@@ -2,7 +2,6 @@ import streamlit as st
 from sqlalchemy import create_engine, text # For database connection and executing SQL
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError # For catching DB errors
 import pandas as pd # For handling data in DataFrames
-# *** FIXED: Added Tuple to the import line ***
 from typing import Any, Optional, Dict, List, Tuple # For type hinting
 
 # --- Database Connection ---
@@ -98,10 +97,9 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
             result = connection.execute(query, {"id": item_id})
             row = result.fetchone()
             if row:
-                # Use _mapping attribute for modern SQLAlchemy Row compatibility
-                return row._mapping
+                return row._mapping # Use ._mapping for compatibility
             else:
-                return None # Item not found
+                return None
     except Exception as e:
         st.error(f"Failed to fetch details for item ID {item_id}: {e}")
         return None
@@ -116,7 +114,7 @@ def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
     """)
     try:
         with engine.connect() as connection:
-            with connection.begin(): # Start transaction
+            with connection.begin():
                 connection.execute(insert_query, item_details)
         return True
     except IntegrityError as e:
@@ -148,9 +146,9 @@ def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -
     """)
     try:
         with engine.connect() as connection:
-            with connection.begin(): # Start transaction
+            with connection.begin():
                 connection.execute(update_query, params)
-        return True # Success
+        return True
     except IntegrityError as e:
         st.error(f"Failed to update item {item_id}: Likely duplicate item name introduced. Error: {e}")
         return False
@@ -178,7 +176,7 @@ if not db_engine:
 else:
     # --- Display Items ---
     st.subheader("Current Active Items")
-    items_df = get_all_items(db_engine) # Fetch current items
+    items_df = get_all_items(db_engine)
 
     if items_df.empty and 'name' not in items_df.columns:
         st.info("No active items found in the database or table structure might be incorrect.")
@@ -234,15 +232,14 @@ else:
                     success = add_new_item(db_engine, item_data)
                     if success:
                         st.success(f"Item '{new_name}' added successfully!")
-                        get_all_items.clear() # Clear cache to refresh table
-                        st.rerun() # Rerun script to show updated table
+                        get_all_items.clear()
+                        st.rerun()
 
     st.divider()
 
     # --- Edit Existing Item Section ---
     st.subheader("✏️ Edit Existing Item")
 
-    # Prepare item list for dropdown (Name, ID)
     if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns:
         item_options: List[Tuple[str, int]] = [
             (row['name'], row['item_id'])
@@ -252,60 +249,62 @@ else:
     else:
         item_options = []
 
-    edit_options = [("", None)] + item_options # Add blank option
+    edit_options = [("", None)] + item_options
 
-    # Callback function to load selected item's data into state
     def load_item_for_edit():
-        selected_option = st.session_state.item_to_edit_select # Get (name, id) tuple
+        selected_option = st.session_state.item_to_edit_select
         if selected_option and selected_option[1] is not None:
             item_id_to_load = selected_option[1]
-            details = get_item_details(db_engine, item_id_to_load) # Fetch details
+            details = get_item_details(db_engine, item_id_to_load)
             if details:
                 st.session_state.item_to_edit_id = item_id_to_load
-                st.session_state.edit_form_values = details # Store fetched details in state
+                st.session_state.edit_form_values = details
             else:
                 st.warning(f"Could not load details for selected item ID: {item_id_to_load}")
                 st.session_state.item_to_edit_id = None
                 st.session_state.edit_form_values = None
         else:
-            # If blank option selected, clear edit state
             st.session_state.item_to_edit_id = None
             st.session_state.edit_form_values = None
 
-    # Selectbox to choose item to edit
+    # Calculate index for selectbox based on current state
+    current_edit_id = st.session_state.get('item_to_edit_id')
+    try:
+        current_index = 0
+        if current_edit_id is not None:
+            current_index = [i for i, opt in enumerate(edit_options) if opt[1] == current_edit_id][0]
+    except IndexError:
+        current_index = 0 # Default to blank if ID not found in options (e.g., after deletion)
+
+
     selected_item_tuple = st.selectbox(
         "Select Item to Edit:",
         options=edit_options,
-        format_func=lambda x: x[0] if isinstance(x, tuple) and x[0] else "--- Select ---", # Show name
-        key="item_to_edit_select", # State key for the selectbox itself
-        on_change=load_item_for_edit, # Callback to load data when selection changes
-        # Set index based on current state to prevent losing selection on rerun
-        index=0 if not st.session_state.item_to_edit_id else [i for i, opt in enumerate(edit_options) if opt[1] == st.session_state.item_to_edit_id][0]
+        format_func=lambda x: x[0] if isinstance(x, tuple) and x[0] else "--- Select ---",
+        key="item_to_edit_select",
+        on_change=load_item_for_edit,
+        index=current_index # Set index based on state
     )
 
-    # Conditionally display the edit form if an item is selected and details loaded
     if st.session_state.item_to_edit_id is not None and st.session_state.edit_form_values is not None:
         current_details = st.session_state.edit_form_values
         with st.form("edit_item_form"):
             st.subheader(f"Editing Item: {current_details.get('name', '')} (ID: {st.session_state.item_to_edit_id})")
-
-            # Pre-fill form fields with current details from state
-            # Use unique keys for edit form widgets
             edit_name = st.text_input("Item Name*", value=current_details.get('name', ''), key="edit_name")
             edit_unit = st.text_input("Unit", value=current_details.get('unit', ''), key="edit_unit")
             edit_category = st.text_input("Category", value=current_details.get('category', ''), key="edit_category")
             edit_sub_category = st.text_input("Sub-Category", value=current_details.get('sub_category', ''), key="edit_sub_category")
             edit_permitted_departments = st.text_input("Permitted Departments", value=current_details.get('permitted_departments', ''), key="edit_permitted_departments")
-            edit_reorder_point = st.number_input("Reorder Point", min_value=0, value=int(current_details.get('reorder_point', 0)), step=1, key="edit_reorder_point") # Ensure int for number input
+            # Ensure value passed to number_input is a number, default to 0 if None/invalid
+            reorder_val = current_details.get('reorder_point', 0)
+            edit_reorder_point = st.number_input("Reorder Point", min_value=0, value=int(reorder_val) if pd.notna(reorder_val) else 0, step=1, key="edit_reorder_point")
             edit_notes = st.text_area("Notes", value=current_details.get('notes', ''), key="edit_notes")
-
             update_submitted = st.form_submit_button("Update Item Details")
 
             if update_submitted:
                 if not edit_name:
                     st.warning("Item Name cannot be empty.")
                 else:
-                    # Prepare dictionary with updated values from edit form state
                     updated_data = {
                         "name": st.session_state.edit_name.strip(),
                         "unit": st.session_state.edit_unit.strip() if st.session_state.edit_unit else None,
@@ -315,19 +314,14 @@ else:
                         "reorder_point": st.session_state.edit_reorder_point,
                         "notes": st.session_state.edit_notes.strip() if st.session_state.edit_notes else None
                     }
-                    # Call backend function to update
                     update_success = update_item_details(db_engine, st.session_state.item_to_edit_id, updated_data)
-
                     if update_success:
                         st.success(f"Item '{st.session_state.edit_name}' updated successfully!")
-                        get_all_items.clear() # Clear cache
+                        get_all_items.clear()
                         # Reset edit state to hide form and clear selection
                         st.session_state.item_to_edit_id = None
                         st.session_state.edit_form_values = None
-                        st.session_state.item_to_edit_select = ("", None) # Explicitly reset selectbox state key if needed
-                        st.rerun() # Rerun to refresh table and hide form
-                    # Error message shown within update_item_details if it fails
+                        # *** FIXED: Removed direct state modification for selectbox key ***
+                        # st.session_state.item_to_edit_select = ("", None)
+                        st.rerun()
 
-    # --- Placeholder for Deactivate Item ---
-    # st.subheader("Deactivate Item (Coming Soon)")
-    # st.write("Functionality to mark items as inactive will be added here.")

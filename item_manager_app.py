@@ -42,7 +42,7 @@ def get_all_items_with_stock(_engine) -> pd.DataFrame:
         st.error("Database connection not available for fetching items.")
         return pd.DataFrame()
 
-    # 1. Get base details for all active items
+    # 1. Get base details for all active items (excluding items.current_stock)
     items_query = text("""
         SELECT item_id, name, unit, category, sub_category,
                permitted_departments, reorder_point, notes
@@ -61,7 +61,7 @@ def get_all_items_with_stock(_engine) -> pd.DataFrame:
             # Fetch base item details
             items_df = pd.read_sql(items_query, connection)
             if items_df.empty:
-                # If no active items, return empty df with expected columns
+                # If no active items, return empty df with expected columns for consistency
                  return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"])
 
             # Fetch calculated stock levels
@@ -71,37 +71,41 @@ def get_all_items_with_stock(_engine) -> pd.DataFrame:
             items_df['item_id'] = items_df['item_id'].astype(int)
             if not stock_levels_df.empty:
                  stock_levels_df['item_id'] = stock_levels_df['item_id'].astype(int)
+                 # Ensure calculated_stock is numeric, fill NaNs if any (though SUM should handle it)
                  stock_levels_df['calculated_stock'] = pd.to_numeric(stock_levels_df['calculated_stock'], errors='coerce').fillna(0)
             else:
-                # Create empty df with correct columns if no transactions exist
+                # Create empty df with correct columns if no transactions exist at all
                 stock_levels_df = pd.DataFrame(columns=['item_id', 'calculated_stock'])
 
 
             # 3. Merge item details with calculated stock levels
-            # Use left merge to keep all items, even those with no transactions
+            # Use left merge to keep all items from items_df, even those with no transactions
             combined_df = pd.merge(items_df, stock_levels_df, on='item_id', how='left')
 
-            # 4. Fill NaN stock values with 0 and rename column
+            # 4. Fill NaN stock values (for items with no transactions) with 0
             combined_df['calculated_stock'] = combined_df['calculated_stock'].fillna(0)
+            # Rename the calculated column to 'current_stock' for display consistency
             combined_df.rename(columns={'calculated_stock': 'current_stock'}, inplace=True)
 
-            # Ensure numeric columns are correct type
+            # Ensure numeric columns are correct type after merge/fillna
             if 'reorder_point' in combined_df.columns:
                  combined_df['reorder_point'] = pd.to_numeric(combined_df['reorder_point'], errors='coerce').fillna(0)
+            if 'current_stock' in combined_df.columns:
+                 combined_df['current_stock'] = pd.to_numeric(combined_df['current_stock'], errors='coerce').fillna(0)
+
 
             return combined_df
 
     except ProgrammingError as e:
         st.error(f"DB query failed. Do 'items' and 'stock_transactions' tables exist? Error: {e}")
-        return pd.DataFrame()
+        return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"]) # Return empty with expected columns
     except Exception as e:
         st.error(f"Failed to fetch items/stock from database: {e}")
         st.exception(e)
-        return pd.DataFrame()
+        return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"])
 
 # --- Other DB Functions (get_item_details, add_new_item, update_item_details, deactivate_item, record_stock_transaction) ---
 # These functions remain the same as in item_manager_app_v7
-# ... (paste functions get_item_details, add_new_item, update_item_details, deactivate_item, record_stock_transaction here) ...
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a specific item_id."""
     if not engine or item_id is None: return None
@@ -110,15 +114,10 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
         with engine.connect() as connection:
             result = connection.execute(query, {"id": item_id})
             row = result.fetchone()
-            # Fetch calculated stock separately for the single item if needed for edit form
-            # Or rely on the value present in the items table if we decide to update it too
-            details = row._mapping if row else None
-            # If needed, calculate stock for this single item:
-            # if details:
-            #    stock_q = text("SELECT SUM(quantity_change) FROM stock_transactions WHERE item_id = :id")
-            #    stock_res = connection.execute(stock_q, {"id": item_id}).scalar_one_or_none()
-            #    details['current_stock'] = stock_res or 0 # Add calculated stock
-            return details
+            # Note: This fetches the potentially outdated current_stock from items table.
+            # If edit form needs accurate stock, it should also be calculated here.
+            # For now, edit form doesn't show stock, so this is okay.
+            return row._mapping if row else None
     except Exception as e: st.error(f"Failed to fetch item details {item_id}: {e}"); return None
 
 def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
@@ -187,7 +186,7 @@ def record_stock_transaction(
             with connection.begin(): connection.execute(insert_query, params)
         return True
     except Exception as e: st.error(f"Failed to record stock transaction: {e}"); st.exception(e); return False
-# --- End of pasted DB functions ---
+# --- End of DB functions ---
 
 
 # --- Initialize Session State ---
@@ -229,7 +228,7 @@ else:
                 "current_stock": st.column_config.NumberColumn(
                     "Current Stock",
                     width="small",
-                    help="Calculated stock based on recorded transactions."
+                    help="Calculated stock based on recorded transactions." # Updated help text
                 ),
                 "notes": st.column_config.TextColumn("Notes", width="large"),
             },
@@ -271,18 +270,18 @@ else:
 
     # --- Edit/Deactivate Existing Item Section ---
     st.subheader("✏️ Edit / Deactivate Existing Item")
-    # Prepare options using the dataframe that includes stock
+    # Prepare options using the dataframe that now includes calculated stock
     if not items_df_with_stock.empty and 'item_id' in items_df_with_stock.columns and 'name' in items_df_with_stock.columns:
         item_options: List[Tuple[str, int]] = [(row['name'], row['item_id']) for index, row in items_df_with_stock.dropna(subset=['name']).iterrows()]
         item_options.sort()
     else: item_options = []
     edit_options = [("--- Select ---", None)] + item_options
 
-    def load_item_for_edit(): # Callback - unchanged
+    def load_item_for_edit(): # Callback
         selected_option = st.session_state.item_to_edit_select
         item_id_to_load = selected_option[1] if selected_option else None
         if item_id_to_load:
-            details = get_item_details(db_engine, item_id_to_load) # get_item_details still works
+            details = get_item_details(db_engine, item_id_to_load)
             st.session_state.item_to_edit_id = item_id_to_load if details else None
             st.session_state.edit_form_values = details if details else None
         else: st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None

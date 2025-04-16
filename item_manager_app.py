@@ -97,7 +97,7 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
             result = connection.execute(query, {"id": item_id})
             row = result.fetchone()
             if row:
-                return row._mapping # Use ._mapping for compatibility
+                return row._mapping
             else:
                 return None
     except Exception as e:
@@ -154,6 +154,30 @@ def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -
         return False
     except Exception as e:
         st.error(f"Failed to update item {item_id} in database: {e}")
+        st.exception(e)
+        return False
+
+# *** NEW: Function to deactivate an item (soft delete) ***
+def deactivate_item(engine, item_id: int) -> bool:
+    """Sets the is_active flag to FALSE for the given item_id."""
+    if not engine or item_id is None:
+        return False
+
+    # SQL query to update the is_active flag
+    deactivate_query = text("""
+        UPDATE items
+        SET is_active = FALSE
+        WHERE item_id = :item_id
+    """)
+    params = {"item_id": item_id}
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin(): # Use transaction
+                connection.execute(deactivate_query, params)
+        return True # Success
+    except Exception as e:
+        st.error(f"Failed to deactivate item {item_id} in database: {e}")
         st.exception(e)
         return False
 
@@ -237,8 +261,8 @@ else:
 
     st.divider()
 
-    # --- Edit Existing Item Section ---
-    st.subheader("✏️ Edit Existing Item")
+    # --- Edit/Deactivate Existing Item Section ---
+    st.subheader("✏️ Edit / Deactivate Existing Item")
 
     if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns:
         item_options: List[Tuple[str, int]] = [
@@ -267,45 +291,47 @@ else:
             st.session_state.item_to_edit_id = None
             st.session_state.edit_form_values = None
 
-    # Calculate index for selectbox based on current state
     current_edit_id = st.session_state.get('item_to_edit_id')
     try:
         current_index = 0
         if current_edit_id is not None:
             current_index = [i for i, opt in enumerate(edit_options) if opt[1] == current_edit_id][0]
     except IndexError:
-        current_index = 0 # Default to blank if ID not found in options (e.g., after deletion)
-
+        current_index = 0
 
     selected_item_tuple = st.selectbox(
-        "Select Item to Edit:",
+        "Select Item to Edit / Deactivate:", # Updated label
         options=edit_options,
         format_func=lambda x: x[0] if isinstance(x, tuple) and x[0] else "--- Select ---",
         key="item_to_edit_select",
         on_change=load_item_for_edit,
-        index=current_index # Set index based on state
+        index=current_index
     )
 
+    # Only show Edit Form and Deactivate button if an item is selected
     if st.session_state.item_to_edit_id is not None and st.session_state.edit_form_values is not None:
         current_details = st.session_state.edit_form_values
+
+        # --- Edit Form ---
         with st.form("edit_item_form"):
             st.subheader(f"Editing Item: {current_details.get('name', '')} (ID: {st.session_state.item_to_edit_id})")
+            # Input fields pre-filled with current details
             edit_name = st.text_input("Item Name*", value=current_details.get('name', ''), key="edit_name")
             edit_unit = st.text_input("Unit", value=current_details.get('unit', ''), key="edit_unit")
             edit_category = st.text_input("Category", value=current_details.get('category', ''), key="edit_category")
             edit_sub_category = st.text_input("Sub-Category", value=current_details.get('sub_category', ''), key="edit_sub_category")
             edit_permitted_departments = st.text_input("Permitted Departments", value=current_details.get('permitted_departments', ''), key="edit_permitted_departments")
-            # Ensure value passed to number_input is a number, default to 0 if None/invalid
             reorder_val = current_details.get('reorder_point', 0)
             edit_reorder_point = st.number_input("Reorder Point", min_value=0, value=int(reorder_val) if pd.notna(reorder_val) else 0, step=1, key="edit_reorder_point")
             edit_notes = st.text_area("Notes", value=current_details.get('notes', ''), key="edit_notes")
+
             update_submitted = st.form_submit_button("Update Item Details")
 
             if update_submitted:
                 if not edit_name:
                     st.warning("Item Name cannot be empty.")
                 else:
-                    updated_data = {
+                    updated_data = { # Collect updated data from form state
                         "name": st.session_state.edit_name.strip(),
                         "unit": st.session_state.edit_unit.strip() if st.session_state.edit_unit else None,
                         "category": st.session_state.edit_category.strip() if st.session_state.edit_category else "Uncategorized",
@@ -318,10 +344,35 @@ else:
                     if update_success:
                         st.success(f"Item '{st.session_state.edit_name}' updated successfully!")
                         get_all_items.clear()
-                        # Reset edit state to hide form and clear selection
-                        st.session_state.item_to_edit_id = None
+                        st.session_state.item_to_edit_id = None # Reset state
                         st.session_state.edit_form_values = None
-                        # *** FIXED: Removed direct state modification for selectbox key ***
-                        # st.session_state.item_to_edit_select = ("", None)
                         st.rerun()
+
+        st.divider() # Divider between edit form and deactivate button
+
+        # --- Deactivate Button ---
+        st.subheader("Deactivate Item")
+        st.warning("⚠️ Deactivating an item will remove it from active lists but preserve its history. This action cannot be easily undone via this UI.")
+
+        # Use a separate button for deactivation
+        if st.button("🗑️ Deactivate This Item", key="deactivate_button", type="secondary"):
+            item_name_to_deactivate = current_details.get('name', 'this item')
+            # Confirmation dialog
+            # Note: st.confirm requires Streamlit 1.32+. Using a simple button check for now.
+            # Consider adding st.confirm if your Streamlit version supports it.
+            # if st.confirm(f"Are you sure you want to deactivate '{item_name_to_deactivate}'?"):
+
+            # Call backend function to deactivate
+            deactivate_success = deactivate_item(db_engine, st.session_state.item_to_edit_id)
+
+            if deactivate_success:
+                st.success(f"Item '{item_name_to_deactivate}' deactivated successfully!")
+                get_all_items.clear() # Clear cache
+                # Reset edit state
+                st.session_state.item_to_edit_id = None
+                st.session_state.edit_form_values = None
+                st.rerun() # Rerun to refresh table and hide edit section
+            else:
+                st.error("Failed to deactivate item.")
+
 

@@ -4,13 +4,14 @@ from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError # 
 import pandas as pd # For handling data in DataFrames
 from typing import Any, Optional, Dict, List, Tuple # For type hinting
 from datetime import datetime, date, timedelta # Import timedelta
+import math # For checking quantity > 0 robustly
 
 # --- Constants ---
 TX_RECEIVING = "RECEIVING"
 TX_ADJUSTMENT = "ADJUSTMENT"
 TX_WASTAGE = "WASTAGE"
-TX_INDENT_FULFILL = "INDENT_FULFILL"
-TX_SALE = "SALE"
+TX_INDENT_FULFILL = "INDENT_FULFILL" # For future use
+TX_SALE = "SALE" # For future use
 
 # --- Database Connection ---
 @st.cache_resource(show_spinner="Connecting to database...")
@@ -31,54 +32,32 @@ def connect_db():
 
 @st.cache_data(ttl=600) # Cache combined data for 10 minutes
 def get_all_items_with_stock(_engine) -> pd.DataFrame:
-    """
-    Fetches all active items and calculates their current stock level
-    by summing transactions from the stock_transactions table.
-    Returns a pandas DataFrame including a 'current_stock' column.
-    """
+    """Fetches active items and calculates stock from transactions."""
     if not _engine: st.error("DB connection unavailable."); return pd.DataFrame()
     items_query = text("""SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, notes FROM items WHERE is_active = TRUE ORDER BY category, sub_category, name;""")
     stock_query = text("""SELECT item_id, SUM(quantity_change) AS calculated_stock FROM stock_transactions GROUP BY item_id;""")
+    expected_cols = ["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"]
     try:
         with _engine.connect() as connection:
             items_df = pd.read_sql(items_query, connection)
             stock_levels_df = pd.read_sql(stock_query, connection)
-
-            # Define expected columns for empty case
-            expected_cols = ["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"]
-
-            if items_df.empty:
-                 return pd.DataFrame(columns=expected_cols)
-
-            # Ensure item_id is int for merging
+            if items_df.empty: return pd.DataFrame(columns=expected_cols)
             items_df['item_id'] = items_df['item_id'].astype(int)
             if not stock_levels_df.empty:
                  stock_levels_df['item_id'] = stock_levels_df['item_id'].astype(int)
                  stock_levels_df['calculated_stock'] = pd.to_numeric(stock_levels_df['calculated_stock'], errors='coerce').fillna(0)
-            else: stock_levels_df = pd.DataFrame(columns=['item_id', 'calculated_stock']) # Empty df if no transactions
-
-            # Merge and calculate stock
+            else: stock_levels_df = pd.DataFrame(columns=['item_id', 'calculated_stock'])
             combined_df = pd.merge(items_df, stock_levels_df, on='item_id', how='left')
             combined_df['calculated_stock'] = combined_df['calculated_stock'].fillna(0)
             combined_df.rename(columns={'calculated_stock': 'current_stock'}, inplace=True)
-
-            # Ensure numeric types
             if 'reorder_point' in combined_df.columns: combined_df['reorder_point'] = pd.to_numeric(combined_df['reorder_point'], errors='coerce').fillna(0)
             if 'current_stock' in combined_df.columns: combined_df['current_stock'] = pd.to_numeric(combined_df['current_stock'], errors='coerce').fillna(0)
-
-            # Ensure all expected columns exist before returning
             for col in expected_cols:
-                if col not in combined_df.columns:
-                    combined_df[col] = 0 if col in ['reorder_point', 'current_stock'] else None # Add missing cols with default
-
-            return combined_df[expected_cols] # Return with consistent columns
-
+                if col not in combined_df.columns: combined_df[col] = 0 if col in ['reorder_point', 'current_stock'] else None
+            return combined_df[expected_cols]
     except ProgrammingError as e: st.error(f"DB query failed. Tables exist? Error: {e}"); return pd.DataFrame(columns=expected_cols)
     except Exception as e: st.error(f"Failed to fetch items/stock: {e}"); st.exception(e); return pd.DataFrame(columns=expected_cols)
 
-# --- Other DB Functions (get_item_details, add_new_item, update_item_details, deactivate_item, record_stock_transaction, get_stock_transactions) ---
-# These functions remain the same as in item_manager_app_v10
-# ... (paste functions get_item_details, add_new_item, update_item_details, deactivate_item, record_stock_transaction, get_stock_transactions here) ...
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a specific item_id."""
     if not engine or item_id is None: return None
@@ -128,7 +107,12 @@ def deactivate_item(engine, item_id: int) -> bool:
 def record_stock_transaction(engine, item_id: int, quantity_change: float, transaction_type: str, user_id: str, notes: Optional[str] = None, related_mrn: Optional[str] = None, related_po_id: Optional[int] = None) -> bool:
     """Records a single stock movement in the stock_transactions table."""
     if not engine: st.error("DB connection unavailable."); return False
-    if not all([item_id, quantity_change is not None, transaction_type, user_id]): st.error("Missing required fields for stock transaction."); return False
+    if not all([item_id, quantity_change is not None, transaction_type, user_id]):
+        st.error("Missing required fields for stock transaction."); return False
+    # Basic check: quantity change should not be zero for logging
+    if math.isclose(quantity_change, 0):
+         st.warning("Quantity change cannot be zero for a transaction.")
+         return False
     insert_query = text("""INSERT INTO stock_transactions (item_id, quantity_change, transaction_type, user_id, notes, related_mrn, related_po_id) VALUES (:item_id, :quantity_change, :transaction_type, :user_id, :notes, :related_mrn, :related_po_id)""")
     params = {"item_id": item_id, "quantity_change": quantity_change, "transaction_type": transaction_type, "user_id": user_id, "notes": notes, "related_mrn": related_mrn, "related_po_id": related_po_id}
     try:
@@ -137,7 +121,7 @@ def record_stock_transaction(engine, item_id: int, quantity_change: float, trans
         return True
     except Exception as e: st.error(f"Failed to record stock transaction: {e}"); st.exception(e); return False
 
-@st.cache_data(ttl=60) # Cache history for 1 minute
+@st.cache_data(ttl=60)
 def get_stock_transactions(_engine, item_id: Optional[int] = None, start_date: Optional[date] = None, end_date: Optional[date] = None) -> pd.DataFrame:
     """Fetches stock transaction history, optionally filtered."""
     if not _engine: st.error("DB connection unavailable."); return pd.DataFrame()
@@ -155,8 +139,6 @@ def get_stock_transactions(_engine, item_id: Optional[int] = None, start_date: O
             return df
     except ProgrammingError as e: st.error(f"DB query failed. Tables exist? Error: {e}"); return pd.DataFrame()
     except Exception as e: st.error(f"Failed to fetch stock transactions: {e}"); st.exception(e); return pd.DataFrame()
-# --- End of DB functions ---
-
 
 # --- Initialize Session State ---
 if 'item_to_edit_id' not in st.session_state: st.session_state.item_to_edit_id = None
@@ -177,72 +159,36 @@ else:
     st.subheader("Current Active Items")
     items_df_with_stock = get_all_items_with_stock(db_engine)
 
-    # --- NEW: Low Stock Report Section ---
+    # --- Low Stock Report Section ---
     st.divider()
     st.subheader("⚠️ Low Stock Items")
     if not items_df_with_stock.empty:
-        # Ensure columns are numeric before comparison
         items_df_with_stock['current_stock'] = pd.to_numeric(items_df_with_stock['current_stock'], errors='coerce').fillna(0)
         items_df_with_stock['reorder_point'] = pd.to_numeric(items_df_with_stock['reorder_point'], errors='coerce').fillna(0)
-
-        # Filter DataFrame for low stock items
-        low_stock_df = items_df_with_stock[
-            (items_df_with_stock['reorder_point'] > 0) & # Only include items with a reorder point set
-            (items_df_with_stock['current_stock'] <= items_df_with_stock['reorder_point'])
-        ].copy() # Create a copy
-
-        if low_stock_df.empty:
-            st.info("No items are currently at or below their reorder point.")
+        low_stock_df = items_df_with_stock[(items_df_with_stock['reorder_point'] > 0) & (items_df_with_stock['current_stock'] <= items_df_with_stock['reorder_point'])].copy()
+        if low_stock_df.empty: st.info("No items are currently at or below their reorder point.")
         else:
             st.warning("The following items need attention:")
-            # Display the low stock items - use similar config as main table
             st.dataframe(
-                low_stock_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={ # Reuse or adapt config from main table
-                    "item_id": st.column_config.NumberColumn("ID", width="small"),
-                    "name": st.column_config.TextColumn("Item Name", width="medium"),
-                    "unit": st.column_config.TextColumn("Unit", width="small"),
-                    "category": st.column_config.TextColumn("Category"),
-                    "sub_category": st.column_config.TextColumn("Sub-Category"),
-                    "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="small"), # Maybe smaller width here
-                    "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
-                    "current_stock": st.column_config.NumberColumn("Current Stock", width="small"), # Highlight this? (No easy way in st.dataframe directly)
-                    "notes": None, # Hide notes in this summary view
-                },
-                 # Define column order, maybe prioritize stock/reorder point
+                low_stock_df, use_container_width=True, hide_index=True,
+                column_config={ "item_id": st.column_config.NumberColumn("ID", width="small"), "name": st.column_config.TextColumn("Item Name", width="medium"), "unit": st.column_config.TextColumn("Unit", width="small"), "category": st.column_config.TextColumn("Category"), "sub_category": st.column_config.TextColumn("Sub-Category"), "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="small"), "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"), "current_stock": st.column_config.NumberColumn("Current Stock", width="small"), "notes": None, },
                 column_order=[col for col in ["item_id", "name", "current_stock", "reorder_point", "unit", "category", "sub_category", "permitted_departments"] if col in low_stock_df.columns]
             )
-    else:
-        st.info("No item data available to check stock levels.")
-    # --- End Low Stock Report Section ---
-
+    else: st.info("No item data available to check stock levels.")
     st.divider()
 
-    # Display All Items Table (Moved below Low Stock Report)
+    # Display All Items Table
     st.subheader("Full Item List")
-    if items_df_with_stock.empty and 'name' not in items_df_with_stock.columns:
-        st.info("No active items found.")
+    if items_df_with_stock.empty and 'name' not in items_df_with_stock.columns: st.info("No active items found.")
     else:
         st.dataframe(
             items_df_with_stock, use_container_width=True, hide_index=True,
-            column_config={
-                "item_id": st.column_config.NumberColumn("ID", width="small"),
-                "name": st.column_config.TextColumn("Item Name", width="medium"),
-                "unit": st.column_config.TextColumn("Unit", width="small"),
-                "category": st.column_config.TextColumn("Category"),
-                "sub_category": st.column_config.TextColumn("Sub-Category"),
-                "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"),
-                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
-                "current_stock": st.column_config.NumberColumn("Current Stock", width="small", help="Calculated from transactions."),
-                "notes": st.column_config.TextColumn("Notes", width="large"),
-            },
+            column_config={ "item_id": st.column_config.NumberColumn("ID", width="small"), "name": st.column_config.TextColumn("Item Name", width="medium"), "unit": st.column_config.TextColumn("Unit", width="small"), "category": st.column_config.TextColumn("Category"), "sub_category": st.column_config.TextColumn("Sub-Category"), "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"), "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"), "current_stock": st.column_config.NumberColumn("Current Stock", width="small", help="Calculated from transactions."), "notes": st.column_config.TextColumn("Notes", width="large"), },
             column_order=[col for col in ["item_id", "name", "category", "sub_category", "unit", "current_stock", "reorder_point", "permitted_departments", "notes"] if col in items_df_with_stock.columns]
         )
     st.divider()
 
-    # Prepare item options once for all selectboxes below
+    # Prepare item options once for reuse in selectboxes below
     if not items_df_with_stock.empty and 'item_id' in items_df_with_stock.columns and 'name' in items_df_with_stock.columns:
         item_options_list: List[Tuple[str, int]] = [(row['name'], row['item_id']) for index, row in items_df_with_stock.dropna(subset=['name']).iterrows()]
         item_options_list.sort()
@@ -336,6 +282,62 @@ else:
                     recv_success = record_stock_transaction(engine=db_engine, item_id=selected_item_id, quantity_change=float(recv_qty), transaction_type=TX_RECEIVING, user_id=recv_user_id.strip(), notes=recv_notes.strip() if recv_notes else None)
                     if recv_success: st.success(f"Recorded receipt of {recv_qty} for item ID {selected_item_id}!"); get_all_items_with_stock.clear(); st.rerun()
                     else: st.error("Failed to record received stock.")
+
+    st.divider() # Divider before the new section
+
+    # --- NEW: Record Wastage / Spoilage Form ---
+    st.subheader("🗑️ Record Wastage / Spoilage")
+    with st.expander("Enter Details of Wasted Stock"):
+        # Use item_options_list prepared earlier
+        waste_item_options = [("--- Select Item Wasted ---", None)] + item_options_list
+
+        with st.form("wastage_form", clear_on_submit=True):
+            waste_selected_item = st.selectbox(
+                "Item Wasted*",
+                options=waste_item_options,
+                format_func=lambda x: x[0], # Show name
+                key="waste_item_select"
+            )
+            waste_qty = st.number_input(
+                "Quantity Wasted*",
+                min_value=0.01, # Must waste a positive quantity
+                step=0.01, # Allow decimals
+                format="%.2f",
+                help="Enter the positive quantity that was wasted/spoiled",
+                key="waste_qty"
+            )
+            waste_user_id = st.text_input("Recorder's Name/ID*", help="Who is recording this wastage?", key="waste_user_id")
+            waste_notes = st.text_area("Reason for Wastage*", help="Why was this item wasted? (e.g., Expired, Damaged)", key="waste_notes")
+            waste_submitted = st.form_submit_button("Record Wastage")
+
+            if waste_submitted:
+                selected_item_id = waste_selected_item[1] if waste_selected_item else None
+                # Validation
+                if not selected_item_id:
+                    st.warning("Please select the item wasted.")
+                elif waste_qty <= 0:
+                    st.warning("Quantity Wasted must be greater than zero.")
+                elif not waste_user_id:
+                    st.warning("Please enter the Recorder's Name/ID.")
+                elif not waste_notes:
+                    st.warning("Please enter a reason for the wastage.")
+                else:
+                    # Call backend function, ensuring quantity_change is negative
+                    waste_success = record_stock_transaction(
+                        engine=db_engine,
+                        item_id=selected_item_id,
+                        quantity_change=-abs(float(waste_qty)), # Make quantity negative
+                        transaction_type=TX_WASTAGE, # Use the constant
+                        user_id=waste_user_id.strip(),
+                        notes=waste_notes.strip()
+                    )
+
+                    if waste_success:
+                        st.success(f"Recorded wastage of {waste_qty} for item ID {selected_item_id}!")
+                        get_all_items_with_stock.clear() # Clear cache
+                        st.rerun() # Rerun to update display
+                    else:
+                        st.error("Failed to record wastage.")
 
     st.divider()
 

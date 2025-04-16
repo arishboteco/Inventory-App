@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, text # For database connection and executi
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError # For catching DB errors
 import pandas as pd # For handling data in DataFrames
 from typing import Any, Optional, Dict, List, Tuple # For type hinting
+from decimal import Decimal # Use Decimal for precise quantity changes
 
 # --- Constants ---
 # Define standard transaction types for consistency
@@ -13,22 +14,17 @@ TX_INDENT_FULFILL = "INDENT_FULFILL"
 TX_SALE = "SALE" # For potential future POS integration
 
 # --- Database Connection ---
-
 @st.cache_resource(show_spinner="Connecting to database...")
 def connect_db():
-    """
-    Connects to the PostgreSQL database using credentials from Streamlit Secrets.
-    Returns the SQLAlchemy engine object, or None if connection fails.
-    """
+    """Connects to the DB. Returns SQLAlchemy engine or None."""
     try:
         if "database" not in st.secrets:
-            st.error("Database configuration (`[database]`) missing in st.secrets!")
-            st.info("Ensure secrets are added via Streamlit Cloud dashboard if deployed, or in local `.streamlit/secrets.toml`.")
+            st.error("DB config missing in secrets!")
             return None
         db_secrets = st.secrets["database"]
         required_keys = ["engine", "user", "password", "host", "port", "dbname"]
         if not all(key in db_secrets for key in required_keys):
-            st.error("Database secrets are missing required keys (engine, user, password, host, port, dbname).")
+            st.error("DB secrets missing required keys.")
             return None
         db_url = (
             f"{db_secrets['engine']}://"
@@ -38,29 +34,18 @@ def connect_db():
         )
         engine = create_engine(db_url, pool_pre_ping=True)
         # Test connection
-        try:
-            with engine.connect() as connection:
-                connection.execute(text("SELECT 1"))
-        except OperationalError as oe:
-            st.error(f"Database connection failed. Check credentials/network in secrets. Error: {oe}")
-            return None
-        except Exception as test_e:
-            st.error(f"Database connection test failed: {test_e}")
-            return None
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
         return engine
-    except OperationalError as e:
-        st.error(f"Database engine creation failed: Check secrets format/values. Error: {e}")
-        return None
     except Exception as e:
-        st.error(f"Failed to connect to database: {e}")
-        st.exception(e)
+        st.error(f"DB connection failed: {e}")
         return None
 
 # --- Database Interaction Functions ---
 
 @st.cache_data(ttl=600)
 def get_all_items(_engine) -> pd.DataFrame:
-    """Fetches all active items from the 'items' table."""
+    """Fetches all active items."""
     if not _engine: return pd.DataFrame()
     query = text("""
         SELECT item_id, name, unit, category, sub_category,
@@ -73,8 +58,7 @@ def get_all_items(_engine) -> pd.DataFrame:
             for col in ['reorder_point', 'current_stock']:
                 if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
             return df
-    except ProgrammingError as e: st.error(f"DB query failed (items table?). Error: {e}"); return pd.DataFrame()
-    except Exception as e: st.error(f"Failed to fetch items: {e}"); st.exception(e); return pd.DataFrame()
+    except Exception as e: st.error(f"Failed to fetch items: {e}"); return pd.DataFrame()
 
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a specific item_id."""
@@ -88,7 +72,7 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     except Exception as e: st.error(f"Failed to fetch item details {item_id}: {e}"); return None
 
 def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
-    """Inserts a new item into the 'items' table."""
+    """Inserts a new item."""
     if not engine: return False
     insert_query = text("""
         INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, notes)
@@ -102,7 +86,7 @@ def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
     except Exception as e: st.error(f"Failed to add item: {e}"); st.exception(e); return False
 
 def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -> bool:
-    """Updates an existing item in the 'items' table."""
+    """Updates an existing item."""
     if not engine or item_id is None: return False
     update_parts = []; params = {"item_id": item_id}
     editable_fields = ['name', 'unit', 'category', 'sub_category', 'permitted_departments', 'reorder_point', 'notes']
@@ -118,7 +102,7 @@ def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -
     except Exception as e: st.error(f"Failed to update item {item_id}: {e}"); st.exception(e); return False
 
 def deactivate_item(engine, item_id: int) -> bool:
-    """Sets the is_active flag to FALSE for the given item_id."""
+    """Sets the is_active flag to FALSE."""
     if not engine or item_id is None: return False
     deactivate_query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id")
     params = {"item_id": item_id}
@@ -128,61 +112,32 @@ def deactivate_item(engine, item_id: int) -> bool:
         return True
     except Exception as e: st.error(f"Failed to deactivate item {item_id}: {e}"); st.exception(e); return False
 
-# *** NEW: Function to record a stock movement ***
 def record_stock_transaction(
-    engine,
-    item_id: int,
-    quantity_change: float, # Use float or Decimal for quantity
-    transaction_type: str,
-    user_id: str, # Who performed the action
-    notes: Optional[str] = None,
-    related_mrn: Optional[str] = None,
+    engine, item_id: int, quantity_change: float, transaction_type: str,
+    user_id: str, notes: Optional[str] = None, related_mrn: Optional[str] = None,
     related_po_id: Optional[int] = None
 ) -> bool:
-    """
-    Records a single stock movement in the stock_transactions table.
-    quantity_change should be positive for stock IN, negative for stock OUT.
-    """
-    if not engine:
-        st.error("Database connection not available for recording transaction.")
-        return False
+    """Records a single stock movement in the stock_transactions table."""
+    if not engine: st.error("DB connection unavailable."); return False
     if not all([item_id, quantity_change is not None, transaction_type, user_id]):
-        st.error("Missing required fields for stock transaction (item_id, quantity_change, transaction_type, user_id).")
-        return False
+        st.error("Missing required fields for stock transaction."); return False
 
-    # SQL INSERT statement for the transaction log
     insert_query = text("""
         INSERT INTO stock_transactions
             (item_id, quantity_change, transaction_type, user_id, notes, related_mrn, related_po_id)
         VALUES
             (:item_id, :quantity_change, :transaction_type, :user_id, :notes, :related_mrn, :related_po_id)
     """)
-
-    # Prepare parameters dictionary
     params = {
-        "item_id": item_id,
-        "quantity_change": quantity_change,
-        "transaction_type": transaction_type,
-        "user_id": user_id,
-        "notes": notes,
-        "related_mrn": related_mrn,
-        "related_po_id": related_po_id
+        "item_id": item_id, "quantity_change": quantity_change,
+        "transaction_type": transaction_type, "user_id": user_id,
+        "notes": notes, "related_mrn": related_mrn, "related_po_id": related_po_id
     }
-
     try:
-        # Execute within a transaction
         with engine.connect() as connection:
-            with connection.begin():
-                connection.execute(insert_query, params)
-        # Optionally: Could update items.current_stock here within the same transaction
-        # update_stock_query = text("UPDATE items SET current_stock = current_stock + :change WHERE item_id = :id")
-        # connection.execute(update_stock_query, {"change": quantity_change, "id": item_id})
-        # Decided against updating current_stock directly for now to keep log pure.
-        return True # Success
-    except Exception as e:
-        st.error(f"Failed to record stock transaction for item {item_id}: {e}")
-        st.exception(e)
-        return False
+            with connection.begin(): connection.execute(insert_query, params)
+        return True
+    except Exception as e: st.error(f"Failed to record stock transaction: {e}"); st.exception(e); return False
 
 # --- Initialize Session State ---
 if 'item_to_edit_id' not in st.session_state: st.session_state.item_to_edit_id = None
@@ -207,7 +162,7 @@ else:
     else:
         st.dataframe(
             items_df, use_container_width=True, hide_index=True,
-            column_config={
+            column_config={ # Customize columns
                 "item_id": st.column_config.NumberColumn("ID", width="small"),
                 "name": st.column_config.TextColumn("Item Name", width="medium"),
                 "unit": st.column_config.TextColumn("Unit", width="small"),
@@ -215,7 +170,7 @@ else:
                 "sub_category": st.column_config.TextColumn("Sub-Category"),
                 "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"),
                 "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
-                "current_stock": st.column_config.NumberColumn("Stock Qty", width="small"),
+                "current_stock": st.column_config.NumberColumn("Stock Qty", width="small", help="Value from items table (may not reflect recent transactions yet)"),
                 "notes": st.column_config.TextColumn("Notes", width="large"),
             },
             column_order=["item_id", "name", "category", "sub_category", "unit", "current_stock", "reorder_point", "permitted_departments", "notes"]
@@ -258,19 +213,20 @@ else:
     else: item_options = []
     edit_options = [("--- Select ---", None)] + item_options
 
-    def load_item_for_edit(): # Callback to load data for editing
+    def load_item_for_edit(): # Callback
         selected_option = st.session_state.item_to_edit_select
-        if selected_option and selected_option[1] is not None:
-            details = get_item_details(db_engine, selected_option[1])
-            if details: st.session_state.item_to_edit_id = selected_option[1]; st.session_state.edit_form_values = details
-            else: st.warning(f"Could not load details for ID: {selected_option[1]}"); st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None
+        item_id_to_load = selected_option[1] if selected_option else None
+        if item_id_to_load:
+            details = get_item_details(db_engine, item_id_to_load)
+            st.session_state.item_to_edit_id = item_id_to_load if details else None
+            st.session_state.edit_form_values = details if details else None
         else: st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None
 
     current_edit_id = st.session_state.get('item_to_edit_id')
     try: current_index = [i for i, opt in enumerate(edit_options) if opt[1] == current_edit_id][0] if current_edit_id is not None else 0
     except IndexError: current_index = 0
 
-    selected_item_tuple = st.selectbox( # Dropdown to select item
+    selected_item_tuple = st.selectbox( # Dropdown
         "Select Item to Edit / Deactivate:", options=edit_options,
         format_func=lambda x: x[0], key="item_to_edit_select",
         on_change=load_item_for_edit, index=current_index
@@ -307,15 +263,79 @@ else:
                         st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None; st.rerun()
 
         st.divider()
-        # Deactivate Button
+        # Deactivate Button Section
         st.subheader("Deactivate Item")
         st.warning("⚠️ Deactivating removes item from active lists. History remains.")
         if st.button("🗑️ Deactivate This Item", key="deactivate_button", type="secondary"):
             item_name_to_deactivate = current_details.get('name', 'this item')
-            # Simple confirmation using button click as trigger
+            # Simple confirmation via button click - consider adding st.confirm if needed
             deactivate_success = deactivate_item(db_engine, st.session_state.item_to_edit_id)
             if deactivate_success:
                 st.success(f"Item '{item_name_to_deactivate}' deactivated!"); get_all_items.clear()
                 st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None; st.rerun()
             else: st.error("Failed to deactivate item.")
+
+    st.divider()
+
+    # --- NEW: Stock Adjustment Form ---
+    with st.expander("📈 Record Stock Adjustment"):
+        with st.form("adjustment_form", clear_on_submit=True):
+            st.subheader("Enter Adjustment Details:")
+
+            # Select item to adjust
+            adj_item_options = [("--- Select Item ---", None)] + item_options[1:] # Reuse item list, skip blank
+            adj_selected_item = st.selectbox(
+                "Item to Adjust*",
+                options=adj_item_options,
+                format_func=lambda x: x[0], # Show name
+                key="adj_item_select"
+            )
+
+            # Input for quantity change (positive or negative)
+            adj_qty_change = st.number_input(
+                "Quantity Change*",
+                step=0.01, # Allow decimals
+                format="%.2f", # Format as float with 2 decimals
+                help="Enter positive value for stock IN (e.g., found stock), negative for stock OUT (e.g., correction)",
+                key="adj_qty_change"
+            )
+
+            # Input for user performing adjustment
+            adj_user_id = st.text_input("Your Name/ID*", help="Who is making this adjustment?", key="adj_user_id")
+
+            # Input for reason/notes (mandatory for adjustments)
+            adj_notes = st.text_area("Reason for Adjustment*", help="Explain why this adjustment is needed (e.g., Stock count correction, Initial stock entry)", key="adj_notes")
+
+            # Form submission button
+            adj_submitted = st.form_submit_button("Record Adjustment")
+
+            if adj_submitted:
+                # Validation
+                selected_item_id = adj_selected_item[1] if adj_selected_item else None
+                if not selected_item_id:
+                    st.warning("Please select an item to adjust.")
+                elif adj_qty_change == 0:
+                    st.warning("Quantity Change cannot be zero.")
+                elif not adj_user_id:
+                    st.warning("Please enter Your Name/ID.")
+                elif not adj_notes:
+                    st.warning("Please enter a reason for the adjustment in the Notes.")
+                else:
+                    # Call the backend function to record the transaction
+                    adj_success = record_stock_transaction(
+                        engine=db_engine,
+                        item_id=selected_item_id,
+                        quantity_change=float(adj_qty_change), # Ensure float
+                        transaction_type=TX_ADJUSTMENT, # Use the constant
+                        user_id=adj_user_id.strip(),
+                        notes=adj_notes.strip()
+                        # related_mrn and related_po_id are None by default
+                    )
+
+                    if adj_success:
+                        st.success(f"Stock adjustment for item ID {selected_item_id} recorded successfully!")
+                        # Note: We are NOT clearing get_all_items cache or rerunning here
+                        # because this action doesn't update the displayed 'current_stock' yet.
+                    else:
+                        st.error("Failed to record stock adjustment.")
 

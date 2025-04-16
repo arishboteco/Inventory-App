@@ -6,11 +6,12 @@ from typing import Any, Optional, Dict, List, Tuple # For type hinting
 # Removed unused Decimal import
 
 # --- Constants ---
+# Define standard transaction types for consistency
 TX_RECEIVING = "RECEIVING"
 TX_ADJUSTMENT = "ADJUSTMENT"
 TX_WASTAGE = "WASTAGE"
 TX_INDENT_FULFILL = "INDENT_FULFILL"
-TX_SALE = "SALE"
+TX_SALE = "SALE" # For potential future POS integration
 
 # --- Database Connection ---
 @st.cache_resource(show_spinner="Connecting to database...")
@@ -30,7 +31,6 @@ def connect_db():
 
 # --- Database Interaction Functions ---
 
-# *** MODIFIED: Function now calculates stock from transactions ***
 @st.cache_data(ttl=600) # Cache combined data for 10 minutes
 def get_all_items_with_stock(_engine) -> pd.DataFrame:
     """
@@ -38,74 +38,37 @@ def get_all_items_with_stock(_engine) -> pd.DataFrame:
     by summing transactions from the stock_transactions table.
     Returns a pandas DataFrame including a 'current_stock' column.
     """
-    if not _engine:
-        st.error("Database connection not available for fetching items.")
-        return pd.DataFrame()
+    if not _engine: st.error("DB connection unavailable."); return pd.DataFrame()
 
-    # 1. Get base details for all active items (excluding items.current_stock)
     items_query = text("""
         SELECT item_id, name, unit, category, sub_category,
                permitted_departments, reorder_point, notes
         FROM items WHERE is_active = TRUE ORDER BY category, sub_category, name;
     """)
-
-    # 2. Calculate stock levels from transactions
     stock_query = text("""
         SELECT item_id, SUM(quantity_change) AS calculated_stock
-        FROM stock_transactions
-        GROUP BY item_id;
+        FROM stock_transactions GROUP BY item_id;
     """)
-
     try:
         with _engine.connect() as connection:
-            # Fetch base item details
             items_df = pd.read_sql(items_query, connection)
             if items_df.empty:
-                # If no active items, return empty df with expected columns for consistency
                  return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"])
-
-            # Fetch calculated stock levels
             stock_levels_df = pd.read_sql(stock_query, connection)
-
-            # Ensure item_id is the same type for merging (important if one is empty)
             items_df['item_id'] = items_df['item_id'].astype(int)
             if not stock_levels_df.empty:
                  stock_levels_df['item_id'] = stock_levels_df['item_id'].astype(int)
-                 # Ensure calculated_stock is numeric, fill NaNs if any (though SUM should handle it)
                  stock_levels_df['calculated_stock'] = pd.to_numeric(stock_levels_df['calculated_stock'], errors='coerce').fillna(0)
-            else:
-                # Create empty df with correct columns if no transactions exist at all
-                stock_levels_df = pd.DataFrame(columns=['item_id', 'calculated_stock'])
-
-
-            # 3. Merge item details with calculated stock levels
-            # Use left merge to keep all items from items_df, even those with no transactions
+            else: stock_levels_df = pd.DataFrame(columns=['item_id', 'calculated_stock'])
             combined_df = pd.merge(items_df, stock_levels_df, on='item_id', how='left')
-
-            # 4. Fill NaN stock values (for items with no transactions) with 0
             combined_df['calculated_stock'] = combined_df['calculated_stock'].fillna(0)
-            # Rename the calculated column to 'current_stock' for display consistency
             combined_df.rename(columns={'calculated_stock': 'current_stock'}, inplace=True)
-
-            # Ensure numeric columns are correct type after merge/fillna
-            if 'reorder_point' in combined_df.columns:
-                 combined_df['reorder_point'] = pd.to_numeric(combined_df['reorder_point'], errors='coerce').fillna(0)
-            if 'current_stock' in combined_df.columns:
-                 combined_df['current_stock'] = pd.to_numeric(combined_df['current_stock'], errors='coerce').fillna(0)
-
-
+            if 'reorder_point' in combined_df.columns: combined_df['reorder_point'] = pd.to_numeric(combined_df['reorder_point'], errors='coerce').fillna(0)
+            if 'current_stock' in combined_df.columns: combined_df['current_stock'] = pd.to_numeric(combined_df['current_stock'], errors='coerce').fillna(0)
             return combined_df
+    except ProgrammingError as e: st.error(f"DB query failed. Tables exist? Error: {e}"); return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"])
+    except Exception as e: st.error(f"Failed to fetch items/stock: {e}"); st.exception(e); return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"])
 
-    except ProgrammingError as e:
-        st.error(f"DB query failed. Do 'items' and 'stock_transactions' tables exist? Error: {e}")
-        return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"]) # Return empty with expected columns
-    except Exception as e:
-        st.error(f"Failed to fetch items/stock from database: {e}")
-        st.exception(e)
-        return pd.DataFrame(columns=["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "current_stock"])
-
-# --- Other DB Functions (get_item_details, add_new_item, update_item_details, deactivate_item, record_stock_transaction) ---
-# These functions remain the same as in item_manager_app_v7
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a specific item_id."""
     if not engine or item_id is None: return None
@@ -114,9 +77,6 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
         with engine.connect() as connection:
             result = connection.execute(query, {"id": item_id})
             row = result.fetchone()
-            # Note: This fetches the potentially outdated current_stock from items table.
-            # If edit form needs accurate stock, it should also be calculated here.
-            # For now, edit form doesn't show stock, so this is okay.
             return row._mapping if row else None
     except Exception as e: st.error(f"Failed to fetch item details {item_id}: {e}"); return None
 
@@ -186,8 +146,6 @@ def record_stock_transaction(
             with connection.begin(): connection.execute(insert_query, params)
         return True
     except Exception as e: st.error(f"Failed to record stock transaction: {e}"); st.exception(e); return False
-# --- End of DB functions ---
-
 
 # --- Initialize Session State ---
 if 'item_to_edit_id' not in st.session_state: st.session_state.item_to_edit_id = None
@@ -196,7 +154,7 @@ if 'edit_form_values' not in st.session_state: st.session_state.edit_form_values
 # --- Main App Logic ---
 st.set_page_config(page_title="Boteco Item Manager", layout="wide")
 st.title("Boteco Item Manager 🛒")
-st.write("Manage inventory items stored in the database.")
+st.write("Manage inventory items and basic stock movements.") # Updated description
 
 db_engine = connect_db()
 
@@ -206,16 +164,13 @@ if not db_engine:
 else:
     # --- Display Items ---
     st.subheader("Current Active Items")
-    # *** Use the modified function to get items WITH calculated stock ***
     items_df_with_stock = get_all_items_with_stock(db_engine)
 
     if items_df_with_stock.empty and 'name' not in items_df_with_stock.columns:
-        st.info("No active items found or failed to load stock levels.")
+        st.info("No active items found.")
     else:
         st.dataframe(
-            items_df_with_stock, # Display the combined dataframe
-            use_container_width=True,
-            hide_index=True,
+            items_df_with_stock, use_container_width=True, hide_index=True,
             column_config={ # Customize columns
                 "item_id": st.column_config.NumberColumn("ID", width="small"),
                 "name": st.column_config.TextColumn("Item Name", width="medium"),
@@ -224,18 +179,18 @@ else:
                 "sub_category": st.column_config.TextColumn("Sub-Category"),
                 "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"),
                 "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
-                # *** Updated config for current_stock ***
-                "current_stock": st.column_config.NumberColumn(
-                    "Current Stock",
-                    width="small",
-                    help="Calculated stock based on recorded transactions." # Updated help text
-                ),
+                "current_stock": st.column_config.NumberColumn("Current Stock", width="small", help="Calculated from transactions."),
                 "notes": st.column_config.TextColumn("Notes", width="large"),
             },
-            # Ensure column order includes the calculated current_stock
             column_order=[col for col in ["item_id", "name", "category", "sub_category", "unit", "current_stock", "reorder_point", "permitted_departments", "notes"] if col in items_df_with_stock.columns]
         )
     st.divider()
+
+    # Prepare item options once for all selectboxes below
+    if not items_df_with_stock.empty and 'item_id' in items_df_with_stock.columns and 'name' in items_df_with_stock.columns:
+        item_options_list: List[Tuple[str, int]] = [(row['name'], row['item_id']) for index, row in items_df_with_stock.dropna(subset=['name']).iterrows()]
+        item_options_list.sort()
+    else: item_options_list = []
 
     # --- Add New Item Form ---
     with st.expander("➕ Add New Item"):
@@ -261,21 +216,13 @@ else:
                         "reorder_point": new_reorder_point, "notes": new_notes.strip() or None
                     }
                     success = add_new_item(db_engine, item_data)
-                    if success:
-                        st.success(f"Item '{new_name}' added!");
-                        get_all_items_with_stock.clear() # Clear the correct cache
-                        st.rerun()
+                    if success: st.success(f"Item '{new_name}' added!"); get_all_items_with_stock.clear(); st.rerun()
 
     st.divider()
 
     # --- Edit/Deactivate Existing Item Section ---
     st.subheader("✏️ Edit / Deactivate Existing Item")
-    # Prepare options using the dataframe that now includes calculated stock
-    if not items_df_with_stock.empty and 'item_id' in items_df_with_stock.columns and 'name' in items_df_with_stock.columns:
-        item_options: List[Tuple[str, int]] = [(row['name'], row['item_id']) for index, row in items_df_with_stock.dropna(subset=['name']).iterrows()]
-        item_options.sort()
-    else: item_options = []
-    edit_options = [("--- Select ---", None)] + item_options
+    edit_options = [("--- Select ---", None)] + item_options_list # Use the prepared list
 
     def load_item_for_edit(): # Callback
         selected_option = st.session_state.item_to_edit_select
@@ -324,7 +271,7 @@ else:
                     update_success = update_item_details(db_engine, st.session_state.item_to_edit_id, updated_data)
                     if update_success:
                         st.success(f"Item '{st.session_state.edit_name}' updated!");
-                        get_all_items_with_stock.clear() # Clear the correct cache
+                        get_all_items_with_stock.clear(); # Clear cache
                         st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None; st.rerun()
 
         st.divider()
@@ -333,10 +280,12 @@ else:
         st.warning("⚠️ Deactivating removes item from active lists. History remains.")
         if st.button("🗑️ Deactivate This Item", key="deactivate_button", type="secondary"):
             item_name_to_deactivate = current_details.get('name', 'this item')
+            # Add st.confirm here if desired and Streamlit version >= 1.32
+            # if st.confirm(f"Are you sure you want to deactivate '{item_name_to_deactivate}'?"):
             deactivate_success = deactivate_item(db_engine, st.session_state.item_to_edit_id)
             if deactivate_success:
                 st.success(f"Item '{item_name_to_deactivate}' deactivated!");
-                get_all_items_with_stock.clear() # Clear the correct cache
+                get_all_items_with_stock.clear(); # Clear cache
                 st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None; st.rerun()
             else: st.error("Failed to deactivate item.")
 
@@ -344,8 +293,8 @@ else:
 
     # --- Stock Adjustment Form ---
     with st.expander("📈 Record Stock Adjustment"):
-        # Use item_options generated from the dataframe that now includes calculated stock
-        adj_item_options = [("--- Select Item ---", None)] + item_options
+        # Use item_options_list generated earlier
+        adj_item_options = [("--- Select Item ---", None)] + item_options_list
 
         with st.form("adjustment_form", clear_on_submit=True):
             st.subheader("Enter Adjustment Details:")
@@ -368,9 +317,62 @@ else:
                     )
                     if adj_success:
                         st.success(f"Stock adjustment for item ID {selected_item_id} recorded!")
-                        # *** ADDED: Clear cache and rerun after adjustment ***
-                        get_all_items_with_stock.clear()
-                        st.rerun()
+                        get_all_items_with_stock.clear() # Clear cache
+                        st.rerun() # Rerun to update display
+                    else: st.error("Failed to record stock adjustment.")
+
+    st.divider() # Divider before the new section
+
+    # --- NEW: Record Goods Received Form ---
+    st.subheader("📥 Record Goods Received")
+    with st.expander("Enter Details of Stock Received"):
+        # Use item_options_list generated earlier
+        recv_item_options = [("--- Select Item Received ---", None)] + item_options_list
+
+        with st.form("receiving_form", clear_on_submit=True):
+            recv_selected_item = st.selectbox(
+                "Item Received*",
+                options=recv_item_options,
+                format_func=lambda x: x[0], # Show name
+                key="recv_item_select"
+            )
+            recv_qty = st.number_input(
+                "Quantity Received*",
+                min_value=0.01, # Must receive a positive quantity
+                step=0.01,
+                format="%.2f",
+                help="Enter the positive quantity received",
+                key="recv_qty"
+            )
+            recv_user_id = st.text_input("Receiver's Name/ID*", help="Who received this stock?", key="recv_user_id")
+            recv_notes = st.text_area("Notes (Optional)", help="e.g., Supplier Name, PO#, Invoice#, Delivery Note#", key="recv_notes")
+            recv_submitted = st.form_submit_button("Record Received Stock")
+
+            if recv_submitted:
+                selected_item_id = recv_selected_item[1] if recv_selected_item else None
+                # Validation
+                if not selected_item_id:
+                    st.warning("Please select the item received.")
+                elif recv_qty <= 0: # Check quantity is positive
+                    st.warning("Quantity Received must be greater than zero.")
+                elif not recv_user_id:
+                    st.warning("Please enter the Receiver's Name/ID.")
+                else:
+                    # Call the backend function to record the transaction
+                    recv_success = record_stock_transaction(
+                        engine=db_engine,
+                        item_id=selected_item_id,
+                        quantity_change=float(recv_qty), # Ensure positive float
+                        transaction_type=TX_RECEIVING, # Use the constant
+                        user_id=recv_user_id.strip(),
+                        notes=recv_notes.strip() if recv_notes else None
+                        # Can add related_po_id later if PO system is built
+                    )
+
+                    if recv_success:
+                        st.success(f"Successfully recorded receipt of {recv_qty} for item ID {selected_item_id}!")
+                        get_all_items_with_stock.clear() # Clear cache
+                        st.rerun() # Rerun to update display
                     else:
-                        st.error("Failed to record stock adjustment.")
+                        st.error("Failed to record received stock.")
 

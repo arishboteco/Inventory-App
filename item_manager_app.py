@@ -154,7 +154,7 @@ def get_stock_transactions(_engine, item_id: Optional[int] = None, start_date: O
     except ProgrammingError as e: st.error(f"DB query failed. Tables exist? Error: {e}"); return pd.DataFrame()
     except Exception as e: st.error(f"Failed to fetch stock transactions: {e}"); st.exception(e); return pd.DataFrame()
 
-# *** NEW: Supplier Database Functions ***
+# --- Supplier Database Functions ---
 @st.cache_data(ttl=600)
 def get_all_suppliers(_engine, include_inactive: bool = False) -> pd.DataFrame:
     """Fetches all suppliers, optionally including inactive ones."""
@@ -183,7 +183,14 @@ def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
 def add_supplier(engine, supplier_details: Dict[str, Any]) -> bool:
     """Inserts a new supplier."""
     if not engine: return False
-    insert_query = text("""INSERT INTO suppliers (name, contact_person, phone, email, address, notes) VALUES (:name, :contact_person, :phone, :email, :address, :notes)""")
+    # Ensure required 'name' is present
+    if not supplier_details.get("name"):
+        st.error("Supplier Name is required.")
+        return False
+    # Set is_active default if not provided (though DB default should handle it)
+    supplier_details.setdefault("is_active", True)
+    # Define query and editable fields
+    insert_query = text("""INSERT INTO suppliers (name, contact_person, phone, email, address, notes, is_active) VALUES (:name, :contact_person, :phone, :email, :address, :notes, :is_active)""")
     try:
         with engine.connect() as connection:
             with connection.begin(): connection.execute(insert_query, supplier_details)
@@ -229,10 +236,11 @@ def reactivate_supplier(engine, supplier_id: int) -> bool:
 
 
 # --- Initialize Session State ---
+# Item Management State
 if 'item_to_edit_id' not in st.session_state: st.session_state.item_to_edit_id = None
 if 'edit_form_values' not in st.session_state: st.session_state.edit_form_values = None
 if 'show_inactive' not in st.session_state: st.session_state.show_inactive = False
-# *** NEW: State for Supplier Management ***
+# Supplier Management State
 if 'show_inactive_suppliers' not in st.session_state: st.session_state.show_inactive_suppliers = False
 if 'supplier_to_edit_id' not in st.session_state: st.session_state.supplier_to_edit_id = None
 if 'edit_supplier_form_values' not in st.session_state: st.session_state.edit_supplier_form_values = None
@@ -240,7 +248,7 @@ if 'edit_supplier_form_values' not in st.session_state: st.session_state.edit_su
 # --- Main App Logic ---
 st.set_page_config(page_title="Boteco Item Manager", layout="wide")
 st.title("Boteco Item Manager 🛒")
-st.write("Manage inventory items, stock movements, and suppliers.") # Updated description
+st.write("Manage inventory items, stock movements, and suppliers.")
 
 db_engine = connect_db()
 
@@ -259,8 +267,7 @@ else:
     if not items_df_with_stock.empty:
         active_items_df = items_df_with_stock[items_df_with_stock['is_active']].copy()
         if not active_items_df.empty:
-            active_items_df['current_stock'] = pd.to_numeric(active_items_df['current_stock'], errors='coerce').fillna(0)
-            active_items_df['reorder_point'] = pd.to_numeric(active_items_df['reorder_point'], errors='coerce').fillna(0)
+            active_items_df['current_stock'] = pd.to_numeric(active_items_df['current_stock'], errors='coerce').fillna(0); active_items_df['reorder_point'] = pd.to_numeric(active_items_df['reorder_point'], errors='coerce').fillna(0)
             low_stock_df = active_items_df[(active_items_df['reorder_point'] > 0) & (active_items_df['current_stock'] <= active_items_df['reorder_point'])].copy()
             if low_stock_df.empty: st.info("No active items are currently at or below their reorder point.")
             else:
@@ -336,6 +343,120 @@ else:
                 else: st.error("Failed to reactivate item.")
 
     st.divider()
+    st.divider() # Add extra divider for visual separation
+
+    # --- NEW: Supplier Management Section ---
+    st.header("Supplier Management")
+    st.checkbox("Show Deactivated Suppliers?", key="show_inactive_suppliers", value=st.session_state.show_inactive_suppliers)
+
+    # Display Suppliers Table
+    st.subheader("Supplier List" + (" (Including Deactivated)" if st.session_state.show_inactive_suppliers else " (Active Only)"))
+    suppliers_df = get_all_suppliers(db_engine, include_inactive=st.session_state.show_inactive_suppliers)
+
+    if suppliers_df.empty and 'name' not in suppliers_df.columns:
+        st.info("No suppliers found matching the current view setting.")
+    else:
+        st.dataframe(
+            suppliers_df, use_container_width=True, hide_index=True,
+            column_config={
+                "supplier_id": st.column_config.NumberColumn("ID", width="small"),
+                "name": st.column_config.TextColumn("Supplier Name", width="medium"),
+                "contact_person": st.column_config.TextColumn("Contact Person", width="medium"),
+                "phone": st.column_config.TextColumn("Phone", width="small"),
+                "email": st.column_config.TextColumn("Email", width="medium"),
+                "address": st.column_config.TextColumn("Address", width="large"),
+                "notes": st.column_config.TextColumn("Notes", width="large"),
+                "is_active": st.column_config.CheckboxColumn("Active?", width="small", disabled=True)
+            },
+            column_order=[col for col in ["supplier_id", "name", "contact_person", "phone", "email", "address", "is_active", "notes"] if col in suppliers_df.columns]
+        )
+    st.divider()
+
+    # Prepare supplier options for dropdowns
+    if not suppliers_df.empty and 'supplier_id' in suppliers_df.columns and 'name' in suppliers_df.columns:
+        supplier_options_list: List[Tuple[str, int]] = [
+            (f"{row['name']}{'' if row['is_active'] else ' (Inactive)'}", row['supplier_id'])
+            for index, row in suppliers_df.dropna(subset=['name']).iterrows()
+        ]
+        supplier_options_list.sort()
+    else: supplier_options_list = []
+
+    # Add New Supplier Form
+    with st.expander("➕ Add New Supplier"):
+        with st.form("new_supplier_form", clear_on_submit=True):
+            st.subheader("Enter New Supplier Details:")
+            new_s_name = st.text_input("Supplier Name*")
+            new_s_contact = st.text_input("Contact Person")
+            new_s_phone = st.text_input("Phone")
+            new_s_email = st.text_input("Email")
+            new_s_address = st.text_area("Address")
+            new_s_notes = st.text_area("Notes")
+            s_submitted = st.form_submit_button("Save New Supplier")
+            if s_submitted:
+                if not new_s_name: st.warning("Supplier Name is required.")
+                else:
+                    supplier_data = {
+                        "name": new_s_name.strip(),
+                        "contact_person": new_s_contact.strip() or None,
+                        "phone": new_s_phone.strip() or None,
+                        "email": new_s_email.strip() or None,
+                        "address": new_s_address.strip() or None,
+                        "notes": new_s_notes.strip() or None
+                    }
+                    s_success = add_supplier(db_engine, supplier_data)
+                    if s_success: st.success(f"Supplier '{new_s_name}' added!"); get_all_suppliers.clear(); st.rerun()
+
+    st.divider()
+
+    # Edit/Deactivate/Reactivate Existing Supplier Section
+    st.subheader("✏️ Edit / Deactivate / Reactivate Existing Supplier")
+    edit_supplier_options = [("--- Select ---", None)] + supplier_options_list
+
+    def load_supplier_for_edit(): # Callback
+        selected_option = st.session_state.supplier_to_edit_select; supplier_id_to_load = selected_option[1] if selected_option else None
+        if supplier_id_to_load: details = get_supplier_details(db_engine, supplier_id_to_load); st.session_state.supplier_to_edit_id = supplier_id_to_load if details else None; st.session_state.edit_supplier_form_values = details if details else None
+        else: st.session_state.supplier_to_edit_id = None; st.session_state.edit_supplier_form_values = None
+
+    current_supplier_edit_id = st.session_state.get('supplier_to_edit_id')
+    try: current_supplier_index = [i for i, opt in enumerate(edit_supplier_options) if opt[1] == current_supplier_edit_id][0] if current_supplier_edit_id is not None else 0
+    except IndexError: current_supplier_index = 0
+
+    selected_supplier_tuple = st.selectbox( # Dropdown
+        "Select Supplier to Edit / Deactivate / Reactivate:", options=edit_supplier_options, format_func=lambda x: x[0], key="supplier_to_edit_select", on_change=load_supplier_for_edit, index=current_supplier_index
+    )
+
+    if st.session_state.supplier_to_edit_id is not None and st.session_state.edit_supplier_form_values is not None:
+        current_s_details = st.session_state.edit_supplier_form_values; supplier_is_active = current_s_details.get('is_active', True)
+        if supplier_is_active: # Show Edit/Deactivate for Active suppliers
+            with st.form("edit_supplier_form"):
+                st.subheader(f"Editing Supplier: {current_s_details.get('name', '')} (ID: {st.session_state.supplier_to_edit_id})")
+                edit_s_name = st.text_input("Supplier Name*", value=current_s_details.get('name', ''), key="edit_s_name")
+                edit_s_contact = st.text_input("Contact Person", value=current_s_details.get('contact_person', ''), key="edit_s_contact")
+                edit_s_phone = st.text_input("Phone", value=current_s_details.get('phone', ''), key="edit_s_phone")
+                edit_s_email = st.text_input("Email", value=current_s_details.get('email', ''), key="edit_s_email")
+                edit_s_address = st.text_area("Address", value=current_s_details.get('address', ''), key="edit_s_address")
+                edit_s_notes = st.text_area("Notes", value=current_s_details.get('notes', ''), key="edit_s_notes")
+                s_update_submitted = st.form_submit_button("Update Supplier Details")
+                if s_update_submitted:
+                    if not edit_s_name: st.warning("Supplier Name cannot be empty.")
+                    else:
+                        s_updated_data = {"name": st.session_state.edit_s_name.strip(), "contact_person": st.session_state.edit_s_contact.strip() or None, "phone": st.session_state.edit_s_phone.strip() or None, "email": st.session_state.edit_s_email.strip() or None, "address": st.session_state.edit_s_address.strip() or None, "notes": st.session_state.edit_s_notes.strip() or None}
+                        s_update_success = update_supplier(db_engine, st.session_state.supplier_to_edit_id, s_updated_data)
+                        if s_update_success: st.success(f"Supplier '{st.session_state.edit_s_name}' updated!"); get_all_suppliers.clear(); st.session_state.supplier_to_edit_id = None; st.session_state.edit_supplier_form_values = None; st.rerun()
+            st.divider(); st.subheader("Deactivate Supplier"); st.warning("⚠️ Deactivating removes supplier from active lists.")
+            if st.button("🗑️ Deactivate This Supplier", key="deactivate_supplier_button", type="secondary"):
+                s_name_to_deactivate = current_s_details.get('name', 'this supplier')
+                s_deactivate_success = deactivate_supplier(db_engine, st.session_state.supplier_to_edit_id)
+                if s_deactivate_success: st.success(f"Supplier '{s_name_to_deactivate}' deactivated!"); get_all_suppliers.clear(); st.session_state.supplier_to_edit_id = None; st.session_state.edit_supplier_form_values = None; st.rerun()
+                else: st.error("Failed to deactivate supplier.")
+        else: # Show Reactivate for Inactive suppliers
+            st.info(f"Supplier **'{current_s_details.get('name', '')}'** (ID: {st.session_state.supplier_to_edit_id}) is currently deactivated.")
+            if st.button("✅ Reactivate This Supplier", key="reactivate_supplier_button"):
+                s_reactivate_success = reactivate_supplier(db_engine, st.session_state.supplier_to_edit_id)
+                if s_reactivate_success: st.success(f"Supplier '{current_s_details.get('name', '')}' reactivated!"); get_all_suppliers.clear(); st.session_state.supplier_to_edit_id = None; st.session_state.edit_supplier_form_values = None; st.rerun()
+                else: st.error("Failed to reactivate supplier.")
+
+    st.divider()
 
     # --- Stock Transaction Forms ---
     st.header("Stock Movements")
@@ -343,7 +464,7 @@ else:
 
     with col1: # Receiving Column
         with st.expander("📥 Record Goods Received", expanded=False):
-            # Use active items only for receiving dropdown
+            # ... (Receiving form unchanged) ...
             active_item_options_recv = [opt for opt in item_options_list if "(Inactive)" not in opt[0]]
             recv_item_options = [("--- Select ---", None)] + active_item_options_recv
             with st.form("receiving_form", clear_on_submit=True):
@@ -361,7 +482,7 @@ else:
 
     with col2: # Adjustment Column
         with st.expander("📈 Record Stock Adjustment", expanded=False):
-            # Allow adjusting active or inactive items
+            # ... (Adjustment form unchanged) ...
             adj_item_options = [("--- Select ---", None)] + item_options_list
             with st.form("adjustment_form", clear_on_submit=True):
                 adj_selected_item = st.selectbox("Item to Adjust*", options=adj_item_options, format_func=lambda x: x[0], key="adj_item_select"); adj_qty_change = st.number_input("Quantity Change*", step=0.01, format="%.2f", help="+ for IN, - for OUT", key="adj_qty_change"); adj_user_id = st.text_input("Your Name/ID*", key="adj_user_id"); adj_notes = st.text_area("Reason*", key="adj_notes")
@@ -379,7 +500,7 @@ else:
 
     with col3: # Wastage Column
         with st.expander("🗑️ Record Wastage / Spoilage", expanded=False):
-            # Use active items only for wastage dropdown
+            # ... (Wastage form unchanged) ...
             active_item_options_waste = [opt for opt in item_options_list if "(Inactive)" not in opt[0]]
             waste_item_options = [("--- Select ---", None)] + active_item_options_waste
             with st.form("wastage_form", clear_on_submit=True):
@@ -400,7 +521,7 @@ else:
 
     # --- Stock Transaction History Section ---
     st.subheader("📜 Stock Transaction History")
-    # Use item_options_list (includes inactive marker if shown)
+    # ... (History section unchanged) ...
     hist_item_options = [("All Items", None)] + item_options_list
     hist_col1, hist_col2, hist_col3 = st.columns([2,1,1])
     with hist_col1: hist_selected_item = st.selectbox("Filter by Item:", options=hist_item_options, format_func=lambda x: x[0], key="hist_item_select")
@@ -410,9 +531,5 @@ else:
     transactions_df = get_stock_transactions(_engine=db_engine, item_id=hist_item_id, start_date=st.session_state.hist_start_date, end_date=st.session_state.hist_end_date)
     if transactions_df.empty: st.info("No stock transactions found matching filters.")
     else:
-        st.dataframe(
-            transactions_df, use_container_width=True, hide_index=True,
-            column_config={ "transaction_date": st.column_config.TextColumn("Timestamp", width="small"), "item_name": st.column_config.TextColumn("Item Name", width="medium"), "transaction_type": st.column_config.TextColumn("Type", width="small"), "quantity_change": st.column_config.NumberColumn("Qty Change", format="%.2f", width="small"), "user_id": st.column_config.TextColumn("User", width="small"), "notes": st.column_config.TextColumn("Notes", width="large"), "related_mrn": st.column_config.TextColumn("Related MRN", width="small"), },
-             column_order=[ "transaction_date", "item_name", "transaction_type", "quantity_change", "user_id", "notes", "related_mrn" ]
-        )
+        st.dataframe(transactions_df, use_container_width=True, hide_index=True, column_config={ "transaction_date": st.column_config.TextColumn("Timestamp", width="small"), "item_name": st.column_config.TextColumn("Item Name", width="medium"), "transaction_type": st.column_config.TextColumn("Type", width="small"), "quantity_change": st.column_config.NumberColumn("Qty Change", format="%.2f", width="small"), "user_id": st.column_config.TextColumn("User", width="small"), "notes": st.column_config.TextColumn("Notes", width="large"), "related_mrn": st.column_config.TextColumn("Related MRN", width="small"), }, column_order=[ "transaction_date", "item_name", "transaction_type", "quantity_change", "user_id", "notes", "related_mrn" ])
 

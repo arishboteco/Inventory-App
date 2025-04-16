@@ -51,15 +51,17 @@ def connect_db():
 
 # --- Database Interaction Functions ---
 
-# *** ADDED: Cache decorator to allow clearing ***
-@st.cache_data(ttl=600) # Cache item list for 10 minutes
-def get_all_items(engine) -> pd.DataFrame:
+# Cache item list for 10 minutes
+# *** FIXED: Added underscore to engine parameter name to prevent hashing error ***
+@st.cache_data(ttl=600)
+def get_all_items(_engine) -> pd.DataFrame:
     """
     Fetches all active items from the 'items' table.
-    Takes the SQLAlchemy engine as input.
+    Takes the SQLAlchemy engine as input (prefixed with _ for caching).
     Returns a pandas DataFrame.
     """
-    if not engine:
+    # Use the parameter name with underscore internally
+    if not _engine:
         st.error("Database connection not available for fetching items.")
         return pd.DataFrame()
 
@@ -70,10 +72,11 @@ def get_all_items(engine) -> pd.DataFrame:
         FROM items
         WHERE is_active = TRUE
         ORDER BY category, sub_category, name;
-    """) # Removed is_active from SELECT as we filter by it
+    """)
 
     try:
-        with engine.connect() as connection:
+        # Use the parameter name with underscore internally
+        with _engine.connect() as connection:
             df = pd.read_sql(query, connection)
             # Ensure numeric columns are numeric, handle potential errors
             for col in ['reorder_point', 'current_stock']:
@@ -89,7 +92,7 @@ def get_all_items(engine) -> pd.DataFrame:
         st.exception(e)
         return pd.DataFrame()
 
-# *** NEW: Function to add a new item ***
+# Function to add a new item
 def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
     """
     Inserts a new item into the 'items' table.
@@ -100,21 +103,17 @@ def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
         st.error("Database connection not available for adding item.")
         return False
 
-    # Define the SQL INSERT statement with named parameters
-    # is_active defaults to TRUE in the table definition
     insert_query = text("""
         INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, notes)
         VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :notes)
     """)
 
     try:
-        # Execute within a transaction (commit happens automatically on exit if no error)
         with engine.connect() as connection:
             with connection.begin(): # Start transaction
                 connection.execute(insert_query, item_details)
         return True # Success
     except IntegrityError as e:
-        # Handle specific errors like duplicate name (violating UNIQUE constraint)
         st.error(f"Failed to add item: Likely duplicate item name. Error: {e}")
         return False
     except Exception as e:
@@ -136,7 +135,8 @@ if not db_engine:
 else:
     # --- Display Items ---
     st.subheader("Current Active Items")
-    items_df = get_all_items(db_engine) # Fetch items
+    # *** Call function normally, without underscore ***
+    items_df = get_all_items(db_engine)
 
     if items_df.empty:
         st.info("No active items found in the database.")
@@ -152,8 +152,8 @@ else:
                 "category": st.column_config.TextColumn("Category"),
                 "sub_category": st.column_config.TextColumn("Sub-Category"),
                 "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"),
-                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"), # Format as integer
-                "current_stock": st.column_config.NumberColumn("Stock Qty", width="small"), # Format depends on needs
+                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
+                "current_stock": st.column_config.NumberColumn("Stock Qty", width="small"),
                 "notes": st.column_config.TextColumn("Notes", width="large"),
             },
             column_order=[
@@ -166,11 +166,8 @@ else:
 
     # --- Add New Item Form ---
     with st.expander("➕ Add New Item"):
-        # Use a form to group inputs and submit them together
         with st.form("new_item_form", clear_on_submit=True):
             st.subheader("Enter New Item Details:")
-
-            # Input fields for the new item
             new_name = st.text_input("Item Name*")
             new_unit = st.text_input("Unit (e.g., Kg, Pcs, Ltr)")
             new_category = st.text_input("Category")
@@ -178,16 +175,12 @@ else:
             new_permitted_departments = st.text_input("Permitted Departments (Comma-separated or All)")
             new_reorder_point = st.number_input("Reorder Point", min_value=0, value=0, step=1)
             new_notes = st.text_area("Notes")
-
-            # Submit button for the form
             submitted = st.form_submit_button("Save New Item")
 
             if submitted:
-                # Basic validation (at least name is required)
                 if not new_name:
                     st.warning("Item Name is required.")
                 else:
-                    # Prepare details dictionary for the backend function
                     item_data = {
                         "name": new_name.strip(),
                         "unit": new_unit.strip() if new_unit else None,
@@ -197,16 +190,12 @@ else:
                         "reorder_point": new_reorder_point,
                         "notes": new_notes.strip() if new_notes else None
                     }
-                    # Call the backend function to add the item
+                    # Pass engine normally when calling add_new_item
                     success = add_new_item(db_engine, item_data)
-
                     if success:
                         st.success(f"Item '{new_name}' added successfully!")
-                        # Clear the cache for the item list so the table updates
-                        get_all_items.clear()
-                        # Rerun forces the update, clearing cache might be enough sometimes
-                        st.rerun()
-                    # Error message is shown within add_new_item if it fails
+                        get_all_items.clear() # Clear cache
+                        st.rerun() # Rerun to update table
 
     st.divider()
     # --- Placeholder for Edit Item ---

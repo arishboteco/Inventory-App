@@ -4,9 +4,16 @@ from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError # 
 import pandas as pd # For handling data in DataFrames
 from typing import Any, Optional, Dict, List, Tuple # For type hinting
 
+# --- Constants ---
+# Define standard transaction types for consistency
+TX_RECEIVING = "RECEIVING"
+TX_ADJUSTMENT = "ADJUSTMENT"
+TX_WASTAGE = "WASTAGE"
+TX_INDENT_FULFILL = "INDENT_FULFILL"
+TX_SALE = "SALE" # For potential future POS integration
+
 # --- Database Connection ---
 
-# Cache the database connection (engine) to reuse it across reruns
 @st.cache_resource(show_spinner="Connecting to database...")
 def connect_db():
     """
@@ -51,60 +58,35 @@ def connect_db():
 
 # --- Database Interaction Functions ---
 
-@st.cache_data(ttl=600) # Cache item list for 10 minutes
+@st.cache_data(ttl=600)
 def get_all_items(_engine) -> pd.DataFrame:
-    """
-    Fetches all active items from the 'items' table.
-    Takes the SQLAlchemy engine as input (prefixed with _ for caching).
-    Returns a pandas DataFrame.
-    """
-    if not _engine:
-        st.error("Database connection not available for fetching items.")
-        return pd.DataFrame()
-
+    """Fetches all active items from the 'items' table."""
+    if not _engine: return pd.DataFrame()
     query = text("""
-        SELECT
-            item_id, name, unit, category, sub_category,
-            permitted_departments, reorder_point, current_stock, notes
-        FROM items
-        WHERE is_active = TRUE
-        ORDER BY category, sub_category, name;
+        SELECT item_id, name, unit, category, sub_category,
+               permitted_departments, reorder_point, current_stock, notes
+        FROM items WHERE is_active = TRUE ORDER BY category, sub_category, name;
     """)
-
     try:
         with _engine.connect() as connection:
             df = pd.read_sql(query, connection)
             for col in ['reorder_point', 'current_stock']:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                if col in df.columns: df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
             return df
-    except ProgrammingError as e:
-        st.error(f"Database query failed. Does the 'items' table exist? Error: {e}")
-        return pd.DataFrame()
-    except Exception as e:
-        st.error(f"Failed to fetch items from database: {e}")
-        st.exception(e)
-        return pd.DataFrame()
+    except ProgrammingError as e: st.error(f"DB query failed (items table?). Error: {e}"); return pd.DataFrame()
+    except Exception as e: st.error(f"Failed to fetch items: {e}"); st.exception(e); return pd.DataFrame()
 
-# Function to get details for a SINGLE item
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a specific item_id."""
-    if not engine or item_id is None:
-        return None
+    if not engine or item_id is None: return None
     query = text("SELECT * FROM items WHERE item_id = :id")
     try:
         with engine.connect() as connection:
             result = connection.execute(query, {"id": item_id})
             row = result.fetchone()
-            if row:
-                return row._mapping
-            else:
-                return None
-    except Exception as e:
-        st.error(f"Failed to fetch details for item ID {item_id}: {e}")
-        return None
+            return row._mapping if row else None
+    except Exception as e: st.error(f"Failed to fetch item details {item_id}: {e}"); return None
 
-# Function to add a new item
 def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
     """Inserts a new item into the 'items' table."""
     if not engine: return False
@@ -114,78 +96,97 @@ def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
     """)
     try:
         with engine.connect() as connection:
-            with connection.begin():
-                connection.execute(insert_query, item_details)
+            with connection.begin(): connection.execute(insert_query, item_details)
         return True
-    except IntegrityError as e:
-        st.error(f"Failed to add item: Likely duplicate item name. Error: {e}")
-        return False
-    except Exception as e:
-        st.error(f"Failed to add item to database: {e}")
-        st.exception(e)
-        return False
+    except IntegrityError as e: st.error(f"Failed to add: Duplicate name? Error: {e}"); return False
+    except Exception as e: st.error(f"Failed to add item: {e}"); st.exception(e); return False
 
-# Function to update an existing item
 def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -> bool:
     """Updates an existing item in the 'items' table."""
-    if not engine or item_id is None:
-        return False
-    update_parts = []
-    params = {"item_id": item_id}
+    if not engine or item_id is None: return False
+    update_parts = []; params = {"item_id": item_id}
+    editable_fields = ['name', 'unit', 'category', 'sub_category', 'permitted_departments', 'reorder_point', 'notes']
     for key, value in updated_details.items():
-        if key in ['name', 'unit', 'category', 'sub_category', 'permitted_departments', 'reorder_point', 'notes']:
-             update_parts.append(f"{key} = :{key}")
-             params[key] = value
-    if not update_parts:
-        st.warning("No changes detected to update.")
-        return False
-    update_query = text(f"""
-        UPDATE items
-        SET {', '.join(update_parts)}
-        WHERE item_id = :item_id
-    """)
+        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value
+    if not update_parts: st.warning("No changes detected."); return False
+    update_query = text(f"UPDATE items SET {', '.join(update_parts)} WHERE item_id = :item_id")
     try:
         with engine.connect() as connection:
-            with connection.begin():
-                connection.execute(update_query, params)
+            with connection.begin(): connection.execute(update_query, params)
         return True
-    except IntegrityError as e:
-        st.error(f"Failed to update item {item_id}: Likely duplicate item name introduced. Error: {e}")
-        return False
-    except Exception as e:
-        st.error(f"Failed to update item {item_id} in database: {e}")
-        st.exception(e)
-        return False
+    except IntegrityError as e: st.error(f"Failed to update: Duplicate name? Error: {e}"); return False
+    except Exception as e: st.error(f"Failed to update item {item_id}: {e}"); st.exception(e); return False
 
-# *** NEW: Function to deactivate an item (soft delete) ***
 def deactivate_item(engine, item_id: int) -> bool:
     """Sets the is_active flag to FALSE for the given item_id."""
-    if not engine or item_id is None:
-        return False
-
-    # SQL query to update the is_active flag
-    deactivate_query = text("""
-        UPDATE items
-        SET is_active = FALSE
-        WHERE item_id = :item_id
-    """)
+    if not engine or item_id is None: return False
+    deactivate_query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id")
     params = {"item_id": item_id}
-
     try:
         with engine.connect() as connection:
-            with connection.begin(): # Use transaction
-                connection.execute(deactivate_query, params)
+            with connection.begin(): connection.execute(deactivate_query, params)
+        return True
+    except Exception as e: st.error(f"Failed to deactivate item {item_id}: {e}"); st.exception(e); return False
+
+# *** NEW: Function to record a stock movement ***
+def record_stock_transaction(
+    engine,
+    item_id: int,
+    quantity_change: float, # Use float or Decimal for quantity
+    transaction_type: str,
+    user_id: str, # Who performed the action
+    notes: Optional[str] = None,
+    related_mrn: Optional[str] = None,
+    related_po_id: Optional[int] = None
+) -> bool:
+    """
+    Records a single stock movement in the stock_transactions table.
+    quantity_change should be positive for stock IN, negative for stock OUT.
+    """
+    if not engine:
+        st.error("Database connection not available for recording transaction.")
+        return False
+    if not all([item_id, quantity_change is not None, transaction_type, user_id]):
+        st.error("Missing required fields for stock transaction (item_id, quantity_change, transaction_type, user_id).")
+        return False
+
+    # SQL INSERT statement for the transaction log
+    insert_query = text("""
+        INSERT INTO stock_transactions
+            (item_id, quantity_change, transaction_type, user_id, notes, related_mrn, related_po_id)
+        VALUES
+            (:item_id, :quantity_change, :transaction_type, :user_id, :notes, :related_mrn, :related_po_id)
+    """)
+
+    # Prepare parameters dictionary
+    params = {
+        "item_id": item_id,
+        "quantity_change": quantity_change,
+        "transaction_type": transaction_type,
+        "user_id": user_id,
+        "notes": notes,
+        "related_mrn": related_mrn,
+        "related_po_id": related_po_id
+    }
+
+    try:
+        # Execute within a transaction
+        with engine.connect() as connection:
+            with connection.begin():
+                connection.execute(insert_query, params)
+        # Optionally: Could update items.current_stock here within the same transaction
+        # update_stock_query = text("UPDATE items SET current_stock = current_stock + :change WHERE item_id = :id")
+        # connection.execute(update_stock_query, {"change": quantity_change, "id": item_id})
+        # Decided against updating current_stock directly for now to keep log pure.
         return True # Success
     except Exception as e:
-        st.error(f"Failed to deactivate item {item_id} in database: {e}")
+        st.error(f"Failed to record stock transaction for item {item_id}: {e}")
         st.exception(e)
         return False
 
 # --- Initialize Session State ---
-if 'item_to_edit_id' not in st.session_state:
-    st.session_state.item_to_edit_id = None
-if 'edit_form_values' not in st.session_state:
-    st.session_state.edit_form_values = None
+if 'item_to_edit_id' not in st.session_state: st.session_state.item_to_edit_id = None
+if 'edit_form_values' not in st.session_state: st.session_state.edit_form_values = None
 
 # --- Main App Logic ---
 st.set_page_config(page_title="Boteco Item Manager", layout="wide")
@@ -201,16 +202,13 @@ else:
     # --- Display Items ---
     st.subheader("Current Active Items")
     items_df = get_all_items(db_engine)
-
     if items_df.empty and 'name' not in items_df.columns:
-        st.info("No active items found in the database or table structure might be incorrect.")
+        st.info("No active items found.")
     else:
         st.dataframe(
-            items_df,
-            use_container_width=True,
-            hide_index=True,
+            items_df, use_container_width=True, hide_index=True,
             column_config={
-                "item_id": st.column_config.NumberColumn("ID", width="small", help="Unique database ID"),
+                "item_id": st.column_config.NumberColumn("ID", width="small"),
                 "name": st.column_config.TextColumn("Item Name", width="medium"),
                 "unit": st.column_config.TextColumn("Unit", width="small"),
                 "category": st.column_config.TextColumn("Category"),
@@ -220,17 +218,14 @@ else:
                 "current_stock": st.column_config.NumberColumn("Stock Qty", width="small"),
                 "notes": st.column_config.TextColumn("Notes", width="large"),
             },
-            column_order=[
-                "item_id", "name", "category", "sub_category", "unit",
-                "current_stock", "reorder_point", "permitted_departments",
-                "notes"
-            ]
+            column_order=["item_id", "name", "category", "sub_category", "unit", "current_stock", "reorder_point", "permitted_departments", "notes"]
         )
     st.divider()
 
     # --- Add New Item Form ---
     with st.expander("➕ Add New Item"):
         with st.form("new_item_form", clear_on_submit=True):
+            # ... (Add form code remains the same) ...
             st.subheader("Enter New Item Details:")
             new_name = st.text_input("Item Name*")
             new_unit = st.text_input("Unit (e.g., Kg, Pcs, Ltr)")
@@ -241,81 +236,52 @@ else:
             new_notes = st.text_area("Notes")
             submitted = st.form_submit_button("Save New Item")
             if submitted:
-                if not new_name:
-                    st.warning("Item Name is required.")
+                if not new_name: st.warning("Item Name is required.")
                 else:
                     item_data = {
-                        "name": new_name.strip(),
-                        "unit": new_unit.strip() if new_unit else None,
-                        "category": new_category.strip() if new_category else "Uncategorized",
-                        "sub_category": new_sub_category.strip() if new_sub_category else "General",
-                        "permitted_departments": new_permitted_departments.strip() if new_permitted_departments else None,
-                        "reorder_point": new_reorder_point,
-                        "notes": new_notes.strip() if new_notes else None
+                        "name": new_name.strip(), "unit": new_unit.strip() or None,
+                        "category": new_category.strip() or "Uncategorized",
+                        "sub_category": new_sub_category.strip() or "General",
+                        "permitted_departments": new_permitted_departments.strip() or None,
+                        "reorder_point": new_reorder_point, "notes": new_notes.strip() or None
                     }
                     success = add_new_item(db_engine, item_data)
-                    if success:
-                        st.success(f"Item '{new_name}' added successfully!")
-                        get_all_items.clear()
-                        st.rerun()
+                    if success: st.success(f"Item '{new_name}' added!"); get_all_items.clear(); st.rerun()
 
     st.divider()
 
     # --- Edit/Deactivate Existing Item Section ---
     st.subheader("✏️ Edit / Deactivate Existing Item")
-
     if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns:
-        item_options: List[Tuple[str, int]] = [
-            (row['name'], row['item_id'])
-            for index, row in items_df.dropna(subset=['name']).iterrows()
-        ]
+        item_options: List[Tuple[str, int]] = [(row['name'], row['item_id']) for index, row in items_df.dropna(subset=['name']).iterrows()]
         item_options.sort()
-    else:
-        item_options = []
+    else: item_options = []
+    edit_options = [("--- Select ---", None)] + item_options
 
-    edit_options = [("", None)] + item_options
-
-    def load_item_for_edit():
+    def load_item_for_edit(): # Callback to load data for editing
         selected_option = st.session_state.item_to_edit_select
         if selected_option and selected_option[1] is not None:
-            item_id_to_load = selected_option[1]
-            details = get_item_details(db_engine, item_id_to_load)
-            if details:
-                st.session_state.item_to_edit_id = item_id_to_load
-                st.session_state.edit_form_values = details
-            else:
-                st.warning(f"Could not load details for selected item ID: {item_id_to_load}")
-                st.session_state.item_to_edit_id = None
-                st.session_state.edit_form_values = None
-        else:
-            st.session_state.item_to_edit_id = None
-            st.session_state.edit_form_values = None
+            details = get_item_details(db_engine, selected_option[1])
+            if details: st.session_state.item_to_edit_id = selected_option[1]; st.session_state.edit_form_values = details
+            else: st.warning(f"Could not load details for ID: {selected_option[1]}"); st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None
+        else: st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None
 
     current_edit_id = st.session_state.get('item_to_edit_id')
-    try:
-        current_index = 0
-        if current_edit_id is not None:
-            current_index = [i for i, opt in enumerate(edit_options) if opt[1] == current_edit_id][0]
-    except IndexError:
-        current_index = 0
+    try: current_index = [i for i, opt in enumerate(edit_options) if opt[1] == current_edit_id][0] if current_edit_id is not None else 0
+    except IndexError: current_index = 0
 
-    selected_item_tuple = st.selectbox(
-        "Select Item to Edit / Deactivate:", # Updated label
-        options=edit_options,
-        format_func=lambda x: x[0] if isinstance(x, tuple) and x[0] else "--- Select ---",
-        key="item_to_edit_select",
-        on_change=load_item_for_edit,
-        index=current_index
+    selected_item_tuple = st.selectbox( # Dropdown to select item
+        "Select Item to Edit / Deactivate:", options=edit_options,
+        format_func=lambda x: x[0], key="item_to_edit_select",
+        on_change=load_item_for_edit, index=current_index
     )
 
-    # Only show Edit Form and Deactivate button if an item is selected
     if st.session_state.item_to_edit_id is not None and st.session_state.edit_form_values is not None:
         current_details = st.session_state.edit_form_values
-
-        # --- Edit Form ---
+        # Edit Form
         with st.form("edit_item_form"):
+            # ... (Edit form code remains the same) ...
             st.subheader(f"Editing Item: {current_details.get('name', '')} (ID: {st.session_state.item_to_edit_id})")
-            # Input fields pre-filled with current details
             edit_name = st.text_input("Item Name*", value=current_details.get('name', ''), key="edit_name")
             edit_unit = st.text_input("Unit", value=current_details.get('unit', ''), key="edit_unit")
             edit_category = st.text_input("Category", value=current_details.get('category', ''), key="edit_category")
@@ -324,55 +290,32 @@ else:
             reorder_val = current_details.get('reorder_point', 0)
             edit_reorder_point = st.number_input("Reorder Point", min_value=0, value=int(reorder_val) if pd.notna(reorder_val) else 0, step=1, key="edit_reorder_point")
             edit_notes = st.text_area("Notes", value=current_details.get('notes', ''), key="edit_notes")
-
             update_submitted = st.form_submit_button("Update Item Details")
-
             if update_submitted:
-                if not edit_name:
-                    st.warning("Item Name cannot be empty.")
+                if not edit_name: st.warning("Item Name cannot be empty.")
                 else:
-                    updated_data = { # Collect updated data from form state
-                        "name": st.session_state.edit_name.strip(),
-                        "unit": st.session_state.edit_unit.strip() if st.session_state.edit_unit else None,
-                        "category": st.session_state.edit_category.strip() if st.session_state.edit_category else "Uncategorized",
-                        "sub_category": st.session_state.edit_sub_category.strip() if st.session_state.edit_sub_category else "General",
-                        "permitted_departments": st.session_state.edit_permitted_departments.strip() if st.session_state.edit_permitted_departments else None,
-                        "reorder_point": st.session_state.edit_reorder_point,
-                        "notes": st.session_state.edit_notes.strip() if st.session_state.edit_notes else None
+                    updated_data = {
+                        "name": st.session_state.edit_name.strip(), "unit": st.session_state.edit_unit.strip() or None,
+                        "category": st.session_state.edit_category.strip() or "Uncategorized",
+                        "sub_category": st.session_state.edit_sub_category.strip() or "General",
+                        "permitted_departments": st.session_state.edit_permitted_departments.strip() or None,
+                        "reorder_point": st.session_state.edit_reorder_point, "notes": st.session_state.edit_notes.strip() or None
                     }
                     update_success = update_item_details(db_engine, st.session_state.item_to_edit_id, updated_data)
                     if update_success:
-                        st.success(f"Item '{st.session_state.edit_name}' updated successfully!")
-                        get_all_items.clear()
-                        st.session_state.item_to_edit_id = None # Reset state
-                        st.session_state.edit_form_values = None
-                        st.rerun()
+                        st.success(f"Item '{st.session_state.edit_name}' updated!"); get_all_items.clear()
+                        st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None; st.rerun()
 
-        st.divider() # Divider between edit form and deactivate button
-
-        # --- Deactivate Button ---
+        st.divider()
+        # Deactivate Button
         st.subheader("Deactivate Item")
-        st.warning("⚠️ Deactivating an item will remove it from active lists but preserve its history. This action cannot be easily undone via this UI.")
-
-        # Use a separate button for deactivation
+        st.warning("⚠️ Deactivating removes item from active lists. History remains.")
         if st.button("🗑️ Deactivate This Item", key="deactivate_button", type="secondary"):
             item_name_to_deactivate = current_details.get('name', 'this item')
-            # Confirmation dialog
-            # Note: st.confirm requires Streamlit 1.32+. Using a simple button check for now.
-            # Consider adding st.confirm if your Streamlit version supports it.
-            # if st.confirm(f"Are you sure you want to deactivate '{item_name_to_deactivate}'?"):
-
-            # Call backend function to deactivate
+            # Simple confirmation using button click as trigger
             deactivate_success = deactivate_item(db_engine, st.session_state.item_to_edit_id)
-
             if deactivate_success:
-                st.success(f"Item '{item_name_to_deactivate}' deactivated successfully!")
-                get_all_items.clear() # Clear cache
-                # Reset edit state
-                st.session_state.item_to_edit_id = None
-                st.session_state.edit_form_values = None
-                st.rerun() # Rerun to refresh table and hide edit section
-            else:
-                st.error("Failed to deactivate item.")
-
+                st.success(f"Item '{item_name_to_deactivate}' deactivated!"); get_all_items.clear()
+                st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None; st.rerun()
+            else: st.error("Failed to deactivate item.")
 

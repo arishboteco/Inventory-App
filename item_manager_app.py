@@ -154,7 +154,7 @@ if 'edit_form_values' not in st.session_state: st.session_state.edit_form_values
 # --- Main App Logic ---
 st.set_page_config(page_title="Boteco Item Manager", layout="wide")
 st.title("Boteco Item Manager 🛒")
-st.write("Manage inventory items and basic stock movements.") # Updated description
+st.write("Manage inventory items and basic stock movements.")
 
 db_engine = connect_db()
 
@@ -317,30 +317,26 @@ else:
                     )
                     if adj_success:
                         st.success(f"Stock adjustment for item ID {selected_item_id} recorded!")
-                        get_all_items_with_stock.clear() # Clear cache
-                        st.rerun() # Rerun to update display
+                        get_all_items_with_stock.clear(); st.rerun() # Refresh table
                     else: st.error("Failed to record stock adjustment.")
 
-    st.divider() # Divider before the new section
+    st.divider()
 
-    # --- NEW: Record Goods Received Form ---
+    # --- Record Goods Received Form ---
     st.subheader("📥 Record Goods Received")
     with st.expander("Enter Details of Stock Received"):
         # Use item_options_list generated earlier
         recv_item_options = [("--- Select Item Received ---", None)] + item_options_list
 
         with st.form("receiving_form", clear_on_submit=True):
-            recv_selected_item = st.selectbox(
-                "Item Received*",
-                options=recv_item_options,
-                format_func=lambda x: x[0], # Show name
-                key="recv_item_select"
-            )
+            recv_selected_item = st.selectbox("Item Received*", options=recv_item_options, format_func=lambda x: x[0], key="recv_item_select")
+            # *** FIXED: Quantity Received Input ***
             recv_qty = st.number_input(
                 "Quantity Received*",
-                min_value=0.01, # Must receive a positive quantity
-                step=0.01,
-                format="%.2f",
+                min_value=0.0,  # Allow 0 initially, validation prevents submitting <=0
+                value=0.0,      # Start displaying 0.00
+                step=1.0,       # Increment/decrement by 1 (adjust if needed)
+                format="%.2f",  # Allow and display 2 decimal places
                 help="Enter the positive quantity received",
                 key="recv_qty"
             )
@@ -351,28 +347,21 @@ else:
             if recv_submitted:
                 selected_item_id = recv_selected_item[1] if recv_selected_item else None
                 # Validation
-                if not selected_item_id:
-                    st.warning("Please select the item received.")
-                elif recv_qty <= 0: # Check quantity is positive
-                    st.warning("Quantity Received must be greater than zero.")
-                elif not recv_user_id:
-                    st.warning("Please enter the Receiver's Name/ID.")
+                if not selected_item_id: st.warning("Please select the item received.")
+                # Ensure quantity is positive before submitting
+                elif recv_qty <= 0: st.warning("Quantity Received must be greater than zero.")
+                elif not recv_user_id: st.warning("Please enter the Receiver's Name/ID.")
                 else:
-                    # Call the backend function to record the transaction
+                    # Call backend function
                     recv_success = record_stock_transaction(
-                        engine=db_engine,
-                        item_id=selected_item_id,
-                        quantity_change=float(recv_qty), # Ensure positive float
+                        engine=db_engine, item_id=selected_item_id,
+                        quantity_change=float(recv_qty), # Positive quantity
                         transaction_type=TX_RECEIVING, # Use the constant
                         user_id=recv_user_id.strip(),
                         notes=recv_notes.strip() if recv_notes else None
-                        # Can add related_po_id later if PO system is built
                     )
-
                     if recv_success:
-                        st.success(f"Successfully recorded receipt of {recv_qty} for item ID {selected_item_id}!")
-                        get_all_items_with_stock.clear() # Clear cache
-                        st.rerun() # Rerun to update display
-                    else:
-                        st.error("Failed to record received stock.")
+                        st.success(f"Recorded receipt of {recv_qty} for item ID {selected_item_id}!");
+                        get_all_items_with_stock.clear(); st.rerun() # Refresh table
+                    else: st.error("Failed to record received stock.")
 

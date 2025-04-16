@@ -207,13 +207,19 @@ else:
 
     # --- Edit/Deactivate Existing Item Section ---
     st.subheader("✏️ Edit / Deactivate Existing Item")
+    # Prepare options for BOTH selectboxes using the main items_df
     if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns:
+        # Create list of tuples (display_name, id) for selectboxes
         item_options: List[Tuple[str, int]] = [(row['name'], row['item_id']) for index, row in items_df.dropna(subset=['name']).iterrows()]
-        item_options.sort()
-    else: item_options = []
+        item_options.sort() # Sort alphabetically by name
+    else:
+        item_options = [] # Empty list if no items
+
+    # Options for the Edit/Deactivate selectbox
     edit_options = [("--- Select ---", None)] + item_options
 
-    def load_item_for_edit(): # Callback
+    # Callback function to load item details when Edit selectbox changes
+    def load_item_for_edit():
         selected_option = st.session_state.item_to_edit_select
         item_id_to_load = selected_option[1] if selected_option else None
         if item_id_to_load:
@@ -222,16 +228,19 @@ else:
             st.session_state.edit_form_values = details if details else None
         else: st.session_state.item_to_edit_id = None; st.session_state.edit_form_values = None
 
+    # Determine current index for Edit selectbox
     current_edit_id = st.session_state.get('item_to_edit_id')
     try: current_index = [i for i, opt in enumerate(edit_options) if opt[1] == current_edit_id][0] if current_edit_id is not None else 0
     except IndexError: current_index = 0
 
-    selected_item_tuple = st.selectbox( # Dropdown
+    # Edit/Deactivate Selectbox
+    selected_item_tuple = st.selectbox(
         "Select Item to Edit / Deactivate:", options=edit_options,
         format_func=lambda x: x[0], key="item_to_edit_select",
         on_change=load_item_for_edit, index=current_index
     )
 
+    # Display Edit form and Deactivate button if item selected
     if st.session_state.item_to_edit_id is not None and st.session_state.edit_form_values is not None:
         current_details = st.session_state.edit_form_values
         # Edit Form
@@ -268,7 +277,7 @@ else:
         st.warning("⚠️ Deactivating removes item from active lists. History remains.")
         if st.button("🗑️ Deactivate This Item", key="deactivate_button", type="secondary"):
             item_name_to_deactivate = current_details.get('name', 'this item')
-            # Simple confirmation via button click - consider adding st.confirm if needed
+            # Simple confirmation via button click
             deactivate_success = deactivate_item(db_engine, st.session_state.item_to_edit_id)
             if deactivate_success:
                 st.success(f"Item '{item_name_to_deactivate}' deactivated!"); get_all_items.clear()
@@ -277,65 +286,44 @@ else:
 
     st.divider()
 
-    # --- NEW: Stock Adjustment Form ---
+    # --- Stock Adjustment Form ---
     with st.expander("📈 Record Stock Adjustment"):
         with st.form("adjustment_form", clear_on_submit=True):
             st.subheader("Enter Adjustment Details:")
 
-            # Select item to adjust
-            adj_item_options = [("--- Select Item ---", None)] + item_options[1:] # Reuse item list, skip blank
+            # *** FIXED: Use item_options directly ***
+            adj_item_options = [("--- Select Item ---", None)] + item_options # Use the full list
+
             adj_selected_item = st.selectbox(
                 "Item to Adjust*",
                 options=adj_item_options,
                 format_func=lambda x: x[0], # Show name
                 key="adj_item_select"
             )
-
-            # Input for quantity change (positive or negative)
             adj_qty_change = st.number_input(
-                "Quantity Change*",
-                step=0.01, # Allow decimals
-                format="%.2f", # Format as float with 2 decimals
-                help="Enter positive value for stock IN (e.g., found stock), negative for stock OUT (e.g., correction)",
+                "Quantity Change*", step=0.01, format="%.2f",
+                help="Positive for stock IN, negative for stock OUT",
                 key="adj_qty_change"
             )
-
-            # Input for user performing adjustment
             adj_user_id = st.text_input("Your Name/ID*", help="Who is making this adjustment?", key="adj_user_id")
-
-            # Input for reason/notes (mandatory for adjustments)
-            adj_notes = st.text_area("Reason for Adjustment*", help="Explain why this adjustment is needed (e.g., Stock count correction, Initial stock entry)", key="adj_notes")
-
-            # Form submission button
+            adj_notes = st.text_area("Reason for Adjustment*", help="Why is this adjustment needed?", key="adj_notes")
             adj_submitted = st.form_submit_button("Record Adjustment")
 
             if adj_submitted:
-                # Validation
                 selected_item_id = adj_selected_item[1] if adj_selected_item else None
-                if not selected_item_id:
-                    st.warning("Please select an item to adjust.")
-                elif adj_qty_change == 0:
-                    st.warning("Quantity Change cannot be zero.")
-                elif not adj_user_id:
-                    st.warning("Please enter Your Name/ID.")
-                elif not adj_notes:
-                    st.warning("Please enter a reason for the adjustment in the Notes.")
+                # Validation
+                if not selected_item_id: st.warning("Please select an item to adjust.")
+                elif adj_qty_change == 0: st.warning("Quantity Change cannot be zero.")
+                elif not adj_user_id: st.warning("Please enter Your Name/ID.")
+                elif not adj_notes: st.warning("Please enter a reason for the adjustment.")
                 else:
-                    # Call the backend function to record the transaction
+                    # Call backend function
                     adj_success = record_stock_transaction(
-                        engine=db_engine,
-                        item_id=selected_item_id,
+                        engine=db_engine, item_id=selected_item_id,
                         quantity_change=float(adj_qty_change), # Ensure float
-                        transaction_type=TX_ADJUSTMENT, # Use the constant
-                        user_id=adj_user_id.strip(),
+                        transaction_type=TX_ADJUSTMENT, user_id=adj_user_id.strip(),
                         notes=adj_notes.strip()
-                        # related_mrn and related_po_id are None by default
                     )
-
-                    if adj_success:
-                        st.success(f"Stock adjustment for item ID {selected_item_id} recorded successfully!")
-                        # Note: We are NOT clearing get_all_items cache or rerunning here
-                        # because this action doesn't update the displayed 'current_stock' yet.
-                    else:
-                        st.error("Failed to record stock adjustment.")
+                    if adj_success: st.success(f"Stock adjustment for item ID {selected_item_id} recorded!")
+                    else: st.error("Failed to record stock adjustment.")
 

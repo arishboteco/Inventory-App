@@ -497,28 +497,41 @@ else:
     # --- Calculate KPIs ---
     total_active_items = len(all_items_df) if not all_items_df.empty else 0
 
-    # Low stock calculation
+    # Low stock calculation (REVISED LOGIC)
     low_stock_df = pd.DataFrame() # Initialize as empty
+    low_stock_count = 0
+    # Check if DataFrame is valid and required columns exist BEFORE attempting filtering/conversion
     if not all_items_df.empty and 'current_stock' in all_items_df.columns and 'reorder_point' in all_items_df.columns:
-        # Ensure numeric types before comparison
-        all_items_df['current_stock'] = pd.to_numeric(all_items_df['current_stock'], errors='coerce')
-        all_items_df['reorder_point'] = pd.to_numeric(all_items_df['reorder_point'], errors='coerce')
-        # Filter items at or below reorder point, ignoring items with reorder point 0 or NaN/None
-        low_stock_df = all_items_df[
-            (all_items_df['current_stock'] <= all_items_df['reorder_point']) &
-            (all_items_df['reorder_point'] > 0) &
-            (all_items_df['reorder_point'].notna()) &
-            (all_items_df['current_stock'].notna())
-        ]
-    low_stock_count = len(low_stock_df)
+        try:
+            # Create boolean masks applying pd.to_numeric safely
+            # Only apply to_numeric to the columns involved in the comparison
+            current_stock_numeric = pd.to_numeric(all_items_df['current_stock'], errors='coerce')
+            reorder_point_numeric = pd.to_numeric(all_items_df['reorder_point'], errors='coerce')
+
+            is_low = (
+                (current_stock_numeric <= reorder_point_numeric) &
+                (reorder_point_numeric > 0) &
+                (reorder_point_numeric.notna()) &
+                (current_stock_numeric.notna())
+            )
+            # Filter the original DataFrame using the boolean mask
+            low_stock_df = all_items_df[is_low]
+            low_stock_count = len(low_stock_df)
+
+        except TypeError as te:
+             # This catch block is a safeguard, the error should ideally be prevented by the initial checks
+             st.error(f"Error during low stock calculation: Could not convert stock/reorder columns. {te}")
+        except Exception as e:
+             st.error(f"Unexpected error during low stock calculation: {e}")
+
 
     # --- Display KPIs ---
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Total Active Items", total_active_items)
     with col2:
+        # Use the calculated low_stock_count
         st.metric("Items Low on Stock", low_stock_count)
-    # Add more KPIs later (e.g., Total Stock Value if costs are added)
 
     st.divider()
 
@@ -536,7 +549,7 @@ else:
                 "item_id": "ID", "name": "Item Name", "unit": "Unit",
                 "category": "Category", "sub_category": "Sub-Category",
                 "permitted_departments": None, # Hide less relevant columns for this view
-                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small"), # format="%d" removed for flexibility
+                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small"), # Removed %d format for flexibility
                 "current_stock": st.column_config.NumberColumn("Current Stock", width="small"),
                 "notes": None, "is_active": None,
             },

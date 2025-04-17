@@ -284,29 +284,3 @@ else:
     # --- Tabs 2 & 3 ---
     with tab_view: st.subheader("View Indents"); st.info("To be implemented.")
     with tab_process: st.subheader("Process Indents"); st.info("To be implemented.")
-
-```
-
-**Explanation:**
-
-1.  **No Form:** `st.form` is completely removed.
-2.  **State Management:**
-    * `st.session_state[KEY_ITEM_LIST]` stores a list of dictionaries, where each dictionary just needs a unique `row_key` (e.g., `[{"row_key": 0}, {"row_key": 1}, ...]`).
-    * The actual *values* for each row's widgets are stored automatically by Streamlit under keys derived from the `row_key` (e.g., `st.session_state[f"item_select_{row_key}"]`).
-    * `st.session_state[KEY_NEXT_ITEM_ROW_KEY]` provides unique keys for new rows.
-3.  **Callbacks:**
-    * `add_row_callback` appends a new dictionary with a unique key to `st.session_state[KEY_ITEM_LIST]` and increments the counter. It also initializes the state for the new row's widgets.
-    * `remove_row_callback(row_key)` removes the dictionary with the matching key from the list and also removes the corresponding widget values from session state using `pop`.
-4.  **UI:**
-    * The code loops through `st.session_state[KEY_ITEM_LIST]` to render the rows.
-    * Each widget inside the loop gets a unique key based on the `row_key`.
-    * Standard `st.button` widgets are used for "Add" and "Remove", triggering the callbacks via `on_click`.
-5.  **Submission:**
-    * The final "Submit Indent Request" is a standard `st.button`.
-    * Its logic iterates through `st.session_state[KEY_ITEM_LIST]` again.
-    * For each row, it reads the corresponding widget values from `st.session_state` using the dynamic keys (e.g., `st.session_state.get(f"item_select_{item_key}")`).
-    * It validates these values and builds the `item_list_final`.
-    * The rest of the submission logic proceeds as before.
-6.  **Reset:** The `reset_state` function clears the custom state lists/flags and uses `pop` to safely remove widget keys. `st.rerun` clears the display.
-
-This callback-based approach within the "No Form" structure is the standard, recommended way to handle dynamic lists of inputs in Streamlit and should be much more stable. Please replace your file, **Save, Commit, Push, Reboot, Hard Refresh**, and test this fresh sta

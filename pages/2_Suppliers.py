@@ -1,166 +1,245 @@
-# item_manager_app.py  – FULL VERSION (incl. get_supplier_details)
+# pages/2_Suppliers.py  – full file with sys.path patch
+import sys, pathlib
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:          # <-- key fix
+    sys.path.append(str(ROOT))
+
 import streamlit as st
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
 import pandas as pd
-from typing import Any, Optional, Dict, List
-from datetime import datetime, date, timedelta
+from typing import Any, Dict, List, Tuple, Optional
 
 # ─────────────────────────────────────────────────────────
-# CONSTANTS
+# Back‑end imports
 # ─────────────────────────────────────────────────────────
-TX_RECEIVING       = "RECEIVING"
-TX_ADJUSTMENT      = "ADJUSTMENT"
-TX_WASTAGE         = "WASTAGE"
-TX_INDENT_FULFILL  = "INDENT_FULFILL"
-TX_SALE            = "SALE"
-
-STATUS_SUBMITTED   = "Submitted"
-STATUS_PROCESSING  = "Processing"
-STATUS_COMPLETED   = "Completed"
-STATUS_CANCELLED   = "Cancelled"
-ALL_INDENT_STATUSES = [
-    STATUS_SUBMITTED, STATUS_PROCESSING, STATUS_COMPLETED, STATUS_CANCELLED
-]
-
-# ─────────────────────────────────────────────────────────
-# DB CONNECTION
-# ─────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="Connecting to database…")
-def connect_db():
-    try:
-        if "database" not in st.secrets:
-            st.error("Database configuration missing.")
-            return None
-        db = st.secrets["database"]
-        url = (
-            f"{db['engine']}://{db['user']}:{db['password']}"
-            f"@{db['host']}:{db['port']}/{db['dbname']}"
-        )
-        eng = create_engine(url, pool_pre_ping=True)
-        with eng.connect() as c:
-            c.execute(text("SELECT 1"))
-        return eng
-    except Exception as e:
-        st.error(f"DB connection error: {e}")
-        return None
-
-
-def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
-    try:
-        with engine.connect() as conn:
-            rows = conn.execute(text(query), parameters=params or {})
-            return pd.DataFrame(rows.fetchall(), columns=rows.keys())
-    except Exception as e:
-        st.error(f"Fetch error: {e}")
-        return pd.DataFrame()
-
-# ─────────────────────────────────────────────────────────
-# ITEM FUNCTIONS
-# ─────────────────────────────────────────────────────────
-@st.cache_data(ttl=600, show_spinner="Fetching items…")
-def get_all_items_with_stock(_engine,
-                             include_inactive: bool = False,
-                             department: Optional[str] = None) -> pd.DataFrame:
-    where, params = [], {}
-    if not include_inactive:
-        where.append("i.is_active = TRUE")
-    if department:
-        where.append("(i.permitted_departments = 'All' "
-                     "OR i.permitted_departments ILIKE :dept)")
-        params["dept"] = f"%{department}%"
-    clause = "WHERE " + " AND ".join(where) if where else ""
-    sql = f"""
-        SELECT i.*,
-               COALESCE(s.calculated_stock,0) AS current_stock
-        FROM items i
-        LEFT JOIN (
-            SELECT item_id, SUM(quantity_change) AS calculated_stock
-            FROM stock_transactions GROUP BY item_id
-        ) s ON s.item_id = i.item_id
-        {clause}
-        ORDER BY i.name
-    """
-    df = fetch_data(_engine, sql, params)
-    df = df.loc[:, ~df.columns.duplicated()]
-    return df
-
-# (Item CRUD functions omitted for brevity …)
-
-# ─────────────────────────────────────────────────────────
-# SUPPLIER FUNCTIONS
-# ─────────────────────────────────────────────────────────
-@st.cache_data(ttl=600)
-def get_all_suppliers(engine, include_inactive=False):
-    sql = "SELECT * FROM suppliers"
-    if not include_inactive:
-        sql += " WHERE is_active=TRUE"
-    return fetch_data(engine, sql + " ORDER BY name")
-
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# NEW: single‑supplier look‑up  (needed by Suppliers page)
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
-    """
-    Return a single supplier row as a dict, or None if not found.
-    """
-    df = fetch_data(
-        engine,
-        "SELECT * FROM suppliers WHERE supplier_id = :sid",
-        {"sid": supplier_id},
+try:
+    from item_manager_app import (
+        connect_db,
+        get_all_suppliers,
+        get_supplier_details,
+        add_supplier,
+        update_supplier,
+        deactivate_supplier,
+        reactivate_supplier,
     )
-    return df.iloc[0].to_dict() if not df.empty else None
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-def add_supplier(engine, name, contact, phone, email, address, notes) -> bool:
-    q = text("""
-        INSERT INTO suppliers
-        (name, contact_person, phone, email, address, notes, is_active)
-        VALUES (:name,:contact,:phone,:email,:address,:notes,TRUE)
-        ON CONFLICT (name) DO NOTHING
-    """)
-    try:
-        with engine.begin() as conn:
-            r = conn.execute(q, locals())
-        get_all_suppliers.clear()
-        return r.rowcount > 0
-    except IntegrityError:
-        st.error(f"Supplier “{name}” exists.")
-    except Exception as e:
-        st.error(f"Error adding supplier: {e}")
-    return False
-
-def update_supplier(engine, supplier_id: int, d: Dict[str, Any]) -> bool:
-    d["supplier_id"] = supplier_id
-    q = text("""
-        UPDATE suppliers SET
-          name=:name, contact_person=:contact_person, phone=:phone,
-          email=:email, address=:address, notes=:notes
-        WHERE supplier_id=:supplier_id
-    """)
-    try:
-        with engine.begin() as conn:
-            r = conn.execute(q, d)
-        get_all_suppliers.clear()
-        return r.rowcount > 0
-    except IntegrityError:
-        st.error(f"Name “{d['name']}” exists.")
-    except Exception as e:
-        st.error(f"Supplier update error: {e}")
-    return False
-
-_supplier_status = lambda eng, sid, act: fetch_data(
-    eng,
-    "UPDATE suppliers SET is_active=:a WHERE supplier_id=:s RETURNING 1",
-    {"a": act, "s": sid}
-).shape[0] > 0
-
-deactivate_supplier = lambda eng, sid: _supplier_status(eng, sid, False)
-reactivate_supplier = lambda eng, sid: _supplier_status(eng, sid, True)
+except ImportError as e:
+    st.error(f"Import error: {e}")
+    st.stop()
 
 # ─────────────────────────────────────────────────────────
-# (Stock transactions, indents, dashboard code continues…)
+# Session‑state defaults
 # ─────────────────────────────────────────────────────────
-# -- the remainder of the file is unchanged from the previous version --
-# -- keep your stock transaction functions, MRN / indent functions,  --
-# -- and the dashboard UI section here.                               --
+if "show_inactive_suppliers" not in st.session_state:
+    st.session_state.show_inactive_suppliers = False
+if "supplier_to_edit_id" not in st.session_state:
+    st.session_state.supplier_to_edit_id = None
+if "edit_supplier_form_values" not in st.session_state:
+    st.session_state.edit_supplier_form_values = None
+
+# ─────────────────────────────────────────────────────────
+# Page header & DB
+# ─────────────────────────────────────────────────────────
+st.header("Supplier Management")
+engine = connect_db()
+if not engine:
+    st.error("DB connection failed."); st.stop()
+
+# ─────────────────────────────────────────────────────────
+# Tabs
+# ─────────────────────────────────────────────────────────
+tab_view, tab_add, tab_manage = st.tabs(
+    ["📊 View Suppliers", "➕ Add New Supplier", "✏️ Edit / Manage"]
+)
+
+# ------------------------------------------------------------------
+# 📊 TAB 1 – VIEW
+# ------------------------------------------------------------------
+with tab_view:
+    st.subheader("View Options")
+    st.checkbox(
+        "Show Deactivated Suppliers?",
+        key="show_inactive_suppliers",
+        value=st.session_state.show_inactive_suppliers,
+    )
+    st.divider()
+
+    df = get_all_suppliers(engine, include_inactive=st.session_state.show_inactive_suppliers)
+    st.subheader(
+        "Supplier List"
+        + (" (Including Deactivated)" if st.session_state.show_inactive_suppliers else " (Active Only)")
+    )
+
+    if df.empty:
+        st.info("No suppliers found.")
+    else:
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "supplier_id": st.column_config.NumberColumn("ID", width="small"),
+                "name": st.column_config.TextColumn("Supplier Name", width="medium"),
+                "contact_person": st.column_config.TextColumn("Contact Person", width="medium"),
+                "phone": st.column_config.TextColumn("Phone", width="small"),
+                "email": st.column_config.TextColumn("Email", width="medium"),
+                "address": st.column_config.TextColumn("Address", width="large"),
+                "notes": st.column_config.TextColumn("Notes", width="large"),
+                "is_active": st.column_config.CheckboxColumn("Active?", width="small", disabled=True),
+            },
+            column_order=[
+                c
+                for c in [
+                    "supplier_id",
+                    "name",
+                    "contact_person",
+                    "phone",
+                    "email",
+                    "address",
+                    "is_active",
+                    "notes",
+                ]
+                if c in df.columns
+            ],
+        )
+
+# ------------------------------------------------------------------
+# ➕ TAB 2 – ADD NEW
+# ------------------------------------------------------------------
+with tab_add:
+    with st.form("new_supplier_form", clear_on_submit=True):
+        st.subheader("Enter New Supplier Details:")
+        s_name   = st.text_input("Supplier Name*")
+        s_person = st.text_input("Contact Person")
+        s_phone  = st.text_input("Phone")
+        s_email  = st.text_input("Email")
+        s_addr   = st.text_area("Address")
+        s_notes  = st.text_area("Notes")
+        if st.form_submit_button("Save New Supplier"):
+            if not s_name:
+                st.warning("Supplier Name is required.")
+            else:
+                ok = add_supplier(
+                    engine,
+                    s_name.strip(),
+                    s_person.strip() or None,
+                    s_phone.strip() or None,
+                    s_email.strip() or None,
+                    s_addr.strip() or None,
+                    s_notes.strip() or None,
+                )
+                if ok:
+                    st.success("Supplier added!")
+                    get_all_suppliers.clear()
+                    st.rerun()
+
+# ------------------------------------------------------------------
+# ✏️ TAB 3 – EDIT / MANAGE
+# ------------------------------------------------------------------
+with tab_manage:
+    st.subheader("Select Supplier to Manage")
+
+    df_manage = get_all_suppliers(
+        engine, include_inactive=st.session_state.show_inactive_suppliers
+    )
+    opts: List[Tuple[str, int]] = (
+        [
+            (
+                f"{r['name']}{'' if r['is_active'] else ' (Inactive)'}",
+                int(r["supplier_id"]),
+            )
+            for _, r in df_manage.iterrows()
+        ]
+        if not df_manage.empty
+        else []
+    )
+    opts.sort()
+    select_opts = [("--- Select ---", None)] + opts
+
+    def load_supplier():
+        tup = st.session_state.supplier_to_edit_select
+        sid = tup[1] if tup else None
+        if sid:
+            det = get_supplier_details(engine, sid)
+            st.session_state.supplier_to_edit_id = sid if det else None
+            st.session_state.edit_supplier_form_values = det if det else None
+        else:
+            st.session_state.supplier_to_edit_id = None
+            st.session_state.edit_supplier_form_values = None
+
+    cur_id = st.session_state.get("supplier_to_edit_id")
+    idx = next((i for i, o in enumerate(select_opts) if o[1] == cur_id), 0)
+
+    st.selectbox(
+        "Supplier",
+        options=select_opts,
+        format_func=lambda x: x[0],
+        index=idx,
+        key="supplier_to_edit_select",
+        on_change=load_supplier,
+        label_visibility="collapsed",
+    )
+
+    if (
+        st.session_state.supplier_to_edit_id
+        and st.session_state.edit_supplier_form_values
+    ):
+        d = st.session_state.edit_supplier_form_values
+        active = d.get("is_active", True)
+
+        st.divider()
+        if active:
+            # ---- EDIT FORM ----
+            with st.form("edit_supplier_form"):
+                st.subheader(
+                    f"Editing: {d.get('name', '')} (ID {st.session_state.supplier_to_edit_id})"
+                )
+                e_name   = st.text_input("Supplier Name*", value=d.get("name", ""))
+                e_person = st.text_input("Contact Person", value=d.get("contact_person", ""))
+                e_phone  = st.text_input("Phone", value=d.get("phone", ""))
+                e_email  = st.text_input("Email", value=d.get("email", ""))
+                e_addr   = st.text_area("Address", value=d.get("address", ""))
+                e_notes  = st.text_area("Notes", value=d.get("notes", ""))
+
+                if st.form_submit_button("Update Supplier Details"):
+                    if not e_name:
+                        st.warning("Supplier Name cannot be empty.")
+                    else:
+                        ok = update_supplier(
+                            engine,
+                            st.session_state.supplier_to_edit_id,
+                            {
+                                "name": e_name.strip(),
+                                "contact_person": e_person.strip() or None,
+                                "phone": e_phone.strip() or None,
+                                "email": e_email.strip() or None,
+                                "address": e_addr.strip() or None,
+                                "notes": e_notes.strip() or None,
+                            },
+                        )
+                        if ok:
+                            st.success("Supplier updated.")
+                            get_all_suppliers.clear()
+                            st.session_state.supplier_to_edit_id = None
+                            st.session_state.edit_supplier_form_values = None
+                            st.rerun()
+
+            # ---- Deactivate ----
+            st.divider()
+            st.subheader("Deactivate Supplier")
+            if st.button("🗑️ Deactivate"):
+                if deactivate_supplier(engine, st.session_state.supplier_to_edit_id):
+                    st.success("Supplier deactivated.")
+                    get_all_suppliers.clear()
+                    st.session_state.supplier_to_edit_id = None
+                    st.session_state.edit_supplier_form_values = None
+                    st.rerun()
+        else:
+            st.info("This supplier is deactivated.")
+            if st.button("✅ Reactivate"):
+                if reactivate_supplier(engine, st.session_state.supplier_to_edit_id):
+                    st.success("Supplier reactivated.")
+                    get_all_suppliers.clear()
+                    st.session_state.supplier_to_edit_id = None
+                    st.session_state.edit_supplier_form_values = None
+                    st.rerun()
+    else:
+        st.info("Select a supplier from the dropdown above to manage.")

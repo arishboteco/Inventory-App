@@ -1,6 +1,6 @@
 # pages/5_Indents.py
 # Implementation: No Form, Looped Widgets, Callbacks for Rows, Dept Filtering
-# Added View Indents Tab Functionality
+# Modified reset function to assign defaults instead of popping widget keys
 
 import streamlit as st
 import pandas as pd
@@ -11,20 +11,12 @@ import numpy as np
 
 # --- Imports and Error Handling ---
 try:
-    # Ensure all necessary functions are imported from your main app file
     from item_manager_app import (
-        connect_db,
-        get_all_items_with_stock,
-        generate_mrn,
-        create_indent,
-        get_indents, # <-- Import the new function
-        ALL_INDENT_STATUSES # <-- Import status constants
-        # get_indent_details, update_indent_status, fulfill_indent_item, get_departments # Future
+        connect_db, get_all_items_with_stock, generate_mrn, create_indent
     )
-    # Placeholder for future functions if needed
-    # if 'get_indents' not in locals(): get_indents = lambda **kwargs: pd.DataFrame() # Remove placeholder if function imported
+    if 'get_indents' not in locals(): get_indents = lambda **kwargs: pd.DataFrame()
 except ImportError as e:
-    st.error(f"Import Error from item_manager_app.py: {e}. Ensure file exists and functions are defined.")
+    st.error(f"Import Error from item_manager_app.py: {e}.")
     st.stop()
 except Exception as e:
     st.error(f"An unexpected error occurred during import: {e}")
@@ -32,23 +24,15 @@ except Exception as e:
 
 # --- Constants ---
 DEPARTMENTS = ["Kitchen", "Bar", "Housekeeping", "Admin", "Maintenance", "Service"]
-# Use distinct keys for this version
-STATE_PREFIX = "indent_loop_v1_"
+STATE_PREFIX = "indent_loop_v1_" # Keep prefix consistent for this version
 KEY_DEPT = f"{STATE_PREFIX}dept"
 KEY_REQ_BY = f"{STATE_PREFIX}req_by"
 KEY_REQ_DATE = f"{STATE_PREFIX}req_date"
 KEY_NOTES = f"{STATE_PREFIX}notes"
-# Session state keys for internal logic
-KEY_ITEM_LIST = f"{STATE_PREFIX}item_list" # Holds list of item row dicts [{row_key: int}, ...]
-KEY_NEXT_ITEM_ROW_KEY = f"{STATE_PREFIX}next_row_key" # Counter for unique row keys
-KEY_ITEM_OPTIONS = f"{STATE_PREFIX}item_options" # Holds [(display, id),...] for current dept
-KEY_CURRENT_DEPT = f"{STATE_PREFIX}current_dept" # Tracks which dept's items are loaded
-# Keys for View Tab Filters
-KEY_VIEW_MRN = f"{STATE_PREFIX}view_mrn"
-KEY_VIEW_DEPT = f"{STATE_PREFIX}view_dept"
-KEY_VIEW_STATUS = f"{STATE_PREFIX}view_status"
-KEY_VIEW_DATE = f"{STATE_PREFIX}view_date"
-
+KEY_ITEM_LIST = f"{STATE_PREFIX}item_list"
+KEY_NEXT_ITEM_ROW_KEY = f"{STATE_PREFIX}next_row_key"
+KEY_ITEM_OPTIONS = f"{STATE_PREFIX}item_options"
+KEY_CURRENT_DEPT = f"{STATE_PREFIX}current_dept"
 
 # --- Initialize Session State ---
 def init_state():
@@ -60,15 +44,11 @@ def init_state():
     if KEY_NEXT_ITEM_ROW_KEY not in st.session_state: st.session_state[KEY_NEXT_ITEM_ROW_KEY] = 1
     if KEY_ITEM_OPTIONS not in st.session_state: st.session_state[KEY_ITEM_OPTIONS] = []
     if KEY_CURRENT_DEPT not in st.session_state: st.session_state[KEY_CURRENT_DEPT] = None
+    # Initialize header widget keys if they don't exist
     if KEY_DEPT not in st.session_state: st.session_state[KEY_DEPT] = None
     if KEY_REQ_BY not in st.session_state: st.session_state[KEY_REQ_BY] = ""
     if KEY_REQ_DATE not in st.session_state: st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1)
     if KEY_NOTES not in st.session_state: st.session_state[KEY_NOTES] = ""
-    # Initialize view filter keys
-    if KEY_VIEW_MRN not in st.session_state: st.session_state[KEY_VIEW_MRN] = ""
-    if KEY_VIEW_DEPT not in st.session_state: st.session_state[KEY_VIEW_DEPT] = []
-    if KEY_VIEW_STATUS not in st.session_state: st.session_state[KEY_VIEW_STATUS] = []
-    if KEY_VIEW_DATE not in st.session_state: st.session_state[KEY_VIEW_DATE] = (None, None) # Tuple for date range
 
 # Call initialization function at the start
 init_state()
@@ -84,27 +64,38 @@ def add_row_callback():
 def remove_row_callback(row_key_to_remove):
     current_list = st.session_state[KEY_ITEM_LIST]
     if len(current_list) <= 1:
-        st.toast("Cannot remove the last item row.", icon="⚠️")
-        return
+        st.toast("Cannot remove the last item row.", icon="⚠️"); return
     st.session_state[KEY_ITEM_LIST] = [d for d in current_list if d["row_key"] != row_key_to_remove]
     st.session_state.pop(f"item_select_{row_key_to_remove}", None)
     st.session_state.pop(f"item_qty_{row_key_to_remove}", None)
 
-# --- Reset Function ---
+# --- Reset Function (MODIFIED) ---
 def reset_state():
+    """Resets all state for the indent creation page by assigning defaults."""
+    # Get all current dynamic row keys before resetting the list
     keys_to_clear = [d["row_key"] for d in st.session_state.get(KEY_ITEM_LIST, [])]
+
+    # Reset control and list state
     st.session_state[KEY_ITEM_LIST] = [{"row_key": 0}]
     st.session_state[KEY_NEXT_ITEM_ROW_KEY] = 1
     st.session_state[KEY_ITEM_OPTIONS] = []
     st.session_state[KEY_CURRENT_DEPT] = None
-    st.session_state.pop(KEY_DEPT, None)
-    st.session_state.pop(KEY_REQ_BY, None)
-    st.session_state.pop(KEY_REQ_DATE, None)
-    st.session_state.pop(KEY_NOTES, None)
+
+    # Reset header widget values by ASSIGNING defaults
+    st.session_state[KEY_DEPT] = None
+    st.session_state[KEY_REQ_BY] = ""
+    st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1) # Assign valid date
+    st.session_state[KEY_NOTES] = ""
+
+    # Clear dynamic widget keys that existed before reset using pop
     for k in keys_to_clear:
         st.session_state.pop(f"item_select_{k}", None)
         st.session_state.pop(f"item_qty_{k}", None)
-    init_state() # Re-initialize defaults
+
+    # Initialize state for the single remaining row (key 0)
+    st.session_state["item_select_0"] = None
+    st.session_state["item_qty_0"] = 1.0
+    # No need to call init_state() again as we explicitly set defaults
 
 # --- Helper function for validation ---
 def is_valid_item_tuple(val):
@@ -123,9 +114,10 @@ else:
         "📝 Create New Indent", "📊 View Indents", "⚙️ Process Indent (Future)"
     ])
 
-    # --- Create Indent Tab ---
     with tab_create:
         st.subheader("Create a New Material Request")
+        # --- NO FORM WRAPPER ---
+
         # --- Department Selection ---
         dept_value_on_load = st.session_state.get(KEY_DEPT, None)
         dept_index = DEPARTMENTS.index(dept_value_on_load) if dept_value_on_load in DEPARTMENTS else None
@@ -161,8 +153,9 @@ else:
         can_add_items = bool(current_item_options)
 
         # --- Other Header Inputs ---
+        # Use default_value argument which reads from state if key exists
         req_by = st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY)
-        req_date = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key=KEY_REQ_DATE)
+        req_date = st.date_input("Date Required*", value=st.session_state[KEY_REQ_DATE], min_value=date.today(), key=KEY_REQ_DATE) # Read value from state
 
         st.divider()
         st.markdown("**Add Items to Request:**")
@@ -226,76 +219,14 @@ else:
                  else:
                     indent_header = {"mrn": mrn, "requested_by": current_req_by, "department": current_dept, "date_required": current_req_date, "status": "Submitted", "notes": current_notes}
                     success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list_final)
-                    if success: st.success(f"Indent '{mrn}' submitted!", icon="✅"); reset_state(); time.sleep(0.5); st.rerun()
+                    if success:
+                        st.success(f"Indent '{mrn}' submitted!", icon="✅")
+                        reset_state() # Call MODIFIED reset
+                        time.sleep(0.5)
+                        st.rerun() # Rerun to clear fields visually
                     else: st.error("Failed to submit Indent.", icon="❌")
 
-    # --- View Indents Tab ---
-    with tab_view:
-        st.subheader("View Submitted Indents")
+    # --- Tabs 2 & 3 ---
+    with tab_view: st.subheader("View Indents"); st.info("To be implemented.") # Placeholder
+    with tab_process: st.subheader("Process Indents"); st.info("To be implemented.") # Placeholder
 
-        # --- Filters ---
-        st.markdown("**Filters:**")
-        f_col1, f_col2, f_col3 = st.columns([2, 2, 3])
-        with f_col1:
-            mrn_search = st.text_input("Search by MRN", key=KEY_VIEW_MRN)
-        with f_col2:
-            status_select = st.multiselect("Filter by Status", options=ALL_INDENT_STATUSES, key=KEY_VIEW_STATUS)
-        with f_col3:
-            # Use tuple for date range, default None
-            date_range = st.date_input("Filter by Submission Date", value=(None, None), key=KEY_VIEW_DATE)
-
-        dept_select = st.multiselect("Filter by Department", options=DEPARTMENTS, key=KEY_VIEW_DEPT)
-
-        # Separate start/end dates from tuple
-        start_date, end_date = None, None
-        # Check if date_range is iterable and has 2 elements before unpacking
-        if isinstance(date_range, (list, tuple)) and len(date_range) == 2:
-            start_date, end_date = date_range
-            # Handle case where only one date might be selected by the widget
-            # (Some versions might return single date if only one selected)
-            if isinstance(start_date, date) and end_date is None: end_date = start_date
-            if isinstance(end_date, date) and start_date is None: start_date = end_date
-
-        # --- Fetch Data ---
-        # Pass filter values from session state to the backend function
-        indents_df = get_indents(
-            db_engine,
-            mrn_filter=st.session_state[KEY_VIEW_MRN],
-            dept_filter=st.session_state[KEY_VIEW_DEPT] or None, # Pass None if list empty
-            status_filter=st.session_state[KEY_VIEW_STATUS] or None, # Pass None if list empty
-            date_start_filter=start_date,
-            date_end_filter=end_date
-        )
-
-        st.divider()
-
-        # --- Display Table ---
-        if indents_df.empty:
-            st.info("No indents found matching the selected filters.")
-        else:
-            st.markdown(f"Found **{len(indents_df)}** indent(s).")
-            # Use st.dataframe for simple display, configure columns
-            st.dataframe(
-                indents_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "indent_id": None, # Hide internal ID
-                    "mrn": st.column_config.TextColumn("MRN", width="small", help="Material Request Number"),
-                    "date_submitted": st.column_config.DatetimeColumn("Submitted", format="YYYY-MM-DD HH:mm", width="medium"),
-                    "department": st.column_config.TextColumn("Dept.", width="small"),
-                    "requested_by": st.column_config.TextColumn("Requester", width="medium"),
-                    "date_required": st.column_config.DateColumn("Date Reqd.", format="YYYY-MM-DD", width="small"),
-                    "status": st.column_config.TextColumn("Status", width="small"),
-                    "notes": st.column_config.TextColumn("Notes", width="large"),
-                },
-                # Define column order for display
-                column_order=["mrn", "date_submitted", "department", "requested_by", "date_required", "status", "notes"]
-            )
-            # TODO: Add ability to click on a row/MRN to see item details (future enhancement)
-
-    # --- Process Indent Tab ---
-    with tab_process:
-        st.subheader("Process Submitted Indents")
-        st.info("Functionality to approve, fulfill (issue stock), and update indent status will be built here.")
-        # (Placeholder for future implementation)

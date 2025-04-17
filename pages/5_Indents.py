@@ -57,6 +57,17 @@ def reset_indent_form_state():
     )
     # Increment trigger to help clear widgets if needed (optional)
     st.session_state.indent_reset_trigger += 1
+    # Clear specific widget values manually if needed (safer)
+    widget_keys_to_clear = [
+        f"indent_req_dept_{st.session_state.indent_reset_trigger-1}", # Previous keys
+        f"indent_req_by_{st.session_state.indent_reset_trigger-1}",
+        f"indent_req_date_{st.session_state.indent_reset_trigger-1}",
+        f"indent_notes_{st.session_state.indent_reset_trigger-1}",
+        f"indent_item_editor_{st.session_state.indent_reset_trigger-1}",
+    ]
+    for key in widget_keys_to_clear:
+         if key in st.session_state:
+              del st.session_state[key] # Or set to default if deletion causes issues
 
 # --- Page Content ---
 st.header("🛒 Material Indents")
@@ -92,13 +103,20 @@ else:
             # --- Step 1: Select Department ---
             st.markdown("**Step 1: Select Department**")
             current_selected_dept = st.session_state.get('indent_selected_dept', None)
+            # Define widget keys using the reset trigger
+            dept_key = f"indent_req_dept_{st.session_state.indent_reset_trigger}"
+            req_by_key = f"indent_req_by_{st.session_state.indent_reset_trigger}"
+            req_date_key = f"indent_req_date_{st.session_state.indent_reset_trigger}"
+            editor_key = f"indent_item_editor_{st.session_state.indent_reset_trigger}"
+            notes_key = f"indent_notes_{st.session_state.indent_reset_trigger}"
 
-            dept_selectbox = st.selectbox(
+
+            dept_selectbox_val = st.selectbox( # Assign to new variable to avoid confusion
                 "Requesting Department*",
                 options=DEPARTMENTS,
                 index=DEPARTMENTS.index(current_selected_dept) if current_selected_dept in DEPARTMENTS else None,
                 placeholder="Select department...",
-                key=f"indent_req_dept_{st.session_state.indent_reset_trigger}", # Use reset trigger in key
+                key=dept_key,
                 # Disable if department is already confirmed
                 disabled=st.session_state.indent_dept_confirmed
             )
@@ -107,8 +125,7 @@ else:
             if not st.session_state.indent_dept_confirmed:
                 confirm_dept_button = st.form_submit_button(
                     "Confirm Department & Load Items",
-                    # disabled=not dept_selectbox, # <-- REMOVED THIS LINE
-                    # The button should be clickable; validation happens on click
+                    # Button should be clickable; validation happens on click
                 )
 
             # Optional: Button to change department after confirmation
@@ -128,7 +145,6 @@ else:
                 st.markdown(f"**Step 2: Add Items for {st.session_state.indent_selected_dept} Department**")
 
                 # Fetch filtered items based on the confirmed department
-                # Add spinner for user feedback during fetch
                 with st.spinner(f"Loading items for {st.session_state.indent_selected_dept}..."):
                     filtered_items_df = get_all_items_with_stock(
                         db_engine,
@@ -152,9 +168,11 @@ else:
                 # --- Display Rest of Form Fields ---
                 c2, c3 = st.columns(2)
                 with c2:
-                    req_by = st.text_input("Requested By*", placeholder="Enter your name or ID", key=f"indent_req_by_{st.session_state.indent_reset_trigger}")
+                    # Define widget, but don't rely on the assigned variable later
+                    st.text_input("Requested By*", placeholder="Enter your name or ID", key=req_by_key)
                 with c3:
-                    req_date = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key=f"indent_req_date_{st.session_state.indent_reset_trigger}")
+                     # Define widget, but don't rely on the assigned variable later
+                    st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key=req_date_key)
 
                 st.markdown("**Add Items to Request:**")
                 if not items_loaded_successfully:
@@ -162,9 +180,10 @@ else:
                     can_add_items = False
                 else:
                      can_add_items = True
+                      # Define widget, but don't rely on the assigned variable later
                      edited_df = st.data_editor(
                         st.session_state.indent_items_df,
-                        key=f"indent_item_editor_{st.session_state.indent_reset_trigger}", # Use reset trigger
+                        key=editor_key,
                         num_rows="dynamic",
                         use_container_width=True,
                         column_config={
@@ -185,6 +204,7 @@ else:
                      )
 
                      # --- Process Edited Dataframe (Unit lookup, etc.) ---
+                     # This still needs to happen to update session state for the editor
                      processed_rows = []
                      if not edited_df.empty:
                          for i, row in edited_df.iterrows():
@@ -206,12 +226,13 @@ else:
 
 
                 st.divider()
-                req_notes = st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=f"indent_notes_{st.session_state.indent_reset_trigger}")
+                 # Define widget, but don't rely on the assigned variable later
+                st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=notes_key)
 
                 # --- Final Submit Button (Only displayed if dept confirmed) ---
                 submit_indent_button = st.form_submit_button(
                     "Submit Full Indent Request",
-                    disabled=not items_loaded_successfully, # Disable if no items could be loaded
+                    disabled=not items_loaded_successfully,
                     type="primary"
                     )
 
@@ -220,42 +241,43 @@ else:
             # This block executes when ANY submit button inside the form is pressed
 
             if change_dept_button:
-                 # Handle the "Change Department" action
-                 reset_indent_form_state() # Reset the entire state
-                 st.rerun() # Rerun to show step 1 again
+                 reset_indent_form_state()
+                 st.rerun()
 
             elif confirm_dept_button:
-                # Logic for the first step submission
-                # Check the value from the selectbox *now*
-                selected_dept_val = dept_selectbox
-                if not selected_dept_val: # Check if a department was actually selected
+                # Use the value captured from the widget during this run
+                selected_dept_val = dept_selectbox_val
+                if not selected_dept_val:
                     st.warning("Please select a department first before confirming.")
                 else:
                     st.session_state.indent_selected_dept = selected_dept_val
                     st.session_state.indent_dept_confirmed = True
-                    # Reset item editor state when department confirmed
                     st.session_state.indent_items_df = pd.DataFrame(
                         [{"Item": None, "Quantity": 1.0, "Unit": ""}],
                         columns=["Item", "Quantity", "Unit"]
                     )
-                    st.rerun() # Rerun to show the second part of the form
+                    st.rerun()
 
             # Check if the final submit button was pressed
-            elif submit_indent_button: # Use elif to avoid running if change_dept was clicked
-                # --- Perform Final Validation ---
+            elif submit_indent_button:
                 if not st.session_state.indent_dept_confirmed:
                      st.error("Department not confirmed. Please confirm department first.")
                 else:
-                    final_dept = st.session_state.indent_selected_dept # Get confirmed dept
-                    final_req_by = req_by # Get value from widget instance
-                    final_req_date = req_date # Get value from widget instance
+                    # --- Get final values directly from session_state using keys ---
+                    final_dept = st.session_state.indent_selected_dept
+                    final_req_by = st.session_state.get(req_by_key, "").strip() # Use .get for safety
+                    final_req_date = st.session_state.get(req_date_key, date.today())
+                    final_notes = st.session_state.get(notes_key, "").strip()
+                    # Ensure items_df is processed correctly based on editor state
+                    items_df_to_validate = st.session_state.indent_items_df.copy()
 
-                    items_df_final = st.session_state.indent_items_df.copy()
-                    items_df_final = items_df_final[items_df_final['Item'].apply(lambda x: isinstance(x, tuple))]
+
+                    # --- Perform Final Validation ---
+                    items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
                     items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
                     items_df_final = items_df_final[items_df_final['Quantity'] > 0]
 
-                    if not final_req_by.strip():
+                    if not final_req_by: # Check stripped value
                         st.warning("Please enter the Requester's Name/ID.", icon="⚠️")
                     elif items_df_final.empty:
                          st.warning("Please add at least one valid item with a quantity greater than 0.", icon="⚠️")
@@ -269,11 +291,11 @@ else:
                         else:
                             indent_header = {
                                 "mrn": mrn,
-                                "requested_by": final_req_by.strip(),
+                                "requested_by": final_req_by, # Already stripped
                                 "department": final_dept,
                                 "date_required": final_req_date,
                                 "status": "Submitted",
-                                "notes": req_notes.strip() # Get notes value from widget instance
+                                "notes": final_notes # Already stripped
                             }
                             item_list = [
                                 {"item_id": row['Item'][1], "requested_qty": row['Quantity'], "notes": ""}
@@ -290,7 +312,7 @@ else:
                             if success:
                                 st.success(f"Indent Request '{mrn}' submitted successfully!", icon="✅")
                                 reset_indent_form_state() # Reset state for next indent
-                                # Don't call rerun here, allow success message to show
+                                # Let Streamlit handle the rerun after success message automatically
                             else:
                                 st.error("Failed to submit Indent Request.", icon="❌")
 

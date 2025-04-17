@@ -48,13 +48,15 @@ with tab_view:
         value=st.session_state.show_inactive,
     )
     st.divider()
-
-    # fetch once
+        # fetch once
     items_df_with_stock = get_all_items_with_stock(
         db_engine, include_inactive=st.session_state.show_inactive
     )
-# 👉 ADD THIS LINE: remove duplicate‑named columns (keep first occurrence)
-items_df_with_stock = items_df_with_stock.loc[:, ~items_df_with_stock.columns.duplicated()]
+
+    # remove any duplicate‑named columns (keeps the first occurrence)
+    items_df_with_stock = items_df_with_stock.loc[
+        :, ~items_df_with_stock.columns.duplicated()
+    ]
     st.subheader(
         "Full Item List"
         + (

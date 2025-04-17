@@ -6,8 +6,8 @@ from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple
 import time # For potential MRN generation or unique keys
 
-# --- Page Config (MUST BE THE FIRST STREAMLIT COMMAND) ---
-st.set_page_config(layout="wide")
+# --- Page Config (REMOVED FROM HERE) ---
+# REMOVED: st.set_page_config(layout="wide")
 
 # Import shared functions and engine from the main app file
 try:
@@ -70,7 +70,7 @@ def reset_indent_form_state():
 
 
 # --- Page Content ---
-st.header("🛒 Material Indents")
+st.header("🛒 Material Indents") # Page header can stay
 
 # Establish DB connection for this page
 db_engine = connect_db()
@@ -204,8 +204,14 @@ else:
                             elif pd.isna(selected_option): new_row["Unit"] = ''
                             else: new_row["Unit"] = ''
                             processed_rows.append(new_row)
-                         st.session_state.indent_items_df = pd.DataFrame(processed_rows)
-                     else:
+                         # Update session state only if rows were processed
+                         if processed_rows:
+                            st.session_state.indent_items_df = pd.DataFrame(processed_rows)
+                         else: # Handle case where editor might be cleared
+                             st.session_state.indent_items_df = pd.DataFrame(
+                                [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
+                             )
+                     else: # Handle case where editor starts empty or is cleared
                           st.session_state.indent_items_df = pd.DataFrame(
                             [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
                           )
@@ -243,19 +249,17 @@ else:
                 if not st.session_state.indent_dept_confirmed:
                      st.error("Department not confirmed. Please confirm department first.")
                 else:
-                    # --- Get final values directly from session_state using keys ---
-                    # Accessing state directly avoids NameErrors
+                    # Get current values directly from session_state using keys
                     current_req_by = st.session_state.get(req_by_key, "").strip()
                     current_req_date = st.session_state.get(req_date_key, date.today())
                     current_notes = st.session_state.get(notes_key, "").strip()
                     items_df_to_validate = st.session_state.indent_items_df.copy()
 
-                    # --- Perform Final Validation ---
+                    # Perform Final Validation
                     items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
                     items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
                     items_df_final = items_df_final[items_df_final['Quantity'] > 0]
 
-                    # Validate using the values fetched directly from state
                     if not current_req_by:
                         st.warning("Please enter the Requester's Name/ID.", icon="⚠️")
                     elif items_df_final.empty:
@@ -263,26 +267,25 @@ else:
                     elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any():
                          st.warning("Duplicate items found. Please combine quantities for each item.", icon="⚠️")
                     else:
-                        # --- Prepare Data for Backend ---
+                        # Prepare Data for Backend
                         mrn = generate_mrn(engine=db_engine)
                         if not mrn:
                              st.error("Failed to generate MRN. Cannot submit indent.")
                         else:
-                            # Build header using values directly from state
                             indent_header = {
                                 "mrn": mrn,
-                                "requested_by": current_req_by, # Already stripped
-                                "department": st.session_state.indent_selected_dept, # Use stored dept
+                                "requested_by": current_req_by,
+                                "department": st.session_state.indent_selected_dept,
                                 "date_required": current_req_date,
                                 "status": "Submitted",
-                                "notes": current_notes # Already stripped
+                                "notes": current_notes
                             }
                             item_list = [
                                 {"item_id": row['Item'][1], "requested_qty": row['Quantity'], "notes": ""}
                                 for _, row in items_df_final.iterrows()
                             ]
 
-                            # --- Call Backend Function ---
+                            # Call Backend Function
                             success = create_indent(
                                 engine=db_engine,
                                 indent_details=indent_header,

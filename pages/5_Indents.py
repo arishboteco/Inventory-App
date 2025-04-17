@@ -4,8 +4,6 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple
 import time
-# AgGrid Imports
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode, JsCode
 
 # --- Page Config (REMOVED) ---
 
@@ -22,39 +20,27 @@ except ImportError as e:
 
 # --- Constants ---
 DEPARTMENTS = ["Kitchen", "Bar", "Housekeeping", "Admin", "Maintenance", "Service"]
-# Static Keys for widgets outside grid
-KEY_DEPT_AG = "indent_aggrid_dept"
-KEY_REQ_BY_AG = "indent_aggrid_req_by"
-KEY_REQ_DATE_AG = "indent_aggrid_req_date"
-KEY_NOTES_AG = "indent_aggrid_notes"
-
+# Static Keys
+KEY_DEPT = "indent_req_dept_nofilter"
+KEY_REQ_BY = "indent_req_by_nofilter"
+KEY_REQ_DATE = "indent_req_date_nofilter"
+KEY_EDITOR = "indent_item_editor_nofilter"
+KEY_NOTES = "indent_notes_nofilter"
+KEY_FORM = "new_indent_form_nofilter"
 
 # --- Initialize Session State ---
-# Keep track of selected department
-if 'aggrid_selected_dept' not in st.session_state: st.session_state.aggrid_selected_dept = None
-# Store the grid data
-if 'aggrid_indent_items_df' not in st.session_state:
-    # Start with 1 empty row structure
-    st.session_state.aggrid_indent_items_df = pd.DataFrame(
-        [{"Item": None, "Quantity": None, "Unit": ""}],
-        columns=["Item", "Quantity", "Unit"]
+# Initialize only data editor state if needed (using a consistent key)
+if 'indent_items_df_nofilter' not in st.session_state:
+    st.session_state.indent_items_df_nofilter = pd.DataFrame(
+        [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
-# Store fetched item details for lookup
-if 'aggrid_item_details' not in st.session_state: st.session_state.aggrid_item_details = {}
 
-
-# --- Reset Function ---
-def reset_aggrid_indent_form():
-    st.session_state.aggrid_selected_dept = None
-    st.session_state.aggrid_indent_items_df = pd.DataFrame(
-        [{"Item": None, "Quantity": None, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
+# --- Simplified Reset Function ---
+# This might not be needed if clear_on_submit works well enough, but keep for now
+def reset_indent_form_state_nofilter():
+    st.session_state.indent_items_df_nofilter = pd.DataFrame(
+        [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
-    st.session_state.aggrid_item_details = {}
-    # Reset other widgets by clearing their keys if they exist
-    st.session_state.pop(KEY_DEPT_AG, None)
-    st.session_state.pop(KEY_REQ_BY_AG, None)
-    st.session_state.pop(KEY_REQ_DATE_AG, None)
-    st.session_state.pop(KEY_NOTES_AG, None)
 
 # --- Page Content ---
 st.header("🛒 Material Indents")
@@ -69,178 +55,107 @@ else:
 
     with tab_create:
         st.subheader("Create a New Material Request")
-        # --- NO FORM WRAPPER ---
+        st.caption("Note: Item list is not filtered by department in this view.")
 
-        # --- Department Selection ---
-        selected_dept = st.selectbox(
-            "Requesting Department*", options=DEPARTMENTS,
-            key=KEY_DEPT_AG, index=None, placeholder="Select department...",
-            help="Select the department requesting items."
-        )
-        # Update selected dept in state if changed
-        if selected_dept != st.session_state.aggrid_selected_dept:
-            st.session_state.aggrid_selected_dept = selected_dept
-            # Reset grid when department changes
-            st.session_state.aggrid_indent_items_df = pd.DataFrame(
-                [{"Item": None, "Quantity": None, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
+        all_items_df = get_all_items_with_stock(db_engine, include_inactive=False)
+        all_item_options = []
+        item_unit_map = {}
+        if not all_items_df.empty and 'item_id' in all_items_df.columns and 'name' in all_items_df.columns:
+             all_item_options = [(f"{r['name']} ({r.get('unit', 'N/A')})", r['item_id']) for i, r in all_items_df.iterrows()]
+             item_unit_map = {r['item_id']: r.get('unit', '') for i, r in all_items_df.iterrows()}
+
+        # Using clear_on_submit=True which should clear basic fields
+        # But we still need to manage the data editor's state df
+        with st.form(KEY_FORM, clear_on_submit=True):
+            st.markdown("**Enter Indent Details:**")
+
+            c1, c2, c3 = st.columns(3)
+            with c1: st.selectbox("Requesting Department*", options=DEPARTMENTS, index=None, placeholder="Select...", key=KEY_DEPT)
+            with c2: st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY)
+            with c3: st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key=KEY_REQ_DATE)
+
+            st.divider()
+            st.markdown("**Add Items to Request:**")
+
+            # Use Data Editor with ALL items
+            # Assign its output to edited_df
+            edited_df = st.data_editor(
+                st.session_state.indent_items_df_nofilter, # Display current state
+                key=KEY_EDITOR,
+                num_rows="dynamic", use_container_width=True,
+                column_config={
+                    "Item": st.column_config.SelectboxColumn("Select Item*", help="Choose item", width="large", options=all_item_options, required=True),
+                    "Quantity": st.column_config.NumberColumn("Quantity*", help="Enter quantity", min_value=0.01, format="%.2f", step=0.1, required=True),
+                    "Unit": st.column_config.TextColumn("Unit", help="Auto-filled", disabled=True, width="small"),
+                }, hide_index=True, disabled=not all_item_options
             )
-            st.rerun() # Rerun to load correct items
 
-        # --- Other Header Inputs ---
-        req_by = st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY_AG)
-        req_date = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key=KEY_REQ_DATE_AG)
+            # Process units locally just before potential use (but don't save back to state here)
+            # We will use edited_df directly in the submit logic below
+            processed_rows_for_unit_display = []
+            if not edited_df.empty:
+                for i, row in edited_df.iterrows():
+                    new_row = row.to_dict()
+                    selected_option = new_row.get("Item")
+                    item_id = None
+                    if isinstance(selected_option, tuple):
+                        item_id = selected_option[1]
+                        new_row["Unit"] = item_unit_map.get(item_id, '') # Lookup unit
+                    processed_rows_for_unit_display.append(new_row)
+            # Note: We are NOT updating st.session_state.indent_items_df_nofilter here anymore
 
-        st.divider()
-        st.markdown("**Add Items to Request:**")
+            st.divider()
+            st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=KEY_NOTES)
 
-        # --- Load Items based on Selected Department ---
-        item_options_display_list = []
-        item_lookup_dict = {} # Maps display string back to id/unit
+            submit_button = st.form_submit_button("Submit Indent Request", type="primary")
 
-        if st.session_state.aggrid_selected_dept:
-            with st.spinner(f"Loading items for {st.session_state.aggrid_selected_dept}..."):
-                filtered_items_df = get_all_items_with_stock(
-                    db_engine, include_inactive=False,
-                    department=st.session_state.aggrid_selected_dept
-                )
-            if not filtered_items_df.empty and 'item_id' in filtered_items_df.columns and 'name' in filtered_items_df.columns:
-                # Create list of display strings for dropdown, store details for lookup
-                for i, r in filtered_items_df.iterrows():
-                    display_name = f"{r['name']} ({r.get('unit', 'N/A')})"
-                    item_options_display_list.append(display_name)
-                    item_lookup_dict[display_name] = {"id": r['item_id'], "unit": r.get('unit', '')}
-                # Store lookup dict in session state for use during submission
-                st.session_state.aggrid_item_details = item_lookup_dict
+            # --- Form Submission Logic ---
+            if submit_button:
+                # Access basic values using static keys from st.session_state
+                dept_val = st.session_state.get(KEY_DEPT)
+                req_by_val = st.session_state.get(KEY_REQ_BY, "").strip()
+                req_date_val = st.session_state.get(KEY_REQ_DATE, date.today())
+                notes_val = st.session_state.get(KEY_NOTES, "").strip()
 
-            else:
-                 st.warning(f"No active items permitted for '{st.session_state.aggrid_selected_dept}'.", icon="⚠️")
-                 st.session_state.aggrid_item_details = {} # Clear lookup if no items
-        else:
-            st.info("Select a department to load and add items.")
-            st.session_state.aggrid_item_details = {} # Clear lookup if no dept
+                # --- Process items DIRECTLY from edited_df ---
+                # Use the 'edited_df' variable returned by st.data_editor IN THIS RUN
+                items_df_to_validate = edited_df.copy()
 
-        # --- Configure AgGrid ---
-        gb = GridOptionsBuilder.from_dataframe(st.session_state.aggrid_indent_items_df)
+                # Validation (same logic, but applied to edited_df directly)
+                items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
+                items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
+                items_df_final = items_df_final[pd.to_numeric(items_df_final['Quantity'], errors='coerce').fillna(0) > 0] # Ensure Quantity check is robust
 
-        gb.configure_column(
-            "Item",
-            cellEditor='agSelectCellEditor', # Use a dropdown editor
-            cellEditorParams={'values': item_options_display_list}, # Populate with filtered display names
-            editable=True,
-            width=350
-        )
-        gb.configure_column(
-            "Quantity",
-            editable=True,
-            type=["numericColumn", "numberColumnFilter", "customNumericFormat"],
-            precision=2, # Set precision for numeric input
-            width=100
-        )
-        gb.configure_column("Unit", editable=False, width=80)
-
-        # Enable adding/deleting rows via context menu (more advanced)
-        # gb.configure_grid_options(rowSelection='single', enableRangeSelection=True) # Example options
-        # gb.configure_grid_options(suppressRowClickSelection=True, stopEditingWhenCellsLoseFocus=True)
-
-        gridOptions = gb.build()
-
-        # --- Display AgGrid ---
-        # Cannot add/delete rows easily without buttons/callbacks outside grid
-        # User needs to edit the existing rows (initially 1 blank row)
-        st.caption("Edit quantity and select items below. Add more rows if needed (manually for now).") # Placeholder text
-        grid_response = AgGrid(
-            st.session_state.aggrid_indent_items_df,
-            gridOptions=gridOptions,
-            data_return_mode=DataReturnMode.AS_INPUT, # Get data as displayed
-            update_mode=GridUpdateMode.MODEL_CHANGED, # Update state as user types
-            allow_unsafe_jscode=True, # Needed for some features like custom formatting or editors
-            enable_enterprise_modules=False,
-            key='indent_aggrid_editor', # Unique key
-            # Set height or use theme default
-            height=200,
-            width='100%',
-            reload_data=True # Try to force reload if data changes
-        )
-
-        # --- IMPORTANT: Update session state with grid changes ---
-        # Do this *after* the AgGrid call so edits are reflected on next rerun
-        if grid_response['data'] is not None:
-             current_grid_df = grid_response['data']
-             # Simple way to add a blank row if user might need more (needs better UI)
-             if not current_grid_df.empty and current_grid_df.iloc[-1]['Item'] is not None:
-                  blank_row = pd.DataFrame([{"Item": None, "Quantity": None, "Unit": ""}], columns=["Item", "Quantity", "Unit"])
-                  current_grid_df = pd.concat([current_grid_df, blank_row], ignore_index=True)
-
-             st.session_state.aggrid_indent_items_df = current_grid_df
-
-
-        # --- Notes ---
-        st.divider()
-        notes = st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=KEY_NOTES_AG)
-
-        # --- Submit Button (outside grid) ---
-        if st.button("Submit Indent Request", type="primary", disabled=(not st.session_state.aggrid_selected_dept)):
-
-            # Get other values
-            current_req_by = st.session_state.get(KEY_REQ_BY_AG, "").strip()
-            current_req_date = st.session_state.get(KEY_REQ_DATE_AG, date.today())
-            current_notes = st.session_state.get(KEY_NOTES_AG, "").strip()
-            current_dept = st.session_state.aggrid_selected_dept # Already validated above basically
-
-            # Get data from grid state and process it
-            items_df_to_validate = st.session_state.aggrid_indent_items_df.copy()
-            item_list = []
-            validation_warning = None
-
-            # Filter rows with selected item and valid quantity
-            valid_rows = items_df_to_validate.dropna(subset=['Item', 'Quantity'])
-            valid_rows = valid_rows[pd.to_numeric(valid_rows['Quantity'], errors='coerce').fillna(0) > 0]
-
-            item_ids_added = set() # To check for duplicates
-
-            if not valid_rows.empty:
-                for i, row in valid_rows.iterrows():
-                    item_display_name = row['Item']
-                    qty = pd.to_numeric(row['Quantity'], errors='coerce')
-
-                    # Lookup item details based on display name
-                    item_details = st.session_state.aggrid_item_details.get(item_display_name)
-
-                    if item_details and qty is not None and qty > 0:
-                         item_id = item_details['id']
-                         if item_id in item_ids_added:
-                              validation_warning = "Duplicate items found. Please combine quantities."
-                              break # Stop processing on first duplicate
-                         item_list.append({"item_id": item_id, "requested_qty": qty, "notes": ""})
-                         item_ids_added.add(item_id)
-                    # else: Allow skipping rows that aren't fully valid
-
-            # Final Validation
-            if not current_dept: validation_warning = "Select Department."
-            elif not current_req_by: validation_warning = "Enter Requester Name/ID."
-            elif not item_list: validation_warning = "Add at least one valid item with quantity > 0."
-            # Duplicate check already handled above
-
-            if validation_warning:
-                st.warning(validation_warning, icon="⚠️")
-            else:
-                # --- Prepare & Execute Backend Call ---
-                 mrn = generate_mrn(engine=db_engine)
-                 if not mrn: st.error("Failed to generate MRN.")
-                 else:
-                    indent_header = {
-                        "mrn": mrn, "requested_by": current_req_by,
-                        "department": current_dept,
-                        "date_required": current_req_date, "status": "Submitted",
-                        "notes": current_notes
-                    }
-                    success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
-                    if success:
-                        st.success(f"Indent '{mrn}' submitted!", icon="✅")
-                        reset_aggrid_indent_form() # Call reset
-                        time.sleep(0.5)
-                        st.rerun() # Rerun to clear form visually
-                    else: st.error("Failed to submit Indent.", icon="❌")
+                if not dept_val: st.warning("Select Department.", icon="⚠️")
+                elif not req_by_val: st.warning("Enter Requester.", icon="⚠️")
+                elif items_df_final.empty:
+                    # Add more debug info if this fails
+                    st.warning("Add valid item(s) with quantity > 0.", icon="⚠️")
+                    # st.write("Debug: edited_df at submission:")
+                    # st.dataframe(edited_df) # Uncomment to see raw editor output
+                elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
+                else:
+                    # Prepare & Execute Backend Call
+                    item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
+                    mrn = generate_mrn(engine=db_engine)
+                    if not mrn: st.error("Failed to generate MRN.")
+                    else:
+                        indent_header = {
+                            "mrn": mrn, "requested_by": req_by_val,
+                            "department": dept_val, "date_required": req_date_val,
+                            "status": "Submitted", "notes": notes_val
+                        }
+                        success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
+                        if success:
+                            st.success(f"Indent '{mrn}' submitted!", icon="✅")
+                            # Still reset the session state DF for the *next* render
+                            reset_indent_form_state_nofilter()
+                            # No rerun needed, clear_on_submit=True should handle basic fields
+                            # The data editor will show the reset state on the next interaction/run
+                        else:
+                            st.error("Failed to submit Indent.", icon="❌")
+                            # Keep state on failure since clear_on_submit=False might be needed if True causes issues
+                            # If clear_on_submit=True works, failure case might lose data editor input
 
 
     # --- Tabs 2 & 3 ---

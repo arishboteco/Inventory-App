@@ -1,5 +1,13 @@
-streamlit
-pandas
-sqlalchemy
-psycopg2-binary # Or psycopg2 if not using binary
-streamlit-aggrid
+# ───────── core ─────────
+streamlit>=1.30
+pandas>=1.5
+sqlalchemy>=2.0
+psycopg2-binary          # PostgreSQL driver (binary build)
+
+# ───────── UI helpers ─────────
+streamlit-aggrid>=0.3.4  # sortable / filterable tables
+
+# ───────── new Tier‑0 features ─────────
+fpdf2>=2.7               # PDF generation for Indents
+
+# (no extra install needed for urllib.parse; that’s in the Python std‑lib)

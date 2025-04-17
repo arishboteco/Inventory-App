@@ -57,7 +57,37 @@ else:
         # Full Item List Display
         st.subheader("Full Item List" + (" (Including Deactivated)" if st.session_state.show_inactive else " (Active Only)"))
         if items_df_with_stock.empty and 'name' not in items_df_with_stock.columns: st.info("No items found.")
-        else: st.dataframe(items_df_with_stock, use_container_width=True, hide_index=True, column_config={"item_id": st.column_config.NumberColumn("ID", width="small"), "name": st.column_config.TextColumn("Item Name", width="medium"), "unit": st.column_config.TextColumn("Unit", width="small"), "category": st.column_config.TextColumn("Category"), "sub_category": st.column_config.TextColumn("Sub-Category"), "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"), "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"), "current_stock": st.column_config.NumberColumn("Current Stock", width="small", help="Calculated from transactions."), "notes": st.column_config.TextColumn("Notes", width="large"), "is_active": st.column_config.CheckboxColumn("Active?", width="small", disabled=True)}, column_order=[col for col in ["item_id", "name", "category", "sub_category", "unit", "current_stock", "reorder_point", "permitted_departments", "is_active", "notes"] if col in items_df_with_stock.columns])
+        else:
+    # ---- PATCH: cast object columns to string so PyArrow can serialize ----
+    for col in items_df_with_stock.select_dtypes(include=["object"]).columns:
+        items_df_with_stock[col] = items_df_with_stock[col].astype(str)
+
+    st.dataframe(
+        items_df_with_stock,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "item_id": st.column_config.NumberColumn("ID", width="small"),
+            "name": st.column_config.TextColumn("Item Name", width="medium"),
+            "unit": st.column_config.TextColumn("Unit", width="small"),
+            "category": st.column_config.TextColumn("Category"),
+            "sub_category": st.column_config.TextColumn("Sub-Category"),
+            "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"),
+            "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
+            "current_stock": st.column_config.NumberColumn("Current Stock", width="small",
+                                                           help="Calculated from transactions."),
+            "notes": st.column_config.TextColumn("Notes", width="large"),
+            "is_active": st.column_config.CheckboxColumn("Active?", width="small", disabled=True),
+        },
+        column_order=[
+            col for col in [
+                "item_id", "name", "category", "sub_category",
+                "unit", "current_stock", "reorder_point",
+                "permitted_departments", "is_active", "notes"
+            ] if col in items_df_with_stock.columns
+        ]
+    )
+
 
     # Prepare item options list for dropdowns in Manage tab
     # Needs to be done outside the tab but after fetching data

@@ -1,5 +1,6 @@
 # pages/5_Indents.py
-# Fresh implementation using No Form + st.data_editor + Department Filtering
+# Clean implementation using No Form + st.data_editor + Department Filtering
+# Removed Unit column from data editor
 
 import streamlit as st
 import pandas as pd
@@ -10,10 +11,14 @@ import numpy as np
 
 # --- Page Config (REMOVED) ---
 
-# Import shared functions
+# --- Imports and Error Handling ---
 try:
+    # Ensure all necessary functions are imported from your main app file
     from item_manager_app import (
-        connect_db, get_all_items_with_stock, generate_mrn, create_indent
+        connect_db,
+        get_all_items_with_stock, # Needs to support department filtering
+        generate_mrn,
+        create_indent
     )
     # Placeholder for future functions if needed
     if 'get_indents' not in locals(): get_indents = lambda **kwargs: pd.DataFrame()
@@ -32,21 +37,21 @@ KEY_DEPT = f"{STATE_PREFIX}dept"
 KEY_REQ_BY = f"{STATE_PREFIX}req_by"
 KEY_REQ_DATE = f"{STATE_PREFIX}req_date"
 KEY_NOTES = f"{STATE_PREFIX}notes"
-KEY_EDITOR = f"{STATE_PREFIX}editor" # Key for the data_editor widget itself <-- ADDED THIS LINE
+KEY_EDITOR = f"{STATE_PREFIX}editor" # Key for the data_editor widget itself
 KEY_EDITOR_DF = f"{STATE_PREFIX}editor_df" # Holds the DataFrame for the editor
 KEY_ITEM_OPTIONS = f"{STATE_PREFIX}item_options" # Holds [(display, id),...] for current dept
-KEY_UNIT_MAP = f"{STATE_PREFIX}unit_map" # Holds {id: unit,...} for current dept
+# REMOVED: KEY_UNIT_MAP - No longer needed for editor display
 KEY_CURRENT_DEPT = f"{STATE_PREFIX}current_dept" # Tracks which dept's items are loaded
 
 # --- Initialize Session State ---
 def init_state():
     """Initializes session state variables if they don't exist."""
     state_defaults = {
-        KEY_EDITOR_DF: pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]),
+        # Data editor DF now only has Item and Quantity
+        KEY_EDITOR_DF: pd.DataFrame([{"Item": None, "Quantity": 1.0}], columns=["Item", "Quantity"]),
         KEY_ITEM_OPTIONS: [],
-        KEY_UNIT_MAP: {},
+        # REMOVED: KEY_UNIT_MAP initialization
         KEY_CURRENT_DEPT: None,
-        # Initialize keys for widgets used outside data editor too
         KEY_DEPT: None,
         KEY_REQ_BY: "",
         KEY_REQ_DATE: date.today() + timedelta(days=1),
@@ -62,20 +67,18 @@ init_state()
 # --- Reset Function ---
 def reset_state():
     """Resets state variables to initial values."""
-    # Reset custom state variables
+    # Reset data editor's DataFrame state (without Unit)
     st.session_state[KEY_EDITOR_DF] = pd.DataFrame(
-        [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
+        [{"Item": None, "Quantity": 1.0}], columns=["Item", "Quantity"]
     )
     st.session_state[KEY_ITEM_OPTIONS] = []
-    st.session_state[KEY_UNIT_MAP] = {}
+    # REMOVED: KEY_UNIT_MAP reset
     st.session_state[KEY_CURRENT_DEPT] = None
     # Reset widget values by clearing/setting keys
-    # Use pop for safety, or direct set if preferred for defaults
     st.session_state.pop(KEY_DEPT, None)
     st.session_state.pop(KEY_REQ_BY, None)
     st.session_state.pop(KEY_REQ_DATE, None)
     st.session_state.pop(KEY_NOTES, None)
-    # Optionally re-set date to default
     st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1)
 
 
@@ -84,7 +87,6 @@ def is_valid_item_tuple(val):
     """Checks if the value is a tuple representing a valid item selection."""
     if val is None: return False
     try:
-        # Check tuple structure and ensure ID is int
         return isinstance(val, tuple) and len(val) == 2 and isinstance(int(val[1]), int)
     except (TypeError, ValueError, IndexError): return False
 
@@ -118,8 +120,8 @@ else:
             st.session_state[KEY_CURRENT_DEPT] = selected_dept
             needs_item_reload = True
             st.session_state[KEY_ITEM_OPTIONS] = []
-            st.session_state[KEY_UNIT_MAP] = {}
-            st.session_state[KEY_EDITOR_DF] = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}])
+            # REMOVED: KEY_UNIT_MAP clear
+            st.session_state[KEY_EDITOR_DF] = pd.DataFrame([{"Item": None, "Quantity": 1.0}]) # No Unit
 
         # Load items if needed
         if selected_dept and not st.session_state.get(KEY_ITEM_OPTIONS):
@@ -127,25 +129,25 @@ else:
                 filtered_items_df = get_all_items_with_stock(db_engine, include_inactive=False, department=selected_dept)
             if not filtered_items_df.empty and 'item_id' in filtered_items_df.columns and 'name' in filtered_items_df.columns:
                 temp_options = []
-                temp_map = {}
+                # REMOVED: temp_map
                 filtered_items_df['item_id'] = pd.to_numeric(filtered_items_df['item_id'], errors='coerce').fillna(-1).astype(int)
                 valid_items = filtered_items_df[filtered_items_df['item_id'] != -1]
                 for i, r in valid_items.iterrows():
+                    # Include unit in display name for user info, even if not separate column
                     display_name = f"{r['name']} ({r.get('unit', 'N/A')})"
                     temp_options.append((display_name, r['item_id']))
-                    temp_map[r['item_id']] = r.get('unit', '')
+                    # REMOVED: temp_map population
                 st.session_state[KEY_ITEM_OPTIONS] = temp_options
-                st.session_state[KEY_UNIT_MAP] = temp_map
+                # REMOVED: KEY_UNIT_MAP store
             else:
                  st.warning(f"No active items permitted for '{selected_dept}'.", icon="⚠️")
                  st.session_state[KEY_ITEM_OPTIONS] = []
-                 st.session_state[KEY_UNIT_MAP] = {}
-            # Rerun only if triggered by department change flag
+                 # REMOVED: KEY_UNIT_MAP clear
             if needs_item_reload:
                  st.rerun()
 
         current_item_options = st.session_state[KEY_ITEM_OPTIONS]
-        current_unit_map = st.session_state[KEY_UNIT_MAP]
+        # REMOVED: current_unit_map
         can_add_items = bool(current_item_options)
 
         # --- Other Header Inputs ---
@@ -160,36 +162,27 @@ else:
         elif not can_add_items:
              st.warning(f"No items available for {selected_dept}.")
         else:
-             # --- Data Editor (No Form) ---
+             # --- Data Editor (No Form, No Unit Column) ---
              edited_df = st.data_editor(
-                 st.session_state[KEY_EDITOR_DF],
-                 key=KEY_EDITOR, # Use the specific editor key defined above
+                 st.session_state[KEY_EDITOR_DF], # Reads state DF (Item, Quantity)
+                 key=KEY_EDITOR,
                  num_rows="dynamic", use_container_width=True,
                  column_config={
+                    # Unit column config removed
                     "Item": st.column_config.SelectboxColumn("Select Item*", help="Choose item", width="large", options=current_item_options, required=False),
                     "Quantity": st.column_config.NumberColumn("Quantity*", help="Enter quantity", min_value=0.01, format="%.2f", step=0.1, required=False),
-                    "Unit": st.column_config.TextColumn("Unit", help="Auto-filled", disabled=True, width="small"),
                  }, hide_index=True
              )
 
              # --- Update Session State DF AFTER editor interaction ---
-             processed_rows = []
-             data_changed = False # Flag to check if actual data differs
-             if not edited_df.equals(st.session_state[KEY_EDITOR_DF]): # Check if editor output differs from state
-                 data_changed = True
-                 if not edited_df.empty:
-                     for i, row in edited_df.iterrows():
-                        new_row = row.to_dict()
-                        selected_option = new_row.get("Item")
-                        if is_valid_item_tuple(selected_option):
-                            item_id = selected_option[1]
-                            new_row["Unit"] = current_unit_map.get(item_id, '')
-                        else:
-                             new_row["Unit"] = ''
-                        processed_rows.append(new_row)
-                     st.session_state[KEY_EDITOR_DF] = pd.DataFrame(processed_rows) # Update state
-                 else: # Handle editor being cleared
-                      st.session_state[KEY_EDITOR_DF] = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}])
+             # No need to process units, just save the edited data back
+             if not edited_df.equals(st.session_state[KEY_EDITOR_DF]):
+                 # Basic check: ensure columns expected exist before assigning
+                 if all(col in edited_df.columns for col in ["Item", "Quantity"]):
+                      st.session_state[KEY_EDITOR_DF] = edited_df # Update state with raw edits
+                 else:
+                      # Fallback or error if columns are wrong
+                      st.session_state[KEY_EDITOR_DF] = pd.DataFrame([{"Item": None, "Quantity": 1.0}])
 
 
         # --- Notes ---
@@ -198,7 +191,7 @@ else:
 
         # --- Submit Button ---
         st.divider()
-        submit_disabled = not selected_dept or not can_add_items # Also disable if no items can be added
+        submit_disabled = not selected_dept or not can_add_items
         if st.button("Submit Indent Request", type="primary", disabled=submit_disabled):
 
             # Get values directly from state using keys
@@ -206,19 +199,24 @@ else:
             current_req_date = st.session_state.get(KEY_REQ_DATE, date.today())
             current_notes = st.session_state.get(KEY_NOTES, "").strip()
             current_dept = selected_dept
-            items_df_to_validate = st.session_state[KEY_EDITOR_DF].copy()
+            items_df_to_validate = st.session_state[KEY_EDITOR_DF].copy() # Use state DF
 
             # Validation
             items_df_validated_items = items_df_to_validate[items_df_to_validate['Item'].apply(is_valid_item_tuple)]
-            items_df_validated_items['Quantity'] = pd.to_numeric(items_df_validated_items['Quantity'], errors='coerce')
-            items_df_validated_items = items_df_validated_items.dropna(subset=['Quantity'])
-            items_df_final = items_df_validated_items[items_df_validated_items['Quantity'] > 0]
+            # Ensure Quantity column exists before trying to convert/filter
+            if 'Quantity' in items_df_validated_items.columns:
+                 items_df_validated_items['Quantity'] = pd.to_numeric(items_df_validated_items['Quantity'], errors='coerce')
+                 items_df_validated_items = items_df_validated_items.dropna(subset=['Quantity'])
+                 items_df_final = items_df_validated_items[items_df_validated_items['Quantity'] > 0]
+            else:
+                 items_df_final = pd.DataFrame() # Treat as empty if Quantity column missing
 
             if not current_dept: st.warning("Select Department.", icon="⚠️")
             elif not current_req_by: st.warning("Enter Requester.", icon="⚠️")
             elif items_df_final.empty: st.warning("Add valid item(s) with quantity > 0.", icon="⚠️")
             elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
             else:
+                 # Prepare item_list (no longer needs Unit)
                  item_list = [{"item_id": r['Item'][1], "requested_qty": float(r['Quantity']), "notes": ""} for i, r in items_df_final.iterrows()]
                  mrn = generate_mrn(engine=db_engine)
                  if not mrn: st.error("Failed to generate MRN.")
@@ -240,3 +238,4 @@ else:
     # --- Tabs 2 & 3 ---
     with tab_view: st.subheader("View Indents"); st.info("To be implemented.")
     with tab_process: st.subheader("Process Indents"); st.info("To be implemented.")
+

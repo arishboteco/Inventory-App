@@ -1,73 +1,53 @@
 # pages/5_Indents.py
 import streamlit as st
 import pandas as pd
-# Updated import to include timedelta
 from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple
 import time
 
-# --- Page Config (REMOVED FROM HERE) ---
+# --- Page Config (REMOVED) ---
 
-# Import shared functions and engine from the main app file
+# Import shared functions
 try:
     from item_manager_app import (
-        connect_db,
-        get_all_items_with_stock, # Will be used with department filter
-        generate_mrn,
-        create_indent,
-        # --- Functions to be added later ---
-        # get_indents,
-        # get_indent_details,
-        # update_indent_status,
-        # fulfill_indent_item,
-        # get_departments
+        connect_db, get_all_items_with_stock, generate_mrn, create_indent,
+        # get_indents, get_indent_details, update_indent_status, fulfill_indent_item, get_departments # Future
     )
-    # Placeholder for functions not yet created
     if 'get_indents' not in locals(): get_indents = lambda **kwargs: pd.DataFrame()
-
 except ImportError as e:
-    st.error(f"Could not import functions from item_manager_app.py: {e}.")
+    st.error(f"Import Error: {e}.")
     st.stop()
 
 # --- Constants ---
 DEPARTMENTS = ["Kitchen", "Bar", "Housekeeping", "Admin", "Maintenance", "Service"]
+KEY_DEPT = "indent_req_dept"
+KEY_REQ_BY = "indent_req_by"
+KEY_REQ_DATE = "indent_req_date"
+KEY_EDITOR = "indent_item_editor"
+KEY_NOTES = "indent_notes"
+KEY_FORM = "new_indent_form"
 
-# --- Initialize Session State for Indent Page ---
+# --- Initialize Session State ---
 if 'indent_dept_confirmed' not in st.session_state: st.session_state.indent_dept_confirmed = False
 if 'indent_selected_dept' not in st.session_state: st.session_state.indent_selected_dept = None
 if 'indent_items_df' not in st.session_state:
     st.session_state.indent_items_df = pd.DataFrame(
         [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
-# REMOVED: indent_reset_trigger
 
-# --- Static Keys ---
-# Define keys centrally
-KEY_DEPT = "indent_req_dept"
-KEY_REQ_BY = "indent_req_by"
-KEY_REQ_DATE = "indent_req_date"
-KEY_EDITOR = "indent_item_editor"
-KEY_NOTES = "indent_notes"
-KEY_FORM = "new_indent_form" # Static key for the form
-
-# Function to reset the indent creation state
+# --- Simplified Reset Function ---
 def reset_indent_form_state():
+    # Only reset control flags and data editor content
     st.session_state.indent_dept_confirmed = False
     st.session_state.indent_selected_dept = None
     st.session_state.indent_items_df = pd.DataFrame(
         [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
-    # Explicitly reset widget values in state using static keys
-    st.session_state[KEY_DEPT] = None # Or appropriate default like ""
-    st.session_state[KEY_REQ_BY] = ""
-    st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1) # Reset to default date
-    st.session_state[KEY_NOTES] = ""
-    # Data editor state is reset via indent_items_df above
-    # We might need st.rerun() after calling this if not called from within form logic
+    # REMOVED: Explicit reset of widget values like st.session_state[KEY_REQ_BY] = ""
+
 
 # --- Page Content ---
 st.header("🛒 Material Indents")
-
 db_engine = connect_db()
 if not db_engine:
     st.error("Database connection failed.")
@@ -80,7 +60,6 @@ else:
     with tab_create:
         st.subheader("Create a New Material Request")
 
-        # Use static form key
         with st.form(KEY_FORM, clear_on_submit=False):
             confirm_dept_button = False
             submit_indent_button = False
@@ -89,7 +68,6 @@ else:
             st.markdown("**Step 1: Select Department**")
             current_selected_dept = st.session_state.get('indent_selected_dept', None)
 
-            # Use static keys for widgets
             dept_selectbox_val = st.selectbox(
                 "Requesting Department*", options=DEPARTMENTS,
                 index=DEPARTMENTS.index(current_selected_dept) if current_selected_dept in DEPARTMENTS else None,
@@ -99,7 +77,6 @@ else:
 
             if not st.session_state.indent_dept_confirmed:
                 confirm_dept_button = st.form_submit_button("Confirm Department & Load Items")
-
             if st.session_state.indent_dept_confirmed:
                  change_dept_button = st.form_submit_button("Change Department", type="secondary")
 
@@ -126,11 +103,10 @@ else:
 
                 c2, c3 = st.columns(2)
                 with c2: st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY)
-                with c3: st.date_input("Date Required*", value=st.session_state.get(KEY_REQ_DATE, date.today() + timedelta(days=1)), min_value=date.today(), key=KEY_REQ_DATE) # Use state value if available
+                with c3: st.date_input("Date Required*", value=st.session_state.get(KEY_REQ_DATE, date.today() + timedelta(days=1)), min_value=date.today(), key=KEY_REQ_DATE)
 
                 st.markdown("**Add Items to Request:**")
-                if not items_loaded_successfully:
-                    st.info("No items available.")
+                if not items_loaded_successfully: st.info("No items available.")
                 else:
                      edited_df = st.data_editor(
                         st.session_state.indent_items_df, key=KEY_EDITOR, num_rows="dynamic", use_container_width=True,
@@ -140,7 +116,7 @@ else:
                             "Unit": st.column_config.TextColumn("Unit", help="Auto-filled", disabled=True, width="small"),
                         }, hide_index=True,
                      )
-                     # Process edited data editor state for unit lookup
+                     # Unit lookup logic
                      processed_rows = []
                      if not edited_df.empty:
                          for i, row in edited_df.iterrows():
@@ -165,7 +141,6 @@ else:
                  st.rerun()
 
             elif confirm_dept_button:
-                # Use static key to get value
                 selected_dept_val = st.session_state.get(KEY_DEPT)
                 if not selected_dept_val: st.warning("Please select department first.")
                 else:
@@ -175,16 +150,14 @@ else:
                     st.rerun()
 
             elif submit_indent_button:
-                if not st.session_state.indent_dept_confirmed:
-                     st.error("Department not confirmed.")
+                if not st.session_state.indent_dept_confirmed: st.error("Department not confirmed.")
                 else:
-                    # --- Get final values directly from session_state using STATIC keys ---
                     current_req_by = st.session_state.get(KEY_REQ_BY, "").strip()
                     current_req_date = st.session_state.get(KEY_REQ_DATE, date.today())
                     current_notes = st.session_state.get(KEY_NOTES, "").strip()
                     items_df_to_validate = st.session_state.indent_items_df.copy()
 
-                    # --- Perform Final Validation ---
+                    # Validation logic remains the same
                     items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
                     items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
                     items_df_final = items_df_final[items_df_final['Quantity'] > 0]
@@ -193,7 +166,6 @@ else:
                     elif items_df_final.empty: st.warning("Add valid item(s).", icon="⚠️")
                     elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
                     else:
-                        # --- Prepare & Execute Backend Call ---
                          mrn = generate_mrn(engine=db_engine)
                          if not mrn: st.error("Failed to generate MRN.")
                          else:
@@ -205,17 +177,13 @@ else:
                             }
                             item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
                             success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
-
                             if success:
                                 st.success(f"Indent '{mrn}' submitted!", icon="✅")
-                                # Call reset which now sets defaults for static keys
-                                reset_indent_form_state()
-                                # Need to rerun to clear form fields after successful reset
-                                time.sleep(0.5) # Short delay might help ensure state updates propagate
-                                st.rerun()
+                                reset_indent_form_state() # Call simplified reset
+                                time.sleep(0.5) # Keep short delay before rerun
+                                st.rerun() # Rerun to clear form visually
                             else: st.error("Failed to submit Indent.", icon="❌")
 
-    # --- Tab 2: View Indents ---
-    with tab_view: st.subheader("View Submitted Indents"); st.info("To be implemented.")
-    # --- Tab 3: Process Indent ---
-    with tab_process: st.subheader("Process Submitted Indents"); st.info("To be implemented.")
+    # --- Tabs 2 & 3 ---
+    with tab_view: st.subheader("View Indents"); st.info("To be implemented.")
+    with tab_process: st.subheader("Process Indents"); st.info("To be implemented.")

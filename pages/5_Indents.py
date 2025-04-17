@@ -59,26 +59,18 @@ def init_indent_state():
 # Call initialization function
 init_indent_state()
 
-# --- Reset Function ---
-def reset_indent_state():
-    """Resets state variables to initial values."""
-    st.session_state[KEY_EDITOR_DF] = pd.DataFrame(
+# --- CORRECTED Reset Function ---
+def reset_indent_state_noform():
+    """Resets custom state variables for the indent form."""
+    # Reset data editor's DataFrame state
+    st.session_state.indent_editor_df_nf = pd.DataFrame(
         [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
-    st.session_state[KEY_ITEM_OPTIONS] = []
-    st.session_state[KEY_UNIT_MAP] = {}
-    st.session_state[KEY_CURRENT_DEPT] = None
-    # Reset widget values by clearing keys - safe approach
-    st.session_state.pop(KEY_DEPT, None)
-    st.session_state.pop(KEY_REQ_BY, None)
-    st.session_state.pop(KEY_REQ_DATE, None)
-    st.session_state.pop(KEY_NOTES, None)
-    # We might need to explicitly set defaults if pop doesn't clear visuals reliably
-    # st.session_state[KEY_DEPT] = None
-    # st.session_state[KEY_REQ_BY] = ""
-    # st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1)
-    # st.session_state[KEY_NOTES] = ""
-
+    # Reset custom state related to items/department
+    st.session_state.indent_item_unit_map_nf = {}
+    st.session_state.indent_current_dept_nf = None
+    st.session_state.indent_item_options_nf = []
+    # DO NOT pop or set widget keys (KEY_DEPT_NF, KEY_REQ_BY_NF etc.) here
 # --- Helper function for validation ---
 def is_valid_item_tuple(val):
     """Checks if the value is a tuple representing a valid item selection."""

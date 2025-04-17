@@ -15,7 +15,6 @@ TX_INDENT_FULFILL = "INDENT_FULFILL"
 TX_SALE = "SALE"
 
 # --- Database Connection ---
-# This function will be called by the main app and pages
 @st.cache_resource(show_spinner="Connecting to database...")
 def connect_db():
     """Connects to the DB. Returns SQLAlchemy engine or None."""
@@ -26,13 +25,12 @@ def connect_db():
         db_url = (f"{db_secrets['engine']}://{db_secrets['user']}:{db_secrets['password']}"
                   f"@{db_secrets['host']}:{db_secrets['port']}/{db_secrets['dbname']}")
         engine = create_engine(db_url, pool_pre_ping=True)
-        # Test connection once
         with engine.connect() as connection: connection.execute(text("SELECT 1"))
-        print("DB Connection Successful") # Optional: Log success to console
+        # print("DB Connection Successful") # Keep console log minimal
         return engine
     except Exception as e:
-        print(f"DB Connection Error: {e}") # Log error to console
-        st.error(f"DB connection failed: {e}")
+        # print(f"DB Connection Error: {e}") # Keep console log minimal
+        st.error(f"DB connection failed: Check secrets and DB status. ({e})")
         return None
 
 # --- Database Interaction Functions ---
@@ -79,9 +77,8 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     if not engine or item_id is None: return None
     query = text("SELECT * FROM items WHERE item_id = :id")
     try:
-        with engine.connect() as connection:
-            result = connection.execute(query, {"id": item_id}); row = result.fetchone()
-            return row._mapping if row else None
+        with engine.connect() as connection: result = connection.execute(query, {"id": item_id}); row = result.fetchone()
+        return row._mapping if row else None
     except Exception as e: st.error(f"Failed to fetch item details {item_id}: {e}"); return None
 
 def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
@@ -100,7 +97,7 @@ def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -
     if not engine or item_id is None: return False
     update_parts = []; params = {"item_id": item_id}; editable_fields = ['name', 'unit', 'category', 'sub_category', 'permitted_departments', 'reorder_point', 'notes']
     for key, value in updated_details.items():
-        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value if value != "" else None # Store empty strings as NULL for optional text fields
+        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value if value else None # Store empty string as NULL
     if not update_parts: st.warning("No changes detected."); return False
     update_query = text(f"UPDATE items SET {', '.join(update_parts)} WHERE item_id = :item_id")
     try:
@@ -123,7 +120,7 @@ def deactivate_item(engine, item_id: int) -> bool:
 def reactivate_item(engine, item_id: int) -> bool:
     """Sets the item's is_active flag to TRUE."""
     if not engine or item_id is None: return False
-    reactivate_query = text("UPDATE items SET is_active = TRUE WHERE supplier_id = :id"); params = {"id": item_id}
+    reactivate_query = text("UPDATE items SET is_active = TRUE WHERE item_id = :id"); params = {"id": item_id} # Corrected parameter name
     try:
         with engine.connect() as connection:
             with connection.begin(): connection.execute(reactivate_query, params)
@@ -205,7 +202,7 @@ def update_supplier(engine, supplier_id: int, updated_details: Dict[str, Any]) -
     if not engine or supplier_id is None: return False
     update_parts = []; params = {"supplier_id": supplier_id}; editable_fields = ['name', 'contact_person', 'phone', 'email', 'address', 'notes']
     for key, value in updated_details.items():
-        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value if value else None # Store empty string as NULL
+        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value if value else None
     if not update_parts: st.warning("No changes detected."); return False
     update_query = text(f"UPDATE suppliers SET {', '.join(update_parts)} WHERE supplier_id = :supplier_id")
     try:
@@ -247,16 +244,72 @@ st.set_page_config(
 )
 
 # Display Title on the main page
-st.title("Boteco Inventory Manager 🛒")
-st.write("Welcome! Use the sidebar to navigate between sections.")
+st.title("Boteco Inventory Manager Dashboard 🛒")
+st.write("Overview of your inventory status. Use the sidebar to navigate.")
 
-# Attempt to connect to the database - needed for pages potentially
+# Attempt to connect to the database
 db_engine = connect_db()
 
 if not db_engine:
     st.error("Database connection failed. Please check secrets and configuration.")
     st.stop()
+else:
+    # --- Dashboard Content ---
+    st.header("Inventory Overview")
 
-# The rest of the UI is now handled by files in the 'pages/' directory
-# Streamlit automatically creates navigation from those files.
+    # Fetch data needed for KPIs and Low Stock report (only active items)
+    items_overview_df = get_all_items_with_stock(db_engine, include_inactive=False)
 
+    if items_overview_df.empty and 'name' not in items_overview_df.columns:
+        st.warning("No active item data found to generate dashboard.")
+        total_active_items = 0
+        low_stock_count = 0
+        low_stock_df = pd.DataFrame() # Ensure low_stock_df exists even if empty
+    else:
+        # --- Calculate KPIs ---
+        total_active_items = len(items_overview_df)
+        # Ensure columns are numeric before comparison for low stock
+        items_overview_df['current_stock'] = pd.to_numeric(items_overview_df['current_stock'], errors='coerce').fillna(0)
+        items_overview_df['reorder_point'] = pd.to_numeric(items_overview_df['reorder_point'], errors='coerce').fillna(0)
+        low_stock_df = items_overview_df[
+            (items_overview_df['reorder_point'] > 0) &
+            (items_overview_df['current_stock'] <= items_overview_df['reorder_point'])
+        ].copy()
+        low_stock_count = len(low_stock_df)
+
+    # --- Display KPIs ---
+    kpi_col1, kpi_col2 = st.columns(2)
+    kpi_col1.metric("Total Active Items", total_active_items)
+    kpi_col2.metric("Items Low on Stock", low_stock_count)
+    # Add more KPIs later (e.g., Total Stock Value if costs are added)
+
+    st.divider()
+
+    # --- Display Low Stock Items ---
+    st.subheader("⚠️ Low Stock Items")
+    if low_stock_df.empty:
+        st.info("No active items are currently at or below their reorder point.")
+    else:
+        st.warning("The following active items need attention:")
+        st.dataframe(
+            low_stock_df,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "item_id": "ID", "name": "Item Name", "unit": "Unit",
+                "category": "Category", "sub_category": "Sub-Category",
+                "permitted_departments": None, # Hide less relevant columns for this view
+                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
+                "current_stock": st.column_config.NumberColumn("Current Stock", width="small"),
+                "notes": None, "is_active": None,
+            },
+            column_order=[col for col in ["item_id", "name", "current_stock", "reorder_point", "unit", "category", "sub_category"] if col in low_stock_df.columns]
+        )
+
+    # --- Placeholder for other dashboard elements ---
+    st.divider()
+    st.markdown("*(More dashboard elements like charts or recent activity can be added here later)*")
+
+
+# Note: The page files (pages/1_Items.py, pages/2_Suppliers.py etc.)
+# handle the detailed views and actions.

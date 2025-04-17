@@ -4,7 +4,9 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple
 import time
-import numpy as np # Import numpy for potential NaN checks if needed
+import numpy as np
+# AgGrid Imports (Keep if using AgGrid, remove if using data_editor)
+# from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, DataReturnMode, JsCode
 
 # --- Page Config (REMOVED) ---
 
@@ -21,51 +23,42 @@ except ImportError as e:
 
 # --- Constants ---
 DEPARTMENTS = ["Kitchen", "Bar", "Housekeeping", "Admin", "Maintenance", "Service"]
-# Static Keys for widgets (using _nf for "no form" version state)
+# Static Keys for widgets
 KEY_DEPT_NF = "indent_dept_noform"
 KEY_REQ_BY_NF = "indent_req_by_noform"
 KEY_REQ_DATE_NF = "indent_req_date_noform"
-KEY_EDITOR_NF = "indent_editor_noform"
+KEY_EDITOR_NF = "indent_editor_noform" # Using data editor key
 KEY_NOTES_NF = "indent_notes_noform"
 
 # --- Initialize Session State ---
-# Store the data editor's dataframe
 if 'indent_editor_df_nf' not in st.session_state:
     st.session_state.indent_editor_df_nf = pd.DataFrame(
         [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
-# Store fetched item details (unit map) for lookup based on selected department
-if 'indent_item_unit_map_nf' not in st.session_state:
-    st.session_state.indent_item_unit_map_nf = {}
-# Store currently selected department to detect changes
-if 'indent_current_dept_nf' not in st.session_state:
-    st.session_state.indent_current_dept_nf = None
-# Store options list for editor to prevent refetching unless dept changes
-if 'indent_item_options_nf' not in st.session_state:
-     st.session_state.indent_item_options_nf = []
+if 'indent_item_unit_map_nf' not in st.session_state: st.session_state.indent_item_unit_map_nf = {}
+if 'indent_current_dept_nf' not in st.session_state: st.session_state.indent_current_dept_nf = None
+if 'indent_item_options_nf' not in st.session_state: st.session_state.indent_item_options_nf = []
 
 
-# --- Reset Function ---
+# --- CORRECTED Reset Function ---
 def reset_indent_state_noform():
-    """Resets state variables for the indent form."""
+    """Resets custom state variables for the indent form."""
+    # Reset data editor's DataFrame state
     st.session_state.indent_editor_df_nf = pd.DataFrame(
         [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
     )
+    # Reset custom state related to items/department
     st.session_state.indent_item_unit_map_nf = {}
     st.session_state.indent_current_dept_nf = None
     st.session_state.indent_item_options_nf = []
-    # Reset widget values by clearing keys
-    st.session_state.pop(KEY_DEPT_NF, None)
-    st.session_state.pop(KEY_REQ_BY_NF, None)
-    st.session_state.pop(KEY_REQ_DATE_NF, None)
-    st.session_state.pop(KEY_NOTES_NF, None)
+    # DO NOT pop or set widget keys (KEY_DEPT_NF, KEY_REQ_BY_NF etc.) here
+    # Let Streamlit handle their state based on the rerun and cleared control state
+
 
 # --- Helper function for validation ---
 def is_valid_item_tuple_nf(val):
-    """Checks if the value is a tuple representing a valid item selection."""
     if val is None: return False
     try:
-        # Check tuple structure and ensure ID is int
         return isinstance(val, tuple) and len(val) == 2 and isinstance(int(val[1]), int)
     except (TypeError, ValueError, IndexError): return False
 
@@ -86,30 +79,28 @@ else:
         # --- NO FORM WRAPPER ---
 
         # --- Department Selection ---
-        dept_value_on_load = st.session_state.get(KEY_DEPT_NF, None) # Read from state
+        dept_value_on_load = st.session_state.get(KEY_DEPT_NF, None)
         dept_index = DEPARTMENTS.index(dept_value_on_load) if dept_value_on_load in DEPARTMENTS else None
 
         selected_dept = st.selectbox(
-            "Requesting Department*", options=DEPARTMENTS,
-            key=KEY_DEPT_NF, # Use state to preserve value across reruns
-            index=dept_index,
-            placeholder="Select department...",
-            help="Select department to filter items & record request."
+            "Requesting Department*", options=DEPARTMENTS, key=KEY_DEPT_NF, index=dept_index,
+            placeholder="Select department...", help="Select department to filter items & record request."
         )
 
         # --- Handle Department Change and Load Items ---
         needs_item_reload = False
-        if selected_dept and selected_dept != st.session_state.get('indent_current_dept_nf'):
-            # Department changed, trigger reload
-            st.session_state.indent_current_dept_nf = selected_dept
+        # Check if the widget value changed OR if the internal control state doesn't match
+        if selected_dept != st.session_state.get('indent_current_dept_nf'):
+            st.session_state.indent_current_dept_nf = selected_dept # Update control state
             needs_item_reload = True
-            # Reset editor df when dept changes
+            # Reset editor df and item caches when department changes
             st.session_state.indent_editor_df_nf = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}])
-            # Clear previous item options and map
             st.session_state.indent_item_options_nf = []
             st.session_state.indent_item_unit_map_nf = {}
+            # Don't rerun here yet, load items below first if needed
 
-        # Load items if needed (new dept selected OR first time with this dept)
+        # Load items if needed (new dept selected OR options list is empty)
+        # This avoids re-fetching if state already holds options for the current dept
         if selected_dept and not st.session_state.get('indent_item_options_nf'):
             with st.spinner(f"Loading items for {selected_dept}..."):
                 filtered_items_df = get_all_items_with_stock(db_engine, include_inactive=False, department=selected_dept)
@@ -128,19 +119,19 @@ else:
                  st.warning(f"No active items permitted for '{selected_dept}'.", icon="⚠️")
                  st.session_state.indent_item_options_nf = []
                  st.session_state.indent_item_unit_map_nf = {}
-            # If reload was triggered by dept change, rerun now
+            # If reload was triggered by dept change, rerun now after loading
             if needs_item_reload:
                  st.rerun()
 
         # Get current options and map from state for editor config
         current_item_options = st.session_state.get('indent_item_options_nf', [])
         current_unit_map = st.session_state.get('indent_item_unit_map_nf', {})
-        can_add_items = bool(current_item_options) # Enable editor if options exist
+        can_add_items = bool(current_item_options)
 
         # --- Other Header Inputs ---
-        # Read default from state if exists
-        req_by = st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY_NF, value=st.session_state.get(KEY_REQ_BY_NF, ""))
-        req_date = st.date_input("Date Required*", value=st.session_state.get(KEY_REQ_DATE_NF, date.today() + timedelta(days=1)), min_value=date.today(), key=KEY_REQ_DATE_NF)
+        # Let these widgets manage their own state via key
+        req_by = st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY_NF)
+        req_date = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key=KEY_REQ_DATE_NF)
 
         st.divider()
         st.markdown("**Add Items to Request:**")
@@ -152,7 +143,7 @@ else:
         else:
              # --- Data Editor (No Form) ---
              edited_df = st.data_editor(
-                 st.session_state.indent_editor_df_nf, # Use stateful DataFrame
+                 st.session_state.indent_editor_df_nf, # Read from state
                  key=KEY_EDITOR_NF,
                  num_rows="dynamic", use_container_width=True,
                  column_config={
@@ -171,32 +162,30 @@ else:
                     selected_option = new_row.get("Item")
                     if is_valid_item_tuple_nf(selected_option):
                         item_id = selected_option[1]
-                        new_row["Unit"] = current_unit_map.get(item_id, '') # Use current map
+                        new_row["Unit"] = current_unit_map.get(item_id, '')
                     else:
                          new_row["Unit"] = ''
                     processed_rows.append(new_row)
-                 st.session_state.indent_editor_df_nf = pd.DataFrame(processed_rows)
+                 st.session_state.indent_editor_df_nf = pd.DataFrame(processed_rows) # Update state
              else: # Handle editor being cleared
                   st.session_state.indent_editor_df_nf = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}])
 
 
         # --- Notes ---
         st.divider()
-        notes = st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=KEY_NOTES_NF, value=st.session_state.get(KEY_NOTES_NF, ""))
+        notes = st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=KEY_NOTES_NF)
 
         # --- Submit Button ---
         st.divider()
-        # Disable button if no department selected
-        submit_disabled = not st.session_state.get(KEY_DEPT_NF)
+        submit_disabled = not st.session_state.get(KEY_DEPT_NF) # Disable if no dept selected
         if st.button("Submit Indent Request", type="primary", disabled=submit_disabled):
 
-            # Get values directly from state/widgets for submission
+            # Get values directly from state using keys
             current_req_by = st.session_state.get(KEY_REQ_BY_NF, "").strip()
             current_req_date = st.session_state.get(KEY_REQ_DATE_NF, date.today())
             current_notes = st.session_state.get(KEY_NOTES_NF, "").strip()
-            current_dept = st.session_state.get(KEY_DEPT_NF) # Should exist if button enabled
-            # Use the DataFrame stored in session state (updated after editor)
-            items_df_to_validate = st.session_state.indent_editor_df_nf.copy()
+            current_dept = st.session_state.get(KEY_DEPT_NF) # Use state value
+            items_df_to_validate = st.session_state.indent_editor_df_nf.copy() # Use state DF
 
             # Validation
             items_df_validated_items = items_df_to_validate[items_df_to_validate['Item'].apply(is_valid_item_tuple_nf)]
@@ -204,12 +193,11 @@ else:
             items_df_validated_items = items_df_validated_items.dropna(subset=['Quantity'])
             items_df_final = items_df_validated_items[items_df_validated_items['Quantity'] > 0]
 
-            if not current_dept: st.warning("Select Department.", icon="⚠️") # Failsafe
+            if not current_dept: st.warning("Select Department.", icon="⚠️")
             elif not current_req_by: st.warning("Enter Requester.", icon="⚠️")
             elif items_df_final.empty: st.warning("Add valid item(s) with quantity > 0.", icon="⚠️")
             elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
             else:
-                 # Prepare & Execute Backend Call
                  item_list = [{"item_id": r['Item'][1], "requested_qty": float(r['Quantity']), "notes": ""} for i, r in items_df_final.iterrows()]
                  mrn = generate_mrn(engine=db_engine)
                  if not mrn: st.error("Failed to generate MRN.")
@@ -222,8 +210,8 @@ else:
                     success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
                     if success:
                         st.success(f"Indent '{mrn}' submitted!", icon="✅")
-                        reset_indent_state_noform() # Call reset
-                        time.sleep(0.5) # Allow success message to show briefly
+                        reset_indent_state_noform() # Call CORRECT reset
+                        time.sleep(0.5)
                         st.rerun() # Rerun to clear fields visually
                     else: st.error("Failed to submit Indent.", icon="❌")
 

@@ -171,56 +171,54 @@ else:
                     st.rerun()
 
             elif submit_indent_button:
-                # --- START DEBUGGING ---
-                st.write("--- DEBUG: Inside submit_indent_button Logic ---")
-                st.write(f"Checking key: {req_by_key}")
-                st.write(f"Value in state for {req_by_key}: {st.session_state.get(req_by_key)}")
-                st.write(f"Checking key: {req_date_key}")
-                st.write(f"Value in state for {req_date_key}: {st.session_state.get(req_date_key)}")
-                st.write(f"Checking key: {notes_key}")
-                st.write(f"Value in state for {notes_key}: {st.session_state.get(notes_key)}")
-                st.write(f"Confirmed Dept: {st.session_state.indent_selected_dept}")
-                st.write("--- END DEBUGGING ---")
-                # --- END DEBUGGING ---
+                # Print debug output - REMOVED for this test
+                # st.write("--- DEBUG: Inside submit_indent_button Logic ---")
+                # ... (rest of debug output) ...
 
                 #################################################################
-                # --- TEMPORARILY COMMENTED OUT FOR ISOLATION DEBUGGING ---   #
+                # --- BLOCK 1: UNCOMMENTED FOR TESTING ---                    #
                 #################################################################
-                # if not st.session_state.indent_dept_confirmed:
-                #      st.error("Department not confirmed.") # Should not happen if button logic is correct
-                # else:
-                #     current_req_by = st.session_state.get(req_by_key, "").strip()
-                #     current_req_date = st.session_state.get(req_date_key, date.today())
-                #     current_notes = st.session_state.get(notes_key, "").strip()
-                #     items_df_to_validate = st.session_state.indent_items_df.copy()
+                if not st.session_state.indent_dept_confirmed:
+                     st.error("Department not confirmed.") # Should not happen
+                else:
+                    current_req_by = st.session_state.get(req_by_key, "").strip()
+                    current_req_date = st.session_state.get(req_date_key, date.today())
+                    current_notes = st.session_state.get(notes_key, "").strip()
+                    items_df_to_validate = st.session_state.indent_items_df.copy()
 
-                #     items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
-                #     items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
-                #     items_df_final = items_df_final[items_df_final['Quantity'] > 0]
+                    items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
+                    items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
+                    items_df_final = items_df_final[items_df_final['Quantity'] > 0]
 
-                #     if not current_req_by: st.warning("Enter Requester Name/ID.", icon="⚠️")
-                #     elif items_df_final.empty: st.warning("Add valid item(s).", icon="⚠️")
-                #     elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
-                #     else:
-                #         mrn = generate_mrn(engine=db_engine)
-                #         if not mrn: st.error("Failed to generate MRN.")
-                #         else:
-                #             indent_header = {
-                #                 "mrn": mrn, "requested_by": current_req_by,
-                #                 "department": st.session_state.indent_selected_dept,
-                #                 "date_required": current_req_date, "status": "Submitted",
-                #                 "notes": current_notes
-                #             }
-                #             item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
-                #             success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
-                #             if success: st.success(f"Indent '{mrn}' submitted!", icon="✅"); reset_indent_form_state()
-                #             else: st.error("Failed to submit Indent.", icon="❌")
+                    validation_passed = False # Flag to track validation
+                    if not current_req_by: st.warning("Enter Requester Name/ID.", icon="⚠️")
+                    elif items_df_final.empty: st.warning("Add valid item(s).", icon="⚠️")
+                    elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
+                    else:
+                        validation_passed = True # Validation passed!
+                        st.write("DEBUG: Validation Passed.") # Add debug message
+
                 #################################################################
-                # --- END OF TEMPORARILY COMMENTED OUT BLOCK ---              #
+                # --- BLOCK 2: STILL COMMENTED OUT ---                        #
+                #################################################################
+                #         if validation_passed: # Check flag before proceeding
+                #             mrn = generate_mrn(engine=db_engine)
+                #             if not mrn: st.error("Failed to generate MRN.")
+                #             else:
+                #                 indent_header = {
+                #                     "mrn": mrn, "requested_by": current_req_by,
+                #                     "department": st.session_state.indent_selected_dept,
+                #                     "date_required": current_req_date, "status": "Submitted",
+                #                     "notes": current_notes
+                #                 }
+                #                 item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
+                #                 success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
+                #                 if success: st.success(f"Indent '{mrn}' submitted!", icon="✅"); reset_indent_form_state()
+                #                 else: st.error("Failed to submit Indent.", icon="❌")
                 #################################################################
 
-                # Add success message to confirm this block ran without NameError
-                st.success("DEBUG: Reached end of submit logic block without NameError.")
+                # Removed final success message from isolation test
+                # st.success("DEBUG: Reached end of submit logic block without NameError.")
 
 
     # --- Tab 2: View Indents ---

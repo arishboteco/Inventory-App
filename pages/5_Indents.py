@@ -5,8 +5,6 @@ from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple
 import time
 
-st.write("--- INDENTS PAGE VERSION: 2025-04-17-B ---") # <-- ADD THIS LINE
-
 # --- Page Config (REMOVED) ---
 
 # Import shared functions
@@ -22,30 +20,34 @@ except ImportError as e:
 
 # --- Constants ---
 DEPARTMENTS = ["Kitchen", "Bar", "Housekeeping", "Admin", "Maintenance", "Service"]
+# Static Keys
 KEY_DEPT = "indent_req_dept"
 KEY_REQ_BY = "indent_req_by"
 KEY_REQ_DATE = "indent_req_date"
-KEY_EDITOR = "indent_item_editor"
 KEY_NOTES = "indent_notes"
 KEY_FORM = "new_indent_form"
+# Keys for simplified item entry
+KEY_ITEM_SELECT = "indent_item_select"
+KEY_ITEM_QTY = "indent_item_qty"
+
 
 # --- Initialize Session State ---
 if 'indent_dept_confirmed' not in st.session_state: st.session_state.indent_dept_confirmed = False
 if 'indent_selected_dept' not in st.session_state: st.session_state.indent_selected_dept = None
-if 'indent_items_df' not in st.session_state:
-    st.session_state.indent_items_df = pd.DataFrame(
-        [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
-    )
+# REMOVED: indent_items_df - no longer using data editor state here
 
 # --- Simplified Reset Function ---
 def reset_indent_form_state():
-    # Only reset control flags and data editor content
     st.session_state.indent_dept_confirmed = False
     st.session_state.indent_selected_dept = None
-    st.session_state.indent_items_df = pd.DataFrame(
-        [{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"]
-    )
-    # REMOVED: Explicit reset of widget values like st.session_state[KEY_REQ_BY] = ""
+    # Explicitly reset widget values in state using static keys
+    st.session_state[KEY_DEPT] = None
+    st.session_state[KEY_REQ_BY] = ""
+    st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1)
+    st.session_state[KEY_NOTES] = ""
+    # Reset simplified item widgets
+    st.session_state[KEY_ITEM_SELECT] = None
+    st.session_state[KEY_ITEM_QTY] = 1.0 # Reset qty to default
 
 
 # --- Page Content ---
@@ -85,8 +87,7 @@ else:
             st.divider()
 
             items_loaded_successfully = False
-            item_options_list = []
-            item_unit_map = {}
+            item_options_list = [] # Will still hold [(display, id), ...]
 
             if st.session_state.indent_dept_confirmed:
                 st.markdown(f"**Step 2: Add Items for {st.session_state.indent_selected_dept} Department**")
@@ -100,38 +101,41 @@ else:
                 else:
                     items_loaded_successfully = True
                     if 'item_id' in filtered_items_df.columns and 'name' in filtered_items_df.columns:
+                        # Still need the options list for the selectbox
                         item_options_list = [(f"{r['name']} ({r.get('unit', 'N/A')})", r['item_id']) for i, r in filtered_items_df.iterrows()]
-                        item_unit_map = {r['item_id']: r.get('unit', '') for i, r in filtered_items_df.iterrows()}
+                        # No item_unit_map needed for this simplified version
 
+                # --- Display Rest of Form Fields ---
                 c2, c3 = st.columns(2)
                 with c2: st.text_input("Requested By*", placeholder="Enter name", key=KEY_REQ_BY)
                 with c3: st.date_input("Date Required*", value=st.session_state.get(KEY_REQ_DATE, date.today() + timedelta(days=1)), min_value=date.today(), key=KEY_REQ_DATE)
 
-                st.markdown("**Add Items to Request:**")
-                if not items_loaded_successfully: st.info("No items available.")
+                st.markdown("**Add Item to Request (Simplified):**")
+                if not items_loaded_successfully:
+                    st.info("No items available to add for the selected department.")
                 else:
-                     edited_df = st.data_editor(
-                        st.session_state.indent_items_df, key=KEY_EDITOR, num_rows="dynamic", use_container_width=True,
-                        column_config={
-                            "Item": st.column_config.SelectboxColumn("Select Item*", help="Choose item", width="large", options=item_options_list, required=True),
-                            "Quantity": st.column_config.NumberColumn("Quantity*", help="Enter quantity", min_value=0.01, format="%.2f", step=0.1, required=True),
-                            "Unit": st.column_config.TextColumn("Unit", help="Auto-filled", disabled=True, width="small"),
-                        }, hide_index=True,
-                     )
-                     # Unit lookup logic
-                     processed_rows = []
-                     if not edited_df.empty:
-                         for i, row in edited_df.iterrows():
-                            new_row = row.to_dict()
-                            selected_option = new_row.get("Item")
-                            item_id = None
-                            if isinstance(selected_option, tuple): item_id = selected_option[1]; new_row["Item"] = selected_option; new_row["Unit"] = item_unit_map.get(item_id, '')
-                            elif pd.isna(selected_option): new_row["Unit"] = ''
-                            else: new_row["Unit"] = ''
-                            processed_rows.append(new_row)
-                         if processed_rows: st.session_state.indent_items_df = pd.DataFrame(processed_rows)
-                         else: st.session_state.indent_items_df = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"])
-                     else: st.session_state.indent_items_df = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"])
+                    # --- SIMPLIFIED ITEM ENTRY ---
+                    item_c1, item_c2 = st.columns([3, 1])
+                    with item_c1:
+                        st.selectbox(
+                            "Select Item*",
+                            options=item_options_list,
+                            format_func=lambda x: x[0] if isinstance(x, tuple) else x, # Show display name
+                            key=KEY_ITEM_SELECT,
+                            index=None, # Default to empty selection
+                            placeholder="Choose an item...",
+                            disabled=not items_loaded_successfully
+                        )
+                    with item_c2:
+                        st.number_input(
+                            "Quantity*",
+                            min_value=0.01,
+                            step=0.1,
+                            format="%.2f",
+                            key=KEY_ITEM_QTY,
+                            disabled=not items_loaded_successfully
+                        )
+                    # --- END SIMPLIFIED ITEM ENTRY ---
 
                 st.divider()
                 st.text_area("Notes / Remarks", placeholder="Any special instructions?", key=KEY_NOTES)
@@ -148,50 +152,53 @@ else:
                 else:
                     st.session_state.indent_selected_dept = selected_dept_val
                     st.session_state.indent_dept_confirmed = True
-                    st.session_state.indent_items_df = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"])
+                    # Reset simplified item widgets when dept confirmed
+                    st.session_state[KEY_ITEM_SELECT] = None
+                    st.session_state[KEY_ITEM_QTY] = 1.0
                     st.rerun()
 
-           # Replace the existing elif submit_indent_button: block with this:
             elif submit_indent_button:
-                if not st.session_state.indent_dept_confirmed:
-                     st.error("Department not confirmed.")
+                if not st.session_state.indent_dept_confirmed: st.error("Department not confirmed.")
                 else:
-                    # Validate directly using st.session_state.get()
-                    if not st.session_state.get(KEY_REQ_BY, "").strip():
-                        st.warning("Enter Requester Name/ID.", icon="⚠️")
+                    # Get values using static keys
+                    current_req_by = st.session_state.get(KEY_REQ_BY, "").strip()
+                    current_req_date = st.session_state.get(KEY_REQ_DATE, date.today())
+                    current_notes = st.session_state.get(KEY_NOTES, "").strip()
+                    # Get simplified item details
+                    selected_item_tuple = st.session_state.get(KEY_ITEM_SELECT)
+                    selected_qty = st.session_state.get(KEY_ITEM_QTY, 0.0)
+
+                    # Validation
+                    if not current_req_by: st.warning("Enter Requester Name/ID.", icon="⚠️")
+                    elif not selected_item_tuple or not isinstance(selected_item_tuple, tuple): # Check item selected
+                         st.warning("Please select a valid item.", icon="⚠️")
+                    elif selected_qty <= 0: # Check quantity
+                         st.warning("Please enter a quantity greater than 0.", icon="⚠️")
                     else:
-                        items_df_to_validate = st.session_state.indent_items_df.copy()
-                        items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
-                        items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
-                        items_df_final = items_df_final[items_df_final['Quantity'] > 0]
+                         # Prepare item list (with only one item)
+                         item_list = [{
+                             "item_id": selected_item_tuple[1], # Get ID from tuple
+                             "requested_qty": selected_qty,
+                             "notes": ""
+                         }]
 
-                        if items_df_final.empty:
-                             st.warning("Add valid item(s).", icon="⚠️")
-                        elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any():
-                             st.warning("Duplicate items found.", icon="⚠️")
-                        else:
-                             # Validation passed, proceed to backend
-                             mrn = generate_mrn(engine=db_engine)
-                             if not mrn: st.error("Failed to generate MRN.")
-                             else:
-                                # Build header directly using st.session_state.get()
-                                indent_header = {
-                                    "mrn": mrn,
-                                    "requested_by": st.session_state.get(KEY_REQ_BY, "").strip(),
-                                    "department": st.session_state.indent_selected_dept,
-                                    "date_required": st.session_state.get(KEY_REQ_DATE, date.today()),
-                                    "status": "Submitted",
-                                    "notes": st.session_state.get(KEY_NOTES, "").strip()
-                                }
-                                item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
-                                success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
-
-                                if success:
-                                    st.success(f"Indent '{mrn}' submitted!", icon="✅")
-                                    reset_indent_form_state()
-                                    time.sleep(0.5)
-                                    st.rerun()
-                                else: st.error("Failed to submit Indent.", icon="❌")
+                         # Proceed with backend call
+                         mrn = generate_mrn(engine=db_engine)
+                         if not mrn: st.error("Failed to generate MRN.")
+                         else:
+                            indent_header = {
+                                "mrn": mrn, "requested_by": current_req_by,
+                                "department": st.session_state.indent_selected_dept,
+                                "date_required": current_req_date, "status": "Submitted",
+                                "notes": current_notes
+                            }
+                            success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
+                            if success:
+                                st.success(f"Indent '{mrn}' submitted!", icon="✅")
+                                reset_indent_form_state()
+                                time.sleep(0.5)
+                                st.rerun()
+                            else: st.error("Failed to submit Indent.", icon="❌")
 
     # --- Tabs 2 & 3 ---
     with tab_view: st.subheader("View Indents"); st.info("To be implemented.")

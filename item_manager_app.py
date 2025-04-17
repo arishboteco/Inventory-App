@@ -1,286 +1,523 @@
+# item_manager_app.py
 import streamlit as st
 from sqlalchemy import create_engine, text, exc as sqlalchemy_exc
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
 import pandas as pd
-from typing import Any, Optional, Dict, List, Tuple
+from typing import Any, Optional, Dict, List, Tuple # Ensure these are imported
 from datetime import datetime, date, timedelta
 import math
+import time # Added for dummy MRN generation if needed, and maybe other uses
 
 # --- Constants ---
 # Define standard transaction types for consistency
 TX_RECEIVING = "RECEIVING"
 TX_ADJUSTMENT = "ADJUSTMENT"
 TX_WASTAGE = "WASTAGE"
-TX_INDENT_FULFILL = "INDENT_FULFILL"
-TX_SALE = "SALE"
+TX_INDENT_FULFILL = "INDENT_FULFILL" # Added for indent fulfillment
+TX_SALE = "SALE" # For potential future use
 
 # --- Database Connection ---
 @st.cache_resource(show_spinner="Connecting to database...")
 def connect_db():
-    """Connects to the DB. Returns SQLAlchemy engine or None."""
+    """Connects to the DB using secrets. Returns SQLAlchemy engine or None."""
     try:
-        if "database" not in st.secrets: st.error("DB config missing!"); return None
-        db_secrets = st.secrets["database"]; required_keys = ["engine", "user", "password", "host", "port", "dbname"]
-        if not all(key in db_secrets for key in required_keys): st.error("DB secrets missing keys."); return None
-        db_url = (f"{db_secrets['engine']}://{db_secrets['user']}:{db_secrets['password']}"
-                  f"@{db_secrets['host']}:{db_secrets['port']}/{db_secrets['dbname']}")
+        # Check if secrets for database exist
+        if "database" not in st.secrets:
+            st.error("Database configuration missing in Streamlit secrets (secrets.toml)!")
+            return None
+
+        db_secrets = st.secrets["database"]
+        required_keys = ["engine", "user", "password", "host", "port", "dbname"]
+
+        # Validate required keys are present
+        if not all(key in db_secrets for key in required_keys):
+            st.error(f"Database secrets are missing required keys: {required_keys}")
+            return None
+
+        # Construct database URL
+        db_url = (
+            f"{db_secrets['engine']}://{db_secrets['user']}:{db_secrets['password']}"
+            f"@{db_secrets['host']}:{db_secrets['port']}/{db_secrets['dbname']}"
+        )
+
+        # Create and test engine connection
         engine = create_engine(db_url, pool_pre_ping=True)
-        with engine.connect() as connection: connection.execute(text("SELECT 1"))
-        # print("DB Connection Successful") # Keep console log minimal
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1")) # Test connection
+        # print("DB Connection Successful") # Keep console log minimal for production
         return engine
+
+    except OperationalError as oe:
+        st.error(f"Database connection error: {oe}. Check connection details, firewall, or DB status.")
+        return None
     except Exception as e:
-        # print(f"DB Connection Error: {e}") # Keep console log minimal
-        st.error(f"DB connection failed: Check secrets and DB status. ({e})")
+        st.error(f"An unexpected error occurred during database connection: {e}")
         return None
 
-# --- Database Interaction Functions ---
-# All functions that interact with the database are kept here
-# They will be imported by the page scripts
-
-# --- Item Functions ---
-@st.cache_data(ttl=600)
-def get_all_items_with_stock(_engine, include_inactive: bool = False) -> pd.DataFrame:
-    """Fetches items and calculates stock, optionally including inactive."""
-    if not _engine: st.error("DB connection unavailable."); return pd.DataFrame()
-    items_query_sql = """SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, notes, is_active FROM items"""
-    if not include_inactive: items_query_sql += " WHERE is_active = TRUE"
-    items_query_sql += " ORDER BY category, sub_category, name;"
-    items_query = text(items_query_sql)
-    stock_query = text("""SELECT item_id, SUM(quantity_change) AS calculated_stock FROM stock_transactions GROUP BY item_id;""")
-    expected_cols = ["item_id", "name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes", "is_active", "current_stock"]
+# --- Helper Function for Data Fetching (Error Handling) ---
+def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    """Fetches data using SQLAlchemy, handles errors, returns DataFrame."""
     try:
-        with _engine.connect() as connection:
-            items_df = pd.read_sql(items_query, connection)
-            stock_levels_df = pd.read_sql(stock_query, connection)
-            if items_df.empty: return pd.DataFrame(columns=expected_cols)
-            items_df['item_id'] = items_df['item_id'].astype(int)
-            if not stock_levels_df.empty:
-                 stock_levels_df['item_id'] = stock_levels_df['item_id'].astype(int)
-                 stock_levels_df['calculated_stock'] = pd.to_numeric(stock_levels_df['calculated_stock'], errors='coerce').fillna(0)
-            else: stock_levels_df = pd.DataFrame(columns=['item_id', 'calculated_stock'])
-            combined_df = pd.merge(items_df, stock_levels_df, on='item_id', how='left')
-            combined_df['calculated_stock'] = combined_df['calculated_stock'].fillna(0)
-            combined_df.rename(columns={'calculated_stock': 'current_stock'}, inplace=True)
-            if 'reorder_point' in combined_df.columns: combined_df['reorder_point'] = pd.to_numeric(combined_df['reorder_point'], errors='coerce').fillna(0)
-            if 'current_stock' in combined_df.columns: combined_df['current_stock'] = pd.to_numeric(combined_df['current_stock'], errors='coerce').fillna(0)
-            for col in expected_cols:
-                if col not in combined_df.columns:
-                    if col == 'is_active': combined_df[col] = True
-                    elif col in ['reorder_point', 'current_stock']: combined_df[col] = 0
-                    else: combined_df[col] = None
-            return combined_df[expected_cols]
-    except ProgrammingError as e: st.error(f"DB query failed (items/transactions tables?). Error: {e}"); return pd.DataFrame(columns=expected_cols)
-    except Exception as e: st.error(f"Failed to fetch items/stock: {e}"); st.exception(e); return pd.DataFrame(columns=expected_cols)
+        with engine.connect() as connection:
+            return pd.read_sql(text(query), connection, params=params if params else {})
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error executing query: {db_err}")
+    except Exception as e:
+        st.error(f"An unexpected error occurred fetching data: {e}")
+    return pd.DataFrame() # Return empty DataFrame on error
 
+# --- Item Management Functions ---
+@st.cache_data(ttl=600, show_spinner="Fetching items...") # Cache for 10 minutes
+def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame:
+    """Fetches all items joined with their calculated current stock."""
+    # SQL query to calculate stock by summing transactions for each item
+    stock_query = """
+        SELECT
+            item_id,
+            SUM(quantity_change) AS calculated_stock
+        FROM stock_transactions
+        GROUP BY item_id
+    """
+    # Main query to get items and join with calculated stock
+    items_query = f"""
+        SELECT
+            i.*,
+            COALESCE(s.calculated_stock, 0) AS current_stock
+        FROM items i
+        LEFT JOIN ({stock_query}) s ON i.item_id = s.item_id
+        {"" if include_inactive else "WHERE i.is_active = TRUE"}
+        ORDER BY i.name;
+    """
+    return fetch_data(_engine, items_query)
+
+# Function to get details for a single item
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
-    """Fetches details for a specific item_id."""
-    if not engine or item_id is None: return None
-    query = text("SELECT * FROM items WHERE item_id = :id")
-    try:
-        with engine.connect() as connection: result = connection.execute(query, {"id": item_id}); row = result.fetchone()
-        return row._mapping if row else None
-    except Exception as e: st.error(f"Failed to fetch item details {item_id}: {e}"); return None
+    """Fetches details for a single item by its ID."""
+    query = "SELECT * FROM items WHERE item_id = :id;"
+    df = fetch_data(engine, query, {"id": item_id})
+    if not df.empty:
+        return df.iloc[0].to_dict()
+    return None
 
-def add_new_item(engine, item_details: Dict[str, Any]) -> bool:
-    """Inserts a new item."""
-    if not engine: return False
-    insert_query = text("""INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, notes, current_stock, is_active) VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :notes, 0, TRUE)""")
-    try:
-        with engine.connect() as connection:
-            with connection.begin(): connection.execute(insert_query, item_details)
-        return True
-    except IntegrityError as e: st.error(f"Failed to add: Duplicate name? Error: {e}"); return False
-    except Exception as e: st.error(f"Failed to add item: {e}"); st.exception(e); return False
-
-def update_item_details(engine, item_id: int, updated_details: Dict[str, Any]) -> bool:
-    """Updates an existing item (excluding current_stock)."""
-    if not engine or item_id is None: return False
-    update_parts = []; params = {"item_id": item_id}; editable_fields = ['name', 'unit', 'category', 'sub_category', 'permitted_departments', 'reorder_point', 'notes']
-    for key, value in updated_details.items():
-        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value if value else None # Store empty string as NULL
-    if not update_parts: st.warning("No changes detected."); return False
-    update_query = text(f"UPDATE items SET {', '.join(update_parts)} WHERE item_id = :item_id")
+# Function to add a new item
+def add_new_item(engine, name: str, unit: str, category: str, sub_category: str,
+                 permitted_departments: str, reorder_point: float, notes: str) -> bool:
+    """Adds a new item to the database."""
+    sql = text("""
+        INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, notes, is_active)
+        VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :notes, TRUE)
+        ON CONFLICT (name) DO NOTHING;
+    """)
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(update_query, params)
-        return True
-    except IntegrityError as e: st.error(f"Failed to update: Duplicate name? Error: {e}"); return False
-    except Exception as e: st.error(f"Failed to update item {item_id}: {e}"); st.exception(e); return False
+            with connection.begin(): # Use transaction
+                result = connection.execute(sql, parameters={
+                    "name": name, "unit": unit, "category": category, "sub_category": sub_category,
+                    "permitted_departments": permitted_departments, "reorder_point": reorder_point, "notes": notes
+                })
+            # Clear cache for item list after adding
+            get_all_items_with_stock.clear()
+            return result.rowcount > 0 # Returns true if a row was inserted
+    except IntegrityError: # Handles potential duplicate name if ON CONFLICT fails somehow
+        st.error(f"Item name '{name}' might already exist.")
+        return False
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error adding item: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred adding item: {e}")
+        return False
 
+# Function to update existing item details
+def update_item_details(engine, item_id: int, details: Dict[str, Any]) -> bool:
+    """Updates details for an existing item."""
+    sql = text("""
+        UPDATE items SET
+        name = :name, unit = :unit, category = :category, sub_category = :sub_category,
+        permitted_departments = :permitted_departments, reorder_point = :reorder_point, notes = :notes
+        WHERE item_id = :item_id;
+    """)
+    params = details.copy()
+    params["item_id"] = item_id
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(sql, parameters=params)
+            get_all_items_with_stock.clear() # Clear cache
+            return result.rowcount > 0
+    except IntegrityError: # Handles potential duplicate name if trying to rename
+        st.error(f"Could not update: Item name '{details.get('name')}' might already exist.")
+        return False
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error updating item: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred updating item: {e}")
+        return False
+
+# Function to deactivate an item (soft delete)
 def deactivate_item(engine, item_id: int) -> bool:
-    """Sets the item's is_active flag to FALSE."""
-    if not engine or item_id is None: return False
-    deactivate_query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id"); params = {"item_id": item_id}
+    """Sets the is_active flag to FALSE for an item."""
+    sql = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id;")
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(deactivate_query, params)
-        return True
-    except Exception as e: st.error(f"Failed to deactivate item {item_id}: {e}"); st.exception(e); return False
+            with connection.begin():
+                result = connection.execute(sql, parameters={"item_id": item_id})
+            get_all_items_with_stock.clear() # Clear cache
+            return result.rowcount > 0
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error deactivating item: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred deactivating item: {e}")
+        return False
 
+# Function to reactivate an item
 def reactivate_item(engine, item_id: int) -> bool:
-    """Sets the item's is_active flag to TRUE."""
-    if not engine or item_id is None: return False
-    reactivate_query = text("UPDATE items SET is_active = TRUE WHERE item_id = :id"); params = {"id": item_id} # Corrected parameter name
+    """Sets the is_active flag to TRUE for an item."""
+    sql = text("UPDATE items SET is_active = TRUE WHERE item_id = :item_id;")
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(reactivate_query, params)
-        return True
-    except Exception as e: st.error(f"Failed to reactivate item {item_id}: {e}"); st.exception(e); return False
+            with connection.begin():
+                result = connection.execute(sql, parameters={"item_id": item_id})
+            get_all_items_with_stock.clear() # Clear cache
+            return result.rowcount > 0
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error reactivating item: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred reactivating item: {e}")
+        return False
 
-# --- Stock Transaction Functions ---
-def record_stock_transaction(engine, item_id: int, quantity_change: float, transaction_type: str, user_id: str, notes: Optional[str] = None, related_mrn: Optional[str] = None, related_po_id: Optional[int] = None) -> bool:
-    """Records a single stock movement."""
-    if not engine: st.error("DB connection unavailable."); return False
-    if not all([item_id, quantity_change is not None, transaction_type, user_id]): st.error("Missing required fields for stock transaction."); return False
-    if math.isclose(quantity_change, 0): st.warning("Quantity change cannot be zero."); return False
-    insert_query = text("""INSERT INTO stock_transactions (item_id, quantity_change, transaction_type, user_id, notes, related_mrn, related_po_id) VALUES (:item_id, :quantity_change, :transaction_type, :user_id, :notes, :related_mrn, :related_po_id)""")
-    params = {"item_id": item_id, "quantity_change": quantity_change, "transaction_type": transaction_type, "user_id": user_id, "notes": notes, "related_mrn": related_mrn, "related_po_id": related_po_id}
-    try:
-        with engine.connect() as connection:
-            with connection.begin(): connection.execute(insert_query, params)
-        return True
-    except Exception as e: st.error(f"Failed to record stock transaction: {e}"); st.exception(e); return False
 
-@st.cache_data(ttl=60)
-def get_stock_transactions(_engine, item_id: Optional[int] = None, start_date: Optional[date] = None, end_date: Optional[date] = None) -> pd.DataFrame:
-    """Fetches stock transaction history, optionally filtered."""
-    if not _engine: st.error("DB connection unavailable."); return pd.DataFrame()
-    base_query = """SELECT t.transaction_date, i.name AS item_name, t.transaction_type, t.quantity_change, t.user_id, t.notes, t.related_mrn FROM stock_transactions t JOIN items i ON t.item_id = i.item_id"""
-    params = {}; conditions = []
-    if item_id: conditions.append("t.item_id = :item_id"); params["item_id"] = item_id
-    if start_date: conditions.append("t.transaction_date >= :start_date"); params["start_date"] = start_date
-    if end_date: conditions.append("t.transaction_date < :end_date_plus_one"); params["end_date_plus_one"] = end_date + timedelta(days=1)
-    query_string = base_query + (" WHERE " + " AND ".join(conditions) if conditions else "") + " ORDER BY t.transaction_date DESC;"
-    try:
-        with _engine.connect() as connection:
-            df = pd.read_sql(text(query_string), connection, params=params)
-            if 'transaction_date' in df.columns: df['transaction_date'] = pd.to_datetime(df['transaction_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
-            if 'quantity_change' in df.columns: df['quantity_change'] = pd.to_numeric(df['quantity_change'], errors='coerce').fillna(0)
-            return df
-    except ProgrammingError as e: st.error(f"DB query failed. Tables exist? Error: {e}"); return pd.DataFrame()
-    except Exception as e: st.error(f"Failed to fetch stock transactions: {e}"); st.exception(e); return pd.DataFrame()
-
-# --- Supplier Database Functions ---
-@st.cache_data(ttl=600)
-def get_all_suppliers(_engine, include_inactive: bool = False) -> pd.DataFrame:
-    """Fetches all suppliers, optionally including inactive ones."""
-    if not _engine: st.error("DB connection unavailable."); return pd.DataFrame()
-    query_sql = "SELECT supplier_id, name, contact_person, phone, email, address, notes, is_active FROM suppliers"
-    if not include_inactive: query_sql += " WHERE is_active = TRUE"
-    query_sql += " ORDER BY name;"
-    query = text(query_sql)
-    try:
-        with _engine.connect() as connection: df = pd.read_sql(query, connection)
-        return df
-    except ProgrammingError as e: st.error(f"DB query failed. Does 'suppliers' table exist? Error: {e}"); return pd.DataFrame()
-    except Exception as e: st.error(f"Failed to fetch suppliers: {e}"); st.exception(e); return pd.DataFrame()
+# --- Supplier Management Functions ---
+@st.cache_data(ttl=600, show_spinner="Fetching suppliers...")
+def get_all_suppliers(_engine, include_inactive=False) -> pd.DataFrame:
+    """Fetches all suppliers."""
+    query = f"""
+        SELECT * FROM suppliers
+        {"" if include_inactive else "WHERE is_active = TRUE"}
+        ORDER BY name;
+    """
+    return fetch_data(_engine, query)
 
 def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
-    """Fetches details for a specific supplier_id."""
-    if not engine or supplier_id is None: return None
-    query = text("SELECT * FROM suppliers WHERE supplier_id = :id")
-    try:
-        with engine.connect() as connection: result = connection.execute(query, {"id": supplier_id}); row = result.fetchone()
-        return row._mapping if row else None
-    except Exception as e: st.error(f"Failed to fetch supplier details {supplier_id}: {e}"); return None
+    """Fetches details for a single supplier by its ID."""
+    query = "SELECT * FROM suppliers WHERE supplier_id = :id;"
+    df = fetch_data(engine, query, {"id": supplier_id})
+    if not df.empty:
+        return df.iloc[0].to_dict()
+    return None
 
-def add_supplier(engine, supplier_details: Dict[str, Any]) -> bool:
-    """Inserts a new supplier."""
-    if not engine: return False
-    if not supplier_details.get("name"): st.error("Supplier Name is required."); return False
-    supplier_details.setdefault("is_active", True)
-    insert_query = text("""INSERT INTO suppliers (name, contact_person, phone, email, address, notes, is_active) VALUES (:name, :contact_person, :phone, :email, :address, :notes, :is_active)""")
+def add_supplier(engine, name: str, contact: str, phone: str, email: str, address: str, notes: str) -> bool:
+    """Adds a new supplier."""
+    sql = text("""
+        INSERT INTO suppliers (name, contact_person, phone, email, address, notes, is_active)
+        VALUES (:name, :contact, :phone, :email, :address, :notes, TRUE)
+        ON CONFLICT (name) DO NOTHING;
+    """)
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(insert_query, supplier_details)
-        return True
-    except IntegrityError as e: st.error(f"Failed to add supplier: Duplicate name? Error: {e}"); return False
-    except Exception as e: st.error(f"Failed to add supplier: {e}"); st.exception(e); return False
+            with connection.begin():
+                result = connection.execute(sql, parameters={
+                    "name": name, "contact": contact, "phone": phone,
+                    "email": email, "address": address, "notes": notes
+                })
+            get_all_suppliers.clear()
+            return result.rowcount > 0
+    except IntegrityError:
+        st.error(f"Supplier name '{name}' might already exist.")
+        return False
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error adding supplier: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred adding supplier: {e}")
+        return False
 
-def update_supplier(engine, supplier_id: int, updated_details: Dict[str, Any]) -> bool:
-    """Updates an existing supplier."""
-    if not engine or supplier_id is None: return False
-    update_parts = []; params = {"supplier_id": supplier_id}; editable_fields = ['name', 'contact_person', 'phone', 'email', 'address', 'notes']
-    for key, value in updated_details.items():
-        if key in editable_fields: update_parts.append(f"{key} = :{key}"); params[key] = value if value else None
-    if not update_parts: st.warning("No changes detected."); return False
-    update_query = text(f"UPDATE suppliers SET {', '.join(update_parts)} WHERE supplier_id = :supplier_id")
+def update_supplier(engine, supplier_id: int, details: Dict[str, Any]) -> bool:
+    """Updates details for an existing supplier."""
+    sql = text("""
+        UPDATE suppliers SET
+        name = :name, contact_person = :contact_person, phone = :phone, email = :email,
+        address = :address, notes = :notes
+        WHERE supplier_id = :supplier_id;
+    """)
+    params = details.copy()
+    params["supplier_id"] = supplier_id
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(update_query, params)
-        return True
-    except IntegrityError as e: st.error(f"Failed to update supplier: Duplicate name? Error: {e}"); return False
-    except Exception as e: st.error(f"Failed to update supplier {supplier_id}: {e}"); st.exception(e); return False
+            with connection.begin():
+                result = connection.execute(sql, parameters=params)
+            get_all_suppliers.clear()
+            return result.rowcount > 0
+    except IntegrityError:
+        st.error(f"Could not update: Supplier name '{details.get('name')}' might already exist.")
+        return False
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error updating supplier: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred updating supplier: {e}")
+        return False
 
 def deactivate_supplier(engine, supplier_id: int) -> bool:
-    """Sets the supplier's is_active flag to FALSE."""
-    if not engine or supplier_id is None: return False
-    deactivate_query = text("UPDATE suppliers SET is_active = FALSE WHERE supplier_id = :id"); params = {"id": supplier_id}
+    """Sets the is_active flag to FALSE for a supplier."""
+    sql = text("UPDATE suppliers SET is_active = FALSE WHERE supplier_id = :supplier_id;")
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(deactivate_query, params)
-        return True
-    except Exception as e: st.error(f"Failed to deactivate supplier {supplier_id}: {e}"); st.exception(e); return False
+            with connection.begin():
+                result = connection.execute(sql, parameters={"supplier_id": supplier_id})
+            get_all_suppliers.clear()
+            return result.rowcount > 0
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error deactivating supplier: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred deactivating supplier: {e}")
+        return False
 
 def reactivate_supplier(engine, supplier_id: int) -> bool:
-    """Sets the supplier's is_active flag to TRUE."""
-    if not engine or supplier_id is None: return False
-    reactivate_query = text("UPDATE suppliers SET is_active = TRUE WHERE supplier_id = :id"); params = {"id": supplier_id}
+    """Sets the is_active flag to TRUE for a supplier."""
+    sql = text("UPDATE suppliers SET is_active = TRUE WHERE supplier_id = :supplier_id;")
     try:
         with engine.connect() as connection:
-            with connection.begin(): connection.execute(reactivate_query, params)
-        return True
-    except Exception as e: st.error(f"Failed to reactivate supplier {supplier_id}: {e}"); st.exception(e); return False
-# --- End of DB Functions ---
+            with connection.begin():
+                result = connection.execute(sql, parameters={"supplier_id": supplier_id})
+            get_all_suppliers.clear()
+            return result.rowcount > 0
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error reactivating supplier: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred reactivating supplier: {e}")
+        return False
 
 
-# --- Main App Execution ---
-# Set page config first
+# --- Stock Transaction Functions ---
+def record_stock_transaction(engine, item_id: int, quantity_change: float, transaction_type: str,
+                             user_id: Optional[str] = None, related_mrn: Optional[str] = None,
+                             related_po_id: Optional[int] = None, notes: Optional[str] = None) -> bool:
+    """Records a single stock movement transaction."""
+    sql = text("""
+        INSERT INTO stock_transactions
+        (item_id, quantity_change, transaction_type, transaction_date, user_id, related_mrn, related_po_id, notes)
+        VALUES (:item_id, :quantity_change, :transaction_type, CURRENT_TIMESTAMP, :user_id, :related_mrn, :related_po_id, :notes);
+    """)
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                connection.execute(sql, parameters={
+                    "item_id": item_id, "quantity_change": quantity_change, "transaction_type": transaction_type,
+                    "user_id": user_id, "related_mrn": related_mrn, "related_po_id": related_po_id, "notes": notes
+                })
+            # Clear item cache as stock level changed
+            get_all_items_with_stock.clear()
+            # Clear transaction history cache if it exists
+            # get_stock_transactions.clear() # Need to define this function first
+            return True
+    except IntegrityError as ie: # Catch FK violation if item_id doesn't exist
+         st.error(f"Database integrity error recording transaction: {ie}. Ensure item ID {item_id} exists.")
+         return False
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error recording transaction: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred recording transaction: {e}")
+        return False
+
+@st.cache_data(ttl=300, show_spinner="Fetching transaction history...") # Cache for 5 mins
+def get_stock_transactions(_engine, item_id: Optional[int] = None,
+                           start_date: Optional[date] = None, end_date: Optional[date] = None,
+                           limit: int = 1000) -> pd.DataFrame:
+    """Fetches stock transaction history with optional filters."""
+    params = {"limit": limit}
+    conditions = []
+    if item_id:
+        conditions.append("st.item_id = :item_id")
+        params["item_id"] = item_id
+    if start_date:
+        conditions.append("st.transaction_date >= :start_date")
+        params["start_date"] = start_date
+    if end_date:
+        # Add 1 day to end_date to include the whole day
+        end_date_inclusive = end_date + timedelta(days=1)
+        conditions.append("st.transaction_date < :end_date")
+        params["end_date"] = end_date_inclusive
+
+    where_clause = ""
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+    query = f"""
+        SELECT
+            st.transaction_id,
+            st.transaction_date,
+            i.name AS item_name,
+            st.quantity_change,
+            st.transaction_type,
+            st.user_id,
+            st.related_mrn,
+            st.related_po_id,
+            st.notes
+        FROM stock_transactions st
+        JOIN items i ON st.item_id = i.item_id
+        {where_clause}
+        ORDER BY st.transaction_date DESC, st.transaction_id DESC
+        LIMIT :limit;
+    """
+    return fetch_data(_engine, query, params)
+
+# --- Indent Management Functions --- [NEWLY ADDED SECTION]
+
+# Function to generate a unique MRN using the database sequence
+def generate_mrn(engine) -> Optional[str]:
+    """
+    Generates a unique Material Request Number (MRN) using the 'mrn_seq' sequence.
+    Returns MRN string (e.g., 'MRN-123') or None on error.
+    Requires 'mrn_seq' sequence to exist in the database:
+    CREATE SEQUENCE IF NOT EXISTS mrn_seq START 1;
+    """
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT nextval('mrn_seq');"))
+            seq_val = result.scalar_one_or_none()
+            if seq_val is not None:
+                return f"MRN-{seq_val:04d}" # Format as MRN-0001, MRN-0002 etc.
+            else:
+                st.error("Failed to fetch next value from mrn_seq sequence.")
+                return None
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error generating MRN: {db_err}")
+        # Could indicate the sequence doesn't exist
+        st.warning("Ensure the 'mrn_seq' sequence exists in your database.")
+        return None
+    except Exception as e:
+        st.error(f"An unexpected error occurred generating MRN: {e}")
+        return None
+
+# Function to create a new indent record (header and items)
+def create_indent(engine, indent_details: Dict[str, Any], item_list: List[Dict[str, Any]]) -> bool:
+    """
+    Creates a new indent record in the database within a transaction.
+    Inserts into 'indents' table and then related items into 'indent_items'.
+
+    Args:
+        engine: SQLAlchemy engine instance.
+        indent_details: Dict containing header info (mrn, requested_by, department,
+                          date_required, status, notes).
+        item_list: List of dicts, each containing item info (item_id, requested_qty, notes).
+
+    Returns:
+        True if successful, False otherwise.
+    """
+    if not indent_details or not item_list:
+        st.error("Indent details or item list cannot be empty.")
+        return False
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin(): # Start a transaction
+                # 1. Insert into indents table
+                sql_insert_indent = text("""
+                    INSERT INTO indents (mrn, requested_by, department, date_required, status, date_submitted, notes)
+                    VALUES (:mrn, :requested_by, :department, :date_required, :status, CURRENT_TIMESTAMP, :notes)
+                    RETURNING indent_id;
+                """)
+                result = connection.execute(sql_insert_indent, parameters=indent_details)
+                new_indent_id = result.scalar_one_or_none()
+
+                if new_indent_id is None:
+                    st.error("Failed to retrieve indent_id after inserting indent header.")
+                    # Transaction will be rolled back automatically here
+                    return False
+
+                # 2. Insert into indent_items table
+                sql_insert_item = text("""
+                    INSERT INTO indent_items (indent_id, item_id, requested_qty, notes)
+                    VALUES (:indent_id, :item_id, :requested_qty, :notes);
+                """)
+
+                # Prepare list of parameter dictionaries for executemany
+                item_params = [
+                    {
+                        "indent_id": new_indent_id,
+                        "item_id": item.get("item_id"),
+                        "requested_qty": item.get("requested_qty"),
+                        "notes": item.get("notes", None) # Allow optional notes per item
+                    }
+                    for item in item_list
+                ]
+
+                connection.execute(sql_insert_item, parameters=item_params)
+
+            # Transaction commits automatically if no exception occurred
+            # print(f"Successfully created indent ID: {new_indent_id} with {len(item_list)} items.") # Debug log
+            # Optionally clear caches if indent lists are cached elsewhere
+            # get_indents.clear() # Assuming we create a get_indents function later
+            return True
+
+    except IntegrityError as ie:
+        # Handles errors like non-existent item_id (FK violation)
+        st.error(f"Database integrity error: {ie}")
+        st.warning("Please ensure all selected items exist and data is correct.")
+        return False
+    except (OperationalError, ProgrammingError) as db_err:
+        st.error(f"Database error creating indent: {db_err}")
+        return False
+    except Exception as e:
+        st.error(f"An unexpected error occurred creating indent: {e}")
+        return False
+
+
+# --- Main Application (Dashboard) ---
 st.set_page_config(
-    page_title="Boteco Inventory Manager",
-    page_icon="🛒",
-    layout="wide",
-    initial_sidebar_state="expanded" # Keep sidebar open
+    page_title="Restaurant Inventory Manager",
+    page_icon="🍲", # You can use emojis or provide a path to a .ico file
+    layout="wide" # Options: "centered" or "wide"
 )
 
-# Display Title on the main page
-st.title("Boteco Inventory Manager Dashboard 🛒")
-st.write("Overview of your inventory status. Use the sidebar to navigate.")
+st.title("🍲 Restaurant Inventory Dashboard")
+st.caption(f"Current Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-# Attempt to connect to the database
-db_engine = connect_db()
+# --- Connect to Database ---
+engine = connect_db()
 
-if not db_engine:
-    st.error("Database connection failed. Please check secrets and configuration.")
-    st.stop()
+# --- Main App Logic ---
+if not engine:
+    st.error("Application cannot start without a database connection. Please check secrets.toml and database status.")
+    st.stop() # Halt execution if no DB connection
 else:
-    # --- Dashboard Content ---
-    st.header("Inventory Overview")
+    st.sidebar.success("Connected to Database")
 
-    # Fetch data needed for KPIs and Low Stock report (only active items)
-    items_overview_df = get_all_items_with_stock(db_engine, include_inactive=False)
+    # Fetch data needed for the dashboard
+    # Use the internal _engine variable for cached functions
+    all_items_df = get_all_items_with_stock(engine, include_inactive=False) # Only active items for dashboard KPIs
 
-    if items_overview_df.empty and 'name' not in items_overview_df.columns:
-        st.warning("No active item data found to generate dashboard.")
-        total_active_items = 0
-        low_stock_count = 0
-        low_stock_df = pd.DataFrame() # Ensure low_stock_df exists even if empty
-    else:
-        # --- Calculate KPIs ---
-        total_active_items = len(items_overview_df)
-        # Ensure columns are numeric before comparison for low stock
-        items_overview_df['current_stock'] = pd.to_numeric(items_overview_df['current_stock'], errors='coerce').fillna(0)
-        items_overview_df['reorder_point'] = pd.to_numeric(items_overview_df['reorder_point'], errors='coerce').fillna(0)
-        low_stock_df = items_overview_df[
-            (items_overview_df['reorder_point'] > 0) &
-            (items_overview_df['current_stock'] <= items_overview_df['reorder_point'])
-        ].copy()
-        low_stock_count = len(low_stock_df)
+    # --- Calculate KPIs ---
+    total_active_items = len(all_items_df) if not all_items_df.empty else 0
+
+    # Low stock calculation
+    low_stock_df = pd.DataFrame() # Initialize as empty
+    if not all_items_df.empty and 'current_stock' in all_items_df.columns and 'reorder_point' in all_items_df.columns:
+        # Ensure numeric types before comparison
+        all_items_df['current_stock'] = pd.to_numeric(all_items_df['current_stock'], errors='coerce')
+        all_items_df['reorder_point'] = pd.to_numeric(all_items_df['reorder_point'], errors='coerce')
+        # Filter items at or below reorder point, ignoring items with reorder point 0 or NaN/None
+        low_stock_df = all_items_df[
+            (all_items_df['current_stock'] <= all_items_df['reorder_point']) &
+            (all_items_df['reorder_point'] > 0) &
+            (all_items_df['reorder_point'].notna()) &
+            (all_items_df['current_stock'].notna())
+        ]
+    low_stock_count = len(low_stock_df)
 
     # --- Display KPIs ---
-    kpi_col1, kpi_col2 = st.columns(2)
-    kpi_col1.metric("Total Active Items", total_active_items)
-    kpi_col2.metric("Items Low on Stock", low_stock_count)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Total Active Items", total_active_items)
+    with col2:
+        st.metric("Items Low on Stock", low_stock_count)
     # Add more KPIs later (e.g., Total Stock Value if costs are added)
 
     st.divider()
@@ -299,10 +536,11 @@ else:
                 "item_id": "ID", "name": "Item Name", "unit": "Unit",
                 "category": "Category", "sub_category": "Sub-Category",
                 "permitted_departments": None, # Hide less relevant columns for this view
-                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small", format="%d"),
+                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small"), # format="%d" removed for flexibility
                 "current_stock": st.column_config.NumberColumn("Current Stock", width="small"),
                 "notes": None, "is_active": None,
             },
+            # Ensure column order only includes columns present in the dataframe
             column_order=[col for col in ["item_id", "name", "current_stock", "reorder_point", "unit", "category", "sub_category"] if col in low_stock_df.columns]
         )
 
@@ -311,5 +549,5 @@ else:
     st.markdown("*(More dashboard elements like charts or recent activity can be added here later)*")
 
 
-# Note: The page files (pages/1_Items.py, pages/2_Suppliers.py etc.)
-# handle the detailed views and actions.
+# Note: The page files (pages/1_Items.py, pages/2_Suppliers.py, etc.) should
+# import functions from this file (e.g., `from item_manager_app import connect_db, ...`)

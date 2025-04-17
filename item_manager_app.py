@@ -1,8 +1,8 @@
-# item_manager_app.py  – FULL VERSION (19 Apr 2025)
+# item_manager_app.py
 
 import streamlit as st
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError, ProgrammingError
 import pandas as pd
 from typing import Any, Optional, Dict, List
 from datetime import datetime, date, timedelta
@@ -29,8 +29,9 @@ ALL_INDENT_STATUSES = [
 # ─────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Connecting to database…")
 def connect_db():
+    """Return SQLAlchemy engine or None if connection fails."""
     try:
-        db = st.secrets["database"]                       # assumes secrets present
+        db = st.secrets["database"]
         url = (
             f"{db['engine']}://{db['user']}:{db['password']}"
             f"@{db['host']}:{db['port']}/{db['dbname']}"
@@ -45,16 +46,17 @@ def connect_db():
 
 
 def fetch_data(engine, sql: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    """Run a query and return result as DataFrame; returns empty DF on error."""
     try:
         with engine.connect() as conn:
-            rows = conn.execute(text(sql), params or {})
-            return pd.DataFrame(rows.fetchall(), columns=rows.keys())
+            res = conn.execute(text(sql), params or {})
+            return pd.DataFrame(res.fetchall(), columns=res.keys())
     except Exception as e:
-        st.error(f"Fetch error: {e}")
+        st.error(f"Query error: {e}")
         return pd.DataFrame()
 
 # ─────────────────────────────────────────────────────────
-# 3 · ITEM FUNCTIONS  (full block)
+# 3 · ITEM FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=600, show_spinner="Fetching items…")
 def get_all_items_with_stock(_engine,
@@ -78,12 +80,10 @@ def get_all_items_with_stock(_engine,
         {clause}
         ORDER BY i.name
     """
-    df = fetch_data(_engine, sql, p)
-    return df.loc[:, ~df.columns.duplicated()]
+    return fetch_data(_engine, sql, p).loc[:, ~pd.Index.duplicated]
 
-# ---- CRUD helpers ----
 def get_item_details(_engine, item_id: int) -> Optional[Dict[str, Any]]:
-    df = fetch_data(_engine, "SELECT * FROM items WHERE item_id=:iid", {"iid": item_id})
+    df = fetch_data(_engine, "SELECT * FROM items WHERE item_id=:id", {"id": item_id})
     return df.iloc[0].to_dict() if not df.empty else None
 
 def add_new_item(_engine, name, unit, category, sub_category,
@@ -134,8 +134,8 @@ def update_item_status(_engine, item_id: int, active: bool) -> bool:
     try:
         with _engine.begin() as conn:
             r = conn.execute(
-                text("UPDATE items SET is_active=:a WHERE item_id=:id"),
-                {"a": active, "id": item_id}
+                text("UPDATE items SET is_active=:a WHERE item_id=:i"),
+                {"a": active, "i": item_id}
             )
         get_all_items_with_stock.clear()
         return r.rowcount > 0
@@ -143,11 +143,11 @@ def update_item_status(_engine, item_id: int, active: bool) -> bool:
         st.error(f"Status update error: {e}")
         return False
 
-deactivate_item = lambda eng, iid: update_item_status(eng, iid, False)
-reactivate_item = lambda eng, iid: update_item_status(eng, iid, True)
+deactivate_item = lambda eng, i: update_item_status(eng, i, False)
+reactivate_item = lambda eng, i: update_item_status(eng, i, True)
 
 # ─────────────────────────────────────────────────────────
-# 4 · SUPPLIER FUNCTIONS  (hash‑safe)
+# 4 · SUPPLIER FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=600, show_spinner="Fetching suppliers…")
 def get_all_suppliers(_engine, include_inactive=False) -> pd.DataFrame:
@@ -273,8 +273,10 @@ def create_indent(_engine, hdr: Dict[str, Any], items: List[Dict[str, Any]]) -> 
         with _engine.begin() as conn:
             ind_id = conn.execute(text("""
                 INSERT INTO indents
-                (mrn, requested_by, department, date_required, status, date_submitted, notes)
-                VALUES (:mrn,:requested,:dept,:req_date,:status,CURRENT_TIMESTAMP,:notes)
+                (mrn, requested_by, department, date_required,
+                 status, date_submitted, notes)
+                VALUES (:mrn,:requested_by,:department,:date_required,
+                        :status,CURRENT_TIMESTAMP,:notes)
                 RETURNING indent_id
             """), hdr).scalar_one()
             conn.execute(text("""
@@ -295,15 +297,20 @@ def get_indents(_engine,
                 mrn_filter: Optional[str] = None,
                 dept_filter: Optional[List[str]] = None,
                 status_filter: Optional[List[str]] = None,
-                start: Optional[date] = None,
-                end: Optional[date] = None,
+                date_start_filter: Optional[date] = None,
+                date_end_filter: Optional[date] = None,
                 limit: int = 500) -> pd.DataFrame:
     cond, p = [], {"limit": limit}
-    if mrn_filter: cond.append("ind.mrn ILIKE :mrn"); p["mrn"] = f"%{mrn_filter}%"
-    if dept_filter: cond.append("ind.department = ANY(:dept)"); p["dept"] = dept_filter
-    if status_filter: cond.append("ind.status = ANY(:status)"); p["status"] = status_filter
-    if start: cond.append("ind.date_submitted>=:s"); p["s"] = start
-    if end: cond.append("ind.date_submitted<:e"); p["e"] = end + timedelta(days=1)
+    if mrn_filter:
+        cond.append("ind.mrn ILIKE :mrn"); p["mrn"] = f"%{mrn_filter.strip()}%"
+    if dept_filter:
+        cond.append("ind.department = ANY(:dept)"); p["dept"] = dept_filter
+    if status_filter:
+        cond.append("ind.status = ANY(:status)"); p["status"] = status_filter
+    if date_start_filter:
+        cond.append("ind.date_submitted>=:s"); p["s"] = date_start_filter
+    if date_end_filter:
+        cond.append("ind.date_submitted<:e"); p["e"] = date_end_filter + timedelta(days=1)
     where = "WHERE " + " AND ".join(cond) if cond else ""
     sql = f"""
         SELECT indent_id, mrn, requested_by, department,
@@ -318,25 +325,26 @@ def get_indents(_engine,
 # ─────────────────────────────────────────────────────────
 st.set_page_config("Inv Manager", "🍲", layout="wide")
 st.title("🍲 Restaurant Inventory Dashboard")
-st.caption(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+st.caption(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 engine = connect_db()
-if not engine: st.stop()
+if not engine:
+    st.stop()
 st.sidebar.success("DB connected")
 
-items_df = get_all_items_with_stock(engine)
-total_active = len(items_df)
+df_items = get_all_items_with_stock(engine)
+total_active = len(df_items)
 
-low_df, low_cnt = pd.DataFrame(), 0
-if not items_df.empty:
-    cs = pd.to_numeric(items_df["current_stock"], errors="coerce")
-    rp = pd.to_numeric(items_df["reorder_point"], errors="coerce")
+low_df = pd.DataFrame()
+if not df_items.empty:
+    cs = pd.to_numeric(df_items["current_stock"], errors="coerce")
+    rp = pd.to_numeric(df_items["reorder_point"], errors="coerce")
     mask = (cs <= rp) & (rp > 0) & cs.notna() & rp.notna()
-    low_df = items_df[mask]; low_cnt = len(low_df)
+    low_df = df_items[mask]
 
 c1, c2 = st.columns(2)
 c1.metric("Active Items", total_active)
-c2.metric("Low Stock Items", low_cnt)
+c2.metric("Low Stock Items", len(low_df))
 
 st.divider()
 st.subheader("⚠️ Low Stock Items")
@@ -345,13 +353,13 @@ if low_df.empty:
 else:
     st.dataframe(
         low_df,
-        use_container_width=True,
         hide_index=True,
+        use_container_width=True,
         column_order=[
-            "item_id","name","current_stock","reorder_point",
-            "unit","category","sub_category"
+            "item_id", "name", "current_stock", "reorder_point",
+            "unit", "category", "sub_category"
         ]
     )
 
 st.divider()
-st.markdown("*(additional dashboard widgets here)*")
+st.markdown("*(additional dashboard widgets can go here)*")

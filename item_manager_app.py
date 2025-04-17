@@ -356,7 +356,11 @@ else:
     low_stock_df = pd.DataFrame(); low_stock_count = 0
     if not all_items_df.empty and 'current_stock' in all_items_df.columns and 'reorder_point' in all_items_df.columns:
         try:
-            current_stock_numeric = pd.to_numeric(all_items_df['current_stock'], errors='coerce')
+            cs = all_items_df.get('current_stock')
+rp = all_items_df.get('reorder_point')
+if isinstance(cs, pd.Series) and isinstance(rp, pd.Series):
+    current_stock_numeric = pd.to_numeric(cs, errors='coerce')
+    reorder_point_numeric = pd.to_numeric(rp, errors='coerce')
             reorder_point_numeric = pd.to_numeric(all_items_df['reorder_point'], errors='coerce')
             is_low = ((current_stock_numeric <= reorder_point_numeric) & (reorder_point_numeric > 0) &
                       (reorder_point_numeric.notna()) & (current_stock_numeric.notna()))

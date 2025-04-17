@@ -1,4 +1,5 @@
-# item_manager_app.py  – FULL VERSION  (19 Apr 2025)
+# item_manager_app.py  – FULL VERSION (19 Apr 2025)
+
 import streamlit as st
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
@@ -7,7 +8,7 @@ from typing import Any, Optional, Dict, List
 from datetime import datetime, date, timedelta
 
 # ─────────────────────────────────────────────────────────
-# CONSTANTS
+# 1. CONSTANTS
 # ─────────────────────────────────────────────────────────
 TX_RECEIVING       = "RECEIVING"
 TX_ADJUSTMENT      = "ADJUSTMENT"
@@ -20,18 +21,17 @@ STATUS_PROCESSING  = "Processing"
 STATUS_COMPLETED   = "Completed"
 STATUS_CANCELLED   = "Cancelled"
 ALL_INDENT_STATUSES = [
-    STATUS_SUBMITTED, STATUS_PROCESSING,
-    STATUS_COMPLETED, STATUS_CANCELLED
+    STATUS_SUBMITTED, STATUS_PROCESSING, STATUS_COMPLETED, STATUS_CANCELLED
 ]
 
 # ─────────────────────────────────────────────────────────
-# DB CONNECTION
+# 2. DB CONNECTION
 # ─────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Connecting to database…")
 def connect_db():
     try:
         if "database" not in st.secrets:
-            st.error("Database configuration missing.")
+            st.error("Database configuration missing in secrets.toml")
             return None
         db = st.secrets["database"]
         url = (
@@ -57,12 +57,16 @@ def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> p
         return pd.DataFrame()
 
 # ─────────────────────────────────────────────────────────
-# ITEM FUNCTIONS
+# 3. ITEM FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=600, show_spinner="Fetching items…")
 def get_all_items_with_stock(_engine,
                              include_inactive: bool = False,
                              department: Optional[str] = None) -> pd.DataFrame:
+    """
+    Returns items plus calculated current_stock.
+    Leading underscore tells Streamlit not to hash the SQLAlchemy engine.
+    """
     where, params = [], {}
     if not include_inactive:
         where.append("i.is_active = TRUE")
@@ -83,7 +87,7 @@ def get_all_items_with_stock(_engine,
         ORDER BY i.name
     """
     df = fetch_data(_engine, sql, params)
-    df = df.loc[:, ~df.columns.duplicated()]
+    df = df.loc[:, ~df.columns.duplicated()]  # drop duplicate cols
     return df
 
 
@@ -151,15 +155,27 @@ deactivate_item  = lambda eng, iid: update_item_status(eng, iid, False)
 reactivate_item  = lambda eng, iid: update_item_status(eng, iid, True)
 
 # ─────────────────────────────────────────────────────────
-# SUPPLIER FUNCTIONS
+# 4. SUPPLIER FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=600)
 def get_all_suppliers(engine, include_inactive=False):
     sql = "SELECT * FROM suppliers"
     if not include_inactive:
         sql += " WHERE is_active=TRUE"
-    return fetch_data(engine, sql+" ORDER BY name")
+    return fetch_data(engine, sql + " ORDER BY name")
 
+# --- Newly re‑added single‑supplier look‑up ---------------
+def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Return a single supplier row as a dict, or None if not found.
+    """
+    df = fetch_data(
+        engine,
+        "SELECT * FROM suppliers WHERE supplier_id = :sid",
+        {"sid": supplier_id},
+    )
+    return df.iloc[0].to_dict() if not df.empty else None
+# ----------------------------------------------------------
 
 def add_supplier(engine, name, contact, phone, email, address, notes) -> bool:
     q = text("""
@@ -210,7 +226,7 @@ deactivate_supplier = lambda eng, sid: _supplier_status(eng, sid, False)
 reactivate_supplier = lambda eng, sid: _supplier_status(eng, sid, True)
 
 # ─────────────────────────────────────────────────────────
-# STOCK TRANSACTIONS
+# 5. STOCK TRANSACTIONS
 # ─────────────────────────────────────────────────────────
 def record_stock_transaction(engine, item_id: int, qty: float, tx_type: str,
                              user: Optional[str] = None,
@@ -260,7 +276,7 @@ def get_stock_transactions(engine,
     return fetch_data(engine, sql, p)
 
 # ─────────────────────────────────────────────────────────
-# MRN + INDENTS
+# 6. MRN & INDENTS
 # ─────────────────────────────────────────────────────────
 def generate_mrn(engine):
     try:
@@ -329,30 +345,27 @@ def get_indents(engine,
     return fetch_data(engine, sql, p)
 
 # ─────────────────────────────────────────────────────────
-# DASHBOARD  UI
+# 7. DASHBOARD UI
 # ─────────────────────────────────────────────────────────
 st.set_page_config(page_title="Inv Manager", page_icon="🍲", layout="wide")
 st.title("🍲 Restaurant Inventory Dashboard")
-st.caption(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+st.caption(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 engine = connect_db()
-if not engine:
-    st.stop()
-
+if not engine: st.stop()
 st.sidebar.success("DB connected")
 
 items_df = get_all_items_with_stock(engine)
 total_active = len(items_df)
 
-# ---- low stock (rp > 0) ----
+# Low stock (rp > 0)
 low_df, low_cnt = pd.DataFrame(), 0
 if not items_df.empty:
     try:
         cs = pd.to_numeric(items_df["current_stock"], errors="coerce")
         rp = pd.to_numeric(items_df["reorder_point"], errors="coerce")
         mask = (cs <= rp) & (rp > 0) & cs.notna() & rp.notna()
-        low_df = items_df[mask]
-        low_cnt = len(low_df)
+        low_df = items_df[mask]; low_cnt = len(low_df)
     except Exception as e:
         st.error(f"Low‑stock calc error: {e}")
 
@@ -369,8 +382,10 @@ else:
         low_df,
         use_container_width=True,
         hide_index=True,
-        column_order=["item_id","name","current_stock","reorder_point",
-                      "unit","category","sub_category"]
+        column_order=[
+            "item_id","name","current_stock","reorder_point",
+            "unit","category","sub_category"
+        ]
     )
 
 st.divider()

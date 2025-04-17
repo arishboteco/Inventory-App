@@ -117,7 +117,7 @@ else:
                             help="Choose the item you need",
                             width="large",
                             options=item_options_list, # Use list of (display, value) tuples
-                            format_func=lambda x: x[0] if isinstance(x, tuple) else x, # Show only display name
+                            # format_func=lambda x: x[0] if isinstance(x, tuple) else x, # <--- REMOVED THIS LINE
                             required=True,
                         ),
                         "Quantity": st.column_config.NumberColumn(

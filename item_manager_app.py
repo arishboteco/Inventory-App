@@ -1,14 +1,14 @@
-# item_manager_app.py  – FULL VERSION (19 Apr 2025, hash‑safe suppliers)
+# item_manager_app.py  – FULL VERSION (19 Apr 2025)
 
 import streamlit as st
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 import pandas as pd
 from typing import Any, Optional, Dict, List
 from datetime import datetime, date, timedelta
 
 # ─────────────────────────────────────────────────────────
-# 1. CONSTANTS
+# 1 · CONSTANTS
 # ─────────────────────────────────────────────────────────
 TX_RECEIVING       = "RECEIVING"
 TX_ADJUSTMENT      = "ADJUSTMENT"
@@ -25,15 +25,12 @@ ALL_INDENT_STATUSES = [
 ]
 
 # ─────────────────────────────────────────────────────────
-# 2. DB CONNECTION
+# 2 · DB CONNECTION
 # ─────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Connecting to database…")
 def connect_db():
     try:
-        if "database" not in st.secrets:
-            st.error("Database configuration missing in secrets.toml")
-            return None
-        db = st.secrets["database"]
+        db = st.secrets["database"]                       # assumes secrets present
         url = (
             f"{db['engine']}://{db['user']}:{db['password']}"
             f"@{db['host']}:{db['port']}/{db['dbname']}"
@@ -47,29 +44,28 @@ def connect_db():
         return None
 
 
-def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+def fetch_data(engine, sql: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
     try:
         with engine.connect() as conn:
-            rows = conn.execute(text(query), parameters=params or {})
+            rows = conn.execute(text(sql), params or {})
             return pd.DataFrame(rows.fetchall(), columns=rows.keys())
     except Exception as e:
         st.error(f"Fetch error: {e}")
         return pd.DataFrame()
 
 # ─────────────────────────────────────────────────────────
-# 3. ITEM FUNCTIONS  (unchanged from previous version)
+# 3 · ITEM FUNCTIONS  (full block)
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=600, show_spinner="Fetching items…")
 def get_all_items_with_stock(_engine,
                              include_inactive: bool = False,
                              department: Optional[str] = None) -> pd.DataFrame:
-    where, params = [], {}
+    where, p = [], {}
     if not include_inactive:
         where.append("i.is_active = TRUE")
     if department:
-        where.append("(i.permitted_departments = 'All' "
-                     "OR i.permitted_departments ILIKE :dept)")
-        params["dept"] = f"%{department}%"
+        where.append("(i.permitted_departments = 'All' OR i.permitted_departments ILIKE :dept)")
+        p["dept"] = f"%{department}%"
     clause = "WHERE " + " AND ".join(where) if where else ""
     sql = f"""
         SELECT i.*,
@@ -82,32 +78,86 @@ def get_all_items_with_stock(_engine,
         {clause}
         ORDER BY i.name
     """
-    df = fetch_data(_engine, sql, params)
-    df = df.loc[:, ~df.columns.duplicated()]
-    return df
+    df = fetch_data(_engine, sql, p)
+    return df.loc[:, ~df.columns.duplicated()]
 
-# (Item CRUD functions stay the same …)
+# ---- CRUD helpers ----
+def get_item_details(_engine, item_id: int) -> Optional[Dict[str, Any]]:
+    df = fetch_data(_engine, "SELECT * FROM items WHERE item_id=:iid", {"iid": item_id})
+    return df.iloc[0].to_dict() if not df.empty else None
+
+def add_new_item(_engine, name, unit, category, sub_category,
+                 permitted_departments, reorder_point, notes) -> bool:
+    q = text("""
+        INSERT INTO items
+        (name, unit, category, sub_category, permitted_departments,
+         reorder_point, notes, is_active)
+        VALUES (:name,:unit,:category,:sub,:dept,:rp,:notes,TRUE)
+        ON CONFLICT (name) DO NOTHING
+    """)
+    try:
+        with _engine.begin() as conn:
+            r = conn.execute(q, {
+                "name": name, "unit": unit, "category": category,
+                "sub": sub_category, "dept": permitted_departments,
+                "rp": reorder_point, "notes": notes
+            })
+        get_all_items_with_stock.clear()
+        return r.rowcount > 0
+    except IntegrityError:
+        st.error(f"Item “{name}” already exists.")
+    except Exception as e:
+        st.error(f"Add item error: {e}")
+    return False
+
+def update_item_details(_engine, item_id: int, d: Dict[str, Any]) -> bool:
+    d["item_id"] = item_id
+    q = text("""
+        UPDATE items SET
+          name=:name, unit=:unit, category=:category, sub_category=:sub_category,
+          permitted_departments=:permitted_departments, reorder_point=:reorder_point,
+          notes=:notes
+        WHERE item_id=:item_id
+    """)
+    try:
+        with _engine.begin() as conn:
+            r = conn.execute(q, d)
+        get_all_items_with_stock.clear()
+        return r.rowcount > 0
+    except IntegrityError:
+        st.error(f"Name “{d['name']}” exists.")
+    except Exception as e:
+        st.error(f"Update item error: {e}")
+    return False
+
+def update_item_status(_engine, item_id: int, active: bool) -> bool:
+    try:
+        with _engine.begin() as conn:
+            r = conn.execute(
+                text("UPDATE items SET is_active=:a WHERE item_id=:id"),
+                {"a": active, "id": item_id}
+            )
+        get_all_items_with_stock.clear()
+        return r.rowcount > 0
+    except Exception as e:
+        st.error(f"Status update error: {e}")
+        return False
+
+deactivate_item = lambda eng, iid: update_item_status(eng, iid, False)
+reactivate_item = lambda eng, iid: update_item_status(eng, iid, True)
 
 # ─────────────────────────────────────────────────────────
-# 4. SUPPLIER FUNCTIONS (hash‑safe now)
+# 4 · SUPPLIER FUNCTIONS  (hash‑safe)
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=600, show_spinner="Fetching suppliers…")
 def get_all_suppliers(_engine, include_inactive=False) -> pd.DataFrame:
-    """
-    Returns supplier list.
-    Leading underscore avoids Streamlit hashing the SQLAlchemy engine.
-    """
     sql = "SELECT * FROM suppliers"
     if not include_inactive:
         sql += " WHERE is_active=TRUE"
     return fetch_data(_engine, sql + " ORDER BY name")
 
 def get_supplier_details(_engine, supplier_id: int) -> Optional[Dict[str, Any]]:
-    df = fetch_data(
-        _engine,
-        "SELECT * FROM suppliers WHERE supplier_id = :sid",
-        {"sid": supplier_id},
-    )
+    df = fetch_data(_engine, "SELECT * FROM suppliers WHERE supplier_id=:sid", {"sid": supplier_id})
     return df.iloc[0].to_dict() if not df.empty else None
 
 def add_supplier(_engine, name, contact, phone, email, address, notes) -> bool:
@@ -125,7 +175,7 @@ def add_supplier(_engine, name, contact, phone, email, address, notes) -> bool:
     except IntegrityError:
         st.error(f"Supplier “{name}” exists.")
     except Exception as e:
-        st.error(f"Error adding supplier: {e}")
+        st.error(f"Add supplier error: {e}")
     return False
 
 def update_supplier(_engine, supplier_id: int, d: Dict[str, Any]) -> bool:
@@ -144,7 +194,7 @@ def update_supplier(_engine, supplier_id: int, d: Dict[str, Any]) -> bool:
     except IntegrityError:
         st.error(f"Name “{d['name']}” exists.")
     except Exception as e:
-        st.error(f"Supplier update error: {e}")
+        st.error(f"Update supplier error: {e}")
     return False
 
 _supplier_status = lambda eng, sid, act: fetch_data(
@@ -157,26 +207,24 @@ deactivate_supplier = lambda eng, sid: _supplier_status(eng, sid, False)
 reactivate_supplier = lambda eng, sid: _supplier_status(eng, sid, True)
 
 # ─────────────────────────────────────────────────────────
-# 5. STOCK TRANSACTIONS
+# 5 · STOCK TRANSACTIONS
 # ─────────────────────────────────────────────────────────
-def record_stock_transaction(engine, item_id: int, qty: float, tx_type: str,
+def record_stock_transaction(_engine, item_id: int, qty: float, tx_type: str,
                              user: Optional[str] = None,
                              related_mrn: Optional[str] = None,
                              related_po_id: Optional[int] = None,
                              notes: Optional[str] = None) -> bool:
-    q = text("""
-        INSERT INTO stock_transactions
-        (item_id, quantity_change, transaction_type, transaction_date,
-         user_id, related_mrn, related_po_id, notes)
-        VALUES (:item_id,:qty,:tx_type,CURRENT_TIMESTAMP,
-                :user,:related_mrn,:related_po_id,:notes)
-    """)
     try:
-        with engine.begin() as conn:
-            conn.execute(q, {
-                "item_id": item_id, "qty": qty, "tx_type": tx_type,
-                "user": user, "related_mrn": related_mrn,
-                "related_po_id": related_po_id, "notes": notes
+        with _engine.begin() as conn:
+            conn.execute(text("""
+                INSERT INTO stock_transactions
+                (item_id, quantity_change, transaction_type, transaction_date,
+                 user_id, related_mrn, related_po_id, notes)
+                VALUES (:item,:qty,:type,CURRENT_TIMESTAMP,
+                        :user,:mrn,:po,:notes)
+            """), {
+                "item": item_id, "qty": qty, "type": tx_type, "user": user,
+                "mrn": related_mrn, "po": related_po_id, "notes": notes
             })
         get_all_items_with_stock.clear()
         return True
@@ -184,17 +232,16 @@ def record_stock_transaction(engine, item_id: int, qty: float, tx_type: str,
         st.error(f"Transaction error: {e}")
         return False
 
-
-@st.cache_data(ttl=300)
-def get_stock_transactions(engine,
+@st.cache_data(ttl=300, show_spinner="Fetching history…")
+def get_stock_transactions(_engine,
                            item_id: Optional[int] = None,
                            start: Optional[date] = None,
                            end: Optional[date] = None,
                            limit: int = 1000) -> pd.DataFrame:
     cond, p = [], {"limit": limit}
     if item_id: cond.append("st.item_id=:item"); p["item"] = item_id
-    if start:   cond.append("st.transaction_date>=:s"); p["s"] = start
-    if end:     cond.append("st.transaction_date<:e");  p["e"] = end + timedelta(days=1)
+    if start: cond.append("st.transaction_date>=:s"); p["s"] = start
+    if end: cond.append("st.transaction_date<:e"); p["e"] = end + timedelta(days=1)
     where = "WHERE " + " AND ".join(cond) if cond else ""
     sql = f"""
         SELECT st.transaction_date, st.transaction_type, st.quantity_change,
@@ -204,56 +251,47 @@ def get_stock_transactions(engine,
         {where}
         ORDER BY st.transaction_date DESC LIMIT :limit
     """
-    return fetch_data(engine, sql, p)
+    return fetch_data(_engine, sql, p)
 
 # ─────────────────────────────────────────────────────────
-# 6. MRN & INDENTS
+# 6 · MRN & INDENTS
 # ─────────────────────────────────────────────────────────
-def generate_mrn(engine):
+def generate_mrn(_engine) -> Optional[str]:
     try:
-        with engine.connect() as conn:
+        with _engine.connect() as conn:
             seq = conn.execute(text("SELECT nextval('mrn_seq')")).scalar()
         return f"MRN-{seq:04d}" if seq else None
     except Exception as e:
         st.error(f"MRN generation error: {e}")
         return None
 
-
-def create_indent(engine, hdr: Dict[str, Any], items: List[Dict[str, Any]]) -> bool:
+def create_indent(_engine, hdr: Dict[str, Any], items: List[Dict[str, Any]]) -> bool:
     if not hdr or not items:
-        st.error("Empty indent header/items")
+        st.error("Empty indent data.")
         return False
     try:
-        with engine.begin() as conn:
-            indent_id = conn.execute(
-                text("""
-                    INSERT INTO indents
-                    (mrn, requested_by, department, date_required,
-                     status, date_submitted, notes)
-                    VALUES (:mrn,:requested_by,:department,:date_required,
-                            :status,CURRENT_TIMESTAMP,:notes)
-                    RETURNING indent_id
-                """), hdr).scalar_one()
-            conn.execute(
-                text("""INSERT INTO indent_items
-                    (indent_id,item_id,requested_qty,notes)
-                    VALUES (:indent_id,:item_id,:requested_qty,:notes)"""),
-                [
-                    {"indent_id": indent_id,
-                     "item_id": i["item_id"],
-                     "requested_qty": i["requested_qty"],
-                     "notes": i.get("notes")}
-                    for i in items
-                ]
-            )
+        with _engine.begin() as conn:
+            ind_id = conn.execute(text("""
+                INSERT INTO indents
+                (mrn, requested_by, department, date_required, status, date_submitted, notes)
+                VALUES (:mrn,:requested,:dept,:req_date,:status,CURRENT_TIMESTAMP,:notes)
+                RETURNING indent_id
+            """), hdr).scalar_one()
+            conn.execute(text("""
+                INSERT INTO indent_items (indent_id,item_id,requested_qty,notes)
+                VALUES (:iid,:item,:qty,:notes)
+            """), [
+                {"iid": ind_id, "item": i["item_id"],
+                 "qty": i["requested_qty"], "notes": i.get("notes")}
+                for i in items
+            ])
         return True
     except Exception as e:
-        st.error(f"Indent creation error: {e}")
+        st.error(f"Indent error: {e}")
         return False
 
-
-@st.cache_data(ttl=120)
-def get_indents(engine,
+@st.cache_data(ttl=120, show_spinner="Fetching indents…")
+def get_indents(_engine,
                 mrn_filter: Optional[str] = None,
                 dept_filter: Optional[List[str]] = None,
                 status_filter: Optional[List[str]] = None,
@@ -261,7 +299,7 @@ def get_indents(engine,
                 end: Optional[date] = None,
                 limit: int = 500) -> pd.DataFrame:
     cond, p = [], {"limit": limit}
-    if mrn_filter: cond.append("ind.mrn ILIKE :mrn"); p["mrn"] = f"%{mrn_filter.strip()}%"
+    if mrn_filter: cond.append("ind.mrn ILIKE :mrn"); p["mrn"] = f"%{mrn_filter}%"
     if dept_filter: cond.append("ind.department = ANY(:dept)"); p["dept"] = dept_filter
     if status_filter: cond.append("ind.status = ANY(:status)"); p["status"] = status_filter
     if start: cond.append("ind.date_submitted>=:s"); p["s"] = start
@@ -273,12 +311,12 @@ def get_indents(engine,
         FROM indents ind {where}
         ORDER BY date_submitted DESC LIMIT :limit
     """
-    return fetch_data(engine, sql, p)
+    return fetch_data(_engine, sql, p)
 
 # ─────────────────────────────────────────────────────────
-# 7. DASHBOARD UI
+# 7 · DASHBOARD UI
 # ─────────────────────────────────────────────────────────
-st.set_page_config(page_title="Inv Manager", page_icon="🍲", layout="wide")
+st.set_page_config("Inv Manager", "🍲", layout="wide")
 st.title("🍲 Restaurant Inventory Dashboard")
 st.caption(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -289,20 +327,16 @@ st.sidebar.success("DB connected")
 items_df = get_all_items_with_stock(engine)
 total_active = len(items_df)
 
-# Low stock (rp > 0)
 low_df, low_cnt = pd.DataFrame(), 0
 if not items_df.empty:
-    try:
-        cs = pd.to_numeric(items_df["current_stock"], errors="coerce")
-        rp = pd.to_numeric(items_df["reorder_point"], errors="coerce")
-        mask = (cs <= rp) & (rp > 0) & cs.notna() & rp.notna()
-        low_df = items_df[mask]; low_cnt = len(low_df)
-    except Exception as e:
-        st.error(f"Low‑stock calc error: {e}")
+    cs = pd.to_numeric(items_df["current_stock"], errors="coerce")
+    rp = pd.to_numeric(items_df["reorder_point"], errors="coerce")
+    mask = (cs <= rp) & (rp > 0) & cs.notna() & rp.notna()
+    low_df = items_df[mask]; low_cnt = len(low_df)
 
-k1, k2 = st.columns(2)
-k1.metric("Active Items", total_active)
-k2.metric("Low Stock Items", low_cnt)
+c1, c2 = st.columns(2)
+c1.metric("Active Items", total_active)
+c2.metric("Low Stock Items", low_cnt)
 
 st.divider()
 st.subheader("⚠️ Low Stock Items")

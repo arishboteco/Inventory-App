@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from typing import Any, Optional, Dict, List, Tuple
 
-# Import shared functions from the main backend file
+# Import shared functions from backend
 try:
     from item_manager_app import (
         connect_db,
@@ -14,10 +14,12 @@ try:
         reactivate_item,
     )
 except ImportError:
-    st.error("Could not import functions from item_manager_app.py. Check your paths.")
+    st.error("Could not import functions from item_manager_app.py. Check paths.")
     st.stop()
 
-# --- Session‑state defaults ---
+# ------------------------------------------------------------------
+# Session‑state defaults
+# ------------------------------------------------------------------
 if "item_to_edit_id" not in st.session_state:
     st.session_state.item_to_edit_id = None
 if "edit_form_values" not in st.session_state:
@@ -25,20 +27,24 @@ if "edit_form_values" not in st.session_state:
 if "show_inactive" not in st.session_state:
     st.session_state.show_inactive = False
 
-# --- Page setup ---
+# ------------------------------------------------------------------
+# Page setup
+# ------------------------------------------------------------------
 st.header("Item Management")
 db_engine = connect_db()
 if not db_engine:
     st.error("Database connection failed on this page.")
     st.stop()
 
-# --- Tabs ---
+# ------------------------------------------------------------------
+# Tabs
+# ------------------------------------------------------------------
 tab_view, tab_add, tab_manage = st.tabs(
     ["📊 View Items", "➕ Add New Item", "✏️ Edit / Manage Selected"]
 )
 
 # ------------------------------------------------------------------
-# 📊 TAB 1 – VIEW ITEMS
+# 📊 TAB 1 – VIEW ITEMS
 # ------------------------------------------------------------------
 with tab_view:
     st.subheader("View Options")
@@ -48,15 +54,17 @@ with tab_view:
         value=st.session_state.show_inactive,
     )
     st.divider()
-        # fetch once
+
+    # fetch once
     items_df_with_stock = get_all_items_with_stock(
         db_engine, include_inactive=st.session_state.show_inactive
     )
 
-    # remove any duplicate‑named columns (keeps the first occurrence)
+    # drop duplicate‑named cols (e.g., two “current_stock”)
     items_df_with_stock = items_df_with_stock.loc[
         :, ~items_df_with_stock.columns.duplicated()
     ]
+
     st.subheader(
         "Full Item List"
         + (
@@ -69,7 +77,7 @@ with tab_view:
     if items_df_with_stock.empty:
         st.info("No items found.")
     else:
-        # --- Cast object columns to str so PyArrow is happy ---
+        #  make PyArrow happy
         for col in items_df_with_stock.select_dtypes(include=["object"]).columns:
             items_df_with_stock[col] = items_df_with_stock[col].astype(str)
 
@@ -100,8 +108,8 @@ with tab_view:
                 ),
             },
             column_order=[
-                col
-                for col in [
+                c
+                for c in [
                     "item_id",
                     "name",
                     "category",
@@ -113,11 +121,11 @@ with tab_view:
                     "is_active",
                     "notes",
                 ]
-                if col in items_df_with_stock.columns
+                if c in items_df_with_stock.columns
             ],
         )
 
-# ---------- Prepare dropdown list (must happen after fetch) ----------
+# ---------- dropdown list for Manage tab ----------
 if (
     not items_df_with_stock.empty
     and {"item_id", "name", "is_active"}.issubset(items_df_with_stock.columns)
@@ -179,7 +187,6 @@ with tab_manage:
 
     edit_options = [("--- Select ---", None)] + item_options_list
 
-    # ----- callback -----
     def load_item_for_edit():
         tup = st.session_state.item_to_edit_select
         item_id = tup[1] if tup else None
@@ -209,7 +216,6 @@ with tab_manage:
         label_visibility="collapsed",
     )
 
-    # -------- management forms --------
     if (
         st.session_state.item_to_edit_id is not None
         and st.session_state.edit_form_values is not None
@@ -220,7 +226,6 @@ with tab_manage:
         st.divider()
 
         if is_active:
-            # ----- EDIT FORM -----
             with st.form("edit_item_form"):
                 st.subheader(
                     f"Editing: {details.get('name', '')} (ID {st.session_state.item_to_edit_id})"
@@ -248,8 +253,7 @@ with tab_manage:
                 )
                 edit_notes = st.text_area("Notes", value=details.get("notes", ""))
 
-                update_clicked = st.form_submit_button("Update Item Details")
-                if update_clicked:
+                if st.form_submit_button("Update Item Details"):
                     if not edit_name:
                         st.warning("Item Name cannot be empty.")
                     else:
@@ -273,26 +277,24 @@ with tab_manage:
                             st.session_state.edit_form_values = None
                             st.rerun()
 
-            # ----- Deactivate -----
+            # Deactivate
             st.divider()
             st.subheader("Deactivate Item")
             st.warning("⚠️ Deactivating removes item from active lists.")
             if st.button("🗑️ Deactivate This Item"):
-                ok = deactivate_item(db_engine, st.session_state.item_to_edit_id)
-                if ok:
+                if deactivate_item(db_engine, st.session_state.item_to_edit_id):
                     st.success("Item deactivated.")
                     get_all_items_with_stock.clear()
                     st.session_state.item_to_edit_id = None
                     st.session_state.edit_form_values = None
                     st.rerun()
         else:
-            # ----- Reactivate -----
+            # Reactivate
             st.info(
                 f"Item **“{details.get('name', '')}”** (ID {st.session_state.item_to_edit_id}) is deactivated."
             )
             if st.button("✅ Reactivate This Item"):
-                ok = reactivate_item(db_engine, st.session_state.item_to_edit_id)
-                if ok:
+                if reactivate_item(db_engine, st.session_state.item_to_edit_id):
                     st.success("Item reactivated.")
                     get_all_items_with_stock.clear()
                     st.session_state.item_to_edit_id = None

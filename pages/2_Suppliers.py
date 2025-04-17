@@ -1,11 +1,10 @@
-import streamlit as st
-import pandas as pd
-from typing import Any, Optional, Dict, List, Tuple
 import sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:          # <-- key fix
     sys.path.append(str(ROOT))
-
+import streamlit as st
+import pandas as pd
+from typing import Any, Optional, Dict, List, Tuple
 
 # Import shared functions and engine from the main app file
 try:

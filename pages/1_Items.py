@@ -1,8 +1,18 @@
+# pages/1_Items.py  – full file with import‑path fix
+
+# ─── Ensure repo root is on sys.path ─────────────────────────────────
+import sys, pathlib
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+# ────────────────────────────────────────────────────────────────────
+
 import streamlit as st
 import pandas as pd
-from typing import Any, Optional, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
+import math
 
-# Import shared functions from backend
+# Back‑end imports
 try:
     from item_manager_app import (
         connect_db,
@@ -13,13 +23,13 @@ try:
         deactivate_item,
         reactivate_item,
     )
-except ImportError:
-    st.error("Could not import functions from item_manager_app.py. Check paths.")
+except ImportError as e:
+    st.error(f"Import error: {e}")
     st.stop()
 
-# ------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────
 # Session‑state defaults
-# ------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────
 if "item_to_edit_id" not in st.session_state:
     st.session_state.item_to_edit_id = None
 if "edit_form_values" not in st.session_state:
@@ -27,24 +37,23 @@ if "edit_form_values" not in st.session_state:
 if "show_inactive" not in st.session_state:
     st.session_state.show_inactive = False
 
-# ------------------------------------------------------------------
-# Page setup
-# ------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────
+# Page header & DB
+# ─────────────────────────────────────────────────────────
 st.header("Item Management")
-db_engine = connect_db()
-if not db_engine:
-    st.error("Database connection failed on this page.")
-    st.stop()
+engine = connect_db()
+if not engine:
+    st.error("DB connection failed."); st.stop()
 
-# ------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────
 # Tabs
-# ------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────
 tab_view, tab_add, tab_manage = st.tabs(
-    ["📊 View Items", "➕ Add New Item", "✏️ Edit / Manage Selected"]
+    ["📊 View Items", "➕ Add New Item", "✏️ Edit / Manage"]
 )
 
 # ------------------------------------------------------------------
-# 📊 TAB 1 – VIEW ITEMS
+# 📊 TAB 1 – VIEW
 # ------------------------------------------------------------------
 with tab_view:
     st.subheader("View Options")
@@ -55,34 +64,21 @@ with tab_view:
     )
     st.divider()
 
-    # fetch once
-    items_df_with_stock = get_all_items_with_stock(
-        db_engine, include_inactive=st.session_state.show_inactive
-    )
-
-    # drop duplicate‑named cols (e.g., two “current_stock”)
-    items_df_with_stock = items_df_with_stock.loc[
-        :, ~items_df_with_stock.columns.duplicated()
-    ]
-
+    df = get_all_items_with_stock(engine, include_inactive=st.session_state.show_inactive)
     st.subheader(
-        "Full Item List"
-        + (
-            " (Including Deactivated)"
-            if st.session_state.show_inactive
-            else " (Active Only)"
-        )
+        "Item List"
+        + (" (Including Deactivated)" if st.session_state.show_inactive else " (Active Only)")
     )
 
-    if items_df_with_stock.empty:
+    if df.empty:
         st.info("No items found.")
     else:
-        #  make PyArrow happy
-        for col in items_df_with_stock.select_dtypes(include=["object"]).columns:
-            items_df_with_stock[col] = items_df_with_stock[col].astype(str)
+        # Cast object columns to string so PyArrow can serialize
+        for col in df.select_dtypes(include=["object"]).columns:
+            df[col] = df[col].astype(str)
 
         st.dataframe(
-            items_df_with_stock,
+            df,
             use_container_width=True,
             hide_index=True,
             column_config={
@@ -90,215 +86,154 @@ with tab_view:
                 "name": st.column_config.TextColumn("Item Name", width="medium"),
                 "unit": st.column_config.TextColumn("Unit", width="small"),
                 "category": st.column_config.TextColumn("Category"),
-                "sub_category": st.column_config.TextColumn("Sub-Category"),
-                "permitted_departments": st.column_config.TextColumn(
-                    "Permitted Depts", width="medium"
-                ),
-                "reorder_point": st.column_config.NumberColumn(
-                    "Reorder Lvl", width="small", format="%d"
-                ),
-                "current_stock": st.column_config.NumberColumn(
-                    "Current Stock",
-                    width="small",
-                    help="Calculated from transactions.",
-                ),
+                "sub_category": st.column_config.TextColumn("Sub‑Category"),
+                "permitted_departments": st.column_config.TextColumn("Permitted Depts", width="medium"),
+                "reorder_point": st.column_config.NumberColumn("Reorder Lvl", width="small"),
+                "current_stock": st.column_config.NumberColumn("Current Stock", width="small"),
                 "notes": st.column_config.TextColumn("Notes", width="large"),
-                "is_active": st.column_config.CheckboxColumn(
-                    "Active?", width="small", disabled=True
-                ),
+                "is_active": st.column_config.CheckboxColumn("Active?", width="small", disabled=True),
             },
             column_order=[
                 c
                 for c in [
-                    "item_id",
-                    "name",
-                    "category",
-                    "sub_category",
-                    "unit",
-                    "current_stock",
-                    "reorder_point",
-                    "permitted_departments",
-                    "is_active",
-                    "notes",
+                    "item_id","name","category","sub_category",
+                    "unit","current_stock","reorder_point",
+                    "permitted_departments","is_active","notes"
                 ]
-                if c in items_df_with_stock.columns
+                if c in df.columns
             ],
         )
 
-# ---------- dropdown list for Manage tab ----------
-if (
-    not items_df_with_stock.empty
-    and {"item_id", "name", "is_active"}.issubset(items_df_with_stock.columns)
-):
-    item_options_list: List[Tuple[str, int]] = [
-        (
-            f"{row['name']}{'' if row['is_active'] else ' (Inactive)'}",
-            int(row["item_id"]),
-        )
-        for _, row in items_df_with_stock.iterrows()
+# Prepare dropdown options for other tabs
+if not df.empty and {"item_id","name"}.issubset(df.columns):
+    item_opts: List[Tuple[str,int]] = [
+        (f"{r['name']}{'' if r['is_active'] else ' (Inactive)'}", int(r["item_id"]))
+        for _, r in df.iterrows()
     ]
-    item_options_list.sort()
+    item_opts.sort()
 else:
-    item_options_list = []
+    item_opts = []
 
 # ------------------------------------------------------------------
-# ➕ TAB 2 – ADD NEW ITEM
+# ➕ TAB 2 – ADD NEW
 # ------------------------------------------------------------------
 with tab_add:
     with st.form("new_item_form", clear_on_submit=True):
         st.subheader("Enter New Item Details:")
-        new_name = st.text_input("Item Name*")
-        new_unit = st.text_input("Unit (e.g., Kg, Pcs, Ltr)")
-        new_category = st.text_input("Category")
-        new_sub_category = st.text_input("Sub-Category")
-        new_permitted_departments = st.text_input(
-            "Permitted Departments (Comma‑separated or All)"
-        )
-        new_reorder_point = st.number_input(
-            "Reorder Point", min_value=0, value=0, step=1
-        )
-        new_notes = st.text_area("Notes")
-        submitted = st.form_submit_button("Save New Item")
-
-        if submitted:
-            if not new_name:
-                st.warning("Item Name is required.")
+        n_name   = st.text_input("Item Name*")
+        n_unit   = st.text_input("Unit (e.g., Kg, Pcs)")
+        n_cat    = st.text_input("Category")
+        n_subcat = st.text_input("Sub‑Category")
+        n_depts  = st.text_input("Permitted Depts (comma or 'All')")
+        n_rp     = st.number_input("Reorder Point", min_value=0, step=1)
+        n_notes  = st.text_area("Notes")
+        if st.form_submit_button("Save New Item"):
+            if not n_name:
+                st.warning("Item Name is required.")
             else:
-                success = add_new_item(
-                    db_engine,
-                    new_name.strip(),
-                    new_unit.strip() or None,
-                    new_category.strip() or "Uncategorized",
-                    new_sub_category.strip() or "General",
-                    new_permitted_departments.strip() or None,
-                    new_reorder_point,
-                    new_notes.strip() or None,
+                ok = add_new_item(
+                    engine,
+                    n_name.strip(),
+                    n_unit.strip() or None,
+                    n_cat.strip() or "Uncategorized",
+                    n_subcat.strip() or "General",
+                    n_depts.strip() or None,
+                    n_rp,
+                    n_notes.strip() or None,
                 )
-                if success:
-                    st.success(f"Item “{new_name}” added!")
+                if ok:
+                    st.success("Item added.")
                     get_all_items_with_stock.clear()
                     st.rerun()
 
 # ------------------------------------------------------------------
-# ✏️ TAB 3 – EDIT / MANAGE
+# ✏️ TAB 3 – EDIT / MANAGE
 # ------------------------------------------------------------------
 with tab_manage:
     st.subheader("Select Item to Manage")
 
-    edit_options = [("--- Select ---", None)] + item_options_list
-
-    def load_item_for_edit():
-        tup = st.session_state.item_to_edit_select
-        item_id = tup[1] if tup else None
-        if item_id:
-            details = get_item_details(db_engine, item_id)
-            st.session_state.item_to_edit_id = item_id if details else None
-            st.session_state.edit_form_values = details if details else None
+    sel_opts = [("--- Select ---", None)] + item_opts
+    def load_item():
+        tup = st.session_state.item_select
+        iid = tup[1] if tup else None
+        if iid:
+            det = get_item_details(engine, iid)
+            st.session_state.item_to_edit_id = iid if det else None
+            st.session_state.edit_form_values = det if det else None
         else:
             st.session_state.item_to_edit_id = None
             st.session_state.edit_form_values = None
 
-    current_id = st.session_state.get("item_to_edit_id")
-    try:
-        current_idx = next(
-            i for i, opt in enumerate(edit_options) if opt[1] == current_id
-        )
-    except StopIteration:
-        current_idx = 0
+    cur = st.session_state.get("item_to_edit_id")
+    idx = next((i for i,o in enumerate(sel_opts) if o[1]==cur), 0)
 
     st.selectbox(
-        "Select Item:",
-        options=edit_options,
+        "Item",
+        options=sel_opts,
         format_func=lambda x: x[0],
-        index=current_idx,
-        key="item_to_edit_select",
-        on_change=load_item_for_edit,
+        index=idx,
+        key="item_select",
+        on_change=load_item,
         label_visibility="collapsed",
     )
 
-    if (
-        st.session_state.item_to_edit_id is not None
-        and st.session_state.edit_form_values is not None
-    ):
-        details = st.session_state.edit_form_values
-        is_active = details.get("is_active", True)
-
+    if st.session_state.item_to_edit_id and st.session_state.edit_form_values:
+        d = st.session_state.edit_form_values
+        active = d.get("is_active", True)
         st.divider()
 
-        if is_active:
-            with st.form("edit_item_form"):
-                st.subheader(
-                    f"Editing: {details.get('name', '')} (ID {st.session_state.item_to_edit_id})"
-                )
-                edit_name = st.text_input(
-                    "Item Name*", value=details.get("name", "")
-                )
-                edit_unit = st.text_input("Unit", value=details.get("unit", ""))
-                edit_category = st.text_input(
-                    "Category", value=details.get("category", "")
-                )
-                edit_sub_category = st.text_input(
-                    "Sub-Category", value=details.get("sub_category", "")
-                )
-                edit_permitted_departments = st.text_input(
-                    "Permitted Departments",
-                    value=details.get("permitted_departments", ""),
-                )
-                rp_val = details.get("reorder_point", 0)
-                edit_rp = st.number_input(
-                    "Reorder Point",
-                    min_value=0,
-                    value=int(rp_val) if pd.notna(rp_val) else 0,
-                    step=1,
-                )
-                edit_notes = st.text_area("Notes", value=details.get("notes", ""))
-
-                if st.form_submit_button("Update Item Details"):
-                    if not edit_name:
-                        st.warning("Item Name cannot be empty.")
+        if active:
+            with st.form("edit_form"):
+                st.subheader(f"Editing: {d.get('name','')} (ID {st.session_state.item_to_edit_id})")
+                e_name   = st.text_input("Item Name*", value=d.get("name",""))
+                e_unit   = st.text_input("Unit", value=d.get("unit",""))
+                e_cat    = st.text_input("Category", value=d.get("category",""))
+                e_subcat = st.text_input("Sub‑Category", value=d.get("sub_category",""))
+                e_depts  = st.text_input("Permitted Depts", value=d.get("permitted_departments",""))
+                e_rp_val = int(d.get("reorder_point",0) or 0)
+                e_rp     = st.number_input("Reorder Point", min_value=0, step=1, value=e_rp_val)
+                e_notes  = st.text_area("Notes", value=d.get("notes",""))
+                if st.form_submit_button("Update"):
+                    if not e_name:
+                        st.warning("Name cannot be empty.")
                     else:
-                        updated = {
-                            "name": edit_name.strip(),
-                            "unit": edit_unit.strip() or None,
-                            "category": edit_category.strip() or "Uncategorized",
-                            "sub_category": edit_sub_category.strip() or "General",
-                            "permitted_departments": edit_permitted_departments.strip()
-                            or None,
-                            "reorder_point": edit_rp,
-                            "notes": edit_notes.strip() or None,
-                        }
                         ok = update_item_details(
-                            db_engine, st.session_state.item_to_edit_id, updated
+                            engine,
+                            st.session_state.item_to_edit_id,
+                            {
+                                "name": e_name.strip(),
+                                "unit": e_unit.strip() or None,
+                                "category": e_cat.strip() or "Uncategorized",
+                                "sub_category": e_subcat.strip() or "General",
+                                "permitted_departments": e_depts.strip() or None,
+                                "reorder_point": e_rp,
+                                "notes": e_notes.strip() or None,
+                            },
                         )
                         if ok:
-                            st.success("Item updated!")
+                            st.success("Item updated.")
                             get_all_items_with_stock.clear()
                             st.session_state.item_to_edit_id = None
                             st.session_state.edit_form_values = None
                             st.rerun()
 
-            # Deactivate
             st.divider()
             st.subheader("Deactivate Item")
-            st.warning("⚠️ Deactivating removes item from active lists.")
-            if st.button("🗑️ Deactivate This Item"):
-                if deactivate_item(db_engine, st.session_state.item_to_edit_id):
+            if st.button("🗑️ Deactivate"):
+                if deactivate_item(engine, st.session_state.item_to_edit_id):
                     st.success("Item deactivated.")
                     get_all_items_with_stock.clear()
                     st.session_state.item_to_edit_id = None
                     st.session_state.edit_form_values = None
                     st.rerun()
         else:
-            # Reactivate
-            st.info(
-                f"Item **“{details.get('name', '')}”** (ID {st.session_state.item_to_edit_id}) is deactivated."
-            )
-            if st.button("✅ Reactivate This Item"):
-                if reactivate_item(db_engine, st.session_state.item_to_edit_id):
+            st.info("This item is deactivated.")
+            if st.button("✅ Reactivate"):
+                if reactivate_item(engine, st.session_state.item_to_edit_id):
                     st.success("Item reactivated.")
                     get_all_items_with_stock.clear()
                     st.session_state.item_to_edit_id = None
                     st.session_state.edit_form_values = None
                     st.rerun()
     else:
-        st.info("Select an item from the dropdown above to manage it.")
+        st.info("Select an item from the dropdown above to manage.")

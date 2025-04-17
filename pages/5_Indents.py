@@ -1,5 +1,6 @@
 # pages/5_Indents.py
 # Fresh implementation: No Form, Looped Widgets, Callbacks for Rows
+# Fixed reset function name mismatch
 
 import streamlit as st
 import pandas as pd
@@ -43,18 +44,12 @@ KEY_CURRENT_DEPT = f"{STATE_PREFIX}current_dept" # Tracks which dept's items are
 # --- Initialize Session State ---
 def init_state_fresh():
     """Initializes session state variables if they don't exist."""
-    # State for dynamic item rows: list of dicts like {"row_key": int}
-    # Widget values will be stored under keys like f"item_select_{row_key}"
     if KEY_ITEM_LIST not in st.session_state:
-        st.session_state[KEY_ITEM_LIST] = [{"row_key": 0}] # Start with one row structure
+        st.session_state[KEY_ITEM_LIST] = [{"row_key": 0}]
     if KEY_NEXT_ITEM_ROW_KEY not in st.session_state:
-        st.session_state[KEY_NEXT_ITEM_ROW_KEY] = 1 # Next key to assign is 1
-
-    # State for item options/lookup based on selected department
+        st.session_state[KEY_NEXT_ITEM_ROW_KEY] = 1
     if KEY_ITEM_OPTIONS not in st.session_state: st.session_state[KEY_ITEM_OPTIONS] = []
     if KEY_CURRENT_DEPT not in st.session_state: st.session_state[KEY_CURRENT_DEPT] = None
-
-    # Initialize keys for header widgets if they don't exist
     if KEY_DEPT not in st.session_state: st.session_state[KEY_DEPT] = None
     if KEY_REQ_BY not in st.session_state: st.session_state[KEY_REQ_BY] = ""
     if KEY_REQ_DATE not in st.session_state: st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1)
@@ -68,45 +63,37 @@ def add_row_callback():
     """Appends a new row structure to the item list state."""
     new_key = st.session_state[KEY_NEXT_ITEM_ROW_KEY]
     st.session_state[KEY_ITEM_LIST].append({"row_key": new_key})
-    # Initialize state for the new row's widgets
     st.session_state[f"item_select_{new_key}"] = None
     st.session_state[f"item_qty_{new_key}"] = 1.0
     st.session_state[KEY_NEXT_ITEM_ROW_KEY] += 1
 
 def remove_row_callback(row_key_to_remove):
     """Removes a row structure and its associated state keys."""
-    # Remove the row dict from the list
     st.session_state[KEY_ITEM_LIST] = [
         item_dict for item_dict in st.session_state[KEY_ITEM_LIST]
         if item_dict["row_key"] != row_key_to_remove
     ]
-    # Remove associated widget state keys
     st.session_state.pop(f"item_select_{row_key_to_remove}", None)
     st.session_state.pop(f"item_qty_{row_key_to_remove}", None)
-    # Ensure at least one row remains (optional)
     if not st.session_state[KEY_ITEM_LIST]:
-         add_row_callback() # Add a fresh blank row back
+         add_row_callback()
 
 # --- Reset Function ---
-def reset_state_fresh():
+# Renamed from reset_state_fresh to reset_state
+def reset_state():
     """Resets all state for the indent creation page."""
     st.session_state[KEY_ITEM_LIST] = [{"row_key": 0}]
     st.session_state[KEY_NEXT_ITEM_ROW_KEY] = 1
     st.session_state[KEY_ITEM_OPTIONS] = []
     st.session_state[KEY_CURRENT_DEPT] = None
-    # Reset widget values by clearing keys
     st.session_state.pop(KEY_DEPT, None)
     st.session_state.pop(KEY_REQ_BY, None)
     st.session_state.pop(KEY_REQ_DATE, None)
     st.session_state.pop(KEY_NOTES, None)
-    # Clear dynamic widget keys too
-    # Need to iterate based on potential keys, safer to just reset defaults above
-    # Re-initialize defaults for simple widgets
-    st.session_state[KEY_REQ_BY] = ""
+    st.session_state[KEY_REQ_BY] = "" # Re-initialize defaults after pop
     st.session_state[KEY_REQ_DATE] = date.today() + timedelta(days=1)
     st.session_state[KEY_NOTES] = ""
-    # Clear state for the initial row 0 widgets
-    st.session_state.pop("item_select_0", None)
+    st.session_state.pop("item_select_0", None) # Clear initial row widgets too
     st.session_state.pop("item_qty_0", None)
 
 
@@ -144,8 +131,7 @@ else:
         # --- Handle Department Change and Load Items ---
         if selected_dept and selected_dept != st.session_state.get(KEY_CURRENT_DEPT):
             st.session_state[KEY_CURRENT_DEPT] = selected_dept
-            st.session_state[KEY_ITEM_OPTIONS] = [] # Clear old options
-            # Reset item list state when department changes
+            st.session_state[KEY_ITEM_OPTIONS] = []
             st.session_state[KEY_ITEM_LIST] = [{"row_key": 0}]
             st.session_state[KEY_NEXT_ITEM_ROW_KEY] = 1
 
@@ -159,14 +145,13 @@ else:
                 for i, r in valid_items.iterrows():
                     display_name = f"{r['name']} ({r.get('unit', 'N/A')})"
                     temp_options.append((display_name, r['item_id']))
-                st.session_state[KEY_ITEM_OPTIONS] = temp_options # Store new options
+                st.session_state[KEY_ITEM_OPTIONS] = temp_options
             else:
                  st.warning(f"No active items permitted for '{selected_dept}'.", icon="⚠️")
-                 st.session_state[KEY_ITEM_OPTIONS] = [] # Ensure cleared
+                 st.session_state[KEY_ITEM_OPTIONS] = []
 
-            st.rerun() # Rerun immediately to reflect changes
+            st.rerun()
 
-        # Get current options for editor config
         current_item_options = st.session_state[KEY_ITEM_OPTIONS]
         can_add_items = bool(current_item_options)
 
@@ -183,36 +168,40 @@ else:
              st.warning(f"No items available for {selected_dept}.")
         else:
              # --- Dynamic Item Rows ---
-             # Create header row
              hdr_cols = st.columns([4, 2, 1])
              hdr_cols[0].markdown("**Item**")
              hdr_cols[1].markdown("**Quantity**")
 
-             # Loop through item list state to render rows
-             for i, item_dict in enumerate(st.session_state[KEY_ITEM_LIST]):
+             # Use a copy to avoid issues if list modified during iteration (by remove callback)
+             list_copy = st.session_state[KEY_ITEM_LIST][:]
+             for i, item_dict in enumerate(list_copy):
                  item_key = item_dict["row_key"]
+                 # Check if state exists for this key, initialize if not (e.g., after add_row)
+                 if f"item_select_{item_key}" not in st.session_state: st.session_state[f"item_select_{item_key}"] = None
+                 if f"item_qty_{item_key}" not in st.session_state: st.session_state[f"item_qty_{item_key}"] = 1.0
+
                  row_cols = st.columns([4, 2, 1])
                  with row_cols[0]:
                      st.selectbox(
                          f"Item Row {i+1}", options=current_item_options,
                          format_func=lambda x: x[0] if isinstance(x, tuple) else "Select...",
-                         key=f"item_select_{item_key}", # Unique key per row widget
-                         index=None, # Default to empty unless loading data
+                         key=f"item_select_{item_key}",
+                         index=None, # Let state handle value
                          label_visibility="collapsed"
                      )
                  with row_cols[1]:
                      st.number_input(
                          f"Qty Row {i+1}", min_value=0.01, step=0.1, format="%.2f",
-                         key=f"item_qty_{item_key}", # Unique key per row widget
-                         value=1.0, # Default value for new rows
+                         key=f"item_qty_{item_key}",
+                         # value=1.0, # Let state handle value
                          label_visibility="collapsed"
                      )
                  with row_cols[2]:
                      st.button(
                          "➖", key=f"remove_{item_key}",
-                         on_click=remove_row_callback, args=(item_key,), # Pass key to remove
+                         on_click=remove_row_callback, args=(item_key,),
                          help="Remove this item row",
-                         disabled=(len(st.session_state[KEY_ITEM_LIST]) <= 1) # Keep at least one row
+                         disabled=(len(st.session_state[KEY_ITEM_LIST]) <= 1)
                      )
 
              # --- Add Item Button ---
@@ -228,7 +217,6 @@ else:
         submit_disabled = not selected_dept or not can_add_items
         if st.button("Submit Indent Request", type="primary", disabled=submit_disabled):
 
-            # Get header values directly from state using keys
             current_req_by = st.session_state.get(KEY_REQ_BY, "").strip()
             current_req_date = st.session_state.get(KEY_REQ_DATE, date.today())
             current_notes = st.session_state.get(KEY_NOTES, "").strip()
@@ -245,14 +233,12 @@ else:
                 selected_item = st.session_state.get(f"item_select_{item_key}")
                 quantity = st.session_state.get(f"item_qty_{item_key}")
 
-                # Validate row
                 if is_valid_item_tuple_fresh(selected_item) and quantity is not None and pd.to_numeric(quantity, errors='coerce') > 0:
                     item_id = selected_item[1]
                     qty_float = float(quantity)
                     if item_id in processed_item_ids: duplicate_found = True; break
                     processed_item_ids.add(item_id)
                     item_list_final.append({"item_id": item_id, "requested_qty": qty_float, "notes": ""})
-                # Check if row has *any* input but is invalid (ignoring completely blank rows)
                 elif selected_item is not None or (quantity is not None and quantity != 1.0):
                      invalid_row_found = True
 
@@ -263,7 +249,6 @@ else:
             elif not item_list_final: st.warning("Add at least one valid item row with quantity > 0.", icon="⚠️")
             elif duplicate_found: st.warning("Duplicate items found. Please remove or combine rows.", icon="⚠️")
             else:
-                 # --- Prepare & Execute Backend Call ---
                  mrn = generate_mrn(engine=db_engine)
                  if not mrn: st.error("Failed to generate MRN.")
                  else:
@@ -275,7 +260,7 @@ else:
                     success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list_final)
                     if success:
                         st.success(f"Indent '{mrn}' submitted!", icon="✅")
-                        reset_state() # Call reset
+                        reset_state() # Call reset using the CORRECT name
                         time.sleep(0.5)
                         st.rerun() # Rerun to clear fields visually
                     else: st.error("Failed to submit Indent.", icon="❌")

@@ -151,40 +151,47 @@ else:
                     st.session_state.indent_items_df = pd.DataFrame([{"Item": None, "Quantity": 1.0, "Unit": ""}], columns=["Item", "Quantity", "Unit"])
                     st.rerun()
 
+           # Replace the existing elif submit_indent_button: block with this:
             elif submit_indent_button:
-                if not st.session_state.indent_dept_confirmed: st.error("Department not confirmed.")
+                if not st.session_state.indent_dept_confirmed:
+                     st.error("Department not confirmed.")
                 else:
-                    current_req_by = st.session_state.get(KEY_REQ_BY, "").strip()
-                    current_req_date = st.session_state.get(KEY_REQ_DATE, date.today())
-                    current_notes = st.session_state.get(KEY_NOTES, "").strip()
-                    items_df_to_validate = st.session_state.indent_items_df.copy()
-
-                    # Validation logic remains the same
-                    items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
-                    items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
-                    items_df_final = items_df_final[items_df_final['Quantity'] > 0]
-
-                    if not current_req_by: st.warning("Enter Requester Name/ID.", icon="⚠️")
-                    elif items_df_final.empty: st.warning("Add valid item(s).", icon="⚠️")
-                    elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any(): st.warning("Duplicate items found.", icon="⚠️")
+                    # Validate directly using st.session_state.get()
+                    if not st.session_state.get(KEY_REQ_BY, "").strip():
+                        st.warning("Enter Requester Name/ID.", icon="⚠️")
                     else:
-                         mrn = generate_mrn(engine=db_engine)
-                         if not mrn: st.error("Failed to generate MRN.")
-                         else:
-                            indent_header = {
-                                "mrn": mrn, "requested_by": current_req_by,
-                                "department": st.session_state.indent_selected_dept,
-                                "date_required": current_req_date, "status": "Submitted",
-                                "notes": current_notes
-                            }
-                            item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
-                            success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
-                            if success:
-                                st.success(f"Indent '{mrn}' submitted!", icon="✅")
-                                reset_indent_form_state() # Call simplified reset
-                                time.sleep(0.5) # Keep short delay before rerun
-                                st.rerun() # Rerun to clear form visually
-                            else: st.error("Failed to submit Indent.", icon="❌")
+                        items_df_to_validate = st.session_state.indent_items_df.copy()
+                        items_df_final = items_df_to_validate[items_df_to_validate['Item'].apply(lambda x: isinstance(x, tuple))]
+                        items_df_final = items_df_final.dropna(subset=['Item', 'Quantity'])
+                        items_df_final = items_df_final[items_df_final['Quantity'] > 0]
+
+                        if items_df_final.empty:
+                             st.warning("Add valid item(s).", icon="⚠️")
+                        elif items_df_final['Item'].apply(lambda x: x[1]).duplicated().any():
+                             st.warning("Duplicate items found.", icon="⚠️")
+                        else:
+                             # Validation passed, proceed to backend
+                             mrn = generate_mrn(engine=db_engine)
+                             if not mrn: st.error("Failed to generate MRN.")
+                             else:
+                                # Build header directly using st.session_state.get()
+                                indent_header = {
+                                    "mrn": mrn,
+                                    "requested_by": st.session_state.get(KEY_REQ_BY, "").strip(),
+                                    "department": st.session_state.indent_selected_dept,
+                                    "date_required": st.session_state.get(KEY_REQ_DATE, date.today()),
+                                    "status": "Submitted",
+                                    "notes": st.session_state.get(KEY_NOTES, "").strip()
+                                }
+                                item_list = [{"item_id": r['Item'][1], "requested_qty": r['Quantity'], "notes": ""} for i, r in items_df_final.iterrows()]
+                                success = create_indent(engine=db_engine, indent_details=indent_header, item_list=item_list)
+
+                                if success:
+                                    st.success(f"Indent '{mrn}' submitted!", icon="✅")
+                                    reset_indent_form_state()
+                                    time.sleep(0.5)
+                                    st.rerun()
+                                else: st.error("Failed to submit Indent.", icon="❌")
 
     # --- Tabs 2 & 3 ---
     with tab_view: st.subheader("View Indents"); st.info("To be implemented.")

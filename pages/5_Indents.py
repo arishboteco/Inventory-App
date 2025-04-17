@@ -107,7 +107,8 @@ else:
             if not st.session_state.indent_dept_confirmed:
                 confirm_dept_button = st.form_submit_button(
                     "Confirm Department & Load Items",
-                    disabled=not dept_selectbox, # Disable if no department selected
+                    # disabled=not dept_selectbox, # <-- REMOVED THIS LINE
+                    # The button should be clickable; validation happens on click
                 )
 
             # Optional: Button to change department after confirmation
@@ -225,10 +226,12 @@ else:
 
             elif confirm_dept_button:
                 # Logic for the first step submission
-                if not dept_selectbox:
-                    st.warning("Please select a department first.")
+                # Check the value from the selectbox *now*
+                selected_dept_val = dept_selectbox
+                if not selected_dept_val: # Check if a department was actually selected
+                    st.warning("Please select a department first before confirming.")
                 else:
-                    st.session_state.indent_selected_dept = dept_selectbox
+                    st.session_state.indent_selected_dept = selected_dept_val
                     st.session_state.indent_dept_confirmed = True
                     # Reset item editor state when department confirmed
                     st.session_state.indent_items_df = pd.DataFrame(
@@ -238,11 +241,8 @@ else:
                     st.rerun() # Rerun to show the second part of the form
 
             # Check if the final submit button was pressed
-            # This variable 'submit_indent_button' now exists (initialized to False)
-            # and will be True only if Step 2 was displayed AND its button was clicked.
             elif submit_indent_button: # Use elif to avoid running if change_dept was clicked
                 # --- Perform Final Validation ---
-                # Ensure we are still in the confirmed state (sanity check)
                 if not st.session_state.indent_dept_confirmed:
                      st.error("Department not confirmed. Please confirm department first.")
                 else:
@@ -291,10 +291,8 @@ else:
                                 st.success(f"Indent Request '{mrn}' submitted successfully!", icon="✅")
                                 reset_indent_form_state() # Reset state for next indent
                                 # Don't call rerun here, allow success message to show
-                                # Form widgets will reset on next interaction due to key change
                             else:
                                 st.error("Failed to submit Indent Request.", icon="❌")
-                                # State is not reset, user can retry submitting
 
 
     # --- Tab 2: View Indents ---

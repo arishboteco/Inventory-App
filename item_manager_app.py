@@ -353,19 +353,22 @@ else:
     st.sidebar.success("Connected to Database")
     all_items_df = get_all_items_with_stock(engine, include_inactive=False)
     total_active_items = len(all_items_df) if not all_items_df.empty else 0
-    low_stock_df = pd.DataFrame(); low_stock_count = 0
-    if not all_items_df.empty and 'current_stock' in all_items_df.columns and 'reorder_point' in all_items_df.columns:
-        try:
-            cs = all_items_df.get('current_stock')
-rp = all_items_df.get('reorder_point')
-if isinstance(cs, pd.Series) and isinstance(rp, pd.Series):
-    current_stock_numeric = pd.to_numeric(cs, errors='coerce')
-    reorder_point_numeric = pd.to_numeric(rp, errors='coerce')
-            reorder_point_numeric = pd.to_numeric(all_items_df['reorder_point'], errors='coerce')
-            is_low = ((current_stock_numeric <= reorder_point_numeric) & (reorder_point_numeric > 0) &
-                      (reorder_point_numeric.notna()) & (current_stock_numeric.notna()))
-            low_stock_df = all_items_df[is_low]; low_stock_count = len(low_stock_df)
-        except Exception as e: st.error(f"Error calculating low stock: {e}")
+low_stock_df = pd.DataFrame()
+low_stock_count = 0
+
+if not all_items_df.empty:
+    try:
+        cs = all_items_df.get('current_stock')
+        rp = all_items_df.get('reorder_point')
+        if isinstance(cs, pd.Series) and isinstance(rp, pd.Series):
+            cs_numeric = pd.to_numeric(cs, errors='coerce')
+            rp_numeric = pd.to_numeric(rp, errors='coerce')
+            is_low = (cs_numeric <= rp_numeric) & (rp_numeric > 0) & cs_numeric.notna() & rp_numeric.notna()
+            low_stock_df = all_items_df[is_low]
+            low_stock_count = len(low_stock_df)
+    except Exception as e:
+        st.error(f"Error calculating low stock: {e}")
+
 
     col1, col2 = st.columns(2)
     with col1: st.metric("Total Active Items", total_active_items)

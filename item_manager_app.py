@@ -1,4 +1,4 @@
-# item_manager_app.py  – FULL VERSION
+# item_manager_app.py  – FULL VERSION (UnhashableParamError fixed)
 import streamlit as st
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError
@@ -64,17 +64,17 @@ def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> p
 # ITEM  FUNCTIONS
 # ────────────────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=600, show_spinner="Fetching items…")
-def get_all_items_with_stock(engine,
+def get_all_items_with_stock(_engine,
                              include_inactive: bool = False,
                              department: Optional[str] = None) -> pd.DataFrame:
-    where, params = [], {}
+    """ `_engine` is un‑hashable, the leading underscore tells Streamlit not to hash it. """
+    conditions, params = [], {}
     if not include_inactive:
-        where.append("i.is_active = TRUE")
+        conditions.append("i.is_active = TRUE")
     if department:
-        where.append("(i.permitted_departments = 'All' OR i.permitted_departments ILIKE :dept)")
+        conditions.append("(i.permitted_departments = 'All' OR i.permitted_departments ILIKE :dept)")
         params["dept"] = f"%{department}%"
-
-    where_clause = "WHERE " + " AND ".join(where) if where else ""
+    where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
     query = f"""
         SELECT i.*,
                COALESCE(s.calculated_stock, 0) AS current_stock
@@ -86,12 +86,9 @@ def get_all_items_with_stock(engine,
         {where_clause}
         ORDER BY i.name
     """
-    df = fetch_data(engine, query, params)
-    # drop duplicate columns if underlying table also has current_stock
-    df = df.loc[:, ~df.columns.duplicated()]
+    df = fetch_data(_engine, query, params)
+    df = df.loc[:, ~df.columns.duplicated()]  # drop duplicate cols
     return df
-
-
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     df = fetch_data(engine, "SELECT * FROM items WHERE item_id = :id", {"id": item_id})
     return df.iloc[0].to_dict() if not df.empty else None

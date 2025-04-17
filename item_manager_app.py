@@ -68,8 +68,29 @@ def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> p
 
 # --- Item Management Functions ---
 @st.cache_data(ttl=600, show_spinner="Fetching items...") # Cache for 10 minutes
-def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame:
-    """Fetches all items joined with their calculated current stock."""
+def get_all_items_with_stock(_engine, include_inactive=False, department: Optional[str] = None) -> pd.DataFrame:
+    """
+    Fetches items joined with their calculated current stock.
+    Optionally filters by department based on 'permitted_departments' column.
+    """
+    params = {}
+    # Base WHERE clause conditions
+    where_conditions = []
+    if not include_inactive:
+        where_conditions.append("i.is_active = TRUE")
+
+    # Add department filter if provided
+    if department:
+        # Uses simple LIKE matching - assumes department names don't clash as substrings
+        # e.g., '%Kitchen%' will match 'Kitchen' or 'Kitchen,Bar' or 'Bar,Kitchen'
+        where_conditions.append("(i.permitted_departments = 'All' OR i.permitted_departments LIKE :dept_pattern)")
+        params["dept_pattern"] = f'%{department}%'
+
+    # Combine WHERE conditions
+    where_clause = ""
+    if where_conditions:
+        where_clause = "WHERE " + " AND ".join(where_conditions)
+
     # SQL query to calculate stock by summing transactions for each item
     stock_query = """
         SELECT
@@ -85,10 +106,11 @@ def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame:
             COALESCE(s.calculated_stock, 0) AS current_stock
         FROM items i
         LEFT JOIN ({stock_query}) s ON i.item_id = s.item_id
-        {"" if include_inactive else "WHERE i.is_active = TRUE"}
+        {where_clause}
         ORDER BY i.name;
     """
-    return fetch_data(_engine, items_query)
+    return fetch_data(_engine, items_query, params)
+
 
 # Function to get details for a single item
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
@@ -368,7 +390,7 @@ def get_stock_transactions(_engine, item_id: Optional[int] = None,
     """
     return fetch_data(_engine, query, params)
 
-# --- Indent Management Functions --- [NEWLY ADDED SECTION]
+# --- Indent Management Functions ---
 
 # Function to generate a unique MRN using the database sequence
 def generate_mrn(engine) -> Optional[str]:

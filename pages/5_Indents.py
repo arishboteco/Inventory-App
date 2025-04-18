@@ -2,6 +2,7 @@
 # Integrates with consolidated backend and includes PDF generation locally.
 # Fix: Removed unnecessary st.form wrapper in Create Indent tab.
 # Fix: Correctly reset state after successful indent creation.
+# Fix: Updated fpdf2 usage to resolve DeprecationWarnings and RuntimeError.
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -16,7 +17,8 @@ from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple, Set
 import time
 import numpy as np
-from fpdf import FPDF # <-- Import FPDF here for local generation
+from fpdf import FPDF
+from fpdf.enums import XPos, YPos # <-- Import new enums for positioning
 
 # --- Imports from consolidated backend (item_manager_app.py) ---
 try:
@@ -70,7 +72,7 @@ def fetch_indent_page_data(_engine):
 
     return items_df_filtered, departments
 
-# --- PDF Generation Utility (Moved here as it doesn't need engine) ---
+# --- PDF Generation Utility (Updated fpdf2 usage) ---
 def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Optional[bytes]:
     """Generates a PDF document for a submitted indent using FPDF2."""
     if not indent_header or indent_items is None: # items can be an empty list
@@ -83,7 +85,7 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
         pdf.set_font("Helvetica", "B", 16)
 
         # Title
-        pdf.cell(0, 10, "Material Indent Request", ln=True, align='C')
+        pdf.cell(0, 10, "Material Indent Request", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT) # Updated ln=True
         pdf.ln(10)
 
         # Header Info - Use a consistent label width
@@ -94,7 +96,7 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
             pdf.set_font("Helvetica", "", 11)
             pdf.cell(label_width, 7, label)
             pdf.set_font("Helvetica", "B", 11) # Bold for value
-            pdf.cell(0, 7, str(value), ln=True) # Ensure value is string
+            pdf.cell(0, 7, str(value), new_x=XPos.LMARGIN, new_y=YPos.NEXT) # Updated ln=True
 
         add_header_line("MRN:", indent_header.get('mrn', 'N/A'))
         add_header_line("Department:", indent_header.get('department', 'N/A'))
@@ -109,7 +111,8 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
         if indent_header.get('notes'):
             pdf.ln(3) # Small gap before notes
             pdf.set_font("Helvetica", "I", 10)
-            pdf.multi_cell(0, 5, f"Indent Notes: {indent_header['notes']}", border=0)
+            # Use multi_cell for notes which handles line breaks properly
+            pdf.multi_cell(0, 5, f"Indent Notes: {indent_header['notes']}", border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(8) # More space before table
 
         # Items Table Header
@@ -121,15 +124,14 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
         pdf.cell(col_widths['name'], 7, "Item Name", border=1, fill=True)
         pdf.cell(col_widths['unit'], 7, "Unit", border=1, align='C', fill=True)
         pdf.cell(col_widths['qty'], 7, "Req. Qty", border=1, align='C', fill=True)
-        pdf.cell(col_widths['notes'], 7, "Item Notes", border=1, fill=True)
-        pdf.ln()
+        pdf.cell(col_widths['notes'], 7, "Item Notes", border=1, fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT) # Updated ln=True
 
         # Items Table Rows
         pdf.set_font("Helvetica", "", 9) # Smaller font for table content
         pdf.set_fill_color(255, 255, 255) # Reset fill color
         fill = False # Alternate row colors
         if not indent_items:
-             pdf.cell(sum(col_widths.values()), 7, "No items found in this indent.", border=1, ln=True, align='C')
+             pdf.cell(sum(col_widths.values()), 7, "No items found in this indent.", border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT) # Updated ln=True
         else:
             for i, item in enumerate(indent_items):
                 # Handle potential line breaks in name/notes
@@ -144,22 +146,25 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
                 num_lines = max(1, len(notes_str) // (col_widths['notes'] // 2) + 1) # Rough estimate
                 row_height = line_height * num_lines
 
+                # Store Y position before drawing cells in this row
+                start_y = pdf.get_y()
+
                 pdf.cell(col_widths['sno'], row_height, str(i + 1), border=1, align='C', fill=fill)
 
-                # Store position before multi-cell for name
-                x_name = pdf.get_x()
-                y_name = pdf.get_y()
-                pdf.multi_cell(col_widths['name'], line_height, item_name_str, border=1, align='L', fill=fill)
-                pdf.set_xy(x_name + col_widths['name'], y_name) # Reset position after multi-cell
+                # Use multi_cell for name to allow wrapping if needed
+                x_after_sno = pdf.get_x()
+                pdf.multi_cell(col_widths['name'], line_height, item_name_str, border=1, align='L', fill=fill, new_x=XPos.LEFT, new_y=YPos.TOP) # Draw name
+                pdf.set_y(start_y) # Reset Y to top of row
+                pdf.set_x(x_after_sno + col_widths['name']) # Move X after name cell
 
                 pdf.cell(col_widths['unit'], row_height, item.get('item_unit', 'N/A'), border=1, align='C', fill=fill)
                 pdf.cell(col_widths['qty'], row_height, f"{item.get('requested_qty', 0):.2f}", border=1, align='R', fill=fill) # Format quantity
 
-                # Store position before multi-cell for notes
-                x_notes = pdf.get_x()
-                y_notes = pdf.get_y()
-                pdf.multi_cell(col_widths['notes'], line_height, notes_str, border=1, align='L', fill=fill)
-                pdf.set_xy(x_notes + col_widths['notes'], y_notes) # Reset position
+                # Use multi_cell for notes
+                x_after_qty = pdf.get_x()
+                pdf.multi_cell(col_widths['notes'], line_height, notes_str, border=1, align='L', fill=fill, new_x=XPos.LEFT, new_y=YPos.TOP) # Draw notes
+                pdf.set_y(start_y) # Reset Y to top of row
+                pdf.set_x(x_after_qty + col_widths['notes']) # Move X after notes cell
 
                 pdf.ln(row_height) # Move down by the calculated row height
                 fill = not fill # Alternate fill color
@@ -167,10 +172,10 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
         # --- Footer (Optional) ---
         pdf.set_y(-15) # Position 1.5 cm from bottom
         pdf.set_font("Helvetica", "I", 8)
-        pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 0, 'C')
+        pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", align='C', new_x=XPos.RIGHT, new_y=YPos.TOP) # Updated ln=0
 
-        # Output as bytes
-        return pdf.output(dest='tobytes')
+        # Output as bytes (remove deprecated 'dest')
+        return pdf.output() # Returns bytes by default
 
     except Exception as e:
         st.error(f"Failed to generate PDF: {e}")
@@ -432,13 +437,6 @@ with tab_create:
                     st.session_state.create_indent_next_id = 1
                     st.session_state.selected_department_for_create = None # Reset department filter state
 
-                    # *** Removed direct widget state modification ***
-                    # st.session_state.create_dept = None
-                    # st.session_state.create_req_by = ""
-                    # st.session_state.create_date_req = date.today() + timedelta(days=1)
-                    # st.session_state.create_header_notes = ""
-                    # *** End of removal ***
-
                     st.balloons()
                     time.sleep(1) # Short pause
                     st.rerun() # Rerun to reset the form visually and clear selections
@@ -560,7 +558,7 @@ with tab_view:
                                 # 3. Display download button
                                 download_button_placeholder.download_button(
                                     label=f"Download PDF for {selected_mrn_for_pdf}",
-                                    data=pdf_bytes,
+                                    data=pdf_bytes, # Should be bytes now
                                     file_name=f"indent_{selected_mrn_for_pdf}.pdf",
                                     mime="application/pdf",
                                     key="download_pdf_btn_final" # Use a distinct key

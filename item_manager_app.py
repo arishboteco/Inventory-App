@@ -1,5 +1,6 @@
 # item_manager_app.py
 # Consolidated backend logic based on canvas content ('indents_page_pdf')
+# Fix: Handle NoneType error when processing notes in create_indent.
 
 import streamlit as st
 from sqlalchemy import create_engine, text, func, inspect, select, MetaData, Table
@@ -607,14 +608,19 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
         VALUES (:indent_id, :item_id, :requested_qty, :notes);
     """)
 
+    # *** Fix applied here to handle potential None for notes ***
+    notes_value = indent_data.get("notes") # Get the value, might be None or a string
+    cleaned_notes = notes_value.strip() if isinstance(notes_value, str) else None # Strip only if it's a string
+
     indent_params = {
         "mrn": indent_data["mrn"].strip(), # Ensure stripped
         "requested_by": indent_data["requested_by"].strip(), # Ensure stripped
         "department": indent_data["department"], # Assuming already validated/selected
         "date_required": indent_data["date_required"], # Assume date object
-        "notes": indent_data.get("notes", "").strip() or None,
+        "notes": cleaned_notes, # Use the safely cleaned notes value
         "status": indent_data.get("status", STATUS_SUBMITTED) # Default status
     }
+    # *** End of fix ***
 
     try:
         with engine.connect() as connection:

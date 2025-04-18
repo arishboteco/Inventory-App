@@ -1,16 +1,11 @@
-# item_manager_app.py
-# Main Streamlit application file for Restaurant Inventory Manager
-# Includes database connection, core backend logic, and dashboard page.
-
 import streamlit as st
-from sqlalchemy import create_engine, text, func, inspect, select, MetaData, Table
+from sqlalchemy import create_engine, text, func, inspect
 from sqlalchemy.exc import OperationalError, ProgrammingError, IntegrityError, SQLAlchemyError
 import pandas as pd
 from typing import Any, Optional, Dict, List, Tuple, Set
 from datetime import datetime, date, timedelta
 import re # Import regular expressions for parsing departments
 from fpdf import FPDF # <-- Import added for PDF generation
-import io # <-- Import needed for PDF bytes output
 
 # ─────────────────────────────────────────────────────────
 # CONSTANTS
@@ -40,853 +35,762 @@ def connect_db():
         if "database" not in st.secrets:
             st.error("Database configuration missing in secrets.toml!")
             return None
-        if "url" not in st.secrets.database:
-             st.error("Database 'url' missing in secrets.toml under [database] section!")
-             return None
+        db = st.secrets["database"]
+        required_keys = ["engine", "user", "password", "host", "port", "dbname"]
+        if not all(key in db for key in required_keys):
+            missing = [k for k in required_keys if k not in db]
+            st.error(f"Missing keys in database secrets: {', '.join(missing)}")
+            return None
 
-        # Ensure the URL starts with postgresql://
-        db_url = st.secrets.database.url
-        if not db_url.startswith("postgresql://"):
-            if db_url.startswith("postgres://"): # Common Supabase format
-                 db_url = db_url.replace("postgres://", "postgresql://", 1)
-            else:
-                st.error("Database URL in secrets.toml must start with 'postgresql://' or 'postgres://'")
-                return None
-
-        engine = create_engine(db_url, pool_pre_ping=True)
+        connection_url = f"{db['engine']}://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['dbname']}"
+        engine = create_engine(connection_url, pool_pre_ping=True)
 
         # Test connection
         with engine.connect() as connection:
-            st.success("Database connection established successfully!")
+            # Sidebar message moved to run_dashboard after successful connection test
             return engine
 
     except OperationalError as e:
-        st.error(f"Database connection failed: {e}")
+        st.error(f"Database connection failed: Check host, port, credentials.\n{e}")
         return None
     except Exception as e:
-        st.error(f"An unexpected error occurred during database connection: {e}")
+        st.error(f"An unexpected error occurred during DB connection: {e}")
         return None
 
 # ─────────────────────────────────────────────────────────
-# DATA FETCHING & HELPER FUNCTIONS (Cached where appropriate)
+# HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────
-
-# --- Helper for executing queries ---
-def fetch_data(_engine: Any, query: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
-    """Helper function to execute a SQL query and return a DataFrame."""
-    if _engine is None:
-        st.error("Database connection not available.")
-        return pd.DataFrame()
+# This function is NOT cached with @st.cache_data, so engine param remains 'engine'
+def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    """Fetches data using a SQL query and returns a Pandas DataFrame."""
     try:
-        with _engine.connect() as connection:
-            # Use text() for literal SQL strings
+        with engine.connect() as connection:
             result = connection.execute(text(query), params or {})
-            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+            df = pd.DataFrame(result.mappings().all())
             return df
-    except ProgrammingError as e:
-        st.error(f"Database programming error: {e}")
-        st.error(f"Query attempted: {query}") # Log the query
-        st.error(f"Parameters: {params}")
-        return pd.DataFrame()
-    except SQLAlchemyError as e:
-        st.error(f"Database error during data fetch: {e}")
+    except (ProgrammingError, OperationalError, SQLAlchemyError) as e:
+        st.error(f"Database query error: {e}\nQuery: {query}")
         return pd.DataFrame()
     except Exception as e:
         st.error(f"An unexpected error occurred during data fetch: {e}")
         return pd.DataFrame()
 
-# --- Get All Items (with stock) ---
-@st.cache_data(ttl=300, show_spinner="Fetching item data...") # Cache for 5 mins
-def get_all_items_with_stock(_engine: Any, show_inactive: bool = False) -> pd.DataFrame:
-    """Fetches all items, optionally including inactive ones, joining with current stock."""
-    # This function now correctly uses the _engine convention for caching
-    if _engine is None: return pd.DataFrame()
-    where_clause = "" if show_inactive else "WHERE i.is_active = TRUE"
-    query = f"""
-        SELECT
-            i.item_id,
-            i.name,
-            i.unit,
-            i.category,
-            COALESCE(s.current_stock, 0) AS current_stock, -- Use current_stock from dedicated column
-            i.reorder_point,
-            i.permitted_departments,
-            i.is_active
-        FROM items i
-        LEFT JOIN ( -- Ensure we get the latest stock level if needed (though items.current_stock should be canonical)
-             SELECT item_id, current_stock FROM items
-        ) s ON i.item_id = s.item_id
-        {where_clause}
-        ORDER BY i.name;
-    """
-    return fetch_data(_engine, query)
+# ─────────────────────────────────────────────────────────
+# ITEM MASTER FUNCTIONS (No changes in this section from previous version)
+# ─────────────────────────────────────────────────────────
+@st.cache_data(ttl=300) # Cache for 5 minutes
+def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame: # MODIFIED: _engine
+    """Fetches all items, optionally including inactive ones."""
+    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
+    if not include_inactive:
+        query += " WHERE is_active = TRUE"
+    query += " ORDER BY name;"
+    return fetch_data(_engine, query) # MODIFIED: _engine
 
-# --- Get Item Details ---
-# No caching needed as it's usually for editing a specific item
-def get_item_details(engine: Any, item_id: int) -> Optional[Dict[str, Any]]:
+# Not cached, keep 'engine'
+def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a single item."""
-    if engine is None: return None
-    query = "SELECT * FROM items WHERE item_id = :item_id;"
+    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
     df = fetch_data(engine, query, {"item_id": item_id})
     if not df.empty:
-        # Convert DataFrame row to dictionary
-        details = df.iloc[0].to_dict()
-        # Ensure numeric types are correct (Pandas might infer them as objects sometimes)
-        for col in ['reorder_point', 'current_stock']: # Add other numeric cols if any
-            if col in details and pd.notna(details[col]):
-                try:
-                    details[col] = pd.to_numeric(details[col])
-                except ValueError:
-                    st.warning(f"Could not convert column '{col}' to numeric for item {item_id}.")
-                    details[col] = 0 # Or some default
-            elif col in details and pd.isna(details[col]):
-                 details[col] = 0 # Handle None/NaN explicitly if needed
-        return details
+        return df.iloc[0].to_dict()
     return None
 
+# Not cached, keep 'engine'
+def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
+    """Adds a new item to the database."""
+    required = ["name", "unit"]
+    if not all(details.get(k) for k in required):
+        return False, f"Missing required fields: {', '.join(k for k in required if not details.get(k))}"
 
-# --- Get All Suppliers ---
-@st.cache_data(ttl=300, show_spinner="Fetching supplier data...") # Cache for 5 mins
-def get_all_suppliers(_engine: Any, show_inactive: bool = False) -> pd.DataFrame:
+    query = text("""
+        INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
+        VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
+        RETURNING item_id;
+    """)
+    params = {
+        "name": details["name"].strip(),
+        "unit": details["unit"].strip(),
+        "category": details.get("category", "Uncategorized").strip(),
+        "sub_category": details.get("sub_category", "General").strip(),
+        "permitted_departments": details.get("permitted_departments"), # Keep as provided (string expected)
+        "reorder_point": details.get("reorder_point", 0),
+        "current_stock": details.get("current_stock", 0),
+        "notes": details.get("notes"),
+        "is_active": details.get("is_active", True)
+    }
+    try:
+        with engine.connect() as connection:
+            with connection.begin(): # Start transaction
+                result = connection.execute(query, params)
+                new_id = result.scalar_one_or_none()
+        if new_id:
+            get_all_items_with_stock.clear() # Clear cache on success
+            get_distinct_departments_from_items.clear() # Clear dept cache
+            return True, f"Item '{params['name']}' added with ID {new_id}."
+        else:
+            return False, "Failed to add item (no ID returned)."
+    except IntegrityError:
+        return False, f"Item name '{params['name']}' already exists. Choose a unique name."
+    except (SQLAlchemyError, Exception) as e:
+        return False, f"Database error adding item: {e}"
+
+# Not cached, keep 'engine'
+def update_item_details(engine, item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
+    """Updates details for an existing item."""
+    if not item_id or not updates:
+        return False, "Invalid item ID or no updates provided."
+
+    set_clauses = []
+    params = {"item_id": item_id}
+    allowed_fields = ["name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes"] # Exclude current_stock, is_active
+
+    for key, value in updates.items():
+        if key in allowed_fields:
+            set_clauses.append(f"{key} = :{key}")
+            params[key] = value.strip() if isinstance(value, str) else value
+
+    if not set_clauses:
+        return False, "No valid fields provided for update."
+
+    query = text(f"UPDATE items SET {', '.join(set_clauses)} WHERE item_id = :item_id;")
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin(): # Start transaction
+                result = connection.execute(query, params)
+        if result.rowcount > 0:
+            get_all_items_with_stock.clear() # Clear cache on success
+            get_distinct_departments_from_items.clear() # Clear dept cache
+            return True, f"Item ID {item_id} updated successfully."
+        else:
+            # This could happen if the item_id doesn't exist, though usually caught earlier
+            return False, f"Item ID {item_id} not found or no changes made."
+    except IntegrityError:
+        return False, f"Update failed: Potential duplicate name '{updates.get('name')}'. Choose a unique name."
+    except (SQLAlchemyError, Exception) as e:
+        return False, f"Database error updating item: {e}"
+
+# Not cached, keep 'engine'
+def deactivate_item(engine, item_id: int) -> bool:
+    """Sets the is_active flag to FALSE for an item."""
+    query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id;")
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, {"item_id": item_id})
+        if result.rowcount > 0:
+            get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear() # Clear dept cache
+            return True
+        return False
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Error deactivating item {item_id}: {e}")
+        return False
+
+# Not cached, keep 'engine'
+def reactivate_item(engine, item_id: int) -> bool:
+    """Sets the is_active flag to TRUE for an item."""
+    query = text("UPDATE items SET is_active = TRUE WHERE item_id = :item_id;")
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, {"item_id": item_id})
+        if result.rowcount > 0:
+            get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear() # Clear dept cache
+            return True
+        return False
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Error reactivating item {item_id}: {e}")
+        return False
+
+# ─────────────────────────────────────────────────────────
+# DEPARTMENT HELPER FUNCTION (NEW)
+# ─────────────────────────────────────────────────────────
+@st.cache_data(ttl=300) # Cache for 5 minutes
+def get_distinct_departments_from_items(_engine) -> List[str]: # MODIFIED: _engine
+    """
+    Fetches distinct, non-empty department names from the permitted_departments
+    column of active items. Assumes comma-separated strings.
+    """
+    query = text("""
+        SELECT DISTINCT permitted_departments
+        FROM items
+        WHERE is_active = TRUE
+          AND permitted_departments IS NOT NULL
+          AND permitted_departments <> ''
+          AND permitted_departments <> ' ';
+    """)
+    departments_set: Set[str] = set()
+    try:
+        # Use _engine here
+        with _engine.connect() as connection:
+            result = connection.execute(query)
+            rows = result.fetchall() # Use fetchall to get all distinct strings
+
+        for row in rows:
+            permitted_str = row[0] # Assuming permitted_departments is the first column
+            if permitted_str:
+                # Split by comma, strip whitespace, filter out empty strings
+                departments = [dept.strip() for dept in permitted_str.split(',') if dept.strip()]
+                departments_set.update(departments)
+
+        return sorted(list(departments_set))
+
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Error fetching distinct departments: {e}")
+        return []
+
+# ─────────────────────────────────────────────────────────
+# SUPPLIER MASTER FUNCTIONS
+# ─────────────────────────────────────────────────────────
+@st.cache_data(ttl=300)
+def get_all_suppliers(_engine, include_inactive=False) -> pd.DataFrame: # MODIFIED: _engine
     """Fetches all suppliers, optionally including inactive ones."""
-    if _engine is None: return pd.DataFrame()
-    where_clause = "" if show_inactive else "WHERE is_active = TRUE"
-    query = f"SELECT supplier_id, name, contact_person, email, phone, is_active FROM suppliers {where_clause} ORDER BY name;"
-    return fetch_data(_engine, query)
+    query = "SELECT supplier_id, name, contact_person, phone, email, address, notes, is_active FROM suppliers"
+    if not include_inactive:
+        query += " WHERE is_active = TRUE"
+    query += " ORDER BY name;"
+    return fetch_data(_engine, query) # MODIFIED: _engine
 
-# --- Get Supplier Details ---
-# No caching needed
-def get_supplier_details(engine: Any, supplier_id: int) -> Optional[Dict[str, Any]]:
+# Not cached, keep 'engine'
+def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a single supplier."""
-    if engine is None: return None
-    query = "SELECT * FROM suppliers WHERE supplier_id = :supplier_id;"
+    query = "SELECT supplier_id, name, contact_person, phone, email, address, notes, is_active FROM suppliers WHERE supplier_id = :supplier_id;"
     df = fetch_data(engine, query, {"supplier_id": supplier_id})
     if not df.empty:
         return df.iloc[0].to_dict()
     return None
 
-# --- Get Stock Transactions ---
-@st.cache_data(ttl=120, show_spinner="Fetching transaction history...") # Cache for 2 mins
-def get_stock_transactions(
-    _engine: Any,
-    item_id_filter: Optional[int] = None,
-    date_start_str_filter: Optional[str] = None, # Accept string dates
-    date_end_str_filter: Optional[str] = None,   # Accept string dates
-    transaction_type_filter: Optional[str] = None,
-    user_filter: Optional[str] = None,
-    mrn_filter: Optional[str] = None
+# Not cached, keep 'engine'
+def add_supplier(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
+    """Adds a new supplier."""
+    if not details.get("name"):
+        return False, "Supplier name is required."
+
+    query = text("""
+        INSERT INTO suppliers (name, contact_person, phone, email, address, notes, is_active)
+        VALUES (:name, :contact_person, :phone, :email, :address, :notes, :is_active)
+        RETURNING supplier_id;
+    """)
+    params = {
+        "name": details["name"].strip(),
+        "contact_person": details.get("contact_person", "").strip() or None,
+        "phone": details.get("phone", "").strip() or None,
+        "email": details.get("email", "").strip() or None,
+        "address": details.get("address", "").strip() or None,
+        "notes": details.get("notes", "").strip() or None,
+        "is_active": details.get("is_active", True)
+    }
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, params)
+                new_id = result.scalar_one_or_none()
+        if new_id:
+            get_all_suppliers.clear()
+            return True, f"Supplier '{params['name']}' added with ID {new_id}."
+        else:
+            return False, "Failed to add supplier."
+    except IntegrityError:
+        return False, f"Supplier name '{params['name']}' already exists."
+    except (SQLAlchemyError, Exception) as e:
+        return False, f"Database error adding supplier: {e}"
+
+# Not cached, keep 'engine'
+def update_supplier(engine, supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
+    """Updates an existing supplier."""
+    if not supplier_id or not updates:
+        return False, "Invalid supplier ID or no updates."
+
+    set_clauses = []
+    params = {"supplier_id": supplier_id}
+    allowed = ["name", "contact_person", "phone", "email", "address", "notes"]
+
+    for key, value in updates.items():
+        if key in allowed:
+            set_clauses.append(f"{key} = :{key}")
+            # Handle empty strings -> None for optional fields if desired, or just strip
+            params[key] = value.strip() if isinstance(value, str) else value
+            if key != "name" and params[key] == "":
+                 params[key] = None # Set optional fields to NULL if submitted empty
+
+    if not set_clauses:
+        return False, "No valid fields to update."
+
+    query = text(f"UPDATE suppliers SET {', '.join(set_clauses)} WHERE supplier_id = :supplier_id;")
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, params)
+        if result.rowcount > 0:
+            get_all_suppliers.clear()
+            return True, f"Supplier ID {supplier_id} updated."
+        else:
+            return False, f"Supplier ID {supplier_id} not found or no changes."
+    except IntegrityError:
+        return False, f"Update failed: Potential duplicate name '{updates.get('name')}'. Choose a unique name."
+    except (SQLAlchemyError, Exception) as e:
+        return False, f"Database error updating supplier: {e}"
+
+# Not cached, keep 'engine'
+def deactivate_supplier(engine, supplier_id: int) -> bool:
+    """Sets is_active to FALSE for a supplier."""
+    query = text("UPDATE suppliers SET is_active = FALSE WHERE supplier_id = :supplier_id;")
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, {"supplier_id": supplier_id})
+        if result.rowcount > 0:
+            get_all_suppliers.clear()
+            return True
+        return False
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Error deactivating supplier {supplier_id}: {e}")
+        return False
+
+# Not cached, keep 'engine'
+def reactivate_supplier(engine, supplier_id: int) -> bool:
+    """Sets is_active to TRUE for a supplier."""
+    query = text("UPDATE suppliers SET is_active = TRUE WHERE supplier_id = :supplier_id;")
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, {"supplier_id": supplier_id})
+        if result.rowcount > 0:
+            get_all_suppliers.clear()
+            return True
+        return False
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Error reactivating supplier {supplier_id}: {e}")
+        return False
+
+
+# ─────────────────────────────────────────────────────────
+# STOCK TRANSACTION FUNCTIONS
+# ─────────────────────────────────────────────────────────
+# Not cached, keep 'engine'
+def record_stock_transaction(
+    engine,
+    item_id: int,
+    quantity_change: float,
+    transaction_type: str,
+    user_id: Optional[str] = None,
+    related_mrn: Optional[str] = None,
+    related_po_id: Optional[int] = None,
+    notes: Optional[str] = None
+) -> bool:
+    """Records a stock transaction and updates the item's current stock."""
+    if not item_id or quantity_change == 0:
+        st.warning("Item ID missing or quantity change is zero. No transaction recorded.")
+        return False
+
+    # Ensure notes is either a string or None
+    notes = str(notes).strip() if notes is not None else None
+    user_id = str(user_id).strip() if user_id is not None else None
+    related_mrn = str(related_mrn).strip() if related_mrn is not None else None
+
+    stock_update_query = text("""
+        UPDATE items
+        SET current_stock = current_stock + :quantity_change
+        WHERE item_id = :item_id;
+    """)
+
+    transaction_insert_query = text("""
+        INSERT INTO stock_transactions
+            (item_id, quantity_change, transaction_type, user_id, related_mrn, related_po_id, notes)
+        VALUES
+            (:item_id, :quantity_change, :transaction_type, :user_id, :related_mrn, :related_po_id, :notes);
+    """)
+
+    params = {
+        "item_id": item_id,
+        "quantity_change": quantity_change,
+        "transaction_type": transaction_type,
+        "user_id": user_id,
+        "related_mrn": related_mrn,
+        "related_po_id": related_po_id,
+        "notes": notes
+    }
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin(): # Start transaction
+                # 1. Update current stock
+                connection.execute(stock_update_query, {"item_id": item_id, "quantity_change": quantity_change})
+                # 2. Insert transaction record
+                connection.execute(transaction_insert_query, params)
+        get_all_items_with_stock.clear() # Clear item cache as stock changed
+        get_stock_transactions.clear() # Clear transaction history cache
+        return True
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Database error recording stock transaction: {e}")
+        return False
+
+@st.cache_data(ttl=120) # Cache history for 2 minutes
+def get_stock_transactions( # MODIFIED: _engine
+    _engine,
+    item_id: Optional[int] = None,
+    transaction_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    start_date: Optional[date] = None, # Keep original type hint here
+    end_date: Optional[date] = None,   # Keep original type hint here
+    related_mrn: Optional[str] = None
 ) -> pd.DataFrame:
     """Fetches stock transaction history with optional filters."""
-    if _engine is None: return pd.DataFrame()
-
-    params = {}
-    filters = []
-
-    if item_id_filter:
-        filters.append("st.item_id = :item_id")
-        params["item_id"] = item_id_filter
-    if date_start_str_filter:
-        filters.append("st.transaction_date >= :date_start")
-        params["date_start"] = date_start_str_filter # Pass string directly
-    if date_end_str_filter:
-        # Add 1 day to end date to make it inclusive for date comparison
-        try:
-            end_date = datetime.strptime(date_end_str_filter, '%Y-%m-%d').date()
-            inclusive_end_date = end_date + timedelta(days=1)
-            filters.append("st.transaction_date < :date_end")
-            params["date_end"] = inclusive_end_date.strftime('%Y-%m-%d') # Pass string directly
-        except ValueError:
-             st.warning(f"Invalid end date format: {date_end_str_filter}. Expected YYYY-MM-DD.")
-             # Optionally skip this filter or handle error differently
-    if transaction_type_filter:
-        filters.append("st.transaction_type = :transaction_type")
-        params["transaction_type"] = transaction_type_filter
-    if user_filter:
-        filters.append("st.user_id ILIKE :user_id")
-        params["user_id"] = f"%{user_filter}%"
-    if mrn_filter:
-        filters.append("st.related_mrn = :related_mrn")
-        params["related_mrn"] = mrn_filter
-
-    where_clause = "WHERE " + " AND ".join(filters) if filters else ""
-
-    query = f"""
+    query = """
         SELECT
             st.transaction_id,
-            st.item_id,
-            i.name AS item_name,
             st.transaction_date,
+            i.name AS item_name, -- Join with items to get name
             st.transaction_type,
             st.quantity_change,
             st.user_id,
             st.notes,
             st.related_mrn,
-            st.related_po_id
+            st.related_po_id,
+            st.item_id -- Include item_id for potential joins later
         FROM stock_transactions st
-        JOIN items i ON st.item_id = i.item_id
-        {where_clause}
-        ORDER BY st.transaction_date DESC;
+        JOIN items i ON st.item_id = i.item_id -- Join added
+        WHERE 1=1
     """
-    return fetch_data(_engine, query, params)
+    params = {}
+
+    if item_id:
+        query += " AND st.item_id = :item_id"
+        params['item_id'] = item_id
+    if transaction_type:
+        query += " AND st.transaction_type = :transaction_type"
+        params['transaction_type'] = transaction_type
+    if user_id:
+        query += " AND st.user_id ILIKE :user_id" # Case-insensitive search for user
+        params['user_id'] = f"%{user_id}%"
+    if related_mrn:
+        query += " AND st.related_mrn ILIKE :related_mrn" # Case-insensitive search
+        params['related_mrn'] = f"%{related_mrn}%"
+    if start_date:
+        query += " AND st.transaction_date >= :start_date"
+        params['start_date'] = start_date
+    if end_date:
+        # Adjust end_date to include the whole day
+        effective_end_date = end_date + timedelta(days=1)
+        query += " AND st.transaction_date < :end_date"
+        params['end_date'] = effective_end_date
+
+    query += " ORDER BY st.transaction_date DESC, st.transaction_id DESC;"
+
+    df = fetch_data(_engine, query, params) # MODIFIED: _engine
+    if not df.empty:
+        # Format date for better display, keep time component
+         if 'transaction_date' in df.columns:
+            df['transaction_date'] = pd.to_datetime(df['transaction_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
+    return df
+
+# ─────────────────────────────────────────────────────────
+# INDENT FUNCTIONS (create_indent & get_indents modified)
+# ─────────────────────────────────────────────────────────
+# Not cached, keep 'engine'
+def generate_mrn(engine) -> Optional[str]:
+    """Generates a new Material Request Number (MRN) using a sequence."""
+    try:
+        with engine.connect() as connection:
+            # Assuming sequence name is 'mrn_seq'
+            result = connection.execute(text("SELECT nextval('mrn_seq');"))
+            seq_num = result.scalar_one()
+            # Format: MRN-YYYYMM-SequenceNumber (padded)
+            mrn = f"MRN-{datetime.now().strftime('%Y%m')}-{seq_num:05d}"
+            return mrn
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Error generating MRN: {e}")
+        return None
+
+# *** MODIFIED create_indent function with requested_by fix ***
+# Not cached, keep 'engine'
+def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> Tuple[bool, str]:
+    """Creates a new indent record and its associated items."""
+    required_header = ["mrn", "requested_by", "department", "date_required"]
+    # Perform initial check using .get() which is safer for potentially missing keys
+    if not all(indent_data.get(k) for k in required_header):
+        missing = [k for k in required_header if not indent_data.get(k)]
+         # Explicitly check requested_by if it was the missing one
+        if not indent_data.get("requested_by"):
+            missing.append("requested_by (is empty)")
+        return False, f"Missing required indent header fields: {', '.join(missing)}"
+
+    if not items_data:
+        return False, "Indent must contain at least one item."
+
+    # Validate item data (basic check)
+    for item in items_data:
+        if not item.get('item_id') or not item.get('requested_qty') or item['requested_qty'] <= 0:
+            return False, f"Invalid item data found: {item}. Ensure item ID and positive quantity are present."
+
+    indent_query = text("""
+        INSERT INTO indents (mrn, requested_by, department, date_required, notes, status)
+        VALUES (:mrn, :requested_by, :department, :date_required, :notes, :status)
+        RETURNING indent_id;
+    """)
+    item_query = text("""
+        INSERT INTO indent_items (indent_id, item_id, requested_qty, notes)
+        VALUES (:indent_id, :item_id, :requested_qty, :notes);
+    """)
+
+    # Safely handle requested_by before stripping to prevent NoneType error
+    requested_by_value = indent_data.get("requested_by", "") # Default to empty string if None
+    requested_by_stripped = requested_by_value.strip() if requested_by_value else None # Strip only if not None/empty
+
+    # Add an additional check after stripping to ensure it's not empty
+    if not requested_by_stripped:
+         # This check is now slightly redundant due to the initial check, but provides extra safety
+         return False, "Missing required indent header fields: requested_by (cannot be empty)"
+
+    indent_params = {
+        "mrn": indent_data["mrn"],
+        "requested_by": requested_by_stripped, # Use the safely stripped value
+        "department": indent_data["department"], # Assuming already validated/selected
+        "date_required": indent_data["date_required"],
+        "notes": indent_data.get("notes", "").strip() or None, # This get() pattern is safe
+        "status": indent_data.get("status", STATUS_SUBMITTED) # Default status
+    }
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin(): # Transaction for header and items
+                # 1. Insert indent header
+                result = connection.execute(indent_query, indent_params)
+                new_indent_id = result.scalar_one_or_none()
+
+                if not new_indent_id:
+                    st.error("Failed to retrieve indent_id after insertion in transaction.")
+                    raise Exception("Failed to retrieve indent_id after insertion.")
+
+                # 2. Insert indent items
+                item_params_list = [
+                    {
+                        "indent_id": new_indent_id,
+                        "item_id": item['item_id'],
+                        "requested_qty": item['requested_qty'],
+                        "notes": item.get('notes', "").strip() or None # This get() pattern is safe
+                    }
+                    for item in items_data
+                ]
+                connection.execute(item_query, item_params_list)
+
+        get_indents.clear() # Clear indent list cache
+        return True, f"Indent {indent_data['mrn']} created successfully."
+
+    except IntegrityError as e:
+        st.error(f"Database integrity error creating indent: {e}") # Log error
+        return False, f"Database integrity error. Possible duplicate MRN ('{indent_data.get('mrn', 'N/A')}') or invalid Item ID."
+    except (SQLAlchemyError, Exception) as e:
+        st.error(f"Database error creating indent: {e}") # Log error
+        return False, f"Database error creating indent: {e}"
 
 
-# --- Get Indents ---
-@st.cache_data(ttl=120, show_spinner="Fetching indent data...") # Cache for 2 mins
-def get_indents(
-    _engine: Any,
+@st.cache_data(ttl=120) # Cache indent list for 2 minutes
+def get_indents( # MODIFIED: Accepts date strings
+    _engine,
     mrn_filter: Optional[str] = None,
     dept_filter: Optional[str] = None,
     status_filter: Optional[str] = None,
-    date_start_str: Optional[str] = None, # Accept string date
-    date_end_str: Optional[str] = None    # Accept string date
+    date_start_str: Optional[str] = None, # MODIFIED: Changed param name & type hint
+    date_end_str: Optional[str] = None    # MODIFIED: Changed param name & type hint
 ) -> pd.DataFrame:
-    """Fetches indent header information with optional filters."""
-    if _engine is None: return pd.DataFrame()
+    """Fetches indent records with optional filters, accepting dates as strings."""
 
+    # --- Convert date strings to date objects for query ---
+    date_start_filter = None
+    if date_start_str:
+        try:
+            date_start_filter = datetime.strptime(date_start_str, '%Y-%m-%d').date()
+        except ValueError:
+            st.warning(f"Invalid start date format received: {date_start_str}. Ignoring.")
+
+    date_end_filter = None
+    if date_end_str:
+        try:
+            date_end_filter = datetime.strptime(date_end_str, '%Y-%m-%d').date()
+        except ValueError:
+            st.warning(f"Invalid end date format received: {date_end_str}. Ignoring.")
+    # --- End Date Conversion ---
+
+    query = """
+        SELECT
+            i.indent_id, i.mrn, i.requested_by, i.department, i.date_required,
+            i.date_submitted, i.status, i.notes AS indent_notes,
+            COUNT(ii.indent_item_id) AS item_count
+        FROM indents i
+        LEFT JOIN indent_items ii ON i.indent_id = ii.indent_id
+        WHERE 1=1
+    """
     params = {}
-    filters = []
 
     if mrn_filter:
-        filters.append("ind.mrn = :mrn")
-        params["mrn"] = mrn_filter
+        query += " AND i.mrn ILIKE :mrn"
+        params['mrn'] = f"%{mrn_filter}%"
     if dept_filter:
-        filters.append("ind.department = :department")
-        params["department"] = dept_filter
+        query += " AND i.department = :department"
+        params['department'] = dept_filter
     if status_filter:
-        filters.append("ind.status = :status")
-        params["status"] = status_filter
-    if date_start_str:
-        filters.append("ind.date_submitted >= :date_start")
-        params["date_start"] = date_start_str # Pass string directly
-    if date_end_str:
-         # Add 1 day to end date to make it inclusive for date comparison
-        try:
-            end_date = datetime.strptime(date_end_str, '%Y-%m-%d').date()
-            inclusive_end_date = end_date + timedelta(days=1)
-            filters.append("ind.date_submitted < :date_end")
-            params["date_end"] = inclusive_end_date.strftime('%Y-%m-%d') # Pass string directly
-        except ValueError:
-             st.warning(f"Invalid end date format: {date_end_str}. Expected YYYY-MM-DD.")
-             # Optionally skip this filter
+        query += " AND i.status = :status"
+        params['status'] = status_filter
 
-    where_clause = "WHERE " + " AND ".join(filters) if filters else ""
+    # Use the converted date objects for filtering
+    if date_start_filter:
+        query += " AND i.date_submitted >= :date_from"
+        params['date_from'] = date_start_filter
+    if date_end_filter:
+        # Adjust end_date for timestamp comparison
+        effective_date_to = date_end_filter + timedelta(days=1)
+        query += " AND i.date_submitted < :date_to"
+        params['date_to'] = effective_date_to
 
-    # Query to get indent headers and count of items per indent
-    query = f"""
-        SELECT
-            ind.indent_id,
-            ind.mrn,
-            ind.department,
-            ind.requested_by,
-            ind.date_submitted,
-            ind.date_required,
-            ind.status,
-            ind.notes AS indent_notes,
-            COUNT(ii.indent_item_id) AS item_count
-        FROM indents ind
-        LEFT JOIN indent_items ii ON ind.indent_id = ii.indent_id
-        {where_clause}
+    query += """
         GROUP BY
-            ind.indent_id, ind.mrn, ind.department, ind.requested_by,
-            ind.date_submitted, ind.date_required, ind.status, ind.notes
-        ORDER BY ind.date_submitted DESC, ind.mrn DESC;
+            i.indent_id, i.mrn, i.requested_by, i.department, i.date_required,
+            i.date_submitted, i.status, i.notes
+        ORDER BY i.date_submitted DESC, i.indent_id DESC
     """
-    return fetch_data(_engine, query, params)
 
+    df = fetch_data(_engine, query, params) # Use _engine fix
 
-# --- Get Distinct Departments from Items ---
-@st.cache_data(ttl=600, show_spinner="Fetching department list...") # Cache for 10 mins
-def get_distinct_departments_from_items(_engine: Any) -> List[str]:
-    """
-    Fetches all 'permitted_departments' strings from active items,
-    parses them, and returns a unique, sorted list of departments.
-    """
-    if _engine is None: return []
-    query = "SELECT DISTINCT permitted_departments FROM items WHERE is_active = TRUE AND permitted_departments IS NOT NULL AND permitted_departments <> '';"
-    df = fetch_data(_engine, query)
-    if df.empty:
-        return []
+    # Format dates for display (remains the same)
+    if not df.empty:
+        if 'date_required' in df.columns:
+             # Handle potential NaT/None before formatting
+             df['date_required'] = pd.to_datetime(df['date_required'], errors='coerce').dt.strftime('%Y-%m-%d')
+        if 'date_submitted' in df.columns:
+            # Handle potential NaT/None before formatting
+             df['date_submitted'] = pd.to_datetime(df['date_submitted'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M')
+    return df
 
-    all_departments: Set[str] = set()
-    # Iterate through the DataFrame column containing comma-separated strings
-    for dept_string in df['permitted_departments']:
-        # Split the string by comma, strip whitespace from each part,
-        # filter out empty strings, and add to the set
-        departments = {dept.strip() for dept in dept_string.split(',') if dept.strip()}
-        all_departments.update(departments)
+# *** ADDED PDF Generation Function ***
+# ─────────────────────────────────────────────────────────
+# PDF GENERATION UTILITY
+# ─────────────────────────────────────────────────────────
+def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> bytes:
+    """Generates a PDF document for a submitted indent."""
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
 
-    # Convert the set to a sorted list
-    return sorted(list(all_departments))
+    # Title
+    pdf.cell(0, 10, "Material Indent Request", ln=True, align='C')
+    pdf.ln(10)
+
+    # Header Info
+    pdf.set_font("Helvetica", "", 11) # Slightly smaller font
+    col_width = pdf.get_string_width("Date Required: ") + 2 # Estimate label width
+    pdf.cell(col_width, 7, "MRN:")
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 7, f"{indent_header.get('mrn', 'N/A')}", ln=True)
+
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(col_width, 7, "Department:")
+    pdf.cell(0, 7, f"{indent_header.get('department', 'N/A')}", ln=True)
+    pdf.cell(col_width, 7, "Requested By:")
+    pdf.cell(0, 7, f"{indent_header.get('requested_by', 'N/A')}", ln=True)
+
+    # Assuming date_submitted might not be in header yet, use current time
+    submitted_date_str = indent_header.get('date_submitted', datetime.now().strftime('%Y-%m-%d %H:%M'))
+    pdf.cell(col_width, 7, "Date Submitted:")
+    pdf.cell(0, 7, submitted_date_str, ln=True)
+    pdf.cell(col_width, 7, "Date Required:")
+    # Ensure date_required is treated as string
+    pdf.cell(0, 7, f"{indent_header.get('date_required', 'N/A')}", ln=True)
+
+    if indent_header.get('notes'):
+        pdf.ln(2) # Small gap before notes
+        pdf.set_font("Helvetica", "I", 10)
+        pdf.multi_cell(0, 5, f"Indent Notes: {indent_header['notes']}", border=0)
+        pdf.set_font("Helvetica", "", 11) # Reset font
+    pdf.ln(8) # More space before table
+
+    # Items Table Header
+    pdf.set_font("Helvetica", "B", 10)
+    col_widths = {'sno': 15, 'name': 75, 'unit': 20, 'qty': 25, 'notes': 55} # Adjust as needed
+    pdf.cell(col_widths['sno'], 7, "S.No.", border=1, align='C')
+    pdf.cell(col_widths['name'], 7, "Item Name", border=1)
+    pdf.cell(col_widths['unit'], 7, "Unit", border=1, align='C')
+    pdf.cell(col_widths['qty'], 7, "Req. Qty", border=1, align='C')
+    pdf.cell(col_widths['notes'], 7, "Item Notes", border=1)
+    pdf.ln()
+
+    # Items Table Rows
+    pdf.set_font("Helvetica", "", 9) # Smaller font for table content
+    if not indent_items:
+         pdf.cell(sum(col_widths.values()), 7, "No items found in this indent.", border=1, ln=True, align='C')
+    else:
+        for i, item in enumerate(indent_items):
+            # Handle potential line breaks in name/notes
+            line_height = 6
+            notes_str = item.get('notes', '') or '' # Ensure string
+            # Simple split for notes - adjust if more complex wrapping needed
+            notes_lines = pdf.multi_cell(col_widths['notes'], line_height, notes_str, border=0, align='L', split_only=True)
+
+            # Get max lines needed for this row (considering item name too if it could wrap)
+            max_lines = len(notes_lines) # Assume notes is longest for now
+
+            pdf.cell(col_widths['sno'], line_height * max_lines, str(i + 1), border=1, align='C')
+            pdf.cell(col_widths['name'], line_height * max_lines, item.get('item_name', 'N/A'), border=1)
+            pdf.cell(col_widths['unit'], line_height * max_lines, item.get('item_unit', 'N/A'), border=1, align='C')
+            pdf.cell(col_widths['qty'], line_height * max_lines, str(item.get('requested_qty', 0)), border=1, align='R')
+
+            # Use current position for multi-cell notes within the row height
+            x_pos = pdf.get_x()
+            y_pos = pdf.get_y()
+            pdf.multi_cell(col_widths['notes'], line_height, notes_str, border=1, align='L')
+            # Reset Y position to bottom of the row and X to start of next cell (implicit with ln)
+            pdf.set_xy(x_pos + col_widths['notes'], y_pos)
+
+            pdf.ln(line_height * max_lines) # Move down by the calculated row height
+
+    # Output as bytes
+    return pdf.output(dest='tobytes')
 
 
 # ─────────────────────────────────────────────────────────
-# DATABASE MODIFICATION FUNCTIONS (Generally not cached)
+# DASHBOARD UI (Main App Page)
 # ─────────────────────────────────────────────────────────
+def run_dashboard():
+    """Defines the UI for the main dashboard page."""
+    st.set_page_config(page_title="Inv Manager", page_icon="🍲", layout="wide")
+    st.title("🍲 Restaurant Inventory Dashboard")
+    st.caption(f"As of: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-# --- Add New Item ---
-def add_new_item(engine: Any, name: str, unit: str, category: str, reorder_point: float, permitted_departments: str) -> bool:
-    """Adds a new item to the database."""
-    if engine is None: return False
-    query = text("""
-        INSERT INTO items (name, unit, category, reorder_point, permitted_departments, current_stock, is_active)
-        VALUES (:name, :unit, :category, :reorder_point, :permitted_departments, 0, TRUE)
-        ON CONFLICT (name) DO NOTHING; -- Basic conflict handling: ignore duplicates by name
-    """)
-    params = {
-        "name": name, "unit": unit, "category": category,
-        "reorder_point": reorder_point, "permitted_departments": permitted_departments
-    }
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, params)
-            connection.commit()
-            return result.rowcount > 0 # Return True if a row was inserted
-    except IntegrityError as e:
-         st.error(f"Database integrity error (e.g., duplicate name): {e}")
-         return False
-    except SQLAlchemyError as e:
-        st.error(f"Database error adding item: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred adding item: {e}")
-        return False
+    engine = connect_db()
+    if not engine:
+        st.warning("Database connection failed. Dashboard data cannot be loaded.")
+        st.stop()
+    else:
+        st.sidebar.success("DB connected")
 
-# --- Update Item Details ---
-def update_item_details(engine: Any, item_id: int, details: Dict[str, Any]) -> bool:
-    """Updates details for an existing item."""
-    if engine is None: return False
-    # Ensure only valid columns are updated
-    valid_columns = ["name", "unit", "category", "reorder_point", "permitted_departments"]
-    set_clauses = []
-    params = {"item_id": item_id}
-    for key, value in details.items():
-        if key in valid_columns:
-            set_clauses.append(f"{key} = :{key}")
-            params[key] = value
+    items_df = get_all_items_with_stock(engine, include_inactive=False)
+    suppliers_df = get_all_suppliers(engine, include_inactive=False)
 
-    if not set_clauses:
-        st.warning("No valid fields provided for update.")
-        return False
+    total_active_items = len(items_df)
+    total_active_suppliers = len(suppliers_df)
 
-    query = text(f"""
-        UPDATE items
-        SET {', '.join(set_clauses)}
-        WHERE item_id = :item_id;
-    """)
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, params)
-            connection.commit()
-            return result.rowcount > 0 # Return True if a row was updated
-    except IntegrityError as e:
-         st.error(f"Database integrity error (e.g., duplicate name if name is updated): {e}")
-         return False
-    except SQLAlchemyError as e:
-        st.error(f"Database error updating item: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred updating item: {e}")
-        return False
-
-# --- Deactivate Item ---
-def deactivate_item(engine: Any, item_id: int) -> bool:
-    """Marks an item as inactive."""
-    if engine is None: return False
-    query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id;")
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, {"item_id": item_id})
-            connection.commit()
-            return result.rowcount > 0
-    except SQLAlchemyError as e:
-        st.error(f"Database error deactivating item: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred deactivating item: {e}")
-        return False
-
-# --- Reactivate Item ---
-def reactivate_item(engine: Any, item_id: int) -> bool:
-    """Marks an item as active."""
-    if engine is None: return False
-    query = text("UPDATE items SET is_active = TRUE WHERE item_id = :item_id;")
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, {"item_id": item_id})
-            connection.commit()
-            return result.rowcount > 0
-    except SQLAlchemyError as e:
-        st.error(f"Database error reactivating item: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred reactivating item: {e}")
-        return False
-
-
-# --- Add Supplier ---
-def add_supplier(engine: Any, name: str, contact_person: Optional[str], email: Optional[str], phone: Optional[str]) -> bool:
-    """Adds a new supplier."""
-    if engine is None: return False
-    query = text("""
-        INSERT INTO suppliers (name, contact_person, email, phone, is_active)
-        VALUES (:name, :contact_person, :email, :phone, TRUE)
-        ON CONFLICT (name) DO NOTHING; -- Basic conflict handling
-    """)
-    params = {"name": name, "contact_person": contact_person, "email": email, "phone": phone}
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, params)
-            connection.commit()
-            return result.rowcount > 0
-    except IntegrityError as e:
-         st.error(f"Database integrity error (e.g., duplicate name): {e}")
-         return False
-    except SQLAlchemyError as e:
-        st.error(f"Database error adding supplier: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred adding supplier: {e}")
-        return False
-
-# --- Update Supplier ---
-def update_supplier(engine: Any, supplier_id: int, details: Dict[str, Any]) -> bool:
-    """Updates supplier details."""
-    if engine is None: return False
-    valid_columns = ["name", "contact_person", "email", "phone"]
-    set_clauses = []
-    params = {"supplier_id": supplier_id}
-    for key, value in details.items():
-        if key in valid_columns:
-            set_clauses.append(f"{key} = :{key}")
-            params[key] = value
-
-    if not set_clauses:
-        st.warning("No valid fields provided for supplier update.")
-        return False
-
-    query = text(f"""
-        UPDATE suppliers
-        SET {', '.join(set_clauses)}
-        WHERE supplier_id = :supplier_id;
-    """)
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, params)
-            connection.commit()
-            return result.rowcount > 0
-    except IntegrityError as e:
-         st.error(f"Database integrity error (e.g., duplicate name): {e}")
-         return False
-    except SQLAlchemyError as e:
-        st.error(f"Database error updating supplier: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred updating supplier: {e}")
-        return False
-
-# --- Deactivate Supplier ---
-def deactivate_supplier(engine: Any, supplier_id: int) -> bool:
-    """Marks a supplier as inactive."""
-    if engine is None: return False
-    query = text("UPDATE suppliers SET is_active = FALSE WHERE supplier_id = :supplier_id;")
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, {"supplier_id": supplier_id})
-            connection.commit()
-            return result.rowcount > 0
-    except SQLAlchemyError as e:
-        st.error(f"Database error deactivating supplier: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred deactivating supplier: {e}")
-        return False
-
-# --- Reactivate Supplier ---
-def reactivate_supplier(engine: Any, supplier_id: int) -> bool:
-    """Marks a supplier as active."""
-    if engine is None: return False
-    query = text("UPDATE suppliers SET is_active = TRUE WHERE supplier_id = :supplier_id;")
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query, {"supplier_id": supplier_id})
-            connection.commit()
-            return result.rowcount > 0
-    except SQLAlchemyError as e:
-        st.error(f"Database error reactivating supplier: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred reactivating supplier: {e}")
-        return False
-
-
-# --- Record Stock Transaction ---
-def record_stock_transaction(
-    engine: Any,
-    item_id: int,
-    quantity_change: float,
-    transaction_type: str,
-    user_id: str,
-    notes: Optional[str] = None,
-    related_mrn: Optional[str] = None,
-    related_po_id: Optional[str] = None
-) -> bool:
-    """
-    Records a stock transaction and updates the item's current stock level.
-    Uses a transaction to ensure atomicity.
-    """
-    if engine is None: return False
-
-    # Validate transaction type
-    valid_types = [TX_RECEIVING, TX_ADJUSTMENT, TX_WASTAGE, TX_INDENT_FULFILL, TX_SALE]
-    if transaction_type not in valid_types:
-        st.error(f"Invalid transaction type: {transaction_type}")
-        return False
-
-    # Start a transaction
-    try:
-        with engine.connect() as connection:
-            with connection.begin(): # Start transaction
-                # 1. Update the item's current stock
-                update_stock_query = text("""
-                    UPDATE items
-                    SET current_stock = current_stock + :quantity_change
-                    WHERE item_id = :item_id;
-                """)
-                connection.execute(update_stock_query, {
-                    "quantity_change": quantity_change,
-                    "item_id": item_id
-                })
-
-                # 2. Insert the transaction log
-                insert_log_query = text("""
-                    INSERT INTO stock_transactions (
-                        item_id, transaction_date, transaction_type, quantity_change,
-                        user_id, notes, related_mrn, related_po_id
-                    ) VALUES (
-                        :item_id, NOW(), :transaction_type, :quantity_change,
-                        :user_id, :notes, :related_mrn, :related_po_id
-                    );
-                """)
-                connection.execute(insert_log_query, {
-                    "item_id": item_id,
-                    "transaction_type": transaction_type,
-                    "quantity_change": quantity_change,
-                    "user_id": user_id,
-                    "notes": notes,
-                    "related_mrn": related_mrn,
-                    "related_po_id": related_po_id
-                })
-            # Transaction automatically commits here if no exceptions occurred
-            return True
-    except SQLAlchemyError as e:
-        # Transaction automatically rolls back on exception
-        st.error(f"Database error during stock transaction: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred during stock transaction: {e}")
-        return False
-
-
-# --- Generate MRN ---
-def generate_mrn(engine: Any) -> Optional[str]:
-    """Generates a unique Material Request Number (MRN) using a database sequence."""
-    if engine is None: return None
-    query = text("SELECT nextval('mrn_seq');") # Assumes sequence name is 'mrn_seq'
-    prefix = "MRN"
-    current_year = datetime.now().strftime("%y") # e.g., 24
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(query)
-            sequence_number = result.scalar_one()
-            # Format: MRN-YY-0000N (e.g., MRN-24-00001)
-            mrn = f"{prefix}-{current_year}-{sequence_number:05d}"
-            return mrn
-    except ProgrammingError as e:
-        st.error(f"Database error generating MRN: Sequence 'mrn_seq' might not exist or user lacks permissions. {e}")
-        return None
-    except SQLAlchemyError as e:
-        st.error(f"Database error generating MRN: {e}")
-        return None
-    except Exception as e:
-        st.error(f"An unexpected error occurred generating MRN: {e}")
-        return None
-
-
-# --- Create Indent ---
-def create_indent(
-    engine: Any,
-    mrn: str,
-    department: str,
-    requested_by: str,
-    date_required: date,
-    status: str,
-    notes: Optional[str],
-    items: List[Dict[str, Any]] # List of {'item_id': int, 'requested_qty': float, 'notes': Optional[str]}
-) -> bool:
-    """Creates an indent header and its associated items within a transaction."""
-    if engine is None: return False
-    if not items:
-        st.error("Cannot create an indent with no items.")
-        return False
-
-    try:
-        with engine.connect() as connection:
-            with connection.begin(): # Start transaction
-                # 1. Insert Indent Header
-                insert_header_query = text("""
-                    INSERT INTO indents (mrn, department, requested_by, date_submitted, date_required, status, notes)
-                    VALUES (:mrn, :department, :requested_by, NOW(), :date_required, :status, :notes)
-                    RETURNING indent_id;
-                """)
-                result = connection.execute(insert_header_query, {
-                    "mrn": mrn,
-                    "department": department,
-                    "requested_by": requested_by,
-                    "date_required": date_required,
-                    "status": status,
-                    "notes": notes
-                })
-                indent_id = result.scalar_one() # Get the newly created indent_id
-
-                # 2. Insert Indent Items
-                insert_item_query = text("""
-                    INSERT INTO indent_items (indent_id, item_id, requested_qty, notes)
-                    VALUES (:indent_id, :item_id, :requested_qty, :notes);
-                """)
-                # Prepare list of parameters for executemany
-                item_params = [
-                    {
-                        "indent_id": indent_id,
-                        "item_id": item['item_id'],
-                        "requested_qty": item['requested_qty'],
-                        "notes": item.get('notes') # Use .get for optional notes
-                    } for item in items
-                ]
-                connection.execute(insert_item_query, item_params)
-
-            # Transaction commits here if successful
-            return True
-    except IntegrityError as e:
-        st.error(f"Database integrity error creating indent (e.g., invalid item_id): {e}")
-        return False
-    except SQLAlchemyError as e:
-        st.error(f"Database error creating indent: {e}")
-        return False
-    except Exception as e:
-        st.error(f"An unexpected error occurred creating indent: {e}")
-        return False
-
-
-# ─────────────────────────────────────────────────────────
-# PDF GENERATION FUNCTIONALITY
-# ─────────────────────────────────────────────────────────
-
-# --- Generate Indent PDF ---
-def generate_indent_pdf(engine: Any, mrn: str) -> Optional[bytes]:
-    """
-    Generates a PDF document for a specific indent.
-
-    Args:
-        engine: The SQLAlchemy engine instance.
-        mrn: The Material Request Number (MRN) of the indent.
-
-    Returns:
-        PDF content as bytes, or None if an error occurs or indent not found.
-    """
-    if engine is None:
-        st.error("Database connection not available for PDF generation.")
-        return None
-    if not mrn:
-        st.error("MRN must be provided to generate PDF.")
-        return None
-
-    try:
-        with engine.connect() as connection:
-            # 1. Fetch Indent Header Details
-            header_query = text("""
-                SELECT
-                    ind.mrn, ind.department, ind.requested_by,
-                    ind.date_submitted, ind.date_required, ind.status, ind.notes
-                FROM indents ind
-                WHERE ind.mrn = :mrn;
-            """)
-            header_result = connection.execute(header_query, {"mrn": mrn}).fetchone()
-
-            if not header_result:
-                st.error(f"Indent with MRN '{mrn}' not found.")
-                return None
-
-            header_data = header_result._asdict() # Convert Row to dict-like
-
-            # 2. Fetch Indent Items
-            items_query = text("""
-                SELECT
-                    i.name AS item_name,
-                    ii.requested_qty,
-                    i.unit,
-                    ii.notes AS item_notes
-                FROM indent_items ii
-                JOIN items i ON ii.item_id = i.item_id
-                JOIN indents ind ON ii.indent_id = ind.indent_id
-                WHERE ind.mrn = :mrn
-                ORDER BY i.name;
-            """)
-            items_result = connection.execute(items_query, {"mrn": mrn}).fetchall()
-            items_data = [row._asdict() for row in items_result] # Convert list of Rows
-
-        # 3. Create PDF using FPDF2
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Helvetica", "B", 16)
-        pdf.cell(0, 10, "Material Indent Request", ln=True, align='C')
-        pdf.ln(10) # Line break
-
-        # --- Header Section ---
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(40, 10, "MRN:", border=0)
-        pdf.set_font("Helvetica", "", 12)
-        pdf.cell(0, 10, header_data.get("mrn", "N/A"), ln=True, border=0)
-
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(40, 10, "Department:", border=0)
-        pdf.set_font("Helvetica", "", 12)
-        pdf.cell(0, 10, header_data.get("department", "N/A"), ln=True, border=0)
-
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(40, 10, "Requested By:", border=0)
-        pdf.set_font("Helvetica", "", 12)
-        pdf.cell(0, 10, header_data.get("requested_by", "N/A"), ln=True, border=0)
-
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(40, 10, "Date Submitted:", border=0)
-        pdf.set_font("Helvetica", "", 12)
-        submitted_date = header_data.get("date_submitted")
-        pdf.cell(0, 10, submitted_date.strftime('%Y-%m-%d %H:%M') if submitted_date else "N/A", ln=True, border=0)
-
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(40, 10, "Date Required:", border=0)
-        pdf.set_font("Helvetica", "", 12)
-        required_date = header_data.get("date_required")
-        pdf.cell(0, 10, required_date.strftime('%Y-%m-%d') if required_date else "N/A", ln=True, border=0)
-
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(40, 10, "Status:", border=0)
-        pdf.set_font("Helvetica", "", 12)
-        pdf.cell(0, 10, header_data.get("status", "N/A"), ln=True, border=0)
-
-        pdf.ln(5) # Line break
-
-        # --- Items Table ---
-        pdf.set_font("Helvetica", "B", 12)
-        pdf.cell(0, 10, "Requested Items", ln=True, align='L')
-        pdf.ln(2)
-
-        # Table Header
-        pdf.set_fill_color(220, 220, 220) # Light grey background
-        pdf.set_font("Helvetica", "B", 10)
-        col_widths = [80, 30, 20, 60] # Adjust widths as needed: Name, Qty, Unit, Notes
-        pdf.cell(col_widths[0], 8, "Item Name", border=1, fill=True, align='C')
-        pdf.cell(col_widths[1], 8, "Req. Qty", border=1, fill=True, align='C')
-        pdf.cell(col_widths[2], 8, "Unit", border=1, fill=True, align='C')
-        pdf.cell(col_widths[3], 8, "Item Notes", border=1, fill=True, align='C')
-        pdf.ln()
-
-        # Table Rows
-        pdf.set_font("Helvetica", "", 10)
-        for item in items_data:
-            pdf.cell(col_widths[0], 7, str(item.get("item_name", "")), border=1)
-            pdf.cell(col_widths[1], 7, f"{item.get('requested_qty', 0):.2f}", border=1, align='R')
-            pdf.cell(col_widths[2], 7, str(item.get("unit", "")), border=1, align='C')
-            pdf.cell(col_widths[3], 7, str(item.get("item_notes", "")), border=1)
-            pdf.ln()
-
-        pdf.ln(10) # Line break
-
-        # --- Indent Notes ---
-        indent_notes = header_data.get("notes")
-        if indent_notes:
-            pdf.set_font("Helvetica", "B", 12)
-            pdf.cell(0, 10, "Overall Indent Notes:", ln=True)
-            pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 5, indent_notes)
-            pdf.ln(5)
-
-        # --- Footer (Optional) ---
-        pdf.set_y(-15) # Position 1.5 cm from bottom
-        pdf.set_font("Helvetica", "I", 8)
-        pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 0, 0, 'C')
-
-        # 4. Output PDF to bytes
-        pdf_output = pdf.output(dest='S').encode('latin-1') # Output as bytes string
-        return pdf_output
-
-    except SQLAlchemyError as e:
-        st.error(f"Database error generating PDF for MRN {mrn}: {e}")
-        return None
-    except Exception as e:
-        st.error(f"An unexpected error occurred generating PDF for MRN {mrn}: {e}")
-        return None
-
-
-# ─────────────────────────────────────────────────────────
-# MAIN APP / DASHBOARD PAGE LOGIC
-# ─────────────────────────────────────────────────────────
-
-st.set_page_config(
-    page_title="Restaurant Inventory Dashboard",
-    page_icon="📊",
-    layout="wide"
-)
-
-st.title("📊 Restaurant Inventory Dashboard")
-
-# --- Database Connection ---
-engine = connect_db()
-
-if engine:
-    # --- Fetch data for KPIs ---
-    total_active_items = 0
-    total_active_suppliers = 0
+    low_stock_df = pd.DataFrame()
     low_stock_count = 0
-    low_stock_df = pd.DataFrame() # Initialize empty DataFrame
-
-    try:
-        # Pass engine using '_engine' convention for cached functions
-        items_df = get_all_items_with_stock(engine, show_inactive=False)
-        suppliers_df = get_all_suppliers(engine, show_inactive=False)
-
-        total_active_items = len(items_df)
-        total_active_suppliers = len(suppliers_df)
-
-        # Calculate Low Stock Items (where current_stock <= reorder_point AND reorder_point > 0)
-        # Ensure columns exist and handle potential NaN values
-        if 'current_stock' in items_df.columns and 'reorder_point' in items_df.columns:
-            # Convert to numeric, coercing errors to NaN, then fill NaN with 0
-            items_df['current_stock'] = pd.to_numeric(items_df['current_stock'], errors='coerce').fillna(0)
-            items_df['reorder_point'] = pd.to_numeric(items_df['reorder_point'], errors='coerce').fillna(0)
-
-            low_stock_df = items_df[
-                (items_df['current_stock'] <= items_df['reorder_point']) &
-                (items_df['reorder_point'] > 0)
-            ].copy() # Create a copy to avoid SettingWithCopyWarning
-
-            # Select and rename columns for display if needed
-            low_stock_df = low_stock_df[['name', 'unit', 'current_stock', 'reorder_point']] # Select relevant columns
+    if not items_df.empty and 'current_stock' in items_df.columns and 'reorder_point' in items_df.columns:
+        try:
+            items_df['current_stock_num'] = pd.to_numeric(items_df['current_stock'], errors='coerce')
+            items_df['reorder_point_num'] = pd.to_numeric(items_df['reorder_point'], errors='coerce')
+            mask = (
+                items_df['current_stock_num'].notna() &
+                items_df['reorder_point_num'].notna() &
+                (items_df['reorder_point_num'] > 0) & # Only consider items with a defined reorder point > 0
+                (items_df['current_stock_num'] <= items_df['reorder_point_num'])
+            )
+            low_stock_df = items_df.loc[mask, ['name', 'unit', 'current_stock', 'reorder_point']] # Select relevant columns
             low_stock_count = len(low_stock_df)
-        else:
-             missing_cols = [col for col in ['current_stock', 'reorder_point'] if col not in items_df.columns]
-             if missing_cols:
-                 st.warning(f"Missing columns needed for low-stock calculation: {', '.join(missing_cols)}")
-             low_stock_count = 0 # Cannot calculate
-
-    except Exception as e:
-        st.error(f"Error fetching data for dashboard KPIs: {e}")
-        # Reset counts/df on error
-        total_active_items = 0
-        total_active_suppliers = 0
-        low_stock_count = 0
-        low_stock_df = pd.DataFrame()
-
+        except KeyError as e:
+             st.error(f"Missing expected column for low-stock calculation: {e}")
+        except Exception as e:
+            st.error(f"Error calculating low stock items: {e}")
 
     # --- Display KPIs ---
     st.header("Key Metrics")
@@ -899,7 +803,7 @@ if engine:
 
     # --- Display Low Stock Table ---
     st.header("⚠️ Low Stock Items")
-    if not low_stock_df.empty:
+    if low_stock_count > 0:
         st.dataframe(
             low_stock_df,
             use_container_width=True,
@@ -911,20 +815,10 @@ if engine:
                  "reorder_point": st.column_config.NumberColumn("Reorder Point", format="%.2f", width="small"),
             }
         )
-    elif low_stock_count == 0 and total_active_items > 0:
-         st.info("No items are currently below their reorder point.")
-    elif total_active_items == 0:
-         st.info("No active items found to check stock levels.")
-    # else: # Error occurred during data fetching, message shown above
+    else:
+        st.info("No items are currently below their reorder point.")
 
-    st.divider()
-    st.markdown("Navigate using the sidebar to manage Items, Suppliers, Stock, and Indents.")
 
-else:
-    st.warning("Database connection could not be established. Please check your configuration and ensure the database is running.")
-    st.info("Please configure your database connection details in `.streamlit/secrets.toml`.")
-    st.code("""
-[database]
-url = "postgresql://user:password@host:port/database"
-    """, language="toml")
-
+# --- Main execution ---
+if __name__ == "__main__":
+    run_dashboard()

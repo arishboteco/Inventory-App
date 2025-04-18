@@ -3,6 +3,7 @@
 # Fix: Removed unnecessary st.form wrapper in Create Indent tab.
 # Fix: Correctly reset state after successful indent creation.
 # Fix: Updated fpdf2 usage to resolve DeprecationWarnings and RuntimeError.
+# Fix: Explicitly convert PDF output to bytes for st.download_button.
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -72,7 +73,7 @@ def fetch_indent_page_data(_engine):
 
     return items_df_filtered, departments
 
-# --- PDF Generation Utility (Updated fpdf2 usage) ---
+# --- PDF Generation Utility (Updated fpdf2 usage & explicit bytes conversion) ---
 def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Optional[bytes]:
     """Generates a PDF document for a submitted indent using FPDF2."""
     if not indent_header or indent_items is None: # items can be an empty list
@@ -174,8 +175,9 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
         pdf.set_font("Helvetica", "I", 8)
         pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", align='C', new_x=XPos.RIGHT, new_y=YPos.TOP) # Updated ln=0
 
-        # Output as bytes (remove deprecated 'dest')
-        return pdf.output() # Returns bytes by default
+        # Output as bytes (explicitly convert bytearray to bytes)
+        pdf_output_data = pdf.output()
+        return bytes(pdf_output_data) # <-- *** EXPLICIT CONVERSION ***
 
     except Exception as e:
         st.error(f"Failed to generate PDF: {e}")

@@ -46,7 +46,7 @@ def connect_db():
 
         # Test connection
         with engine.connect() as connection:
-            st.sidebar.success("DB connected") # Move success message here after testing
+            # Sidebar message moved to run_dashboard after successful connection test
             return engine
 
     except OperationalError as e:
@@ -59,6 +59,7 @@ def connect_db():
 # ─────────────────────────────────────────────────────────
 # HELPER FUNCTIONS
 # ─────────────────────────────────────────────────────────
+# This function is NOT cached with @st.cache_data, so engine param remains 'engine'
 def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
     """Fetches data using a SQL query and returns a Pandas DataFrame."""
     try:
@@ -77,14 +78,15 @@ def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> p
 # ITEM MASTER FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300) # Cache for 5 minutes
-def get_all_items_with_stock(engine, include_inactive=False) -> pd.DataFrame:
+def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame: # MODIFIED: _engine
     """Fetches all items, optionally including inactive ones."""
     query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
-    return fetch_data(engine, query)
+    return fetch_data(_engine, query) # MODIFIED: _engine
 
+# Not cached, keep 'engine'
 def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a single item."""
     query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
@@ -93,6 +95,7 @@ def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
         return df.iloc[0].to_dict()
     return None
 
+# Not cached, keep 'engine'
 def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """Adds a new item to the database."""
     required = ["name", "unit"]
@@ -130,6 +133,7 @@ def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     except (SQLAlchemyError, Exception) as e:
         return False, f"Database error adding item: {e}"
 
+# Not cached, keep 'engine'
 def update_item_details(engine, item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
     """Updates details for an existing item."""
     if not item_id or not updates:
@@ -164,6 +168,7 @@ def update_item_details(engine, item_id: int, updates: Dict[str, Any]) -> Tuple[
     except (SQLAlchemyError, Exception) as e:
         return False, f"Database error updating item: {e}"
 
+# Not cached, keep 'engine'
 def deactivate_item(engine, item_id: int) -> bool:
     """Sets the is_active flag to FALSE for an item."""
     query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id;")
@@ -179,6 +184,7 @@ def deactivate_item(engine, item_id: int) -> bool:
         st.error(f"Error deactivating item {item_id}: {e}")
         return False
 
+# Not cached, keep 'engine'
 def reactivate_item(engine, item_id: int) -> bool:
     """Sets the is_active flag to TRUE for an item."""
     query = text("UPDATE items SET is_active = TRUE WHERE item_id = :item_id;")
@@ -198,7 +204,7 @@ def reactivate_item(engine, item_id: int) -> bool:
 # DEPARTMENT HELPER FUNCTION (NEW)
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300) # Cache for 5 minutes
-def get_distinct_departments_from_items(engine) -> List[str]:
+def get_distinct_departments_from_items(_engine) -> List[str]: # MODIFIED: _engine
     """
     Fetches distinct, non-empty department names from the permitted_departments
     column of active items. Assumes comma-separated strings.
@@ -213,7 +219,8 @@ def get_distinct_departments_from_items(engine) -> List[str]:
     """)
     departments_set: Set[str] = set()
     try:
-        with engine.connect() as connection:
+        # Use _engine here
+        with _engine.connect() as connection:
             result = connection.execute(query)
             rows = result.fetchall() # Use fetchall to get all distinct strings
 
@@ -234,14 +241,15 @@ def get_distinct_departments_from_items(engine) -> List[str]:
 # SUPPLIER MASTER FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
-def get_all_suppliers(engine, include_inactive=False) -> pd.DataFrame:
+def get_all_suppliers(_engine, include_inactive=False) -> pd.DataFrame: # MODIFIED: _engine
     """Fetches all suppliers, optionally including inactive ones."""
     query = "SELECT supplier_id, name, contact_person, phone, email, address, notes, is_active FROM suppliers"
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
-    return fetch_data(engine, query)
+    return fetch_data(_engine, query) # MODIFIED: _engine
 
+# Not cached, keep 'engine'
 def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
     """Fetches details for a single supplier."""
     query = "SELECT supplier_id, name, contact_person, phone, email, address, notes, is_active FROM suppliers WHERE supplier_id = :supplier_id;"
@@ -250,6 +258,7 @@ def get_supplier_details(engine, supplier_id: int) -> Optional[Dict[str, Any]]:
         return df.iloc[0].to_dict()
     return None
 
+# Not cached, keep 'engine'
 def add_supplier(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """Adds a new supplier."""
     if not details.get("name"):
@@ -284,6 +293,7 @@ def add_supplier(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     except (SQLAlchemyError, Exception) as e:
         return False, f"Database error adding supplier: {e}"
 
+# Not cached, keep 'engine'
 def update_supplier(engine, supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
     """Updates an existing supplier."""
     if not supplier_id or not updates:
@@ -320,6 +330,7 @@ def update_supplier(engine, supplier_id: int, updates: Dict[str, Any]) -> Tuple[
     except (SQLAlchemyError, Exception) as e:
         return False, f"Database error updating supplier: {e}"
 
+# Not cached, keep 'engine'
 def deactivate_supplier(engine, supplier_id: int) -> bool:
     """Sets is_active to FALSE for a supplier."""
     query = text("UPDATE suppliers SET is_active = FALSE WHERE supplier_id = :supplier_id;")
@@ -335,6 +346,7 @@ def deactivate_supplier(engine, supplier_id: int) -> bool:
         st.error(f"Error deactivating supplier {supplier_id}: {e}")
         return False
 
+# Not cached, keep 'engine'
 def reactivate_supplier(engine, supplier_id: int) -> bool:
     """Sets is_active to TRUE for a supplier."""
     query = text("UPDATE suppliers SET is_active = TRUE WHERE supplier_id = :supplier_id;")
@@ -354,6 +366,7 @@ def reactivate_supplier(engine, supplier_id: int) -> bool:
 # ─────────────────────────────────────────────────────────
 # STOCK TRANSACTION FUNCTIONS
 # ─────────────────────────────────────────────────────────
+# Not cached, keep 'engine'
 def record_stock_transaction(
     engine,
     item_id: int,
@@ -412,8 +425,8 @@ def record_stock_transaction(
         return False
 
 @st.cache_data(ttl=120) # Cache history for 2 minutes
-def get_stock_transactions(
-    engine,
+def get_stock_transactions( # MODIFIED: _engine
+    _engine,
     item_id: Optional[int] = None,
     transaction_type: Optional[str] = None,
     user_id: Optional[str] = None,
@@ -463,7 +476,7 @@ def get_stock_transactions(
 
     query += " ORDER BY st.transaction_date DESC, st.transaction_id DESC;"
 
-    df = fetch_data(engine, query, params)
+    df = fetch_data(_engine, query, params) # MODIFIED: _engine
     if not df.empty:
         # Format date for better display, keep time component
          df['transaction_date'] = pd.to_datetime(df['transaction_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
@@ -472,6 +485,7 @@ def get_stock_transactions(
 # ─────────────────────────────────────────────────────────
 # INDENT FUNCTIONS
 # ─────────────────────────────────────────────────────────
+# Not cached, keep 'engine'
 def generate_mrn(engine) -> Optional[str]:
     """Generates a new Material Request Number (MRN) using a sequence."""
     try:
@@ -486,6 +500,7 @@ def generate_mrn(engine) -> Optional[str]:
         st.error(f"Error generating MRN: {e}")
         return None
 
+# Not cached, keep 'engine'
 def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> Tuple[bool, str]:
     """Creates a new indent record and its associated items."""
     required_header = ["mrn", "requested_by", "department", "date_required"]
@@ -554,8 +569,8 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
 
 
 @st.cache_data(ttl=120) # Cache indent list for 2 minutes
-def get_indents(
-    engine,
+def get_indents( # MODIFIED: _engine
+    _engine,
     mrn_filter: Optional[str] = None,
     dept_filter: Optional[str] = None,
     status_filter: Optional[str] = None,
@@ -604,11 +619,14 @@ def get_indents(
         ORDER BY i.date_submitted DESC, i.indent_id DESC
     """
 
-    df = fetch_data(engine, query, params)
+    df = fetch_data(_engine, query, params) # MODIFIED: _engine
     # Format dates for display
     if not df.empty:
-        df['date_required'] = pd.to_datetime(df['date_required']).dt.strftime('%Y-%m-%d')
-        df['date_submitted'] = pd.to_datetime(df['date_submitted']).dt.strftime('%Y-%m-%d %H:%M')
+        # Ensure columns exist before formatting
+        if 'date_required' in df.columns:
+             df['date_required'] = pd.to_datetime(df['date_required']).dt.strftime('%Y-%m-%d')
+        if 'date_submitted' in df.columns:
+             df['date_submitted'] = pd.to_datetime(df['date_submitted']).dt.strftime('%Y-%m-%d %H:%M')
     return df
 
 # ─────────────────────────────────────────────────────────
@@ -624,8 +642,11 @@ def run_dashboard():
     if not engine:
         st.warning("Database connection failed. Dashboard data cannot be loaded.")
         st.stop()
+    else:
+        # Show success message only after connection is confirmed good by connect_db returning an engine
+        st.sidebar.success("DB connected")
 
-    # Fetch data for KPIs and low stock
+    # Fetch data for KPIs and low stock (pass the 'engine' variable)
     items_df = get_all_items_with_stock(engine, include_inactive=False) # Only active items for dashboard
     suppliers_df = get_all_suppliers(engine, include_inactive=False)
     # Consider fetching recent indents or transactions if needed for KPIs

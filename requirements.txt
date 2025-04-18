@@ -2,3 +2,4 @@ streamlit
 pandas
 sqlalchemy
 psycopg2-binary # Or psycopg2 if not using binary
+fpdf2

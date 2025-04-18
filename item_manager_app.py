@@ -47,8 +47,16 @@ def connect_db():
             st.info("Expected keys: engine, user, password, host, port, dbname.")
             return None
 
-        connection_url = f"{db['engine']}://{db['user']}:{db['password']}@{db['host']}:{db['port']}/{db['dbname']}"
-        engine = create_engine(connection_url, pool_pre_ping=True)
+        # Construct URL (handle potential None values gracefully, though check prevents most)
+        db_user = db.get('user', '')
+        db_password = db.get('password', '')
+        db_host = db.get('host', '')
+        db_port = db.get('port', '5432') # Default port
+        db_name = db.get('dbname', '')
+        db_engine_type = db.get('engine', 'postgresql') # Default engine
+
+        connection_url = f"{db_engine_type}://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+        engine = create_engine(connection_url, pool_pre_ping=True, echo=False) # Set echo=True for debugging SQL
 
         # Test connection
         with engine.connect() as connection:

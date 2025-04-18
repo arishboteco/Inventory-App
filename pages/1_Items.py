@@ -82,22 +82,6 @@ with st.expander("➕ Add New Item", expanded=False):
         if submitted:
             is_valid = True
             if not name:
-        name = st.text_input("Item Name*", help="Unique name for the item.")
-        unit = st.text_input("Unit*", help="e.g., KG, LTR, PCS, BTL")
-        category = st.text_input("Category", value="Uncategorized")
-        sub_category = st.text_input("Sub-Category", value="General")
-        permitted_departments = st.text_input(
-            "Permitted Departments",
-            help="Comma-separated list of departments allowed to request this item (e.g., Kitchen, Bar)"
-        )
-        reorder_point = st.number_input("Reorder Point", min_value=0.0, value=0.0, step=1.0, format="%.2f")
-        initial_stock = st.number_input("Initial Stock", min_value=0.0, value=0.0, step=1.0, format="%.2f", help="Enter starting stock quantity if known.")
-        notes = st.text_area("Notes")
-
-        submitted = st.form_submit_button("💾 Add Item")
-        if submitted:
-            is_valid = True
-            if not name:
                 st.warning("Item Name is required.")
                 is_valid = False
             if not unit:
@@ -248,7 +232,6 @@ else:
                             st.error(msg)
 
             # --- Deactivate Button (Outside Edit Form, but linked to selected item) ---
-            # --- Deactivate Button (Outside Edit Form, but linked to selected item) ---
             st.divider()
             st.subheader("Deactivate Item")
             if st.button("🗑️ Deactivate"):
@@ -258,7 +241,6 @@ else:
                     # Clear state and rerun
                     st.session_state.item_to_edit_id = None
                     st.session_state.edit_form_values = None
-                    fetch_items_for_display.clear()
                     fetch_items_for_display.clear()
                     st.rerun()
                 else:
@@ -275,8 +257,6 @@ else:
                     st.session_state.edit_form_values = None
                     fetch_items_for_display.clear()
                     st.rerun()
-                else:
-                    st.error("Failed to reactivate item.")
                 else:
                     st.error("Failed to reactivate item.")
     else:

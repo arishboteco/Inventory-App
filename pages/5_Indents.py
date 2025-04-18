@@ -1,6 +1,7 @@
 # pages/5_Indents.py
 # Integrates with consolidated backend and includes PDF generation locally.
 # Fix: Removed unnecessary st.form wrapper in Create Indent tab.
+# Fix: Correctly reset state after successful indent creation.
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -237,6 +238,7 @@ with tab_create:
             help="Select the department requesting the items."
         )
         # Update session state for dynamic item filtering
+        # This happens automatically when the user selects an option
         st.session_state.selected_department_for_create = department
 
     with col2:
@@ -244,6 +246,7 @@ with tab_create:
 
     col3, col4 = st.columns(2)
     with col3:
+        # Set default date value directly in the widget
         date_required = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key="create_date_req", help="Select the date when items are needed.")
     with col4:
         st.text_input("Status", value=STATUS_SUBMITTED, disabled=True, key="create_status") # Read-only status
@@ -423,15 +426,18 @@ with tab_create:
 
                 if success:
                     st.success(f"Indent '{new_mrn}' created successfully!")
-                    # Clear form state after successful submission
+                    # Clear *only custom* form state after successful submission
+                    # Let st.rerun handle resetting the widgets themselves
                     st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': ''}]
                     st.session_state.create_indent_next_id = 1
-                    # Clear widgets using keys (may require rerun)
-                    st.session_state.create_dept = None
-                    st.session_state.create_req_by = ""
-                    st.session_state.create_date_req = date.today() + timedelta(days=1)
-                    st.session_state.create_header_notes = ""
-                    st.session_state.selected_department_for_create = None
+                    st.session_state.selected_department_for_create = None # Reset department filter state
+
+                    # *** Removed direct widget state modification ***
+                    # st.session_state.create_dept = None
+                    # st.session_state.create_req_by = ""
+                    # st.session_state.create_date_req = date.today() + timedelta(days=1)
+                    # st.session_state.create_header_notes = ""
+                    # *** End of removal ***
 
                     st.balloons()
                     time.sleep(1) # Short pause

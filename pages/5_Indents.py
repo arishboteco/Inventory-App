@@ -1,4 +1,4 @@
-# pages/5_Indents.py – full file with date string fix applied to user's latest version
+# pages/5_Indents.py – full file with PDF download integration
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -24,6 +24,7 @@ try:
         create_indent,            # No cache
         get_indents,              # Uses _engine fix, accepts date strings
         get_distinct_departments_from_items, # Uses _engine fix
+        generate_indent_pdf,      # <-- Import the new PDF function
         ALL_INDENT_STATUSES,
         STATUS_SUBMITTED # Import default status
     )
@@ -34,279 +35,326 @@ except Exception as e:
     st.error(f"Unexpected error during import: {e}")
     st.stop()
 
-# --- Constants (Using user's provided constants) ---
-DEPARTMENTS = ["Kitchen", "Bar", "Housekeeping", "Admin", "Maintenance", "Service"] # User's version still used this
-
-# --- Page Setup ---
+# --- Page Config ---
 st.set_page_config(layout="wide")
-st.header("🛒 Material Indents")
-db_engine = connect_db() # Keep original name for connection variable
+st.title("📝 Material Indents")
+st.write("Create, view, and manage material requests (indents).")
+
+# --- Database Connection ---
+# Use the shared connection function
+db_engine = connect_db()
 if not db_engine:
-    st.error("Database connection failed.")
+    st.error("Database connection failed. Cannot load Indent Management page.")
     st.stop()
 
-# --- Session State Initialization for Create Indent ---
-if 'create_indent_rows' not in st.session_state: st.session_state.create_indent_rows = [{'id': 0}]
-if 'create_indent_next_row_id' not in st.session_state: st.session_state.create_indent_next_row_id = 1
-# Note: User's uploaded file didn't have create_indent_selected_department state, but adding it back based on logic below
-if 'create_indent_selected_department' not in st.session_state: st.session_state.create_indent_selected_department = None
+# --- Helper Functions Specific to this Page ---
+
+# Cache data needed across tabs (items, departments)
+@st.cache_data(ttl=300, show_spinner="Loading item data...") # Cache for 5 mins
+def fetch_indent_page_data(_engine):
+    """Fetches active items and distinct departments needed for the Indents page."""
+    if _engine is None:
+        return pd.DataFrame(), [] # Return empty structures if no engine
+
+    # Fetch active items (simplified columns needed for dropdowns/filtering)
+    items_query = "SELECT item_id, name, unit, permitted_departments FROM items WHERE is_active = TRUE ORDER BY name;"
+    items_df = fetch_data(_engine, items_query) # Use the helper from main app
+
+    # Fetch distinct departments using the function from main app
+    departments = get_distinct_departments_from_items(_engine)
+
+    return items_df, departments
+
+# --- Load Data ---
+all_active_items_df, distinct_departments = fetch_indent_page_data(db_engine)
+
+# --- Initialize Session State for Dynamic Rows ---
+if 'create_indent_rows' not in st.session_state:
+    # Start with one empty row
+    st.session_state.create_indent_rows = [{'item_id': None, 'requested_qty': 1.0, 'notes': ''}]
+if 'selected_department_for_create' not in st.session_state:
+     st.session_state.selected_department_for_create = None
 
 
-# --- Fetch Data needed across Tabs (Cached) ---
-@st.cache_data(ttl=120)
-def fetch_indent_page_data(_engine): # Definition uses _engine
-    """Fetches data needed for the indent page (items, departments)."""
-    # Pass _engine to backend functions expecting _engine
-    items = get_all_items_with_stock(_engine, include_inactive=False)
-    # Use the dynamic department fetching function if available (it is in item_manager_app.py)
-    try:
-        dynamic_departments = get_distinct_departments_from_items(_engine)
-    except NameError: # Fallback if function wasn't defined correctly (shouldn't happen now)
-        dynamic_departments = DEPARTMENTS # Fallback to hardcoded if needed
-    # Pass _engine to fetch_data
-    indent_info_df = fetch_data(_engine, "SELECT DISTINCT status, department FROM indents")
-    statuses = ["All"] + sorted(indent_info_df['status'].unique().tolist()) if not indent_info_df.empty else ["All"]
-    view_departments = ["All"] + sorted(indent_info_df['department'].unique().tolist()) if not indent_info_df.empty else ["All"]
-
-    # Return dynamic departments for create tab if found, else the hardcoded list
-    create_depts = dynamic_departments if dynamic_departments else DEPARTMENTS
-    return items, create_depts, statuses, view_departments
-
-# Pass original 'db_engine' variable here; fetch_indent_page_data receives it as _engine
-items_df, create_dept_options, view_status_options, view_dept_options = fetch_indent_page_data(db_engine)
-
-
-# --- Callbacks for Create Indent ---
+# --- Define Callbacks for Dynamic Rows ---
 def add_indent_row():
-    new_row_id = st.session_state.create_indent_next_row_id
-    st.session_state.create_indent_rows.append({'id': new_row_id})
-    st.session_state.create_indent_next_row_id += 1
+    st.session_state.create_indent_rows.append({'item_id': None, 'requested_qty': 1.0, 'notes': ''})
 
-def remove_indent_row(row_id):
-    st.session_state.create_indent_rows = [row for row in st.session_state.create_indent_rows if row['id'] != row_id]
-    keys_to_remove = [key for key in st.session_state if key.startswith(f"create_item_{row_id}_")]
-    for key in keys_to_remove: del st.session_state[key]
-
-def department_changed():
-    st.session_state.create_indent_selected_department = st.session_state.get('create_indent_department_select')
+def remove_indent_row(index):
+    if len(st.session_state.create_indent_rows) > 1: # Prevent removing the last row
+        st.session_state.create_indent_rows.pop(index)
+    else:
+        st.warning("Cannot remove the last item row.")
 
 
-# --- Tabs ---
+# --- Tabs for Indent Management ---
 tab_create, tab_view, tab_process = st.tabs([
-    "📝 Create New Indent", "📊 View Indents", "⚙️ Process Indent (Future)"
+    "➕ Create Indent",
+    "📄 View Indents",
+    "⚙️ Process Indent"
 ])
 
-# ============================
-# 📝 CREATE NEW INDENT TAB
-# ============================
+# ===========================
+# ➕ CREATE INDENT TAB
+# ===========================
 with tab_create:
-    st.subheader("Create a New Material Request")
+    st.subheader("Create New Material Indent")
 
-    # --- Indent Header ---
-    # Using dynamic departments fetched earlier
-    with st.container(border=True):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            requested_by = st.text_input("Requested By*", key="create_indent_requested_by_input")
-        with col2:
-            # Use dynamically fetched departments (or fallback DEPARTMENTS list)
-            if not create_dept_options:
-                st.warning("No departments found linked to active items or defined. Cannot create indent.")
-                selected_dept = None
-            else:
-                current_dept_val = st.session_state.create_indent_selected_department
-                try: dept_index = create_dept_options.index(current_dept_val) if current_dept_val in create_dept_options else 0
-                except ValueError: dept_index = 0
-                selected_dept = st.selectbox(
-                    "Requesting Department*",
-                    create_dept_options, # Use fetched/fallback list
-                    key='create_indent_department_select',
-                    index=dept_index,
-                    on_change=department_changed,
-                    placeholder="Select department..."
-                )
-                if selected_dept != st.session_state.create_indent_selected_department:
-                     st.session_state.create_indent_selected_department = selected_dept
-            current_selected_dept = st.session_state.create_indent_selected_department
-        with col3:
-            date_required = st.date_input(
-                "Date Required*", datetime.now().date() + timedelta(days=1), key="create_indent_date_required_input")
-        notes_header = st.text_area("Indent Notes (Optional)", key="create_indent_notes_header_input", height=75)
-
-
-    st.subheader("Indent Items")
-    # --- Filter items based on selected department ---
-    filtered_items_df = pd.DataFrame() # Initialize empty
-    if current_selected_dept and not items_df.empty:
-        def is_dept_permitted(permitted_str):
-            if pd.isna(permitted_str) or not isinstance(permitted_str, str) or not permitted_str.strip(): return False
-            permitted_list = [d.strip() for d in permitted_str.split(',') if d.strip()]
-            return current_selected_dept in permitted_list
-        mask = items_df['permitted_departments'].apply(is_dept_permitted)
-        filtered_items_df = items_df[mask].copy()
-
-
-    # --- Dynamic Item Rows --- (Logic seems okay from user's file)
-    item_rows_data = []
-    if not filtered_items_df.empty:
-        item_options = filtered_items_df[['item_id', 'name', 'unit']].to_dict('records')
-        item_display_options = {item['item_id']: f"{item['name']} ({item['unit']})" for item in item_options}
-        item_unit_map = {item['item_id']: item['unit'] for item in item_options}
-        header_cols = st.columns([3, 1, 1, 3, 1])
-        header_cols[0].write("**Item**"); header_cols[1].write("**Unit**"); header_cols[2].write("**Req. Qty***")
-        header_cols[3].write("**Item Notes**"); header_cols[4].write("**Action**")
-        st.markdown("---")
-        for i, row_state in enumerate(st.session_state.create_indent_rows):
-            row_id = row_state['id']; key_base = f"create_item_{row_id}"
-            cols = st.columns([3, 1, 1, 3, 1])
-            with cols[0]:
-                current_item_selection = st.session_state.get(f"{key_base}_select", None)
-                valid_item_ids = list(item_display_options.keys())
-                try: item_index = valid_item_ids.index(current_item_selection) if current_item_selection in valid_item_ids else None
-                except ValueError: item_index = None
-                selected_item_id = st.selectbox(
-                    f"Item##{key_base}_select", options=valid_item_ids,
-                    format_func=lambda x: item_display_options.get(x, "Select..."), label_visibility="collapsed",
-                    key=f"{key_base}_select", index=item_index, placeholder="Select item...")
-            with cols[1]:
-                unit = item_unit_map.get(selected_item_id, "")
-                st.text_input(f"Unit##{key_base}_unit", value=unit, key=f"{key_base}_unit_display", disabled=True, label_visibility="collapsed")
-            with cols[2]:
-                requested_qty = st.number_input(
-                    f"Qty##{key_base}_qty", min_value=0.01, step=1.0,
-                    value=float(st.session_state.get(f"{key_base}_qty", 1.0)), format="%.2f",
-                    label_visibility="collapsed", key=f"{key_base}_qty")
-            with cols[3]:
-                item_notes = st.text_input(f"Notes##{key_base}_notes", key=f"{key_base}_notes", label_visibility="collapsed")
-            with cols[4]:
-                disable_remove = len(st.session_state.create_indent_rows) <= 1
-                st.button("➖", key=f"{key_base}_remove", on_click=remove_indent_row, args=(row_id,), disabled=disable_remove, help="Remove item row")
-            if selected_item_id:
-                item_rows_data.append({'item_id': selected_item_id, 'requested_qty': requested_qty,
-                                       'notes': item_notes.strip() or None, 'row_id': row_id})
-    else:
-        if current_selected_dept: st.warning(f"No active items found permitted for department: '{current_selected_dept}'.")
-        else: st.warning("Please select a requesting department to see available items.")
-
-    # --- Action Buttons --- (Logic seems okay from user's file)
-    st.markdown("---")
-    col_add, col_submit = st.columns([1, 10])
-    with col_add:
-        st.button("➕ Add Item", key="create_indent_add_item_btn", on_click=add_indent_row, disabled=filtered_items_df.empty)
-    with col_submit:
-        can_submit = bool(item_rows_data and requested_by and current_selected_dept and date_required)
-        submit_indent = st.button("✅ Submit Indent", key="create_indent_submit_btn", type="primary", disabled=not can_submit)
-
-    # --- Indent Submission Logic --- (Logic seems okay from user's file)
-    if submit_indent:
-        is_valid = True; validation_errors = []
-        if not requested_by: validation_errors.append("'Requested By' field cannot be empty."); is_valid = False
-        if not current_selected_dept: validation_errors.append("'Requesting Department' must be selected."); is_valid = False
-        if not date_required: validation_errors.append("'Date Required' must be selected."); is_valid = False
-        if not item_rows_data: validation_errors.append("At least one valid item must be added."); is_valid = False
-        else:
-            seen_item_ids = set()
-            for idx, item_data in enumerate(item_rows_data):
-                if not item_data.get('item_id'): validation_errors.append(f"Row {idx + 1}: An item must be selected."); is_valid = False
-                elif item_data['item_id'] in seen_item_ids:
-                    item_name = item_display_options.get(item_data['item_id'], f"ID {item_data['item_id']}")
-                    validation_errors.append(f"Row {idx + 1}: Item '{item_name}' is duplicated."); is_valid = False
-                else: seen_item_ids.add(item_data['item_id'])
-                if not item_data.get('requested_qty') or item_data['requested_qty'] <= 0:
-                    item_name = item_display_options.get(item_data['item_id'], f"ID {item_data['item_id']}")
-                    validation_errors.append(f"Row {idx + 1}: Quantity for '{item_name}' must be > 0."); is_valid = False
-        if not is_valid: st.error("Indent validation failed:\n" + "\n".join(f"- {e}" for e in validation_errors))
-        else:
-            with st.spinner("Submitting Indent..."):
-                try:
-                    new_mrn = generate_mrn(db_engine) # Pass original engine
-                    if not new_mrn: st.error("Failed to generate MRN. Indent not created.")
-                    else:
-                        indent_data = {'mrn': new_mrn, 'requested_by': requested_by.strip(), 'department': current_selected_dept,
-                                       'date_required': date_required, 'notes': notes_header.strip() or None, 'status': STATUS_SUBMITTED}
-                        items_to_submit = [{'item_id': item['item_id'], 'requested_qty': item['requested_qty'], 'notes': item['notes']}
-                                           for item in item_rows_data]
-                        success, message = create_indent(db_engine, indent_data, items_to_submit) # Pass original engine
-                        if success:
-                            st.success(f"Indent {new_mrn} created successfully!")
-                            st.session_state.create_indent_rows = [{'id': 0}]; st.session_state.create_indent_next_row_id = 1
-                            st.session_state.create_indent_selected_department = None
-                            if 'create_indent_requested_by_input' in st.session_state: del st.session_state['create_indent_requested_by_input']
-                            if 'create_indent_notes_header_input' in st.session_state: del st.session_state['create_indent_notes_header_input']
-                            keys_to_clear = [k for k in st.session_state if k.startswith("create_item_")]
-                            for k in keys_to_clear: del st.session_state[k]
-                            fetch_indent_page_data.clear(); st.rerun()
-                        else: st.error(f"Failed to create indent: {message}")
-                except Exception as e: st.error(f"An unexpected error occurred during submission: {e}")
-
-# ============================
-# 📊 VIEW INDENTS TAB (MODIFIED TO PASS DATE STRINGS)
-# ============================
-with tab_view:
-    st.subheader("View Submitted Indents")
-    st.write("Apply filters to find specific indents:")
-
-    # --- Filters --- (Using user's latest layout)
-    col_flt1, col_flt2 = st.columns([1, 3])
-    with col_flt1:
-        mrn_filter = st.text_input("MRN", key="view_mrn_filter")
-        dept_filter = st.selectbox( "Department", options=view_dept_options, index=0, key="view_dept_filter")
-        status_filter = st.selectbox("Status", options=view_status_options, index=0, key="view_status_filter")
-
-    # Get Date Objects using user's date_input method
-    with col_flt2:
-        # Use default start/end logic from user's file if desired, otherwise None
-        DEFAULT_START_DATE = date.today() - timedelta(days=90)
-        DEFAULT_END_DATE = date.today()
-
-        # Check if user used range slider or individual inputs, adapt as needed.
-        # Assuming individual inputs based on previous working version:
-        filter_date_from_obj = st.date_input(
-            "Submitted From", value=DEFAULT_START_DATE, key="view_date_from_obj",
-             help="Leave blank for no start date limit." # Or set value=None if no default wanted
+    # --- Header Information ---
+    col1, col2 = st.columns(2)
+    with col1:
+        # Use dynamic list of departments fetched earlier
+        department = st.selectbox(
+            "Requesting Department*",
+            options=distinct_departments,
+            index=None, # Default to no selection
+            placeholder="Select Department...",
+            key="create_dept" # Assign key for potential future use/reset
         )
-        filter_date_to_obj = st.date_input(
-            "Submitted To", value=DEFAULT_END_DATE, key="view_date_to_obj",
-            help="Leave blank for no end date limit." # Or set value=None if no default wanted
-        )
-        # If user's latest file used range slider like:
-        # date_range = st.date_input(...)
-        # Then adapt like this:
-        # if isinstance(date_range, (list, tuple)) and len(date_range) == 2:
-        #     filter_date_from_obj, filter_date_to_obj = date_range
-        # else: # Handle case where only one date might be selected if range slider allows it
-        #     filter_date_from_obj = date_range[0] if isinstance(date_range, (list, tuple)) and len(date_range)>0 else None
-        #     filter_date_to_obj = None # Or handle appropriately
+        # Store selected department in session state to filter items dynamically
+        st.session_state.selected_department_for_create = department
 
-    # Basic date range validation
-    indents_df = pd.DataFrame() # Initialize empty
-    if filter_date_from_obj and filter_date_to_obj and filter_date_from_obj > filter_date_to_obj:
-        st.warning("'Submitted From' date cannot be after 'Submitted To' date.")
-    else:
-        # *** MODIFIED SECTION START ***
-        # --- Convert dates to strings for caching ---
-        date_start_str_arg = filter_date_from_obj.strftime('%Y-%m-%d') if filter_date_from_obj else None
-        date_end_str_arg = filter_date_to_obj.strftime('%Y-%m-%d') if filter_date_to_obj else None
-        # --- End Date Conversion ---
+    with col2:
+        requested_by = st.text_input("Requested By*", placeholder="Your Name/ID", key="create_req_by")
 
-        # --- Fetch and Display Data ---
-        dept_arg = dept_filter if dept_filter != "All" else None
-        status_arg = status_filter if status_filter != "All" else None
-        mrn_arg = mrn_filter.strip() if mrn_filter else None
+    col3, col4 = st.columns(2)
+    with col3:
+        date_required = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key="create_date_req")
+    with col4:
+        # Status defaults to Submitted and is usually read-only at creation
+        st.text_input("Status", value=STATUS_SUBMITTED, disabled=True, key="create_status")
 
-        # Call get_indents with string dates (Pass original engine variable positionally)
-        indents_df = get_indents(
-            db_engine, # <-- Pass original engine variable positionally
-            mrn_filter=mrn_arg,
-            dept_filter=dept_arg,
-            status_filter=status_arg,
-            date_start_str=date_start_str_arg, # MODIFIED: Pass string version
-            date_end_str=date_end_str_arg      # MODIFIED: Pass string version
-        )
-        # *** MODIFIED SECTION END ***
+    header_notes = st.text_area("Overall Indent Notes (Optional)", key="create_header_notes")
 
     st.divider()
-    # Display result or info message (Using user's column order preference)
+    st.subheader("Indent Items")
+
+    # --- Filter Items based on Selected Department ---
+    if st.session_state.selected_department_for_create and not all_active_items_df.empty:
+        selected_dept = st.session_state.selected_department_for_create
+        try:
+            # Filter items where permitted_departments contains the selected department
+            # Handle potential NaN/None in 'permitted_departments'
+            # Ensure case-insensitive and whitespace-tolerant matching
+            available_items_df = all_active_items_df[
+                all_active_items_df['permitted_departments'].fillna('').astype(str).str.split(',')
+                .apply(lambda depts: selected_dept.strip().lower() in [d.strip().lower() for d in depts] if isinstance(depts, list) else False)
+            ].copy()
+
+            if available_items_df.empty:
+                 st.warning(f"No active items found permitted for the '{selected_dept}' department. Check item configurations.")
+                 item_options = []
+            else:
+                 # Create list of tuples for selectbox: (display_name, item_id)
+                 item_options = list(available_items_df[['name', 'item_id', 'unit']].itertuples(index=False, name=None))
+                 # Prepend a placeholder
+                 item_options.insert(0, ("Select Item...", None))
+
+        except Exception as e:
+             st.error(f"Error filtering items by department: {e}")
+             item_options = [("Error loading items", None)]
+             available_items_df = pd.DataFrame() # Ensure it's empty on error
+
+    elif not st.session_state.selected_department_for_create:
+        st.info("Select a department above to see available items.")
+        item_options = [("Select Department First", None)]
+        available_items_df = pd.DataFrame() # Ensure it's empty
+    else: # all_active_items_df is empty
+         st.warning("No active items found in the system.")
+         item_options = [("No Items Available", None)]
+         available_items_df = pd.DataFrame()
+
+
+    # --- Dynamic Item Rows ---
+    item_rows_container = st.container()
+    with item_rows_container:
+        for i, row_data in enumerate(st.session_state.create_indent_rows):
+            cols = st.columns([4, 2, 3, 1]) # Adjust column ratios as needed
+            with cols[0]: # Item Selection
+                # Use the filtered item_options
+                selected_item_tuple = cols[0].selectbox(
+                    f"Item*",
+                    options=item_options,
+                    format_func=lambda x: x[0], # Display only the name part of the tuple
+                    key=f"item_select_{i}",
+                    label_visibility="collapsed", # Hide label for cleaner look
+                    index = item_options.index(next((opt for opt in item_options if opt[1] == row_data['item_id']), item_options[0])) if row_data['item_id'] else 0
+                )
+                # Store the selected item_id back into the session state row
+                st.session_state.create_indent_rows[i]['item_id'] = selected_item_tuple[1] if selected_item_tuple else None
+
+                # Display unit if item is selected
+                if selected_item_tuple and selected_item_tuple[1] is not None:
+                     item_details = available_items_df[available_items_df['item_id'] == selected_item_tuple[1]].iloc[0]
+                     st.caption(f"Unit: {item_details['unit']}")
+
+
+            with cols[1]: # Quantity
+                st.session_state.create_indent_rows[i]['requested_qty'] = cols[1].number_input(
+                    "Quantity*",
+                    min_value=0.01,
+                    value=float(row_data['requested_qty']), # Ensure float for consistency
+                    step=1.0,
+                    key=f"item_qty_{i}",
+                    label_visibility="collapsed"
+                )
+            with cols[2]: # Item Notes
+                st.session_state.create_indent_rows[i]['notes'] = cols[2].text_input(
+                    "Item Notes",
+                    value=row_data['notes'],
+                    placeholder="Optional notes for this item",
+                    key=f"item_notes_{i}",
+                    label_visibility="collapsed"
+                )
+            with cols[3]: # Remove Button
+                if len(st.session_state.create_indent_rows) > 1: # Show remove button only if more than one row
+                    cols[3].button("➖", key=f"remove_row_{i}", on_click=remove_indent_row, args=(i,), help="Remove this item")
+
+    # --- Add Row Button ---
+    st.button("➕ Add Another Item", on_click=add_indent_row)
+
+    st.divider()
+
+    # --- Submit Button ---
+    if st.button("Submit Indent", type="primary"):
+        # --- Validation ---
+        valid = True
+        items_to_submit = []
+        seen_item_ids = set()
+
+        if not department:
+            st.error("Requesting Department is required.")
+            valid = False
+        if not requested_by.strip():
+            st.error("Requested By is required.")
+            valid = False
+        if not date_required: # Should always have a value due to default, but check anyway
+            st.error("Date Required is required.")
+            valid = False
+
+        # Validate item rows
+        for i, row in enumerate(st.session_state.create_indent_rows):
+            item_id = row.get('item_id')
+            qty = row.get('requested_qty')
+
+            if item_id is None:
+                st.error(f"Row {i+1}: Please select an item.")
+                valid = False
+                continue # Skip further checks for this row
+
+            if item_id in seen_item_ids:
+                 st.error(f"Row {i+1}: Item '{available_items_df[available_items_df['item_id']==item_id]['name'].iloc[0]}' is duplicated. Please combine quantities.")
+                 valid = False
+
+            if not isinstance(qty, (int, float)) or qty <= 0:
+                st.error(f"Row {i+1}: Quantity must be a positive number.")
+                valid = False
+
+            if valid and item_id is not None: # Only add if row is valid so far
+                 items_to_submit.append({
+                     "item_id": item_id,
+                     "requested_qty": float(qty),
+                     "notes": row.get('notes', '').strip() or None # Store None if empty
+                 })
+                 seen_item_ids.add(item_id)
+
+
+        if not items_to_submit and valid: # Check if list is empty even if other fields were valid
+             st.error("Indent must contain at least one valid item.")
+             valid = False
+
+
+        # --- Submission ---
+        if valid:
+            st.info("Submitting indent...")
+            # 1. Generate MRN
+            new_mrn = generate_mrn(db_engine)
+
+            if new_mrn:
+                # 2. Call create_indent
+                success = create_indent(
+                    engine=db_engine,
+                    mrn=new_mrn,
+                    department=department,
+                    requested_by=requested_by.strip(),
+                    date_required=date_required,
+                    status=STATUS_SUBMITTED,
+                    notes=header_notes.strip() or None,
+                    items=items_to_submit
+                )
+
+                if success:
+                    st.success(f"Indent '{new_mrn}' created successfully!")
+                    # Clear form state after successful submission
+                    st.session_state.create_indent_rows = [{'item_id': None, 'requested_qty': 1.0, 'notes': ''}]
+                    # Potentially clear other fields using st.session_state and keys if needed
+                    # e.g., st.session_state.create_dept = None (might trigger rerun depending on widget)
+                    # Consider a more robust reset mechanism if required
+                    st.balloons()
+                    # Clear relevant caches
+                    get_indents.clear()
+                    time.sleep(2) # Give user time to see success message
+                    st.rerun() # Rerun to reset the form visually
+
+                else:
+                    st.error("Failed to create indent. Check error messages above.")
+            else:
+                st.error("Failed to generate MRN. Cannot create indent.")
+
+
+# ===========================
+# 📄 VIEW INDENTS TAB
+# ===========================
+with tab_view:
+    st.subheader("View Existing Indents")
+
+    # --- Filters ---
+    view_cols = st.columns([1, 1, 1, 2])
+    with view_cols[0]:
+        mrn_filter = st.text_input("Filter by MRN", key="view_mrn")
+    with view_cols[1]:
+        # Use dynamic department list
+        dept_filter = st.selectbox(
+            "Filter by Department",
+            options=["All"] + distinct_departments, # Add "All" option
+            key="view_dept"
+        )
+    with view_cols[2]:
+        status_filter = st.selectbox(
+            "Filter by Status",
+            options=["All"] + ALL_INDENT_STATUSES, # Add "All" option
+            key="view_status"
+        )
+    with view_cols[3]:
+        # Date Range Filter (Corrected to pass strings)
+        date_col1, date_col2 = st.columns(2)
+        with date_col1:
+            date_start_filter = st.date_input("Submitted From", value=None, key="view_date_start")
+        with date_col2:
+            date_end_filter = st.date_input("Submitted To", value=None, key="view_date_end")
+
+    # --- Fetch Data based on Filters ---
+    # Convert dates to strings *before* passing to the cached function
+    date_start_str_arg = date_start_filter.strftime('%Y-%m-%d') if date_start_filter else None
+    date_end_str_arg = date_end_filter.strftime('%Y-%m-%d') if date_end_filter else None
+
+    # Prepare other arguments
+    dept_arg = dept_filter if dept_filter != "All" else None
+    status_arg = status_filter if status_filter != "All" else None
+    mrn_arg = mrn_filter.strip() if mrn_filter else None
+
+    # Call get_indents with string dates (Pass original engine variable)
+    indents_df = get_indents(
+        db_engine, # <-- Pass original engine variable
+        mrn_filter=mrn_arg,
+        dept_filter=dept_arg,
+        status_filter=status_arg,
+        date_start_str=date_start_str_arg, # Pass string version
+        date_end_str=date_end_str_arg      # Pass string version
+    )
+
+    st.divider()
+    # --- Display Results ---
     if indents_df.empty:
          st.info("No indents found matching the selected criteria.")
     else:
@@ -315,13 +363,74 @@ with tab_view:
             indents_df,
             use_container_width=True,
             hide_index=True,
-            column_order=["mrn", "date_submitted", "department", "requested_by", "date_required", "status", "item_count", "indent_notes"] # Adjusted based on function output
+            column_order=["mrn", "date_submitted", "department", "requested_by", "date_required", "status", "item_count", "indent_notes"], # Adjusted based on function output
+             column_config={
+                "indent_id": None, # Hide internal ID
+                "mrn": st.column_config.TextColumn("MRN", width="medium"),
+                "date_submitted": st.column_config.DatetimeColumn("Submitted", format="YYYY-MM-DD HH:mm", width="medium"),
+                "department": st.column_config.TextColumn("Department", width="medium"),
+                "requested_by": st.column_config.TextColumn("Requestor", width="medium"),
+                "date_required": st.column_config.DateColumn("Required By", format="YYYY-MM-DD", width="small"),
+                "status": st.column_config.TextColumn("Status", width="small"),
+                "item_count": st.column_config.NumberColumn("Items", format="%d", width="small"),
+                "indent_notes": st.column_config.TextColumn("Notes", width="large"),
+            }
         )
 
-# ============================
+        # --- PDF Download Section ---
+        st.divider()
+        st.subheader("Download Indent as PDF")
+
+        # Get list of MRNs from the displayed dataframe
+        available_mrns = ["Select MRN..."] + indents_df['mrn'].tolist()
+        selected_mrn_for_pdf = st.selectbox(
+            "Choose an MRN to download:",
+            options=available_mrns,
+            key="pdf_mrn_select"
+        )
+
+        # Placeholder for the download button
+        download_button_placeholder = st.empty()
+
+        if selected_mrn_for_pdf != "Select MRN...":
+            if st.button("Generate PDF", key="generate_pdf_btn"):
+                with st.spinner(f"Generating PDF for {selected_mrn_for_pdf}..."):
+                    # Call the backend function to generate PDF bytes
+                    pdf_bytes = generate_indent_pdf(db_engine, selected_mrn_for_pdf)
+
+                    if pdf_bytes:
+                        # Display the download button in the placeholder
+                        download_button_placeholder.download_button(
+                            label=f"Download PDF for {selected_mrn_for_pdf}",
+                            data=pdf_bytes,
+                            file_name=f"indent_{selected_mrn_for_pdf}.pdf",
+                            mime="application/pdf",
+                            key="download_pdf_btn" # Add key for potential state management
+                        )
+                        st.success("PDF generated successfully. Click the button above to download.")
+                    else:
+                        # Error message should be displayed by generate_indent_pdf
+                        st.error(f"Could not generate PDF for {selected_mrn_for_pdf}. See logs if available.")
+                        # Clear the placeholder if generation failed
+                        download_button_placeholder.empty()
+        else:
+            # Clear the placeholder if no MRN is selected
+             download_button_placeholder.empty()
+
+
+# ===========================
 # ⚙️ PROCESS INDENT TAB
-# ============================
+# ===========================
 with tab_process:
-    st.subheader("Process Indent (Future Implementation)")
-    st.info("This section will allow viewing indent details, marking items as fulfilled, and updating indent status.")
-    # Placeholder as before
+    st.header("Process Indent (Placeholder)")
+    st.info("This section will allow authorized users to view submitted indents, allocate stock, mark items as fulfilled, and update the indent status (e.g., Processing, Completed).")
+    # Future elements:
+    # - Selectbox/Search for Submitted/Processing Indents by MRN
+    # - Display Indent Details (Header + Items)
+    # - For each item: Input field for 'Fulfilled Quantity', button to 'Allocate Stock'
+    #   - Allocation should check available stock
+    #   - Record a stock transaction (Type: INDENT_FULFILL)
+    #   - Update 'fulfilled_qty' in 'indent_items' table
+    # - Button to update overall Indent Status (e.g., 'Mark as Processing', 'Mark as Completed')
+    # - Potentially link to PO generation if stock is insufficient.
+

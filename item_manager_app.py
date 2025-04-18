@@ -488,7 +488,7 @@ def get_stock_transactions( # MODIFIED: _engine
     return df
 
 # ─────────────────────────────────────────────────────────
-# INDENT FUNCTIONS (get_indents is modified)
+# INDENT FUNCTIONS (create_indent is modified)
 # ─────────────────────────────────────────────────────────
 # Not cached, keep 'engine'
 def generate_mrn(engine) -> Optional[str]:
@@ -505,10 +505,12 @@ def generate_mrn(engine) -> Optional[str]:
         st.error(f"Error generating MRN: {e}")
         return None
 
+# *** MODIFIED SECTION START: create_indent function ***
 # Not cached, keep 'engine'
 def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> Tuple[bool, str]:
     """Creates a new indent record and its associated items."""
     required_header = ["mrn", "requested_by", "department", "date_required"]
+    # Perform initial check using .get() which is safer for potentially missing keys
     if not all(indent_data.get(k) for k in required_header):
         missing = [k for k in required_header if not indent_data.get(k)]
         return False, f"Missing required indent header fields: {', '.join(missing)}"
@@ -531,12 +533,20 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
         VALUES (:indent_id, :item_id, :requested_qty, :notes);
     """)
 
+    # Safely handle requested_by before stripping to prevent NoneType error
+    requested_by_value = indent_data.get("requested_by", "") # Default to empty string if None
+    requested_by_stripped = requested_by_value.strip() if requested_by_value else None # Strip only if not None/empty
+
+    # Add an additional check after stripping to ensure it's not empty
+    if not requested_by_stripped:
+         return False, "Missing required indent header fields: requested_by (cannot be empty)"
+
     indent_params = {
         "mrn": indent_data["mrn"],
-        "requested_by": indent_data["requested_by"].strip(),
+        "requested_by": requested_by_stripped, # Use the safely stripped value
         "department": indent_data["department"], # Assuming already validated/selected
         "date_required": indent_data["date_required"],
-        "notes": indent_data.get("notes", "").strip() or None,
+        "notes": indent_data.get("notes", "").strip() or None, # This get() pattern is safe
         "status": indent_data.get("status", STATUS_SUBMITTED) # Default status
     }
 
@@ -548,7 +558,9 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
                 new_indent_id = result.scalar_one_or_none()
 
                 if not new_indent_id:
-                    raise Exception("Failed to retrieve indent_id after insertion.") # Rollback transaction
+                    # Log or raise a more specific error if needed
+                    st.error("Failed to retrieve indent_id after insertion in transaction.")
+                    raise Exception("Failed to retrieve indent_id after insertion.")
 
                 # 2. Insert indent items
                 item_params_list = [
@@ -556,32 +568,36 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
                         "indent_id": new_indent_id,
                         "item_id": item['item_id'],
                         "requested_qty": item['requested_qty'],
-                        "notes": item.get('notes', "").strip() or None
+                        "notes": item.get('notes', "").strip() or None # This get() pattern is safe
                     }
                     for item in items_data
                 ]
-                connection.execute(item_query, item_params_list) # Bulk insert items
+                # Execute bulk insert for items
+                connection.execute(item_query, item_params_list)
 
         get_indents.clear() # Clear indent list cache
         return True, f"Indent {indent_data['mrn']} created successfully."
 
     except IntegrityError as e:
-        # Could be duplicate MRN if generation somehow failed/collided, or FK violation
-        return False, f"Database integrity error creating indent: {e}"
+        st.error(f"Database integrity error creating indent: {e}") # Log error
+        # Provide a more user-friendly message, potentially masking internal details
+        return False, f"Database integrity error. Possible duplicate MRN ('{indent_data.get('mrn', 'N/A')}') or invalid Item ID."
     except (SQLAlchemyError, Exception) as e:
-        # The transaction ensures rollback on error
-        return False, f"Database error creating indent: {e}"
+        st.error(f"Database error creating indent: {e}") # Log error
+        # Return the specific error message if needed for debugging, or a generic one
+        # return False, f"An unexpected database error occurred."
+        return False, f"Database error creating indent: {e}" # Return specific error for now
+# *** MODIFIED SECTION END: create_indent function ***
 
 
-# *** MODIFIED SECTION START ***
 @st.cache_data(ttl=120) # Cache indent list for 2 minutes
-def get_indents( # Accepts date strings
+def get_indents( # MODIFIED: Accepts date strings
     _engine,
     mrn_filter: Optional[str] = None,
     dept_filter: Optional[str] = None,
     status_filter: Optional[str] = None,
-    date_start_str: Optional[str] = None, # Changed param name & type hint
-    date_end_str: Optional[str] = None    # Changed param name & type hint
+    date_start_str: Optional[str] = None, # MODIFIED: Changed param name & type hint
+    date_end_str: Optional[str] = None    # MODIFIED: Changed param name & type hint
 ) -> pd.DataFrame:
     """Fetches indent records with optional filters, accepting dates as strings."""
 
@@ -648,7 +664,6 @@ def get_indents( # Accepts date strings
         if 'date_submitted' in df.columns:
              df['date_submitted'] = pd.to_datetime(df['date_submitted']).dt.strftime('%Y-%m-%d %H:%M')
     return df
-# *** MODIFIED SECTION END ***
 
 
 # ─────────────────────────────────────────────────────────

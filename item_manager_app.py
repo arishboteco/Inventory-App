@@ -748,7 +748,7 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> bytes:
             pdf.ln(line_height * max_lines) # Move down by the calculated row height
 
     # Output as bytes
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='tobytes')
 
 
 # ─────────────────────────────────────────────────────────

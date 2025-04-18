@@ -5,6 +5,7 @@ import pandas as pd
 from typing import Any, Optional, Dict, List, Tuple, Set
 from datetime import datetime, date, timedelta
 import re # Import regular expressions for parsing departments
+from fpdf import FPDF # <-- Import added for PDF generation
 
 # ─────────────────────────────────────────────────────────
 # CONSTANTS
@@ -125,6 +126,7 @@ def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
                 new_id = result.scalar_one_or_none()
         if new_id:
             get_all_items_with_stock.clear() # Clear cache on success
+            get_distinct_departments_from_items.clear() # Clear dept cache
             return True, f"Item '{params['name']}' added with ID {new_id}."
         else:
             return False, "Failed to add item (no ID returned)."
@@ -159,6 +161,7 @@ def update_item_details(engine, item_id: int, updates: Dict[str, Any]) -> Tuple[
                 result = connection.execute(query, params)
         if result.rowcount > 0:
             get_all_items_with_stock.clear() # Clear cache on success
+            get_distinct_departments_from_items.clear() # Clear dept cache
             return True, f"Item ID {item_id} updated successfully."
         else:
             # This could happen if the item_id doesn't exist, though usually caught earlier
@@ -178,6 +181,7 @@ def deactivate_item(engine, item_id: int) -> bool:
                 result = connection.execute(query, {"item_id": item_id})
         if result.rowcount > 0:
             get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear() # Clear dept cache
             return True
         return False
     except (SQLAlchemyError, Exception) as e:
@@ -194,6 +198,7 @@ def reactivate_item(engine, item_id: int) -> bool:
                 result = connection.execute(query, {"item_id": item_id})
         if result.rowcount > 0:
             get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear() # Clear dept cache
             return True
         return False
     except (SQLAlchemyError, Exception) as e:
@@ -435,10 +440,6 @@ def get_stock_transactions( # MODIFIED: _engine
     related_mrn: Optional[str] = None
 ) -> pd.DataFrame:
     """Fetches stock transaction history with optional filters."""
-    # NOTE: This function's signature still uses Optional[date] for consistency
-    # with how it was called elsewhere (e.g. history page). The _engine fix
-    # is the primary one needed here. If unhashable errors occur for dates
-    # *in this function*, apply the string conversion method used in get_indents.
     query = """
         SELECT
             st.transaction_id,
@@ -488,7 +489,7 @@ def get_stock_transactions( # MODIFIED: _engine
     return df
 
 # ─────────────────────────────────────────────────────────
-# INDENT FUNCTIONS (create_indent is modified)
+# INDENT FUNCTIONS (create_indent & get_indents modified)
 # ─────────────────────────────────────────────────────────
 # Not cached, keep 'engine'
 def generate_mrn(engine) -> Optional[str]:
@@ -505,7 +506,7 @@ def generate_mrn(engine) -> Optional[str]:
         st.error(f"Error generating MRN: {e}")
         return None
 
-# *** MODIFIED SECTION START: create_indent function ***
+# *** MODIFIED create_indent function with requested_by fix ***
 # Not cached, keep 'engine'
 def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> Tuple[bool, str]:
     """Creates a new indent record and its associated items."""
@@ -513,6 +514,9 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
     # Perform initial check using .get() which is safer for potentially missing keys
     if not all(indent_data.get(k) for k in required_header):
         missing = [k for k in required_header if not indent_data.get(k)]
+         # Explicitly check requested_by if it was the missing one
+        if not indent_data.get("requested_by"):
+            missing.append("requested_by (is empty)")
         return False, f"Missing required indent header fields: {', '.join(missing)}"
 
     if not items_data:
@@ -539,6 +543,7 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
 
     # Add an additional check after stripping to ensure it's not empty
     if not requested_by_stripped:
+         # This check is now slightly redundant due to the initial check, but provides extra safety
          return False, "Missing required indent header fields: requested_by (cannot be empty)"
 
     indent_params = {
@@ -558,7 +563,6 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
                 new_indent_id = result.scalar_one_or_none()
 
                 if not new_indent_id:
-                    # Log or raise a more specific error if needed
                     st.error("Failed to retrieve indent_id after insertion in transaction.")
                     raise Exception("Failed to retrieve indent_id after insertion.")
 
@@ -572,7 +576,6 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
                     }
                     for item in items_data
                 ]
-                # Execute bulk insert for items
                 connection.execute(item_query, item_params_list)
 
         get_indents.clear() # Clear indent list cache
@@ -580,14 +583,10 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
 
     except IntegrityError as e:
         st.error(f"Database integrity error creating indent: {e}") # Log error
-        # Provide a more user-friendly message, potentially masking internal details
         return False, f"Database integrity error. Possible duplicate MRN ('{indent_data.get('mrn', 'N/A')}') or invalid Item ID."
     except (SQLAlchemyError, Exception) as e:
         st.error(f"Database error creating indent: {e}") # Log error
-        # Return the specific error message if needed for debugging, or a generic one
-        # return False, f"An unexpected database error occurred."
-        return False, f"Database error creating indent: {e}" # Return specific error for now
-# *** MODIFIED SECTION END: create_indent function ***
+        return False, f"Database error creating indent: {e}"
 
 
 @st.cache_data(ttl=120) # Cache indent list for 2 minutes
@@ -660,10 +659,96 @@ def get_indents( # MODIFIED: Accepts date strings
     # Format dates for display (remains the same)
     if not df.empty:
         if 'date_required' in df.columns:
-             df['date_required'] = pd.to_datetime(df['date_required']).dt.strftime('%Y-%m-%d')
+             # Handle potential NaT/None before formatting
+             df['date_required'] = pd.to_datetime(df['date_required'], errors='coerce').dt.strftime('%Y-%m-%d')
         if 'date_submitted' in df.columns:
-             df['date_submitted'] = pd.to_datetime(df['date_submitted']).dt.strftime('%Y-%m-%d %H:%M')
+            # Handle potential NaT/None before formatting
+             df['date_submitted'] = pd.to_datetime(df['date_submitted'], errors='coerce').dt.strftime('%Y-%m-%d %H:%M')
     return df
+
+# *** ADDED PDF Generation Function ***
+# ─────────────────────────────────────────────────────────
+# PDF GENERATION UTILITY
+# ─────────────────────────────────────────────────────────
+def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> bytes:
+    """Generates a PDF document for a submitted indent."""
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+
+    # Title
+    pdf.cell(0, 10, "Material Indent Request", ln=True, align='C')
+    pdf.ln(10)
+
+    # Header Info
+    pdf.set_font("Helvetica", "", 11) # Slightly smaller font
+    col_width = pdf.get_string_width("Date Required: ") + 2 # Estimate label width
+    pdf.cell(col_width, 7, "MRN:")
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 7, f"{indent_header.get('mrn', 'N/A')}", ln=True)
+
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(col_width, 7, "Department:")
+    pdf.cell(0, 7, f"{indent_header.get('department', 'N/A')}", ln=True)
+    pdf.cell(col_width, 7, "Requested By:")
+    pdf.cell(0, 7, f"{indent_header.get('requested_by', 'N/A')}", ln=True)
+
+    # Assuming date_submitted might not be in header yet, use current time
+    submitted_date_str = indent_header.get('date_submitted', datetime.now().strftime('%Y-%m-%d %H:%M'))
+    pdf.cell(col_width, 7, "Date Submitted:")
+    pdf.cell(0, 7, submitted_date_str, ln=True)
+    pdf.cell(col_width, 7, "Date Required:")
+    # Ensure date_required is treated as string
+    pdf.cell(0, 7, f"{indent_header.get('date_required', 'N/A')}", ln=True)
+
+    if indent_header.get('notes'):
+        pdf.ln(2) # Small gap before notes
+        pdf.set_font("Helvetica", "I", 10)
+        pdf.multi_cell(0, 5, f"Indent Notes: {indent_header['notes']}", border=0)
+        pdf.set_font("Helvetica", "", 11) # Reset font
+    pdf.ln(8) # More space before table
+
+    # Items Table Header
+    pdf.set_font("Helvetica", "B", 10)
+    col_widths = {'sno': 15, 'name': 75, 'unit': 20, 'qty': 25, 'notes': 55} # Adjust as needed
+    pdf.cell(col_widths['sno'], 7, "S.No.", border=1, align='C')
+    pdf.cell(col_widths['name'], 7, "Item Name", border=1)
+    pdf.cell(col_widths['unit'], 7, "Unit", border=1, align='C')
+    pdf.cell(col_widths['qty'], 7, "Req. Qty", border=1, align='C')
+    pdf.cell(col_widths['notes'], 7, "Item Notes", border=1)
+    pdf.ln()
+
+    # Items Table Rows
+    pdf.set_font("Helvetica", "", 9) # Smaller font for table content
+    if not indent_items:
+         pdf.cell(sum(col_widths.values()), 7, "No items found in this indent.", border=1, ln=True, align='C')
+    else:
+        for i, item in enumerate(indent_items):
+            # Handle potential line breaks in name/notes
+            line_height = 6
+            notes_str = item.get('notes', '') or '' # Ensure string
+            # Simple split for notes - adjust if more complex wrapping needed
+            notes_lines = pdf.multi_cell(col_widths['notes'], line_height, notes_str, border=0, align='L', split_only=True)
+
+            # Get max lines needed for this row (considering item name too if it could wrap)
+            max_lines = len(notes_lines) # Assume notes is longest for now
+
+            pdf.cell(col_widths['sno'], line_height * max_lines, str(i + 1), border=1, align='C')
+            pdf.cell(col_widths['name'], line_height * max_lines, item.get('item_name', 'N/A'), border=1)
+            pdf.cell(col_widths['unit'], line_height * max_lines, item.get('item_unit', 'N/A'), border=1, align='C')
+            pdf.cell(col_widths['qty'], line_height * max_lines, str(item.get('requested_qty', 0)), border=1, align='R')
+
+            # Use current position for multi-cell notes within the row height
+            x_pos = pdf.get_x()
+            y_pos = pdf.get_y()
+            pdf.multi_cell(col_widths['notes'], line_height, notes_str, border=1, align='L')
+            # Reset Y position to bottom of the row and X to start of next cell (implicit with ln)
+            pdf.set_xy(x_pos + col_widths['notes'], y_pos)
+
+            pdf.ln(line_height * max_lines) # Move down by the calculated row height
+
+    # Output as bytes
+    return pdf.output(dest='S').encode('latin-1')
 
 
 # ─────────────────────────────────────────────────────────
@@ -713,7 +798,6 @@ def run_dashboard():
     kpi1.metric("Active Items", total_active_items)
     kpi2.metric("Low Stock Items", low_stock_count, help="Items at or below reorder point (where reorder point > 0)")
     kpi3.metric("Active Suppliers", total_active_suppliers)
-    # Add more KPIs as needed (e.g., Pending Indents, Recent Transactions)
 
     st.divider()
 
@@ -734,10 +818,7 @@ def run_dashboard():
     else:
         st.info("No items are currently below their reorder point.")
 
-    # Add other dashboard elements (charts, recent activity) here later if needed
 
 # --- Main execution ---
 if __name__ == "__main__":
-    # This check ensures that the dashboard UI only runs when item_manager_app.py
-    # is executed directly, not when its functions are imported by pages.
     run_dashboard()

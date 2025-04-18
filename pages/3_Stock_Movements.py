@@ -1,4 +1,4 @@
-# pages/3_Stock_Movements.py
+# pages/3_Stock_Movements.py – full file with sys.path and _engine fix
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -16,10 +16,10 @@ import math
 try:
     from item_manager_app import (
         connect_db,
-        get_all_items_with_stock, # Needed for item dropdowns
-        record_stock_transaction,
-        get_all_suppliers, # Potentially needed for Receiving notes later
-        TX_RECEIVING,      # Import constants
+        get_all_items_with_stock, # Will receive _engine fix
+        record_stock_transaction, # Does not need fix (not cached)
+        # get_all_suppliers,      # Not currently used here, but available
+        TX_RECEIVING,             # Import constants
         TX_ADJUSTMENT,
         TX_WASTAGE
     )
@@ -36,16 +36,17 @@ st.header("🚚 Stock Movements")
 st.write("Record stock coming in (Goods Received), adjustments, or wastage/spoilage.")
 
 # Establish DB connection for this page
-db_engine = connect_db()
+db_engine = connect_db() # Keep original name for the connection variable
 if not db_engine:
     st.error("Database connection failed on this page.")
     st.stop()
 
 # Fetch data needed for dropdowns ONCE per page load (only active items)
 @st.cache_data(ttl=60)
-def fetch_active_items_for_dropdown(engine):
-    items_df = get_all_items_with_stock(engine, include_inactive=False)
-    if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns:
+def fetch_active_items_for_dropdown(_engine): # MODIFIED: _engine
+    # Pass _engine to the backend function which now expects _engine
+    items_df = get_all_items_with_stock(_engine, include_inactive=False) # MODIFIED: Call with _engine
+    if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns and 'unit' in items_df.columns:
         # Create list of tuples: (display_name, item_id)
         item_options_list: List[Tuple[str, int]] = [
             (f"{row['name']} ({row['unit']})", row['item_id'])
@@ -54,11 +55,13 @@ def fetch_active_items_for_dropdown(engine):
         return item_options_list
     return []
 
+# Pass the original 'db_engine' variable here; fetch_active_items_for_dropdown receives it as _engine
 active_item_options = fetch_active_items_for_dropdown(db_engine)
 
 if not active_item_options:
     st.warning("No active items found. Cannot record stock movements.")
-    st.stop()
+    # Don't st.stop() here, allow page to render potentially empty forms or message
+    # st.stop()
 
 # Create placeholder option
 placeholder_option = ("Select an item...", -1)
@@ -102,8 +105,9 @@ with tab_recv:
                    except ValueError:
                        st.warning("Related PO ID must be a valid number if provided.")
                        related_po = -1 # Indicate error without stopping submission if needed
-                
+
                 if related_po != -1: # Proceed if PO ID is valid number or empty
+                     # Pass original 'db_engine' variable to non-cached function
                      success = record_stock_transaction(
                         engine=db_engine,
                         item_id=selected_item_id,
@@ -154,6 +158,7 @@ with tab_adj:
             elif not adj_notes:
                 st.warning("Please enter a reason for the adjustment.")
             else:
+                 # Pass original 'db_engine' variable to non-cached function
                 success = record_stock_transaction(
                     engine=db_engine,
                     item_id=selected_item_id,
@@ -204,6 +209,7 @@ with tab_waste:
             elif not waste_notes:
                 st.warning("Please enter a reason for the wastage.")
             else:
+                # Pass original 'db_engine' variable to non-cached function
                 success = record_stock_transaction(
                     engine=db_engine,
                     item_id=selected_item_id,

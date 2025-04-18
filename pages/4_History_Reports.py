@@ -1,4 +1,4 @@
-# pages/4_History_Reports.py
+# pages/4_History_Reports.py – full file with sys.path and _engine fix
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -16,8 +16,8 @@ from datetime import datetime, date, timedelta
 try:
     from item_manager_app import (
         connect_db,
-        get_stock_transactions,
-        get_all_items_with_stock, # Needed for item filter dropdown
+        get_stock_transactions,     # Will receive _engine fix
+        get_all_items_with_stock,   # Will receive _engine fix
         TX_RECEIVING, TX_ADJUSTMENT, TX_WASTAGE, TX_INDENT_FULFILL, TX_SALE # Import types
     )
 except ImportError as e:
@@ -32,7 +32,7 @@ st.set_page_config(layout="wide")
 st.header("📜 History & Reports")
 
 # Establish DB connection for this page
-db_engine = connect_db()
+db_engine = connect_db() # Keep original name for connection variable
 if not db_engine:
     st.error("Database connection failed on this page.")
     st.stop()
@@ -45,9 +45,10 @@ st.write("Apply filters to narrow down the transaction history:")
 
 # Fetch item list for filter dropdown (include inactive items for history)
 @st.cache_data(ttl=120)
-def fetch_all_items_for_filter(engine):
-    items_df = get_all_items_with_stock(engine, include_inactive=True)
-    if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns:
+def fetch_all_items_for_filter(_engine): # MODIFIED: _engine
+    # Pass _engine to the backend function which now expects _engine
+    items_df = get_all_items_with_stock(_engine, include_inactive=True) # MODIFIED: Call with _engine
+    if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns and 'is_active' in items_df.columns:
         # Create list of tuples: (display_name, item_id)
         item_options_list: List[Tuple[str, int]] = [
             (f"{row['name']}{' [Inactive]' if not row['is_active'] else ''}", row['item_id'])
@@ -57,6 +58,7 @@ def fetch_all_items_for_filter(engine):
         return [("All Items", -1)] + sorted(item_options_list, key=lambda x: x[0])
     return [("All Items", -1)]
 
+# Pass original 'db_engine' variable here; fetch_all_items_for_filter receives it as _engine
 all_item_filter_options = fetch_all_items_for_filter(db_engine)
 
 # Transaction Types Filter Options
@@ -105,8 +107,9 @@ with filt_col3:
 
 # --- Fetch Data based on Filters ---
 st.divider()
+# Pass original 'db_engine' variable here; get_stock_transactions receives it as _engine
 transactions_df = get_stock_transactions(
-    engine=db_engine,
+    engine=db_engine, # MODIFIED: Pass original variable name
     item_id=filter_item_id,
     transaction_type=filter_trans_type,
     user_id=filter_user_id.strip() if filter_user_id else None,

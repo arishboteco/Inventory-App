@@ -1,5 +1,4 @@
-# pages/2_Suppliers.py – full file with sys.path patch
-
+# pages/2_Suppliers.py – full file with sys.path patch and _engine fix
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -15,12 +14,12 @@ from typing import Any, Dict, List, Tuple, Optional
 try:
     from item_manager_app import (
         connect_db,
-        get_all_suppliers,
-        get_supplier_details,
-        add_supplier,
-        update_supplier,
-        deactivate_supplier,
-        reactivate_supplier,
+        get_all_suppliers,      # Will receive _engine fix
+        get_supplier_details,   # Does not need fix (not cached)
+        add_supplier,           # Does not need fix (not cached)
+        update_supplier,        # Does not need fix (not cached)
+        deactivate_supplier,    # Does not need fix (not cached)
+        reactivate_supplier,    # Does not need fix (not cached)
     )
 except ImportError as e:
     st.error(f"Import error from item_manager_app.py: {e}. Ensure it's in the parent directory.")
@@ -43,9 +42,10 @@ if "edit_supplier_form_values" not in st.session_state:
 # Helper function to fetch suppliers for display (cached)
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
-def fetch_suppliers_for_display(engine, show_inactive: bool) -> pd.DataFrame:
+def fetch_suppliers_for_display(_engine, show_inactive: bool) -> pd.DataFrame: # MODIFIED: _engine
     """Cached fetch using the main app's function."""
-    return get_all_suppliers(engine, include_inactive=show_inactive)
+    # Pass _engine to the backend function which now expects _engine
+    return get_all_suppliers(_engine, include_inactive=show_inactive) # MODIFIED: Call with _engine
 
 # ─────────────────────────────────────────────────────────
 # Page Setup & DB Connection
@@ -53,7 +53,7 @@ def fetch_suppliers_for_display(engine, show_inactive: bool) -> pd.DataFrame:
 st.set_page_config(layout="wide")
 st.header("🤝 Supplier Management")
 
-engine = connect_db()
+engine = connect_db() # Keep original name for the connection variable
 if not engine:
     st.error("Database connection failed. Cannot manage suppliers.")
     st.stop()
@@ -85,10 +85,11 @@ with st.expander("➕ Add New Supplier", expanded=False):
                     "notes": notes.strip() or None,
                     "is_active": True
                 }
+                # Pass original 'engine' variable to non-cached function
                 success, message = add_supplier(engine, supplier_data)
                 if success:
                     st.success(message)
-                    fetch_suppliers_for_display.clear() # Clear cache
+                    fetch_suppliers_for_display.clear() # Clear this page's cache
                     st.rerun()
                 else:
                     st.error(message)
@@ -108,6 +109,7 @@ show_inactive_sup = st.toggle(
 st.session_state.show_inactive_suppliers = show_inactive_sup # Update session state
 
 # --- Fetch Data for Dropdown and Table ---
+# Pass original 'engine' variable here; fetch_suppliers_for_display receives it as _engine
 suppliers_df_display = fetch_suppliers_for_display(engine, st.session_state.show_inactive_suppliers)
 
 if suppliers_df_display.empty:
@@ -126,6 +128,7 @@ else:
         selected_name = st.session_state.supplier_select_key
         if selected_name and selected_name in supplier_dict:
             st.session_state.supplier_to_edit_id = supplier_dict[selected_name]
+            # Pass original 'engine' variable to non-cached function
             details = get_supplier_details(engine, st.session_state.supplier_to_edit_id)
             st.session_state.edit_supplier_form_values = details
         else:
@@ -190,6 +193,7 @@ else:
                             "address": e_address.strip() or None,
                             "notes": e_notes.strip() or None,
                         }
+                        # Pass original 'engine' variable to non-cached function
                         ok, msg = update_supplier(engine, st.session_state.supplier_to_edit_id, update_data)
                         if ok:
                             st.success(msg)
@@ -204,6 +208,7 @@ else:
             st.divider()
             st.subheader("Deactivate Supplier")
             if st.button("🗑️ Deactivate"):
+                 # Pass original 'engine' variable to non-cached function
                 if deactivate_supplier(engine, st.session_state.supplier_to_edit_id):
                     st.success("Supplier deactivated.")
                     st.session_state.supplier_to_edit_id = None
@@ -216,6 +221,7 @@ else:
         else: # Supplier is currently inactive
             st.info("This supplier is currently deactivated. You can reactivate it below.")
             if st.button("✅ Reactivate"):
+                # Pass original 'engine' variable to non-cached function
                 if reactivate_supplier(engine, st.session_state.supplier_to_edit_id):
                     st.success("Supplier reactivated.")
                     st.session_state.supplier_to_edit_id = None

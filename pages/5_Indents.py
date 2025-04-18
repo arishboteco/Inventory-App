@@ -1,4 +1,4 @@
-# pages/5_Indents.py
+# pages/5_Indents.py – full file with sys.path and _engine fix
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -18,11 +18,12 @@ import numpy as np
 try:
     from item_manager_app import (
         connect_db,
-        get_all_items_with_stock,
-        generate_mrn,
-        create_indent,
-        get_indents,
-        get_distinct_departments_from_items, # Import new function
+        fetch_data, # Needed by fetch_indent_page_data
+        get_all_items_with_stock, # Will receive _engine fix
+        generate_mrn,             # Does not need fix (not cached)
+        create_indent,            # Does not need fix (not cached)
+        get_indents,              # Will receive _engine fix
+        get_distinct_departments_from_items, # Will receive _engine fix
         ALL_INDENT_STATUSES,
         STATUS_SUBMITTED # Import default status
     )
@@ -36,7 +37,7 @@ except Exception as e:
 # --- Page Setup ---
 st.set_page_config(layout="wide")
 st.header("🛒 Material Indents")
-db_engine = connect_db()
+db_engine = connect_db() # Keep original name for connection variable
 if not db_engine:
     st.error("Database connection failed.")
     st.stop()
@@ -52,18 +53,19 @@ if 'create_indent_selected_department' not in st.session_state:
 
 # --- Fetch Data needed across Tabs (Cached) ---
 @st.cache_data(ttl=120)
-def fetch_indent_page_data(engine):
+def fetch_indent_page_data(_engine): # MODIFIED: _engine
     """Fetches data needed for the indent page (items, departments)."""
-    items = get_all_items_with_stock(engine, include_inactive=False)
-    # Fetch distinct departments dynamically from active items
-    departments = get_distinct_departments_from_items(engine)
-    # Fetch distinct statuses and departments *from indents* for view filters
-    indent_info_df = fetch_data(engine, "SELECT DISTINCT status, department FROM indents")
+    # Pass _engine to backend functions expecting _engine
+    items = get_all_items_with_stock(_engine, include_inactive=False)
+    departments = get_distinct_departments_from_items(_engine)
+    # Pass _engine to fetch_data (which expects 'engine', but receives _engine here)
+    indent_info_df = fetch_data(_engine, "SELECT DISTINCT status, department FROM indents")
     statuses = ["All"] + sorted(indent_info_df['status'].unique().tolist()) if not indent_info_df.empty else ["All"]
     view_departments = ["All"] + sorted(indent_info_df['department'].unique().tolist()) if not indent_info_df.empty else ["All"]
 
     return items, departments, statuses, view_departments
 
+# Pass original 'db_engine' variable here; fetch_indent_page_data receives it as _engine
 items_df, create_dept_options, view_status_options, view_dept_options = fetch_indent_page_data(db_engine)
 
 # --- Callbacks for Create Indent ---
@@ -286,7 +288,7 @@ with tab_create:
             # Proceed with submission
             with st.spinner("Submitting Indent..."):
                 try:
-                    # 1. Generate MRN
+                    # 1. Generate MRN (Pass original db_engine)
                     new_mrn = generate_mrn(db_engine)
                     if not new_mrn:
                         st.error("Failed to generate MRN. Indent not created.")
@@ -306,7 +308,7 @@ with tab_create:
                             for item in item_rows_data
                         ]
 
-                        # 3. Call create_indent function
+                        # 3. Call create_indent function (Pass original db_engine)
                         success, message = create_indent(db_engine, indent_data, items_to_submit)
 
                         if success:
@@ -373,18 +375,19 @@ with tab_view:
         filter_date_to = st.date_input("Submitted To", value=None, key="view_filter_date_to", help="Leave blank for no end date limit.")
 
     # Basic date range validation
+    indents_df = pd.DataFrame() # Initialize empty
     if filter_date_from and filter_date_to and filter_date_from > filter_date_to:
         st.warning("'Submitted From' date cannot be after 'Submitted To' date.")
-        # Avoid calling backend with invalid range; display empty or previous results
-        indents_df = pd.DataFrame() # Show empty
+        # Avoid calling backend with invalid range; display empty dataframe
     else:
         # --- Fetch and Display Data ---
         dept_arg = filter_dept if filter_dept != "All" else None
         status_arg = filter_status if filter_status != "All" else None
         mrn_arg = filter_mrn.strip() if filter_mrn else None
 
+        # Pass original 'db_engine' variable here; get_indents receives it as _engine
         indents_df = get_indents(
-            db_engine,
+            engine=db_engine, # MODIFIED: Pass original variable name
             mrn_filter=mrn_arg,
             dept_filter=dept_arg,
             status_filter=status_arg,
@@ -393,10 +396,10 @@ with tab_view:
         )
 
     st.divider()
-    if indents_df.empty and not (filter_date_from and filter_date_to and filter_date_from > filter_date_to):
-         # Only show "No indents found" if the date range wasn't the issue
+    # Display result or info message
+    if indents_df.empty:
          st.info("No indents found matching the selected criteria.")
-    elif not indents_df.empty:
+    else:
         st.success(f"Found {len(indents_df)} indent(s).")
         st.dataframe(
             indents_df,

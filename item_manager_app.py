@@ -30,9 +30,13 @@ ALL_INDENT_STATUSES = [
 def connect_db():
     try:
         if "database" not in st.secrets:
-            st.error("Database configuration missing.")
+            st.error("Database configuration missing in secrets.toml!")
             return None
         db = st.secrets["database"]
+        required_keys = ["engine", "user", "password", "host", "port", "dbname"]
+        if not all(key in db for key in required_keys):
+            st.error(f"Missing keys in secrets: {required_keys}")
+            return None
         url = (
             f"{db['engine']}://{db['user']}:{db['password']}"
             f"@{db['host']}:{db['port']}/{db['dbname']}"

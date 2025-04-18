@@ -75,7 +75,7 @@ def fetch_data(engine, query: str, params: Optional[Dict[str, Any]] = None) -> p
         return pd.DataFrame()
 
 # ─────────────────────────────────────────────────────────
-# ITEM MASTER FUNCTIONS
+# ITEM MASTER FUNCTIONS (No changes in this section from previous version)
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300) # Cache for 5 minutes
 def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame: # MODIFIED: _engine
@@ -430,11 +430,15 @@ def get_stock_transactions( # MODIFIED: _engine
     item_id: Optional[int] = None,
     transaction_type: Optional[str] = None,
     user_id: Optional[str] = None,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: Optional[date] = None, # Keep original type hint here
+    end_date: Optional[date] = None,   # Keep original type hint here
     related_mrn: Optional[str] = None
 ) -> pd.DataFrame:
     """Fetches stock transaction history with optional filters."""
+    # NOTE: This function's signature still uses Optional[date] for consistency
+    # with how it was called elsewhere (e.g. history page). The _engine fix
+    # is the primary one needed here. If unhashable errors occur for dates
+    # *in this function*, apply the string conversion method used in get_indents.
     query = """
         SELECT
             st.transaction_id,
@@ -479,11 +483,12 @@ def get_stock_transactions( # MODIFIED: _engine
     df = fetch_data(_engine, query, params) # MODIFIED: _engine
     if not df.empty:
         # Format date for better display, keep time component
-         df['transaction_date'] = pd.to_datetime(df['transaction_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
+         if 'transaction_date' in df.columns:
+            df['transaction_date'] = pd.to_datetime(df['transaction_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
     return df
 
 # ─────────────────────────────────────────────────────────
-# INDENT FUNCTIONS
+# INDENT FUNCTIONS (get_indents is modified)
 # ─────────────────────────────────────────────────────────
 # Not cached, keep 'engine'
 def generate_mrn(engine) -> Optional[str]:
@@ -568,29 +573,41 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
         return False, f"Database error creating indent: {e}"
 
 
+# *** MODIFIED SECTION START ***
 @st.cache_data(ttl=120) # Cache indent list for 2 minutes
-def get_indents( # MODIFIED: _engine
+def get_indents( # Accepts date strings
     _engine,
     mrn_filter: Optional[str] = None,
     dept_filter: Optional[str] = None,
     status_filter: Optional[str] = None,
-    date_start_filter: Optional[date] = None,
-    date_end_filter: Optional[date] = None
+    date_start_str: Optional[str] = None, # Changed param name & type hint
+    date_end_str: Optional[str] = None    # Changed param name & type hint
 ) -> pd.DataFrame:
-    """Fetches indent records with optional filters."""
+    """Fetches indent records with optional filters, accepting dates as strings."""
+
+    # --- Convert date strings to date objects for query ---
+    date_start_filter = None
+    if date_start_str:
+        try:
+            date_start_filter = datetime.strptime(date_start_str, '%Y-%m-%d').date()
+        except ValueError:
+            st.warning(f"Invalid start date format received: {date_start_str}. Ignoring.")
+
+    date_end_filter = None
+    if date_end_str:
+        try:
+            date_end_filter = datetime.strptime(date_end_str, '%Y-%m-%d').date()
+        except ValueError:
+            st.warning(f"Invalid end date format received: {date_end_str}. Ignoring.")
+    # --- End Date Conversion ---
+
     query = """
         SELECT
-            i.indent_id,
-            i.mrn,
-            i.requested_by,
-            i.department,
-            i.date_required,
-            i.date_submitted,
-            i.status,
-            i.notes AS indent_notes,
-            COUNT(ii.indent_item_id) AS item_count -- Count items per indent
+            i.indent_id, i.mrn, i.requested_by, i.department, i.date_required,
+            i.date_submitted, i.status, i.notes AS indent_notes,
+            COUNT(ii.indent_item_id) AS item_count
         FROM indents i
-        LEFT JOIN indent_items ii ON i.indent_id = ii.indent_id -- Join to count items
+        LEFT JOIN indent_items ii ON i.indent_id = ii.indent_id
         WHERE 1=1
     """
     params = {}
@@ -604,10 +621,13 @@ def get_indents( # MODIFIED: _engine
     if status_filter:
         query += " AND i.status = :status"
         params['status'] = status_filter
+
+    # Use the converted date objects for filtering
     if date_start_filter:
         query += " AND i.date_submitted >= :date_from"
         params['date_from'] = date_start_filter
     if date_end_filter:
+        # Adjust end_date for timestamp comparison
         effective_date_to = date_end_filter + timedelta(days=1)
         query += " AND i.date_submitted < :date_to"
         params['date_to'] = effective_date_to
@@ -619,15 +639,17 @@ def get_indents( # MODIFIED: _engine
         ORDER BY i.date_submitted DESC, i.indent_id DESC
     """
 
-    df = fetch_data(_engine, query, params) # MODIFIED: _engine
-    # Format dates for display
+    df = fetch_data(_engine, query, params) # Use _engine fix
+
+    # Format dates for display (remains the same)
     if not df.empty:
-        # Ensure columns exist before formatting
         if 'date_required' in df.columns:
              df['date_required'] = pd.to_datetime(df['date_required']).dt.strftime('%Y-%m-%d')
         if 'date_submitted' in df.columns:
              df['date_submitted'] = pd.to_datetime(df['date_submitted']).dt.strftime('%Y-%m-%d %H:%M')
     return df
+# *** MODIFIED SECTION END ***
+
 
 # ─────────────────────────────────────────────────────────
 # DASHBOARD UI (Main App Page)
@@ -643,27 +665,20 @@ def run_dashboard():
         st.warning("Database connection failed. Dashboard data cannot be loaded.")
         st.stop()
     else:
-        # Show success message only after connection is confirmed good by connect_db returning an engine
         st.sidebar.success("DB connected")
 
-    # Fetch data for KPIs and low stock (pass the 'engine' variable)
-    items_df = get_all_items_with_stock(engine, include_inactive=False) # Only active items for dashboard
+    items_df = get_all_items_with_stock(engine, include_inactive=False)
     suppliers_df = get_all_suppliers(engine, include_inactive=False)
-    # Consider fetching recent indents or transactions if needed for KPIs
 
     total_active_items = len(items_df)
     total_active_suppliers = len(suppliers_df)
 
-    # Calculate Low Stock Count
     low_stock_df = pd.DataFrame()
     low_stock_count = 0
     if not items_df.empty and 'current_stock' in items_df.columns and 'reorder_point' in items_df.columns:
         try:
-            # Ensure columns are numeric, coercing errors
             items_df['current_stock_num'] = pd.to_numeric(items_df['current_stock'], errors='coerce')
             items_df['reorder_point_num'] = pd.to_numeric(items_df['reorder_point'], errors='coerce')
-
-            # Filter condition
             mask = (
                 items_df['current_stock_num'].notna() &
                 items_df['reorder_point_num'].notna() &

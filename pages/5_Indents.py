@@ -1,5 +1,6 @@
 # pages/5_Indents.py
 # Integrates with consolidated backend and includes PDF generation locally.
+# Fix: Removed unnecessary st.form wrapper in Create Indent tab.
 
 # ─── Ensure repo root is on sys.path ─────────────────────────────────
 import sys, pathlib
@@ -224,34 +225,30 @@ tab_create, tab_view, tab_process = st.tabs([
 with tab_create:
     st.subheader("Create New Material Indent")
 
-    with st.form("indent_header_form"):
-        # --- Header Information within a Form ---
-        col1, col2 = st.columns(2)
-        with col1:
-            department = st.selectbox(
-                "Requesting Department*",
-                options=distinct_departments,
-                index=None, # Default to no selection
-                placeholder="Select Department...",
-                key="create_dept", # Key for form state
-                help="Select the department requesting the items."
-            )
-            # Update session state for dynamic item filtering outside the form
-            st.session_state.selected_department_for_create = department
+    # --- Header Information (No longer wrapped in st.form) ---
+    col1, col2 = st.columns(2)
+    with col1:
+        department = st.selectbox(
+            "Requesting Department*",
+            options=distinct_departments,
+            index=None, # Default to no selection
+            placeholder="Select Department...",
+            key="create_dept", # Key to read value later
+            help="Select the department requesting the items."
+        )
+        # Update session state for dynamic item filtering
+        st.session_state.selected_department_for_create = department
 
-        with col2:
-            requested_by = st.text_input("Requested By*", placeholder="Your Name/ID", key="create_req_by", help="Enter the name or ID of the person requesting.")
+    with col2:
+        requested_by = st.text_input("Requested By*", placeholder="Your Name/ID", key="create_req_by", help="Enter the name or ID of the person requesting.")
 
-        col3, col4 = st.columns(2)
-        with col3:
-            date_required = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key="create_date_req", help="Select the date when items are needed.")
-        with col4:
-            st.text_input("Status", value=STATUS_SUBMITTED, disabled=True, key="create_status") # Read-only status
+    col3, col4 = st.columns(2)
+    with col3:
+        date_required = st.date_input("Date Required*", value=date.today() + timedelta(days=1), min_value=date.today(), key="create_date_req", help="Select the date when items are needed.")
+    with col4:
+        st.text_input("Status", value=STATUS_SUBMITTED, disabled=True, key="create_status") # Read-only status
 
-        header_notes = st.text_area("Overall Indent Notes (Optional)", key="create_header_notes", placeholder="Add any general notes for this indent.")
-
-        # Form submit button for the header part (optional, could submit all at once)
-        # header_submitted = st.form_submit_button("Set Header") # If we want separate header submission
+    header_notes = st.text_area("Overall Indent Notes (Optional)", key="create_header_notes", placeholder="Add any general notes for this indent.")
 
     # --- Display Available Items based on Department Selection ---
     st.divider()
@@ -349,14 +346,14 @@ with tab_create:
 
     st.divider()
 
-    # --- Submit Button (Outside the header form, processes everything) ---
+    # --- Submit Button (Processes everything) ---
     if st.button("Submit Indent", type="primary", key="submit_indent_button"):
         # --- Validation ---
         valid = True
         items_to_submit = []
         seen_item_ids = set()
 
-        # Get header values from form state (or regular widget state if not using form)
+        # Get header values from widget state using keys
         header_data = {
             "department": st.session_state.get("create_dept"),
             "requested_by": st.session_state.get("create_req_by", "").strip(),

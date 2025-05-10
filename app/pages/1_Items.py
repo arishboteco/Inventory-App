@@ -1,41 +1,41 @@
-# At the VERY TOP of app/pages/1_Items.py
-import sys
-import os
-print(f"--- Debug from 1_Items.py ---")
-print(f"Current Working Directory (from 1_Items.py): {os.getcwd()}")
-print(f"sys.path (from 1_Items.py): {sys.path}")
-print(f"--- End Debug ---")
+# app/pages/1_Items.py
 
-# Normal imports follow
+# Debug prints can be removed now if everything is working, or kept for future debugging
+# import sys
+# import os
+# print(f"--- Debug from 1_Items.py ---")
+# print(f"Current Working Directory (from 1_Items.py): {os.getcwd()}")
+# print(f"sys.path (from 1_Items.py): {sys.path}")
+# print(f"--- End Debug ---")
+
 import streamlit as st
 import pandas as pd
 from typing import Any, Dict, List, Tuple, Optional
 import math
 
-# Try importing shared functions from app.item_manager_app
-# These functions will later move to specific service modules.
 try:
+    # Functions that will eventually move to service modules are still imported from app.item_manager_app
     from app.item_manager_app import (
-        connect_db,
-        get_all_items_with_stock, # Will receive _engine fix if not already
-        get_item_details,         # Does not need fix (not cached)
-        add_new_item,             # Does not need fix (not cached)
-        update_item_details,      # Does not need fix (not cached)
-        deactivate_item,          # Does not need fix (not cached)
-        reactivate_item,          # Does not need fix (not cached)
-        # get_distinct_departments_from_items # This was in your original item_manager_app.py but not directly used in 1_Items.py imports. If needed, add here.
+        get_all_items_with_stock,
+        get_item_details,
+        add_new_item,
+        update_item_details,
+        deactivate_item,
+        reactivate_item,
+        get_distinct_departments_from_items # This was in your original main app
     )
-    # If this page used any constants directly, they would be imported here:
-    # from app.core.constants import YOUR_CONSTANT_IF_NEEDED
+    # Import connect_db from its new location
+    from app.db.database_utils import connect_db
+    # No constants seem to be directly used by this page from app.core.constants
 except ImportError as e:
-    st.error(f"Import error in 1_Items.py: {e}. Check terminal output for debug prints (sys.path, cwd). Ensure 'INVENTORY-APP' is the root for 'streamlit run app/item_manager_app.py'.")
+    st.error(f"Import error in 1_Items.py: {e}. Ensure 'INVENTORY-APP' is the root for 'streamlit run app/item_manager_app.py'.")
     st.stop()
 except Exception as e:
     st.error(f"An unexpected error occurred during import in 1_Items.py: {e}")
     st.stop()
 
 # ─────────────────────────────────────────────────────────
-# Session‑state defaults (matches your original file)
+# Session‑state defaults
 # ─────────────────────────────────────────────────────────
 if "item_to_edit_id" not in st.session_state:
     st.session_state.item_to_edit_id = None
@@ -45,27 +45,25 @@ if "show_inactive" not in st.session_state:
     st.session_state.show_inactive = False
 
 # ─────────────────────────────────────────────────────────
-# Helper function to fetch items for display (cached) - (matches your original file)
+# Helper function to fetch items for display (cached)
 # ─────────────────────────────────────────────────────────
-@st.cache_data(ttl=60) # Short cache as data changes often
+@st.cache_data(ttl=60)
 def fetch_items_for_display(_engine, show_inactive: bool) -> pd.DataFrame:
-    # This will call the get_all_items_with_stock imported above
     return get_all_items_with_stock(_engine, include_inactive=show_inactive)
 
 # ─────────────────────────────────────────────────────────
-# Page Setup & DB Connection - (matches your original file)
+# Page Setup & DB Connection
 # ─────────────────────────────────────────────────────────
-st.set_page_config(layout="wide") # This might cause an error if called multiple times; Streamlit prefers it once in main app.
-                                 # However, it's in your original page file. We can address this later if it's an issue.
+# st.set_page_config(layout="wide") # Ideally called only once in the main app script
 st.header("📦 Item Master Management")
 
-engine = connect_db()
+engine = connect_db() # Uses imported connect_db
 if not engine:
     st.error("Database connection failed. Cannot manage items.")
     st.stop()
 
 # ─────────────────────────────────────────────────────────
-# ADD NEW ITEM Section - (matches your original file)
+# ADD NEW ITEM Section
 # ─────────────────────────────────────────────────────────
 with st.expander("➕ Add New Item", expanded=False):
     with st.form("add_item_form", clear_on_submit=True):
@@ -104,24 +102,20 @@ with st.expander("➕ Add New Item", expanded=False):
                     "notes": notes.strip() or None,
                     "is_active": True
                 }
+                # Calls add_new_item (currently from app.item_manager_app)
                 success, message = add_new_item(engine, item_data)
                 if success:
                     st.success(message)
-                    fetch_items_for_display.clear()
-                    # When add_new_item moves to item_service.py, it will handle clearing
-                    # its own dependent caches (like item_service.get_all_items_with_stock.clear())
-                    # For now, if get_distinct_departments_from_items is still in app.item_manager_app and used by items:
-                    # get_distinct_departments_from_items.clear() # This function wasn't explicitly imported in your original 1_Items.py 'try' block.
-                                                              # If add_new_item affects it, its cache needs clearing.
-                                                              # The function get_all_items_with_stock itself should be cleared too.
-                    # Let's assume add_new_item (wherever it is) clears the necessary backend caches
-                    get_all_items_with_stock.clear() # Clear the cache of the function imported by this page.
+                    fetch_items_for_display.clear() # Clears this page's display cache
+                    # The following caches should be cleared by add_new_item itself once it's in item_service.py
+                    get_all_items_with_stock.clear()
+                    get_distinct_departments_from_items.clear()
                     st.rerun()
                 else:
                     st.error(message)
 
 # ─────────────────────────────────────────────────────────
-# VIEW / EDIT / DEACTIVATE Section - (matches your original file)
+# VIEW / EDIT / DEACTIVATE Section
 # ─────────────────────────────────────────────────────────
 st.divider()
 st.subheader("🔍 View & Manage Existing Items")
@@ -149,6 +143,7 @@ else:
         selected_name = st.session_state.item_select_key
         if selected_name and selected_name in item_dict:
             st.session_state.item_to_edit_id = item_dict[selected_name]
+            # Calls get_item_details (currently from app.item_manager_app)
             details = get_item_details(engine, st.session_state.item_to_edit_id)
             st.session_state.edit_form_values = details
         else:
@@ -157,7 +152,7 @@ else:
 
     st.selectbox(
         "Select Item to View/Edit",
-        options=item_dict.keys(),
+        options=list(item_dict.keys()), # Ensure options is a list
         index=list(item_dict.keys()).index(selected_display_name) if selected_display_name else 0,
         key="item_select_key",
         on_change=load_item_for_edit,
@@ -221,16 +216,16 @@ else:
                             "reorder_point": float(e_rp),
                             "notes": e_notes.strip() or None,
                         }
+                        # Calls update_item_details (currently from app.item_manager_app)
                         ok, msg = update_item_details(engine, st.session_state.item_to_edit_id, update_data)
                         if ok:
                             st.success(msg)
                             st.session_state.item_to_edit_id = None
                             st.session_state.edit_form_values = None
                             fetch_items_for_display.clear()
-                            # Similar to add_new_item, update_item_details should handle its own cache clearing.
-                            get_all_items_with_stock.clear() # Clear the imported function's cache
-                            # If get_item_details was cached and specific to this item ID, clear it too.
-                            # get_distinct_departments_from_items.clear() if relevant
+                            get_all_items_with_stock.clear()
+                            get_distinct_departments_from_items.clear()
+                            # If get_item_details were cached, clear it here too
                             st.rerun()
                         else:
                             st.error(msg)
@@ -238,13 +233,14 @@ else:
             st.divider()
             st.subheader("Deactivate Item")
             if st.button("🗑️ Deactivate"):
+                # Calls deactivate_item (currently from app.item_manager_app)
                 if deactivate_item(engine, st.session_state.item_to_edit_id):
                     st.success("Item deactivated.")
                     st.session_state.item_to_edit_id = None
                     st.session_state.edit_form_values = None
                     fetch_items_for_display.clear()
                     get_all_items_with_stock.clear()
-                    # get_distinct_departments_from_items.clear() if relevant
+                    get_distinct_departments_from_items.clear()
                     st.rerun()
                 else:
                     st.error("Failed to deactivate item.")
@@ -252,13 +248,14 @@ else:
         else: # Item is currently inactive
             st.info("This item is currently deactivated. You can reactivate it below.")
             if st.button("✅ Reactivate"):
+                # Calls reactivate_item (currently from app.item_manager_app)
                 if reactivate_item(engine, st.session_state.item_to_edit_id):
                     st.success("Item reactivated.")
                     st.session_state.item_to_edit_id = None
                     st.session_state.edit_form_values = None
                     fetch_items_for_display.clear()
                     get_all_items_with_stock.clear()
-                    # get_distinct_departments_from_items.clear() if relevant
+                    get_distinct_departments_from_items.clear()
                     st.rerun()
                 else:
                     st.error("Failed to reactivate item.")

@@ -1,46 +1,43 @@
-# pages/3_Stock_Movements.py
+# app/pages/3_Stock_Movements.py
 
 import streamlit as st
 import pandas as pd
 from typing import Any, Optional, Dict, List, Tuple
 import math
 
-# Import shared functions and engine from the main app file
+# Import shared functions and constants
 try:
+    # Import connect_db from its new location
+    from app.db.database_utils import connect_db
+    # Functions still temporarily in app.item_manager_app
     from app.item_manager_app import (
-        connect_db,
-        get_all_items_with_stock, # Will receive _engine fix
-        record_stock_transaction, # Does not need fix (not cached)
-        # get_all_suppliers,      # Not currently used here, but available
-        TX_RECEIVING,             # Import constants
-        TX_ADJUSTMENT,
-        TX_WASTAGE
+        get_all_items_with_stock,
+        record_stock_transaction,
     )
+    # Import constants from their new location
+    from app.core.constants import TX_RECEIVING, TX_ADJUSTMENT, TX_WASTAGE
 except ImportError as e:
-    st.error(f"Import error from item_manager_app.py: {e}. Ensure it's in the parent directory.")
+    st.error(f"Import error in 3_Stock_Movements.py: {e}. Ensure 'INVENTORY-APP' is the root for 'streamlit run app/item_manager_app.py'.")
     st.stop()
 except Exception as e:
-    st.error(f"Unexpected error during import: {e}")
+    st.error(f"An unexpected error occurred during import in 3_Stock_Movements.py: {e}")
     st.stop()
 
 # --- Page Content ---
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide") # Ideally called only once in the main app script
 st.header("🚚 Stock Movements")
 st.write("Record stock coming in (Goods Received), adjustments, or wastage/spoilage.")
 
-# Establish DB connection for this page
-db_engine = connect_db() # Keep original name for the connection variable
+db_engine = connect_db() # Uses imported connect_db
 if not db_engine:
     st.error("Database connection failed on this page.")
     st.stop()
 
-# Fetch data needed for dropdowns ONCE per page load (only active items)
 @st.cache_data(ttl=60)
-def fetch_active_items_for_dropdown(_engine): # MODIFIED: _engine
-    # Pass _engine to the backend function which now expects _engine
-    items_df = get_all_items_with_stock(_engine, include_inactive=False) # MODIFIED: Call with _engine
+def fetch_active_items_for_dropdown(_engine):
+    # Calls get_all_items_with_stock (imported from app.item_manager_app)
+    items_df = get_all_items_with_stock(_engine, include_inactive=False)
     if not items_df.empty and 'item_id' in items_df.columns and 'name' in items_df.columns and 'unit' in items_df.columns:
-        # Create list of tuples: (display_name, item_id)
         item_options_list: List[Tuple[str, int]] = [
             (f"{row['name']} ({row['unit']})", row['item_id'])
             for index, row in items_df.iterrows()
@@ -48,15 +45,8 @@ def fetch_active_items_for_dropdown(_engine): # MODIFIED: _engine
         return item_options_list
     return []
 
-# Pass the original 'db_engine' variable here; fetch_active_items_for_dropdown receives it as _engine
 active_item_options = fetch_active_items_for_dropdown(db_engine)
 
-if not active_item_options:
-    st.warning("No active items found. Cannot record stock movements.")
-    # Don't st.stop() here, allow page to render potentially empty forms or message
-    # st.stop()
-
-# Create placeholder option
 placeholder_option = ("Select an item...", -1)
 item_options_with_placeholder = [placeholder_option] + active_item_options
 
@@ -70,13 +60,13 @@ with tab_recv:
         recv_selected_item_tuple = st.selectbox(
             "Item Received*",
             options=item_options_with_placeholder,
-            format_func=lambda x: x[0], # Display only the name part
+            format_func=lambda x: x[0],
             key="recv_item_select",
-            index=0 # Default to placeholder
+            index=0
         )
         recv_qty = st.number_input("Quantity Received*", min_value=0.01, step=0.01, format="%.2f", key="recv_qty")
         recv_user_id = st.text_input("Receiver's Name/ID*", key="recv_user_id")
-        recv_po_id = st.text_input("Related PO ID (Optional)", key="recv_po") # Changed to text_input
+        recv_po_id = st.text_input("Related PO ID (Optional)", key="recv_po")
         recv_notes = st.text_area("Notes (e.g., Supplier, Invoice #)", key="recv_notes")
 
         recv_submitted = st.form_submit_button("Record Receiving")
@@ -90,29 +80,31 @@ with tab_recv:
             elif not recv_user_id:
                 st.warning("Please enter the Receiver's Name/ID.")
             else:
-                # Try converting PO ID to int if provided, else None
                 related_po = None
                 if recv_po_id.strip():
                    try:
                        related_po = int(recv_po_id.strip())
                    except ValueError:
                        st.warning("Related PO ID must be a valid number if provided.")
-                       related_po = -1 # Indicate error without stopping submission if needed
+                       related_po = -1 # Indicate error
 
-                if related_po != -1: # Proceed if PO ID is valid number or empty
-                     # Pass original 'db_engine' variable to non-cached function
+                if related_po != -1:
+                     # Calls record_stock_transaction (imported from app.item_manager_app)
                      success = record_stock_transaction(
                         engine=db_engine,
                         item_id=selected_item_id,
-                        quantity_change=abs(float(recv_qty)), # Ensure positive
-                        transaction_type=TX_RECEIVING,
+                        quantity_change=abs(float(recv_qty)),
+                        transaction_type=TX_RECEIVING, # Imported constant
                         user_id=recv_user_id.strip(),
                         related_po_id=related_po,
                         notes=recv_notes.strip() or None
                     )
                      if success:
                         st.success(f"Successfully recorded receipt of {recv_qty:.2f} units for '{recv_selected_item_tuple[0]}'.")
-                        fetch_active_items_for_dropdown.clear() # Clear cache if needed
+                        fetch_active_items_for_dropdown.clear()
+                        # record_stock_transaction should clear get_all_items_with_stock and get_stock_transactions
+                        # For now, ensure they are cleared if record_stock_transaction doesn't do it.
+                        get_all_items_with_stock.clear() # To refresh current stock in dropdown if needed elsewhere
                      else:
                         st.error("Failed to record stock receiving.")
 
@@ -133,7 +125,7 @@ with tab_adj:
             format="%.2f",
             help="Enter positive number for stock increase, negative number for stock decrease.",
             key="adj_qty",
-            value=0.0 # Default to zero to force user input
+            value=0.0
         )
         adj_user_id = st.text_input("Adjuster's Name/ID*", key="adj_user_id")
         adj_notes = st.text_area("Reason for Adjustment*", key="adj_notes")
@@ -151,12 +143,12 @@ with tab_adj:
             elif not adj_notes:
                 st.warning("Please enter a reason for the adjustment.")
             else:
-                 # Pass original 'db_engine' variable to non-cached function
+                # Calls record_stock_transaction (imported from app.item_manager_app)
                 success = record_stock_transaction(
                     engine=db_engine,
                     item_id=selected_item_id,
-                    quantity_change=float(adj_qty), # Use the signed value directly
-                    transaction_type=TX_ADJUSTMENT,
+                    quantity_change=float(adj_qty),
+                    transaction_type=TX_ADJUSTMENT, # Imported constant
                     user_id=adj_user_id.strip(),
                     notes=adj_notes.strip()
                 )
@@ -164,6 +156,7 @@ with tab_adj:
                     change_type = "increase" if adj_qty > 0 else "decrease"
                     st.success(f"Successfully recorded stock {change_type} of {abs(adj_qty):.2f} units for '{adj_selected_item_tuple[0]}'.")
                     fetch_active_items_for_dropdown.clear()
+                    get_all_items_with_stock.clear()
                 else:
                     st.error("Failed to record stock adjustment.")
 
@@ -202,17 +195,18 @@ with tab_waste:
             elif not waste_notes:
                 st.warning("Please enter a reason for the wastage.")
             else:
-                # Pass original 'db_engine' variable to non-cached function
+                # Calls record_stock_transaction (imported from app.item_manager_app)
                 success = record_stock_transaction(
                     engine=db_engine,
                     item_id=selected_item_id,
-                    quantity_change=-abs(float(waste_qty)), # Ensure negative change
-                    transaction_type=TX_WASTAGE,
+                    quantity_change=-abs(float(waste_qty)),
+                    transaction_type=TX_WASTAGE, # Imported constant
                     user_id=waste_user_id.strip(),
                     notes=waste_notes.strip()
                 )
                 if success:
                     st.success(f"Successfully recorded wastage of {waste_qty:.2f} units for '{waste_selected_item_tuple[0]}'.")
                     fetch_active_items_for_dropdown.clear()
+                    get_all_items_with_stock.clear()
                 else:
                     st.error("Failed to record wastage.")

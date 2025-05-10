@@ -1,25 +1,28 @@
-# pages/2_Suppliers.py
+# app/pages/2_Suppliers.py
 
 import streamlit as st
 import pandas as pd
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional # Ensure all necessary typing imports are here
 
-# Back‑end imports
+# Back-end imports
 try:
+    # Import connect_db from its new location
+    from app.db.database_utils import connect_db
+    # Functions specific to suppliers, still temporarily in app.item_manager_app
     from app.item_manager_app import (
-        connect_db,
-        get_all_suppliers,      # Will receive _engine fix
-        get_supplier_details,   # Does not need fix (not cached)
-        add_supplier,           # Does not need fix (not cached)
-        update_supplier,        # Does not need fix (not cached)
-        deactivate_supplier,    # Does not need fix (not cached)
-        reactivate_supplier,    # Does not need fix (not cached)
+        get_all_suppliers,
+        get_supplier_details,
+        add_supplier,
+        update_supplier,
+        deactivate_supplier,
+        reactivate_supplier,
     )
+    # This page doesn't seem to use constants directly from app.core.constants
 except ImportError as e:
-    st.error(f"Import error from item_manager_app.py: {e}. Ensure it's in the parent directory.")
+    st.error(f"Import error in 2_Suppliers.py: {e}. Ensure 'INVENTORY-APP' is the root for 'streamlit run app/item_manager_app.py'.")
     st.stop()
 except Exception as e:
-    st.error(f"Unexpected error during import: {e}")
+    st.error(f"An unexpected error occurred during import in 2_Suppliers.py: {e}")
     st.stop()
 
 # ─────────────────────────────────────────────────────────
@@ -36,18 +39,17 @@ if "edit_supplier_form_values" not in st.session_state:
 # Helper function to fetch suppliers for display (cached)
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
-def fetch_suppliers_for_display(_engine, show_inactive: bool) -> pd.DataFrame: # MODIFIED: _engine
-    """Cached fetch using the main app's function."""
-    # Pass _engine to the backend function which now expects _engine
-    return get_all_suppliers(_engine, include_inactive=show_inactive) # MODIFIED: Call with _engine
+def fetch_suppliers_for_display(_engine, show_inactive: bool) -> pd.DataFrame:
+    # This will call the get_all_suppliers imported above
+    return get_all_suppliers(_engine, include_inactive=show_inactive)
 
 # ─────────────────────────────────────────────────────────
 # Page Setup & DB Connection
 # ─────────────────────────────────────────────────────────
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide") # Ideally called only once in the main app script
 st.header("🤝 Supplier Management")
 
-engine = connect_db() # Keep original name for the connection variable
+engine = connect_db() # Uses imported connect_db
 if not engine:
     st.error("Database connection failed. Cannot manage suppliers.")
     st.stop()
@@ -79,11 +81,13 @@ with st.expander("➕ Add New Supplier", expanded=False):
                     "notes": notes.strip() or None,
                     "is_active": True
                 }
-                # Pass original 'engine' variable to non-cached function
+                # Calls add_supplier (currently from app.item_manager_app)
                 success, message = add_supplier(engine, supplier_data)
                 if success:
                     st.success(message)
-                    fetch_suppliers_for_display.clear() # Clear this page's cache
+                    fetch_suppliers_for_display.clear() # Clears this page's display cache
+                    # The following cache should be cleared by add_supplier itself once it's in supplier_service.py
+                    get_all_suppliers.clear()
                     st.rerun()
                 else:
                     st.error(message)
@@ -94,22 +98,18 @@ with st.expander("➕ Add New Supplier", expanded=False):
 st.divider()
 st.subheader("🔍 View & Manage Existing Suppliers")
 
-# --- Filters ---
 show_inactive_sup = st.toggle(
     "Show Inactive Suppliers",
     value=st.session_state.show_inactive_suppliers,
     key="show_inactive_suppliers_toggle"
 )
-st.session_state.show_inactive_suppliers = show_inactive_sup # Update session state
+st.session_state.show_inactive_suppliers = show_inactive_sup
 
-# --- Fetch Data for Dropdown and Table ---
-# Pass original 'engine' variable here; fetch_suppliers_for_display receives it as _engine
 suppliers_df_display = fetch_suppliers_for_display(engine, st.session_state.show_inactive_suppliers)
 
 if suppliers_df_display.empty:
     st.info("No suppliers found." if not st.session_state.show_inactive_suppliers else "No active suppliers found. Toggle 'Show Inactive' to see all.")
 else:
-    # --- Supplier Selection Dropdown ---
     supplier_options = suppliers_df_display[['supplier_id', 'name', 'is_active']].copy()
     supplier_options['display_name'] = supplier_options.apply(lambda row: f"{row['name']}" + (" [Inactive]" if not row['is_active'] else ""), axis=1)
     supplier_dict = pd.Series(supplier_options.supplier_id.values, index=supplier_options.display_name).to_dict()
@@ -118,11 +118,10 @@ else:
     selected_display_name = next((name for name, id_ in supplier_dict.items() if id_ == current_selection_id), None)
 
     def load_supplier_for_edit():
-        """Callback to load selected supplier details into session state."""
         selected_name = st.session_state.supplier_select_key
         if selected_name and selected_name in supplier_dict:
             st.session_state.supplier_to_edit_id = supplier_dict[selected_name]
-            # Pass original 'engine' variable to non-cached function
+            # Calls get_supplier_details (currently from app.item_manager_app)
             details = get_supplier_details(engine, st.session_state.supplier_to_edit_id)
             st.session_state.edit_supplier_form_values = details
         else:
@@ -131,14 +130,13 @@ else:
 
     st.selectbox(
         "Select Supplier to View/Edit",
-        options=supplier_dict.keys(),
+        options=list(supplier_dict.keys()), # Ensure options is a list
         index=list(supplier_dict.keys()).index(selected_display_name) if selected_display_name else 0,
         key="supplier_select_key",
         on_change=load_supplier_for_edit,
         placeholder="Choose a supplier..."
     )
 
-    # --- Display Supplier Table ---
     st.dataframe(
         suppliers_df_display,
         use_container_width=True,
@@ -156,7 +154,6 @@ else:
         }
     )
 
-    # --- Edit/Deactivate Form ---
     if st.session_state.supplier_to_edit_id and st.session_state.edit_supplier_form_values:
         st.divider()
         st.subheader(f"Edit Supplier: {st.session_state.edit_supplier_form_values.get('name', 'N/A')}")
@@ -164,7 +161,7 @@ else:
         current_values = st.session_state.edit_supplier_form_values
         is_currently_active = current_values.get('is_active', False)
 
-        if is_currently_active: # Only allow editing active suppliers fully
+        if is_currently_active:
             with st.form("edit_supplier_form"):
                 st.caption(f"Supplier ID: {st.session_state.supplier_to_edit_id}")
                 e_name = st.text_input("Supplier Name*", value=current_values.get('name', ''))
@@ -187,27 +184,28 @@ else:
                             "address": e_address.strip() or None,
                             "notes": e_notes.strip() or None,
                         }
-                        # Pass original 'engine' variable to non-cached function
+                        # Calls update_supplier (currently from app.item_manager_app)
                         ok, msg = update_supplier(engine, st.session_state.supplier_to_edit_id, update_data)
                         if ok:
                             st.success(msg)
                             st.session_state.supplier_to_edit_id = None
                             st.session_state.edit_supplier_form_values = None
-                            fetch_suppliers_for_display.clear() # Clear display cache
+                            fetch_suppliers_for_display.clear()
+                            get_all_suppliers.clear()
                             st.rerun()
                         else:
                             st.error(msg)
 
-            # --- Deactivate Button ---
             st.divider()
             st.subheader("Deactivate Supplier")
             if st.button("🗑️ Deactivate"):
-                 # Pass original 'engine' variable to non-cached function
+                # Calls deactivate_supplier (currently from app.item_manager_app)
                 if deactivate_supplier(engine, st.session_state.supplier_to_edit_id):
                     st.success("Supplier deactivated.")
                     st.session_state.supplier_to_edit_id = None
                     st.session_state.edit_supplier_form_values = None
                     fetch_suppliers_for_display.clear()
+                    get_all_suppliers.clear()
                     st.rerun()
                 else:
                     st.error("Failed to deactivate supplier.")
@@ -215,12 +213,13 @@ else:
         else: # Supplier is currently inactive
             st.info("This supplier is currently deactivated. You can reactivate it below.")
             if st.button("✅ Reactivate"):
-                # Pass original 'engine' variable to non-cached function
+                # Calls reactivate_supplier (currently from app.item_manager_app)
                 if reactivate_supplier(engine, st.session_state.supplier_to_edit_id):
                     st.success("Supplier reactivated.")
                     st.session_state.supplier_to_edit_id = None
                     st.session_state.edit_supplier_form_values = None
                     fetch_suppliers_for_display.clear()
+                    get_all_suppliers.clear()
                     st.rerun()
                 else:
                     st.error("Failed to reactivate supplier.")

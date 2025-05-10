@@ -1,11 +1,4 @@
-# pages/4_History_Reports.py – full file with sys.path and corrected call
-
-# ─── Ensure repo root is on sys.path ─────────────────────────────────
-import sys, pathlib
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-# ────────────────────────────────────────────────────────────────────
+# pages/4_History_Reports.py
 
 import streamlit as st
 import pandas as pd
@@ -14,7 +7,7 @@ from datetime import datetime, date, timedelta
 
 # Import shared functions and engine from the main app file
 try:
-    from item_manager_app import (
+    from app.item_manager_app import (
         connect_db,
         get_stock_transactions,     # Receives _engine fix in definition
         get_all_items_with_stock,   # Receives _engine fix in definition

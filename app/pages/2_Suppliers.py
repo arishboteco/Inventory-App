@@ -1,10 +1,4 @@
-# pages/2_Suppliers.py – full file with sys.path patch and _engine fix
-# ─── Ensure repo root is on sys.path ─────────────────────────────────
-import sys, pathlib
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-# ────────────────────────────────────────────────────────────────────
+# pages/2_Suppliers.py
 
 import streamlit as st
 import pandas as pd
@@ -12,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Optional
 
 # Back‑end imports
 try:
-    from item_manager_app import (
+    from app.item_manager_app import (
         connect_db,
         get_all_suppliers,      # Will receive _engine fix
         get_supplier_details,   # Does not need fix (not cached)

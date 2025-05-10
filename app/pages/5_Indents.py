@@ -5,13 +5,6 @@
 # Fix: Updated fpdf2 usage to resolve DeprecationWarnings and RuntimeError.
 # Fix: Explicitly convert PDF output to bytes for st.download_button.
 
-# ─── Ensure repo root is on sys.path ─────────────────────────────────
-import sys, pathlib
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-# ────────────────────────────────────────────────────────────────────
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
@@ -23,23 +16,21 @@ from fpdf.enums import XPos, YPos # <-- Import new enums for positioning
 
 # --- Imports from consolidated backend (item_manager_app.py) ---
 try:
-    from item_manager_app import (
+    # For now, functions are still in app.item_manager_app (will change later)
+    from app.item_manager_app import (
         connect_db,
-        fetch_data, # Used by fetch_indent_page_data
-        get_all_items_with_stock, # Used by fetch_indent_page_data
-        generate_mrn,             # For creating indents
-        create_indent,            # For creating indents
-        get_indents,              # For viewing indents
-        get_distinct_departments_from_items, # For dropdowns
-        get_indent_details_for_pdf, # <-- New function for PDF data
-        ALL_INDENT_STATUSES,      # Constants
-        STATUS_SUBMITTED
+        fetch_data, 
+        get_all_items_with_stock, 
+        generate_mrn,            
+        create_indent,           
+        get_indents,             
+        get_distinct_departments_from_items, 
+        get_indent_details_for_pdf, 
     )
+    # Import constants from their new location
+    from app.core.constants import ALL_INDENT_STATUSES, STATUS_SUBMITTED
 except ImportError as e:
-    st.error(f"Import error from item_manager_app.py: {e}. Ensure it's in the parent directory.")
-    st.stop()
-except Exception as e:
-    st.error(f"Unexpected error during import: {e}")
+    st.error(f"Import error in 5_Indents.py: {e}. Ensure the app is run from the 'INVENTORY-APP' directory (e.g., 'streamlit run app/item_manager_app.py').")
     st.stop()
 
 # --- Page Config ---

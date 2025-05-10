@@ -1,6 +1,13 @@
 # item_manager_app.py
-# Consolidated backend logic based on canvas content ('indents_page_pdf')
-# Fix: Handle NoneType error when processing notes in create_indent.
+
+import sys
+import os
+
+# Add the project root (INVENTORY-APP) to sys.path
+# This makes the 'app' package available for absolute imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 import streamlit as st
 from sqlalchemy import create_engine, text, func, inspect, select, MetaData, Table
@@ -10,25 +17,11 @@ from typing import Any, Optional, Dict, List, Tuple, Set
 from datetime import datetime, date, timedelta
 import re # Import regular expressions for parsing departments
 # Note: fpdf is NOT imported here anymore, as generation is moved to the page script
-
-# ─────────────────────────────────────────────────────────
-# CONSTANTS
-# ─────────────────────────────────────────────────────────
-TX_RECEIVING       = "RECEIVING"
-TX_ADJUSTMENT      = "ADJUSTMENT"
-TX_WASTAGE         = "WASTAGE"
-TX_INDENT_FULFILL  = "INDENT_FULFILL"
-TX_SALE            = "SALE" # Assuming future use
-
-STATUS_SUBMITTED   = "Submitted"
-STATUS_PROCESSING  = "Processing"
-STATUS_COMPLETED   = "Completed"
-STATUS_CANCELLED   = "Cancelled"
-ALL_INDENT_STATUSES = [
-    STATUS_SUBMITTED, STATUS_PROCESSING,
-    STATUS_COMPLETED, STATUS_CANCELLED
-]
-
+from app.core.constants import (
+    TX_RECEIVING, TX_ADJUSTMENT, TX_WASTAGE, TX_INDENT_FULFILL, TX_SALE,
+    STATUS_SUBMITTED, STATUS_PROCESSING, STATUS_COMPLETED, STATUS_CANCELLED,
+    ALL_INDENT_STATUSES
+)
 # ─────────────────────────────────────────────────────────
 # DB CONNECTION (Using structure from canvas 'indents_page_pdf')
 # ─────────────────────────────────────────────────────────

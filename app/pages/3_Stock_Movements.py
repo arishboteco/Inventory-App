@@ -1,11 +1,4 @@
-# pages/3_Stock_Movements.py – full file with sys.path and _engine fix
-
-# ─── Ensure repo root is on sys.path ─────────────────────────────────
-import sys, pathlib
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-# ────────────────────────────────────────────────────────────────────
+# pages/3_Stock_Movements.py
 
 import streamlit as st
 import pandas as pd
@@ -14,7 +7,7 @@ import math
 
 # Import shared functions and engine from the main app file
 try:
-    from item_manager_app import (
+    from app.item_manager_app import (
         connect_db,
         get_all_items_with_stock, # Will receive _engine fix
         record_stock_transaction, # Does not need fix (not cached)

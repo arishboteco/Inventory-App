@@ -1,23 +1,11 @@
 # app/pages/2_Suppliers.py
-
 import streamlit as st
 import pandas as pd
-from typing import Any, Dict, List, Tuple, Optional # Ensure all necessary typing imports are here
+from typing import Any, Dict, List, Tuple, Optional
 
-# Back-end imports
 try:
-    # Import connect_db from its new location
     from app.db.database_utils import connect_db
-    # Functions specific to suppliers, still temporarily in app.item_manager_app
-    from app.item_manager_app import (
-        get_all_suppliers,
-        get_supplier_details,
-        add_supplier,
-        update_supplier,
-        deactivate_supplier,
-        reactivate_supplier,
-    )
-    # This page doesn't seem to use constants directly from app.core.constants
+    from app.services import supplier_service # Import the supplier_service module
 except ImportError as e:
     st.error(f"Import error in 2_Suppliers.py: {e}. Ensure 'INVENTORY-APP' is the root for 'streamlit run app/item_manager_app.py'.")
     st.stop()
@@ -25,38 +13,24 @@ except Exception as e:
     st.error(f"An unexpected error occurred during import in 2_Suppliers.py: {e}")
     st.stop()
 
-# ─────────────────────────────────────────────────────────
-# Session‑state defaults
-# ─────────────────────────────────────────────────────────
-if "show_inactive_suppliers" not in st.session_state:
-    st.session_state.show_inactive_suppliers = False
-if "supplier_to_edit_id" not in st.session_state:
-    st.session_state.supplier_to_edit_id = None
-if "edit_supplier_form_values" not in st.session_state:
-    st.session_state.edit_supplier_form_values = None
+# Session state (remains the same)
+if "show_inactive_suppliers" not in st.session_state: st.session_state.show_inactive_suppliers = False
+if "supplier_to_edit_id" not in st.session_state: st.session_state.supplier_to_edit_id = None
+if "edit_supplier_form_values" not in st.session_state: st.session_state.edit_supplier_form_values = None
 
-# ─────────────────────────────────────────────────────────
-# Helper function to fetch suppliers for display (cached)
-# ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
 def fetch_suppliers_for_display(_engine, show_inactive: bool) -> pd.DataFrame:
-    # This will call the get_all_suppliers imported above
-    return get_all_suppliers(_engine, include_inactive=show_inactive)
+    # Use supplier_service to get data
+    return supplier_service.get_all_suppliers(_engine, include_inactive=show_inactive)
 
-# ─────────────────────────────────────────────────────────
-# Page Setup & DB Connection
-# ─────────────────────────────────────────────────────────
-# st.set_page_config(layout="wide") # Ideally called only once in the main app script
+# Page Setup
 st.header("🤝 Supplier Management")
-
-engine = connect_db() # Uses imported connect_db
+engine = connect_db()
 if not engine:
     st.error("Database connection failed. Cannot manage suppliers.")
     st.stop()
 
-# ─────────────────────────────────────────────────────────
 # ADD NEW SUPPLIER Section
-# ─────────────────────────────────────────────────────────
 with st.expander("➕ Add New Supplier", expanded=False):
     with st.form("add_supplier_form", clear_on_submit=True):
         st.subheader("Enter New Supplier Details:")
@@ -74,27 +48,24 @@ with st.expander("➕ Add New Supplier", expanded=False):
             else:
                 supplier_data = {
                     "name": name.strip(),
-                    "contact_person": contact_person.strip() or None,
-                    "phone": phone.strip() or None,
-                    "email": email.strip() or None,
-                    "address": address.strip() or None,
-                    "notes": notes.strip() or None,
+                    "contact_person": (contact_person or "").strip() or None,
+                    "phone": (phone or "").strip() or None,
+                    "email": (email or "").strip() or None,
+                    "address": (address or "").strip() or None,
+                    "notes": (notes or "").strip() or None,
                     "is_active": True
                 }
-                # Calls add_supplier (currently from app.item_manager_app)
-                success, message = add_supplier(engine, supplier_data)
+                # Call function from supplier_service
+                success, message = supplier_service.add_supplier(engine, supplier_data)
                 if success:
                     st.success(message)
                     fetch_suppliers_for_display.clear() # Clears this page's display cache
-                    # The following cache should be cleared by add_supplier itself once it's in supplier_service.py
-                    get_all_suppliers.clear()
+                    # supplier_service.add_supplier internally clears supplier_service.get_all_suppliers cache
                     st.rerun()
                 else:
                     st.error(message)
 
-# ─────────────────────────────────────────────────────────
 # VIEW / EDIT / DEACTIVATE Section
-# ─────────────────────────────────────────────────────────
 st.divider()
 st.subheader("🔍 View & Manage Existing Suppliers")
 
@@ -111,7 +82,7 @@ if suppliers_df_display.empty:
     st.info("No suppliers found." if not st.session_state.show_inactive_suppliers else "No active suppliers found. Toggle 'Show Inactive' to see all.")
 else:
     supplier_options = suppliers_df_display[['supplier_id', 'name', 'is_active']].copy()
-    supplier_options['display_name'] = supplier_options.apply(lambda row: f"{row['name']}" + (" [Inactive]" if not row['is_active'] else ""), axis=1)
+    supplier_options['display_name'] = supplier_options.apply(lambda r: f"{r['name']}" + (" [Inactive]" if not r['is_active'] else ""), axis=1)
     supplier_dict = pd.Series(supplier_options.supplier_id.values, index=supplier_options.display_name).to_dict()
 
     current_selection_id = st.session_state.get('supplier_to_edit_id')
@@ -121,8 +92,8 @@ else:
         selected_name = st.session_state.supplier_select_key
         if selected_name and selected_name in supplier_dict:
             st.session_state.supplier_to_edit_id = supplier_dict[selected_name]
-            # Calls get_supplier_details (currently from app.item_manager_app)
-            details = get_supplier_details(engine, st.session_state.supplier_to_edit_id)
+            # Call function from supplier_service
+            details = supplier_service.get_supplier_details(engine, st.session_state.supplier_to_edit_id)
             st.session_state.edit_supplier_form_values = details
         else:
             st.session_state.supplier_to_edit_id = None
@@ -130,7 +101,7 @@ else:
 
     st.selectbox(
         "Select Supplier to View/Edit",
-        options=list(supplier_dict.keys()), # Ensure options is a list
+        options=list(supplier_dict.keys()),
         index=list(supplier_dict.keys()).index(selected_display_name) if selected_display_name else 0,
         key="supplier_select_key",
         on_change=load_supplier_for_edit,
@@ -143,22 +114,16 @@ else:
         hide_index=True,
         column_order=["name", "contact_person", "phone", "email", "address", "is_active", "notes", "supplier_id"],
         column_config={
-            "supplier_id": st.column_config.NumberColumn("ID", width="small"),
-            "name": "Supplier Name",
-            "contact_person": "Contact",
-            "phone": "Phone",
-            "email": "Email",
-            "address": "Address",
-            "is_active": st.column_config.CheckboxColumn("Active?", width="small"),
-            "notes": "Notes"
+            "supplier_id": st.column_config.NumberColumn("ID", width="small"), "name": "Supplier Name",
+            "contact_person": "Contact", "phone": "Phone", "email": "Email", "address": "Address",
+            "is_active": st.column_config.CheckboxColumn("Active?", width="small"), "notes": "Notes"
         }
     )
 
     if st.session_state.supplier_to_edit_id and st.session_state.edit_supplier_form_values:
         st.divider()
-        st.subheader(f"Edit Supplier: {st.session_state.edit_supplier_form_values.get('name', 'N/A')}")
-
         current_values = st.session_state.edit_supplier_form_values
+        st.subheader(f"Edit Supplier: {current_values.get('name', 'N/A')}")
         is_currently_active = current_values.get('is_active', False)
 
         if is_currently_active:
@@ -178,20 +143,20 @@ else:
                     else:
                         update_data = {
                             "name": e_name.strip(),
-                            "contact_person": e_contact.strip() or None,
-                            "phone": e_phone.strip() or None,
-                            "email": e_email.strip() or None,
-                            "address": e_address.strip() or None,
-                            "notes": e_notes.strip() or None,
+                            "contact_person": (e_contact or "").strip() or None,
+                            "phone": (e_phone or "").strip() or None,
+                            "email": (e_email or "").strip() or None,
+                            "address": (e_address or "").strip() or None,
+                            "notes": (e_notes or "").strip() or None,
                         }
-                        # Calls update_supplier (currently from app.item_manager_app)
-                        ok, msg = update_supplier(engine, st.session_state.supplier_to_edit_id, update_data)
+                        # Call function from supplier_service
+                        ok, msg = supplier_service.update_supplier(engine, st.session_state.supplier_to_edit_id, update_data)
                         if ok:
                             st.success(msg)
                             st.session_state.supplier_to_edit_id = None
                             st.session_state.edit_supplier_form_values = None
                             fetch_suppliers_for_display.clear()
-                            get_all_suppliers.clear()
+                            # supplier_service.update_supplier clears its own cache
                             st.rerun()
                         else:
                             st.error(msg)
@@ -199,27 +164,24 @@ else:
             st.divider()
             st.subheader("Deactivate Supplier")
             if st.button("🗑️ Deactivate"):
-                # Calls deactivate_supplier (currently from app.item_manager_app)
-                if deactivate_supplier(engine, st.session_state.supplier_to_edit_id):
+                # Call function from supplier_service
+                if supplier_service.deactivate_supplier(engine, st.session_state.supplier_to_edit_id):
                     st.success("Supplier deactivated.")
                     st.session_state.supplier_to_edit_id = None
                     st.session_state.edit_supplier_form_values = None
                     fetch_suppliers_for_display.clear()
-                    get_all_suppliers.clear()
                     st.rerun()
                 else:
                     st.error("Failed to deactivate supplier.")
-
         else: # Supplier is currently inactive
             st.info("This supplier is currently deactivated. You can reactivate it below.")
             if st.button("✅ Reactivate"):
-                # Calls reactivate_supplier (currently from app.item_manager_app)
-                if reactivate_supplier(engine, st.session_state.supplier_to_edit_id):
+                # Call function from supplier_service
+                if supplier_service.reactivate_supplier(engine, st.session_state.supplier_to_edit_id):
                     st.success("Supplier reactivated.")
                     st.session_state.supplier_to_edit_id = None
                     st.session_state.edit_supplier_form_values = None
                     fetch_suppliers_for_display.clear()
-                    get_all_suppliers.clear()
                     st.rerun()
                 else:
                     st.error("Failed to reactivate supplier.")

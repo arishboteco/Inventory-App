@@ -36,19 +36,29 @@ def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     if not all(details.get(k) for k in required):
         missing = [k for k in required if not details.get(k)]
         return False, f"Missing required fields: {', '.join(missing)}"
+    
     query = text("""
         INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
         VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
         RETURNING item_id;
     """)
+
+    # Safely prepare notes
+    notes_value_from_details = details.get("notes")
+    cleaned_notes_for_db = notes_value_from_details.strip() if isinstance(notes_value_from_details, str) else None
+    # Ensure empty strings that become None are handled by "or None" if the DB column allows NULL
+    if cleaned_notes_for_db == "":
+        cleaned_notes_for_db = None
+
     params = {
-        "name": details.get("name", "").strip(), "unit": details.get("unit", "").strip(),
-        "category": details.get("category", "Uncategorized").strip(),
-        "sub_category": details.get("sub_category", "General").strip(),
-        "permitted_departments": details.get("permitted_departments"),
+        "name": details.get("name", "").strip(),
+        "unit": details.get("unit", "").strip(),
+        "category": (details.get("category") or "Uncategorized").strip(), # Ensure strip after default
+        "sub_category": (details.get("sub_category") or "General").strip(), # Ensure strip after default
+        "permitted_departments": details.get("permitted_departments"), # String or None
         "reorder_point": details.get("reorder_point", 0.0),
         "current_stock": details.get("current_stock", 0.0),
-        "notes": details.get("notes", "").strip() or None,
+        "notes": cleaned_notes_for_db, # Use the safely prepared notes
         "is_active": details.get("is_active", True)
     }
     try:
@@ -57,11 +67,11 @@ def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
                 result = connection.execute(query, params)
                 new_id = result.scalar_one_or_none()
         if new_id:
-            get_all_items_with_stock.clear() # Clear relevant caches within this service
+            get_all_items_with_stock.clear()
             get_distinct_departments_from_items.clear()
             return True, f"Item '{params['name']}' added with ID {new_id}."
         else: return False, "Failed to add item (no ID returned)."
-    except IntegrityError: return False, f"Item name '{params['name']}' already exists."
+    except IntegrityError: return False, f"Item name '{params['name']}' already exists. Choose a unique name."
     except (SQLAlchemyError, Exception) as e:
         st.error(f"Database error adding item: {e}"); return False, "Database error adding item."
 

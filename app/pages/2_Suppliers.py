@@ -2,188 +2,216 @@
 import streamlit as st
 import pandas as pd
 from typing import Any, Dict, List, Tuple, Optional
+import math # For pagination
 
 try:
     from app.db.database_utils import connect_db
-    from app.services import supplier_service # Import the supplier_service module
+    from app.services import supplier_service
 except ImportError as e:
-    st.error(f"Import error in 2_Suppliers.py: {e}. Ensure 'INVENTORY-APP' is the root for 'streamlit run app/item_manager_app.py'.")
+    st.error(f"Import error in 2_Suppliers.py: {e}.")
     st.stop()
 except Exception as e:
     st.error(f"An unexpected error occurred during import in 2_Suppliers.py: {e}")
     st.stop()
 
-# Session state (remains the same)
+# --- Session State ---
+if "supplier_to_edit_id" not in st.session_state: st.session_state.supplier_to_edit_id = None # Not used with inline edit
+if "edit_supplier_form_values" not in st.session_state: st.session_state.edit_supplier_form_values = None # Used by inline edit
+if "show_edit_form_for_supplier_id" not in st.session_state: st.session_state.show_edit_form_for_supplier_id = None
 if "show_inactive_suppliers" not in st.session_state: st.session_state.show_inactive_suppliers = False
-if "supplier_to_edit_id" not in st.session_state: st.session_state.supplier_to_edit_id = None
-if "edit_supplier_form_values" not in st.session_state: st.session_state.edit_supplier_form_values = None
+if "current_page_suppliers" not in st.session_state: st.session_state.current_page_suppliers = 1
+if "suppliers_per_page" not in st.session_state: st.session_state.suppliers_per_page = 10
+if "supplier_search_term" not in st.session_state: st.session_state.supplier_search_term = ""
 
 @st.cache_data(ttl=60)
-def fetch_suppliers_for_display(_engine, show_inactive: bool) -> pd.DataFrame:
-    # Use supplier_service to get data
+def fetch_all_suppliers_df(_engine, show_inactive: bool) -> pd.DataFrame:
+    # Fetches ALL suppliers, filtering will happen in Python for search
     return supplier_service.get_all_suppliers(_engine, include_inactive=show_inactive)
 
-# Page Setup
 st.header("🤝 Supplier Management")
+st.write("Maintain your list of suppliers: add new ones, update details, or manage their active status.")
+st.divider()
+
 engine = connect_db()
-if not engine:
-    st.error("Database connection failed. Cannot manage suppliers.")
-    st.stop()
+if not engine: st.error("Database connection failed."); st.stop()
 
-# ADD NEW SUPPLIER Section
-with st.expander("➕ Add New Supplier", expanded=False):
-    with st.form("add_supplier_form", clear_on_submit=True):
-        st.subheader("Enter New Supplier Details:")
-        name = st.text_input("Supplier Name*", help="Unique name for the supplier.")
-        contact_person = st.text_input("Contact Person")
-        phone = st.text_input("Phone Number")
-        email = st.text_input("Email Address")
-        address = st.text_area("Address")
-        notes = st.text_area("Notes")
+# --- ADD NEW SUPPLIER Section ---
+with st.expander("➕ Add New Supplier Record", expanded=False):
+    with st.form("add_supplier_form_v2", clear_on_submit=True): # Unique form key
+        st.subheader("Enter New Supplier Details")
+        form_col1, form_col2 = st.columns(2)
+        with form_col1:
+            s_name = st.text_input("Supplier Name*", help="Unique name for the supplier.", key="add_s_name")
+            s_contact_person = st.text_input("Contact Person", key="add_s_contact")
+        with form_col2:
+            s_phone = st.text_input("Phone Number", key="add_s_phone")
+            s_email = st.text_input("Email Address", key="add_s_email")
+        s_address = st.text_area("Address", key="add_s_address")
+        s_notes = st.text_area("Notes", placeholder="Optional: any specific terms, payment details, etc.", key="add_s_notes")
 
-        submitted = st.form_submit_button("💾 Add Supplier")
-        if submitted:
-            if not name:
+        if st.form_submit_button("💾 Save Supplier Information"):
+            if not s_name:
                 st.warning("Supplier Name is required.")
             else:
                 supplier_data = {
-                    "name": name.strip(),
-                    "contact_person": (contact_person or "").strip() or None,
-                    "phone": (phone or "").strip() or None,
-                    "email": (email or "").strip() or None,
-                    "address": (address or "").strip() or None,
-                    "notes": (notes or "").strip() or None,
+                    "name": s_name.strip(),
+                    "contact_person": (s_contact_person or "").strip() or None,
+                    "phone": (s_phone or "").strip() or None,
+                    "email": (s_email or "").strip() or None,
+                    "address": (s_address or "").strip() or None,
+                    "notes": (s_notes or "").strip() or None,
                     "is_active": True
                 }
-                # Call function from supplier_service
                 success, message = supplier_service.add_supplier(engine, supplier_data)
                 if success:
                     st.success(message)
-                    fetch_suppliers_for_display.clear() # Clears this page's display cache
-                    # supplier_service.add_supplier internally clears supplier_service.get_all_suppliers cache
+                    fetch_all_suppliers_df.clear()
                     st.rerun()
                 else:
                     st.error(message)
-
-# VIEW / EDIT / DEACTIVATE Section
 st.divider()
+
+# --- VIEW & MANAGE EXISTING SUPPLIERS ---
 st.subheader("🔍 View & Manage Existing Suppliers")
 
-show_inactive_sup = st.toggle(
-    "Show Inactive Suppliers",
-    value=st.session_state.show_inactive_suppliers,
-    key="show_inactive_suppliers_toggle"
-)
-st.session_state.show_inactive_suppliers = show_inactive_sup
+filter_s_col1, filter_s_col2 = st.columns([3,1])
+with filter_s_col1:
+    st.session_state.supplier_search_term = st.text_input(
+        "Search Suppliers (by Name, Contact, Email)",
+        value=st.session_state.supplier_search_term,
+        key="supplier_search_input",
+        placeholder="e.g., Fresh Produce Inc, John Doe, sales@..."
+    )
+with filter_s_col2:
+    st.session_state.show_inactive_suppliers = st.toggle(
+        "Show Inactive",
+        value=st.session_state.show_inactive_suppliers,
+        key="show_inactive_suppliers_toggle_v2",
+        help="Toggle to include inactive suppliers"
+    )
 
-suppliers_df_display = fetch_suppliers_for_display(engine, st.session_state.show_inactive_suppliers)
+all_suppliers_df = fetch_all_suppliers_df(engine, st.session_state.show_inactive_suppliers)
+filtered_suppliers_df = all_suppliers_df
 
-if suppliers_df_display.empty:
-    st.info("No suppliers found." if not st.session_state.show_inactive_suppliers else "No active suppliers found. Toggle 'Show Inactive' to see all.")
+if st.session_state.supplier_search_term:
+    search_term = st.session_state.supplier_search_term.lower()
+    # Ensure columns are string type for filtering
+    filtered_suppliers_df = all_suppliers_df[
+        all_suppliers_df['name'].astype(str).str.lower().str.contains(search_term, na=False) |
+        all_suppliers_df['contact_person'].astype(str).str.lower().str.contains(search_term, na=False) |
+        all_suppliers_df['email'].astype(str).str.lower().str.contains(search_term, na=False)
+    ]
+
+if filtered_suppliers_df.empty:
+    st.info("No suppliers found matching your criteria." if st.session_state.supplier_search_term or st.session_state.show_inactive_suppliers else "No active suppliers found. Add suppliers or adjust filters.")
 else:
-    supplier_options = suppliers_df_display[['supplier_id', 'name', 'is_active']].copy()
-    supplier_options['display_name'] = supplier_options.apply(lambda r: f"{r['name']}" + (" [Inactive]" if not r['is_active'] else ""), axis=1)
-    supplier_dict = pd.Series(supplier_options.supplier_id.values, index=supplier_options.display_name).to_dict()
+    total_suppliers = len(filtered_suppliers_df)
+    st.write(f"Found {total_suppliers} supplier(s) matching your criteria.")
 
-    current_selection_id = st.session_state.get('supplier_to_edit_id')
-    selected_display_name = next((name for name, id_ in supplier_dict.items() if id_ == current_selection_id), None)
-
-    def load_supplier_for_edit():
-        selected_name = st.session_state.supplier_select_key
-        if selected_name and selected_name in supplier_dict:
-            st.session_state.supplier_to_edit_id = supplier_dict[selected_name]
-            # Call function from supplier_service
-            details = supplier_service.get_supplier_details(engine, st.session_state.supplier_to_edit_id)
-            st.session_state.edit_supplier_form_values = details
-        else:
-            st.session_state.supplier_to_edit_id = None
-            st.session_state.edit_supplier_form_values = None
-
-    st.selectbox(
-        "Select Supplier to View/Edit",
-        options=list(supplier_dict.keys()),
-        index=list(supplier_dict.keys()).index(selected_display_name) if selected_display_name else 0,
-        key="supplier_select_key",
-        on_change=load_supplier_for_edit,
-        placeholder="Choose a supplier..."
+    # --- Pagination Setup ---
+    s_items_per_page_options = [5, 10, 20, 50]
+    current_s_ipp_value = st.session_state.suppliers_per_page
+    if current_s_ipp_value not in s_items_per_page_options:
+        current_s_ipp_value = s_items_per_page_options[0]
+        st.session_state.suppliers_per_page = current_s_ipp_value
+        
+    st.session_state.suppliers_per_page = st.selectbox(
+        "Suppliers per page:", options=s_items_per_page_options,
+        index=s_items_per_page_options.index(current_s_ipp_value),
+        key="suppliers_per_page_selector_v2"
     )
+    
+    s_total_pages = math.ceil(total_suppliers / st.session_state.suppliers_per_page)
+    if s_total_pages == 0: s_total_pages = 1
+    if st.session_state.current_page_suppliers > s_total_pages: st.session_state.current_page_suppliers = s_total_pages
+    if st.session_state.current_page_suppliers < 1: st.session_state.current_page_suppliers = 1
+        
+    s_page_nav_cols = st.columns(5)
+    if s_page_nav_cols[0].button("⏮️ First", key="s_first_page", disabled=(st.session_state.current_page_suppliers == 1)):
+        st.session_state.current_page_suppliers = 1; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
+    if s_page_nav_cols[1].button("⬅️ Previous", key="s_prev_page", disabled=(st.session_state.current_page_suppliers == 1)):
+        st.session_state.current_page_suppliers -= 1; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
+    s_page_nav_cols[2].write(f"Page {st.session_state.current_page_suppliers} of {s_total_pages}")
+    if s_page_nav_cols[3].button("Next ➡️", key="s_next_page", disabled=(st.session_state.current_page_suppliers == s_total_pages)):
+        st.session_state.current_page_suppliers += 1; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
+    if s_page_nav_cols[4].button("Last ⏭️", key="s_last_page", disabled=(st.session_state.current_page_suppliers == s_total_pages)):
+        st.session_state.current_page_suppliers = s_total_pages; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
 
-    st.dataframe(
-        suppliers_df_display,
-        use_container_width=True,
-        hide_index=True,
-        column_order=["name", "contact_person", "phone", "email", "address", "is_active", "notes", "supplier_id"],
-        column_config={
-            "supplier_id": st.column_config.NumberColumn("ID", width="small"), "name": "Supplier Name",
-            "contact_person": "Contact", "phone": "Phone", "email": "Email", "address": "Address",
-            "is_active": st.column_config.CheckboxColumn("Active?", width="small"), "notes": "Notes"
-        }
-    )
+    s_start_idx = (st.session_state.current_page_suppliers - 1) * st.session_state.suppliers_per_page
+    s_end_idx = s_start_idx + st.session_state.suppliers_per_page
+    paginated_suppliers_df = filtered_suppliers_df.iloc[s_start_idx:s_end_idx]
 
-    if st.session_state.supplier_to_edit_id and st.session_state.edit_supplier_form_values:
+    # --- Display Paginated Suppliers with Actions ---
+    s_cols_header = st.columns((3, 2, 2, 2, 1, 2)) # Name, Contact, Phone, Email, Active, Actions
+    s_headers = ["Supplier Name", "Contact Person", "Phone", "Email", "Active", "Actions"]
+    for col, header in zip(s_cols_header, s_headers): col.markdown(f"**{header}**")
+    st.divider()
+
+    for index, supplier_row in paginated_suppliers_df.iterrows():
+        supplier_id = supplier_row['supplier_id']
+        supplier_name = supplier_row['name']
+        s_is_active = supplier_row['is_active']
+
+        s_cols = st.columns((3, 2, 2, 2, 1, 2))
+        s_cols[0].write(supplier_name)
+        s_cols[1].write(supplier_row.get('contact_person') or "N/A")
+        s_cols[2].write(supplier_row.get('phone') or "N/A")
+        s_cols[3].write(supplier_row.get('email') or "N/A")
+        s_cols[4].checkbox("", value=s_is_active, disabled=True, key=f"s_active_disp_{supplier_id}")
+        
+        with s_cols[5]: # Action Buttons
+            s_button_key_prefix = f"s_action_{supplier_id}"
+            if st.session_state.get('show_edit_form_for_supplier_id') == supplier_id:
+                if st.button("✖️ Cancel Edit", key=f"{s_button_key_prefix}_cancel_edit", type="secondary"):
+                    st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
+            else:
+                if s_is_active:
+                    if st.button("✏️ Edit", key=f"{s_button_key_prefix}_edit", type="primary"):
+                        st.session_state.show_edit_form_for_supplier_id = supplier_id
+                        st.session_state.edit_supplier_form_values = supplier_service.get_supplier_details(engine, supplier_id)
+                        st.rerun()
+                    if st.button("🗑️ Deact.", key=f"{s_button_key_prefix}_deact", help="Deactivate"): # Shorter label
+                        if supplier_service.deactivate_supplier(engine, supplier_id):
+                            st.success(f"'{supplier_name}' deactivated."); fetch_all_suppliers_df.clear(); st.rerun()
+                        else: st.error(f"Failed to deactivate '{supplier_name}'.")
+                else:
+                    if st.button("✅ Reactivate", key=f"{s_button_key_prefix}_react"):
+                        if supplier_service.reactivate_supplier(engine, supplier_id):
+                            st.success(f"'{supplier_name}' reactivated."); fetch_all_suppliers_df.clear(); st.rerun()
+                        else: st.error(f"Failed to reactivate '{supplier_name}'.")
         st.divider()
-        current_values = st.session_state.edit_supplier_form_values
-        st.subheader(f"Edit Supplier: {current_values.get('name', 'N/A')}")
-        is_currently_active = current_values.get('is_active', False)
 
-        if is_currently_active:
-            with st.form("edit_supplier_form"):
-                st.caption(f"Supplier ID: {st.session_state.supplier_to_edit_id}")
-                e_name = st.text_input("Supplier Name*", value=current_values.get('name', ''))
-                e_contact = st.text_input("Contact Person", value=current_values.get('contact_person', '') or '')
-                e_phone = st.text_input("Phone", value=current_values.get('phone', '') or '')
-                e_email = st.text_input("Email", value=current_values.get('email', '') or '')
-                e_address = st.text_area("Address", value=current_values.get('address', '') or '')
-                e_notes = st.text_area("Notes", value=current_values.get('notes', '') or '')
-
-                submitted_edit = st.form_submit_button("💾 Update Supplier")
-                if submitted_edit:
-                    if not e_name:
-                        st.warning("Supplier Name is required.")
-                    else:
-                        update_data = {
-                            "name": e_name.strip(),
-                            "contact_person": (e_contact or "").strip() or None,
-                            "phone": (e_phone or "").strip() or None,
-                            "email": (e_email or "").strip() or None,
-                            "address": (e_address or "").strip() or None,
-                            "notes": (e_notes or "").strip() or None,
-                        }
-                        # Call function from supplier_service
-                        ok, msg = supplier_service.update_supplier(engine, st.session_state.supplier_to_edit_id, update_data)
-                        if ok:
-                            st.success(msg)
-                            st.session_state.supplier_to_edit_id = None
-                            st.session_state.edit_supplier_form_values = None
-                            fetch_suppliers_for_display.clear()
-                            # supplier_service.update_supplier clears its own cache
-                            st.rerun()
+        # --- Inline Edit Form ---
+        if st.session_state.get('show_edit_form_for_supplier_id') == supplier_id:
+            current_s_values_for_edit = st.session_state.get('edit_supplier_form_values')
+            if not current_s_values_for_edit: # Should be populated by Edit button
+                current_s_values_for_edit = supplier_service.get_supplier_details(engine, supplier_id)
+                st.session_state.edit_supplier_form_values = current_s_values_for_edit
+            
+            if current_s_values_for_edit:
+                with st.form(key=f"edit_s_form_inline_{supplier_id}"):
+                    st.subheader(f"✏️ Editing Supplier: {current_s_values_for_edit.get('name', 'N/A')}")
+                    st.caption(f"Supplier ID: {supplier_id}")
+                    
+                    s_edit_col1, s_edit_col2 = st.columns(2)
+                    with s_edit_col1:
+                        es_name = st.text_input("Supplier Name*", value=current_s_values_for_edit.get('name', ''), key=f"es_name_{supplier_id}")
+                        es_contact = st.text_input("Contact Person", value=current_s_values_for_edit.get('contact_person', '') or '', key=f"es_contact_{supplier_id}")
+                    with s_edit_col2:
+                        es_phone = st.text_input("Phone", value=current_s_values_for_edit.get('phone', '') or '', key=f"es_phone_{supplier_id}")
+                        es_email = st.text_input("Email", value=current_s_values_for_edit.get('email', '') or '', key=f"es_email_{supplier_id}")
+                    es_address = st.text_area("Address", value=current_s_values_for_edit.get('address', '') or '', key=f"es_address_{supplier_id}")
+                    es_notes = st.text_area("Notes", value=current_s_values_for_edit.get('notes', '') or '', key=f"es_notes_{supplier_id}")
+                    
+                    if st.form_submit_button("💾 Update Supplier Details"):
+                        if not es_name: st.warning("Supplier Name required.")
                         else:
-                            st.error(msg)
-
-            st.divider()
-            st.subheader("Deactivate Supplier")
-            if st.button("🗑️ Deactivate"):
-                # Call function from supplier_service
-                if supplier_service.deactivate_supplier(engine, st.session_state.supplier_to_edit_id):
-                    st.success("Supplier deactivated.")
-                    st.session_state.supplier_to_edit_id = None
-                    st.session_state.edit_supplier_form_values = None
-                    fetch_suppliers_for_display.clear()
-                    st.rerun()
-                else:
-                    st.error("Failed to deactivate supplier.")
-        else: # Supplier is currently inactive
-            st.info("This supplier is currently deactivated. You can reactivate it below.")
-            if st.button("✅ Reactivate"):
-                # Call function from supplier_service
-                if supplier_service.reactivate_supplier(engine, st.session_state.supplier_to_edit_id):
-                    st.success("Supplier reactivated.")
-                    st.session_state.supplier_to_edit_id = None
-                    st.session_state.edit_supplier_form_values = None
-                    fetch_suppliers_for_display.clear()
-                    st.rerun()
-                else:
-                    st.error("Failed to reactivate supplier.")
-    else:
-        st.info("Select a supplier from the dropdown above to view details or manage.")
+                            update_s_data = {"name": es_name.strip(), "contact_person": (es_contact or "").strip() or None,
+                                           "phone": (es_phone or "").strip() or None, "email": (es_email or "").strip() or None,
+                                           "address": (es_address or "").strip() or None, "notes": (es_notes or "").strip() or None}
+                            ok, msg = supplier_service.update_supplier(engine, supplier_id, update_s_data)
+                            if ok:
+                                st.success(msg); st.session_state.show_edit_form_for_supplier_id = None
+                                fetch_all_suppliers_df.clear(); st.rerun()
+                            else: st.error(msg)
+                st.divider()

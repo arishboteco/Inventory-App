@@ -23,35 +23,31 @@ except Exception as e:
 # --- Session State Initialization ---
 placeholder_option_stock = ("-- Select Item --", -1)
 
-# For Create Indent dynamic rows
 if 'create_indent_rows' not in st.session_state:
     st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': '', 'last_ordered': None, 'median_qty': None, 'category': None, 'sub_category': None}]
     st.session_state.create_indent_next_id = 1
 if 'selected_department_for_create_indent' not in st.session_state:
      st.session_state.selected_department_for_create_indent = None
-if "num_lines_to_add_indent_widget" not in st.session_state:
+if "num_lines_to_add_indent_widget" not in st.session_state: # Key for the number_input widget
     st.session_state.num_lines_to_add_indent_widget = 1
 
-# For "Print after create" feature
 if 'last_created_mrn_for_print' not in st.session_state: st.session_state.last_created_mrn_for_print = None
 if 'last_submitted_indent_details' not in st.session_state: st.session_state.last_submitted_indent_details = None
 if 'pdf_bytes_for_download' not in st.session_state: st.session_state.pdf_bytes_for_download = None
 if 'pdf_filename_for_download' not in st.session_state: st.session_state.pdf_filename_for_download = None
 
-# For section navigation (radio buttons)
 INDENT_SECTIONS = {"create": "➕ Create Indent", "view": "📄 View Indents", "process": "⚙️ Process Indent"}
 INDENT_SECTION_KEYS = list(INDENT_SECTIONS.keys())
 INDENT_SECTION_DISPLAY_NAMES = list(INDENT_SECTIONS.values())
 if 'active_indent_section' not in st.session_state:
     st.session_state.active_indent_section = INDENT_SECTION_KEYS[0]
 
-# For Create Indent Header Form Fields Persistency & Reset
-# Using v15 for this iteration to ensure key freshness
-CREATE_INDENT_DEPT_SESS_KEY = "sess_create_indent_dept_v15"
-CREATE_INDENT_REQ_BY_SESS_KEY = "sess_create_indent_req_by_val_v15"
-CREATE_INDENT_DATE_REQ_SESS_KEY = "sess_create_indent_date_req_val_v15"
-CREATE_INDENT_NOTES_SESS_KEY = "sess_create_indent_header_notes_val_v15"
-CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY = "sess_create_indent_header_reset_signal_v15"
+# Using v17 for this iteration for key freshness
+CREATE_INDENT_DEPT_SESS_KEY = "sess_create_indent_dept_v17"
+CREATE_INDENT_REQ_BY_SESS_KEY = "sess_create_indent_req_by_val_v17"
+CREATE_INDENT_DATE_REQ_SESS_KEY = "sess_create_indent_date_req_val_v17"
+CREATE_INDENT_NOTES_SESS_KEY = "sess_create_indent_header_notes_val_v17"
+CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY = "sess_create_indent_header_reset_signal_v17"
 
 for key, default_val in [
     (CREATE_INDENT_DEPT_SESS_KEY, ""), 
@@ -63,7 +59,6 @@ for key, default_val in [
     if key not in st.session_state:
         st.session_state[key] = default_val
 
-# --- Page Config & Title ---
 st.title("📝 Material Indents Management")
 st.write("Create new material requests (indents), view their status, and download details.")
 st.divider()
@@ -74,7 +69,8 @@ if not db_engine: st.error("Database connection failed."); st.stop()
 @st.cache_data(ttl=300, show_spinner="Loading item & department data...")
 def fetch_indent_page_data(_engine):
     if _engine is None: return pd.DataFrame(columns=['item_id', 'name', 'unit', 'category', 'sub_category', 'permitted_departments']), []
-    items_df = item_service.get_all_items_with_stock(_engine, include_inactive=False)
+    # Ensure item_service.get_all_items_with_stock returns category and sub_category
+    items_df = item_service.get_all_items_with_stock(_engine, include_inactive=False) 
     required_cols = ['item_id', 'name', 'unit', 'category', 'sub_category', 'permitted_departments']
     if not all(col in items_df.columns for col in required_cols):
         st.error("Required columns (incl. category/sub_category) missing from items_df in fetch_indent_page_data.")
@@ -150,7 +146,7 @@ def add_single_indent_row_logic():
     st.session_state.create_indent_next_id += 1
 
 def add_multiple_indent_lines_callback():
-    num_lines = st.session_state.get("num_lines_to_add_indent_widget", 1)
+    num_lines = st.session_state.get("num_lines_to_add_indent_widget_v10", 1) # Ensure correct key
     for _ in range(int(num_lines)): add_single_indent_row_logic()
 
 def remove_indent_row_callback(row_id_to_remove):
@@ -165,12 +161,13 @@ def add_suggested_item_callback(item_id_to_add, item_name_to_add, unit_to_add):
     empty_row_idx = next((i for i,r in enumerate(st.session_state.create_indent_rows) if r.get('item_id') is None or r.get('item_id')==-1), -1)
     current_department = st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY)
     history = item_service.get_item_order_history_details(db_engine, item_id_to_add, current_department)
-    item_master_detail = all_active_items_df[all_active_items_df['item_id'] == item_id_to_add].iloc[0] if item_id_to_add in all_active_items_df['item_id'].values else {}
+    item_master_detail_row = all_active_items_df[all_active_items_df['item_id'] == item_id_to_add]
+    category_val = item_master_detail_row.iloc[0]['category'] if not item_master_detail_row.empty else "N/A"
+    sub_category_val = item_master_detail_row.iloc[0]['sub_category'] if not item_master_detail_row.empty else "N/A"
     new_row_data = {'item_id': item_id_to_add, 'requested_qty': 1.0, 'notes': '',
                     'last_ordered': history.get('last_ordered_date'), 
                     'median_qty': history.get('median_quantity'),
-                    'category': item_master_detail.get('category', 'N/A'),
-                    'sub_category': item_master_detail.get('sub_category', 'N/A')}
+                    'category': category_val, 'sub_category': sub_category_val}
     if history.get('median_quantity') and history.get('median_quantity') > 0:
         new_row_data['requested_qty'] = float(history.get('median_quantity'))
     if empty_row_idx != -1:
@@ -188,25 +185,21 @@ def update_row_item_details_callback(row_index, item_selectbox_key_arg, item_opt
     category_val, sub_category_val = "N/A", "N/A"
     if item_id_val and item_id_val != -1:
         item_master_row = all_active_items_df[all_active_items_df['item_id'] == item_id_val]
-        if not item_master_row.empty: # Corrected .empty
+        if not item_master_row.empty:
             category_val = item_master_row.iloc[0]['category']
             sub_category_val = item_master_row.iloc[0]['sub_category']
-    st.session_state.create_indent_rows[row_index].update({
-        'item_id': item_id_val, 'category': category_val, 'sub_category': sub_category_val
-    })
+    st.session_state.create_indent_rows[row_index].update({'item_id': item_id_val, 'category': category_val, 'sub_category': sub_category_val})
     if item_id_val and item_id_val != -1:
         dept_for_history = st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY)
         history = item_service.get_item_order_history_details(db_engine, item_id_val, dept_for_history)
-        st.session_state.create_indent_rows[row_index].update({
-            'last_ordered': history.get('last_ordered_date'), 'median_qty': history.get('median_quantity')
-        })
+        st.session_state.create_indent_rows[row_index].update({'last_ordered': history.get('last_ordered_date'), 'median_qty': history.get('median_quantity')})
         if history.get('median_quantity') and history.get('median_quantity') > 0:
             st.session_state.create_indent_rows[row_index]['requested_qty'] = float(history.get('median_quantity'))
     else:
         st.session_state.create_indent_rows[row_index].update({'last_ordered': None, 'median_qty': None, 'category': None, 'sub_category': None})
 
 def set_active_indent_section_callback():
-    selected_display_name = st.session_state.indent_section_radio_key_v15 # Unique key
+    selected_display_name = st.session_state.indent_section_radio_key_v17 # Unique key
     for key, display_name in INDENT_SECTIONS.items():
         if display_name == selected_display_name:
             st.session_state.active_indent_section = key
@@ -217,12 +210,9 @@ def set_active_indent_section_callback():
             break
 st.radio("Indent Actions:", options=INDENT_SECTION_DISPLAY_NAMES,
          index=INDENT_SECTION_KEYS.index(st.session_state.active_indent_section),
-         key="indent_section_radio_key_v15", on_change=set_active_indent_section_callback, horizontal=True)
+         key="indent_section_radio_key_v17", on_change=set_active_indent_section_callback, horizontal=True)
 st.markdown("---")
 
-# ===========================
-# CREATE INDENT SECTION
-# ===========================
 if st.session_state.active_indent_section == "create":
     st.subheader("📝 Create New Material Indent Request")
     if st.session_state.get(CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY, False):
@@ -234,6 +224,7 @@ if st.session_state.active_indent_section == "create":
         st.session_state[CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY] = False
 
     if st.session_state.get("last_created_mrn_for_print"):
+        # ... (Print option logic - same as previous, ensure unique keys like _v17) ...
         mrn_to_print = st.session_state.last_created_mrn_for_print
         st.success(f"Indent **{mrn_to_print}** was created successfully!")
         if st.session_state.get("last_submitted_indent_details"):
@@ -250,10 +241,10 @@ if st.session_state.active_indent_section == "create":
             if st.session_state.get("pdf_bytes_for_download"):
                 pdf_btn_placeholder.download_button(label=f"📥 Download PDF ({mrn_to_print})",data=st.session_state.pdf_bytes_for_download,
                                                     file_name=st.session_state.pdf_filename_for_download,mime="application/pdf",
-                                                    key=f"dl_new_indent_final_v15_{mrn_to_print.replace('-', '_')}",
+                                                    key=f"dl_new_indent_final_v17_{mrn_to_print.replace('-', '_')}",
                                                     on_click=lambda: st.session_state.update({"pdf_bytes_for_download": None, "pdf_filename_for_download": None}),use_container_width=True )
             else:
-                if pdf_btn_placeholder.button(f"📄 Generate PDF ({mrn_to_print})",key=f"print_new_indent_btn_v15_{mrn_to_print.replace('-', '_')}",use_container_width=True):
+                if pdf_btn_placeholder.button(f"📄 Generate PDF ({mrn_to_print})",key=f"print_new_indent_btn_v17_{mrn_to_print.replace('-', '_')}",use_container_width=True):
                     with st.spinner(f"Generating PDF for {mrn_to_print}..."):
                         hd, itms = indent_service.get_indent_details_for_pdf(db_engine, mrn_to_print)
                         if hd and itms is not None:
@@ -269,7 +260,7 @@ if st.session_state.active_indent_section == "create":
                 encoded_text = urllib.parse.quote_plus(wa_text)
                 st.link_button("✅ Prepare WhatsApp Message", f"https://wa.me/?text={encoded_text}", use_container_width=True, help="Opens WhatsApp.")
         st.divider()
-        if st.button("➕ Create Another Indent", key="create_another_indent_btn_v15", use_container_width=True):
+        if st.button("➕ Create Another Indent", key="create_another_indent_btn_v17", use_container_width=True):
             st.session_state.last_created_mrn_for_print = None; st.session_state.last_submitted_indent_details = None
             if "pdf_bytes_for_download" in st.session_state: del st.session_state.pdf_bytes_for_download
             if "pdf_filename_for_download" in st.session_state: del st.session_state.pdf_filename_for_download
@@ -279,19 +270,19 @@ if st.session_state.active_indent_section == "create":
     else: 
         head_col1, head_col2 = st.columns(2)
         with head_col1:
-            dept_widget_key = "create_indent_dept_widget_v15"
+            dept_widget_key = "create_indent_dept_widget_v17"
             st.selectbox("Requesting Department*", options=[""] + distinct_departments,
                          index=([""] + distinct_departments).index(st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY,"")) if st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY,"") in ([""]+distinct_departments) else 0,
                          format_func=lambda x: "Select Department..." if x=="" else x, key=dept_widget_key,
                          on_change=lambda: st.session_state.update({CREATE_INDENT_DEPT_SESS_KEY:st.session_state[dept_widget_key], 'selected_department_for_create_indent':st.session_state[dept_widget_key] if st.session_state[dept_widget_key] else None}))
             if 'selected_department_for_create_indent' not in st.session_state: st.session_state.selected_department_for_create_indent = st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY) if st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY) else None
-            req_by_widget_key = "create_indent_req_by_widget_v15"
+            req_by_widget_key = "create_indent_req_by_widget_v17"
             st.session_state[CREATE_INDENT_REQ_BY_SESS_KEY] = st.text_input("Requested By (Your Name/ID)*", value=st.session_state.get(CREATE_INDENT_REQ_BY_SESS_KEY,""), key=req_by_widget_key)
         with head_col2:
-            date_req_widget_key = "create_indent_date_req_widget_v15"
+            date_req_widget_key = "create_indent_date_req_widget_v17"
             st.session_state[CREATE_INDENT_DATE_REQ_SESS_KEY] = st.date_input("Date Required By*", value=st.session_state.get(CREATE_INDENT_DATE_REQ_SESS_KEY, date.today()+timedelta(days=1)), min_value=date.today(), key=date_req_widget_key)
-            st.text_input("Initial Status", value=STATUS_SUBMITTED, disabled=True, key="create_indent_status_disp_v15")
-        header_notes_widget_key = "create_indent_header_notes_widget_v15"
+            st.text_input("Initial Status", value=STATUS_SUBMITTED, disabled=True, key="create_indent_status_disp_v17")
+        header_notes_widget_key = "create_indent_header_notes_widget_v17"
         st.session_state[CREATE_INDENT_NOTES_SESS_KEY] = st.text_area("Overall Indent Notes (Optional)", value=st.session_state.get(CREATE_INDENT_NOTES_SESS_KEY,""), key=header_notes_widget_key, placeholder="General notes...")
         st.divider()
         st.subheader("🛍️ Requested Items")
@@ -305,7 +296,7 @@ if st.session_state.active_indent_section == "create":
                 if valid_suggestions:
                     sugg_cols = st.columns(min(len(valid_suggestions), 5)) 
                     for i_sugg, sugg_item in enumerate(valid_suggestions):
-                        sugg_cols[i_sugg].button(f"+ {sugg_item['item_name']}", key=f"suggest_item_v15_{sugg_item['item_id']}", 
+                        sugg_cols[i_sugg].button(f"+ {sugg_item['item_name']}", key=f"suggest_item_v17_{sugg_item['item_id']}", 
                                             on_click=add_suggested_item_callback, args=(sugg_item['item_id'], sugg_item['item_name'], sugg_item['unit']),
                                             help=f"Add {sugg_item['item_name']} ({sugg_item['unit']})", use_container_width=True)
                 elif items_in_current_indent_ids and len(st.session_state.create_indent_rows) > 0 and st.session_state.create_indent_rows[0].get('item_id') is not None : st.caption("Frequent items are already in your list or no other frequent items found.")
@@ -325,10 +316,10 @@ if st.session_state.active_indent_section == "create":
 
         h_cols = st.columns([4,2,3,1]); h_cols[0].markdown("**Item**"); h_cols[1].markdown("**Req. Qty**"); h_cols[2].markdown("**Notes**"); h_cols[3].markdown("**Action**"); st.divider()
         
-        for i_loop_item_rows, row_state in enumerate(st.session_state.create_indent_rows): # Unique loop var
+        for i_loop_item_rows, row_state in enumerate(st.session_state.create_indent_rows):
             row_id = row_state['id']
             item_cols_display = st.columns([4,2,3,1])
-            item_selectbox_key_row = f"disp_item_select_v15_{row_id}" # Unique key
+            item_selectbox_key_row = f"disp_item_select_v17_{row_id}" 
             default_item_display_name_row = list(item_options_dict.keys())[0]
             if row_state.get('item_id') is not None: default_item_display_name_row = next((name for name, id_val in item_options_dict.items() if id_val == row_state['item_id']), default_item_display_name_row)
             try: current_item_idx_row = list(item_options_dict.keys()).index(default_item_display_name_row)
@@ -347,10 +338,10 @@ if st.session_state.active_indent_section == "create":
                     if item_subcat_info and item_subcat_info != "N/A": info_parts.append(f"Sub: {item_subcat_info}")
                     last_ord_info_disp = st.session_state.create_indent_rows[i_loop_item_rows].get('last_ordered')
                     if last_ord_info_disp: info_parts.append(f"Last ord: {last_ord_info_disp}")
-                    if info_parts: st.caption(" | ".join(info_parts)) # Horizontal display
+                    if info_parts: st.caption(" | ".join(info_parts)) 
             
             with item_cols_display[1]:
-                qty_key_for_row_disp = f"disp_item_qty_v15_{row_id}" # Unique key
+                qty_key_for_row_disp = f"disp_item_qty_v17_{row_id}"
                 current_qty_for_row_disp = float(st.session_state.create_indent_rows[i_loop_item_rows].get('requested_qty', 1.0))
                 def on_qty_change_callback(idx, key_arg): st.session_state.create_indent_rows[idx]['requested_qty'] = st.session_state[key_arg]
                 st.number_input(f"Qty(R{i_loop_item_rows+1})", value=current_qty_for_row_disp, min_value=0.01, step=0.1, format="%.2f", 
@@ -362,38 +353,38 @@ if st.session_state.active_indent_section == "create":
                     elif actual_qty_row_disp < median_qty_row_disp/3: st.info(f"Low (Avg:~{median_qty_row_disp:.1f})",icon="ℹ️")
 
             with item_cols_display[2]:
-                notes_key_for_row_disp = f"disp_item_notes_v15_{row_id}" # Unique key
+                notes_key_for_row_disp = f"disp_item_notes_v17_{row_id}"
                 def on_notes_change_callback(idx, key_arg): st.session_state.create_indent_rows[idx]['notes'] = st.session_state[key_arg]
                 st.text_input(f"Notes(R{i_loop_item_rows+1})", value=st.session_state.create_indent_rows[i_loop_item_rows].get('notes',''), 
                                                 key=notes_key_for_row_disp, label_visibility="collapsed", placeholder="Optional",
                                                 on_change=on_notes_change_callback, args=(i_loop_item_rows, notes_key_for_row_disp))
             with item_cols_display[3]:
-                if len(st.session_state.create_indent_rows)>1: item_cols_display[3].button("➖",key=f"disp_remove_row_v15_{row_id}",on_click=remove_indent_row_callback,args=(row_id,),help="Remove line") # Unique key
+                if len(st.session_state.create_indent_rows)>1: item_cols_display[3].button("➖",key=f"disp_remove_row_v17_{row_id}",on_click=remove_indent_row_callback,args=(row_id,),help="Remove line")
                 else: item_cols_display[3].write("") 
             st.caption("") 
 
-        add_lines_col_label, add_lines_col_input, add_lines_col_button = st.columns([1.2, 1, 1.8]) 
-        with add_lines_col_label: st.markdown("<div style='padding-top: 28px;'>Add more lines:</div>", unsafe_allow_html=True) 
-        with add_lines_col_input: st.number_input("Number of lines",value=st.session_state.num_lines_to_add_indent_widget,min_value=1,max_value=10,step=1,key="num_lines_to_add_widget_v8", label_visibility="collapsed") # Unique key
-        with add_lines_col_button: st.button("➕ Add Lines",on_click=add_multiple_indent_lines_callback,key="add_multi_lines_btn_v15", use_container_width=True) # Unique key
+        add_lines_col_label, add_lines_col_input, add_lines_col_button = st.columns([1.5, 1, 2]) # Adjusted ratios
+        with add_lines_col_label: st.markdown("<div style='padding-top: 30px; text-align: right; margin-right: 5px;'>Lines to add:</div>", unsafe_allow_html=True) 
+        with add_lines_col_input: st.number_input("Number of lines input",value=st.session_state.num_lines_to_add_indent_widget,min_value=1,max_value=10,step=1,key="num_lines_to_add_indent_widget_v10", label_visibility="collapsed") # Unique key
+        with add_lines_col_button: st.markdown("<div style='padding-top: 25px;'></div>", unsafe_allow_html=True); st.button("➕ Add Lines",on_click=add_multiple_indent_lines_callback,key="add_multi_lines_btn_v17", use_container_width=True) # Unique key
         st.divider()
         
-        with st.form("create_indent_final_submit_form_v15", clear_on_submit=False): # Unique key
+        with st.form("create_indent_final_submit_form_v17", clear_on_submit=False): # Unique key
             submitted_final_button = st.form_submit_button("📝 Submit Indent Request", type="primary", use_container_width=True)
             if submitted_final_button:
-                # ... (Validation and Submission Logic - same as your last working version)
                 header_data_submit = {"department": st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY),"requested_by": st.session_state.get(CREATE_INDENT_REQ_BY_SESS_KEY, "").strip(),
                                       "date_required": st.session_state.get(CREATE_INDENT_DATE_REQ_SESS_KEY),"notes": st.session_state.get(CREATE_INDENT_NOTES_SESS_KEY, "").strip() or None,
                                       "status": STATUS_SUBMITTED}
                 valid = True; items_to_submit_list = []; seen_item_ids_in_form = set()
                 if not header_data_submit["department"]: st.error("Department required."); valid = False
                 if not header_data_submit["requested_by"]: st.error("Requested By required."); valid = False
+                current_item_options_for_validation = item_options_dict if 'item_options_dict' in locals() and isinstance(item_options_dict, dict) else {}
                 for i_r, r_data in enumerate(st.session_state.create_indent_rows):
                     item_id_v = r_data.get('item_id'); qty_v = r_data.get('requested_qty'); notes_v = r_data.get('notes')
                     if item_id_v is None or item_id_v == -1 : st.error(f"Row {i_r+1}: Select item."); valid=False; continue
                     if item_id_v in seen_item_ids_in_form: 
-                        item_name_val = "Item"; temp_item_options_dict_submit = item_options_dict if 'item_options_dict' in locals() else {}
-                        for name_lookup, id_lookup in temp_item_options_dict_submit.items():
+                        item_name_val = "Item" 
+                        for name_lookup, id_lookup in current_item_options_for_validation.items():
                             if id_lookup == item_id_v: item_name_val = name_lookup; break
                         st.error(f"Row {i_r+1}: Item '{item_name_val}' duplicated."); valid=False
                     if not (isinstance(qty_v, (float, int)) and qty_v > 0) : st.error(f"Row {i_r+1}: Qty > 0. Got: {qty_v}"); valid=False
@@ -423,20 +414,20 @@ if st.session_state.active_indent_section == "create":
 # VIEW INDENTS SECTION 
 # ===========================
 elif st.session_state.active_indent_section == "view":
-    # ... (Your existing "View Indents" code with unique widget keys like _v15) ...
+    # ... (Your existing "View Indents" code with unique widget keys like _v17) ...
     st.subheader("📄 View Existing Material Indents")
     view_filter_cols = st.columns([1, 1, 1, 2]) 
-    with view_filter_cols[0]: mrn_filter = st.text_input("Search by MRN:", key="view_indent_mrn_filter_v15", placeholder="e.g., MRN-...")
+    with view_filter_cols[0]: mrn_filter = st.text_input("Search by MRN:", key="view_indent_mrn_filter_v17", placeholder="e.g., MRN-...")
     with view_filter_cols[1]:
         dept_options_view = ["All Departments"] + distinct_departments
-        dept_filter_val = st.selectbox("Filter by Department:", options=dept_options_view, key="view_indent_dept_filter_v15")
+        dept_filter_val = st.selectbox("Filter by Department:", options=dept_options_view, key="view_indent_dept_filter_v17")
     with view_filter_cols[2]:
         status_options_view = ["All Statuses"] + ALL_INDENT_STATUSES
-        status_filter_val = st.selectbox("Filter by Status:", options=status_options_view, key="view_indent_status_filter_v15")
+        status_filter_val = st.selectbox("Filter by Status:", options=status_options_view, key="view_indent_status_filter_v17")
     with view_filter_cols[3]:
         date_col1, date_col2 = st.columns(2)
-        with date_col1: date_start_filter_val = st.date_input("Submitted From:", value=None, key="view_indent_date_start_v15")
-        with date_col2: date_end_filter_val = st.date_input("Submitted To:", value=None, key="view_indent_date_end_v15")
+        with date_col1: date_start_filter_val = st.date_input("Submitted From:", value=None, key="view_indent_date_start_v17")
+        with date_col2: date_end_filter_val = st.date_input("Submitted To:", value=None, key="view_indent_date_end_v17")
     date_start_str_arg = date_start_filter_val.strftime('%Y-%m-%d') if date_start_filter_val else None
     date_end_str_arg = date_end_filter_val.strftime('%Y-%m-%d') if date_end_filter_val else None
     dept_arg = dept_filter_val if dept_filter_val != "All Departments" else None
@@ -462,9 +453,9 @@ elif st.session_state.active_indent_section == "view":
         st.caption("Select an MRN from the list above to generate its PDF.")
         if not indents_df.empty:
             available_mrns_for_pdf = ["-- Select MRN for PDF --"] + indents_df['mrn'].tolist()
-            selected_mrn_for_pdf = st.selectbox("Choose MRN:", options=available_mrns_for_pdf, key="pdf_mrn_select_v15") 
+            selected_mrn_for_pdf = st.selectbox("Choose MRN:", options=available_mrns_for_pdf, key="pdf_mrn_select_v17") 
             if selected_mrn_for_pdf != "-- Select MRN for PDF --":
-                if st.button("⚙️ Generate PDF", key="generate_pdf_indent_btn_v15"): 
+                if st.button("⚙️ Generate PDF", key="generate_pdf_indent_btn_v17"): 
                     with st.spinner(f"Generating PDF for {selected_mrn_for_pdf}..."):
                         header_details, items_details = indent_service.get_indent_details_for_pdf(db_engine, selected_mrn_for_pdf)
                         if header_details and items_details is not None:
@@ -477,7 +468,7 @@ elif st.session_state.active_indent_section == "view":
             if "pdf_bytes_for_download" in st.session_state and st.session_state.pdf_bytes_for_download and st.session_state.get("pdf_filename_for_download","").endswith(f"{selected_mrn_for_pdf}.pdf"):
                 st.download_button(label=f"📥 Download PDF for {selected_mrn_for_pdf}", data=st.session_state.pdf_bytes_for_download,
                                    file_name=st.session_state.pdf_filename_for_download, mime="application/pdf",
-                                   key=f"final_dl_btn_v14_{selected_mrn_for_pdf.replace('-','_')}",
+                                   key=f"final_dl_btn_v16_{selected_mrn_for_pdf.replace('-','_')}",
                                    on_click=lambda: st.session_state.update({"pdf_bytes_for_download":None, "pdf_filename_for_download":None}))
 
 # ===========================

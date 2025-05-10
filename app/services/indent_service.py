@@ -1,18 +1,15 @@
 # app/services/indent_service.py
 import streamlit as st
 import pandas as pd
-from typing import Optional, Dict, List, Tuple, Any # Ensure all needed types are here
-from datetime import datetime, timedelta, date # Ensure all needed datetime parts
+from typing import Optional, Dict, List, Tuple, Any
+from datetime import datetime, timedelta, date
+import traceback # For debugging if needed
 
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.db.database_utils import fetch_data
 from app.core.constants import STATUS_SUBMITTED # create_indent uses this default
-
-# Note: No direct dependency on item_service or other services from here,
-# unless, for example, create_indent needed to directly check item existence
-# or update something in another service (which it currently doesn't).
 
 # ─────────────────────────────────────────────────────────
 # INDENT FUNCTIONS
@@ -56,7 +53,7 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
         "department": indent_data["department"],
         "date_required": indent_data["date_required"],
         "notes": cleaned_notes,
-        "status": indent_data.get("status", STATUS_SUBMITTED) # Uses imported constant
+        "status": indent_data.get("status", STATUS_SUBMITTED)
     }
     try:
         with engine.connect() as connection:
@@ -75,13 +72,13 @@ def create_indent(engine, indent_data: Dict[str, Any], items_data: List[Dict[str
         if "indents_mrn_key" in str(e): error_msg = f"Failed to create indent: MRN '{indent_params['mrn']}' already exists."
         elif "indent_items_item_id_fkey" in str(e): error_msg = "Failed to create indent: One or more selected Item IDs are invalid."
         st.error(error_msg + f" Details: {e}")
-        return False, error_msg.split('.')[0] # Return simpler part of the message
+        return False, error_msg.split('.')[0]
     except (SQLAlchemyError, Exception) as e:
         st.error(f"Database error creating indent: {e}")
         return False, "Database error creating indent."
 
 @st.cache_data(ttl=120, show_spinner="Fetching indent list...")
-def get_indents(
+def get_indents( # This function should use _engine for caching
     _engine, mrn_filter: Optional[str] = None, dept_filter: Optional[str] = None,
     status_filter: Optional[str] = None, date_start_str: Optional[str] = None,
     date_end_str: Optional[str] = None
@@ -113,7 +110,7 @@ def get_indents(
                  i.date_submitted, i.status, i.notes
         ORDER BY i.date_submitted DESC, i.indent_id DESC
     """
-    df = fetch_data(_engine, query, params)
+    df = fetch_data(_engine, query, params) # Pass _engine to fetch_data
     if not df.empty:
         for col in ['date_required', 'date_submitted']:
              if col in df.columns: df[col] = pd.to_datetime(df[col], errors='coerce')
@@ -121,11 +118,15 @@ def get_indents(
              df['item_count'] = pd.to_numeric(df['item_count'], errors='coerce').fillna(0).astype(int)
     return df
 
-def get_indent_details_for_pdf(engine, mrn: str) -> Tuple[Optional[Dict], Optional[List[Dict]]]:
-    if engine is None or not mrn: return None, None
-    header_data, items_data = None, None
+# This function is NOT cached with @st.cache_data, so 'engine' parameter name is fine.
+def get_indent_details_for_pdf(engine, mrn: str) -> Tuple[Optional[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
+    if engine is None or not mrn:
+        return None, None
+    header_data = None
+    items_data = None
     try:
         with engine.connect() as connection:
+            # 1. Fetch Indent Header Details
             header_query = text("""
                 SELECT ind.indent_id, ind.mrn, ind.department, ind.requested_by,
                        ind.date_submitted, ind.date_required, ind.status, ind.notes
@@ -133,7 +134,7 @@ def get_indent_details_for_pdf(engine, mrn: str) -> Tuple[Optional[Dict], Option
             """)
             header_result = connection.execute(header_query, {"mrn": mrn}).mappings().first()
             if not header_result:
-                st.error(f"Indent with MRN '{mrn}' not found.")
+                st.error(f"Indent with MRN '{mrn}' not found for PDF generation.")
                 return None, None
             header_data = dict(header_result)
             if header_data.get('date_submitted'):
@@ -141,17 +142,32 @@ def get_indent_details_for_pdf(engine, mrn: str) -> Tuple[Optional[Dict], Option
             if header_data.get('date_required'):
                  header_data['date_required'] = pd.to_datetime(header_data['date_required']).strftime('%Y-%m-%d')
 
+            # 2. Fetch Indent Items WITH Category and Sub-Category, and SORT them
             items_query = text("""
-                SELECT ii.item_id, i.name AS item_name, i.unit AS item_unit,
-                       ii.requested_qty, ii.notes AS item_notes
+                SELECT
+                    ii.item_id,
+                    i.name AS item_name,
+                    i.unit AS item_unit,
+                    i.category AS item_category,         -- Ensure this is selected
+                    i.sub_category AS item_sub_category, -- Ensure this is selected
+                    ii.requested_qty,
+                    ii.notes AS item_notes
                 FROM indent_items ii
                 JOIN items i ON ii.item_id = i.item_id
                 JOIN indents ind ON ii.indent_id = ind.indent_id
-                WHERE ind.mrn = :mrn ORDER BY i.name;
+                WHERE ind.mrn = :mrn
+                ORDER BY
+                    i.category ASC,                   -- Ensure sorting is correct
+                    i.sub_category ASC,
+                    i.name ASC;
             """)
             items_result = connection.execute(items_query, {"mrn": mrn}).mappings().all()
             items_data = [dict(row) for row in items_result]
+        
         return header_data, items_data
     except (SQLAlchemyError, Exception) as e:
-        st.error(f"Database error fetching details for indent {mrn}: {e}")
+        st.error(f"Database error fetching details for indent PDF (MRN: {mrn}): {e}")
+        # For detailed debugging in your console:
+        print(f"Full error in get_indent_details_for_pdf for MRN {mrn}:")
+        print(traceback.format_exc())
         return None, None

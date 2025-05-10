@@ -113,3 +113,5 @@ def run_dashboard():
         st.info("👍 All item stock levels are currently above their reorder points.")
     else:
         st.info("No active items found in the system to assess stock levels.")
+if __name__ == "__main__":
+    run_dashboard()

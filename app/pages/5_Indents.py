@@ -3,17 +3,21 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple, Set
-import time # Keep for potential future use
+import time 
 import urllib.parse
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
-import traceback # For debugging PDF generation if needed
+import traceback 
 
 try:
     from app.db.database_utils import connect_db, fetch_data
-    from app.services import item_service
+    from app.services import item_service 
     from app.services import indent_service
-    from app.core.constants import ALL_INDENT_STATUSES, STATUS_SUBMITTED, STATUS_PROCESSING, STATUS_COMPLETED, STATUS_CANCELLED
+    from app.core.constants import (
+        ALL_INDENT_STATUSES, STATUS_SUBMITTED, STATUS_PROCESSING, STATUS_COMPLETED, STATUS_CANCELLED,
+        ITEM_STATUS_PENDING_ISSUE, ITEM_STATUS_FULLY_ISSUED, ITEM_STATUS_PARTIALLY_ISSUED,
+        ITEM_STATUS_CANCELLED 
+    )
 except ImportError as e:
     st.error(f"Import error in 5_Indents.py: {e}. Please ensure all service files and utility modules are correctly placed and named.")
     st.stop()
@@ -23,25 +27,34 @@ except Exception as e:
 
 # --- Session State Initialization ---
 placeholder_option_stock = ("-- Select Item --", -1)
+placeholder_option_indent_process = ("-- Select Indent (MRN) to Process --", None, None) 
 
+# Create Indent Section States
 if 'create_indent_rows' not in st.session_state:
     st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': '',
                                             'last_ordered': None, 'median_qty': None,
                                             'category': None, 'sub_category': None,
                                             'current_stock': None, 'unit': None}] 
     st.session_state.create_indent_next_id = 1
-
 if 'selected_department_for_create_indent' not in st.session_state:
      st.session_state.selected_department_for_create_indent = None
-
 if "num_lines_to_add_value" not in st.session_state: 
     st.session_state.num_lines_to_add_value = 1
-
-
 if 'last_created_mrn_for_print' not in st.session_state: st.session_state.last_created_mrn_for_print = None
 if 'last_submitted_indent_details' not in st.session_state: st.session_state.last_submitted_indent_details = None
 if 'pdf_bytes_for_download' not in st.session_state: st.session_state.pdf_bytes_for_download = None
 if 'pdf_filename_for_download' not in st.session_state: st.session_state.pdf_filename_for_download = None
+
+# Process Indent Section States
+if "process_indent_selected_tuple" not in st.session_state:
+    st.session_state.process_indent_selected_tuple = placeholder_option_indent_process
+if "process_indent_items_df" not in st.session_state:
+    st.session_state.process_indent_items_df = pd.DataFrame()
+if "process_indent_issue_quantities_defaults" not in st.session_state: 
+    st.session_state.process_indent_issue_quantities_defaults = {}
+if "process_indent_user_id" not in st.session_state:
+    st.session_state.process_indent_user_id = ""
+
 
 INDENT_SECTIONS = {"create": "➕ Create Indent", "view": "📄 View Indents", "process": "⚙️ Process Indent"}
 INDENT_SECTION_KEYS = list(INDENT_SECTIONS.keys())
@@ -66,7 +79,7 @@ for key, default_val in [
         st.session_state[key] = default_val
 
 st.title("📝 Material Indents Management")
-st.write("Create new material requests (indents), view their status, and download details.")
+st.write("Create new material requests (indents), view their status, process, and download details.")
 st.divider()
 
 db_engine = connect_db()
@@ -86,26 +99,25 @@ def fetch_indent_page_data(_engine):
 all_active_items_df, distinct_departments = fetch_indent_page_data(db_engine)
 
 def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Optional[bytes]:
+    # ... (Keep the latest working version of generate_indent_pdf here) ...
     if not indent_header or indent_items is None:
          st.error("Cannot generate PDF: Missing indent header or items data.")
          return None
     try:
         pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=10) # Bottom margin for page break
-        pdf.set_margins(left=10, top=10, right=10) # Page margins
+        pdf.set_auto_page_break(auto=True, margin=10) 
+        pdf.set_margins(left=8, top=8, right=8)    
         pdf.add_page()
 
-        # --- Page Header ---
-        pdf.set_font("Helvetica", "B", 14)
-        pdf.cell(0, 7, "Material Indent Request", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_font("Helvetica", "B", 13) 
+        pdf.cell(0, 6, "Material Indent Request", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT) 
 
-        pdf.set_font("Helvetica", "I", 8)
+        pdf.set_font("Helvetica", "I", 7) 
         generated_time_str = f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        pdf.cell(0, 5, generated_time_str, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.ln(3)
+        pdf.cell(0, 4, generated_time_str, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT) 
+        pdf.ln(2) 
 
-        # --- Indent Header Details (2-column layout) ---
-        pdf.set_font("Helvetica", "", 9)
+        pdf.set_font("Helvetica", "", 8.5) 
         header_details_list = [
             ("MRN:", indent_header.get('mrn', 'N/A')),
             ("Department:", indent_header.get('department', 'N/A')),
@@ -119,48 +131,50 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
         for label, _ in header_details_list:
             max_label_w = max(max_label_w, pdf.get_string_width(label) + 1)
 
-        gap_between_pairs = 5 
+        gap_between_pairs = 3 
         available_width_for_values = (pdf.w - pdf.l_margin - pdf.r_margin) - (max_label_w * 2) - gap_between_pairs
         col_width_val = available_width_for_values / 2
         
+        line_height_header_details = 4 
+
         for i in range(0, len(header_details_list), 2):
             current_y_pos = pdf.get_y()
-            pdf.set_font("Helvetica", "", 9)
-            pdf.cell(max_label_w, 5, header_details_list[i][0], align='L')
-            pdf.set_font("Helvetica", "B", 9)
-            pdf.cell(col_width_val, 5, str(header_details_list[i][1]), align='L')
+            pdf.set_font("Helvetica", "", 8.5)
+            pdf.cell(max_label_w, line_height_header_details, header_details_list[i][0], align='L')
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.cell(col_width_val, line_height_header_details, str(header_details_list[i][1]), align='L')
 
             if i + 1 < len(header_details_list):
                 pdf.set_xy(pdf.l_margin + max_label_w + col_width_val + gap_between_pairs, current_y_pos)
-                pdf.set_font("Helvetica", "", 9)
-                pdf.cell(max_label_w, 5, header_details_list[i+1][0], align='L')
-                pdf.set_font("Helvetica", "B", 9)
-                pdf.cell(col_width_val, 5, str(header_details_list[i+1][1]), align='L')
-            pdf.ln(5) 
+                pdf.set_font("Helvetica", "", 8.5)
+                pdf.cell(max_label_w, line_height_header_details, header_details_list[i+1][0], align='L')
+                pdf.set_font("Helvetica", "B", 8.5)
+                pdf.cell(col_width_val, line_height_header_details, str(header_details_list[i+1][1]), align='L')
+            pdf.ln(line_height_header_details)
 
         if indent_header.get('notes'):
-            pdf.ln(1) 
-            pdf.set_font("Helvetica", "I", 8)
-            pdf.multi_cell(0, 3.5, f"Indent Notes: {indent_header['notes']}", border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.ln(0.5) 
+            pdf.set_font("Helvetica", "I", 7.5) 
+            pdf.multi_cell(0, 3, f"Indent Notes: {indent_header['notes']}", border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT) 
 
-        pdf.ln(3)
+        pdf.ln(2) 
 
-        # --- Item Table ---
-        pdf.set_font("Helvetica", "B", 8)
-        col_widths = {'sno': 8, 'name': 75, 'unit': 18, 'qty': 22, 'notes': 67}
+        pdf.set_font("Helvetica", "B", 7.5) 
+        col_widths = {'sno': 8, 'name': 72, 'unit': 18, 'qty': 20, 'notes': 70} 
         
         pdf.set_fill_color(220, 220, 220)
+        table_header_height = 4.5
         for key_pdf, header_text_pdf in [('sno',"SNo"), ('name',"Item Name"), ('unit',"UoM"), ('qty',"Req Qty"), ('notes',"Item Notes")]:
             align_pdf = 'C' if key_pdf in ['sno', 'unit'] else ('R' if key_pdf == 'qty' else 'L')
-            pdf.cell(col_widths[key_pdf], 5, header_text_pdf, border=1, align=align_pdf, fill=True,
+            pdf.cell(col_widths[key_pdf], table_header_height, header_text_pdf, border=1, align=align_pdf, fill=True,
                      new_x=XPos.RIGHT if key_pdf != 'notes' else XPos.LMARGIN,
                      new_y=YPos.NEXT if key_pdf == 'notes' else YPos.TOP)
 
-        pdf.set_font("Helvetica", "", 8)
-        base_line_height = 3.8
+        pdf.set_font("Helvetica", "", 7.5) 
+        base_line_height_items = 3.5 
 
         if not indent_items:
-            pdf.cell(sum(col_widths.values()), 5, "No items found for this indent.", border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(sum(col_widths.values()), 4, "No items found for this indent.", border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         else:
             item_serial_number_pdf = 0
             current_category_pdf = None
@@ -173,17 +187,17 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
                 if item_cat_pdf != current_category_pdf:
                     current_category_pdf = item_cat_pdf
                     current_sub_category_pdf = None
-                    pdf.set_font("Helvetica", "B", 8)
+                    pdf.set_font("Helvetica", "B", 8) 
                     pdf.set_fill_color(230,230,250)
                     pdf.cell(sum(col_widths.values()), 5, f"Category: {current_category_pdf}", border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=True, align='L')
 
                 if item_subcat_pdf != current_sub_category_pdf:
                     current_sub_category_pdf = item_subcat_pdf
                     pdf.set_font("Helvetica", "BI", 7.5)
-                    pdf.set_x(pdf.l_margin + 3)
+                    pdf.set_x(pdf.l_margin + 3) 
                     pdf.cell(sum(col_widths.values()) - 3, 4, f"Sub-Category: {current_sub_category_pdf}", border="LRB", new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=False, align='L')
                 
-                pdf.set_font("Helvetica", "", 8)
+                pdf.set_font("Helvetica", "", 7.5) 
                 item_serial_number_pdf += 1
                 
                 sno_str = str(item_serial_number_pdf)
@@ -195,37 +209,37 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
                 max_lines = 1
                 temp_x = pdf.get_x() 
                 if col_widths['name'] > 0:
-                    name_content_lines = pdf.multi_cell(w=col_widths['name'], h=base_line_height, text=name_str, border=0, dry_run=True, output='LINES', align='L')
+                    name_content_lines = pdf.multi_cell(w=col_widths['name'], h=base_line_height_items, text=name_str, border=0, dry_run=True, output='LINES', align='L')
                     max_lines = max(max_lines, len(name_content_lines))
                 pdf.set_x(temp_x) 
                 if col_widths['notes'] > 0:
-                   notes_content_lines = pdf.multi_cell(w=col_widths['notes'], h=base_line_height, text=notes_str, border=0, dry_run=True, output='LINES', align='L')
+                   notes_content_lines = pdf.multi_cell(w=col_widths['notes'], h=base_line_height_items, text=notes_str, border=0, dry_run=True, output='LINES', align='L')
                    max_lines = max(max_lines, len(notes_content_lines))
                 pdf.set_x(temp_x) 
 
-                effective_row_height = max_lines * base_line_height + (max_lines -1) * 0.5 
+                effective_row_height = max_lines * base_line_height_items + (max_lines -1) * 0.5 
 
                 row_start_y = pdf.get_y()
                 current_x_pos = pdf.l_margin
 
                 pdf.set_xy(current_x_pos, row_start_y)
-                pdf.multi_cell(col_widths['sno'], effective_row_height, sno_str, border='LRB', align='C', max_line_height=base_line_height)
+                pdf.multi_cell(col_widths['sno'], effective_row_height, sno_str, border='LRB', align='C', max_line_height=base_line_height_items)
                 current_x_pos += col_widths['sno']
                 
                 pdf.set_xy(current_x_pos, row_start_y)
-                pdf.multi_cell(col_widths['name'], base_line_height, name_str, border='RB', align='L', max_line_height=base_line_height)
+                pdf.multi_cell(col_widths['name'], base_line_height_items, name_str, border='RB', align='L', max_line_height=base_line_height_items)
                 current_x_pos += col_widths['name']
                 
                 pdf.set_xy(current_x_pos, row_start_y)
-                pdf.multi_cell(col_widths['unit'], effective_row_height, unit_str, border='RB', align='C', max_line_height=base_line_height)
+                pdf.multi_cell(col_widths['unit'], effective_row_height, unit_str, border='RB', align='C', max_line_height=base_line_height_items)
                 current_x_pos += col_widths['unit']
                 
                 pdf.set_xy(current_x_pos, row_start_y)
-                pdf.multi_cell(col_widths['qty'], effective_row_height, qty_str, border='RB', align='R', max_line_height=base_line_height)
+                pdf.multi_cell(col_widths['qty'], effective_row_height, qty_str, border='RB', align='R', max_line_height=base_line_height_items)
                 current_x_pos += col_widths['qty']
                 
                 pdf.set_xy(current_x_pos, row_start_y)
-                pdf.multi_cell(col_widths['notes'], base_line_height, notes_str, border='RB', align='L', max_line_height=base_line_height)
+                pdf.multi_cell(col_widths['notes'], base_line_height_items, notes_str, border='RB', align='L', max_line_height=base_line_height_items)
                 
                 pdf.set_y(row_start_y + effective_row_height)
 
@@ -292,7 +306,7 @@ def add_suggested_item_callback(item_id_to_add, item_name_to_add, unit_to_add):
         new_id = st.session_state.create_indent_next_id
         st.session_state.create_indent_rows.append({'id': new_id, **new_row_data})
         st.session_state.create_indent_next_id += 1
-        st.toast(f"Added '{item_name_to_add}' as a new line.", icon="👍")
+        st.toast(f"Added '{item_name_to_add}' as a new line.", icon="?")
 
 def update_row_item_details_callback(row_index, item_selectbox_key_arg, item_options_dict_arg):
     selected_display_name = st.session_state[item_selectbox_key_arg]
@@ -334,14 +348,23 @@ def update_row_item_details_callback(row_index, item_selectbox_key_arg, item_opt
 
 def set_active_indent_section_callback():
     selected_display_name = st.session_state.indent_section_radio_key_v17
+    st.session_state.process_indent_selected_tuple = placeholder_option_indent_process
+    st.session_state.process_indent_items_df = pd.DataFrame()
+    st.session_state.process_indent_issue_quantities_defaults = {} 
+    
     for key, display_name in INDENT_SECTIONS.items():
         if display_name == selected_display_name:
             st.session_state.active_indent_section = key
-            if key != "create":
+            if key != "create": 
                 st.session_state.last_created_mrn_for_print = None
                 if "pdf_bytes_for_download" in st.session_state: del st.session_state.pdf_bytes_for_download
                 if "pdf_filename_for_download" in st.session_state: del st.session_state.pdf_filename_for_download
             break
+
+def on_process_indent_select_change():
+    st.session_state.process_indent_items_df = pd.DataFrame() 
+    st.session_state.process_indent_issue_quantities_defaults = {} 
+
 
 st.radio("Indent Actions:", options=INDENT_SECTION_DISPLAY_NAMES,
          index=INDENT_SECTION_KEYS.index(st.session_state.active_indent_section),
@@ -350,6 +373,7 @@ st.radio("Indent Actions:", options=INDENT_SECTION_DISPLAY_NAMES,
 st.divider()
 
 if st.session_state.active_indent_section == "create":
+    # --- CREATE INDENT SECTION ---
     st.subheader("📝 Create New Material Indent Request")
     if st.session_state.get(CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY, False):
         st.session_state[CREATE_INDENT_DEPT_SESS_KEY] = ""
@@ -527,7 +551,7 @@ if st.session_state.active_indent_section == "create":
                 help="Specify how many new blank item lines to add."
             )
         with add_lines_cols[1]:
-            st.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True) # For vertical alignment
+            st.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True)
             st.button(
                 "➕ Add Lines",
                 on_click=add_multiple_indent_lines_callback,
@@ -644,8 +668,209 @@ elif st.session_state.active_indent_section == "view":
                                    on_click=lambda: st.session_state.update({"pdf_bytes_for_download":None, "pdf_filename_for_download":None}))
 
 # ===========================
-# PROCESS INDENT SECTION (Placeholder)
+# PROCESS INDENT SECTION
 # ===========================
 elif st.session_state.active_indent_section == "process":
     st.subheader("⚙️ Process Material Indents")
-    st.info("This section is under development.")
+
+    indents_to_process_df = indent_service.get_indents_for_processing(db_engine)
+    
+    indent_options_list = [placeholder_option_indent_process]
+    if not indents_to_process_df.empty:
+        for _, row in indents_to_process_df.iterrows():
+            display_name = f"{row['mrn']} ({row['department']}) - Submitted: {pd.to_datetime(row['date_submitted']).strftime('%d-%b-%y')}"
+            indent_options_list.append((display_name, row['indent_id'], row['mrn']))
+
+    current_selected_tuple_for_process = st.session_state.get("process_indent_selected_tuple", placeholder_option_indent_process)
+    current_selected_index = 0
+    for i, option_tuple in enumerate(indent_options_list):
+        if option_tuple[1] == current_selected_tuple_for_process[1]:
+            current_selected_index = i
+            break
+            
+    selected_tuple = st.selectbox(
+        "Select Indent (MRN):",
+        options=indent_options_list,
+        index=current_selected_index,
+        format_func=lambda x: x[0],
+        key="process_indent_select_widget",
+        on_change=on_process_indent_select_change 
+    )
+    st.session_state.process_indent_selected_tuple = selected_tuple
+    
+    selected_indent_id = st.session_state.process_indent_selected_tuple[1]
+    selected_mrn = st.session_state.process_indent_selected_tuple[2]
+
+    st.divider()
+
+    if selected_indent_id:
+        st.markdown(f"#### Processing: **{selected_mrn}**")
+        
+        # Check if items_df needs to be refetched (if indent changes or df is empty)
+        # Add a temporary check column to the df in session state to verify if it's for the current indent
+        refetch_items = True
+        if not st.session_state.process_indent_items_df.empty and \
+           'indent_id_for_check' in st.session_state.process_indent_items_df.columns and \
+           st.session_state.process_indent_items_df.iloc[0]['indent_id_for_check'] == selected_indent_id:
+            refetch_items = False
+
+        if refetch_items:
+            items_df = indent_service.get_indent_items_for_display(db_engine, selected_indent_id)
+            if not items_df.empty:
+                items_df['indent_id_for_check'] = selected_indent_id # Add check column
+            st.session_state.process_indent_items_df = items_df
+            # Reset default quantities when new indent items are loaded
+            st.session_state.process_indent_issue_quantities_defaults = {
+                row['indent_item_id']: 0.0 for _, row in items_df.iterrows()
+            }
+        
+        items_df_for_processing = st.session_state.process_indent_items_df
+
+        if not items_df_for_processing.empty:
+            st.markdown("**Indent Items:**")
+            
+            header_cols = st.columns([3, 1, 1, 1, 1.5, 1.5, 1.5, 2])
+            headers = ["Item (Unit)", "Req.", "Issued", "Pend.", "Stock", "Status", "Issue Now*", "Notes"]
+            for col, header_text in zip(header_cols, headers):
+                col.markdown(f"**{header_text}**")
+            
+            # Form for issuing quantities
+            with st.form("process_indent_form_submit", clear_on_submit=False): # Keep clear_on_submit=False
+                for index, row in items_df_for_processing.iterrows():
+                    indent_item_id = row['indent_item_id']
+                    item_id = row['item_id']
+                    issue_qty_key = f"issue_qty_input_{indent_item_id}" # Unique key for number_input
+
+                    item_display_cols = st.columns([3, 1, 1, 1, 1.5, 1.5, 1.5, 2])
+                    
+                    item_display_cols[0].write(f"{row['item_name']} ({row['item_unit']})")
+                    item_display_cols[1].write(f"{row['requested_qty']:.2f}")
+                    item_display_cols[2].write(f"{row['issued_qty']:.2f}")
+                    item_display_cols[3].write(f"{row['qty_remaining_to_issue']:.2f}")
+                    item_display_cols[4].write(f"{row['stock_on_hand']:.2f}")
+                    item_display_cols[5].caption(row['item_status'])
+
+                    max_issuable_qty = min(row['qty_remaining_to_issue'], row['stock_on_hand'])
+                    is_disabled = row['item_status'] in [ITEM_STATUS_FULLY_ISSUED, ITEM_STATUS_CANCELLED] or max_issuable_qty <= 0
+
+                    item_display_cols[6].number_input(
+                        "Qty to Issue Now", 
+                        min_value=0.0, 
+                        max_value=float(max_issuable_qty),
+                        value=float(st.session_state.process_indent_issue_quantities_defaults.get(indent_item_id, 0.0)),
+                        step=0.01, format="%.2f",
+                        key=issue_qty_key, 
+                        label_visibility="collapsed",
+                        disabled=is_disabled
+                    )
+                    item_display_cols[7].caption(row['item_notes'] or "---")
+                    st.caption("") 
+
+                st.divider()
+                st.session_state.process_indent_user_id = st.text_input(
+                    "Processed by (Your Name/ID)*", 
+                    value=st.session_state.process_indent_user_id,
+                    key="process_user_id_input" # Ensure this key is unique
+                )
+
+                submit_issue_button = st.form_submit_button("💾 Issue Quantities & Update Status", type="primary")
+
+                if submit_issue_button:
+                    if not st.session_state.process_indent_user_id.strip():
+                        st.warning("Please enter 'Processed by' User ID.")
+                    else:
+                        items_to_submit_for_processing = []
+                        has_items_to_issue = False
+                        for idx_form, item_row_form in items_df_for_processing.iterrows():
+                            ii_id_form = item_row_form['indent_item_id']
+                            i_id_form = item_row_form['item_id']
+                            current_issue_qty_key_form = f"issue_qty_input_{ii_id_form}"
+                            qty_val_form = st.session_state.get(current_issue_qty_key_form, 0.0) 
+                            
+                            if float(qty_val_form) > 0:
+                                items_to_submit_for_processing.append({
+                                    "indent_item_id": ii_id_form,
+                                    "item_id": i_id_form,
+                                    "qty_to_issue_now": float(qty_val_form)
+                                })
+                                has_items_to_issue = True
+                        
+                        if not has_items_to_issue:
+                            st.info("No quantities specified for issuance. If you intend to mark the indent as completed without further issuance, use the 'Mark Indent as Completed' button.")
+                        else:
+                            with st.spinner(f"Processing indent {selected_mrn}..."):
+                                success, message = indent_service.process_indent_issuance(
+                                    db_engine,
+                                    selected_indent_id,
+                                    items_to_submit_for_processing,
+                                    st.session_state.process_indent_user_id.strip(),
+                                    selected_mrn
+                                )
+                                if success:
+                                    st.success(message)
+                                    st.session_state.process_indent_selected_tuple = placeholder_option_indent_process
+                                    st.session_state.process_indent_items_df = pd.DataFrame()
+                                    st.session_state.process_indent_issue_quantities_defaults = {}
+                                    # st.session_state.process_indent_user_id = "" # Keep user ID for subsequent actions on same page load
+                                    indent_service.get_indents_for_processing.clear()
+                                    st.rerun()
+                                else:
+                                    st.error(message)
+            
+            # --- Buttons for Mark as Completed / Cancel Indent ---
+            # Placed outside the form for issuing quantities, but within the 'if selected_indent_id:' block
+            st.markdown("---") # Visual separator
+            st.markdown("##### Other Actions for this Indent:")
+
+            action_cols = st.columns(2)
+            with action_cols[0]:
+                if st.button("✅ Mark Indent as Completed", key=f"mark_completed_{selected_indent_id}", use_container_width=True):
+                    if not st.session_state.process_indent_user_id.strip():
+                        st.warning("Please enter 'Processed by' User ID above before marking as completed.")
+                    else:
+                        with st.spinner(f"Marking indent {selected_mrn} as completed..."):
+                            success, msg = indent_service.mark_indent_completed(
+                                db_engine, 
+                                selected_indent_id, 
+                                st.session_state.process_indent_user_id.strip(),
+                                selected_mrn
+                            )
+                            if success:
+                                st.success(msg)
+                                st.session_state.process_indent_selected_tuple = placeholder_option_indent_process
+                                st.session_state.process_indent_items_df = pd.DataFrame()
+                                st.session_state.process_indent_issue_quantities_defaults = {}
+                                indent_service.get_indents_for_processing.clear()
+                                st.rerun()
+                            else:
+                                st.error(msg)
+            
+            with action_cols[1]:
+                if st.button("❌ Cancel Entire Indent", key=f"cancel_indent_{selected_indent_id}", type="secondary", use_container_width=True):
+                    if not st.session_state.process_indent_user_id.strip():
+                        st.warning("Please enter 'Processed by' User ID above before cancelling.")
+                    else:
+                        # Confirmation Dialog (Optional but recommended for destructive actions)
+                        # For simplicity, direct cancellation for now.
+                        # Consider adding: st.confirm("Are you sure you want to cancel this entire indent?")
+                        with st.spinner(f"Cancelling indent {selected_mrn}..."):
+                            success, msg = indent_service.cancel_entire_indent(
+                                db_engine,
+                                selected_indent_id,
+                                st.session_state.process_indent_user_id.strip(),
+                                selected_mrn
+                            )
+                            if success:
+                                st.success(msg)
+                                st.session_state.process_indent_selected_tuple = placeholder_option_indent_process
+                                st.session_state.process_indent_items_df = pd.DataFrame()
+                                st.session_state.process_indent_issue_quantities_defaults = {}
+                                indent_service.get_indents_for_processing.clear()
+                                st.rerun()
+                            else:
+                                st.error(msg)
+
+        elif selected_indent_id: # If indent selected but no items (e.g., already processed or error fetching)
+            st.info(f"No items found for Indent MRN {selected_mrn} to process, or it might have already been processed/cancelled.")
+    else:
+        st.info("Select an indent from the dropdown above to start processing.")

@@ -16,7 +16,8 @@ except Exception as e:
     st.error(f"An unexpected error occurred during import in 4_History_Reports.py: {e}")
     st.stop()
 
-st.header("📜 Stock Transaction History & Reports")
+# Suggestion 1: Change st.header to st.title
+st.title("📜 Stock Transaction History & Reports")
 st.write("Review the detailed history of all stock movements. Use the filters below to narrow down your search.")
 st.divider()
 
@@ -55,8 +56,8 @@ if 'hist_filter_end_date' not in st.session_state: st.session_state.hist_filter_
 st.subheader("🔎 Filter Transactions")
 filter_col1, filter_col2 = st.columns(2)
 with filter_col1:
-    selected_item_tuple_key = "hist_item_filter_select_v4_tuple" # Use a key for the selectbox itself
-    if selected_item_tuple_key not in st.session_state: # Initialize if not present
+    selected_item_tuple_key = "hist_item_filter_select_v4_tuple"
+    if selected_item_tuple_key not in st.session_state:
          current_item_id_for_filter = st.session_state.hist_filter_item_id
          st.session_state[selected_item_tuple_key] = next((opt for opt in item_filter_options if opt[1] == current_item_id_for_filter), item_filter_options[0])
 
@@ -87,7 +88,8 @@ if st.session_state.hist_filter_start_date and st.session_state.hist_filter_end_
     st.warning("Start date cannot be after end date.")
 
 st.divider()
-st.subheader("Transaction Records")
+# Suggestion 2: Add emoji to subheader
+st.subheader("📋 Transaction Records") 
 
 filter_item_id_arg = st.session_state.hist_filter_item_id if st.session_state.hist_filter_item_id != -1 else None
 filter_trans_type_arg = transaction_type_filter_options_map[st.session_state.hist_filter_trans_type]
@@ -109,90 +111,58 @@ else:
     if 'transaction_date' in display_df.columns:
         display_df['transaction_date'] = pd.to_datetime(display_df['transaction_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    # --- MEDIUM COMPLEXITY: Visual Cue for Quantity Change using Pandas Styler ---
-    def style_quantity_change(val):
-        color = 'black' # Default color for zero or non-numeric
-        if pd.isna(val): return ''
-        try:
-            qty = float(val)
-            if qty > 0: color = 'green'
-            elif qty < 0: color = 'red'
-        except ValueError:
-            pass # Keep default color if not a number
-        return f'color: {color}'
-
     def format_qty_with_emoji(qty_series):
-        # This function will create a new series with emojis + text
-        # It operates on the original 'quantity_change' column
         formatted_series = []
         for qty_val in qty_series:
             if pd.isna(qty_val):
                 formatted_series.append("")
                 continue
-            qty_val = float(qty_val)
-            if qty_val > 0:
-                formatted_series.append(f"▲ +{qty_val:.2f}")
-            elif qty_val < 0:
-                formatted_series.append(f"▼ {qty_val:.2f}") # Negative sign is already there
-            else:
-                formatted_series.append(f"{qty_val:.2f}")
+            try: # Ensure qty_val is float for comparison
+                qty_float = float(qty_val)
+                if qty_float > 0:
+                    formatted_series.append(f"▲ +{qty_float:.2f}")
+                elif qty_float < 0:
+                    formatted_series.append(f"▼ {qty_float:.2f}") 
+                else:
+                    formatted_series.append(f"{qty_float:.2f}")
+            except ValueError:
+                 formatted_series.append(str(qty_val)) # If not convertible, show as is
         return formatted_series
     
-    # Apply emoji formatting to a new column for display
     if 'quantity_change' in display_df.columns:
         display_df['qty_display'] = format_qty_with_emoji(display_df['quantity_change'])
 
-    # Apply color styling using Pandas Styler object
-    # We will style the original 'quantity_change' column numbers but display the 'qty_display'
-    # Or, we can try to style the 'qty_display' if it's rendered as text by dataframe
-    # For simplicity with st.dataframe, we'll style the original numeric column
-    # and then rely on column_config to show our emoji version, but st.dataframe doesn't directly take styled text.
-    #
-    # A better approach is to use st.table(df.style.applymap(...)) for full control,
-    # but st.table lacks some features of st.dataframe.
-    #
-    # Let's try styling the *numeric* 'quantity_change' column for color,
-    # and use the 'qty_display' for the text with emoji.
-    # `st.dataframe` will show the styled numbers for `quantity_change` if we include it.
-    # However, `column_config` for `TextColumn` doesn't directly render HTML from the DataFrame cell.
-    # The simplest visual cue that works across Streamlit versions without unsafe_html on st.dataframe
-    # is to just have the emoji in the text. Color is harder without unsafe_html.
-
-    # So, we will only use the emoji column and forgo cell color for st.dataframe without unsafe_allow_html.
-    # If unsafe_allow_html were available on st.dataframe, we could use the HTML span method.
-
     st.dataframe(
-        display_df, # Pass the DataFrame with the new 'qty_display' column
+        display_df,
         use_container_width=True,
         hide_index=True,
         column_config={
             "transaction_id": None, "item_id": None,
-            "quantity_change": None, # Hide the original numeric column
+            "quantity_change": None, 
             "transaction_date": st.column_config.TextColumn("Timestamp", width="medium", help="Date and time."),
             "item_name": st.column_config.TextColumn("Item Name", width="large"),
             "transaction_type": st.column_config.TextColumn("Type", width="medium", help="Type of movement."),
-            "qty_display": st.column_config.TextColumn("Qty Change", width="small", help="Stock change. ▲ In, ▼ Out."), # Display the emoji version
+            "qty_display": st.column_config.TextColumn("Qty Change", width="small", help="Stock change. ▲ In, ▼ Out."),
             "user_id": st.column_config.TextColumn("User", width="medium"),
             "notes": st.column_config.TextColumn("Notes/Reason", width="large"),
             "related_mrn": st.column_config.TextColumn("Related MRN", width="medium"),
             "related_po_id": st.column_config.TextColumn("Related PO", width="medium"),
         },
         column_order=[
-            "transaction_date", "item_name", "transaction_type", "qty_display", # Use qty_display
+            "transaction_date", "item_name", "transaction_type", "qty_display",
             "user_id", "notes", "related_mrn", "related_po_id"
         ]
-        # No unsafe_allow_html here as it's not a valid param for st.dataframe
     )
 
     @st.cache_data
     def convert_df_to_csv(df_to_convert):
         cols_to_export = [col for col in [
-            "transaction_date", "item_name", "transaction_type", "quantity_change", # Export original numeric qty
+            "transaction_date", "item_name", "transaction_type", "quantity_change",
             "user_id", "notes", "related_mrn", "related_po_id"
         ] if col in df_to_convert.columns]
         return df_to_convert[cols_to_export].to_csv(index=False).encode('utf-8')
 
-    csv_data = convert_df_to_csv(transactions_df) # Use original df for CSV
+    csv_data = convert_df_to_csv(transactions_df) 
 
     st.download_button(
         label="📥 Download Report as CSV", data=csv_data,

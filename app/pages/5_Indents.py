@@ -3,10 +3,11 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
 from typing import Any, Optional, Dict, List, Tuple, Set
-import time
+import time # Keep for potential future use
 import urllib.parse
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
+import traceback # For debugging PDF generation if needed
 
 try:
     from app.db.database_utils import connect_db, fetch_data
@@ -24,12 +25,18 @@ except Exception as e:
 placeholder_option_stock = ("-- Select Item --", -1)
 
 if 'create_indent_rows' not in st.session_state:
-    st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': '', 'last_ordered': None, 'median_qty': None, 'category': None, 'sub_category': None}]
+    st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': '',
+                                            'last_ordered': None, 'median_qty': None,
+                                            'category': None, 'sub_category': None,
+                                            'current_stock': None, 'unit': None}] 
     st.session_state.create_indent_next_id = 1
+
 if 'selected_department_for_create_indent' not in st.session_state:
      st.session_state.selected_department_for_create_indent = None
-if "num_lines_to_add_indent_widget" not in st.session_state: # Key for the number_input widget
-    st.session_state.num_lines_to_add_indent_widget = 1
+
+if "num_lines_to_add_value" not in st.session_state: 
+    st.session_state.num_lines_to_add_value = 1
+
 
 if 'last_created_mrn_for_print' not in st.session_state: st.session_state.last_created_mrn_for_print = None
 if 'last_submitted_indent_details' not in st.session_state: st.session_state.last_submitted_indent_details = None
@@ -42,7 +49,6 @@ INDENT_SECTION_DISPLAY_NAMES = list(INDENT_SECTIONS.values())
 if 'active_indent_section' not in st.session_state:
     st.session_state.active_indent_section = INDENT_SECTION_KEYS[0]
 
-# Using v17 for this iteration for key freshness
 CREATE_INDENT_DEPT_SESS_KEY = "sess_create_indent_dept_v17"
 CREATE_INDENT_REQ_BY_SESS_KEY = "sess_create_indent_req_by_val_v17"
 CREATE_INDENT_DATE_REQ_SESS_KEY = "sess_create_indent_date_req_val_v17"
@@ -50,7 +56,7 @@ CREATE_INDENT_NOTES_SESS_KEY = "sess_create_indent_header_notes_val_v17"
 CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY = "sess_create_indent_header_reset_signal_v17"
 
 for key, default_val in [
-    (CREATE_INDENT_DEPT_SESS_KEY, ""), 
+    (CREATE_INDENT_DEPT_SESS_KEY, ""),
     (CREATE_INDENT_REQ_BY_SESS_KEY, ""),
     (CREATE_INDENT_DATE_REQ_SESS_KEY, date.today() + timedelta(days=1)),
     (CREATE_INDENT_NOTES_SESS_KEY, ""),
@@ -68,86 +74,183 @@ if not db_engine: st.error("Database connection failed."); st.stop()
 
 @st.cache_data(ttl=300, show_spinner="Loading item & department data...")
 def fetch_indent_page_data(_engine):
-    if _engine is None: return pd.DataFrame(columns=['item_id', 'name', 'unit', 'category', 'sub_category', 'permitted_departments']), []
-    # Ensure item_service.get_all_items_with_stock returns category and sub_category
-    items_df = item_service.get_all_items_with_stock(_engine, include_inactive=False) 
-    required_cols = ['item_id', 'name', 'unit', 'category', 'sub_category', 'permitted_departments']
+    if _engine is None: return pd.DataFrame(columns=['item_id', 'name', 'unit', 'category', 'sub_category', 'permitted_departments', 'current_stock']), []
+    items_df = item_service.get_all_items_with_stock(_engine, include_inactive=False)
+    required_cols = ['item_id', 'name', 'unit', 'category', 'sub_category', 'permitted_departments', 'current_stock']
     if not all(col in items_df.columns for col in required_cols):
-        st.error("Required columns (incl. category/sub_category) missing from items_df in fetch_indent_page_data.")
+        missing = [col for col in required_cols if col not in items_df.columns]
+        st.error(f"Required columns missing from items_df in fetch_indent_page_data: {', '.join(missing)}.")
         return pd.DataFrame(columns=required_cols), []
     return items_df[required_cols].copy(), item_service.get_distinct_departments_from_items(_engine)
 
 all_active_items_df, distinct_departments = fetch_indent_page_data(db_engine)
 
 def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Optional[bytes]:
-    # ... (Your existing, working PDF generation code with Category/Sub-Category grouping) ...
     if not indent_header or indent_items is None:
          st.error("Cannot generate PDF: Missing indent header or items data.")
          return None
     try:
         pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=10) # Bottom margin for page break
+        pdf.set_margins(left=10, top=10, right=10) # Page margins
         pdf.add_page()
-        pdf.set_font("Helvetica", "B", 16)
-        pdf.cell(0, 10, "Material Indent Request", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.ln(10); pdf.set_font("Helvetica", "", 11)
-        label_width = pdf.get_string_width("Date Required: ") + 2 
-        def add_header_line(label, value):
-            pdf.set_font("Helvetica", "", 11); pdf.cell(label_width, 7, label)
-            pdf.set_font("Helvetica", "B", 11); pdf.cell(0, 7, str(value), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        add_header_line("MRN:", indent_header.get('mrn', 'N/A')); add_header_line("Department:", indent_header.get('department', 'N/A'))
-        add_header_line("Requested By:", indent_header.get('requested_by', 'N/A')); add_header_line("Date Submitted:", indent_header.get('date_submitted', 'N/A'))
-        add_header_line("Date Required:", indent_header.get('date_required', 'N/A')); add_header_line("Status:", indent_header.get('status', 'N/A'))
+
+        # --- Page Header ---
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.cell(0, 7, "Material Indent Request", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        pdf.set_font("Helvetica", "I", 8)
+        generated_time_str = f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        pdf.cell(0, 5, generated_time_str, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(3)
+
+        # --- Indent Header Details (2-column layout) ---
+        pdf.set_font("Helvetica", "", 9)
+        header_details_list = [
+            ("MRN:", indent_header.get('mrn', 'N/A')),
+            ("Department:", indent_header.get('department', 'N/A')),
+            ("Requested By:", indent_header.get('requested_by', 'N/A')),
+            ("Date Submitted:", indent_header.get('date_submitted', 'N/A')),
+            ("Date Required:", indent_header.get('date_required', 'N/A')),
+            ("Status:", indent_header.get('status', 'N/A')),
+        ]
+        
+        max_label_w = 0
+        for label, _ in header_details_list:
+            max_label_w = max(max_label_w, pdf.get_string_width(label) + 1)
+
+        gap_between_pairs = 5 
+        available_width_for_values = (pdf.w - pdf.l_margin - pdf.r_margin) - (max_label_w * 2) - gap_between_pairs
+        col_width_val = available_width_for_values / 2
+        
+        for i in range(0, len(header_details_list), 2):
+            current_y_pos = pdf.get_y()
+            pdf.set_font("Helvetica", "", 9)
+            pdf.cell(max_label_w, 5, header_details_list[i][0], align='L')
+            pdf.set_font("Helvetica", "B", 9)
+            pdf.cell(col_width_val, 5, str(header_details_list[i][1]), align='L')
+
+            if i + 1 < len(header_details_list):
+                pdf.set_xy(pdf.l_margin + max_label_w + col_width_val + gap_between_pairs, current_y_pos)
+                pdf.set_font("Helvetica", "", 9)
+                pdf.cell(max_label_w, 5, header_details_list[i+1][0], align='L')
+                pdf.set_font("Helvetica", "B", 9)
+                pdf.cell(col_width_val, 5, str(header_details_list[i+1][1]), align='L')
+            pdf.ln(5) 
+
         if indent_header.get('notes'):
-            pdf.ln(3); pdf.set_font("Helvetica", "I", 10) 
-            pdf.multi_cell(0, 5, f"Indent Notes: {indent_header['notes']}", border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.ln(8); pdf.set_font("Helvetica", "B", 10)
-        col_widths = {'sno': 10, 'name': 80, 'unit': 20, 'qty': 25, 'notes': 55} 
+            pdf.ln(1) 
+            pdf.set_font("Helvetica", "I", 8)
+            pdf.multi_cell(0, 3.5, f"Indent Notes: {indent_header['notes']}", border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+
+        pdf.ln(3)
+
+        # --- Item Table ---
+        pdf.set_font("Helvetica", "B", 8)
+        col_widths = {'sno': 8, 'name': 75, 'unit': 18, 'qty': 22, 'notes': 67}
+        
         pdf.set_fill_color(220, 220, 220)
-        for key_pdf, header_text_pdf in [('sno',"S.No."), ('name',"Item Name"), ('unit',"Unit"), ('qty',"Req. Qty"), ('notes',"Item Notes")]:
+        for key_pdf, header_text_pdf in [('sno',"SNo"), ('name',"Item Name"), ('unit',"UoM"), ('qty',"Req Qty"), ('notes',"Item Notes")]:
             align_pdf = 'C' if key_pdf in ['sno', 'unit'] else ('R' if key_pdf == 'qty' else 'L')
-            pdf.cell(col_widths[key_pdf], 7, header_text_pdf, border=1, align=align_pdf, fill=True, new_x=XPos.RIGHT if key_pdf != 'notes' else XPos.LMARGIN, new_y=YPos.NEXT if key_pdf == 'notes' else YPos.TOP)
-        pdf.set_font("Helvetica", "", 9); current_category_pdf = None; current_sub_category_pdf = None; item_serial_number_pdf = 0
-        if not indent_items: pdf.cell(sum(col_widths.values()), 7, "No items.", border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(col_widths[key_pdf], 5, header_text_pdf, border=1, align=align_pdf, fill=True,
+                     new_x=XPos.RIGHT if key_pdf != 'notes' else XPos.LMARGIN,
+                     new_y=YPos.NEXT if key_pdf == 'notes' else YPos.TOP)
+
+        pdf.set_font("Helvetica", "", 8)
+        base_line_height = 3.8
+
+        if not indent_items:
+            pdf.cell(sum(col_widths.values()), 5, "No items found for this indent.", border=1, align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         else:
-            for item_pdf in indent_items: 
-                item_cat_pdf = item_pdf.get('item_category', 'Uncategorized'); item_subcat_pdf = item_pdf.get('item_sub_category', 'General')
+            item_serial_number_pdf = 0
+            current_category_pdf = None
+            current_sub_category_pdf = None
+
+            for item_pdf in indent_items:
+                item_cat_pdf = item_pdf.get('item_category', 'Uncategorized')
+                item_subcat_pdf = item_pdf.get('item_sub_category', 'General')
+
                 if item_cat_pdf != current_category_pdf:
-                    current_category_pdf = item_cat_pdf; current_sub_category_pdf = None 
-                    pdf.set_font("Helvetica", "B", 10); pdf.set_fill_color(230,230,250)
-                    pdf.cell(0, 7, f"Category: {current_category_pdf}", border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=True, align='L')
+                    current_category_pdf = item_cat_pdf
+                    current_sub_category_pdf = None
+                    pdf.set_font("Helvetica", "B", 8)
+                    pdf.set_fill_color(230,230,250)
+                    pdf.cell(sum(col_widths.values()), 5, f"Category: {current_category_pdf}", border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=True, align='L')
+
                 if item_subcat_pdf != current_sub_category_pdf:
                     current_sub_category_pdf = item_subcat_pdf
-                    pdf.set_font("Helvetica", "BI", 9); pdf.set_fill_color(240,240,240) 
-                    pdf.cell(5); pdf.cell(0, 6, f"Sub-Category: {current_sub_category_pdf}", border="LRB", new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=False, align='L')
-                pdf.set_font("Helvetica", "", 9); item_serial_number_pdf += 1
-                notes_str_pdf = item_pdf.get('item_notes', '') or ''; item_name_str_pdf = item_pdf.get('item_name', 'N/A') or 'N/A'
-                line_height_pdf = 5
-                name_lines_pdf = pdf.get_string_width(item_name_str_pdf)//col_widths['name']+1 if col_widths['name'] > 0 else 1
-                notes_lines_pdf = pdf.get_string_width(notes_str_pdf)//col_widths['notes']+1 if col_widths['notes'] > 0 else 1
-                num_lines_pdf = int(max(1, name_lines_pdf, notes_lines_pdf)); row_height_pdf = line_height_pdf * num_lines_pdf
-                start_y_item_pdf = pdf.get_y()
-                pdf.cell(col_widths['sno'], row_height_pdf, str(item_serial_number_pdf), border='LRB', align='C')
-                x_before_name_pdf = pdf.get_x()
-                pdf.multi_cell(col_widths['name'], line_height_pdf, item_name_str_pdf, border='RB', align='L', new_x=XPos.LEFT, new_y=YPos.TOP)
-                pdf.set_xy(x_before_name_pdf + col_widths['name'], start_y_item_pdf)
-                pdf.cell(col_widths['unit'], row_height_pdf, str(item_pdf.get('item_unit', 'N/A')), border='RB', align='C')
-                pdf.cell(col_widths['qty'], row_height_pdf, f"{item_pdf.get('requested_qty', 0):.2f}", border='RB', align='R')
-                x_before_notes_pdf = pdf.get_x()
-                pdf.multi_cell(col_widths['notes'], line_height_pdf, notes_str_pdf, border='RB', align='L', new_x=XPos.LEFT, new_y=YPos.TOP)
-                pdf.ln(row_height_pdf)
-        pdf.set_y(-15); pdf.set_font("Helvetica", "I", 8); pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", align='C')
+                    pdf.set_font("Helvetica", "BI", 7.5)
+                    pdf.set_x(pdf.l_margin + 3)
+                    pdf.cell(sum(col_widths.values()) - 3, 4, f"Sub-Category: {current_sub_category_pdf}", border="LRB", new_x=XPos.LMARGIN, new_y=YPos.NEXT, fill=False, align='L')
+                
+                pdf.set_font("Helvetica", "", 8)
+                item_serial_number_pdf += 1
+                
+                sno_str = str(item_serial_number_pdf)
+                name_str = item_pdf.get('item_name', 'N/A') or 'N/A'
+                unit_str = str(item_pdf.get('item_unit', 'N/A'))
+                qty_str = f"{item_pdf.get('requested_qty', 0):.2f}"
+                notes_str = item_pdf.get('item_notes', '') or ''
+
+                max_lines = 1
+                temp_x = pdf.get_x() 
+                if col_widths['name'] > 0:
+                    name_content_lines = pdf.multi_cell(w=col_widths['name'], h=base_line_height, text=name_str, border=0, dry_run=True, output='LINES', align='L')
+                    max_lines = max(max_lines, len(name_content_lines))
+                pdf.set_x(temp_x) 
+                if col_widths['notes'] > 0:
+                   notes_content_lines = pdf.multi_cell(w=col_widths['notes'], h=base_line_height, text=notes_str, border=0, dry_run=True, output='LINES', align='L')
+                   max_lines = max(max_lines, len(notes_content_lines))
+                pdf.set_x(temp_x) 
+
+                effective_row_height = max_lines * base_line_height + (max_lines -1) * 0.5 
+
+                row_start_y = pdf.get_y()
+                current_x_pos = pdf.l_margin
+
+                pdf.set_xy(current_x_pos, row_start_y)
+                pdf.multi_cell(col_widths['sno'], effective_row_height, sno_str, border='LRB', align='C', max_line_height=base_line_height)
+                current_x_pos += col_widths['sno']
+                
+                pdf.set_xy(current_x_pos, row_start_y)
+                pdf.multi_cell(col_widths['name'], base_line_height, name_str, border='RB', align='L', max_line_height=base_line_height)
+                current_x_pos += col_widths['name']
+                
+                pdf.set_xy(current_x_pos, row_start_y)
+                pdf.multi_cell(col_widths['unit'], effective_row_height, unit_str, border='RB', align='C', max_line_height=base_line_height)
+                current_x_pos += col_widths['unit']
+                
+                pdf.set_xy(current_x_pos, row_start_y)
+                pdf.multi_cell(col_widths['qty'], effective_row_height, qty_str, border='RB', align='R', max_line_height=base_line_height)
+                current_x_pos += col_widths['qty']
+                
+                pdf.set_xy(current_x_pos, row_start_y)
+                pdf.multi_cell(col_widths['notes'], base_line_height, notes_str, border='RB', align='L', max_line_height=base_line_height)
+                
+                pdf.set_y(row_start_y + effective_row_height)
+
         return bytes(pdf.output())
-    except Exception as e_pdf: st.error(f"Failed to generate PDF: {e_pdf}"); return None
+
+    except Exception as e_pdf:
+        st.error(f"Failed to generate PDF: {e_pdf}")
+        st.error(traceback.format_exc())
+        return None
 
 # --- Callbacks ---
 def add_single_indent_row_logic():
     new_id = st.session_state.create_indent_next_id
-    st.session_state.create_indent_rows.append({'id': new_id, 'item_id': None, 'requested_qty': 1.0, 'notes': '', 'last_ordered': None, 'median_qty': None, 'category': None, 'sub_category': None})
+    st.session_state.create_indent_rows.append({
+        'id': new_id, 'item_id': None, 'requested_qty': 1.0, 'notes': '',
+        'last_ordered': None, 'median_qty': None,
+        'category': None, 'sub_category': None,
+        'current_stock': None, 'unit': None
+    })
     st.session_state.create_indent_next_id += 1
 
 def add_multiple_indent_lines_callback():
-    num_lines = st.session_state.get("num_lines_to_add_indent_widget_v10", 1) # Ensure correct key
+    num_lines = st.session_state.get("create_indent_num_lines_input_v18", 1)
     for _ in range(int(num_lines)): add_single_indent_row_logic()
+    st.session_state.num_lines_to_add_value = 1
 
 def remove_indent_row_callback(row_id_to_remove):
     idx_to_remove = next((i for i, r in enumerate(st.session_state.create_indent_rows) if r['id'] == row_id_to_remove), -1)
@@ -158,18 +261,30 @@ def remove_indent_row_callback(row_id_to_remove):
 def add_suggested_item_callback(item_id_to_add, item_name_to_add, unit_to_add):
     if any(row.get('item_id') == item_id_to_add for row in st.session_state.create_indent_rows):
         st.toast(f"'{item_name_to_add}' is already in the indent list.", icon="ℹ️"); return
+
     empty_row_idx = next((i for i,r in enumerate(st.session_state.create_indent_rows) if r.get('item_id') is None or r.get('item_id')==-1), -1)
     current_department = st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY)
     history = item_service.get_item_order_history_details(db_engine, item_id_to_add, current_department)
-    item_master_detail_row = all_active_items_df[all_active_items_df['item_id'] == item_id_to_add]
-    category_val = item_master_detail_row.iloc[0]['category'] if not item_master_detail_row.empty else "N/A"
-    sub_category_val = item_master_detail_row.iloc[0]['sub_category'] if not item_master_detail_row.empty else "N/A"
+
+    item_master_detail_row_df = all_active_items_df[all_active_items_df['item_id'] == item_id_to_add]
+    category_val, sub_category_val, current_stock_val, unit_val_from_master = "N/A", "N/A", None, unit_to_add
+
+    if not item_master_detail_row_df.empty:
+        item_master_row = item_master_detail_row_df.iloc[0]
+        category_val = item_master_row['category']
+        sub_category_val = item_master_row['sub_category']
+        current_stock_val = item_master_row.get('current_stock')
+        unit_val_from_master = item_master_row.get('unit', unit_to_add)
+
     new_row_data = {'item_id': item_id_to_add, 'requested_qty': 1.0, 'notes': '',
-                    'last_ordered': history.get('last_ordered_date'), 
+                    'last_ordered': history.get('last_ordered_date'),
                     'median_qty': history.get('median_quantity'),
-                    'category': category_val, 'sub_category': sub_category_val}
+                    'category': category_val, 'sub_category': sub_category_val,
+                    'current_stock': current_stock_val, 'unit': unit_val_from_master}
+
     if history.get('median_quantity') and history.get('median_quantity') > 0:
         new_row_data['requested_qty'] = float(history.get('median_quantity'))
+
     if empty_row_idx != -1:
         st.session_state.create_indent_rows[empty_row_idx].update(new_row_data)
         st.toast(f"Added '{item_name_to_add}' to row {empty_row_idx + 1}.", icon="👍")
@@ -182,24 +297,43 @@ def add_suggested_item_callback(item_id_to_add, item_name_to_add, unit_to_add):
 def update_row_item_details_callback(row_index, item_selectbox_key_arg, item_options_dict_arg):
     selected_display_name = st.session_state[item_selectbox_key_arg]
     item_id_val = item_options_dict_arg.get(selected_display_name)
-    category_val, sub_category_val = "N/A", "N/A"
+    category_val, sub_category_val, current_stock_val, unit_val = "N/A", "N/A", None, "N/A"
+
     if item_id_val and item_id_val != -1:
-        item_master_row = all_active_items_df[all_active_items_df['item_id'] == item_id_val]
-        if not item_master_row.empty:
-            category_val = item_master_row.iloc[0]['category']
-            sub_category_val = item_master_row.iloc[0]['sub_category']
-    st.session_state.create_indent_rows[row_index].update({'item_id': item_id_val, 'category': category_val, 'sub_category': sub_category_val})
+        item_master_row_df = all_active_items_df[all_active_items_df['item_id'] == item_id_val]
+        if not item_master_row_df.empty:
+            item_master_row = item_master_row_df.iloc[0]
+            category_val = item_master_row['category']
+            sub_category_val = item_master_row['sub_category']
+            current_stock_val = item_master_row.get('current_stock', 0)
+            unit_val = item_master_row.get('unit', 'N/A')
+
+    st.session_state.create_indent_rows[row_index].update({
+        'item_id': item_id_val,
+        'category': category_val,
+        'sub_category': sub_category_val,
+        'current_stock': current_stock_val,
+        'unit': unit_val
+    })
+
     if item_id_val and item_id_val != -1:
         dept_for_history = st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY)
         history = item_service.get_item_order_history_details(db_engine, item_id_val, dept_for_history)
-        st.session_state.create_indent_rows[row_index].update({'last_ordered': history.get('last_ordered_date'), 'median_qty': history.get('median_quantity')})
+        st.session_state.create_indent_rows[row_index].update({
+            'last_ordered': history.get('last_ordered_date'),
+            'median_qty': history.get('median_quantity')
+        })
         if history.get('median_quantity') and history.get('median_quantity') > 0:
             st.session_state.create_indent_rows[row_index]['requested_qty'] = float(history.get('median_quantity'))
     else:
-        st.session_state.create_indent_rows[row_index].update({'last_ordered': None, 'median_qty': None, 'category': None, 'sub_category': None})
+        st.session_state.create_indent_rows[row_index].update({
+            'last_ordered': None, 'median_qty': None,
+            'category': None, 'sub_category': None,
+            'current_stock': None, 'unit': None
+        })
 
 def set_active_indent_section_callback():
-    selected_display_name = st.session_state.indent_section_radio_key_v17 # Unique key
+    selected_display_name = st.session_state.indent_section_radio_key_v17
     for key, display_name in INDENT_SECTIONS.items():
         if display_name == selected_display_name:
             st.session_state.active_indent_section = key
@@ -208,10 +342,12 @@ def set_active_indent_section_callback():
                 if "pdf_bytes_for_download" in st.session_state: del st.session_state.pdf_bytes_for_download
                 if "pdf_filename_for_download" in st.session_state: del st.session_state.pdf_filename_for_download
             break
+
 st.radio("Indent Actions:", options=INDENT_SECTION_DISPLAY_NAMES,
          index=INDENT_SECTION_KEYS.index(st.session_state.active_indent_section),
          key="indent_section_radio_key_v17", on_change=set_active_indent_section_callback, horizontal=True)
-st.markdown("---")
+
+st.divider()
 
 if st.session_state.active_indent_section == "create":
     st.subheader("📝 Create New Material Indent Request")
@@ -224,7 +360,6 @@ if st.session_state.active_indent_section == "create":
         st.session_state[CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY] = False
 
     if st.session_state.get("last_created_mrn_for_print"):
-        # ... (Print option logic - same as previous, ensure unique keys like _v17) ...
         mrn_to_print = st.session_state.last_created_mrn_for_print
         st.success(f"Indent **{mrn_to_print}** was created successfully!")
         if st.session_state.get("last_submitted_indent_details"):
@@ -264,10 +399,13 @@ if st.session_state.active_indent_section == "create":
             st.session_state.last_created_mrn_for_print = None; st.session_state.last_submitted_indent_details = None
             if "pdf_bytes_for_download" in st.session_state: del st.session_state.pdf_bytes_for_download
             if "pdf_filename_for_download" in st.session_state: del st.session_state.pdf_filename_for_download
-            st.session_state.create_indent_rows = [{'id':0,'item_id':None,'requested_qty':1.0,'notes':'','last_ordered':None,'median_qty':None, 'category':None, 'sub_category':None}]
+            st.session_state.create_indent_rows = [{'id':0,'item_id':None,'requested_qty':1.0,'notes':'',
+                                                    'last_ordered':None,'median_qty':None,
+                                                    'category':None, 'sub_category':None,
+                                                    'current_stock': None, 'unit': None}]
             st.session_state.create_indent_next_id = 1
             st.session_state[CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY] = True; st.rerun()
-    else: 
+    else:
         head_col1, head_col2 = st.columns(2)
         with head_col1:
             dept_widget_key = "create_indent_dept_widget_v17"
@@ -294,20 +432,20 @@ if st.session_state.active_indent_section == "create":
                 items_in_current_indent_ids = {row.get('item_id') for row in st.session_state.create_indent_rows if row.get('item_id')}
                 valid_suggestions = [sugg for sugg in suggested_items if sugg['item_id'] not in items_in_current_indent_ids]
                 if valid_suggestions:
-                    sugg_cols = st.columns(min(len(valid_suggestions), 5)) 
+                    sugg_cols = st.columns(min(len(valid_suggestions), 5))
                     for i_sugg, sugg_item in enumerate(valid_suggestions):
-                        sugg_cols[i_sugg].button(f"+ {sugg_item['item_name']}", key=f"suggest_item_v17_{sugg_item['item_id']}", 
+                        sugg_cols[i_sugg].button(f"+ {sugg_item['item_name']}", key=f"suggest_item_v17_{sugg_item['item_id']}",
                                             on_click=add_suggested_item_callback, args=(sugg_item['item_id'], sugg_item['item_name'], sugg_item['unit']),
                                             help=f"Add {sugg_item['item_name']} ({sugg_item['unit']})", use_container_width=True)
                 elif items_in_current_indent_ids and len(st.session_state.create_indent_rows) > 0 and st.session_state.create_indent_rows[0].get('item_id') is not None : st.caption("Frequent items are already in your list or no other frequent items found.")
                 else: st.caption("No frequent items found for this department recently.")
-                st.caption("") 
+                st.caption("")
         if st.session_state.selected_department_for_create_indent:
             selected_dept_for_filter = st.session_state.selected_department_for_create_indent
             if not all_active_items_df.empty:
                 try:
                     available_items_df = all_active_items_df[all_active_items_df['permitted_departments'].fillna('').astype(str).str.split(',').apply(lambda dl: selected_dept_for_filter.strip().lower() in [d.strip().lower() for d in dl] if isinstance(dl, list) else False)].copy()
-                    item_options_dict = {placeholder_option_stock[0]: placeholder_option_stock[1]} 
+                    item_options_dict = {placeholder_option_stock[0]: placeholder_option_stock[1]}
                     if available_items_df.empty: item_options_dict.update({"-- No items for this department --": None})
                     else: item_options_dict.update({ f"{r['name']} ({r['unit']})": r['item_id'] for _, r in available_items_df.sort_values('name').iterrows()})
                 except Exception as e: st.error(f"Error filtering items: {e}"); item_options_dict = {"Error loading items": None}
@@ -315,36 +453,50 @@ if st.session_state.active_indent_section == "create":
         else: st.info("Select a requesting department above to add items."); item_options_dict = {"-- Select Department First --": None}
 
         h_cols = st.columns([4,2,3,1]); h_cols[0].markdown("**Item**"); h_cols[1].markdown("**Req. Qty**"); h_cols[2].markdown("**Notes**"); h_cols[3].markdown("**Action**"); st.divider()
-        
+
         for i_loop_item_rows, row_state in enumerate(st.session_state.create_indent_rows):
             row_id = row_state['id']
             item_cols_display = st.columns([4,2,3,1])
-            item_selectbox_key_row = f"disp_item_select_v17_{row_id}" 
+            item_selectbox_key_row = f"disp_item_select_v17_{row_id}"
             default_item_display_name_row = list(item_options_dict.keys())[0]
             if row_state.get('item_id') is not None: default_item_display_name_row = next((name for name, id_val in item_options_dict.items() if id_val == row_state['item_id']), default_item_display_name_row)
             try: current_item_idx_row = list(item_options_dict.keys()).index(default_item_display_name_row)
             except ValueError: current_item_idx_row = 0
-            
+
             with item_cols_display[0]:
                 st.selectbox(f"Item (Row {i_loop_item_rows+1})", options=list(item_options_dict.keys()), index=current_item_idx_row,
                                            key=item_selectbox_key_row, label_visibility="collapsed",
                                            on_change=update_row_item_details_callback, args=(i_loop_item_rows, item_selectbox_key_row, item_options_dict))
-                current_item_id_for_row_disp = st.session_state.create_indent_rows[i_loop_item_rows].get('item_id')
+
+                current_row_data = st.session_state.create_indent_rows[i_loop_item_rows]
+                current_item_id_for_row_disp = current_row_data.get('item_id')
+
                 if current_item_id_for_row_disp and current_item_id_for_row_disp != -1:
                     info_parts = []
-                    item_cat_info = st.session_state.create_indent_rows[i_loop_item_rows].get('category')
+                    item_cat_info = current_row_data.get('category')
                     if item_cat_info and item_cat_info != "N/A": info_parts.append(f"Cat: {item_cat_info}")
-                    item_subcat_info = st.session_state.create_indent_rows[i_loop_item_rows].get('sub_category')
+
+                    item_subcat_info = current_row_data.get('sub_category')
                     if item_subcat_info and item_subcat_info != "N/A": info_parts.append(f"Sub: {item_subcat_info}")
-                    last_ord_info_disp = st.session_state.create_indent_rows[i_loop_item_rows].get('last_ordered')
+
+                    item_stock_info = current_row_data.get('current_stock')
+                    item_unit_info = current_row_data.get('unit', '')
+                    if item_stock_info is not None:
+                        try:
+                            info_parts.append(f"Stock: {float(item_stock_info):.2f} {item_unit_info}")
+                        except (ValueError, TypeError):
+                             info_parts.append(f"Stock: {item_stock_info} {item_unit_info}")
+
+                    last_ord_info_disp = current_row_data.get('last_ordered')
                     if last_ord_info_disp: info_parts.append(f"Last ord: {last_ord_info_disp}")
-                    if info_parts: st.caption(" | ".join(info_parts)) 
-            
+
+                    if info_parts: st.caption(" | ".join(info_parts))
+
             with item_cols_display[1]:
                 qty_key_for_row_disp = f"disp_item_qty_v17_{row_id}"
                 current_qty_for_row_disp = float(st.session_state.create_indent_rows[i_loop_item_rows].get('requested_qty', 1.0))
                 def on_qty_change_callback(idx, key_arg): st.session_state.create_indent_rows[idx]['requested_qty'] = st.session_state[key_arg]
-                st.number_input(f"Qty(R{i_loop_item_rows+1})", value=current_qty_for_row_disp, min_value=0.01, step=0.1, format="%.2f", 
+                st.number_input(f"Qty(R{i_loop_item_rows+1})", value=current_qty_for_row_disp, min_value=0.01, step=0.1, format="%.2f",
                                                   key=qty_key_for_row_disp, label_visibility="collapsed",
                                                   on_change=on_qty_change_callback, args=(i_loop_item_rows, qty_key_for_row_disp))
                 median_qty_row_disp = st.session_state.create_indent_rows[i_loop_item_rows].get('median_qty'); actual_qty_row_disp = st.session_state.create_indent_rows[i_loop_item_rows]['requested_qty']
@@ -355,21 +507,36 @@ if st.session_state.active_indent_section == "create":
             with item_cols_display[2]:
                 notes_key_for_row_disp = f"disp_item_notes_v17_{row_id}"
                 def on_notes_change_callback(idx, key_arg): st.session_state.create_indent_rows[idx]['notes'] = st.session_state[key_arg]
-                st.text_input(f"Notes(R{i_loop_item_rows+1})", value=st.session_state.create_indent_rows[i_loop_item_rows].get('notes',''), 
+                st.text_input(f"Notes(R{i_loop_item_rows+1})", value=st.session_state.create_indent_rows[i_loop_item_rows].get('notes',''),
                                                 key=notes_key_for_row_disp, label_visibility="collapsed", placeholder="Optional",
                                                 on_change=on_notes_change_callback, args=(i_loop_item_rows, notes_key_for_row_disp))
             with item_cols_display[3]:
                 if len(st.session_state.create_indent_rows)>1: item_cols_display[3].button("➖",key=f"disp_remove_row_v17_{row_id}",on_click=remove_indent_row_callback,args=(row_id,),help="Remove line")
-                else: item_cols_display[3].write("") 
-            st.caption("") 
+                else: item_cols_display[3].write("")
+            st.caption("")
 
-        add_lines_col_label, add_lines_col_input, add_lines_col_button = st.columns([1.5, 1, 2]) # Adjusted ratios
-        with add_lines_col_label: st.markdown("<div style='padding-top: 30px; text-align: right; margin-right: 5px;'>Lines to add:</div>", unsafe_allow_html=True) 
-        with add_lines_col_input: st.number_input("Number of lines input",value=st.session_state.num_lines_to_add_indent_widget,min_value=1,max_value=10,step=1,key="num_lines_to_add_indent_widget_v10", label_visibility="collapsed") # Unique key
-        with add_lines_col_button: st.markdown("<div style='padding-top: 25px;'></div>", unsafe_allow_html=True); st.button("➕ Add Lines",on_click=add_multiple_indent_lines_callback,key="add_multi_lines_btn_v17", use_container_width=True) # Unique key
+        add_lines_cols = st.columns([2, 1.2])
+        with add_lines_cols[0]:
+            st.number_input(
+                "Lines to add:",
+                value=st.session_state.num_lines_to_add_value,
+                min_value=1,
+                max_value=10,
+                step=1,
+                key="create_indent_num_lines_input_v18",
+                help="Specify how many new blank item lines to add."
+            )
+        with add_lines_cols[1]:
+            st.markdown("<div style='padding-top: 28px;'></div>", unsafe_allow_html=True) # For vertical alignment
+            st.button(
+                "➕ Add Lines",
+                on_click=add_multiple_indent_lines_callback,
+                key="add_multi_lines_btn_v18",
+                use_container_width=True
+            )
         st.divider()
-        
-        with st.form("create_indent_final_submit_form_v17", clear_on_submit=False): # Unique key
+
+        with st.form("create_indent_final_submit_form_v17", clear_on_submit=False):
             submitted_final_button = st.form_submit_button("📝 Submit Indent Request", type="primary", use_container_width=True)
             if submitted_final_button:
                 header_data_submit = {"department": st.session_state.get(CREATE_INDENT_DEPT_SESS_KEY),"requested_by": st.session_state.get(CREATE_INDENT_REQ_BY_SESS_KEY, "").strip(),
@@ -382,8 +549,8 @@ if st.session_state.active_indent_section == "create":
                 for i_r, r_data in enumerate(st.session_state.create_indent_rows):
                     item_id_v = r_data.get('item_id'); qty_v = r_data.get('requested_qty'); notes_v = r_data.get('notes')
                     if item_id_v is None or item_id_v == -1 : st.error(f"Row {i_r+1}: Select item."); valid=False; continue
-                    if item_id_v in seen_item_ids_in_form: 
-                        item_name_val = "Item" 
+                    if item_id_v in seen_item_ids_in_form:
+                        item_name_val = "Item"
                         for name_lookup, id_lookup in current_item_options_for_validation.items():
                             if id_lookup == item_id_v: item_name_val = name_lookup; break
                         st.error(f"Row {i_r+1}: Item '{item_name_val}' duplicated."); valid=False
@@ -400,23 +567,25 @@ if st.session_state.active_indent_section == "create":
                             st.session_state.last_created_mrn_for_print = new_mrn
                             hd_summary, itms_summary = indent_service.get_indent_details_for_pdf(db_engine, new_mrn)
                             st.session_state.last_submitted_indent_details = {"header": hd_summary, "items": itms_summary} if hd_summary and itms_summary is not None else None
-                            st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': '', 'last_ordered': None, 'median_qty': None, 'category':None, 'sub_category':None}]
+                            st.session_state.create_indent_rows = [{'id': 0, 'item_id': None, 'requested_qty': 1.0, 'notes': '',
+                                                                    'last_ordered': None, 'median_qty': None,
+                                                                    'category':None, 'sub_category':None,
+                                                                    'current_stock': None, 'unit': None}]
                             st.session_state.create_indent_next_id = 1
                             st.session_state[CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY] = True
                             fetch_indent_page_data.clear(); indent_service.get_indents.clear()
                             item_service.get_item_order_history_details.clear(); item_service.get_suggested_items_for_department.clear()
-                            st.rerun() 
+                            st.rerun()
                         else: st.error(f"Failed to create indent: {message}")
                     else: st.error("Failed to generate MRN.")
                 else: st.warning("Fix errors before submitting.")
 
 # ===========================
-# VIEW INDENTS SECTION 
+# VIEW INDENTS SECTION
 # ===========================
 elif st.session_state.active_indent_section == "view":
-    # ... (Your existing "View Indents" code with unique widget keys like _v17) ...
     st.subheader("📄 View Existing Material Indents")
-    view_filter_cols = st.columns([1, 1, 1, 2]) 
+    view_filter_cols = st.columns([1, 1, 1, 2])
     with view_filter_cols[0]: mrn_filter = st.text_input("Search by MRN:", key="view_indent_mrn_filter_v17", placeholder="e.g., MRN-...")
     with view_filter_cols[1]:
         dept_options_view = ["All Departments"] + distinct_departments
@@ -453,9 +622,9 @@ elif st.session_state.active_indent_section == "view":
         st.caption("Select an MRN from the list above to generate its PDF.")
         if not indents_df.empty:
             available_mrns_for_pdf = ["-- Select MRN for PDF --"] + indents_df['mrn'].tolist()
-            selected_mrn_for_pdf = st.selectbox("Choose MRN:", options=available_mrns_for_pdf, key="pdf_mrn_select_v17") 
+            selected_mrn_for_pdf = st.selectbox("Choose MRN:", options=available_mrns_for_pdf, key="pdf_mrn_select_v17")
             if selected_mrn_for_pdf != "-- Select MRN for PDF --":
-                if st.button("⚙️ Generate PDF", key="generate_pdf_indent_btn_v17"): 
+                if st.button("⚙️ Generate PDF", key=f"generate_pdf_indent_btn_v17_{selected_mrn_for_pdf.replace('-', '_')}"):
                     with st.spinner(f"Generating PDF for {selected_mrn_for_pdf}..."):
                         header_details, items_details = indent_service.get_indent_details_for_pdf(db_engine, selected_mrn_for_pdf)
                         if header_details and items_details is not None:
@@ -463,12 +632,15 @@ elif st.session_state.active_indent_section == "view":
                             if pdf_bytes:
                                 st.session_state.pdf_bytes_for_download = pdf_bytes
                                 st.session_state.pdf_filename_for_download = f"Indent_{selected_mrn_for_pdf}.pdf"
-                                st.rerun() 
+                                st.rerun()
                         else: st.error(f"Could not fetch details for PDF: MRN {selected_mrn_for_pdf}.")
-            if "pdf_bytes_for_download" in st.session_state and st.session_state.pdf_bytes_for_download and st.session_state.get("pdf_filename_for_download","").endswith(f"{selected_mrn_for_pdf}.pdf"):
+
+            if ("pdf_bytes_for_download" in st.session_state and
+                    st.session_state.pdf_bytes_for_download and
+                    st.session_state.get("pdf_filename_for_download","").endswith(f"{selected_mrn_for_pdf}.pdf")):
                 st.download_button(label=f"📥 Download PDF for {selected_mrn_for_pdf}", data=st.session_state.pdf_bytes_for_download,
                                    file_name=st.session_state.pdf_filename_for_download, mime="application/pdf",
-                                   key=f"final_dl_btn_v16_{selected_mrn_for_pdf.replace('-','_')}",
+                                   key=f"final_dl_btn_v17_{selected_mrn_for_pdf.replace('-', '_')}",
                                    on_click=lambda: st.session_state.update({"pdf_bytes_for_download":None, "pdf_filename_for_download":None}))
 
 # ===========================

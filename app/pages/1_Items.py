@@ -30,17 +30,17 @@ if "item_filter_subcategory" not in st.session_state: st.session_state.item_filt
 def fetch_all_items_df(_engine, show_inactive: bool) -> pd.DataFrame:
     return item_service.get_all_items_with_stock(_engine, include_inactive=show_inactive)
 
-st.header("📦 Item Master Management")
+# Suggestion 1: Change st.header to st.title
+st.title("📦 Item Master Management")
 st.write("Manage your inventory items: add new items, edit existing ones, and view stock levels.")
 st.divider()
 
 engine = connect_db()
 if not engine: st.error("Database connection failed."); st.stop()
 
-# --- ADD NEW ITEM Section (remains the same) ---
+# --- ADD NEW ITEM Section ---
 with st.expander("➕ Add New Inventory Item", expanded=False):
-    # ... (Your existing "Add New Item" form code here - no changes from previous version) ...
-    with st.form("add_item_form_v2", clear_on_submit=True): # Unique form key
+    with st.form("add_item_form_v2", clear_on_submit=True):
         st.subheader("Enter New Item Details")
         col1, col2 = st.columns(2)
         with col1:
@@ -49,10 +49,16 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
             category = st.text_input("Category", value="Uncategorized", help="e.g., Vegetables, Grains.", key="add_item_category_v2")
             sub_category = st.text_input("Sub-Category", value="General", help="e.g., Leafy Greens, Rice.", key="add_item_subcategory_v2")
         with col2:
-            permitted_departments = st.text_input("Permitted Departments", help="Comma-separated list.", key="add_item_depts_v2")
+            # Suggestion 2: Improved help text for Permitted Departments
+            permitted_departments = st.text_input(
+                "Permitted Departments",
+                help="Enter department names separated by commas (e.g., Kitchen, Bar).",
+                key="add_item_depts_v2"
+            )
             reorder_point = st.number_input("Reorder At", min_value=0.0, value=0.0, step=0.1, format="%.2f", help="Stock level to reorder.", key="add_item_reorder_v2")
             initial_stock = st.number_input("Initial Stock Quantity", min_value=0.0, value=0.0, step=0.1, format="%.2f", help="Current stock on hand.", key="add_item_initial_stock_v2")
         notes = st.text_area("Notes / Description", placeholder="Optional details.", key="add_item_notes_v2")
+        
         if st.form_submit_button("💾 Add Item to Master"):
             is_valid = True
             if not name: st.warning("Item Name is required."); is_valid = False
@@ -72,13 +78,10 @@ st.divider()
 # --- VIEW & MANAGE EXISTING ITEMS ---
 st.subheader("🔍 View & Manage Existing Items")
 
-# Fetch ALL items based on active/inactive toggle first
 all_items_df = fetch_all_items_df(engine, st.session_state.show_inactive_items)
-filtered_items_df = all_items_df.copy() # Start with all items, then filter down
+filtered_items_df = all_items_df.copy()
 
-# --- Filters: Search Name, Select Category, Select Sub-Category, Toggle Inactive ---
 filter_col1, filter_col2, filter_col3, filter_col4 = st.columns([2, 2, 2, 1])
-
 with filter_col1:
     st.session_state.item_search_name = st.text_input(
         "Search by Item Name",
@@ -86,11 +89,8 @@ with filter_col1:
         key="item_search_name_input",
         placeholder="e.g., Tomato, Rice"
     )
-
-# Populate category and sub-category options from the currently available items
 unique_categories = ["All"] + sorted(all_items_df['category'].astype(str).replace('nan', 'Uncategorized').replace('', 'Uncategorized').unique().tolist())
-unique_subcategories = ["All"] # Will be populated based on selected category
-
+unique_subcategories = ["All"]
 with filter_col2:
     st.session_state.item_filter_category = st.selectbox(
         "Filter by Category",
@@ -98,17 +98,12 @@ with filter_col2:
         key="item_category_filter_select",
         index=unique_categories.index(st.session_state.item_filter_category) if st.session_state.item_filter_category in unique_categories else 0
     )
-
-# Filter by selected category first to populate sub-category dropdown
 if st.session_state.item_filter_category != "All":
     category_filtered_df = filtered_items_df[filtered_items_df['category'].astype(str) == st.session_state.item_filter_category]
     unique_subcategories.extend(sorted(category_filtered_df['sub_category'].astype(str).replace('nan', 'General').replace('', 'General').unique().tolist()))
-else: # If "All" categories, show all sub-categories
+else:
     unique_subcategories.extend(sorted(all_items_df['sub_category'].astype(str).replace('nan', 'General').replace('', 'General').unique().tolist()))
-    # Remove duplicates if any from "All"
     unique_subcategories = sorted(list(set(unique_subcategories)))
-
-
 with filter_col3:
     st.session_state.item_filter_subcategory = st.selectbox(
         "Filter by Sub-Category",
@@ -116,28 +111,21 @@ with filter_col3:
         key="item_subcategory_filter_select",
         index=unique_subcategories.index(st.session_state.item_filter_subcategory) if st.session_state.item_filter_subcategory in unique_subcategories else 0
     )
-
 with filter_col4:
     st.session_state.show_inactive_items = st.toggle(
-        "Show Inactive", # Shorter label
+        "Show Inactive",
         value=st.session_state.show_inactive_items,
         key="show_inactive_toggle_items_v5",
         help="Toggle to include inactive items in the list"
     )
 
-# Apply filters progressively
 if st.session_state.item_search_name:
     search_term = st.session_state.item_search_name.lower()
-    # Ensure 'name' column is string type for filtering
     filtered_items_df = filtered_items_df[filtered_items_df['name'].astype(str).str.lower().str.contains(search_term, na=False)]
-
 if st.session_state.item_filter_category != "All":
     filtered_items_df = filtered_items_df[filtered_items_df['category'].astype(str) == st.session_state.item_filter_category]
-
 if st.session_state.item_filter_subcategory != "All":
-    # Ensure sub_category column is string type
     filtered_items_df = filtered_items_df[filtered_items_df['sub_category'].astype(str) == st.session_state.item_filter_subcategory]
-
 
 if filtered_items_df.empty:
     st.info("No items found matching your criteria." if (st.session_state.item_search_name or
@@ -146,17 +134,14 @@ if filtered_items_df.empty:
                                                       st.session_state.show_inactive_items)
             else "No active items found. Add items or adjust filters.")
 else:
-    # --- Pagination and Display (remains largely the same as previous version) ---
     total_items = len(filtered_items_df)
     st.write(f"Found {total_items} item(s) matching your criteria.")
 
     items_per_page_options = [5, 10, 20, 50]
-    # Ensure current items_per_page is valid, default to first option if not
     current_ipp_value = st.session_state.items_per_page
     if current_ipp_value not in items_per_page_options:
         current_ipp_value = items_per_page_options[0]
         st.session_state.items_per_page = current_ipp_value
-
     st.session_state.items_per_page = st.selectbox(
         "Items per page:", options=items_per_page_options,
         index=items_per_page_options.index(current_ipp_value),
@@ -183,17 +168,18 @@ else:
     end_idx = start_idx + st.session_state.items_per_page
     paginated_items_df = filtered_items_df.iloc[start_idx:end_idx]
 
-    cols_header = st.columns((3, 1, 2, 1, 1, 1, 2, 3)) # Name, UoM, Cat, Stock, Reorder, Active, Depts, Actions
-    headers = ["Name", "UoM", "Category", "Stock", "Reorder At", "Active", "Permitted Depts", "Actions"]
+    # Suggestion 3: Change list header "Permitted Depts" to "Permitted Departments"
+    cols_header = st.columns((3, 1, 2, 1, 1, 1, 2.5, 2.5)) # Adjusted widths slightly for longer header
+    headers = ["Name", "UoM", "Category", "Stock", "Reorder At", "Active", "Permitted Departments", "Actions"]
     for col, header in zip(cols_header, headers): col.markdown(f"**{header}**")
     st.divider()
 
     for index, item_row in paginated_items_df.iterrows():
         item_id = item_row['item_id']; item_name = item_row['name']; is_active = item_row['is_active']
-        cols = st.columns((3, 1, 2, 1, 1, 1, 2, 3))
+        cols = st.columns((3, 1, 2, 1, 1, 1, 2.5, 2.5)) # Matched header column widths
         cols[0].write(item_name)
         cols[1].write(item_row['unit'])
-        cols[2].write(item_row.get('category', 'N/A')) # Use .get for safety
+        cols[2].write(item_row.get('category', 'N/A'))
         cols[3].write(f"{item_row.get('current_stock', 0):.2f}")
         cols[4].write(f"{item_row.get('reorder_point', 0):.2f}")
         cols[5].checkbox("", value=is_active, disabled=True, key=f"active_disp_paginated_v2_{item_id}")
@@ -229,7 +215,6 @@ else:
             if current_values_for_edit:
                 with st.form(key=f"edit_form_inline_v2_{item_id}"):
                     st.subheader(f"✏️ Editing: {current_values_for_edit.get('name', 'Item')}")
-                    # ... (Edit form fields - ensure unique keys with item_id)
                     st.caption(f"ID: {item_id} | Stock: {current_values_for_edit.get('current_stock',0):.2f}")
                     edit_form_col1, edit_form_col2 = st.columns(2)
                     with edit_form_col1:
@@ -238,7 +223,13 @@ else:
                         e_category = st.text_input("Category", value=current_values_for_edit.get('category', ''), key=f"e_cat_v2_{item_id}")
                         e_sub_category = st.text_input("Sub-Category", value=current_values_for_edit.get('sub_category', ''), key=f"e_subcat_v2_{item_id}")
                     with edit_form_col2:
-                        e_permitted = st.text_input("Permitted Depts", value=current_values_for_edit.get('permitted_departments', '') or '', key=f"e_depts_v2_{item_id}")
+                        # Suggestion 3: Change edit form label "Permitted Depts" to "Permitted Departments"
+                        e_permitted = st.text_input(
+                            "Permitted Departments", # Changed label
+                            value=current_values_for_edit.get('permitted_departments', '') or '',
+                            key=f"e_depts_v2_{item_id}",
+                            help="Enter department names separated by commas (e.g., Kitchen, Bar)." # Added help text here too
+                        )
                         e_rp = st.number_input("Reorder At", min_value=0.0, value=float(current_values_for_edit.get('reorder_point', 0.0)), step=0.1, format="%.2f", key=f"e_rp_v2_{item_id}")
                     e_notes = st.text_area("Notes", value=current_values_for_edit.get('notes', '') or '', key=f"e_notes_v2_{item_id}")
                     

@@ -28,7 +28,7 @@ from app.services import item_service
 from app.services import supplier_service
 from app.services import stock_service
 from app.services import indent_service
-from app.core.constants import STATUS_SUBMITTED
+# STATUS_SUBMITTED is already imported from app.core.constants above, no need to re-import separately
 
 # NOTE: Item Master functions and Department Helper functions have been MOVED to app/services/item_service.py
 
@@ -54,7 +54,6 @@ def run_dashboard():
     # --- Optional: Fetch data for Pending Indents KPI ---
     pending_indents_count = 0
     try:
-        # Assuming STATUS_SUBMITTED is available/imported
         indents_df = indent_service.get_indents(engine, status_filter=STATUS_SUBMITTED)
         pending_indents_count = len(indents_df)
     except Exception as e:
@@ -83,7 +82,8 @@ def run_dashboard():
         except Exception as e:
             st.error(f"Error calculating low stock items: {e}")
 
-    st.header("📊 Key Performance Indicators")
+    # Changed st.header to st.subheader
+    st.subheader("📊 Key Performance Indicators")
     
     # Use 4 columns if adding the new KPI, otherwise 3
     kpi_cols = st.columns(4 if pending_indents_count is not None else 3) # Adjust number of columns
@@ -96,7 +96,8 @@ def run_dashboard():
     
     st.divider()
 
-    st.header("⚠️ Low Stock Items Alert")
+    # Changed st.header to st.subheader
+    st.subheader("⚠️ Low Stock Items Alert")
     if low_stock_count > 0:
         st.dataframe(
             low_stock_df,
@@ -104,14 +105,15 @@ def run_dashboard():
             hide_index=True,
             column_config={
                  "name": st.column_config.TextColumn("Item Name"),
-                 "unit": st.column_config.TextColumn("UoM", width="small", help="Unit of Measure"), # Changed "Unit" to "UoM"
+                 "unit": st.column_config.TextColumn("UoM", width="small", help="Unit of Measure"),
                  "current_stock": st.column_config.NumberColumn("Current Stock", format="%.2f", width="small"),
-                 "reorder_point": st.column_config.NumberColumn("Reorder At", format="%.2f", width="small"), # Changed "Reorder Point" to "Reorder At"
+                 "reorder_point": st.column_config.NumberColumn("Reorder At", format="%.2f", width="small"),
             }
         )
     elif total_active_items > 0:
         st.info("👍 All item stock levels are currently above their reorder points.")
     else:
         st.info("No active items found in the system to assess stock levels.")
+
 if __name__ == "__main__":
     run_dashboard()

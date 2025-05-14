@@ -16,7 +16,7 @@ try:
     from app.core.constants import (
         ALL_INDENT_STATUSES, STATUS_SUBMITTED, STATUS_PROCESSING, STATUS_COMPLETED, STATUS_CANCELLED,
         ITEM_STATUS_PENDING_ISSUE, ITEM_STATUS_FULLY_ISSUED, ITEM_STATUS_PARTIALLY_ISSUED,
-        ITEM_STATUS_CANCELLED 
+        ITEM_STATUS_CANCELLED_ITEM 
     )
 except ImportError as e:
     st.error(f"Import error in 5_Indents.py: {e}. Please ensure all service files and utility modules are correctly placed and named.")
@@ -751,7 +751,7 @@ elif st.session_state.active_indent_section == "process":
                     item_display_cols[5].caption(row['item_status'])
 
                     max_issuable_qty = min(row['qty_remaining_to_issue'], row['stock_on_hand'])
-                    is_disabled = row['item_status'] in [ITEM_STATUS_FULLY_ISSUED, ITEM_STATUS_CANCELLED] or max_issuable_qty <= 0
+                    is_disabled = row['item_status'] in [ITEM_STATUS_FULLY_ISSUED, ITEM_STATUS_CANCELLED_ITEM] or max_issuable_qty <= 0
 
                     item_display_cols[6].number_input(
                         "Qty to Issue Now", 

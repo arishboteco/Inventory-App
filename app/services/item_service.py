@@ -4,7 +4,7 @@ import traceback
 from typing import Any, Optional, Dict, List, Tuple, Set
 
 import pandas as pd
-import streamlit as st # Only for type hinting @st.cache_data, not for UI elements
+import streamlit as st # Only for type hinting @st.cache_data
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
@@ -18,6 +18,7 @@ from app.db.database_utils import fetch_data
 def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.DataFrame:
     """
     Fetches all items, optionally including inactive ones, with their current stock.
+    This version does NOT select created_at or updated_at from the items table.
     Args:
         _engine: SQLAlchemy database engine instance.
         include_inactive: Flag to include inactive items.
@@ -36,7 +37,8 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
 def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
     """
     Fetches details for a specific item by its ID.
-    (This function is NOT CACHED, so no .clear() method is available)
+    This version does NOT select created_at or updated_at from the items table.
+    (This function is NOT CACHED)
     Args:
         engine: SQLAlchemy database engine instance.
         item_id: The ID of the item to fetch.
@@ -55,6 +57,8 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
 def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Adds a new item to the database.
+    This version does NOT insert created_at or updated_at into the items table.
+    It correctly handles None or empty strings for 'notes' and 'permitted_departments'.
     Args:
         engine: SQLAlchemy database engine instance.
         details: Dictionary containing item details.
@@ -63,29 +67,42 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """
     if engine is None: return False, "Database engine not available."
     required = ["name", "unit"]
-    if not all(details.get(k) and str(details.get(k)).strip() for k in required): # Check for empty strings too
+    if not all(details.get(k) and str(details.get(k)).strip() for k in required): 
         missing = [k for k in required if not details.get(k) or not str(details.get(k)).strip()]
         return False, f"Missing or empty required fields: {', '.join(missing)}"
     
+    # Robust handling for notes
     notes_value_from_details = details.get("notes")
-    cleaned_notes_for_db = notes_value_from_details.strip() if isinstance(notes_value_from_details, str) and notes_value_from_details.strip() else None
+    cleaned_notes_for_db = None
+    if isinstance(notes_value_from_details, str):
+        cleaned_notes_for_db = notes_value_from_details.strip()
+        if not cleaned_notes_for_db: 
+            cleaned_notes_for_db = None
 
+    # Robust handling for permitted_departments
+    permitted_departments_value = details.get("permitted_departments")
+    cleaned_permitted_departments = None
+    if isinstance(permitted_departments_value, str):
+        cleaned_permitted_departments = permitted_departments_value.strip()
+        if not cleaned_permitted_departments: 
+            cleaned_permitted_departments = None
+    
     params = {
         "name": details["name"].strip(), 
         "unit": details["unit"].strip(), 
         "category": (details.get("category", "").strip() or "Uncategorized"),
         "sub_category": (details.get("sub_category", "").strip() or "General"),
-        "permitted_departments": (details.get("permitted_departments", "").strip() or None),
+        "permitted_departments": cleaned_permitted_departments, # Use the cleaned value
         "reorder_point": details.get("reorder_point", 0.0),
         "current_stock": details.get("current_stock", 0.0),
-        "notes": cleaned_notes_for_db,
+        "notes": cleaned_notes_for_db, # Use the cleaned value
         "is_active": details.get("is_active", True)
     }
     query = text("""
         INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
         VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
         RETURNING item_id;
-    """)
+    """) # No created_at, updated_at
     try:
         with engine.connect() as connection: 
             with connection.begin():
@@ -104,6 +121,7 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
 def update_item_details(engine: Engine, item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Updates details for an existing item.
+    This version does NOT set an 'updated_at' column.
     Args:
         engine: SQLAlchemy database engine instance.
         item_id: The ID of the item to update.
@@ -140,7 +158,7 @@ def update_item_details(engine: Engine, item_id: int, updates: Dict[str, Any]) -
                  params[key] = current_val
 
     if not set_clauses: return False, "No valid fields provided for update."
-    query_str = f"UPDATE items SET {', '.join(set_clauses)}, updated_at = NOW() WHERE item_id = :item_id;"
+    query_str = f"UPDATE items SET {', '.join(set_clauses)} WHERE item_id = :item_id;" # No updated_at = NOW()
     query = text(query_str)
     
     try:
@@ -161,7 +179,7 @@ def update_item_details(engine: Engine, item_id: int, updates: Dict[str, Any]) -
 
 def deactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
     """
-    Deactivates an item.
+    Deactivates an item. This version does NOT set updated_at.
     Args:
         engine: SQLAlchemy database engine instance.
         item_id: The ID of the item to deactivate.
@@ -170,7 +188,7 @@ def deactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
     """
     if engine is None: 
         return False, "Database engine not available."
-    query = text("UPDATE items SET is_active = FALSE, updated_at = NOW() WHERE item_id = :item_id;")
+    query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id;") # No updated_at = NOW()
     try:
         with engine.connect() as connection: 
             with connection.begin(): result = connection.execute(query, {"item_id": item_id})
@@ -185,7 +203,7 @@ def deactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
 
 def reactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
     """
-    Reactivates an item.
+    Reactivates an item. This version does NOT set updated_at.
     Args:
         engine: SQLAlchemy database engine instance.
         item_id: The ID of the item to reactivate.
@@ -194,7 +212,7 @@ def reactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
     """
     if engine is None: 
         return False, "Database engine not available."
-    query = text("UPDATE items SET is_active = TRUE, updated_at = NOW() WHERE item_id = :item_id;")
+    query = text("UPDATE items SET is_active = TRUE WHERE item_id = :item_id;") # No updated_at = NOW()
     try:
         with engine.connect() as connection: 
             with connection.begin(): result = connection.execute(query, {"item_id": item_id})

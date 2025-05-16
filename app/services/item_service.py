@@ -1,56 +1,81 @@
 # app/services/item_service.py
-import streamlit as st
-import pandas as pd
-from typing import Any, Optional, Dict, List, Tuple, Set
-import re 
 from datetime import datetime, date, timedelta
-import traceback # For detailed error logging
+import traceback 
+from typing import Any, Optional, Dict, List, Tuple, Set
 
+import pandas as pd
+import streamlit as st # Only for type hinting @st.cache_data, not for UI elements
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.engine import Engine
 
-from app.db.database_utils import fetch_data # This function takes 'engine'
+from app.db.database_utils import fetch_data
 
 # ─────────────────────────────────────────────────────────
 # ITEM MASTER FUNCTIONS
 # ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner="Fetching item data...")
-def get_all_items_with_stock(_engine, include_inactive=False) -> pd.DataFrame:
-    if _engine is None: return pd.DataFrame()
+def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.DataFrame:
+    """
+    Fetches all items, optionally including inactive ones, with their current stock.
+    Args:
+        _engine: SQLAlchemy database engine instance.
+        include_inactive: Flag to include inactive items.
+    Returns:
+        Pandas DataFrame of items.
+    """
+    if _engine is None: 
+        print("ERROR [item_service.get_all_items_with_stock]: Database engine not available.")
+        return pd.DataFrame()
     query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
-    return fetch_data(_engine, query) # Pass _engine to fetch_data
+    return fetch_data(_engine, query)
 
-def get_item_details(engine, item_id: int) -> Optional[Dict[str, Any]]:
-    # This function is not cached, so 'engine' is the correct param name
-    if engine is None: return None
+def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Fetches details for a specific item by its ID.
+    (This function is NOT CACHED, so no .clear() method is available)
+    Args:
+        engine: SQLAlchemy database engine instance.
+        item_id: The ID of the item to fetch.
+    Returns:
+        Dictionary of item details or None if not found.
+    """
+    if engine is None: 
+        print("ERROR [item_service.get_item_details]: Database engine not available.")
+        return None
     query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
-    df = fetch_data(engine, query, {"item_id": item_id}) # Pass 'engine'
+    df = fetch_data(engine, query, {"item_id": item_id}) 
     if not df.empty:
         return df.iloc[0].to_dict()
     return None
 
-def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
-    # Not cached
+def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Adds a new item to the database.
+    Args:
+        engine: SQLAlchemy database engine instance.
+        details: Dictionary containing item details.
+    Returns:
+        Tuple (success_status, message).
+    """
     if engine is None: return False, "Database engine not available."
     required = ["name", "unit"]
-    if not all(details.get(k) for k in required):
-        missing = [k for k in required if not details.get(k)]
-        return False, f"Missing required fields: {', '.join(missing)}"
+    if not all(details.get(k) and str(details.get(k)).strip() for k in required): # Check for empty strings too
+        missing = [k for k in required if not details.get(k) or not str(details.get(k)).strip()]
+        return False, f"Missing or empty required fields: {', '.join(missing)}"
     
     notes_value_from_details = details.get("notes")
-    cleaned_notes_for_db = notes_value_from_details.strip() if isinstance(notes_value_from_details, str) else None
-    if cleaned_notes_for_db == "":
-        cleaned_notes_for_db = None
+    cleaned_notes_for_db = notes_value_from_details.strip() if isinstance(notes_value_from_details, str) and notes_value_from_details.strip() else None
 
     params = {
-        "name": details.get("name", "").strip(),
-        "unit": details.get("unit", "").strip(),
-        "category": (details.get("category") or "Uncategorized").strip(),
-        "sub_category": (details.get("sub_category") or "General").strip(),
-        "permitted_departments": details.get("permitted_departments"),
+        "name": details["name"].strip(), 
+        "unit": details["unit"].strip(), 
+        "category": (details.get("category", "").strip() or "Uncategorized"),
+        "sub_category": (details.get("sub_category", "").strip() or "General"),
+        "permitted_departments": (details.get("permitted_departments", "").strip() or None),
         "reorder_point": details.get("reorder_point", 0.0),
         "current_stock": details.get("current_stock", 0.0),
         "notes": cleaned_notes_for_db,
@@ -62,7 +87,7 @@ def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
         RETURNING item_id;
     """)
     try:
-        with engine.connect() as connection: # Uses 'engine'
+        with engine.connect() as connection: 
             with connection.begin():
                 result = connection.execute(query, params)
                 new_id = result.scalar_one_or_none()
@@ -73,118 +98,211 @@ def add_new_item(engine, details: Dict[str, Any]) -> Tuple[bool, str]:
         else: return False, "Failed to add item (no ID returned)."
     except IntegrityError: return False, f"Item name '{params['name']}' already exists. Choose a unique name."
     except (SQLAlchemyError, Exception) as e:
-        st.error(f"Database error adding item: {e}"); return False, "Database error adding item."
+        print(f"ERROR [item_service.add_new_item]: Database error adding item: {e}\n{traceback.format_exc()}")
+        return False, "A database error occurred while adding the item."
 
-def update_item_details(engine, item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
-    # Not cached
+def update_item_details(engine: Engine, item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Updates details for an existing item.
+    Args:
+        engine: SQLAlchemy database engine instance.
+        item_id: The ID of the item to update.
+        updates: Dictionary of fields to update.
+    Returns:
+        Tuple (success_status, message).
+    """
     if engine is None: return False, "Database engine not available."
     if not item_id or not updates: return False, "Invalid item ID or no updates provided."
+    
     set_clauses = []
     params = {"item_id": item_id}
     allowed_fields = ["name", "unit", "category", "sub_category", "permitted_departments", "reorder_point", "notes"]
+    
+    if "name" in updates and not updates["name"].strip(): return False, "Item Name cannot be empty."
+    if "unit" in updates and not updates["unit"].strip(): return False, "Unit of Measure (UoM) cannot be empty."
+
     for key, value in updates.items():
         if key in allowed_fields:
             set_clauses.append(f"{key} = :{key}")
-            if isinstance(value, str): params[key] = value.strip()
-            elif key == "reorder_point" and value is not None:
-                 try: params[key] = float(value)
-                 except (ValueError, TypeError): return False, f"Invalid numeric value for reorder_point: {value}"
-            else: params[key] = value
+            current_val = value
+            if isinstance(current_val, str):
+                current_val = current_val.strip()
+                if key in ["category", "sub_category"] and not current_val: 
+                    params[key] = "Uncategorized" if key == "category" else "General"
+                elif key in ["permitted_departments", "notes"] and not current_val: 
+                    params[key] = None
+                else:
+                    params[key] = current_val
+            elif key == "reorder_point" and current_val is not None:
+                 try: params[key] = float(current_val)
+                 except (ValueError, TypeError): return False, f"Invalid numeric value for reorder_point: {current_val}"
+            else: 
+                 params[key] = current_val
+
     if not set_clauses: return False, "No valid fields provided for update."
-    query = text(f"UPDATE items SET {', '.join(set_clauses)} WHERE item_id = :item_id;")
+    query_str = f"UPDATE items SET {', '.join(set_clauses)}, updated_at = NOW() WHERE item_id = :item_id;"
+    query = text(query_str)
+    
     try:
-        with engine.connect() as connection: # Uses 'engine'
+        with engine.connect() as connection: 
             with connection.begin(): result = connection.execute(query, params)
         if result.rowcount > 0:
             get_all_items_with_stock.clear()
             get_distinct_departments_from_items.clear()
-            # If get_item_details were cached, you'd clear it here too, perhaps with specific args if it's parameterized
-            return True, f"Item ID {item_id} updated."
+            return True, f"Item ID {item_id} updated successfully."
         else:
-            existing_item = get_item_details(engine, item_id) # Uses 'engine'
+            existing_item = get_item_details(engine, item_id) 
             if existing_item is None: return False, f"Update failed: Item ID {item_id} not found."
-            else: return False, f"Item ID {item_id} found, but no changes were made."
+            return True, f"No changes detected for Item ID {item_id}. Update considered successful." 
     except IntegrityError: return False, f"Update failed: Potential duplicate name '{updates.get('name')}'."
     except (SQLAlchemyError, Exception) as e:
-        st.error(f"Database error updating item {item_id}: {e}"); return False, "Database error updating item."
+        print(f"ERROR [item_service.update_item_details]: Database error updating item {item_id}: {e}\n{traceback.format_exc()}")
+        return False, "A database error occurred while updating the item."
 
-def deactivate_item(engine, item_id: int) -> bool:
-    # Not cached
-    if engine is None: return False
-    query = text("UPDATE items SET is_active = FALSE WHERE item_id = :item_id;")
+def deactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
+    """
+    Deactivates an item.
+    Args:
+        engine: SQLAlchemy database engine instance.
+        item_id: The ID of the item to deactivate.
+    Returns:
+        Tuple (success_status, message).
+    """
+    if engine is None: 
+        return False, "Database engine not available."
+    query = text("UPDATE items SET is_active = FALSE, updated_at = NOW() WHERE item_id = :item_id;")
     try:
-        with engine.connect() as connection: # Uses 'engine'
+        with engine.connect() as connection: 
             with connection.begin(): result = connection.execute(query, {"item_id": item_id})
         if result.rowcount > 0:
-            get_all_items_with_stock.clear(); get_distinct_departments_from_items.clear(); return True
-        return False
-    except (SQLAlchemyError, Exception) as e: st.error(f"Error deactivating item {item_id}: {e}"); return False
+            get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear()
+            return True, "Item deactivated successfully."
+        return False, "Item not found or already inactive."
+    except (SQLAlchemyError, Exception) as e: 
+        print(f"ERROR [item_service.deactivate_item]: Error deactivating item {item_id}: {e}\n{traceback.format_exc()}")
+        return False, "A database error occurred."
 
-def reactivate_item(engine, item_id: int) -> bool:
-    # Not cached
-    if engine is None: return False
-    query = text("UPDATE items SET is_active = TRUE WHERE item_id = :item_id;")
+def reactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
+    """
+    Reactivates an item.
+    Args:
+        engine: SQLAlchemy database engine instance.
+        item_id: The ID of the item to reactivate.
+    Returns:
+        Tuple (success_status, message).
+    """
+    if engine is None: 
+        return False, "Database engine not available."
+    query = text("UPDATE items SET is_active = TRUE, updated_at = NOW() WHERE item_id = :item_id;")
     try:
-        with engine.connect() as connection: # Uses 'engine'
+        with engine.connect() as connection: 
             with connection.begin(): result = connection.execute(query, {"item_id": item_id})
         if result.rowcount > 0:
-            get_all_items_with_stock.clear(); get_distinct_departments_from_items.clear(); return True
-        return False
-    except (SQLAlchemyError, Exception) as e: st.error(f"Error reactivating item {item_id}: {e}"); return False
+            get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear()
+            return True, "Item reactivated successfully."
+        return False, "Item not found or already active."
+    except (SQLAlchemyError, Exception) as e: 
+        print(f"ERROR [item_service.reactivate_item]: Error reactivating item {item_id}: {e}\n{traceback.format_exc()}")
+        return False, "A database error occurred."
 
+# ─────────────────────────────────────────────────────────
+# DEPARTMENT & ITEM HISTORY/SUGGESTIONS FUNCTIONS
+# ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner="Fetching department list...")
-def get_distinct_departments_from_items(_engine) -> List[str]: # Correctly uses _engine
-    if _engine is None: return []
+def get_distinct_departments_from_items(_engine: Engine) -> List[str]: 
+    """
+    Fetches a sorted list of unique, non-empty department names from active items.
+    Args:
+        _engine: SQLAlchemy database engine instance.
+    Returns:
+        List of distinct department names.
+    """
+    if _engine is None: 
+        print("ERROR [item_service.get_distinct_departments_from_items]: Database engine not available.")
+        return []
     query = text("""
         SELECT permitted_departments FROM items
         WHERE is_active = TRUE AND permitted_departments IS NOT NULL AND permitted_departments <> '' AND permitted_departments <> ' ';
     """)
     departments_set: Set[str] = set()
     try:
-        with _engine.connect() as connection: # Uses _engine
+        with _engine.connect() as connection: 
             result = connection.execute(query)
             rows = result.fetchall()
-        for row in rows:
-            permitted_str = row[0]
-            if permitted_str:
+        for row_tuple in rows: 
+            permitted_str = row_tuple[0]
+            if permitted_str: 
                 departments = {dept.strip() for dept in permitted_str.split(',') if dept.strip()}
                 departments_set.update(departments)
         return sorted(list(departments_set))
-    except (SQLAlchemyError, Exception) as e: st.error(f"Error fetching distinct departments: {e}"); return []
+    except (SQLAlchemyError, Exception) as e: 
+        print(f"ERROR [item_service.get_distinct_departments_from_items]: Error fetching distinct departments: {e}\n{traceback.format_exc()}")
+        return []
 
-# ─────────────────────────────────────────────────────────
-# NEW FUNCTIONS FOR ITEM HISTORY & SUGGESTIONS
-# ─────────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
-def get_item_order_history_details(_engine, item_id: int, department_name: Optional[str] = None) -> Dict[str, Any]: # Parameter is _engine
-    if _engine is None or item_id is None: # Check _engine
+def get_item_order_history_details(_engine: Engine, item_id: int, department_name: Optional[str] = None) -> Dict[str, Any]: 
+    """
+    Fetches last ordered date and median requested quantity for an item, optionally filtered by department.
+    Args:
+        _engine: SQLAlchemy database engine instance.
+        item_id: The ID of the item.
+        department_name: Optional department name to filter history.
+    Returns:
+        Dictionary with 'last_ordered_date' and 'median_quantity'.
+    """
+    if _engine is None or item_id is None: 
+        print("ERROR [item_service.get_item_order_history_details]: Database engine or item_id not available.")
         return {"last_ordered_date": None, "median_quantity": None}
-    params = {"item_id": item_id}
+    
+    params: Dict[str, Any] = {"item_id": item_id}
     date_query_conditions = ["ii.item_id = :item_id"]
     qty_query_conditions = ["ii.item_id = :item_id"]
+    
     if department_name:
         date_query_conditions.append("ind.department = :department_name")
         qty_query_conditions.append("ind.department = :department_name")
         params["department_name"] = department_name
+        
     date_where_clause = " AND ".join(date_query_conditions)
     qty_where_clause = " AND ".join(qty_query_conditions)
+    
     last_ordered_date_query = text(f"SELECT MAX(ind.date_submitted) AS last_ordered_date FROM indent_items ii JOIN indents ind ON ii.indent_id = ind.indent_id WHERE {date_where_clause};")
     median_quantity_query = text(f"SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY ii.requested_qty) AS median_quantity FROM indent_items ii JOIN indents ind ON ii.indent_id = ind.indent_id WHERE {qty_where_clause};")
-    last_date_str = None; median_qty_val = None
+    
+    last_date_str: Optional[str] = None
+    median_qty_val: Optional[float] = None
+    
     try:
-        with _engine.connect() as connection: # Use _engine
+        with _engine.connect() as connection: 
             date_result = connection.execute(last_ordered_date_query, params).scalar_one_or_none()
-            if date_result: last_date_str = pd.to_datetime(date_result).strftime("%d-%b-%Y") if pd.notna(date_result) else None
+            if date_result and pd.notna(date_result): 
+                last_date_str = pd.to_datetime(date_result).strftime("%d-%b-%Y")
+            
             qty_result = connection.execute(median_quantity_query, params).scalar_one_or_none()
-            if qty_result is not None: median_qty_val = float(qty_result)
+            if qty_result is not None: 
+                median_qty_val = float(qty_result)
     except Exception as e:
-        print(f"Warning: Could not fetch full order history for item {item_id}, dept {department_name}: {type(e).__name__} - {e}")
-        # print(traceback.format_exc()) # Keep for detailed debugging if needed by user
+        print(f"WARNING [item_service.get_item_order_history_details]: Could not fetch full order history for item {item_id}, dept {department_name}: {type(e).__name__} - {e}")
     return {"last_ordered_date": last_date_str, "median_quantity": median_qty_val}
 
 @st.cache_data(ttl=3600, show_spinner="Analyzing item suggestions...")
-def get_suggested_items_for_department(_engine, department_name: str, top_n: int = 5, days_recency: int = 90) -> List[Dict[str, Any]]: # Parameter is _engine
-    if _engine is None or not department_name: return [] # Check _engine
+def get_suggested_items_for_department(_engine: Engine, department_name: str, top_n: int = 5, days_recency: int = 90) -> List[Dict[str, Any]]: 
+    """
+    Suggests items for a department based on recent order frequency.
+    Args:
+        _engine: SQLAlchemy database engine instance.
+        department_name: The name of the department.
+        top_n: Number of suggestions to return.
+        days_recency: How many days back to consider for recency.
+    Returns:
+        List of suggested item dictionaries.
+    """
+    if _engine is None or not department_name: 
+        print("ERROR [item_service.get_suggested_items_for_department]: Database engine or department_name not available.")
+        return []
+        
     cutoff_date_val = datetime.now() - timedelta(days=days_recency)
     query = text("""
         SELECT i.item_id, i.name AS item_name, i.unit, COUNT(ii.item_id) as order_frequency
@@ -194,11 +312,9 @@ def get_suggested_items_for_department(_engine, department_name: str, top_n: int
     """)
     params = {"department_name": department_name, "cutoff_date": cutoff_date_val, "top_n": top_n}
     try:
-        with _engine.connect() as connection: # Use _engine
+        with _engine.connect() as connection: 
             result = connection.execute(query, params).mappings().all()
             return [dict(row) for row in result]
     except Exception as e:
-        st.warning(f"Could not fetch suggested items for {department_name}. Error: {type(e).__name__} - {e}")
-        print(f"ERROR in get_suggested_items_for_department for dept '{department_name}':")
-        print(traceback.format_exc()) # This will print the full stack trace to the console
+        print(f"ERROR [item_service.get_suggested_items_for_department]: Could not fetch suggested items for dept '{department_name}'. Error: {type(e).__name__} - {e}\n{traceback.format_exc()}")
         return []

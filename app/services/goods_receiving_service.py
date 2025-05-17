@@ -171,7 +171,7 @@ def create_grn(engine: Engine, grn_data: Dict[str, Any], items_received_data: Li
                         "user_id": header_p['received_by_user_id'],
                         "po_id": po_id_to_update, 
                         "fully_received": PO_STATUS_FULLY_RECEIVED, 
-                        "cancelled": PO_STATUS_CANCELLED 
+                        "cancelled": PO_STATUS_CANCELLED_PO 
                     })
                     
                     # Clear caches for PO service as its data has changed

@@ -15,7 +15,7 @@ from app.services import purchase_order_service
 from app.core.constants import (
     TX_RECEIVING, 
     PO_STATUS_PARTIALLY_RECEIVED, PO_STATUS_FULLY_RECEIVED,
-    PO_STATUS_ORDERED, PO_STATUS_CANCELLED # Make sure PO_STATUS_CANCELLED is used if needed
+    PO_STATUS_ORDERED, PO_STATUS_CANCELLED_PO # Make sure PO_STATUS_CANCELLED is used if needed
 )
 
 # ─────────────────────────────────────────────────────────

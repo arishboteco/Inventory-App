@@ -13,7 +13,7 @@ try:
     from app.services import goods_receiving_service 
     from app.core.constants import (
         ALL_PO_STATUSES, PO_STATUS_DRAFT, PO_STATUS_ORDERED,
-        PO_STATUS_PARTIALLY_RECEIVED, PO_STATUS_FULLY_RECEIVED, PO_STATUS_CANCELLED
+        PO_STATUS_PARTIALLY_RECEIVED, PO_STATUS_FULLY_RECEIVED, PO_STATUS_CANCELLED_PO
     )
 except ImportError as e:
     st.error(f"Import error in 6_Purchase_Orders.py: {e}. Please ensure all modules are correctly placed.")

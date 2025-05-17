@@ -2,11 +2,14 @@
 import streamlit as st
 import pandas as pd
 from typing import Any, Dict, List, Tuple, Optional
-import math # For pagination
+import math 
 
 try:
     from app.db.database_utils import connect_db
     from app.services import supplier_service
+    # No specific UI placeholders from constants.py are heavily used here yet,
+    # but good to keep imports organized if they are added later.
+    # from app.core.constants import SOME_CONSTANT 
 except ImportError as e:
     st.error(f"Import error in 2_Suppliers.py: {e}.")
     st.stop()
@@ -14,17 +17,17 @@ except Exception as e:
     st.error(f"An unexpected error occurred during import in 2_Suppliers.py: {e}")
     st.stop()
 
-# --- Session State ---
-if "supplier_to_edit_id" not in st.session_state: st.session_state.supplier_to_edit_id = None
-if "edit_supplier_form_values" not in st.session_state: st.session_state.edit_supplier_form_values = None
-if "show_edit_form_for_supplier_id" not in st.session_state: st.session_state.show_edit_form_for_supplier_id = None
-if "show_inactive_suppliers" not in st.session_state: st.session_state.show_inactive_suppliers = False
-if "current_page_suppliers" not in st.session_state: st.session_state.current_page_suppliers = 1
-if "suppliers_per_page" not in st.session_state: st.session_state.suppliers_per_page = 10
-if "supplier_search_term" not in st.session_state: st.session_state.supplier_search_term = ""
+# --- Session State (prefixed with pg2_ for page-specific scope) ---
+if "pg2_supplier_to_edit_id" not in st.session_state: st.session_state.pg2_supplier_to_edit_id = None
+if "pg2_edit_supplier_form_values" not in st.session_state: st.session_state.pg2_edit_supplier_form_values = None
+if "pg2_show_edit_form_for_supplier_id" not in st.session_state: st.session_state.pg2_show_edit_form_for_supplier_id = None
+if "pg2_show_inactive_suppliers" not in st.session_state: st.session_state.pg2_show_inactive_suppliers = False
+if "pg2_current_page_suppliers" not in st.session_state: st.session_state.pg2_current_page_suppliers = 1
+if "pg2_suppliers_per_page" not in st.session_state: st.session_state.pg2_suppliers_per_page = 10 # Default items per page
+if "pg2_supplier_search_term" not in st.session_state: st.session_state.pg2_supplier_search_term = ""
 
-@st.cache_data(ttl=60)
-def fetch_all_suppliers_df(_engine, show_inactive: bool) -> pd.DataFrame:
+@st.cache_data(ttl=60) # Cache supplier list
+def fetch_all_suppliers_df_pg2(_engine, show_inactive: bool) -> pd.DataFrame: # Page-specific cache function name
     return supplier_service.get_all_suppliers(_engine, include_inactive=show_inactive)
 
 st.title("🤝 Supplier Management")
@@ -32,222 +35,235 @@ st.write("Maintain your list of suppliers: add new ones, update details, or mana
 st.divider()
 
 engine = connect_db()
-if not engine: st.error("Database connection failed."); st.stop()
+if not engine: 
+    st.error("Database connection failed. Supplier Management functionality is unavailable.")
+    st.stop()
 
 # --- ADD NEW SUPPLIER Section ---
 with st.expander("➕ Add New Supplier Record", expanded=False):
-    with st.form("add_supplier_form_v2", clear_on_submit=True):
+    # Unique form key for this page
+    with st.form("add_supplier_form_pg2_v3", clear_on_submit=True): 
         st.subheader("Enter New Supplier Details")
-        form_col1, form_col2 = st.columns(2)
-        with form_col1:
-            s_name = st.text_input("Supplier Name*", help="Unique name for the supplier.", key="add_s_name")
-            s_contact_person = st.text_input(
+        form_col1_add_pg2, form_col2_add_pg2 = st.columns(2)
+        with form_col1_add_pg2:
+            s_name_add_pg2 = st.text_input("Supplier Name*", help="Unique name for the supplier.", key="add_s_name_pg2_v3")
+            s_contact_person_add_pg2 = st.text_input(
                 "Contact Person",
-                key="add_s_contact",
+                key="add_s_contact_pg2_v3",
                 help="Primary contact name at the supplier."
             )
-        with form_col2:
-            s_phone = st.text_input(
+        with form_col2_add_pg2:
+            s_phone_add_pg2 = st.text_input(
                 "Phone Number",
-                key="add_s_phone",
+                key="add_s_phone_pg2_v3",
                 help="Supplier's primary contact number (e.g., +91 9876543210)."
             )
-            s_email = st.text_input(
+            s_email_add_pg2 = st.text_input(
                 "Email Address",
-                key="add_s_email",
+                key="add_s_email_pg2_v3",
                 help="Supplier's primary email for correspondence (e.g., sales@supplier.com)."
             )
-        s_address = st.text_area(
+        s_address_add_pg2 = st.text_area(
             "Address",
-            key="add_s_address",
+            key="add_s_address_pg2_v3",
             help="Full business address of the supplier."
         )
-        s_notes = st.text_area("Notes", placeholder="Optional: any specific terms, payment details, etc.", key="add_s_notes")
+        s_notes_add_pg2 = st.text_area("Notes", placeholder="Optional: any specific terms, payment details, etc.", key="add_s_notes_pg2_v3")
 
         if st.form_submit_button("💾 Save Supplier Information"):
-            if not s_name:
+            if not s_name_add_pg2.strip(): # Check for empty stripped name
                 st.warning("Supplier Name is required.")
             else:
-                supplier_data = {
-                    "name": s_name.strip(),
-                    "contact_person": (s_contact_person or "").strip() or None,
-                    "phone": (s_phone or "").strip() or None,
-                    "email": (s_email or "").strip() or None,
-                    "address": (s_address or "").strip() or None,
-                    "notes": (s_notes or "").strip() or None,
-                    "is_active": True
+                supplier_data_add_pg2 = {
+                    "name": s_name_add_pg2.strip(),
+                    "contact_person": (s_contact_person_add_pg2.strip() or None), # Ensure None if empty after strip
+                    "phone": (s_phone_add_pg2.strip() or None),
+                    "email": (s_email_add_pg2.strip() or None),
+                    "address": (s_address_add_pg2.strip() or None),
+                    "notes": (s_notes_add_pg2.strip() or None),
+                    "is_active": True # New suppliers are active by default
                 }
-                success, message = supplier_service.add_supplier(engine, supplier_data)
-                if success:
-                    st.success(message)
-                    fetch_all_suppliers_df.clear()
+                success_add_pg2, message_add_pg2 = supplier_service.add_supplier(engine, supplier_data_add_pg2)
+                if success_add_pg2:
+                    st.success(message_add_pg2)
+                    fetch_all_suppliers_df_pg2.clear() # Clear page-specific cache
                     st.rerun()
                 else:
-                    st.error(message)
+                    st.error(message_add_pg2)
 st.divider()
 
 # --- VIEW & MANAGE EXISTING SUPPLIERS ---
 st.subheader("🔍 View & Manage Existing Suppliers")
 
-filter_s_col1, filter_s_col2 = st.columns([3,1])
-with filter_s_col1:
-    st.session_state.supplier_search_term = st.text_input(
+filter_s_col1_pg2, filter_s_col2_pg2 = st.columns([3,1])
+with filter_s_col1_pg2:
+    st.session_state.pg2_supplier_search_term = st.text_input(
         "Search Suppliers (by Name, Contact, Email)",
-        value=st.session_state.supplier_search_term,
-        key="supplier_search_input",
+        value=st.session_state.pg2_supplier_search_term,
+        key="supplier_search_input_pg2_v3", # Unique key
         placeholder="e.g., Fresh Produce Inc, John Doe, sales@..."
     )
-with filter_s_col2:
-    st.session_state.show_inactive_suppliers = st.toggle(
+with filter_s_col2_pg2:
+    st.session_state.pg2_show_inactive_suppliers = st.toggle(
         "Show Inactive",
-        value=st.session_state.show_inactive_suppliers,
-        key="show_inactive_suppliers_toggle_v2",
+        value=st.session_state.pg2_show_inactive_suppliers,
+        key="show_inactive_suppliers_toggle_pg2_v3", # Unique key
         help="Toggle to include inactive suppliers"
     )
 
-all_suppliers_df = fetch_all_suppliers_df(engine, st.session_state.show_inactive_suppliers)
-filtered_suppliers_df = all_suppliers_df
+all_suppliers_df_pg2 = fetch_all_suppliers_df_pg2(engine, st.session_state.pg2_show_inactive_suppliers)
+filtered_suppliers_df_pg2 = all_suppliers_df_pg2.copy() # Start with all (respecting inactive toggle)
 
-if st.session_state.supplier_search_term:
-    search_term = st.session_state.supplier_search_term.lower()
-    filtered_suppliers_df = all_suppliers_df[
-        all_suppliers_df['name'].astype(str).str.lower().str.contains(search_term, na=False) |
-        all_suppliers_df['contact_person'].astype(str).str.lower().str.contains(search_term, na=False) |
-        all_suppliers_df['email'].astype(str).str.lower().str.contains(search_term, na=False)
-    ]
+if st.session_state.pg2_supplier_search_term:
+    search_term_pg2 = st.session_state.pg2_supplier_search_term.lower()
+    # Ensure columns exist before trying to filter on them, and handle NaN safely
+    name_matches = filtered_suppliers_df_pg2['name'].astype(str).str.lower().str.contains(search_term_pg2, na=False)
+    contact_matches = filtered_suppliers_df_pg2['contact_person'].astype(str).str.lower().str.contains(search_term_pg2, na=False)
+    email_matches = filtered_suppliers_df_pg2['email'].astype(str).str.lower().str.contains(search_term_pg2, na=False)
+    filtered_suppliers_df_pg2 = filtered_suppliers_df_pg2[name_matches | contact_matches | email_matches]
 
-# CRITICAL FIX: Ensure all subsequent logic that uses paginated_suppliers_df is within this 'else' block
-if filtered_suppliers_df.empty:
-    st.info("No suppliers found matching your criteria." if st.session_state.supplier_search_term or st.session_state.show_inactive_suppliers else "No active suppliers found. Add suppliers or adjust filters.")
+
+if filtered_suppliers_df_pg2.empty:
+    st.info("No suppliers found matching your criteria." if st.session_state.pg2_supplier_search_term or st.session_state.pg2_show_inactive_suppliers else "No active suppliers found. Add suppliers or adjust filters.")
 else:
-    total_suppliers = len(filtered_suppliers_df)
-    st.write(f"Found {total_suppliers} supplier(s) matching your criteria.")
+    total_suppliers_pg2 = len(filtered_suppliers_df_pg2)
+    st.write(f"Found {total_suppliers_pg2} supplier(s) matching your criteria.")
 
-    s_items_per_page_options = [5, 10, 20, 50]
-    current_s_ipp_value = st.session_state.suppliers_per_page
-    if current_s_ipp_value not in s_items_per_page_options:
-        current_s_ipp_value = s_items_per_page_options[0]
-        st.session_state.suppliers_per_page = current_s_ipp_value
+    s_items_per_page_options_pg2 = [5, 10, 20, 50]
+    current_s_ipp_value_pg2 = st.session_state.pg2_suppliers_per_page
+    if current_s_ipp_value_pg2 not in s_items_per_page_options_pg2:
+        current_s_ipp_value_pg2 = s_items_per_page_options_pg2[0]
+        st.session_state.pg2_suppliers_per_page = current_s_ipp_value_pg2
         
-    st.session_state.suppliers_per_page = st.selectbox(
-        "Suppliers per page:", options=s_items_per_page_options,
-        index=s_items_per_page_options.index(current_s_ipp_value),
-        key="suppliers_per_page_selector_v2"
+    st.session_state.pg2_suppliers_per_page = st.selectbox(
+        "Suppliers per page:", options=s_items_per_page_options_pg2,
+        index=s_items_per_page_options_pg2.index(current_s_ipp_value_pg2),
+        key="suppliers_per_page_selector_pg2_v3" # Unique key
     )
     
-    s_total_pages = math.ceil(total_suppliers / st.session_state.suppliers_per_page)
-    if s_total_pages == 0: s_total_pages = 1
-    if st.session_state.current_page_suppliers > s_total_pages: st.session_state.current_page_suppliers = s_total_pages
-    if st.session_state.current_page_suppliers < 1: st.session_state.current_page_suppliers = 1
+    s_total_pages_pg2 = math.ceil(total_suppliers_pg2 / st.session_state.pg2_suppliers_per_page)
+    if s_total_pages_pg2 == 0: s_total_pages_pg2 = 1
+    if st.session_state.pg2_current_page_suppliers > s_total_pages_pg2: st.session_state.pg2_current_page_suppliers = s_total_pages_pg2
+    if st.session_state.pg2_current_page_suppliers < 1: st.session_state.pg2_current_page_suppliers = 1
         
-    s_page_nav_cols = st.columns(5)
-    if s_page_nav_cols[0].button("⏮️ First", key="s_first_page_v3", disabled=(st.session_state.current_page_suppliers == 1)): # incremented key version
-        st.session_state.current_page_suppliers = 1; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
-    if s_page_nav_cols[1].button("⬅️ Previous", key="s_prev_page_v3", disabled=(st.session_state.current_page_suppliers == 1)): # incremented key version
-        st.session_state.current_page_suppliers -= 1; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
-    s_page_nav_cols[2].write(f"Page {st.session_state.current_page_suppliers} of {s_total_pages}")
-    if s_page_nav_cols[3].button("Next ➡️", key="s_next_page_v3", disabled=(st.session_state.current_page_suppliers == s_total_pages)): # incremented key version
-        st.session_state.current_page_suppliers += 1; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
-    if s_page_nav_cols[4].button("Last ⏭️", key="s_last_page_v3", disabled=(st.session_state.current_page_suppliers == s_total_pages)): # incremented key version
-        st.session_state.current_page_suppliers = s_total_pages; st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
+    s_page_nav_cols_pg2 = st.columns(5)
+    if s_page_nav_cols_pg2[0].button("⏮️ First", key="s_first_page_pg2_v4", disabled=(st.session_state.pg2_current_page_suppliers == 1)): 
+        st.session_state.pg2_current_page_suppliers = 1; st.session_state.pg2_show_edit_form_for_supplier_id = None; st.rerun()
+    if s_page_nav_cols_pg2[1].button("⬅️ Previous", key="s_prev_page_pg2_v4", disabled=(st.session_state.pg2_current_page_suppliers == 1)): 
+        st.session_state.pg2_current_page_suppliers -= 1; st.session_state.pg2_show_edit_form_for_supplier_id = None; st.rerun()
+    s_page_nav_cols_pg2[2].write(f"Page {st.session_state.pg2_current_page_suppliers} of {s_total_pages_pg2}")
+    if s_page_nav_cols_pg2[3].button("Next ➡️", key="s_next_page_pg2_v4", disabled=(st.session_state.pg2_current_page_suppliers == s_total_pages_pg2)): 
+        st.session_state.pg2_current_page_suppliers += 1; st.session_state.pg2_show_edit_form_for_supplier_id = None; st.rerun()
+    if s_page_nav_cols_pg2[4].button("Last ⏭️", key="s_last_page_pg2_v4", disabled=(st.session_state.pg2_current_page_suppliers == s_total_pages_pg2)): 
+        st.session_state.pg2_current_page_suppliers = s_total_pages_pg2; st.session_state.pg2_show_edit_form_for_supplier_id = None; st.rerun()
 
-    s_start_idx = (st.session_state.current_page_suppliers - 1) * st.session_state.suppliers_per_page
-    s_end_idx = s_start_idx + st.session_state.suppliers_per_page
-    paginated_suppliers_df = filtered_suppliers_df.iloc[s_start_idx:s_end_idx] # Definition is here
+    s_start_idx_pg2 = (st.session_state.pg2_current_page_suppliers - 1) * st.session_state.pg2_suppliers_per_page
+    s_end_idx_pg2 = s_start_idx_pg2 + st.session_state.pg2_suppliers_per_page
+    paginated_suppliers_df_pg2 = filtered_suppliers_df_pg2.iloc[s_start_idx_pg2:s_end_idx_pg2]
 
-    s_cols_header = st.columns((3, 2, 2, 2, 1, 2))
-    s_headers = ["Supplier Name", "Contact Person", "Phone", "Email", "Active", "Actions"]
-    for col, header in zip(s_cols_header, s_headers): col.markdown(f"**{header}**")
+    s_cols_header_pg2 = st.columns((3, 2, 2, 2.5, 1, 2.5)) # Adjusted for email width
+    s_headers_pg2 = ["Supplier Name", "Contact Person", "Phone", "Email", "Active", "Actions"]
+    for col_s_h_pg2, header_s_h_pg2 in zip(s_cols_header_pg2, s_headers_pg2): 
+        col_s_h_pg2.markdown(f"**{header_s_h_pg2}**")
     st.divider()
 
-    # This loop (and everything inside it that depends on supplier_row or supplier_id)
-    # MUST be within the 'else' block.
-    for index, supplier_row in paginated_suppliers_df.iterrows(): # This is approx line 159 from your error
-        supplier_id = supplier_row['supplier_id']
-        supplier_name = supplier_row['name']
-        s_is_active = supplier_row['is_active']
+    for _, supplier_row_pg2 in paginated_suppliers_df_pg2.iterrows():
+        supplier_id_pg2 = supplier_row_pg2['supplier_id']
+        supplier_name_pg2 = supplier_row_pg2['name']
+        s_is_active_pg2 = supplier_row_pg2['is_active']
 
-        s_cols = st.columns((3, 2, 2, 2, 1, 2))
-        s_cols[0].write(supplier_name)
-        s_cols[1].write(supplier_row.get('contact_person') or "N/A")
-        s_cols[2].write(supplier_row.get('phone') or "N/A")
-        s_cols[3].write(supplier_row.get('email') or "N/A")
-        s_cols[4].checkbox("", value=s_is_active, disabled=True, key=f"s_active_disp_{supplier_id}")
+        s_cols_row_pg2 = st.columns((3, 2, 2, 2.5, 1, 2.5)) # Matched header
+        s_cols_row_pg2[0].write(supplier_name_pg2)
+        s_cols_row_pg2[1].write(supplier_row_pg2.get('contact_person') or "N/A")
+        s_cols_row_pg2[2].write(supplier_row_pg2.get('phone') or "N/A")
+        s_cols_row_pg2[3].write(supplier_row_pg2.get('email') or "N/A")
+        s_cols_row_pg2[4].checkbox("", value=s_is_active_pg2, disabled=True, key=f"s_active_disp_pg2_{supplier_id_pg2}") # Unique key
         
-        with s_cols[5]:
-            s_button_key_prefix = f"s_action_{supplier_id}"
-            if st.session_state.get('show_edit_form_for_supplier_id') == supplier_id:
-                if st.button("✖️ Cancel Edit", key=f"{s_button_key_prefix}_cancel_edit_v3", type="secondary"): # incremented key version
-                    st.session_state.show_edit_form_for_supplier_id = None; st.rerun()
+        with s_cols_row_pg2[5]: # Action buttons
+            s_button_key_prefix_pg2 = f"s_action_pg2_{supplier_id_pg2}" # Unique key prefix
+            if st.session_state.get('pg2_show_edit_form_for_supplier_id') == supplier_id_pg2:
+                if st.button("✖️ Cancel Edit", key=f"{s_button_key_prefix_pg2}_cancel_edit_v4", type="secondary", use_container_width=True): 
+                    st.session_state.pg2_show_edit_form_for_supplier_id = None
+                    st.rerun()
             else:
-                if s_is_active:
-                    if st.button("✏️ Edit", key=f"{s_button_key_prefix}_edit_v3", type="primary"): # incremented key version
-                        st.session_state.show_edit_form_for_supplier_id = supplier_id
-                        st.session_state.edit_supplier_form_values = supplier_service.get_supplier_details(engine, supplier_id)
+                action_buttons_cols_pg2 = st.columns(2) # For Edit and Activate/Deactivate side-by-side
+                if s_is_active_pg2:
+                    if action_buttons_cols_pg2[0].button("✏️", key=f"{s_button_key_prefix_pg2}_edit_v4", help="Edit Supplier", type="primary", use_container_width=True): 
+                        st.session_state.pg2_show_edit_form_for_supplier_id = supplier_id_pg2
+                        st.session_state.pg2_edit_supplier_form_values = supplier_service.get_supplier_details(engine, supplier_id_pg2)
                         st.rerun()
-                    if st.button("🗑️ Deact.", key=f"{s_button_key_prefix}_deact_v3", help="Deactivate"): # incremented key version
-                        if supplier_service.deactivate_supplier(engine, supplier_id):
-                            st.success(f"'{supplier_name}' deactivated."); fetch_all_suppliers_df.clear(); st.rerun()
-                        else: st.error(f"Failed to deactivate '{supplier_name}'.")
-                else:
-                    if st.button("✅ Reactivate", key=f"{s_button_key_prefix}_react_v3"): # incremented key version
-                        if supplier_service.reactivate_supplier(engine, supplier_id):
-                            st.success(f"'{supplier_name}' reactivated."); fetch_all_suppliers_df.clear(); st.rerun()
-                        else: st.error(f"Failed to reactivate '{supplier_name}'.")
-        st.divider() # Divider for each row
+                    if action_buttons_cols_pg2[1].button("🗑️", key=f"{s_button_key_prefix_pg2}_deact_v4", help="Deactivate Supplier", use_container_width=True): 
+                        success_deact_pg2, msg_deact_pg2 = supplier_service.deactivate_supplier(engine, supplier_id_pg2)
+                        if success_deact_pg2:
+                            st.success(msg_deact_pg2); fetch_all_suppliers_df_pg2.clear(); st.rerun()
+                        else: st.error(msg_deact_pg2)
+                else: # Supplier is inactive
+                    if action_buttons_cols_pg2[0].button("✅", key=f"{s_button_key_prefix_pg2}_react_v4", help="Reactivate Supplier", use_container_width=True): 
+                        success_react_pg2, msg_react_pg2 = supplier_service.reactivate_supplier(engine, supplier_id_pg2)
+                        if success_react_pg2:
+                            st.success(msg_react_pg2); fetch_all_suppliers_df_pg2.clear(); st.rerun()
+                        else: st.error(msg_react_pg2)
+        st.divider() 
 
-        # The inline edit form logic also MUST be within this 'else' block, typically inside the loop
-        if st.session_state.get('show_edit_form_for_supplier_id') == supplier_id:
-            current_s_values_for_edit = st.session_state.get('edit_supplier_form_values')
-            if not current_s_values_for_edit:
-                current_s_values_for_edit = supplier_service.get_supplier_details(engine, supplier_id)
-                st.session_state.edit_supplier_form_values = current_s_values_for_edit
+        # Inline Edit Form for selected supplier
+        if st.session_state.get('pg2_show_edit_form_for_supplier_id') == supplier_id_pg2:
+            current_s_values_for_edit_pg2 = st.session_state.get('pg2_edit_supplier_form_values')
+            # Ensure correct supplier's data is loaded for edit form
+            if not current_s_values_for_edit_pg2 or current_s_values_for_edit_pg2.get('supplier_id') != supplier_id_pg2:
+                current_s_values_for_edit_pg2 = supplier_service.get_supplier_details(engine, supplier_id_pg2)
+                st.session_state.pg2_edit_supplier_form_values = current_s_values_for_edit_pg2
             
-            if current_s_values_for_edit:
-                with st.form(key=f"edit_s_form_inline_v3_{supplier_id}"): # incremented key version
-                    st.subheader(f"✏️ Editing Supplier: {current_s_values_for_edit.get('name', 'N/A')}")
-                    st.caption(f"Supplier ID: {supplier_id}")
+            if current_s_values_for_edit_pg2: # Check if data was successfully fetched
+                # Unique form key for edit
+                with st.form(key=f"edit_s_form_inline_pg2_v4_{supplier_id_pg2}"): 
+                    st.subheader(f"✏️ Editing Supplier: {current_s_values_for_edit_pg2.get('name', 'N/A')}")
+                    st.caption(f"Supplier ID: {supplier_id_pg2}")
                     
-                    s_edit_col1, s_edit_col2 = st.columns(2)
-                    with s_edit_col1:
-                        es_name = st.text_input("Supplier Name*", value=current_s_values_for_edit.get('name', ''), key=f"es_name_v3_{supplier_id}", help="Unique name for the supplier.")
-                        es_contact = st.text_input(
+                    s_edit_col1_pg2, s_edit_col2_pg2 = st.columns(2)
+                    with s_edit_col1_pg2:
+                        es_name_pg2 = st.text_input("Supplier Name*", value=current_s_values_for_edit_pg2.get('name', ''), key=f"es_name_pg2_v4_{supplier_id_pg2}")
+                        es_contact_pg2 = st.text_input(
                             "Contact Person",
-                            value=current_s_values_for_edit.get('contact_person', '') or '',
-                            key=f"es_contact_v3_{supplier_id}",
-                            help="Primary contact name at the supplier."
+                            value=current_s_values_for_edit_pg2.get('contact_person', '') or '', # Ensure string for value
+                            key=f"es_contact_pg2_v4_{supplier_id_pg2}"
                         )
-                    with s_edit_col2:
-                        es_phone = st.text_input(
+                    with s_edit_col2_pg2:
+                        es_phone_pg2 = st.text_input(
                             "Phone", 
-                            value=current_s_values_for_edit.get('phone', '') or '',
-                            key=f"es_phone_v3_{supplier_id}",
-                            help="Supplier's primary contact number (e.g., +91 9876543210)."
+                            value=current_s_values_for_edit_pg2.get('phone', '') or '',
+                            key=f"es_phone_pg2_v4_{supplier_id_pg2}"
                         )
-                        es_email = st.text_input(
+                        es_email_pg2 = st.text_input(
                             "Email",
-                            value=current_s_values_for_edit.get('email', '') or '',
-                            key=f"es_email_v3_{supplier_id}",
-                            help="Supplier's primary email for correspondence (e.g., sales@supplier.com)."
+                            value=current_s_values_for_edit_pg2.get('email', '') or '',
+                            key=f"es_email_pg2_v4_{supplier_id_pg2}"
                         )
-                    es_address = st.text_area(
+                    es_address_pg2 = st.text_area(
                         "Address",
-                        value=current_s_values_for_edit.get('address', '') or '',
-                        key=f"es_address_v3_{supplier_id}",
-                        help="Full business address of the supplier."
+                        value=current_s_values_for_edit_pg2.get('address', '') or '',
+                        key=f"es_address_pg2_v4_{supplier_id_pg2}"
                     )
-                    es_notes = st.text_area("Notes", value=current_s_values_for_edit.get('notes', '') or '', key=f"es_notes_v3_{supplier_id}", placeholder="Optional: any specific terms, payment details, etc.")
+                    es_notes_pg2 = st.text_area("Notes", value=current_s_values_for_edit_pg2.get('notes', '') or '', key=f"es_notes_pg2_v4_{supplier_id_pg2}")
                     
                     if st.form_submit_button("💾 Update Supplier Details"):
-                        if not es_name: st.warning("Supplier Name required.")
+                        if not es_name_pg2.strip(): 
+                            st.warning("Supplier Name is required.")
                         else:
-                            update_s_data = {"name": es_name.strip(), "contact_person": (es_contact or "").strip() or None,
-                                           "phone": (es_phone or "").strip() or None, "email": (es_email or "").strip() or None,
-                                           "address": (es_address or "").strip() or None, "notes": (es_notes or "").strip() or None}
-                            ok, msg = supplier_service.update_supplier(engine, supplier_id, update_s_data)
-                            if ok:
-                                st.success(msg); st.session_state.show_edit_form_for_supplier_id = None
-                                fetch_all_suppliers_df.clear(); st.rerun()
-                            else: st.error(msg)
-                st.divider() # Divider for the edit form section
-# This is the end of the 'else' block.
+                            update_s_data_pg2 = {
+                                "name": es_name_pg2.strip(), 
+                                "contact_person": (es_contact_pg2.strip() or None),
+                                "phone": (es_phone_pg2.strip() or None), 
+                                "email": (es_email_pg2.strip() or None),
+                                "address": (es_address_pg2.strip() or None), 
+                                "notes": (es_notes_pg2.strip() or None)
+                            }
+                            ok_update_pg2, msg_update_pg2 = supplier_service.update_supplier(engine, supplier_id_pg2, update_s_data_pg2)
+                            if ok_update_pg2:
+                                st.success(msg_update_pg2)
+                                st.session_state.pg2_show_edit_form_for_supplier_id = None # Close form
+                                st.session_state.pg2_edit_supplier_form_values = None # Clear form values
+                                fetch_all_suppliers_df_pg2.clear() # Clear cache
+                                st.rerun()
+                            else: 
+                                st.error(msg_update_pg2)
+                st.divider()

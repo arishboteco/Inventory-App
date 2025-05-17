@@ -12,7 +12,7 @@ from sqlalchemy.engine import Engine
 from app.db.database_utils import fetch_data
 from app.core.constants import ( 
     PO_STATUS_DRAFT, PO_STATUS_ORDERED, PO_STATUS_FULLY_RECEIVED,
-    PO_STATUS_PARTIALLY_RECEIVED, PO_STATUS_CANCELLED, ALL_PO_STATUSES
+    PO_STATUS_PARTIALLY_RECEIVED, PO_STATUS_CANCELLED_PO, ALL_PO_STATUSES
 )
 
 # ─────────────────────────────────────────────────────────

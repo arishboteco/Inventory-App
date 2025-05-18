@@ -15,7 +15,7 @@ from app.services import purchase_order_service
 from app.core.constants import (
     TX_RECEIVING, 
     PO_STATUS_PARTIALLY_RECEIVED, PO_STATUS_FULLY_RECEIVED,
-    PO_STATUS_ORDERED, PO_STATUS_CANCELLED_PO # Make sure PO_STATUS_CANCELLED is used if needed
+    PO_STATUS_ORDERED, PO_STATUS_CANCELLED_PO # Use specific PO cancel status
 )
 
 # ─────────────────────────────────────────────────────────
@@ -43,7 +43,8 @@ def generate_grn_number(engine: Engine) -> Optional[str]:
 
 def create_grn(engine: Engine, grn_data: Dict[str, Any], items_received_data: List[Dict[str, Any]]) -> Tuple[bool, str, Optional[int]]:
     """
-    Creates a new Goods Received Note (GRN) and its line items, updates stock, and PO status.
+    Creates a new Goods Received Note (GRN), updates stock, and PO status.
+    Handles None or empty strings for notes fields.
     Args:
         engine: SQLAlchemy database engine instance.
         grn_data: Dictionary of GRN header details.
@@ -58,13 +59,13 @@ def create_grn(engine: Engine, grn_data: Dict[str, Any], items_received_data: Li
     if missing_fields:
         return False, f"Missing or empty GRN header fields: {', '.join(missing_fields)}", None
     
-    if not items_received_data: # GRN must have at least one item received to be meaningful
+    if not items_received_data: 
         return False, "GRN must contain at least one received item.", None
 
     for i, item in enumerate(items_received_data):
         try:
             qty = float(item.get('quantity_received', 0))
-            price = float(item.get('unit_price_at_receipt', 0)) # Price can be 0
+            price = float(item.get('unit_price_at_receipt', 0)) 
             if not item.get('item_id') or qty <= 0 or price < 0: 
                 return False, f"Invalid data in received item line {i+1}: Check Item ID, Quantity (>0), or Price (>=0).", None
         except (ValueError, TypeError): 
@@ -73,24 +74,37 @@ def create_grn(engine: Engine, grn_data: Dict[str, Any], items_received_data: Li
     new_grn_number = generate_grn_number(engine)
     if not new_grn_number: return False, "Failed to generate GRN Number.", None
 
-    header_q_obj = text("""INSERT INTO goods_received_notes (grn_number, po_id, supplier_id, received_date, notes, received_by_user_id, created_at)
-                       VALUES (:grn_number, :po_id, :supplier_id, :received_date, :notes, :received_by_user_id, NOW()) RETURNING grn_id;""")
-    item_q_obj = text("""INSERT INTO grn_items (grn_id, item_id, po_item_id, quantity_ordered_on_po, quantity_received, unit_price_at_receipt, notes)
-                    VALUES (:grn_id, :item_id, :po_item_id, :quantity_ordered_on_po, :quantity_received, :unit_price_at_receipt, :item_notes);""")
+    # Robust handling for GRN header notes
+    header_notes_value = grn_data.get('notes')
+    cleaned_header_notes = None
+    if isinstance(header_notes_value, str):
+        cleaned_header_notes = header_notes_value.strip()
+        if not cleaned_header_notes: 
+            cleaned_header_notes = None
+    
+    # Assumes created_at column exists in goods_received_notes table.
+    # If not, remove created_at and the corresponding NOW() from the query.
+    header_q_obj = text("""INSERT INTO goods_received_notes 
+                           (grn_number, po_id, supplier_id, received_date, notes, received_by_user_id, created_at)
+                           VALUES (:grn_number, :po_id, :supplier_id, :received_date, :notes, :received_by_user_id, NOW()) 
+                           RETURNING grn_id;""")
+    item_q_obj = text("""INSERT INTO grn_items 
+                       (grn_id, item_id, po_item_id, quantity_ordered_on_po, quantity_received, unit_price_at_receipt, notes)
+                       VALUES (:grn_id, :item_id, :po_item_id, :quantity_ordered_on_po, :quantity_received, :unit_price_at_receipt, :item_notes);""")
     
     header_p = {
         "grn_number": new_grn_number, 
         "po_id": grn_data.get('po_id'), 
         "supplier_id": grn_data['supplier_id'],
         "received_date": grn_data['received_date'], 
-        "notes": (grn_data.get('notes', '').strip() or None),
-        "received_by_user_id": grn_data['received_by_user_id'].strip() # Known to exist
+        "notes": cleaned_header_notes, # Use cleaned header notes
+        "received_by_user_id": grn_data['received_by_user_id'].strip() 
     }
     new_grn_id: Optional[int] = None
     
     try:
         with engine.connect() as conn: 
-            with conn.begin(): # Start transaction
+            with conn.begin(): 
                 res = conn.execute(header_q_obj, header_p)
                 new_grn_id = res.scalar_one_or_none()
                 if not new_grn_id: 
@@ -100,45 +114,45 @@ def create_grn(engine: Engine, grn_data: Dict[str, Any], items_received_data: Li
                 for item_d in items_received_data:
                     qty_rcv = float(item_d['quantity_received'])
                     price_rcv = float(item_d['unit_price_at_receipt'])
-                    item_notes_val = item_d.get('item_notes')
-                    cleaned_item_notes = item_notes_val.strip() if isinstance(item_notes_val, str) and item_notes_val.strip() else None
-
+                    
+                    item_notes_val = item_d.get('item_notes') 
+                    cleaned_item_notes = None
+                    if isinstance(item_notes_val, str):
+                        cleaned_item_notes = item_notes_val.strip()
+                        if not cleaned_item_notes: 
+                            cleaned_item_notes = None
+                    
                     item_p_list_for_db.append({
                         "grn_id": new_grn_id, 
                         "item_id": item_d['item_id'], 
-                        "po_item_id": item_d.get('po_item_id'), # Can be None if direct receipt
-                        "quantity_ordered_on_po": item_d.get('quantity_ordered_on_po'), # Can be None
+                        "po_item_id": item_d.get('po_item_id'),
+                        "quantity_ordered_on_po": item_d.get('quantity_ordered_on_po'), 
                         "quantity_received": qty_rcv,
                         "unit_price_at_receipt": price_rcv, 
-                        "item_notes": cleaned_item_notes
+                        "item_notes": cleaned_item_notes 
                     })
                     
-                    # Record stock transaction within the same DB transaction
                     stock_ok = stock_service.record_stock_transaction(
                         item_id=item_d['item_id'], 
                         quantity_change=qty_rcv, 
                         transaction_type=TX_RECEIVING,
                         user_id=header_p['received_by_user_id'], 
-                        related_po_id=header_p['po_id'], # Use po_id from header_p
+                        related_po_id=header_p['po_id'], 
                         notes=f"GRN: {new_grn_number}", 
                         db_engine_param=None, 
-                        db_connection_param=conn # Pass the active connection
+                        db_connection_param=conn 
                     )
                     if not stock_ok: 
-                        # This exception will cause the main transaction to roll back
                         raise Exception(f"Failed to record stock transaction for item_id {item_d['item_id']} on GRN {new_grn_number}.")
                 
-                if item_p_list_for_db: # Only execute if there are items
+                if item_p_list_for_db: 
                     conn.execute(item_q_obj, item_p_list_for_db) 
 
-                # Update PO Status if related PO ID exists
                 po_id_to_update = header_p['po_id']
                 if po_id_to_update:
-                    # Fetch PO items details using the current connection
                     po_items_query_str = "SELECT po_item_id, quantity_ordered FROM purchase_order_items WHERE po_id = :po_id"
                     po_items_df = fetch_data(conn, po_items_query_str, {"po_id": po_id_to_update}) 
                     
-                    # Fetch total received quantities for this PO using the current connection
                     grn_items_sum_query_str = """SELECT po_item_id, SUM(quantity_received) as total_received 
                                                FROM grn_items gi
                                                JOIN goods_received_notes g ON gi.grn_id = g.grn_id 
@@ -146,48 +160,51 @@ def create_grn(engine: Engine, grn_data: Dict[str, Any], items_received_data: Li
                                                GROUP BY gi.po_item_id"""
                     grn_items_sum_df = fetch_data(conn, grn_items_sum_query_str, {"po_id": po_id_to_update}) 
 
-                    new_po_stat = PO_STATUS_PARTIALLY_RECEIVED # Default
+                    new_po_stat = PO_STATUS_PARTIALLY_RECEIVED 
                     if not po_items_df.empty:
                         all_fulfilled = True
                         for _, po_row in po_items_df.iterrows():
-                            po_item_id_val = po_row['po_item_id']
+                            po_item_id_val = po_row['po_item_id'] 
                             ordered_qty = float(po_row['quantity_ordered'])
-                            
                             received_rows = grn_items_sum_df[grn_items_sum_df['po_item_id'] == po_item_id_val]
                             total_rcv_for_item = float(received_rows.iloc[0]['total_received']) if not received_rows.empty else 0.0
-                            
                             if total_rcv_for_item < ordered_qty: 
-                                all_fulfilled = False
-                                break 
-                        if all_fulfilled: 
-                            new_po_stat = PO_STATUS_FULLY_RECEIVED
-                    else: # No items on PO; if a GRN is made against it, consider it fully received.
-                        new_po_stat = PO_STATUS_FULLY_RECEIVED
+                                all_fulfilled = False; break 
+                        if all_fulfilled: new_po_stat = PO_STATUS_FULLY_RECEIVED
+                    else: new_po_stat = PO_STATUS_FULLY_RECEIVED
                     
-                    # Update PO status, but don't override if already Fully Received or Cancelled
-                    update_po_q_obj = text("UPDATE purchase_orders SET status = :status, updated_at = NOW(), updated_by_user_id = :user_id WHERE po_id = :po_id AND status NOT IN (:fully_received, :cancelled);")
-                    conn.execute(update_po_q_obj, {
+                    # Default: Does not update 'updated_by_user_id' for PO
+                    # If 'updated_by_user_id' exists in 'purchase_orders', modify query and params
+                    update_po_q_obj = text("""UPDATE purchase_orders 
+                                              SET status = :status, updated_at = NOW() 
+                                              WHERE po_id = :po_id AND status NOT IN (:fully_received, :cancelled);""")
+                    update_po_params = {
                         "status": new_po_stat, 
-                        "user_id": header_p['received_by_user_id'],
                         "po_id": po_id_to_update, 
                         "fully_received": PO_STATUS_FULLY_RECEIVED, 
                         "cancelled": PO_STATUS_CANCELLED_PO 
-                    })
+                    }
+                    # If 'updated_by_user_id' exists in purchase_orders table:
+                    # update_po_q_obj = text("""UPDATE purchase_orders 
+                    #                           SET status = :status, updated_at = NOW(), updated_by_user_id = :user_id 
+                    #                           WHERE po_id = :po_id AND status NOT IN (:fully_received, :cancelled);""")
+                    # update_po_params["user_id"] = header_p['received_by_user_id']
+
+                    conn.execute(update_po_q_obj, update_po_params)
                     
-                    # Clear caches for PO service as its data has changed
                     purchase_order_service.list_pos.clear()
                     purchase_order_service.get_po_by_id.clear() 
         
-        list_grns.clear() # Clear GRN list cache
+        list_grns.clear() 
         return True, f"GRN {new_grn_number} created successfully. Stock updated. PO status updated as applicable.", new_grn_id
     
     except IntegrityError as e:
         msg = "Database integrity error creating GRN."
         if "goods_received_notes_grn_number_key" in str(e).lower(): 
-            msg = f"GRN Number '{new_grn_number}' conflict. This might indicate a sequence issue."
+            msg = f"GRN Number '{new_grn_number}' conflict."
         print(f"ERROR [goods_receiving_service.create_grn]: {msg} Details: {e}\n{traceback.format_exc()}"); 
         return False, msg, None
-    except Exception as e: # Catch-all for other exceptions like the one from stock_service
+    except Exception as e: 
         print(f"ERROR [goods_receiving_service.create_grn]: Error during GRN creation for {new_grn_number}: {e}\n{traceback.format_exc()}"); 
         return False, f"An unexpected error occurred: {str(e)}", None
 
@@ -203,7 +220,7 @@ def get_received_quantities_for_po(_engine: Engine, po_id: int) -> pd.DataFrame:
     """
     if _engine is None or not po_id:
         print("WARNING [goods_receiving_service.get_received_quantities_for_po]: Engine or PO ID not provided.")
-        return pd.DataFrame(columns=['po_item_id', 'total_previously_received']) # Return empty df with expected columns
+        return pd.DataFrame(columns=['po_item_id', 'total_previously_received']) 
         
     query_string = """
         SELECT gi.po_item_id, SUM(gi.quantity_received) as total_previously_received
@@ -214,9 +231,8 @@ def get_received_quantities_for_po(_engine: Engine, po_id: int) -> pd.DataFrame:
     """
     df = fetch_data(_engine, query_string, {"po_id": po_id}) 
     
-    # Ensure columns exist and have correct type even if query returns no rows
     if 'po_item_id' not in df.columns:
-        df['po_item_id'] = pd.Series(dtype='Int64') # Use pandas nullable integer type
+        df['po_item_id'] = pd.Series(dtype='Int64') 
     if 'total_previously_received' not in df.columns:
         df['total_previously_received'] = 0.0 
     else:

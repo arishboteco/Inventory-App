@@ -1,5 +1,11 @@
 # app/item_manager_app.py
 
+import os, sys
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(PACKAGE_DIR, os.pardir))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime

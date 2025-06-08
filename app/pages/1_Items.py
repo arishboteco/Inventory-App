@@ -123,7 +123,7 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
         )
 
         if st.form_submit_button(
-            "💾 Add Item to Master", key="widget_items_add_form_submit_btn"
+            "💾 Add Item to Master"
         ):
             is_valid_add = True
             if not name_add_widget.strip():
@@ -551,7 +551,6 @@ else:
 
                     if st.form_submit_button(
                         "💾 Update Item Details",
-                        key=f"widget_items_edit_form_submit_btn_{item_id_disp}",
                     ):
                         is_valid_edit_form = True
                         if not e_name.strip():

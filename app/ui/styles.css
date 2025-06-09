@@ -7,9 +7,9 @@ body { font-family: 'Roboto', sans-serif; }
 
 /* Compact sidebar layout */
 [data-testid="stSidebar"] {
-    width: 8rem !important;
-    min-width: 8rem;
-    max-width: 8rem;
+    width: 10rem !important;
+    min-width: 10rem;
+    max-width: 10rem;
 }
 [data-testid="stSidebar"] .sidebar-content {
     padding: 0.5rem;

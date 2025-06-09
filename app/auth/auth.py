@@ -21,14 +21,16 @@ def login_sidebar() -> bool:
         return True
 
     with st.sidebar:
-        st.header("Login")
-        st.text_input("User ID", key="login_user_id")
-        if st.button("Login"):
-            user = st.session_state.get("login_user_id", "").strip()
-            if user:
-                st.session_state.user_id = user
-                st.session_state.logged_in = True
-                st.rerun()
-            else:
-                st.warning("Please enter a user ID to login.")
+        # Wrap the login inputs in an expander to minimize sidebar height when
+        # the user is not logged in.
+        with st.expander("Login"):
+            st.text_input("User ID", key="login_user_id")
+            if st.button("Login", key="login_button"):
+                user = st.session_state.get("login_user_id", "").strip()
+                if user:
+                    st.session_state.user_id = user
+                    st.session_state.logged_in = True
+                    st.rerun()
+                else:
+                    st.warning("Please enter a user ID to login.")
     return False

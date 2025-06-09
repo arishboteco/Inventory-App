@@ -986,11 +986,8 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                         db_engine, po_header_data_for_submit, po_items_to_submit
                     )
                     if success_create:
-                        show_success(f"✅ {msg_create} (ID: {new_po_id_create})")
-                        st.page_link(
-                            "pages/6_Purchase_Orders.py",
-                            label="Record Goods Received",
-                            icon="➡️",
+                        show_success(
+                            f"✅ {msg_create} (ID: {new_po_id_create}) Use the sidebar to record goods received."
                         )
                         change_view_mode("list_po", clear_po_form_state=True)
                         st.rerun()
@@ -1095,11 +1092,8 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                 db_engine, grn_header_to_submit, grn_items_to_submit
             )
             if success_grn_create:
-                show_success(f"✅ {msg_grn_create} (GRN ID: {new_grn_id_created})")
-                st.page_link(
-                    "pages/4_History_Reports.py",
-                    label="View in History Reports",
-                    icon="➡️",
+                show_success(
+                    f"✅ {msg_grn_create} (GRN ID: {new_grn_id_created}) Use the sidebar to view reports."
                 )
                 change_view_mode("list_po", clear_grn_state=True, clear_po_form_state=True)
                 purchase_order_service.list_pos.clear()

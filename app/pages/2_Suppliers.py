@@ -134,11 +134,8 @@ with st.expander("➕ Add New Supplier Record", expanded=False):
                     engine, supplier_data_add_pg2
                 )
                 if success_add_pg2:
-                    show_success(message_add_pg2)
-                    st.page_link(
-                        "pages/6_Purchase_Orders.py",
-                        label="Create Purchase Order",
-                        icon="➡️",
+                    show_success(
+                        f"{message_add_pg2} Use the sidebar to create a purchase order."
                     )
                     fetch_all_suppliers_df_pg2.clear()  # Clear page-specific cache
                     st.rerun()
@@ -402,11 +399,8 @@ else:
                                 )
                             )
                             if ok_update_pg2:
-                                show_success(msg_update_pg2)
-                                st.page_link(
-                                    "pages/6_Purchase_Orders.py",
-                                    label="Create Purchase Order",
-                                    icon="➡️",
+                                show_success(
+                                    f"{msg_update_pg2} Use the sidebar to create a purchase order."
                                 )
                                 st.session_state.pg2_show_edit_form_for_supplier_id = (
                                     None  # Close form

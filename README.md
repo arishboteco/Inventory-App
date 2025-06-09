@@ -8,6 +8,7 @@ Inventory-App is a Streamlit application for managing restaurant inventory. It h
 - Stock movement logging and history reports
 - Indents and purchase order tracking
 - Dashboard showing key metrics such as low-stock items
+- Unified sidebar navigation for quick access to all pages
 
 ## Installation
 

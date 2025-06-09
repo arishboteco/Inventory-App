@@ -840,369 +840,373 @@ if st.session_state.pg5_active_indent_section == "create":
             st.session_state[PG5_CREATE_INDENT_HEADER_RESET_SIGNAL_SESS_KEY] = True
             st.rerun()
     else:
-        head_col1_pg5, head_col2_pg5 = st.columns(2)
-        with head_col1_pg5:
-            pg5_dept_widget_key = "pg5_create_indent_dept_widget"
-            current_dept_val_pg5 = st.session_state.get(
-                PG5_CREATE_INDENT_DEPT_SESS_KEY, ""
-            )
-            dept_options_pg5 = [""] + distinct_departments_pg5
-            dept_idx_pg5 = (
-                dept_options_pg5.index(current_dept_val_pg5)
-                if current_dept_val_pg5 in dept_options_pg5
-                else 0
-            )
+        tab_header_pg5, tab_items_pg5 = st.tabs(["Indent Header", "Items"])
 
-            selected_dept_pg5 = st.selectbox(
-                "Requesting Department*",
-                options=dept_options_pg5,
-                index=dept_idx_pg5,
-                format_func=lambda x: "Select Department..." if x == "" else x,
-                key=pg5_dept_widget_key,  # Widget specific key
-                on_change=lambda: st.session_state.update(
-                    {
-                        PG5_CREATE_INDENT_DEPT_SESS_KEY: st.session_state[
-                            pg5_dept_widget_key
-                        ],
-                        "pg5_selected_department_for_create_indent": (
-                            st.session_state[pg5_dept_widget_key]
-                            if st.session_state[pg5_dept_widget_key]
-                            else None
-                        ),
-                    }
-                ),
-            )
-            # Ensure session state for department value is updated if selectbox changes it via key directly
-            if (
-                st.session_state.get(PG5_CREATE_INDENT_DEPT_SESS_KEY)
-                != selected_dept_pg5
-            ):
-                st.session_state[PG5_CREATE_INDENT_DEPT_SESS_KEY] = selected_dept_pg5
-                st.session_state.pg5_selected_department_for_create_indent = (
-                    selected_dept_pg5 if selected_dept_pg5 else None
+        with tab_header_pg5:
+            head_col1_pg5, head_col2_pg5 = st.columns(2)
+            with head_col1_pg5:
+                pg5_dept_widget_key = "pg5_create_indent_dept_widget"
+                current_dept_val_pg5 = st.session_state.get(
+                    PG5_CREATE_INDENT_DEPT_SESS_KEY, ""
+                )
+                dept_options_pg5 = [""] + distinct_departments_pg5
+                dept_idx_pg5 = (
+                    dept_options_pg5.index(current_dept_val_pg5)
+                    if current_dept_val_pg5 in dept_options_pg5
+                    else 0
                 )
 
-            pg5_req_by_widget_key = "pg5_create_indent_req_by_widget"
-            st.session_state[PG5_CREATE_INDENT_REQ_BY_SESS_KEY] = st.text_input(
-                "Requested By (Your Name/ID)*",
-                value=st.session_state.get(PG5_CREATE_INDENT_REQ_BY_SESS_KEY, ""),
-                key=pg5_req_by_widget_key,
-            )
-        with head_col2_pg5:
-            pg5_date_req_widget_key = "pg5_create_indent_date_req_widget"
-            st.session_state[PG5_CREATE_INDENT_DATE_REQ_SESS_KEY] = st.date_input(
-                "Date Required By*",
-                value=st.session_state.get(
-                    PG5_CREATE_INDENT_DATE_REQ_SESS_KEY,
-                    date.today() + timedelta(days=1),
-                ),
-                min_value=date.today(),
-                key=pg5_date_req_widget_key,
-            )
-            st.text_input(
-                "Initial Status",
-                value=STATUS_SUBMITTED,
-                disabled=True,
-                key="pg5_create_indent_status_disp",
-            )
-
-        pg5_header_notes_widget_key = "pg5_create_indent_header_notes_widget"
-        st.session_state[PG5_CREATE_INDENT_NOTES_SESS_KEY] = st.text_area(
-            "Overall Indent Notes (Optional)",
-            value=st.session_state.get(PG5_CREATE_INDENT_NOTES_SESS_KEY, ""),
-            key=pg5_header_notes_widget_key,
-            placeholder="General notes...",
-        )
-        st.divider()
-        st.subheader("🛍️ Requested Items")
-
-        current_dept_for_suggestions_pg5 = st.session_state.get(
-            "pg5_selected_department_for_create_indent"
-        )
-        if current_dept_for_suggestions_pg5:
-            # ... (Suggested items logic - use pg5_ prefixed vars and keys) ...
-            suggested_items_pg5 = item_service.get_suggested_items_for_department(
-                db_engine, current_dept_for_suggestions_pg5, top_n=5
-            )
-            if suggested_items_pg5:
-                st.caption(
-                    "✨ Quick Add (based on recent requests from this department):"
-                )
-                items_in_current_indent_ids_pg5 = {
-                    row.get("item_id")
-                    for row in st.session_state.pg5_create_indent_rows
-                    if row.get("item_id")
-                }
-                valid_suggestions_pg5 = [
-                    sugg
-                    for sugg in suggested_items_pg5
-                    if sugg["item_id"] not in items_in_current_indent_ids_pg5
-                ]
-                if valid_suggestions_pg5:
-                    sugg_cols_pg5 = st.columns(min(len(valid_suggestions_pg5), 5))
-                    for i_sugg_pg5, sugg_item_pg5 in enumerate(
-                        valid_suggestions_pg5[:5]
-                    ):
-                        sugg_cols_pg5[i_sugg_pg5].button(
-                            f"+ {sugg_item_pg5['item_name']}",
-                            key=f"pg5_suggest_item_{sugg_item_pg5['item_id']}",
-                            on_click=add_suggested_item_callback_pg5,
-                            args=(
-                                sugg_item_pg5["item_id"],
-                                sugg_item_pg5["item_name"],
-                                sugg_item_pg5["unit"],
+                selected_dept_pg5 = st.selectbox(
+                    "Requesting Department*",
+                    options=dept_options_pg5,
+                    index=dept_idx_pg5,
+                    format_func=lambda x: "Select Department..." if x == "" else x,
+                    key=pg5_dept_widget_key,  # Widget specific key
+                    on_change=lambda: st.session_state.update(
+                        {
+                            PG5_CREATE_INDENT_DEPT_SESS_KEY: st.session_state[
+                                pg5_dept_widget_key
+                            ],
+                            "pg5_selected_department_for_create_indent": (
+                                st.session_state[pg5_dept_widget_key]
+                                if st.session_state[pg5_dept_widget_key]
+                                else None
                             ),
-                            help=f"Add {sugg_item_pg5['item_name']} ({sugg_item_pg5['unit']})",
-                            use_container_width=True,
-                        )
-                elif items_in_current_indent_ids_pg5 and any(
-                    row.get("item_id")
-                    for row in st.session_state.pg5_create_indent_rows
+                        }
+                    ),
+                )
+                # Ensure session state for department value is updated if selectbox changes it via key directly
+                if (
+                    st.session_state.get(PG5_CREATE_INDENT_DEPT_SESS_KEY)
+                    != selected_dept_pg5
                 ):
-                    st.caption(
-                        "Frequent items are already in your list or no other frequent items found."
+                    st.session_state[PG5_CREATE_INDENT_DEPT_SESS_KEY] = selected_dept_pg5
+                    st.session_state.pg5_selected_department_for_create_indent = (
+                        selected_dept_pg5 if selected_dept_pg5 else None
                     )
-                else:
-                    st.caption("No frequent items found for this department recently.")
-                st.caption("")
 
-        # Item options dictionary construction using constants
-        item_options_dict_pg5: Dict[str, Optional[int]] = {
-            pg5_placeholder_select_item_tuple[0]: pg5_placeholder_select_item_tuple[1]
-        }
-        if st.session_state.get("pg5_selected_department_for_create_indent"):
-            selected_dept_for_filter_pg5 = (
-                st.session_state.pg5_selected_department_for_create_indent
+                pg5_req_by_widget_key = "pg5_create_indent_req_by_widget"
+                st.session_state[PG5_CREATE_INDENT_REQ_BY_SESS_KEY] = st.text_input(
+                    "Requested By (Your Name/ID)*",
+                    value=st.session_state.get(PG5_CREATE_INDENT_REQ_BY_SESS_KEY, ""),
+                    key=pg5_req_by_widget_key,
+                )
+            with head_col2_pg5:
+                pg5_date_req_widget_key = "pg5_create_indent_date_req_widget"
+                st.session_state[PG5_CREATE_INDENT_DATE_REQ_SESS_KEY] = st.date_input(
+                    "Date Required By*",
+                    value=st.session_state.get(
+                        PG5_CREATE_INDENT_DATE_REQ_SESS_KEY,
+                        date.today() + timedelta(days=1),
+                    ),
+                    min_value=date.today(),
+                    key=pg5_date_req_widget_key,
+                )
+                st.text_input(
+                    "Initial Status",
+                    value=STATUS_SUBMITTED,
+                    disabled=True,
+                    key="pg5_create_indent_status_disp",
+                )
+            pg5_header_notes_widget_key = "pg5_create_indent_header_notes_widget"
+            st.session_state[PG5_CREATE_INDENT_NOTES_SESS_KEY] = st.text_area(
+                "Overall Indent Notes (Optional)",
+                value=st.session_state.get(PG5_CREATE_INDENT_NOTES_SESS_KEY, ""),
+                key=pg5_header_notes_widget_key,
+                placeholder="General notes...",
             )
-            if not all_active_items_df_pg5.empty:
-                try:
-                    available_items_df_pg5 = all_active_items_df_pg5[
-                        all_active_items_df_pg5["permitted_departments"]
-                        .fillna("")
-                        .astype(str)
-                        .str.lower()
-                        .apply(
-                            lambda depts_str: (
-                                selected_dept_for_filter_pg5.strip().lower()
-                                in [d.strip().lower() for d in depts_str.split(",")]
-                                if depts_str
-                                else False
+            st.divider()
+
+        with tab_items_pg5:
+            st.subheader("🛍️ Requested Items")
+
+            current_dept_for_suggestions_pg5 = st.session_state.get(
+                "pg5_selected_department_for_create_indent"
+            )
+            if current_dept_for_suggestions_pg5:
+                # ... (Suggested items logic - use pg5_ prefixed vars and keys) ...
+                suggested_items_pg5 = item_service.get_suggested_items_for_department(
+                    db_engine, current_dept_for_suggestions_pg5, top_n=5
+                )
+                if suggested_items_pg5:
+                    st.caption(
+                        "✨ Quick Add (based on recent requests from this department):"
+                    )
+                    items_in_current_indent_ids_pg5 = {
+                        row.get("item_id")
+                        for row in st.session_state.pg5_create_indent_rows
+                        if row.get("item_id")
+                    }
+                    valid_suggestions_pg5 = [
+                        sugg
+                        for sugg in suggested_items_pg5
+                        if sugg["item_id"] not in items_in_current_indent_ids_pg5
+                    ]
+                    if valid_suggestions_pg5:
+                        sugg_cols_pg5 = st.columns(min(len(valid_suggestions_pg5), 5))
+                        for i_sugg_pg5, sugg_item_pg5 in enumerate(
+                            valid_suggestions_pg5[:5]
+                        ):
+                            sugg_cols_pg5[i_sugg_pg5].button(
+                                f"+ {sugg_item_pg5['item_name']}",
+                                key=f"pg5_suggest_item_{sugg_item_pg5['item_id']}",
+                                on_click=add_suggested_item_callback_pg5,
+                                args=(
+                                    sugg_item_pg5["item_id"],
+                                    sugg_item_pg5["item_name"],
+                                    sugg_item_pg5["unit"],
+                                ),
+                                help=f"Add {sugg_item_pg5['item_name']} ({sugg_item_pg5['unit']})",
+                                use_container_width=True,
                             )
-                        )
-                    ].copy()
-                    if available_items_df_pg5.empty:
-                        item_options_dict_pg5.update(
-                            {PLACEHOLDER_NO_ITEMS_FOR_DEPARTMENT: -2}
+                    elif items_in_current_indent_ids_pg5 and any(
+                        row.get("item_id")
+                        for row in st.session_state.pg5_create_indent_rows
+                    ):
+                        st.caption(
+                            "Frequent items are already in your list or no other frequent items found."
                         )
                     else:
-                        item_options_dict_pg5.update(
-                            {
-                                f"{r['name']} ({r['unit']})": r["item_id"]
-                                for _, r in available_items_df_pg5.sort_values(
-                                    "name"
-                                ).iterrows()
-                            }
+                        st.caption("No frequent items found for this department recently.")
+                    st.caption("")
+    
+            # Item options dictionary construction using constants
+            item_options_dict_pg5: Dict[str, Optional[int]] = {
+                pg5_placeholder_select_item_tuple[0]: pg5_placeholder_select_item_tuple[1]
+            }
+            if st.session_state.get("pg5_selected_department_for_create_indent"):
+                selected_dept_for_filter_pg5 = (
+                    st.session_state.pg5_selected_department_for_create_indent
+                )
+                if not all_active_items_df_pg5.empty:
+                    try:
+                        available_items_df_pg5 = all_active_items_df_pg5[
+                            all_active_items_df_pg5["permitted_departments"]
+                            .fillna("")
+                            .astype(str)
+                            .str.lower()
+                            .apply(
+                                lambda depts_str: (
+                                    selected_dept_for_filter_pg5.strip().lower()
+                                    in [d.strip().lower() for d in depts_str.split(",")]
+                                    if depts_str
+                                    else False
+                                )
+                            )
+                        ].copy()
+                        if available_items_df_pg5.empty:
+                            item_options_dict_pg5.update(
+                                {PLACEHOLDER_NO_ITEMS_FOR_DEPARTMENT: -2}
+                            )
+                        else:
+                            item_options_dict_pg5.update(
+                                {
+                                    f"{r['name']} ({r['unit']})": r["item_id"]
+                                    for _, r in available_items_df_pg5.sort_values(
+                                        "name"
+                                    ).iterrows()
+                                }
+                            )
+                    except Exception as e_item_filter_pg5:
+                        print(
+                            f"ERROR [5_Indents.item_filtering_create]: Error filtering items: {e_item_filter_pg5}"
                         )
-                except Exception as e_item_filter_pg5:
-                    print(
-                        f"ERROR [5_Indents.item_filtering_create]: Error filtering items: {e_item_filter_pg5}"
-                    )
-                    item_options_dict_pg5.update({PLACEHOLDER_ERROR_LOADING_ITEMS: -3})
-            else:
-                item_options_dict_pg5.update({PLACEHOLDER_NO_ITEMS_AVAILABLE: -4})
-        else:
-            item_options_dict_pg5 = {PLACEHOLDER_SELECT_DEPARTMENT_FIRST: -5}
-
-        h_cols_pg5 = st.columns([4, 2, 3, 1])
-        h_cols_pg5[0].markdown("**Item**")
-        h_cols_pg5[1].markdown("**Req. Qty**")
-        h_cols_pg5[2].markdown("**Notes**")
-        h_cols_pg5[3].markdown("**Action**")
-        st.divider()
-
-        # Item rows display using pg5_ prefixed session state and keys
-        for i_loop_item_rows_pg5, row_state_pg5 in enumerate(
-            st.session_state.pg5_create_indent_rows
-        ):
-            # ... (Item row rendering logic - use pg5_ prefixed vars and unique keys based on row_id_pg5) ...
-            # This section is complex, ensure all st.session_state.pg5_create_indent_rows access and widget keys are pg5_ prefixed and unique.
-            # Example for one item row input (apply similar pattern for others):
-            # item_selectbox_key_row_pg5 = f"pg5_disp_item_select_{row_id_pg5}"
-            # default_item_display_name_row_pg5 = pg5_placeholder_select_item_tuple[0]
-            # ...
-            # with item_cols_display_pg5[0]:
-            #     st.selectbox(f"Item (Row {i_loop_item_rows_pg5+1})", ..., key=item_selectbox_key_row_pg5, ...)
-            # ...
-            row_id_pg5 = row_state_pg5["id"]
-            item_cols_display_pg5 = st.columns([4, 2, 3, 1])
-            item_selectbox_key_row_pg5 = f"pg5_disp_item_select_{row_id_pg5}"
-            default_item_display_name_row_pg5 = pg5_placeholder_select_item_tuple[0]
-            if row_state_pg5.get("item_id") is not None:
-                default_item_display_name_row_pg5 = next(
-                    (
-                        name
-                        for name, id_val in item_options_dict_pg5.items()
-                        if id_val == row_state_pg5["item_id"]
-                    ),
-                    default_item_display_name_row_pg5,
-                )
-            try:
-                current_item_idx_row_pg5 = list(item_options_dict_pg5.keys()).index(
-                    default_item_display_name_row_pg5
-                )
-            except ValueError:
-                current_item_idx_row_pg5 = 0
-
-            with item_cols_display_pg5[0]:
-                st.selectbox(
-                    f"Item_R{i_loop_item_rows_pg5+1}",
-                    options=list(item_options_dict_pg5.keys()),
-                    index=current_item_idx_row_pg5,
-                    key=item_selectbox_key_row_pg5,
-                    label_visibility="collapsed",
-                    on_change=update_row_item_details_callback_pg5,
-                    args=(
-                        i_loop_item_rows_pg5,
-                        item_selectbox_key_row_pg5,
-                        item_options_dict_pg5,
-                    ),
-                )
-                # ... (Display item details caption) ...
-                current_row_data_pg5 = st.session_state.pg5_create_indent_rows[
-                    i_loop_item_rows_pg5
-                ]
-                if (
-                    current_row_data_pg5.get("item_id")
-                    and current_row_data_pg5.get("item_id") != -1
-                ):
-                    info_parts_pg5 = []
-                    if current_row_data_pg5.get("category"):
-                        info_parts_pg5.append(
-                            f"Cat: {current_row_data_pg5['category']}"
-                        )
-                    # ... (other info parts) ...
-                    if current_row_data_pg5.get("current_stock") is not None:
-                        unit_disp_pg5 = current_row_data_pg5.get("unit", "")
-                        info_parts_pg5.append(
-                            f"Stock: {float(current_row_data_pg5['current_stock']):.2f} {unit_disp_pg5}"
-                        )
-                    if current_row_data_pg5.get("last_ordered"):
-                        info_parts_pg5.append(
-                            f"Last ord: {current_row_data_pg5['last_ordered']}"
-                        )
-                    if info_parts_pg5:
-                        st.caption(" | ".join(info_parts_pg5))
-
-            with item_cols_display_pg5[1]:
-                qty_key_for_row_disp_pg5 = f"pg5_disp_item_qty_{row_id_pg5}"
-                current_qty_for_row_disp_pg5 = float(
-                    st.session_state.pg5_create_indent_rows[i_loop_item_rows_pg5].get(
-                        "requested_qty", 1.0
-                    )
-                )
-
-                def on_qty_change_callback_pg5(idx_pg5, key_arg_pg5):
-                    st.session_state.pg5_create_indent_rows[idx_pg5][
-                        "requested_qty"
-                    ] = st.session_state[key_arg_pg5]
-
-                st.number_input(
-                    f"Qty_R{i_loop_item_rows_pg5+1}",
-                    value=current_qty_for_row_disp_pg5,
-                    min_value=0.01,
-                    step=0.1,
-                    format="%.2f",
-                    key=qty_key_for_row_disp_pg5,
-                    label_visibility="collapsed",
-                    on_change=on_qty_change_callback_pg5,
-                    args=(i_loop_item_rows_pg5, qty_key_for_row_disp_pg5),
-                )
-                # ... (Median qty warning/info) ...
-                median_qty_row_disp_pg5 = st.session_state.pg5_create_indent_rows[
-                    i_loop_item_rows_pg5
-                ].get("median_qty")
-                actual_qty_row_disp_pg5 = st.session_state.pg5_create_indent_rows[
-                    i_loop_item_rows_pg5
-                ].get("requested_qty", 0.0)
-                if (
-                    median_qty_row_disp_pg5
-                    and median_qty_row_disp_pg5 > 0
-                    and actual_qty_row_disp_pg5 > 0
-                ):
-                    if actual_qty_row_disp_pg5 > median_qty_row_disp_pg5 * 3:
-                        st.warning(
-                            f"High! (Avg:~{median_qty_row_disp_pg5:.1f})", icon="❗"
-                        )
-                    elif actual_qty_row_disp_pg5 < median_qty_row_disp_pg5 / 3:
-                        st.info(f"Low (Avg:~{median_qty_row_disp_pg5:.1f})", icon="ℹ️")
-
-            with item_cols_display_pg5[2]:
-                notes_key_for_row_disp_pg5 = f"pg5_disp_item_notes_{row_id_pg5}"
-
-                def on_notes_change_callback_pg5(idx_pg5, key_arg_pg5):
-                    st.session_state.pg5_create_indent_rows[idx_pg5]["notes"] = (
-                        st.session_state[key_arg_pg5]
-                    )
-
-                st.text_input(
-                    f"Notes_R{i_loop_item_rows_pg5+1}",
-                    value=st.session_state.pg5_create_indent_rows[
-                        i_loop_item_rows_pg5
-                    ].get("notes", ""),
-                    key=notes_key_for_row_disp_pg5,
-                    label_visibility="collapsed",
-                    placeholder="Optional",
-                    on_change=on_notes_change_callback_pg5,
-                    args=(i_loop_item_rows_pg5, notes_key_for_row_disp_pg5),
-                )
-            with item_cols_display_pg5[3]:
-                if len(st.session_state.pg5_create_indent_rows) > 1:
-                    item_cols_display_pg5[3].button(
-                        "➖",
-                        key=f"pg5_disp_remove_row_{row_id_pg5}",
-                        on_click=remove_indent_row_callback_pg5,
-                        args=(row_id_pg5,),
-                        help="Remove line",
-                    )
+                        item_options_dict_pg5.update({PLACEHOLDER_ERROR_LOADING_ITEMS: -3})
                 else:
-                    item_cols_display_pg5[3].write("")
-            st.caption("")
-
-        add_lines_cols_pg5 = st.columns([2, 1.2])
-        with add_lines_cols_pg5[0]:
-            st.number_input(
-                "Lines to add:",
-                value=st.session_state.pg5_num_lines_to_add_value,
-                min_value=1,
-                max_value=10,
-                step=1,
-                key="pg5_create_indent_num_lines_input",
-                help="Specify how many new blank item lines to add.",
-            )
-        with add_lines_cols_pg5[1]:
-            st.markdown(
-                "<div style='padding-top: 28px;'></div>", unsafe_allow_html=True
-            )
-            st.button(
-                "➕ Add Lines",
-                on_click=add_multiple_indent_lines_callback_pg5,
-                key="pg5_add_multi_lines_btn",
-                use_container_width=True,
-            )
-        st.divider()
-
-        with st.form("pg5_create_indent_final_submit_form", clear_on_submit=False):
-            submitted_final_button_pg5 = st.form_submit_button(
-                "📝 Submit Indent Request", type="primary", use_container_width=True
-            )
-            if submitted_final_button_pg5:
-                # ... (Submission logic - use pg5_ prefixed session state keys and constants) ...
-                # This section seems mostly okay, ensure PG5_CREATE_INDENT... keys are used for header_data_submit
-                # and st.session_state.pg5_create_indent_rows for items.
-                header_data_submit_pg5 = {
-                    "department": st.session_state.get(PG5_CREATE_INDENT_DEPT_SESS_KEY),
-                    "requested_by": st.session_state.get(
-                        PG5_CREATE_INDENT_REQ_BY_SESS_KEY, ""
+                    item_options_dict_pg5.update({PLACEHOLDER_NO_ITEMS_AVAILABLE: -4})
+            else:
+                item_options_dict_pg5 = {PLACEHOLDER_SELECT_DEPARTMENT_FIRST: -5}
+    
+            h_cols_pg5 = st.columns([4, 2, 3, 1])
+            h_cols_pg5[0].markdown("**Item**")
+            h_cols_pg5[1].markdown("**Req. Qty**")
+            h_cols_pg5[2].markdown("**Notes**")
+            h_cols_pg5[3].markdown("**Action**")
+            st.divider()
+    
+            # Item rows display using pg5_ prefixed session state and keys
+            for i_loop_item_rows_pg5, row_state_pg5 in enumerate(
+                st.session_state.pg5_create_indent_rows
+            ):
+                # ... (Item row rendering logic - use pg5_ prefixed vars and unique keys based on row_id_pg5) ...
+                # This section is complex, ensure all st.session_state.pg5_create_indent_rows access and widget keys are pg5_ prefixed and unique.
+                # Example for one item row input (apply similar pattern for others):
+                # item_selectbox_key_row_pg5 = f"pg5_disp_item_select_{row_id_pg5}"
+                # default_item_display_name_row_pg5 = pg5_placeholder_select_item_tuple[0]
+                # ...
+                # with item_cols_display_pg5[0]:
+                #     st.selectbox(f"Item (Row {i_loop_item_rows_pg5+1})", ..., key=item_selectbox_key_row_pg5, ...)
+                # ...
+                row_id_pg5 = row_state_pg5["id"]
+                item_cols_display_pg5 = st.columns([4, 2, 3, 1])
+                item_selectbox_key_row_pg5 = f"pg5_disp_item_select_{row_id_pg5}"
+                default_item_display_name_row_pg5 = pg5_placeholder_select_item_tuple[0]
+                if row_state_pg5.get("item_id") is not None:
+                    default_item_display_name_row_pg5 = next(
+                        (
+                            name
+                            for name, id_val in item_options_dict_pg5.items()
+                            if id_val == row_state_pg5["item_id"]
+                        ),
+                        default_item_display_name_row_pg5,
+                    )
+                try:
+                    current_item_idx_row_pg5 = list(item_options_dict_pg5.keys()).index(
+                        default_item_display_name_row_pg5
+                    )
+                except ValueError:
+                    current_item_idx_row_pg5 = 0
+    
+                with item_cols_display_pg5[0]:
+                    st.selectbox(
+                        f"Item_R{i_loop_item_rows_pg5+1}",
+                        options=list(item_options_dict_pg5.keys()),
+                        index=current_item_idx_row_pg5,
+                        key=item_selectbox_key_row_pg5,
+                        label_visibility="collapsed",
+                        on_change=update_row_item_details_callback_pg5,
+                        args=(
+                            i_loop_item_rows_pg5,
+                            item_selectbox_key_row_pg5,
+                            item_options_dict_pg5,
+                        ),
+                    )
+                    # ... (Display item details caption) ...
+                    current_row_data_pg5 = st.session_state.pg5_create_indent_rows[
+                        i_loop_item_rows_pg5
+                    ]
+                    if (
+                        current_row_data_pg5.get("item_id")
+                        and current_row_data_pg5.get("item_id") != -1
+                    ):
+                        info_parts_pg5 = []
+                        if current_row_data_pg5.get("category"):
+                            info_parts_pg5.append(
+                                f"Cat: {current_row_data_pg5['category']}"
+                            )
+                        # ... (other info parts) ...
+                        if current_row_data_pg5.get("current_stock") is not None:
+                            unit_disp_pg5 = current_row_data_pg5.get("unit", "")
+                            info_parts_pg5.append(
+                                f"Stock: {float(current_row_data_pg5['current_stock']):.2f} {unit_disp_pg5}"
+                            )
+                        if current_row_data_pg5.get("last_ordered"):
+                            info_parts_pg5.append(
+                                f"Last ord: {current_row_data_pg5['last_ordered']}"
+                            )
+                        if info_parts_pg5:
+                            st.caption(" | ".join(info_parts_pg5))
+    
+                with item_cols_display_pg5[1]:
+                    qty_key_for_row_disp_pg5 = f"pg5_disp_item_qty_{row_id_pg5}"
+                    current_qty_for_row_disp_pg5 = float(
+                        st.session_state.pg5_create_indent_rows[i_loop_item_rows_pg5].get(
+                            "requested_qty", 1.0
+                        )
+                    )
+    
+                    def on_qty_change_callback_pg5(idx_pg5, key_arg_pg5):
+                        st.session_state.pg5_create_indent_rows[idx_pg5][
+                            "requested_qty"
+                        ] = st.session_state[key_arg_pg5]
+    
+                    st.number_input(
+                        f"Qty_R{i_loop_item_rows_pg5+1}",
+                        value=current_qty_for_row_disp_pg5,
+                        min_value=0.01,
+                        step=0.1,
+                        format="%.2f",
+                        key=qty_key_for_row_disp_pg5,
+                        label_visibility="collapsed",
+                        on_change=on_qty_change_callback_pg5,
+                        args=(i_loop_item_rows_pg5, qty_key_for_row_disp_pg5),
+                    )
+                    # ... (Median qty warning/info) ...
+                    median_qty_row_disp_pg5 = st.session_state.pg5_create_indent_rows[
+                        i_loop_item_rows_pg5
+                    ].get("median_qty")
+                    actual_qty_row_disp_pg5 = st.session_state.pg5_create_indent_rows[
+                        i_loop_item_rows_pg5
+                    ].get("requested_qty", 0.0)
+                    if (
+                        median_qty_row_disp_pg5
+                        and median_qty_row_disp_pg5 > 0
+                        and actual_qty_row_disp_pg5 > 0
+                    ):
+                        if actual_qty_row_disp_pg5 > median_qty_row_disp_pg5 * 3:
+                            st.warning(
+                                f"High! (Avg:~{median_qty_row_disp_pg5:.1f})", icon="❗"
+                            )
+                        elif actual_qty_row_disp_pg5 < median_qty_row_disp_pg5 / 3:
+                            st.info(f"Low (Avg:~{median_qty_row_disp_pg5:.1f})", icon="ℹ️")
+    
+                with item_cols_display_pg5[2]:
+                    notes_key_for_row_disp_pg5 = f"pg5_disp_item_notes_{row_id_pg5}"
+    
+                    def on_notes_change_callback_pg5(idx_pg5, key_arg_pg5):
+                        st.session_state.pg5_create_indent_rows[idx_pg5]["notes"] = (
+                            st.session_state[key_arg_pg5]
+                        )
+    
+                    st.text_input(
+                        f"Notes_R{i_loop_item_rows_pg5+1}",
+                        value=st.session_state.pg5_create_indent_rows[
+                            i_loop_item_rows_pg5
+                        ].get("notes", ""),
+                        key=notes_key_for_row_disp_pg5,
+                        label_visibility="collapsed",
+                        placeholder="Optional",
+                        on_change=on_notes_change_callback_pg5,
+                        args=(i_loop_item_rows_pg5, notes_key_for_row_disp_pg5),
+                    )
+                with item_cols_display_pg5[3]:
+                    if len(st.session_state.pg5_create_indent_rows) > 1:
+                        item_cols_display_pg5[3].button(
+                            "➖",
+                            key=f"pg5_disp_remove_row_{row_id_pg5}",
+                            on_click=remove_indent_row_callback_pg5,
+                            args=(row_id_pg5,),
+                            help="Remove line",
+                        )
+                    else:
+                        item_cols_display_pg5[3].write("")
+                st.caption("")
+    
+            add_lines_cols_pg5 = st.columns([2, 1.2])
+            with add_lines_cols_pg5[0]:
+                st.number_input(
+                    "Lines to add:",
+                    value=st.session_state.pg5_num_lines_to_add_value,
+                    min_value=1,
+                    max_value=10,
+                    step=1,
+                    key="pg5_create_indent_num_lines_input",
+                    help="Specify how many new blank item lines to add.",
+                )
+            with add_lines_cols_pg5[1]:
+                st.markdown(
+                    "<div style='padding-top: 28px;'></div>", unsafe_allow_html=True
+                )
+                st.button(
+                    "➕ Add Lines",
+                    on_click=add_multiple_indent_lines_callback_pg5,
+                    key="pg5_add_multi_lines_btn",
+                    use_container_width=True,
+                )
+            st.divider()
+    
+            with st.form("pg5_create_indent_final_submit_form", clear_on_submit=False):
+                submitted_final_button_pg5 = st.form_submit_button(
+                    "📝 Submit Indent Request", type="primary", use_container_width=True
+                )
+                if submitted_final_button_pg5:
+                    # ... (Submission logic - use pg5_ prefixed session state keys and constants) ...
+                    # This section seems mostly okay, ensure PG5_CREATE_INDENT... keys are used for header_data_submit
+                    # and st.session_state.pg5_create_indent_rows for items.
+                    header_data_submit_pg5 = {
+                        "department": st.session_state.get(PG5_CREATE_INDENT_DEPT_SESS_KEY),
+                        "requested_by": st.session_state.get(
+                            PG5_CREATE_INDENT_REQ_BY_SESS_KEY, ""
                     ).strip(),
                     "date_required": st.session_state.get(
                         PG5_CREATE_INDENT_DATE_REQ_SESS_KEY

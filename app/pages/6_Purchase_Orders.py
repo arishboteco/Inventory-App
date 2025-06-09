@@ -367,6 +367,8 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
     )
     st.subheader(form_title)
 
+    po_header_tab, po_items_tab = st.tabs(["Header", "Items"])
+
     # Data for dropdowns
     supp_df_form = supplier_service.get_all_suppliers(
         db_engine, include_inactive=is_edit_mode
@@ -607,228 +609,230 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
             add_po_line_item_form_ss()
 
     # --- PO Header Form ---
-    st.markdown("##### 📋 PO Header Details")
-    form_key_po_create_edit = (
-        f"po_form_v2_{'edit' if is_edit_mode else 'create'}"  # Dynamic form key
-    )
-    with st.form(form_key_po_create_edit):
-        # Supplier selection
-        current_supplier_form_val_widget = st.session_state.form_supplier_name_val
-        if (
-            current_supplier_form_val_widget not in supp_dict_form
-        ):  # Fallback if selected supplier no longer valid
-            current_supplier_form_val_widget = DEFAULT_SUPPLIER_KEY_PG6
-
-        supplier_idx_form_ui_val = list(supp_dict_form.keys()).index(
-            current_supplier_form_val_widget
+    with po_header_tab:
+        st.markdown("##### 📋 PO Header Details")
+        form_key_po_create_edit = (
+            f"po_form_v2_{'edit' if is_edit_mode else 'create'}"  # Dynamic form key
         )
-
-        selected_supplier_widget_val = st.selectbox(  # Renamed var
-            "Supplier*",
-            options=list(supp_dict_form.keys()),
-            index=supplier_idx_form_ui_val,
-            key="form_po_supplier_select_v2",  # Unique widget key
-            help="Choose the supplier for this Purchase Order.",
-        )
-        st.session_state.form_supplier_name_val = (
-            selected_supplier_widget_val  # Update session state
-        )
-        selected_supplier_id_for_submit = supp_dict_form.get(
-            selected_supplier_widget_val
-        )  # Get ID for submission
-
-        # Dates and User ID
-        hcols_form1, hcols_form2 = st.columns(2)  # Renamed vars
-        with hcols_form1:
-            st.session_state.form_order_date_val = hcols_form1.date_input(
-                "Order Date*",
-                value=st.session_state.form_order_date_val,
-                key="form_po_order_date_v2",
-                help="Date the order is placed.",
-            )
-        with hcols_form2:
-            st.session_state.form_exp_delivery_date_val = hcols_form2.date_input(
-                "Expected Delivery Date",
-                value=st.session_state.form_exp_delivery_date_val,
-                key="form_po_exp_delivery_date_v2",
-                help="Optional: Expected date for goods to arrive.",
-            )
-
-        st.session_state.form_notes_val = st.text_area(
-            "PO Notes",
-            value=st.session_state.form_notes_val,
-            key="form_po_notes_v2",
-            placeholder="e.g., Special instructions, payment terms...",
-            help="Optional notes or remarks for this Purchase Order.",
-        )
-        st.session_state.form_user_id_val = st.text_input(
-            "Your Name/ID*",
-            value=st.session_state.form_user_id_val,
-            key="form_po_user_id_v2",
-            placeholder="Enter your identifier (e.g., name or employee ID)",
-            help="Identifier of the person creating or editing this PO.",
-        )
-
-        # Submit PO to Supplier button (only in edit mode for draft POs within header form)
-        if (
-            is_edit_mode
-            and st.session_state.current_po_status_for_edit == PO_STATUS_DRAFT
-        ):
-            if st.form_submit_button(
-                "➡️ Submit PO to Supplier",
-                use_container_width=True,
-                help="Finalize and change status to 'Ordered'.",
-            ):
-                user_id_for_status_update = (
-                    st.session_state.form_user_id_val.strip()
-                    or st.session_state.po_submitter_user_id
+        with st.form(form_key_po_create_edit):
+                # Supplier selection
+                current_supplier_form_val_widget = st.session_state.form_supplier_name_val
+                if (
+                    current_supplier_form_val_widget not in supp_dict_form
+                ):  # Fallback if selected supplier no longer valid
+                    current_supplier_form_val_widget = DEFAULT_SUPPLIER_KEY_PG6
+        
+                supplier_idx_form_ui_val = list(supp_dict_form.keys()).index(
+                    current_supplier_form_val_widget
                 )
-                success_status_update, msg_status_update = (
-                    purchase_order_service.update_po_status(
-                        db_engine,
-                        st.session_state.po_to_edit_id,
-                        PO_STATUS_ORDERED,
-                        user_id_for_status_update,
-                    )
+        
+                selected_supplier_widget_val = st.selectbox(  # Renamed var
+                    "Supplier*",
+                    options=list(supp_dict_form.keys()),
+                    index=supplier_idx_form_ui_val,
+                    key="form_po_supplier_select_v2",  # Unique widget key
+                    help="Choose the supplier for this Purchase Order.",
                 )
-                if success_status_update:
-                    st.success(
-                        f"PO status successfully updated to '{PO_STATUS_ORDERED}'. {msg_status_update}"
+                st.session_state.form_supplier_name_val = (
+                    selected_supplier_widget_val  # Update session state
+                )
+                selected_supplier_id_for_submit = supp_dict_form.get(
+                    selected_supplier_widget_val
+                )  # Get ID for submission
+        
+                # Dates and User ID
+                hcols_form1, hcols_form2 = st.columns(2)  # Renamed vars
+                with hcols_form1:
+                    st.session_state.form_order_date_val = hcols_form1.date_input(
+                        "Order Date*",
+                        value=st.session_state.form_order_date_val,
+                        key="form_po_order_date_v2",
+                        help="Date the order is placed.",
                     )
-                    change_view_mode("list_po", clear_po_form_state=True)
-                    st.rerun()
-                else:
-                    st.error(f"❌ Failed to submit PO: {msg_status_update}")
-
-        st.divider()
-        form_submit_button_label = (
-            "💾 Update Purchase Order" if is_edit_mode else "💾 Create Purchase Order"
-        )
-        submit_button_po_form = st.form_submit_button(
+                with hcols_form2:
+                    st.session_state.form_exp_delivery_date_val = hcols_form2.date_input(
+                        "Expected Delivery Date",
+                        value=st.session_state.form_exp_delivery_date_val,
+                        key="form_po_exp_delivery_date_v2",
+                        help="Optional: Expected date for goods to arrive.",
+                    )
+        
+                st.session_state.form_notes_val = st.text_area(
+                    "PO Notes",
+                    value=st.session_state.form_notes_val,
+                    key="form_po_notes_v2",
+                    placeholder="e.g., Special instructions, payment terms...",
+                    help="Optional notes or remarks for this Purchase Order.",
+                )
+                st.session_state.form_user_id_val = st.text_input(
+                    "Your Name/ID*",
+                    value=st.session_state.form_user_id_val,
+                    key="form_po_user_id_v2",
+                    placeholder="Enter your identifier (e.g., name or employee ID)",
+                    help="Identifier of the person creating or editing this PO.",
+                )
+        
+                # Submit PO to Supplier button (only in edit mode for draft POs within header form)
+                if (
+                    is_edit_mode
+                    and st.session_state.current_po_status_for_edit == PO_STATUS_DRAFT
+                ):
+                    if st.form_submit_button(
+                        "➡️ Submit PO to Supplier",
+                        use_container_width=True,
+                        help="Finalize and change status to 'Ordered'.",
+                    ):
+                        user_id_for_status_update = (
+                            st.session_state.form_user_id_val.strip()
+                            or st.session_state.po_submitter_user_id
+                        )
+                        success_status_update, msg_status_update = (
+                            purchase_order_service.update_po_status(
+                                db_engine,
+                                st.session_state.po_to_edit_id,
+                                PO_STATUS_ORDERED,
+                                user_id_for_status_update,
+                            )
+                        )
+                        if success_status_update:
+                            st.success(
+                                f"PO status successfully updated to '{PO_STATUS_ORDERED}'. {msg_status_update}"
+                            )
+                            change_view_mode("list_po", clear_po_form_state=True)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Failed to submit PO: {msg_status_update}")
+        
+                st.divider()
+                form_submit_button_label = (
+                    "💾 Update Purchase Order" if is_edit_mode else "💾 Create Purchase Order"
+                )
+                submit_button_po_form = st.form_submit_button(
             form_submit_button_label, type="primary", use_container_width=True
         )
 
     # --- PO Line Items Section (managed outside the st.form for header for dynamic add/remove) ---
-    st.markdown("##### 🛍️ PO Line Items")
-    line_header_cols = st.columns([4, 1, 1.5, 1, 0.5])  # Renamed var
-    line_header_cols[0].markdown("**Item**")
-    line_header_cols[1].markdown("**Qty**")
-    line_header_cols[2].markdown("**Unit Price**")
-    line_header_cols[3].markdown("**Unit**")
-    line_header_cols[4].markdown("**Act**")  # Action (Remove)
+    with po_items_tab:
+        st.markdown("##### 🛍️ PO Line Items")
+        line_header_cols = st.columns([4, 1, 1.5, 1, 0.5])  # Renamed var
+        line_header_cols[0].markdown("**Item**")
+        line_header_cols[1].markdown("**Qty**")
+        line_header_cols[2].markdown("**Unit Price**")
+        line_header_cols[3].markdown("**Unit**")
+        line_header_cols[4].markdown("**Act**")  # Action (Remove)
 
-    current_lines_for_render_form: List[Dict[str, Any]] = (
+        current_lines_for_render_form: List[Dict[str, Any]] = (
         []
-    )  # To store widget values for processing
-    for i_po_line, line_item_state_form in enumerate(
+        )  # To store widget values for processing
+        for i_po_line, line_item_state_form in enumerate(
         st.session_state.form_po_line_items
-    ):  # Renamed vars
-        line_item_cols_form = st.columns([4, 1, 1.5, 1, 0.5])  # Renamed var
-        line_item_id_form = line_item_state_form[
-            "id"
-        ]  # Unique ID for this line item instance
-
-        # Item Selectbox
-        current_item_key_form_line = line_item_state_form.get(
-            "item_key", "-- Select Item --"
-        )
-        if (
-            current_item_key_form_line not in item_dict_form
-        ):  # Fallback if key is somehow invalid
-            current_item_key_form_line = "-- Select Item --"
-            st.session_state.form_po_line_items[i_po_line][
-                "item_key"
-            ] = current_item_key_form_line  # Correct session state
-
-        try:
-            item_idx_form_line = list(item_dict_form.keys()).index(
-                current_item_key_form_line
+        ):  # Renamed vars
+            line_item_cols_form = st.columns([4, 1, 1.5, 1, 0.5])  # Renamed var
+            line_item_id_form = line_item_state_form[
+                "id"
+            ]  # Unique ID for this line item instance
+            
+            # Item Selectbox
+            current_item_key_form_line = line_item_state_form.get(
+                "item_key", "-- Select Item --"
             )
-        except ValueError:
-            item_idx_form_line = 0  # Default to placeholder
-            print(
-                f"ERROR [PO Form Render]: Index not found for item key '{current_item_key_form_line}' in line {line_item_id_form}"
+            if (
+                current_item_key_form_line not in item_dict_form
+            ):  # Fallback if key is somehow invalid
+                current_item_key_form_line = "-- Select Item --"
+                st.session_state.form_po_line_items[i_po_line][
+                    "item_key"
+                ] = current_item_key_form_line  # Correct session state
+            
+            try:
+                item_idx_form_line = list(item_dict_form.keys()).index(
+                    current_item_key_form_line
+                )
+            except ValueError:
+                item_idx_form_line = 0  # Default to placeholder
+                print(
+                    f"ERROR [PO Form Render]: Index not found for item key '{current_item_key_form_line}' in line {line_item_id_form}"
+                )
+            
+            selected_item_name_widget_val = line_item_cols_form[0].selectbox(  # Renamed var
+                f"Item_line_select_{line_item_id_form}",
+                options=list(item_dict_form.keys()),
+                key=f"form_po_line_item_name_v2_{line_item_id_form}",  # Unique widget key
+                index=item_idx_form_line,
+                label_visibility="collapsed",
             )
+            
+            # Update unit based on selection
+            _, unit_from_selection = item_dict_form.get(
+                selected_item_name_widget_val, (None, "")
+            )
+            
+            # Quantity Input
+            qty_widget_val = line_item_cols_form[1].number_input(  # Renamed var
+                f"Qty_line_num_input_{line_item_id_form}",
+                value=float(line_item_state_form.get("quantity", 1.0)),
+                min_value=0.01,
+                step=0.01,
+                format="%.2f",  # Min 0.01 for PO
+                key=f"form_po_line_qty_v2_{line_item_id_form}",
+                label_visibility="collapsed",
+            )
+            
+            # Price Input
+            price_widget_val = line_item_cols_form[2].number_input(  # Renamed var
+                f"Price_line_num_input_{line_item_id_form}",
+                value=float(line_item_state_form.get("unit_price", 0.0)),
+                min_value=0.00,
+                step=0.01,
+                format="%.2f",
+                key=f"form_po_line_price_v2_{line_item_id_form}",
+                label_visibility="collapsed",
+            )
+            
+            # Unit Display (disabled input)
+            line_item_cols_form[3].text_input(
+                f"Unit_line_text_disp_{line_item_id_form}",
+                value=(unit_from_selection or ""),  # Display unit from selection
+                key=f"form_po_line_unit_disp_v2_{line_item_id_form}",
+                disabled=True,
+                label_visibility="collapsed",
+            )
+            
+            # Remove Line Button
+            if len(st.session_state.form_po_line_items) > 1:
+                if line_item_cols_form[4].button(
+                    "➖",
+                    key=f"form_po_del_line_btn_v2_{line_item_id_form}",
+                    help="Remove this item line",
+                ):
+                    remove_po_line_item_form_ss(line_item_id_form)
+                    st.rerun()  # Rerun to reflect removal
+            else:
+                line_item_cols_form[4].write("")  # Placeholder for single line
+            
+            # Store current values from widgets to be used on form submission
+            current_lines_for_render_form.append(
+                {
+                    "id": line_item_id_form,
+                    "item_key": selected_item_name_widget_val,
+                    "quantity": qty_widget_val,
+                    "unit_price": price_widget_val,
+                    "unit": (unit_from_selection or ""),
+                }
+            )
+            
+            # Update session state with values from rendered widgets (important for multi-page forms or complex interactions)
+        st.session_state.form_po_line_items = current_lines_for_render_form
 
-        selected_item_name_widget_val = line_item_cols_form[0].selectbox(  # Renamed var
-            f"Item_line_select_{line_item_id_form}",
-            options=list(item_dict_form.keys()),
-            key=f"form_po_line_item_name_v2_{line_item_id_form}",  # Unique widget key
-            index=item_idx_form_line,
-            label_visibility="collapsed",
-        )
-
-        # Update unit based on selection
-        _, unit_from_selection = item_dict_form.get(
-            selected_item_name_widget_val, (None, "")
-        )
-
-        # Quantity Input
-        qty_widget_val = line_item_cols_form[1].number_input(  # Renamed var
-            f"Qty_line_num_input_{line_item_id_form}",
-            value=float(line_item_state_form.get("quantity", 1.0)),
-            min_value=0.01,
-            step=0.01,
-            format="%.2f",  # Min 0.01 for PO
-            key=f"form_po_line_qty_v2_{line_item_id_form}",
-            label_visibility="collapsed",
-        )
-
-        # Price Input
-        price_widget_val = line_item_cols_form[2].number_input(  # Renamed var
-            f"Price_line_num_input_{line_item_id_form}",
-            value=float(line_item_state_form.get("unit_price", 0.0)),
-            min_value=0.00,
-            step=0.01,
-            format="%.2f",
-            key=f"form_po_line_price_v2_{line_item_id_form}",
-            label_visibility="collapsed",
-        )
-
-        # Unit Display (disabled input)
-        line_item_cols_form[3].text_input(
-            f"Unit_line_text_disp_{line_item_id_form}",
-            value=(unit_from_selection or ""),  # Display unit from selection
-            key=f"form_po_line_unit_disp_v2_{line_item_id_form}",
-            disabled=True,
-            label_visibility="collapsed",
-        )
-
-        # Remove Line Button
-        if len(st.session_state.form_po_line_items) > 1:
-            if line_item_cols_form[4].button(
-                "➖",
-                key=f"form_po_del_line_btn_v2_{line_item_id_form}",
-                help="Remove this item line",
-            ):
-                remove_po_line_item_form_ss(line_item_id_form)
-                st.rerun()  # Rerun to reflect removal
-        else:
-            line_item_cols_form[4].write("")  # Placeholder for single line
-
-        # Store current values from widgets to be used on form submission
-        current_lines_for_render_form.append(
-            {
-                "id": line_item_id_form,
-                "item_key": selected_item_name_widget_val,
-                "quantity": qty_widget_val,
-                "unit_price": price_widget_val,
-                "unit": (unit_from_selection or ""),
-            }
-        )
-
-    # Update session state with values from rendered widgets (important for multi-page forms or complex interactions)
-    st.session_state.form_po_line_items = current_lines_for_render_form
-
-    # Add Item Line Button
-    if st.button(
-        "➕ Add Item Line",
-        on_click=add_po_line_item_form_ss,
-        key="form_po_add_line_btn_v2",
-        help="Add a new item line to the Purchase Order.",
-    ):
-        pass  # Rerun handled by on_click if it modifies state that needs redraw, or manually st.rerun()
-    st.divider()
+        # Add Item Line Button
+        if st.button(
+            "➕ Add Item Line",
+            on_click=add_po_line_item_form_ss,
+            key="form_po_add_line_btn_v2",
+            help="Add a new item line to the Purchase Order.",
+        ):
+            pass  # Rerun handled by on_click if it modifies state that needs redraw, or manually st.rerun()
+        st.divider()
 
     # --- Processing Logic for Create/Update PO Form ---
     if submit_button_po_form:
@@ -1009,69 +1013,72 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
 
     # GRN Form
     with st.form("create_grn_form_v2_page6"):  # Unique form key
-        st.markdown("##### 📋 GRN Header")
-        grn_header_cols_ui = st.columns(2)
-        with grn_header_cols_ui[0]:
-            st.session_state.grn_received_date_val = st.date_input(
-                "Received Date*",
-                value=st.session_state.grn_received_date_val,
-                key="grn_recv_date_v2",
-                help="Date when the goods were actually received.",
+        grn_header_tab, grn_items_tab = st.tabs(["Header", "Items Received"])
+
+        with grn_header_tab:
+            st.markdown("##### 📋 GRN Header")
+            grn_header_cols_ui = st.columns(2)
+            with grn_header_cols_ui[0]:
+                st.session_state.grn_received_date_val = st.date_input(
+                    "Received Date*",
+                    value=st.session_state.grn_received_date_val,
+                    key="grn_recv_date_v2",
+                    help="Date when the goods were actually received.",
+                )
+            with grn_header_cols_ui[1]:
+                st.session_state.grn_received_by_val = st.text_input(
+                    "Received By (Your Name/ID)*",
+                    value=st.session_state.grn_received_by_val,
+                    key="grn_recv_by_v2",
+                    help="Person who recorded this goods receipt.",
+                )
+            st.session_state.grn_header_notes_val = st.text_area(
+                "GRN Notes",
+                value=st.session_state.grn_header_notes_val,
+                key="grn_notes_header_v2",
+                placeholder="e.g., Invoice #, delivery condition...",
+                help="Optional notes for this Goods Received Note.",
             )
-        with grn_header_cols_ui[1]:
-            st.session_state.grn_received_by_val = st.text_input(
-                "Received By (Your Name/ID)*",
-                value=st.session_state.grn_received_by_val,
-                key="grn_recv_by_v2",
-                help="Person who recorded this goods receipt.",
-            )
-        st.session_state.grn_header_notes_val = st.text_area(
-            "GRN Notes",
-            value=st.session_state.grn_header_notes_val,
-            key="grn_notes_header_v2",
-            placeholder="e.g., Invoice #, delivery condition...",
-            help="Optional notes for this Goods Received Note.",
-        )
-        st.divider()
 
-        st.markdown("##### 📦 Items Received")
-        # Column headers for GRN items list
-        grn_item_headers_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])  # Adjusted ratios
-        grn_item_headers_ui[0].markdown("**Item (Unit)**")
-        grn_item_headers_ui[1].markdown("**Ordered**")
-        grn_item_headers_ui[2].markdown("**Prev. Rcvd**")
-        grn_item_headers_ui[3].markdown("**Pending**")
-        grn_item_headers_ui[4].markdown("**Qty Rcv Now***")
-        grn_item_headers_ui[5].markdown("**Unit Price Rcvd***")
-
-        # Iterate through items prepared for GRN (from PO)
-        for i_grn_line, line_item_grn_ui in enumerate(st.session_state.grn_line_items):
-            item_cols_grn_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])  # Matched ratios
-            # Construct a unique key prefix for widgets in this line
-            key_prefix_grn_line = f"grn_line_v2_{line_item_grn_ui.get('po_item_id', line_item_grn_ui.get('item_id', i_grn_line))}"
-
-            item_cols_grn_ui[0].write(
+        with grn_items_tab:
+            st.markdown("##### 📦 Items Received")
+            # Column headers for GRN items list
+            grn_item_headers_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])  # Adjusted ratios
+            grn_item_headers_ui[0].markdown("**Item (Unit)**")
+            grn_item_headers_ui[1].markdown("**Ordered**")
+            grn_item_headers_ui[2].markdown("**Prev. Rcvd**")
+            grn_item_headers_ui[3].markdown("**Pending**")
+            grn_item_headers_ui[4].markdown("**Qty Rcv Now***")
+            grn_item_headers_ui[5].markdown("**Unit Price Rcvd***")
+            
+            # Iterate through items prepared for GRN (from PO)
+            for i_grn_line, line_item_grn_ui in enumerate(st.session_state.grn_line_items):
+                item_cols_grn_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])  # Matched ratios
+                # Construct a unique key prefix for widgets in this line
+                key_prefix_grn_line = f"grn_line_v2_{line_item_grn_ui.get('po_item_id', line_item_grn_ui.get('item_id', i_grn_line))}"
+                
+                item_cols_grn_ui[0].write(
                 f"{line_item_grn_ui.get('item_name','N/A')} ({line_item_grn_ui.get('item_unit','N/A')})"
-            )
-            item_cols_grn_ui[1].write(
+                )
+                item_cols_grn_ui[1].write(
                 f"{line_item_grn_ui.get('quantity_ordered_on_po',0.0):.2f}"
-            )
-            item_cols_grn_ui[2].write(
+                )
+                item_cols_grn_ui[2].write(
                 f"{line_item_grn_ui.get('total_previously_received',0.0):.2f}"
-            )
-
-            qty_pending_grn_line = float(
+                )
+                
+                qty_pending_grn_line = float(
                 line_item_grn_ui.get("quantity_remaining_on_po", 0.0)
-            )
-            item_cols_grn_ui[3].write(f"{qty_pending_grn_line:.2f}")
-
-            # Input for "Quantity Received Now"
-            st.session_state.grn_line_items[i_grn_line][
+                )
+                item_cols_grn_ui[3].write(f"{qty_pending_grn_line:.2f}")
+                
+                # Input for "Quantity Received Now"
+                st.session_state.grn_line_items[i_grn_line][
                 "quantity_received_now"
-            ] = item_cols_grn_ui[4].number_input(
+                ] = item_cols_grn_ui[4].number_input(
                 f"QtyRcvNow_{key_prefix_grn_line}",
                 value=float(
-                    line_item_grn_ui.get("quantity_received_now", 0.0)
+                line_item_grn_ui.get("quantity_received_now", 0.0)
                 ),  # Default to 0 or previous entry
                 min_value=0.0,
                 max_value=qty_pending_grn_line,  # Max is pending qty
@@ -1080,14 +1087,14 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                 key=f"{key_prefix_grn_line}_qty_v2",
                 label_visibility="collapsed",
                 help=f"Max quantity you can receive for this item is {qty_pending_grn_line:.2f}",
-            )
-            # Input for "Unit Price at Receipt"
-            st.session_state.grn_line_items[i_grn_line][
+                )
+                # Input for "Unit Price at Receipt"
+                st.session_state.grn_line_items[i_grn_line][
                 "unit_price_at_receipt"
-            ] = item_cols_grn_ui[5].number_input(
+                ] = item_cols_grn_ui[5].number_input(
                 f"PriceRcv_{key_prefix_grn_line}",
                 value=float(
-                    line_item_grn_ui.get("unit_price_at_receipt", 0.0)
+                line_item_grn_ui.get("unit_price_at_receipt", 0.0)
                 ),  # Defaults to PO price
                 min_value=0.00,
                 step=0.01,
@@ -1095,13 +1102,13 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                 key=f"{key_prefix_grn_line}_price_v2",
                 label_visibility="collapsed",
                 help="Actual unit price at the time of receipt.",
+                )
+                st.caption("")  # Small vertical spacer between item lines
+                
+            st.divider()
+            submit_grn_button_ui = st.form_submit_button(
+                "💾 Record Goods Received", type="primary", use_container_width=True
             )
-            st.caption("")  # Small vertical spacer between item lines
-
-        st.divider()
-        submit_grn_button_ui = st.form_submit_button(
-            "💾 Record Goods Received", type="primary", use_container_width=True
-        )
 
         if submit_grn_button_ui:
             if not st.session_state.grn_received_by_val.strip():

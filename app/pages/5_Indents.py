@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import urllib.parse
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos

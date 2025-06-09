@@ -31,17 +31,11 @@ Before running the app, create a `.streamlit/secrets.toml` file containing your 
 
 ## Customizing the Sidebar Logo
 
-The sidebar image displayed in the app is defined in `app/ui/logo.py` as a base64 encoded PNG. To use your own logo:
+To override the default sidebar image, place a file named `logo.png` in
+`app/ui/`. When present, the application loads this file automatically.
+If no such file exists, the built-in base64 image defined in `app/ui/logo.py`
+is used instead.
 
-1. Convert your PNG image to a base64 string:
-
-   ```python
-   import base64
-
-   with open("my_logo.png", "rb") as f:
-       print(base64.b64encode(f.read()).decode())
-   ```
-
-2. Replace the `LOGO_BASE64` value in `app/ui/logo.py` with the string printed above.
-
-Restart the application and your logo will appear in the sidebar.
+Optional fallback: you can still embed a custom image by replacing the value of
+`LOGO_BASE64` in `app/ui/logo.py`. Convert your PNG to a base64 string and
+assign it to `LOGO_BASE64` if you prefer not to keep a separate file.

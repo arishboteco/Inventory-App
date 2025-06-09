@@ -9,6 +9,7 @@ if REPO_ROOT not in sys.path:
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from app.ui.theme import load_css, render_sidebar_logo
 
 # --- Import from our new/refactored modules ---
 from app.core.constants import STATUS_SUBMITTED
@@ -29,6 +30,8 @@ def run_dashboard():
     st.set_page_config(
         page_title="Restaurant Inventory Manager", page_icon="🍲", layout="wide"
     )
+    load_css()
+    render_sidebar_logo()
     st.title("🍲 Restaurant Inventory Dashboard")
     st.caption(
         f"Current Overview as of: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -117,6 +120,9 @@ def run_dashboard():
             pending_indents_count,
             help="Material requests awaiting processing.",
         )
+
+    if not low_stock_df.empty:
+        st.bar_chart(low_stock_df.set_index("name")["current_stock"])
 
     st.divider()
 

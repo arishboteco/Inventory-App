@@ -17,6 +17,7 @@ try:
         PO_STATUS_ORDERED,
         PO_STATUS_PARTIALLY_RECEIVED,
     )
+    from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
 except ImportError as e:
     st.error(
         f"Import error in 6_Purchase_Orders.py: {e}. Please ensure all modules are correctly placed."
@@ -27,6 +28,9 @@ except Exception as e:  # Catch any other potential import errors
         f"An unexpected error occurred during an import in 6_Purchase_Orders.py: {e}"
     )
     st.stop()
+
+load_css()
+render_sidebar_logo()
 
 # --- Page Config and Title ---
 st.title("🛒 Purchase Order & Goods Receiving")
@@ -275,7 +279,8 @@ if st.session_state.po_grn_view_mode == "list_po":
             status_po_list_item = row_po_list_item["status"]
 
             st.markdown(
-                f"**PO #: {row_po_list_item['po_number']}** | Supplier: {row_po_list_item['supplier_name']} | Status: _{status_po_list_item}_"
+                f"**PO #: {row_po_list_item['po_number']}** | Supplier: {row_po_list_item['supplier_name']} | Status: {format_status_badge(status_po_list_item)}",
+                unsafe_allow_html=True,
             )
 
             disp_cols_po_list = st.columns([1.5, 1.5, 1, 1, 2.5])  # Renamed var
@@ -1235,7 +1240,8 @@ elif st.session_state.po_grn_view_mode == "view_po_details":
     header_cols_view_ui[0].markdown(f"**Order Date:** {order_date_view_fmt}")
     header_cols_view_ui[0].markdown(f"**Expected Delivery:** {exp_del_view_fmt}")
     header_cols_view_ui[1].markdown(
-        f"**Status:** {po_details_data_view_ui.get('status', 'N/A')}"
+        f"**Status:** {format_status_badge(po_details_data_view_ui.get('status', 'N/A'))}",
+        unsafe_allow_html=True,
     )
     header_cols_view_ui[1].markdown(
         f"**Total Amount:** {po_details_data_view_ui.get('total_amount', 0.0):.2f}"

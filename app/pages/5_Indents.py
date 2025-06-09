@@ -32,14 +32,15 @@ try:
         PLACEHOLDER_ERROR_LOADING_ITEMS,  # If applicable
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
+    from app.ui import render_sidebar_nav, show_success, show_error
 except ImportError as e:
-    st.error(
+    show_error(
         "Import error in 5_Indents.py: "
         f"{e}. Please ensure all service files and utility modules are correctly placed and named."
     )
     st.stop()
 except Exception as e:
-    st.error(f"An unexpected error occurred during an import in 5_Indents.py: {e}")
+    show_error(f"An unexpected error occurred during an import in 5_Indents.py: {e}")
     st.stop()
 
 # --- Session State Initialization ---
@@ -119,6 +120,7 @@ for key, default_val in [
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 st.title("📝 Material Indents Management")
 st.write(
@@ -128,7 +130,7 @@ st.divider()
 
 db_engine = connect_db()
 if not db_engine:
-    st.error(
+    show_error(
         "Database connection failed. Indent management functionality is unavailable."
     )
     st.stop()
@@ -722,7 +724,7 @@ if st.session_state.pg5_active_indent_section == "create":
         mrn_to_print_pg5 = (
             st.session_state.pg5_last_created_mrn_for_print
         )  # Use pg5_ variable
-        st.success(f"Indent **{mrn_to_print_pg5}** was created successfully!")
+        show_success(f"Indent **{mrn_to_print_pg5}** was created successfully!")
         if st.session_state.get("pg5_last_submitted_indent_details"):
             summary_header_pg5 = st.session_state.pg5_last_submitted_indent_details[
                 "header"
@@ -789,7 +791,7 @@ if st.session_state.pg5_active_indent_section == "create":
                                 )
                                 st.rerun()
                         else:
-                            st.error(
+                            show_error(
                                 f"Could not fetch details for PDF: {mrn_to_print_pg5}."
                             )
         with whatsapp_col_pg5:
@@ -1217,11 +1219,11 @@ if st.session_state.pg5_active_indent_section == "create":
                 items_to_submit_list_pg5 = []
                 seen_item_ids_in_form_pg5 = set()
                 if not header_data_submit_pg5["department"]:
-                    st.error("Department required.")
+                    show_error("Department required.")
                     is_valid_pg5 = False
                 # ... (rest of validation and submission logic, ensuring pg5_ variables and keys) ...
                 if not header_data_submit_pg5["requested_by"]:
-                    st.error("Requested By required.")
+                    show_error("Requested By required.")
                     is_valid_pg5 = False
 
                 current_item_options_for_validation_pg5 = (
@@ -1249,11 +1251,11 @@ if st.session_state.pg5_active_indent_section == "create":
                         )
 
                     if item_id_v_pg5 is None or item_id_v_pg5 == -1:
-                        st.error(f"Row {i_r_pg5+1}: Select item.")
+                        show_error(f"Row {i_r_pg5+1}: Select item.")
                         is_valid_pg5 = False
                         continue
                     if item_id_v_pg5 in seen_item_ids_in_form_pg5:
-                        st.error(
+                        show_error(
                             f"Row {i_r_pg5+1}: Item '{item_name_val_pg5}' duplicated."
                         )
                         is_valid_pg5 = False
@@ -1262,12 +1264,12 @@ if st.session_state.pg5_active_indent_section == "create":
                         if not (
                             isinstance(qty_v_pg5, (float, int)) and float(qty_v_pg5) > 0
                         ):
-                            st.error(
+                            show_error(
                                 f"Row {i_r_pg5+1}: Qty for '{item_name_val_pg5}' > 0. Got: {qty_v_pg5}"
                             )
                             is_valid_pg5 = False
                     except:
-                        st.error(
+                        show_error(
                             f"Row {i_r_pg5+1}: Invalid Qty for '{item_name_val_pg5}'. Got: {qty_v_pg5}"
                         )
                         is_valid_pg5 = False
@@ -1289,7 +1291,7 @@ if st.session_state.pg5_active_indent_section == "create":
                         seen_item_ids_in_form_pg5.add(item_id_v_pg5)
 
                 if not items_to_submit_list_pg5 and is_valid_pg5:
-                    st.error("Indent needs at least one valid item.")
+                    show_error("Indent needs at least one valid item.")
                     is_valid_pg5 = False
 
                 if is_valid_pg5:
@@ -1339,9 +1341,9 @@ if st.session_state.pg5_active_indent_section == "create":
                             item_service.get_suggested_items_for_department.clear()
                             st.rerun()
                         else:
-                            st.error(f"Failed to create indent: {message_pg5}")
+                            show_error(f"Failed to create indent: {message_pg5}")
                     else:
-                        st.error("Failed to generate MRN.")
+                        show_error("Failed to generate MRN.")
                 # else: st.warning("Fix errors before submitting.") # Already handled by individual error messages
 
 # --- VIEW INDENTS SECTION ---
@@ -1411,7 +1413,7 @@ elif st.session_state.pg5_active_indent_section == "view":
     else:
         # ... (Display DataFrame - use pg5_ prefixed vars) ...
         # ... (PDF Download Section - use pg5_ prefixed vars, PLACEHOLDER_SELECT_MRN_PDF, and unique keys) ...
-        st.success(f"Found {len(indents_df_pg5)} indent(s).")
+        show_success(f"Found {len(indents_df_pg5)} indent(s).")
         # ... (DataFrame display logic, ensure column names match what get_indents returns) ...
         # (The display logic was okay, just needs variable renaming if any done above)
         display_df_pg5 = indents_df_pg5.copy()
@@ -1540,7 +1542,7 @@ elif st.session_state.pg5_active_indent_section == "view":
                                     )
                                     st.rerun()
                             else:
-                                st.error(
+                                show_error(
                                     f"Could not fetch details to generate PDF for MRN {selected_mrn_for_pdf_pg5}."
                                 )
 
@@ -1778,7 +1780,7 @@ elif st.session_state.pg5_active_indent_section == "process":
                                     )
                                     has_items_with_qty_pg5 = True
                             except (ValueError, TypeError):
-                                st.error(
+                                show_error(
                                     f"Invalid quantity for {item_row_s_pg5['item_name']}."
                                 )
                                 items_to_submit_list_proc_pg5 = []
@@ -1801,7 +1803,7 @@ elif st.session_state.pg5_active_indent_section == "process":
                                     )
                                 )
                                 if success_p_pg5:
-                                    st.success(message_p_pg5)
+                                    show_success(message_p_pg5)
                                     st.session_state.pg5_process_indent_selected_tuple = (
                                         pg5_placeholder_indent_process_tuple
                                     )
@@ -1814,7 +1816,7 @@ elif st.session_state.pg5_active_indent_section == "process":
                                     indent_service.get_indents_for_processing.clear()
                                     st.rerun()
                                 else:
-                                    st.error(f"Processing Failed: {message_p_pg5}")
+                                    show_error(f"Processing Failed: {message_p_pg5}")
 
             # Other Actions (Mark as Completed / Cancel Indent) - Placed correctly outside the form
             st.markdown("---")
@@ -1842,13 +1844,13 @@ elif st.session_state.pg5_active_indent_section == "process":
                                 selected_mrn_pg5,
                             )
                             if s_mark:
-                                st.success(m_mark)
+                                show_success(m_mark)
                                 st.session_state.pg5_process_indent_selected_tuple = (
                                     pg5_placeholder_indent_process_tuple
                                 )
                                 st.rerun()  # Simplified reset
                             else:
-                                st.error(f"Failed: {m_mark}")
+                                show_error(f"Failed: {m_mark}")
 
             with action_cols_proc_pg5[1]:
                 if st.button(
@@ -1873,13 +1875,13 @@ elif st.session_state.pg5_active_indent_section == "process":
                                 selected_mrn_pg5,
                             )
                             if s_cancel:
-                                st.success(m_cancel)
+                                show_success(m_cancel)
                                 st.session_state.pg5_process_indent_selected_tuple = (
                                     pg5_placeholder_indent_process_tuple
                                 )
                                 st.rerun()  # Simplified reset
                             else:
-                                st.error(f"Failed: {m_cancel}")
+                                show_error(f"Failed: {m_cancel}")
 
         elif selected_indent_id_pg5:
             st.info(

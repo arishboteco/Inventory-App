@@ -12,11 +12,12 @@ try:
         PLACEHOLDER_SELECT_ITEM,
     )
     from app.ui.theme import load_css, render_sidebar_logo
+    from app.ui import render_sidebar_nav, show_success, show_error
 except ImportError as e:
-    st.error(f"Import error in 3_Stock_Movements.py: {e}.")
+    show_error(f"Import error in 3_Stock_Movements.py: {e}.")
     st.stop()
 except Exception as e:
-    st.error(f"An unexpected error occurred during import in 3_Stock_Movements.py: {e}")
+    show_error(f"An unexpected error occurred during import in 3_Stock_Movements.py: {e}")
     st.stop()
 
 SECTIONS_PG3 = {
@@ -64,6 +65,7 @@ for section_key_pg3 in SECTION_KEYS_PG3:
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 st.title("🚚 Stock Movements Log")
 st.write(
@@ -73,7 +75,7 @@ st.divider()
 
 db_engine = connect_db()
 if not db_engine:
-    st.error("❌ Database connection failed. Cannot proceed with stock movements.")
+    show_error("❌ Database connection failed. Cannot proceed with stock movements.")
     st.stop()
 
 
@@ -390,7 +392,7 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
                     if item_display_name_success_pg3_tuple
                     else "Selected Item"
                 )
-                st.success(
+                show_success(
                     f"✅ Successfully recorded {active_section_prefix_val_pg3} for '{item_display_name_success_pg3}'."
                 )
 
@@ -409,6 +411,6 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
                     st.session_state[current_po_id_ss_key_pg3] = ""
                 st.rerun()
             else:
-                st.error(
+                show_error(
                     f"❌ Failed to record stock {active_section_prefix_val_pg3}. Check console for specific database errors."
                 )

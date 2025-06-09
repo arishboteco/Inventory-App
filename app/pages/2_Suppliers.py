@@ -3,7 +3,13 @@ import streamlit as st
 import pandas as pd
 
 from app.ui.theme import load_css, render_sidebar_logo
-from app.ui import pagination_controls, render_search_toggle
+from app.ui import (
+    pagination_controls,
+    render_search_toggle,
+    render_sidebar_nav,
+    show_success,
+    show_error,
+)
 
 try:
     from app.db.database_utils import connect_db
@@ -13,10 +19,12 @@ try:
     # but good to keep imports organized if they are added later.
     # from app.core.constants import SOME_CONSTANT
 except ImportError as e:
-    st.error(f"Import error in 2_Suppliers.py: {e}.")
+    show_error(f"Import error in 2_Suppliers.py: {e}.")
     st.stop()
 except Exception as e:
-    st.error(f"An unexpected error occurred during import in 2_Suppliers.py: {e}")
+    show_error(
+        f"An unexpected error occurred during import in 2_Suppliers.py: {e}"
+    )
     st.stop()
 
 # --- Session State (prefixed with pg2_ for page-specific scope) ---
@@ -45,6 +53,7 @@ def fetch_all_suppliers_df_pg2(
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 
 st.title("🤝 Supplier Management")
@@ -55,7 +64,7 @@ st.divider()
 
 engine = connect_db()
 if not engine:
-    st.error(
+    show_error(
         "Database connection failed. Supplier Management functionality is unavailable."
     )
     st.stop()
@@ -118,11 +127,11 @@ with st.expander("➕ Add New Supplier Record", expanded=False):
                     engine, supplier_data_add_pg2
                 )
                 if success_add_pg2:
-                    st.success(message_add_pg2)
+                    show_success(message_add_pg2)
                     fetch_all_suppliers_df_pg2.clear()  # Clear page-specific cache
                     st.rerun()
                 else:
-                    st.error(message_add_pg2)
+                    show_error(message_add_pg2)
 st.divider()
 
 # --- VIEW & MANAGE EXISTING SUPPLIERS ---
@@ -273,11 +282,11 @@ else:
                             )
                         )
                         if success_deact_pg2:
-                            st.success(msg_deact_pg2)
+                            show_success(msg_deact_pg2)
                             fetch_all_suppliers_df_pg2.clear()
                             st.rerun()
                         else:
-                            st.error(msg_deact_pg2)
+                            show_error(msg_deact_pg2)
                 else:  # Supplier is inactive
                     if action_buttons_cols_pg2[0].button(
                         "✅",
@@ -291,11 +300,11 @@ else:
                             )
                         )
                         if success_react_pg2:
-                            st.success(msg_react_pg2)
+                            show_success(msg_react_pg2)
                             fetch_all_suppliers_df_pg2.clear()
                             st.rerun()
                         else:
-                            st.error(msg_react_pg2)
+                            show_error(msg_react_pg2)
         st.divider()
 
         # Inline Edit Form for selected supplier
@@ -381,7 +390,7 @@ else:
                                 )
                             )
                             if ok_update_pg2:
-                                st.success(msg_update_pg2)
+                                show_success(msg_update_pg2)
                                 st.session_state.pg2_show_edit_form_for_supplier_id = (
                                     None  # Close form
                                 )
@@ -391,5 +400,5 @@ else:
                                 fetch_all_suppliers_df_pg2.clear()  # Clear cache
                                 st.rerun()
                             else:
-                                st.error(msg_update_pg2)
+                                show_error(msg_update_pg2)
                 st.divider()

@@ -51,6 +51,7 @@ def fetch_all_items_df_for_items_page(
         _engine, include_inactive=show_inactive
     )
 
+
 load_css()
 render_sidebar_logo()
 

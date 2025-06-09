@@ -12,6 +12,7 @@ try:
     from app.db.database_utils import connect_db
     from app.services import item_service
     from app.services import indent_service
+    from app.auth.auth import get_current_user_id
     from app.core.constants import (
         ALL_INDENT_STATUSES,
         STATUS_SUBMITTED,
@@ -87,7 +88,7 @@ if "pg5_process_indent_items_df" not in st.session_state:
 if "pg5_process_indent_issue_quantities_defaults" not in st.session_state:
     st.session_state.pg5_process_indent_issue_quantities_defaults = {}
 if "pg5_process_indent_user_id" not in st.session_state:
-    st.session_state.pg5_process_indent_user_id = ""
+    st.session_state.pg5_process_indent_user_id = get_current_user_id()
 
 
 INDENT_SECTIONS_PG5 = {
@@ -1735,10 +1736,12 @@ elif st.session_state.pg5_active_indent_section == "process":
                     st.caption("")
 
                 st.divider()
-                st.session_state.pg5_process_indent_user_id = st.text_input(
-                    "Processed by (Your Name/ID)*",
-                    value=st.session_state.get("pg5_process_indent_user_id", ""),
+                st.session_state.pg5_process_indent_user_id = get_current_user_id()
+                st.text_input(
+                    "Processed by",
+                    value=st.session_state.pg5_process_indent_user_id,
                     key=f"pg5_process_user_id_input_{selected_indent_id_pg5}",
+                    disabled=True,
                 )  # Make key unique per indent
 
                 submit_issue_button_pg5 = st.form_submit_button(
@@ -1748,11 +1751,7 @@ elif st.session_state.pg5_active_indent_section == "process":
                 )
                 if submit_issue_button_pg5:
                     # ... (Submission logic - use pg5_ prefixed vars and unique keys) ...
-                    # This logic should be mostly fine from previous fixes, just ensure variables are pg5_
-                    if not st.session_state.pg5_process_indent_user_id.strip():
-                        st.warning("Please enter 'Processed by' User ID.")
-                    else:
-                        items_to_submit_list_proc_pg5: List[Dict[str, Any]] = []
+                    items_to_submit_list_proc_pg5: List[Dict[str, Any]] = []
                         has_items_with_qty_pg5 = False
                         for (
                             _,
@@ -1796,7 +1795,7 @@ elif st.session_state.pg5_active_indent_section == "process":
                                         db_engine,
                                         selected_indent_id_pg5,
                                         items_to_submit_list_proc_pg5,
-                                        st.session_state.pg5_process_indent_user_id.strip(),
+                                        get_current_user_id().strip(),
                                         selected_mrn_pg5,
                                     )
                                 )
@@ -1827,20 +1826,15 @@ elif st.session_state.pg5_active_indent_section == "process":
                     use_container_width=True,
                 ):
                     # ... (logic using pg5_process_indent_user_id)
-                    user_id_for_action_pg5 = st.session_state.get(
-                        "pg5_process_indent_user_id", ""
-                    ).strip()
-                    if not user_id_for_action_pg5:
-                        st.warning("Enter 'Processed by' ID first.")
-                    else:
-                        # ... (call indent_service.mark_indent_completed) ...
-                        with st.spinner(f"Marking {selected_mrn_pg5} as completed..."):
-                            s_mark, m_mark = indent_service.mark_indent_completed(
-                                db_engine,
-                                selected_indent_id_pg5,
-                                user_id_for_action_pg5,
-                                selected_mrn_pg5,
-                            )
+                    user_id_for_action_pg5 = get_current_user_id()
+                    # ... (call indent_service.mark_indent_completed) ...
+                    with st.spinner(f"Marking {selected_mrn_pg5} as completed..."):
+                        s_mark, m_mark = indent_service.mark_indent_completed(
+                            db_engine,
+                            selected_indent_id_pg5,
+                            user_id_for_action_pg5,
+                            selected_mrn_pg5,
+                        )
                             if s_mark:
                                 st.success(m_mark)
                                 st.session_state.pg5_process_indent_selected_tuple = (
@@ -1858,20 +1852,15 @@ elif st.session_state.pg5_active_indent_section == "process":
                     use_container_width=True,
                 ):
                     # ... (logic using pg5_process_indent_user_id) ...
-                    user_id_for_action_pg5 = st.session_state.get(
-                        "pg5_process_indent_user_id", ""
-                    ).strip()
-                    if not user_id_for_action_pg5:
-                        st.warning("Enter 'Processed by' ID first.")
-                    else:
-                        # ... (call indent_service.cancel_entire_indent) ...
-                        with st.spinner(f"Cancelling {selected_mrn_pg5}..."):
-                            s_cancel, m_cancel = indent_service.cancel_entire_indent(
-                                db_engine,
-                                selected_indent_id_pg5,
-                                user_id_for_action_pg5,
-                                selected_mrn_pg5,
-                            )
+                    user_id_for_action_pg5 = get_current_user_id()
+                    # ... (call indent_service.cancel_entire_indent) ...
+                    with st.spinner(f"Cancelling {selected_mrn_pg5}..."):
+                        s_cancel, m_cancel = indent_service.cancel_entire_indent(
+                            db_engine,
+                            selected_indent_id_pg5,
+                            user_id_for_action_pg5,
+                            selected_mrn_pg5,
+                        )
                             if s_cancel:
                                 st.success(m_cancel)
                                 st.session_state.pg5_process_indent_selected_tuple = (

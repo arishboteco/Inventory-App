@@ -11,6 +11,7 @@ try:
     from app.services import supplier_service
     from app.services import item_service
     from app.services import goods_receiving_service
+    from app.auth.auth import get_current_user_id
     from app.core.constants import (
         ALL_PO_STATUSES,
         PO_STATUS_DRAFT,
@@ -86,7 +87,7 @@ if "form_exp_delivery_date_val" not in st.session_state:
 if "form_notes_val" not in st.session_state:
     st.session_state.form_notes_val = ""
 if "form_user_id_val" not in st.session_state:
-    st.session_state.form_user_id_val = ""  # For created_by/updated_by
+    st.session_state.form_user_id_val = get_current_user_id()
 if "current_po_status_for_edit" not in st.session_state:
     st.session_state.current_po_status_for_edit = (
         None  # Tracks status of PO being edited
@@ -98,13 +99,13 @@ if "loaded_po_for_edit_id" not in st.session_state:
 
 # Default user ID if not entered by user (can be improved with actual user login later)
 if "po_submitter_user_id" not in st.session_state:
-    st.session_state.po_submitter_user_id = "System"
+    st.session_state.po_submitter_user_id = get_current_user_id()
 
 # GRN Form field values
 if "grn_received_date_val" not in st.session_state:
     st.session_state.grn_received_date_val = date.today()
 if "grn_received_by_val" not in st.session_state:
-    st.session_state.grn_received_by_val = ""
+    st.session_state.grn_received_by_val = get_current_user_id()
 if "grn_header_notes_val" not in st.session_state:
     st.session_state.grn_header_notes_val = ""
 
@@ -173,7 +174,7 @@ def change_view_mode(
         st.session_state.po_for_grn_details = None
         st.session_state.grn_line_items = []
         st.session_state.grn_received_date_val = date.today()
-        st.session_state.grn_received_by_val = ""
+        st.session_state.grn_received_by_val = get_current_user_id()
         st.session_state.grn_header_notes_val = ""
 
     # Signal to reset PO form if mode changes require it
@@ -460,7 +461,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
             )
             st.session_state.form_notes_val = po_data_to_edit.get("notes", "")
             st.session_state.form_user_id_val = po_data_to_edit.get(
-                "created_by_user_id", st.session_state.get("po_submitter_user_id", "")
+                "created_by_user_id", get_current_user_id()
             )  # Use stored or default
 
             # Pre-fill line items
@@ -555,9 +556,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
         st.session_state.form_order_date_val = date.today()
         st.session_state.form_exp_delivery_date_val = None
         st.session_state.form_notes_val = ""
-        st.session_state.form_user_id_val = st.session_state.get(
-            "po_submitter_user_id", ""
-        )  # Default user
+        st.session_state.form_user_id_val = get_current_user_id()
         st.session_state.loaded_po_for_edit_id = (
             None  # Clear loaded PO ID for create mode
         )
@@ -661,12 +660,12 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
             placeholder="e.g., Special instructions, payment terms...",
             help="Optional notes or remarks for this Purchase Order.",
         )
-        st.session_state.form_user_id_val = st.text_input(
-            "Your Name/ID*",
+        st.session_state.form_user_id_val = get_current_user_id()
+        st.text_input(
+            "Your Name/ID",
             value=st.session_state.form_user_id_val,
             key="form_po_user_id_v2",
-            placeholder="Enter your identifier (e.g., name or employee ID)",
-            help="Identifier of the person creating or editing this PO.",
+            disabled=True,
         )
 
         # Submit PO to Supplier button (only in edit mode for draft POs within header form)
@@ -679,10 +678,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                 use_container_width=True,
                 help="Finalize and change status to 'Ordered'.",
             ):
-                user_id_for_status_update = (
-                    st.session_state.form_user_id_val.strip()
-                    or st.session_state.po_submitter_user_id
-                )
+                user_id_for_status_update = get_current_user_id()
                 success_status_update, msg_status_update = (
                     purchase_order_service.update_po_status(
                         db_engine,
@@ -837,8 +833,6 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
             st.warning(
                 "⚠️ Supplier is required. Please select a supplier from the list."
             )
-        elif not st.session_state.form_user_id_val.strip():
-            st.warning("⚠️ Your Name/ID is required in the PO Header.")
         else:
             # Prepare header data
             po_header_data_for_submit = {  # Renamed var
@@ -916,7 +910,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
 
             # If all data is valid, proceed with service call
             if are_all_items_valid:
-                current_user_id_for_submit = st.session_state.form_user_id_val.strip()
+                current_user_id_for_submit = get_current_user_id().strip()
 
                 if (
                     is_edit_mode and st.session_state.po_to_edit_id is not None
@@ -1019,11 +1013,12 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                 help="Date when the goods were actually received.",
             )
         with grn_header_cols_ui[1]:
-            st.session_state.grn_received_by_val = st.text_input(
-                "Received By (Your Name/ID)*",
+            st.session_state.grn_received_by_val = get_current_user_id()
+            st.text_input(
+                "Received By",
                 value=st.session_state.grn_received_by_val,
                 key="grn_recv_by_v2",
-                help="Person who recorded this goods receipt.",
+                disabled=True,
             )
         st.session_state.grn_header_notes_val = st.text_area(
             "GRN Notes",
@@ -1104,11 +1099,8 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
         )
 
         if submit_grn_button_ui:
-            if not st.session_state.grn_received_by_val.strip():
-                st.warning("⚠️ 'Received By (Your Name/ID)' is required.")
-            else:
-                # Prepare GRN header data for submission
-                grn_header_to_submit = {  # Renamed var
+            # Prepare GRN header data for submission
+            grn_header_to_submit = {  # Renamed var
                     "po_id": active_grn_po_details_data_ui.get(
                         "po_id"
                     ),  # Get from loaded PO details
@@ -1298,10 +1290,7 @@ elif st.session_state.po_grn_view_mode == "view_po_details":
     # Action button: Submit PO (if Draft)
     if po_details_data_view_ui.get("status") == PO_STATUS_DRAFT:
         # Use a default or prompt for user_id if actual logged-in user not available
-        user_id_for_submit_from_view = (
-            st.session_state.get("form_user_id_val")
-            or st.session_state.po_submitter_user_id
-        )
+        user_id_for_submit_from_view = get_current_user_id()
         if st.button(
             "➡️ Submit PO to Supplier",
             key="submit_po_from_view_details_v2",

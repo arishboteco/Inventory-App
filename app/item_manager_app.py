@@ -21,6 +21,7 @@ from app.db.database_utils import connect_db
 from app.services import item_service
 from app.services import supplier_service
 from app.services import indent_service
+from app.auth.auth import login_sidebar
 
 # STATUS_SUBMITTED is already imported from app.core.constants above, no need to re-import separately
 
@@ -36,6 +37,8 @@ def run_dashboard():
     )
     load_css()
     render_sidebar_logo()
+    if not login_sidebar():
+        st.stop()
     st.title("🍲 Restaurant Inventory Dashboard")
     st.caption(
         f"Current Overview as of: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"

@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
+from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
 from app.core.constants import (
     PO_STATUS_DRAFT,
@@ -19,6 +20,8 @@ from app.core.constants import (
     ALL_PO_STATUSES,
 )
 
+logger = get_logger(__name__)
+
 
 # ─────────────────────────────────────────────────────────
 # PURCHASE ORDER (PO) FUNCTIONS
@@ -26,7 +29,7 @@ from app.core.constants import (
 # ... (generate_po_number, list_pos, get_po_by_id remain the same) ...
 def generate_po_number(engine: Engine) -> Optional[str]:
     if engine is None:
-        print(
+        logger.error(
             "ERROR [purchase_order_service.generate_po_number]: Database engine not available."
         )
         return None
@@ -36,8 +39,10 @@ def generate_po_number(engine: Engine) -> Optional[str]:
             seq_num = result.scalar_one()
             return f"PO-{seq_num:04d}"
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [purchase_order_service.generate_po_number]: Error generating PO Number: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.generate_po_number]: Error generating PO Number: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return None
 
@@ -49,7 +54,7 @@ def list_pos(
     sort_by: Optional[str] = None,
 ) -> pd.DataFrame:
     if _engine is None:
-        print("ERROR [purchase_order_service.list_pos]: Database engine not available.")
+        logger.error("ERROR [purchase_order_service.list_pos]: Database engine not available.")
         return pd.DataFrame()
     query_str = """
         SELECT po.po_id, po.po_number, po.supplier_id, s.name AS supplier_name, 
@@ -107,8 +112,9 @@ def list_pos(
             else:
                 query_str += f" ORDER BY {sort_by.strip()}"
         else:
-            print(
-                f"WARNING [purchase_order_service.list_pos]: Invalid sort_by parameter '{sort_by}' ignored. Defaulting sort."
+            logger.warning(
+                "WARNING [purchase_order_service.list_pos]: Invalid sort_by parameter '%s' ignored. Defaulting sort.",
+                sort_by,
             )
             query_str += default_sort
     else:
@@ -119,7 +125,7 @@ def list_pos(
 @st.cache_data(ttl=60, show_spinner="Fetching Purchase Order details...")
 def get_po_by_id(_engine: Engine, po_id: int) -> Optional[Dict[str, Any]]:
     if _engine is None or not po_id:
-        print(
+        logger.error(
             "ERROR [purchase_order_service.get_po_by_id]: Database engine or PO ID not provided."
         )
         return None
@@ -147,8 +153,9 @@ def get_po_by_id(_engine: Engine, po_id: int) -> Optional[Dict[str, Any]]:
                 connection.execute(po_header_query, {"po_id": po_id}).mappings().first()
             )
             if not header_result:
-                print(
-                    f"WARNING [purchase_order_service.get_po_by_id]: No PO found for ID {po_id}."
+                logger.warning(
+                    "WARNING [purchase_order_service.get_po_by_id]: No PO found for ID %s.",
+                    po_id,
                 )
                 return None
             po_header = dict(header_result)
@@ -158,8 +165,11 @@ def get_po_by_id(_engine: Engine, po_id: int) -> Optional[Dict[str, Any]]:
             po_header["items"] = [dict(item) for item in items_result]
             return po_header
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [purchase_order_service.get_po_by_id]: Database error fetching PO details for po_id {po_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.get_po_by_id]: Database error fetching PO details for po_id %s: %s\n%s",
+            po_id,
+            e,
+            traceback.format_exc(),
         )
         return None
 
@@ -290,13 +300,18 @@ def create_po(
             msg = "Invalid Item ID in PO items."
         elif "purchase_orders_supplier_id_fkey" in str(e).lower():
             msg = "Invalid Supplier ID for PO."
-        print(
-            f"ERROR [purchase_order_service.create_po]: {msg} Details: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.create_po]: %s Details: %s\n%s",
+            msg,
+            e,
+            traceback.format_exc(),
         )
         return False, msg, None
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [purchase_order_service.create_po]: DB error creating PO: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.create_po]: DB error creating PO: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return (
             False,
@@ -348,8 +363,11 @@ def update_po_status(
                 )
             return False, f"Failed to update PO status for ID {po_id}."
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [purchase_order_service.update_po_status]: DB error updating PO status for {po_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.update_po_status]: DB error updating PO status for %s: %s\n%s",
+            po_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while updating PO status."
 
@@ -492,12 +510,18 @@ def update_po_details(
             msg = "Invalid Item ID in updated items."
         elif "supplier_id_fkey" in str(ie).lower():
             msg = "Invalid Supplier ID in PO header."
-        print(
-            f"ERROR [purchase_order_service.update_po_details]: {msg} Details: {ie}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.update_po_details]: %s Details: %s\n%s",
+            msg,
+            ie,
+            traceback.format_exc(),
         )
         return False, msg
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [purchase_order_service.update_po_details]: DB error updating PO {po_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [purchase_order_service.update_po_details]: DB error updating PO %s: %s\n%s",
+            po_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while updating the Purchase Order."

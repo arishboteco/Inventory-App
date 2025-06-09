@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine, Connection
 
 
+from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
 from app.core.constants import (
     STATUS_SUBMITTED,
@@ -25,6 +26,8 @@ from app.core.constants import (
 from app.services import item_service
 from app.services import stock_service
 
+logger = get_logger(__name__)
+
 
 # ─────────────────────────────────────────────────────────
 # INDENT (MATERIAL REQUEST NOTE - MRN) FUNCTIONS
@@ -39,7 +42,7 @@ def generate_mrn(engine: Engine) -> Optional[str]:
         A string representing the new MRN, or None if generation fails.
     """
     if engine is None:
-        print("ERROR [indent_service.generate_mrn]: Database engine not available.")
+        logger.error("ERROR [indent_service.generate_mrn]: Database engine not available.")
         return None
     try:
         with engine.connect() as connection:
@@ -47,8 +50,10 @@ def generate_mrn(engine: Engine) -> Optional[str]:
             seq_num = result.scalar_one()
             return f"MRN-{datetime.now().strftime('%Y%m')}-{seq_num:05d}"
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [indent_service.generate_mrn]: Error generating MRN: {e}. Sequence 'mrn_seq' might not exist or other DB error.\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.generate_mrn]: Error generating MRN: %s. Sequence 'mrn_seq' might not exist or other DB error.\n%s",
+            e,
+            traceback.format_exc(),
         )
         return None
 
@@ -170,13 +175,18 @@ def create_indent(
             )
         elif "indent_items_item_id_fkey" in str(e).lower():
             error_msg = "Failed to create indent: One or more selected Item IDs are invalid or do not exist in the item master."
-        print(
-            f"ERROR [indent_service.create_indent]: {error_msg} Details: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.create_indent]: %s Details: %s\n%s",
+            error_msg,
+            e,
+            traceback.format_exc(),
         )
         return False, error_msg
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [indent_service.create_indent]: Database error creating indent: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.create_indent]: Database error creating indent: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while creating the indent."
 
@@ -204,7 +214,7 @@ def get_indents(
         Pandas DataFrame of indents.
     """
     if _engine is None:
-        print("ERROR [indent_service.get_indents]: Database engine not available.")
+        logger.error("ERROR [indent_service.get_indents]: Database engine not available.")
         return pd.DataFrame()
 
     date_start_filter: Optional[date] = None
@@ -213,15 +223,17 @@ def get_indents(
         try:
             date_start_filter = datetime.strptime(date_start_str, "%Y-%m-%d").date()
         except ValueError:
-            print(
-                f"WARNING [indent_service.get_indents]: Invalid start date format: {date_start_str}. Ignoring."
+            logger.warning(
+                "WARNING [indent_service.get_indents]: Invalid start date format: %s. Ignoring.",
+                date_start_str,
             )
     if date_end_str:
         try:
             date_end_filter = datetime.strptime(date_end_str, "%Y-%m-%d").date()
         except ValueError:
-            print(
-                f"WARNING [indent_service.get_indents]: Invalid end date format: {date_end_str}. Ignoring."
+            logger.warning(
+                "WARNING [indent_service.get_indents]: Invalid end date format: %s. Ignoring.",
+                date_end_str,
             )
 
     query_str = """
@@ -288,7 +300,7 @@ def get_indents_for_processing(_engine: Engine) -> pd.DataFrame:
         Pandas DataFrame of indents suitable for processing.
     """
     if _engine is None:
-        print(
+        logger.error(
             "ERROR [indent_service.get_indents_for_processing]: Database engine not available."
         )
         return pd.DataFrame()
@@ -323,7 +335,7 @@ def get_indent_items_for_display(engine: Engine, indent_id: int) -> pd.DataFrame
         Pandas DataFrame of indent items with stock details.
     """
     if engine is None or not indent_id:
-        print(
+        logger.error(
             "ERROR [indent_service.get_indent_items_for_display]: DB engine or indent_id missing."
         )
         return pd.DataFrame()
@@ -381,7 +393,7 @@ def get_indent_details_for_pdf(
         Tuple (header_dict, list_of_item_dicts) or (None, None) if not found.
     """
     if engine is None or not mrn or not mrn.strip():
-        print(
+        logger.error(
             "ERROR [indent_service.get_indent_details_for_pdf]: Database engine or MRN not provided."
         )
         return None, None
@@ -405,8 +417,9 @@ def get_indent_details_for_pdf(
             )
 
             if not header_result:
-                print(
-                    f"WARNING [indent_service.get_indent_details_for_pdf]: Indent with MRN '{mrn}' not found for PDF generation."
+                logger.warning(
+                    "WARNING [indent_service.get_indent_details_for_pdf]: Indent with MRN '%s' not found for PDF generation.",
+                    mrn,
                 )
                 return None, None
 
@@ -444,8 +457,11 @@ def get_indent_details_for_pdf(
 
         return header_data, items_data
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [indent_service.get_indent_details_for_pdf]: Database error fetching details for indent PDF (MRN: {mrn}): {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.get_indent_details_for_pdf]: Database error fetching details for indent PDF (MRN: %s): %s\n%s",
+            mrn,
+            e,
+            traceback.format_exc(),
         )
         return None, None
 
@@ -707,8 +723,10 @@ def process_indent_issuance(
             return True, final_message
 
     except Exception as e:
-        print(
-            f"ERROR [indent_service.process_indent_issuance]: Exception during indent processing for MRN {indent_mrn}:\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.process_indent_issuance]: Exception during indent processing for MRN %s:\n%s",
+            indent_mrn,
+            traceback.format_exc(),
         )
         detailed_error_message = f"Error processing indent: {str(e)}."
         if processed_messages:
@@ -766,8 +784,11 @@ def mark_indent_completed(
             f"Indent MRN {indent_mrn} successfully marked as {STATUS_COMPLETED}. Any remaining pending/partially issued items were marked as cancelled.",
         )
     except Exception as e:
-        print(
-            f"ERROR [indent_service.mark_indent_completed]: Error marking indent {indent_mrn} as completed: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.mark_indent_completed]: Error marking indent %s as completed: %s\n%s",
+            indent_mrn,
+            e,
+            traceback.format_exc(),
         )
         return False, f"Error marking indent {indent_mrn} as completed: {str(e)}"
 
@@ -820,7 +841,10 @@ def cancel_entire_indent(
             f"Indent MRN {indent_mrn} and its non-issued items successfully cancelled.",
         )
     except Exception as e:
-        print(
-            f"ERROR [indent_service.cancel_entire_indent]: Error cancelling indent {indent_mrn}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [indent_service.cancel_entire_indent]: Error cancelling indent %s: %s\n%s",
+            indent_mrn,
+            e,
+            traceback.format_exc(),
         )
         return False, f"Error cancelling indent {indent_mrn}: {str(e)}"

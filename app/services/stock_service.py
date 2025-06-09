@@ -8,10 +8,13 @@ import streamlit as st  # For type hinting @st.cache_data
 from sqlalchemy import text, exc as sqlalchemy_exc
 from sqlalchemy.engine import Engine, Connection
 
+from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
 
 # Assuming item_service might be needed for future validation or fetching item names, though not directly used in current functions
 # from app.services import item_service
+
+logger = get_logger(__name__)
 
 
 # ─────────────────────────────────────────────────────────
@@ -54,13 +57,13 @@ def record_stock_transaction(
     elif db_engine_param:
         pass  # Will create connection in the try block
     else:
-        print(
+        logger.error(
             "ERROR [stock_service.record_stock_transaction]: Either db_engine_param or db_connection_param must be provided."
         )
         return False
 
     if not item_id:
-        print(
+        logger.warning(
             "WARNING [stock_service.record_stock_transaction]: Item ID missing. No transaction recorded."
         )
         return False
@@ -84,8 +87,9 @@ def record_stock_transaction(
         try:
             related_po_id_cleaned = int(related_po_id)
         except ValueError:
-            print(
-                f"WARNING [stock_service.record_stock_transaction]: Invalid related_po_id '{related_po_id}', will be stored as NULL."
+            logger.warning(
+                "WARNING [stock_service.record_stock_transaction]: Invalid related_po_id '%s', will be stored as NULL.",
+                related_po_id,
             )
             # related_po_id_cleaned remains None
 
@@ -120,8 +124,9 @@ def record_stock_transaction(
         )
         try:
             if conn_obj.closed:  # Should ideally not happen if managed correctly
-                print(
-                    f"WARNING [stock_service._perform_db_operations]: Connection object for stock check is closed for item {item_id}!"
+                logger.warning(
+                    "WARNING [stock_service._perform_db_operations]: Connection object for stock check is closed for item %s!",
+                    item_id,
                 )
                 # Depending on desired robustness, could try to re-establish or fail.
                 # For now, let it proceed and potentially fail at execute if truly closed.
@@ -131,8 +136,10 @@ def record_stock_transaction(
             if current_stock_result is not None:
                 current_stock_before = float(current_stock_result)
         except Exception as e_stock_check:
-            print(
-                f"ERROR [stock_service._perform_db_operations]: Error checking current stock for item {item_id}: {e_stock_check}"
+            logger.error(
+                "ERROR [stock_service._perform_db_operations]: Error checking current stock for item %s: %s",
+                item_id,
+                e_stock_check,
             )
             raise  # Re-raise to be caught by outer try-except, ensuring transaction rollback
 
@@ -169,7 +176,7 @@ def record_stock_transaction(
                     _perform_db_operations(new_conn)
         else:
             # This case should not be reached if the initial checks for params are done.
-            print(
+            logger.critical(
                 "CRITICAL ERROR [stock_service.record_stock_transaction]: No valid database engine or connection provided."
             )
             return False
@@ -187,36 +194,49 @@ def record_stock_transaction(
 
             item_service.get_all_items_with_stock.clear()
         except ImportError:
-            print(
+            logger.warning(
                 "WARNING [stock_service.record_stock_transaction]: Could not import item_service to clear its cache."
             )
 
         return True
 
     except sqlalchemy_exc.IntegrityError as ie:
-        print(
-            f"ERROR [stock_service.record_stock_transaction]: Database integrity error for item_id {item_id}: {ie}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [stock_service.record_stock_transaction]: Database integrity error for item_id %s: %s\n%s",
+            item_id,
+            ie,
+            traceback.format_exc(),
         )
         if is_external_transaction:
             raise  # Propagate if part of a larger transaction
         return False
     except sqlalchemy_exc.SQLAlchemyError as sqla_e:  # More general SQLAlchemy errors
-        print(
-            f"ERROR [stock_service.record_stock_transaction]: Database SQL error for item_id {item_id}: {sqla_e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [stock_service.record_stock_transaction]: Database SQL error for item_id %s: %s\n%s",
+            item_id,
+            sqla_e,
+            traceback.format_exc(),
         )
         if is_external_transaction:
             raise
         return False
     except TypeError as te:  # Catching the TypeError we might raise
-        print(
-            f"ERROR [stock_service.record_stock_transaction]: Type error for item_id {item_id}: {te}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [stock_service.record_stock_transaction]: Type error for item_id %s: %s\n%s",
+            item_id,
+            te,
+            traceback.format_exc(),
         )
         if is_external_transaction:
             raise
         return False
     except Exception as e:  # Catch-all for other unexpected errors
-        print(
-            f"ERROR [stock_service.record_stock_transaction]: Unexpected error for item_id {item_id}: {e}\nType: {type(e)}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [stock_service.record_stock_transaction]: Unexpected error for item_id %s: %s\nType: %s\n%s",
+            item_id,
+            e,
+            type(e),
+            traceback.format_exc(),
         )
         if is_external_transaction:
             raise
@@ -249,7 +269,7 @@ def get_stock_transactions(
         Pandas DataFrame of stock transactions.
     """
     if _engine is None:
-        print(
+        logger.error(
             "ERROR [stock_service.get_stock_transactions]: Database engine not available."
         )
         return pd.DataFrame()

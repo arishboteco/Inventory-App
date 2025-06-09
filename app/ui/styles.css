@@ -40,3 +40,10 @@ body { font-family: 'Roboto', sans-serif; }
     .badge-error   { background: #cc0000; color: white; }
 }
 
+/* Tighten spacing for sidebar navigation items */
+[data-testid="stSidebarNav"] li,
+[data-testid="stSidebarNavLink"] {
+    margin: 0.125rem 0;
+    padding: 0.125rem 0.5rem;
+}
+

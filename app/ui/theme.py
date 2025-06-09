@@ -25,5 +25,5 @@ def format_status_badge(status: str) -> str:
 def render_sidebar_logo() -> None:
     """Render the logo image in the Streamlit sidebar."""
     logo_bytes = get_logo_bytes()
-    # use_container_width avoids deprecation warnings from Streamlit
-    st.sidebar.image(logo_bytes, use_container_width=True)
+    # Explicit width keeps the logo from filling the entire sidebar
+    st.sidebar.image(logo_bytes, width=120)

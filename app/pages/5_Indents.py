@@ -1754,11 +1754,11 @@ elif st.session_state.pg5_active_indent_section == "process":
                 if submit_issue_button_pg5:
                     # ... (Submission logic - use pg5_ prefixed vars and unique keys) ...
                     items_to_submit_list_proc_pg5: List[Dict[str, Any]] = []
-                        has_items_with_qty_pg5 = False
-                        for (
-                            _,
-                            item_row_s_pg5,
-                        ) in items_df_for_processing_disp_pg5.iterrows():
+                    has_items_with_qty_pg5 = False
+                    for (
+                        _,
+                        item_row_s_pg5,
+                    ) in items_df_for_processing_disp_pg5.iterrows():
                             ii_id_s_pg5 = item_row_s_pg5["indent_item_id"]
                             i_id_s_pg5 = item_row_s_pg5["item_id"]
                             current_issue_qty_key_s_pg5 = (
@@ -1785,13 +1785,13 @@ elif st.session_state.pg5_active_indent_section == "process":
                                 items_to_submit_list_proc_pg5 = []
                                 break
 
-                        if (
-                            not has_items_with_qty_pg5
-                            and not items_to_submit_list_proc_pg5
-                        ):
-                            st.info("No quantities specified for issuance.")
-                        elif items_to_submit_list_proc_pg5:
-                            with st.spinner(f"Processing indent {selected_mrn_pg5}..."):
+                    if (
+                        not has_items_with_qty_pg5
+                        and not items_to_submit_list_proc_pg5
+                    ):
+                        st.info("No quantities specified for issuance.")
+                    elif items_to_submit_list_proc_pg5:
+                        with st.spinner(f"Processing indent {selected_mrn_pg5}..."):
                                 success_p_pg5, message_p_pg5 = (
                                     indent_service.process_indent_issuance(
                                         db_engine,
@@ -1837,14 +1837,14 @@ elif st.session_state.pg5_active_indent_section == "process":
                             user_id_for_action_pg5,
                             selected_mrn_pg5,
                         )
-                            if s_mark:
-                                show_success(m_mark)
-                                st.session_state.pg5_process_indent_selected_tuple = (
-                                    pg5_placeholder_indent_process_tuple
-                                )
-                                st.rerun()  # Simplified reset
-                            else:
-                                show_error(f"Failed: {m_mark}")
+                        if s_mark:
+                            show_success(m_mark)
+                            st.session_state.pg5_process_indent_selected_tuple = (
+                                pg5_placeholder_indent_process_tuple
+                            )
+                            st.rerun()  # Simplified reset
+                        else:
+                            show_error(f"Failed: {m_mark}")
 
             with action_cols_proc_pg5[1]:
                 if st.button(
@@ -1863,14 +1863,14 @@ elif st.session_state.pg5_active_indent_section == "process":
                             user_id_for_action_pg5,
                             selected_mrn_pg5,
                         )
-                            if s_cancel:
-                                show_success(m_cancel)
-                                st.session_state.pg5_process_indent_selected_tuple = (
-                                    pg5_placeholder_indent_process_tuple
-                                )
-                                st.rerun()  # Simplified reset
-                            else:
-                                show_error(f"Failed: {m_cancel}")
+                        if s_cancel:
+                            show_success(m_cancel)
+                            st.session_state.pg5_process_indent_selected_tuple = (
+                                pg5_placeholder_indent_process_tuple
+                            )
+                            st.rerun()  # Simplified reset
+                        else:
+                            show_error(f"Failed: {m_cancel}")
 
         elif selected_indent_id_pg5:
             st.info(

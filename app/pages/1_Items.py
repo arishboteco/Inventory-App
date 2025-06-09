@@ -13,7 +13,6 @@ from app.ui.theme import load_css, render_sidebar_logo
 from app.ui import (
     pagination_controls,
     render_search_toggle,
-    render_sidebar_nav,
     show_success,
     show_error,
 )
@@ -67,7 +66,6 @@ def fetch_all_items_df_for_items_page(
 
 load_css()
 render_sidebar_logo()
-render_sidebar_nav()
 
 
 st.title("📦 Item Master Management")

@@ -20,7 +20,7 @@ try:
         PLACEHOLDER_SELECT_ITEM,
     )
     from app.ui.theme import load_css, render_sidebar_logo
-    from app.ui import render_sidebar_nav, show_success, show_error
+    from app.ui import show_success, show_error
 except ImportError as e:
     show_error(f"Import error in 3_Stock_Movements.py: {e}.")
     st.stop()
@@ -73,7 +73,6 @@ for section_key_pg3 in SECTION_KEYS_PG3:
 
 load_css()
 render_sidebar_logo()
-render_sidebar_nav()
 
 st.title("🚚 Stock Movements Log")
 st.write(

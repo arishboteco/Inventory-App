@@ -39,6 +39,26 @@ if not db_engine:
     st.stop()
 
 
+@st.cache_data(ttl=60)
+def format_qty_with_emoji_pg4(qty_series):
+    formatted_series = []
+    for qty_val in qty_series:
+        if pd.isna(qty_val):
+            formatted_series.append("")
+            continue
+        try:
+            qty_float = float(qty_val)
+            if qty_float > 0:
+                formatted_series.append(f"▲ +{qty_float:.2f}")
+            elif qty_float < 0:
+                formatted_series.append(f"▼ {qty_float:.2f}")
+            else:
+                formatted_series.append(f"{qty_float:.2f}")
+        except (ValueError, TypeError):
+            formatted_series.append(str(qty_val))
+    return formatted_series
+
+
 @st.cache_data(ttl=120)
 def fetch_filter_options_pg4(_engine):
     items_df = item_service.get_all_items_with_stock(_engine, include_inactive=True)
@@ -239,24 +259,6 @@ if st.session_state.pg4_start_date_val <= st.session_state.pg4_end_date_val:
         else:
             display_df_pg4["transaction_date_display"] = "N/A"
 
-        def format_qty_with_emoji_pg4(qty_series):
-            formatted_series = []
-            for qty_val in qty_series:
-                if pd.isna(qty_val):
-                    formatted_series.append("")
-                    continue
-                try:
-                    qty_float = float(qty_val)
-                    if qty_float > 0:
-                        formatted_series.append(f"▲ +{qty_float:.2f}")
-                    elif qty_float < 0:
-                        formatted_series.append(f"▼ {qty_float:.2f}")
-                    else:
-                        formatted_series.append(f"{qty_float:.2f}")
-                except (ValueError, TypeError):
-                    formatted_series.append(str(qty_val))
-            return formatted_series
-
         if "quantity_change" in display_df_pg4.columns:
             display_df_pg4["qty_display"] = format_qty_with_emoji_pg4(
                 display_df_pg4["quantity_change"]
@@ -310,7 +312,7 @@ if st.session_state.pg4_start_date_val <= st.session_state.pg4_end_date_val:
             ],
         )
 
-        @st.cache_data
+        @st.cache_data(ttl=60)
         def convert_df_to_csv_pg4(df_to_convert):
             cols_to_export = [
                 col

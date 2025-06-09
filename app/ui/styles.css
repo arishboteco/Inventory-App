@@ -10,6 +10,11 @@ body { font-family: 'Roboto', sans-serif; }
 .badge-warning { background: #f2c037; color: black; padding: 2px 6px; border-radius: 4px; }
 .badge-error   { background: #db2828; color: white; padding: 2px 6px; border-radius: 4px; }
 
+/* Hide Streamlit's built-in page navigation so only custom links show */
+[data-testid="stSidebarNav"] {
+    display: none;
+}
+
 /* Responsive typography */
 @media (max-width: 768px) {
     h1 { font-size: 1.6rem; }

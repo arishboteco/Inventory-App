@@ -17,7 +17,7 @@ def login_sidebar() -> bool:
             if st.button("Logout"):
                 st.session_state.logged_in = False
                 st.session_state.user_id = ""
-                st.experimental_rerun()
+                st.rerun()
         return True
 
     with st.sidebar:
@@ -28,7 +28,7 @@ def login_sidebar() -> bool:
             if user:
                 st.session_state.user_id = user
                 st.session_state.logged_in = True
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.warning("Please enter a user ID to login.")
     return False

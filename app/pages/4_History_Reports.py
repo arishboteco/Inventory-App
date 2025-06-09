@@ -1,7 +1,14 @@
 # app/pages/4_History_Reports.py
+import os
+import sys
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+
+_CUR_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(_CUR_DIR, os.pardir, os.pardir))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 try:
     from app.db.database_utils import connect_db

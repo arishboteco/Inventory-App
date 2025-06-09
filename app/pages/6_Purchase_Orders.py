@@ -1112,52 +1112,52 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                     "received_by_user_id": st.session_state.grn_received_by_val.strip(),
                 }
 
-                grn_items_to_submit: List[Dict[str, Any]] = []  # Renamed var, type hint
-                at_least_one_item_received_flag = False
+            grn_items_to_submit: List[Dict[str, Any]] = []  # Renamed var, type hint
+            at_least_one_item_received_flag = False
 
-                for (
-                    line_data_grn_submit
-                ) in st.session_state.grn_line_items:  # Renamed var
-                    qty_rcv_now_submit = float(
-                        line_data_grn_submit.get("quantity_received_now", 0.0)
+            for (
+                line_data_grn_submit
+            ) in st.session_state.grn_line_items:  # Renamed var
+                qty_rcv_now_submit = float(
+                    line_data_grn_submit.get("quantity_received_now", 0.0)
+                )
+                max_allowed_for_item_submit = float(
+                    line_data_grn_submit.get("quantity_remaining_on_po", 0.0)
+                )
+
+                # Validate quantity received now against pending quantity
+                if qty_rcv_now_submit > max_allowed_for_item_submit:
+                    show_error(
+                        f"🛑 For item {line_data_grn_submit['item_name']}, quantity received ({qty_rcv_now_submit:.2f}) "
+                        f"cannot exceed pending quantity ({max_allowed_for_item_submit:.2f}). Please correct."
                     )
-                    max_allowed_for_item_submit = float(
-                        line_data_grn_submit.get("quantity_remaining_on_po", 0.0)
+                    grn_items_to_submit = []  # Invalidate submission
+                    at_least_one_item_received_flag = False  # Reset flag
+                    break
+
+                if (
+                    qty_rcv_now_submit > 0
+                ):  # Only include items with quantity received
+                    at_least_one_item_received_flag = True
+                    grn_items_to_submit.append(
+                        {
+                            "item_id": line_data_grn_submit["item_id"],
+                            "po_item_id": line_data_grn_submit.get("po_item_id"),
+                            "quantity_ordered_on_po": line_data_grn_submit.get(
+                                "quantity_ordered_on_po"
+                            ),
+                            "quantity_received": qty_rcv_now_submit,
+                            "unit_price_at_receipt": float(
+                                line_data_grn_submit.get(
+                                    "unit_price_at_receipt", 0.0
+                                )
+                            ),
+                            "item_notes": line_data_grn_submit.get(
+                                "item_notes_grn", ""
+                            ).strip()
+                            or None,  # Assuming item_notes_grn might be a key for specific item notes on GRN
+                        }
                     )
-
-                    # Validate quantity received now against pending quantity
-                    if qty_rcv_now_submit > max_allowed_for_item_submit:
-                        show_error(
-                            f"🛑 For item {line_data_grn_submit['item_name']}, quantity received ({qty_rcv_now_submit:.2f}) "
-                            f"cannot exceed pending quantity ({max_allowed_for_item_submit:.2f}). Please correct."
-                        )
-                        grn_items_to_submit = []  # Invalidate submission
-                        at_least_one_item_received_flag = False  # Reset flag
-                        break
-
-                    if (
-                        qty_rcv_now_submit > 0
-                    ):  # Only include items with quantity received
-                        at_least_one_item_received_flag = True
-                        grn_items_to_submit.append(
-                            {
-                                "item_id": line_data_grn_submit["item_id"],
-                                "po_item_id": line_data_grn_submit.get("po_item_id"),
-                                "quantity_ordered_on_po": line_data_grn_submit.get(
-                                    "quantity_ordered_on_po"
-                                ),
-                                "quantity_received": qty_rcv_now_submit,
-                                "unit_price_at_receipt": float(
-                                    line_data_grn_submit.get(
-                                        "unit_price_at_receipt", 0.0
-                                    )
-                                ),
-                                "item_notes": line_data_grn_submit.get(
-                                    "item_notes_grn", ""
-                                ).strip()
-                                or None,  # Assuming item_notes_grn might be a key for specific item notes on GRN
-                            }
-                        )
 
                 if (
                     not grn_items_to_submit and at_least_one_item_received_flag

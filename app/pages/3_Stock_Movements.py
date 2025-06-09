@@ -5,6 +5,7 @@ try:
     from app.db.database_utils import connect_db
     from app.services import item_service
     from app.services import stock_service
+    from app.auth.auth import get_current_user_id
     from app.core.constants import (
         TX_RECEIVING,
         TX_ADJUSTMENT,
@@ -54,7 +55,7 @@ for section_key_pg3 in SECTION_KEYS_PG3:
         # Or 1.0 for receive/waste, but 0.01 matches min_value
 
     if user_id_key_pg3 not in st.session_state:
-        st.session_state[user_id_key_pg3] = ""
+        st.session_state[user_id_key_pg3] = get_current_user_id()
     if notes_key_pg3 not in st.session_state:
         st.session_state[notes_key_pg3] = ""
     if (
@@ -256,16 +257,16 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
 
     with user_form_col_main_pg3:
         user_label_form_pg3 = (
-            "Recorder's Name/ID*"
+            "Recorder"
             if active_section_prefix_val_pg3 != "receive"
-            else "Receiver's Name/ID*"
+            else "Receiver"
         )
-        st.session_state[current_user_id_ss_key_pg3] = st.text_input(
-            user_label_form_pg3,
+        st.session_state[current_user_id_ss_key_pg3] = get_current_user_id()
+        st.text_input(
+            f"{user_label_form_pg3} ID",
+            value=st.session_state[current_user_id_ss_key_pg3],
+            disabled=True,
             key=f"widget_pg3_{active_section_prefix_val_pg3}_user_id_v4",
-            placeholder="e.g., John Doe",
-            value=st.session_state.get(current_user_id_ss_key_pg3, ""),
-            help="Person responsible for this stock movement.",
         )
 
     if active_section_prefix_val_pg3 == "receive":
@@ -305,9 +306,7 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
             current_selected_item_id_key_pg3
         )
         qty_to_process_submit_pg3 = st.session_state.get(current_qty_ss_key_pg3, 0.0)
-        user_id_to_process_submit_pg3 = st.session_state.get(
-            current_user_id_ss_key_pg3, ""
-        )
+        user_id_to_process_submit_pg3 = get_current_user_id()
         notes_to_process_submit_pg3 = st.session_state.get(current_notes_ss_key_pg3, "")
 
         is_valid_submission_pg3 = True
@@ -333,9 +332,6 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
             st.warning("⚠️ Invalid quantity entered. Please enter a valid number.")
             is_valid_submission_pg3 = False
 
-        if not user_id_to_process_submit_pg3.strip():
-            st.warning(f"⚠️ {user_label_form_pg3.replace('*','').strip()} is required.")
-            is_valid_submission_pg3 = False
         if (
             active_section_prefix_val_pg3 in ["adjust", "waste"]
             and not notes_to_process_submit_pg3.strip()

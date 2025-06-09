@@ -42,6 +42,7 @@ def fetch_all_suppliers_df_pg2(
 ) -> pd.DataFrame:  # Page-specific cache function name
     return supplier_service.get_all_suppliers(_engine, include_inactive=show_inactive)
 
+
 load_css()
 render_sidebar_logo()
 

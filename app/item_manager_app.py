@@ -1,10 +1,7 @@
 # app/item_manager_app.py
 
-import os, sys
-PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.abspath(os.path.join(PACKAGE_DIR, os.pardir))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
+import os
+import sys
 
 import streamlit as st
 import pandas as pd
@@ -121,8 +118,7 @@ def run_dashboard():
             help="Material requests awaiting processing.",
         )
 
-    if not low_stock_df.empty:
-        st.bar_chart(low_stock_df.set_index("name")["current_stock"])
+    # Removed the bar chart to avoid Altair warnings and simplify the dashboard
 
     st.divider()
 

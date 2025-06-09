@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 
-import math
 from app.ui.theme import load_css, render_sidebar_logo
+from app.ui import pagination_controls, render_search_toggle
 
 try:
     from app.db.database_utils import connect_db
@@ -175,18 +175,16 @@ def on_items_category_filter_change():
 filter_col1_view, filter_col2_view, filter_col3_view, filter_col4_view = st.columns(
     [2, 2, 2, 1]
 )
-with filter_col1_view:
-    st.text_input(  # Directly updates session state via key
-        "Search by Item Name",
-        key="ss_items_filter_search_name_val",
-        placeholder="e.g., Tomato, Rice",
-    )
-with filter_col4_view:
-    st.toggle(  # Directly updates session state via key
-        "Show Inactive",
-        key="ss_items_filter_show_inactive_flag",
-        help="Toggle to include inactive items in the list",
-    )
+render_search_toggle(
+    search_container=filter_col1_view,
+    toggle_container=filter_col4_view,
+    search_label="Search by Item Name",
+    search_key="ss_items_filter_search_name_val",
+    toggle_label="Show Inactive",
+    toggle_key="ss_items_filter_show_inactive_flag",
+    placeholder="e.g., Tomato, Rice",
+    toggle_help="Toggle to include inactive items in the list",
+)
 
 all_items_df = fetch_all_items_df_for_items_page(
     engine, st.session_state.ss_items_filter_show_inactive_flag
@@ -308,78 +306,10 @@ else:
     total_items_display = len(filtered_items_df)
     st.write(f"Found {total_items_display} item(s) matching your criteria.")
 
-    items_per_page_options_list = [5, 10, 20, 50]
-    # Directly use session state key for items per page selectbox
-    current_ipp_val_for_widget = st.session_state.ss_items_pagination_items_per_page_val
-    if current_ipp_val_for_widget not in items_per_page_options_list:
-        current_ipp_val_for_widget = items_per_page_options_list[0]
-        st.session_state.ss_items_pagination_items_per_page_val = (
-            current_ipp_val_for_widget  # Ensure state is valid
-        )
-
-    st.selectbox(  # Directly updates session state via key
-        "Items per page:",
-        options=items_per_page_options_list,
-        index=items_per_page_options_list.index(current_ipp_val_for_widget),
-        key="ss_items_pagination_items_per_page_val",
-    )
-
-    total_pages_calc = math.ceil(
-        total_items_display / st.session_state.ss_items_pagination_items_per_page_val
-    )
-    if total_pages_calc == 0:
-        total_pages_calc = 1
-    if st.session_state.ss_items_pagination_current_page_num > total_pages_calc:
-        st.session_state.ss_items_pagination_current_page_num = total_pages_calc
-    if st.session_state.ss_items_pagination_current_page_num < 1:
-        st.session_state.ss_items_pagination_current_page_num = 1
-
-    page_nav_cols_display = st.columns(5)
-    if page_nav_cols_display[0].button(
-        "⏮️ First",
-        key="widget_items_pagination_first_btn",
-        disabled=(st.session_state.ss_items_pagination_current_page_num == 1),
-    ):
-        st.session_state.ss_items_pagination_current_page_num = 1
-        st.session_state.ss_items_show_edit_form_flag = None
-        st.rerun()
-    if page_nav_cols_display[1].button(
-        "⬅️ Previous",
-        key="widget_items_pagination_prev_btn",
-        disabled=(st.session_state.ss_items_pagination_current_page_num == 1),
-    ):
-        st.session_state.ss_items_pagination_current_page_num -= 1
-        st.session_state.ss_items_show_edit_form_flag = None
-        st.rerun()
-    page_nav_cols_display[2].write(
-        f"Page {st.session_state.ss_items_pagination_current_page_num} of {total_pages_calc}"
-    )
-    if page_nav_cols_display[3].button(
-        "Next ➡️",
-        key="widget_items_pagination_next_btn",
-        disabled=(
-            st.session_state.ss_items_pagination_current_page_num == total_pages_calc
-        ),
-    ):
-        st.session_state.ss_items_pagination_current_page_num += 1
-        st.session_state.ss_items_show_edit_form_flag = None
-        st.rerun()
-    if page_nav_cols_display[4].button(
-        "Last ⏭️",
-        key="widget_items_pagination_last_btn",
-        disabled=(
-            st.session_state.ss_items_pagination_current_page_num == total_pages_calc
-        ),
-    ):
-        st.session_state.ss_items_pagination_current_page_num = total_pages_calc
-        st.session_state.ss_items_show_edit_form_flag = None
-        st.rerun()
-
-    start_idx_display = (
-        st.session_state.ss_items_pagination_current_page_num - 1
-    ) * st.session_state.ss_items_pagination_items_per_page_val
-    end_idx_display = (
-        start_idx_display + st.session_state.ss_items_pagination_items_per_page_val
+    start_idx_display, end_idx_display = pagination_controls(
+        total_items_display,
+        current_page_key="ss_items_pagination_current_page_num",
+        items_per_page_key="ss_items_pagination_items_per_page_val",
     )
     paginated_items_df_display = filtered_items_df.iloc[
         start_idx_display:end_idx_display

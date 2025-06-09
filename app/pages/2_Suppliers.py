@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 
-import math
 from app.ui.theme import load_css, render_sidebar_logo
+from app.ui import pagination_controls, render_search_toggle
 
 try:
     from app.db.database_utils import connect_db
@@ -129,20 +129,16 @@ st.divider()
 st.subheader("🔍 View & Manage Existing Suppliers")
 
 filter_s_col1_pg2, filter_s_col2_pg2 = st.columns([3, 1])
-with filter_s_col1_pg2:
-    st.session_state.pg2_supplier_search_term = st.text_input(
-        "Search Suppliers (by Name, Contact, Email)",
-        value=st.session_state.pg2_supplier_search_term,
-        key="supplier_search_input_pg2_v3",  # Unique key
-        placeholder="e.g., Fresh Produce Inc, John Doe, sales@...",
-    )
-with filter_s_col2_pg2:
-    st.session_state.pg2_show_inactive_suppliers = st.toggle(
-        "Show Inactive",
-        value=st.session_state.pg2_show_inactive_suppliers,
-        key="show_inactive_suppliers_toggle_pg2_v3",  # Unique key
-        help="Toggle to include inactive suppliers",
-    )
+render_search_toggle(
+    search_container=filter_s_col1_pg2,
+    toggle_container=filter_s_col2_pg2,
+    search_label="Search Suppliers (by Name, Contact, Email)",
+    search_key="pg2_supplier_search_term",
+    toggle_label="Show Inactive",
+    toggle_key="pg2_show_inactive_suppliers",
+    placeholder="e.g., Fresh Produce Inc, John Doe, sales@...",
+    toggle_help="Toggle to include inactive suppliers",
+)
 
 all_suppliers_df_pg2 = fetch_all_suppliers_df_pg2(
     engine, st.session_state.pg2_show_inactive_suppliers
@@ -189,69 +185,11 @@ else:
     st.write(f"Found {total_suppliers_pg2} supplier(s) matching your criteria.")
 
     s_items_per_page_options_pg2 = [5, 10, 20, 50]
-    current_s_ipp_value_pg2 = st.session_state.pg2_suppliers_per_page
-    if current_s_ipp_value_pg2 not in s_items_per_page_options_pg2:
-        current_s_ipp_value_pg2 = s_items_per_page_options_pg2[0]
-        st.session_state.pg2_suppliers_per_page = current_s_ipp_value_pg2
-
-    st.session_state.pg2_suppliers_per_page = st.selectbox(
-        "Suppliers per page:",
-        options=s_items_per_page_options_pg2,
-        index=s_items_per_page_options_pg2.index(current_s_ipp_value_pg2),
-        key="suppliers_per_page_selector_pg2_v3",  # Unique key
+    s_start_idx_pg2, s_end_idx_pg2 = pagination_controls(
+        total_suppliers_pg2,
+        current_page_key="pg2_current_page_suppliers",
+        items_per_page_key="pg2_suppliers_per_page",
     )
-
-    s_total_pages_pg2 = math.ceil(
-        total_suppliers_pg2 / st.session_state.pg2_suppliers_per_page
-    )
-    if s_total_pages_pg2 == 0:
-        s_total_pages_pg2 = 1
-    if st.session_state.pg2_current_page_suppliers > s_total_pages_pg2:
-        st.session_state.pg2_current_page_suppliers = s_total_pages_pg2
-    if st.session_state.pg2_current_page_suppliers < 1:
-        st.session_state.pg2_current_page_suppliers = 1
-
-    s_page_nav_cols_pg2 = st.columns(5)
-    if s_page_nav_cols_pg2[0].button(
-        "⏮️ First",
-        key="s_first_page_pg2_v4",
-        disabled=(st.session_state.pg2_current_page_suppliers == 1),
-    ):
-        st.session_state.pg2_current_page_suppliers = 1
-        st.session_state.pg2_show_edit_form_for_supplier_id = None
-        st.rerun()
-    if s_page_nav_cols_pg2[1].button(
-        "⬅️ Previous",
-        key="s_prev_page_pg2_v4",
-        disabled=(st.session_state.pg2_current_page_suppliers == 1),
-    ):
-        st.session_state.pg2_current_page_suppliers -= 1
-        st.session_state.pg2_show_edit_form_for_supplier_id = None
-        st.rerun()
-    s_page_nav_cols_pg2[2].write(
-        f"Page {st.session_state.pg2_current_page_suppliers} of {s_total_pages_pg2}"
-    )
-    if s_page_nav_cols_pg2[3].button(
-        "Next ➡️",
-        key="s_next_page_pg2_v4",
-        disabled=(st.session_state.pg2_current_page_suppliers == s_total_pages_pg2),
-    ):
-        st.session_state.pg2_current_page_suppliers += 1
-        st.session_state.pg2_show_edit_form_for_supplier_id = None
-        st.rerun()
-    if s_page_nav_cols_pg2[4].button(
-        "Last ⏭️",
-        key="s_last_page_pg2_v4",
-        disabled=(st.session_state.pg2_current_page_suppliers == s_total_pages_pg2),
-    ):
-        st.session_state.pg2_current_page_suppliers = s_total_pages_pg2
-        st.session_state.pg2_show_edit_form_for_supplier_id = None
-        st.rerun()
-
-    s_start_idx_pg2 = (
-        st.session_state.pg2_current_page_suppliers - 1
-    ) * st.session_state.pg2_suppliers_per_page
-    s_end_idx_pg2 = s_start_idx_pg2 + st.session_state.pg2_suppliers_per_page
     paginated_suppliers_df_pg2 = filtered_suppliers_df_pg2.iloc[
         s_start_idx_pg2:s_end_idx_pg2
     ]

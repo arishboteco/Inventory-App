@@ -20,6 +20,7 @@ try:
         PLACEHOLDER_SELECT_ITEM,
     )
     from app.ui.theme import load_css, render_sidebar_logo
+    from app.ui.navigation import render_sidebar_nav
     from app.ui import show_success, show_error
 except ImportError as e:
     show_error(f"Import error in 3_Stock_Movements.py: {e}.")
@@ -73,6 +74,7 @@ for section_key_pg3 in SECTION_KEYS_PG3:
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 st.title("🚚 Stock Movements Log")
 st.write(
@@ -396,6 +398,11 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
                 )
                 show_success(
                     f"✅ Successfully recorded {active_section_prefix_val_pg3} for '{item_display_name_success_pg3}'."
+                )
+                st.page_link(
+                    "pages/4_History_Reports.py",
+                    label="View History Reports",
+                    icon="➡️",
                 )
 
                 fetch_active_items_for_stock_mv_page_pg3.clear()

@@ -40,6 +40,7 @@ try:
         PLACEHOLDER_ERROR_LOADING_ITEMS,  # If applicable
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
+    from app.ui.navigation import render_sidebar_nav
     from app.ui import show_success, show_error
 except ImportError as e:
     show_error(
@@ -126,6 +127,7 @@ for key, default_val in [
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 st.title("📝 Material Indents Management")
 st.write(
@@ -907,6 +909,11 @@ def process_indent_form_pg5(
                     )
                 if success_p_pg5:
                     show_success(message_p_pg5)
+                    st.page_link(
+                        "pages/6_Purchase_Orders.py",
+                        label="Create Purchase Order",
+                        icon="➡️",
+                    )
                     st.session_state.pg5_process_indent_selected_tuple = (
                         pg5_placeholder_indent_process_tuple
                     )
@@ -944,6 +951,11 @@ if st.session_state.pg5_active_indent_section == "create":
         # This section seems okay, just ensure all st.session_state access uses pg5_ prefixes if they were changed.
         mrn_to_print_pg5 = st.session_state.pg5_last_created_mrn_for_print  # Use pg5_ variable
         show_success(f"Indent **{mrn_to_print_pg5}** was created successfully!")
+        st.page_link(
+            "pages/6_Purchase_Orders.py",
+            label="Create Purchase Order",
+            icon="➡️",
+        )
         if st.session_state.get("pg5_last_submitted_indent_details"):
             summary_header_pg5 = st.session_state.pg5_last_submitted_indent_details["header"]
             summary_items_pg5 = st.session_state.pg5_last_submitted_indent_details["items"]

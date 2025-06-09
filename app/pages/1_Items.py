@@ -10,6 +10,7 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from app.ui.theme import load_css, render_sidebar_logo
+from app.ui.navigation import render_sidebar_nav
 from app.ui import (
     pagination_controls,
     render_search_toggle,
@@ -66,6 +67,7 @@ def fetch_all_items_df_for_items_page(
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 
 st.title("📦 Item Master Management")
@@ -168,6 +170,11 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                 )
                 if success_add:
                     show_success(message_add)
+                    st.page_link(
+                        "pages/3_Stock_Movements.py",
+                        label="Record Stock Movement",
+                        icon="➡️",
+                    )
                     fetch_all_items_df_for_items_page.clear()
                     st.rerun()
                 else:
@@ -524,6 +531,11 @@ else:
                             )
                             if ok_update_item:
                                 show_success(msg_update_item)
+                                st.page_link(
+                                    "pages/3_Stock_Movements.py",
+                                    label="Record Stock Movement",
+                                    icon="➡️",
+                                )
                                 st.session_state.ss_items_show_edit_form_flag = None
                                 st.session_state.ss_items_edit_form_data_dict = None
                                 fetch_all_items_df_for_items_page.clear()

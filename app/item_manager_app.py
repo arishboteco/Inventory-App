@@ -14,6 +14,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from app.ui.theme import load_css, render_sidebar_logo
+from app.ui.navigation import render_sidebar_nav
 
 # --- Import from our new/refactored modules ---
 from app.core.constants import STATUS_SUBMITTED
@@ -37,6 +38,7 @@ def run_dashboard():
     )
     load_css()
     render_sidebar_logo()
+    render_sidebar_nav()
     if not login_sidebar():
         st.stop()
     st.title("🍲 Restaurant Inventory Dashboard")

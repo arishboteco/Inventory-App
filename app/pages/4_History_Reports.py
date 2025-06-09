@@ -17,15 +17,17 @@ try:
         FILTER_ALL_TYPES,
     )
     from app.ui.theme import load_css, render_sidebar_logo
+    from app.ui import render_sidebar_nav, show_success, show_error
 except ImportError as e:
-    st.error(f"Import error in 4_History_Reports.py: {e}.")
+    show_error(f"Import error in 4_History_Reports.py: {e}.")
     st.stop()
 except Exception as e:
-    st.error(f"An unexpected error occurred during import in 4_History_Reports.py: {e}")
+    show_error(f"An unexpected error occurred during import in 4_History_Reports.py: {e}")
     st.stop()
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 st.title("📜 Stock Transaction History & Reports")
 st.write(
@@ -35,7 +37,7 @@ st.divider()
 
 db_engine = connect_db()
 if not db_engine:
-    st.error("Database connection failed. Cannot load history reports.")
+    show_error("Database connection failed. Cannot load history reports.")
     st.stop()
 
 
@@ -229,7 +231,7 @@ if st.session_state.pg4_start_date_val <= st.session_state.pg4_end_date_val:
     if transactions_df_pg4.empty:
         st.info("No stock transactions found matching the selected filters.")
     else:
-        st.success(f"Found {len(transactions_df_pg4)} transaction(s).")
+        show_success(f"Found {len(transactions_df_pg4)} transaction(s).")
 
         display_df_pg4 = transactions_df_pg4.copy()
         if "transaction_date" in display_df_pg4.columns:

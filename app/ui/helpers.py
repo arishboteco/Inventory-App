@@ -89,3 +89,19 @@ def pagination_controls(
     start_idx = (st.session_state[current_page_key] - 1) * st.session_state[items_per_page_key]
     end_idx = start_idx + st.session_state[items_per_page_key]
     return start_idx, end_idx
+
+
+def show_success(msg: str) -> None:
+    """Display a success message using toast if available."""
+    if hasattr(st, "toast"):
+        st.toast(msg, icon="✅")
+    else:
+        st.success(msg)
+
+
+def show_error(msg: str) -> None:
+    """Display an error message using toast if available."""
+    if hasattr(st, "toast"):
+        st.toast(msg, icon="❌")
+    else:
+        st.error(msg)

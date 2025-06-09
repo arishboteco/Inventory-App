@@ -3,17 +3,23 @@ import streamlit as st
 import pandas as pd
 
 from app.ui.theme import load_css, render_sidebar_logo
-from app.ui import pagination_controls, render_search_toggle
+from app.ui import (
+    pagination_controls,
+    render_search_toggle,
+    render_sidebar_nav,
+    show_success,
+    show_error,
+)
 
 try:
     from app.db.database_utils import connect_db
     from app.services import item_service
     from app.core.constants import FILTER_ALL_CATEGORIES, FILTER_ALL_SUBCATEGORIES
 except ImportError as e:
-    st.error(f"Import error in 1_Items.py: {e}.")
+    show_error(f"Import error in 1_Items.py: {e}.")
     st.stop()
 except Exception as e:
-    st.error(f"An unexpected error occurred during import in 1_Items.py: {e}")
+    show_error(f"An unexpected error occurred during import in 1_Items.py: {e}")
     st.stop()
 
 # --- Session State (prefixed with ss_items_ for this page) ---
@@ -54,6 +60,7 @@ def fetch_all_items_df_for_items_page(
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 
 st.title("📦 Item Master Management")
@@ -64,7 +71,7 @@ st.divider()
 
 engine = connect_db()
 if not engine:
-    st.error(
+    show_error(
         "Database connection failed. Item Management functionality is unavailable."
     )
     st.stop()
@@ -155,11 +162,11 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                     engine, item_data_to_add
                 )
                 if success_add:
-                    st.success(message_add)
+                    show_success(message_add)
                     fetch_all_items_df_for_items_page.clear()
                     st.rerun()
                 else:
-                    st.error(message_add)
+                    show_error(message_add)
 st.divider()
 
 # --- VIEW & MANAGE EXISTING ITEMS ---
@@ -384,11 +391,11 @@ else:
                             item_service.deactivate_item(engine, item_id_disp)
                         )
                         if success_deact_item:
-                            st.success(msg_deact_item)
+                            show_success(msg_deact_item)
                             fetch_all_items_df_for_items_page.clear()
                             st.rerun()
                         else:
-                            st.error(msg_deact_item)
+                            show_error(msg_deact_item)
                 else:
                     if action_buttons_cols[0].button(
                         "✅",
@@ -400,11 +407,11 @@ else:
                             item_service.reactivate_item(engine, item_id_disp)
                         )
                         if success_react_item:
-                            st.success(msg_react_item)
+                            show_success(msg_react_item)
                             fetch_all_items_df_for_items_page.clear()
                             st.rerun()
                         else:
-                            st.error(msg_react_item)
+                            show_error(msg_react_item)
         st.divider()
 
         if st.session_state.get("ss_items_show_edit_form_flag") == item_id_disp:
@@ -511,11 +518,11 @@ else:
                                 )
                             )
                             if ok_update_item:
-                                st.success(msg_update_item)
+                                show_success(msg_update_item)
                                 st.session_state.ss_items_show_edit_form_flag = None
                                 st.session_state.ss_items_edit_form_data_dict = None
                                 fetch_all_items_df_for_items_page.clear()
                                 st.rerun()
                             else:
-                                st.error(msg_update_item)
+                                show_error(msg_update_item)
                 st.divider()

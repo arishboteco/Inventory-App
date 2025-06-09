@@ -18,19 +18,21 @@ try:
         PO_STATUS_PARTIALLY_RECEIVED,
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
+    from app.ui import render_sidebar_nav, show_success, show_error
 except ImportError as e:
-    st.error(
+    show_error(
         f"Import error in 6_Purchase_Orders.py: {e}. Please ensure all modules are correctly placed."
     )
     st.stop()  # Stop execution if imports fail
 except Exception as e:  # Catch any other potential import errors
-    st.error(
+    show_error(
         f"An unexpected error occurred during an import in 6_Purchase_Orders.py: {e}"
     )
     st.stop()
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 # --- Page Config and Title ---
 st.title("🛒 Purchase Order & Goods Receiving")
@@ -40,7 +42,7 @@ st.divider()
 # --- Database Connection ---
 db_engine = connect_db()
 if not db_engine:
-    st.error("❌ Database connection failed. Cannot manage Purchase Orders/GRNs.")
+    show_error("❌ Database connection failed. Cannot manage Purchase Orders/GRNs.")
     st.stop()
 
 # --- Session State Initialization ---
@@ -402,7 +404,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
     # Load data if in Edit Mode and reset signal is active or PO ID changed
     if is_edit_mode:
         if not st.session_state.po_to_edit_id:
-            st.error(
+            show_error(
                 "❌ PO ID for editing is missing. Please return to the list and select a PO."
             )
             if st.button("⬅️ Back to PO List", key="back_edit_po_no_id_v2_page6"):
@@ -420,7 +422,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                 db_engine, st.session_state.po_to_edit_id
             )
             if not po_data_to_edit:
-                st.error(
+                show_error(
                     f"❌ Could not load details for PO ID: {st.session_state.po_to_edit_id}. It might have been deleted."
                 )
                 change_view_mode("list_po")
@@ -692,13 +694,13 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                     )
                 )
                 if success_status_update:
-                    st.success(
+                    show_success(
                         f"PO status successfully updated to '{PO_STATUS_ORDERED}'. {msg_status_update}"
                     )
                     change_view_mode("list_po", clear_po_form_state=True)
                     st.rerun()
                 else:
-                    st.error(f"❌ Failed to submit PO: {msg_status_update}")
+                    show_error(f"❌ Failed to submit PO: {msg_status_update}")
 
         st.divider()
         form_submit_button_label = (
@@ -858,7 +860,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                 is None
                 for l in st.session_state.form_po_line_items
             ):
-                st.error("🛑 Please add at least one valid item to the Purchase Order.")
+                show_error("🛑 Please add at least one valid item to the Purchase Order.")
                 are_all_items_valid = False
 
             if are_all_items_valid:  # Proceed if initial check passes
@@ -870,7 +872,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                     )
 
                     if item_id_for_submit is None:
-                        st.error(
+                        show_error(
                             f"🛑 Item '{line_item_data_submit['item_key']}' is invalid or not selected. Please select a valid item for all lines."
                         )
                         are_all_items_valid = False
@@ -879,20 +881,20 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                         qty_for_submit = float(line_item_data_submit["quantity"])
                         price_for_submit = float(line_item_data_submit["unit_price"])
                     except (ValueError, TypeError):
-                        st.error(
+                        show_error(
                             f"🛑 Invalid quantity or price for item '{line_item_data_submit['item_key']}'. Please enter valid numbers."
                         )
                         are_all_items_valid = False
                         break
 
                     if qty_for_submit <= 0:
-                        st.error(
+                        show_error(
                             f"🛑 Quantity for item '{line_item_data_submit['item_key']}' must be greater than 0."
                         )
                         are_all_items_valid = False
                         break
                     if price_for_submit < 0:
-                        st.error(
+                        show_error(
                             f"🛑 Unit price for item '{line_item_data_submit['item_key']}' cannot be negative."
                         )
                         are_all_items_valid = False
@@ -909,7 +911,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
             if (
                 not po_items_to_submit and are_all_items_valid
             ):  # If loop completed but list is empty (e.g. only placeholder items)
-                st.error(
+                show_error(
                     "🛑 No valid items to submit. Please add items to the Purchase Order."
                 )
                 are_all_items_valid = False
@@ -931,11 +933,11 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                         )
                     )
                     if success_update:
-                        st.success(f"✅ {msg_update}")
+                        show_success(f"✅ {msg_update}")
                         change_view_mode("list_po", clear_po_form_state=True)
                         st.rerun()
                     else:
-                        st.error(f"❌ Failed to update PO: {msg_update}")
+                        show_error(f"❌ Failed to update PO: {msg_update}")
                 else:  # Create mode
                     po_header_data_for_submit["created_by_user_id"] = (
                         current_user_id_for_submit
@@ -950,11 +952,11 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                         )
                     )
                     if success_create:
-                        st.success(f"✅ {msg_create} (ID: {new_po_id_create})")
+                        show_success(f"✅ {msg_create} (ID: {new_po_id_create})")
                         change_view_mode("list_po", clear_po_form_state=True)
                         st.rerun()
                     else:
-                        st.error(f"❌ Failed to create PO: {msg_create}")
+                        show_error(f"❌ Failed to create PO: {msg_create}")
 
 # --- CREATE GRN VIEW ---
 elif st.session_state.po_grn_view_mode == "create_grn_for_po":
@@ -1133,7 +1135,7 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
 
                     # Validate quantity received now against pending quantity
                     if qty_rcv_now_submit > max_allowed_for_item_submit:
-                        st.error(
+                        show_error(
                             f"🛑 For item {line_data_grn_submit['item_name']}, quantity received ({qty_rcv_now_submit:.2f}) "
                             f"cannot exceed pending quantity ({max_allowed_for_item_submit:.2f}). Please correct."
                         )
@@ -1180,7 +1182,7 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                         )
                     )
                     if success_grn_create:
-                        st.success(
+                        show_success(
                             f"✅ {msg_grn_create} (GRN ID: {new_grn_id_created})"
                         )
                         change_view_mode(
@@ -1189,7 +1191,7 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
                         purchase_order_service.list_pos.clear()  # Ensure PO list refreshes with updated statuses
                         st.rerun()
                     else:
-                        st.error(f"❌ Failed to create GRN: {msg_grn_create}")
+                        show_error(f"❌ Failed to create GRN: {msg_grn_create}")
 
 # --- VIEW PO DETAILS VIEW ---
 elif st.session_state.po_grn_view_mode == "view_po_details":
@@ -1207,7 +1209,7 @@ elif st.session_state.po_grn_view_mode == "view_po_details":
         db_engine, po_id_to_view_ui
     )
     if not po_details_data_view_ui:
-        st.error(
+        show_error(
             f"❌ Could not load details for PO ID: {po_id_to_view_ui}. It might have been deleted."
         )
         st.stop()
@@ -1316,13 +1318,13 @@ elif st.session_state.po_grn_view_mode == "view_po_details":
                 )
             )
             if success_submit_view:
-                st.success(
+                show_success(
                     f"PO {po_details_data_view_ui.get('po_number')} status updated to 'Ordered'. {msg_submit_view}"
                 )
                 change_view_mode("list_po")  # Go back to list
                 st.rerun()
             else:
-                st.error(f"❌ Failed to submit PO: {msg_submit_view}")
+                show_error(f"❌ Failed to submit PO: {msg_submit_view}")
 
 # --- Display Recent GRNs at the bottom of PO list view ---
 # This condition should be outside other elif blocks if it's always shown with list_po

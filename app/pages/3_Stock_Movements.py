@@ -11,6 +11,7 @@ try:
         TX_WASTAGE,
         PLACEHOLDER_SELECT_ITEM,
     )
+    from app.ui.theme import load_css, render_sidebar_logo
 except ImportError as e:
     st.error(f"Import error in 3_Stock_Movements.py: {e}.")
     st.stop()
@@ -60,6 +61,9 @@ for section_key_pg3 in SECTION_KEYS_PG3:
         and "pg3_receive_po_id_form_val" not in st.session_state
     ):
         st.session_state.pg3_receive_po_id_form_val = ""
+
+load_css()
+render_sidebar_logo()
 
 st.title("🚚 Stock Movements Log")
 st.write(

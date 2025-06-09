@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 
 import math
+from app.ui.theme import load_css, render_sidebar_logo
 
 try:
     from app.db.database_utils import connect_db
@@ -40,6 +41,9 @@ def fetch_all_suppliers_df_pg2(
     _engine, show_inactive: bool
 ) -> pd.DataFrame:  # Page-specific cache function name
     return supplier_service.get_all_suppliers(_engine, include_inactive=show_inactive)
+
+load_css()
+render_sidebar_logo()
 
 
 st.title("🤝 Supplier Management")

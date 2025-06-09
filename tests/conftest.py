@@ -49,4 +49,19 @@ def sqlite_engine():
                 transaction_date TEXT
             );
         """))
+        conn.execute(text(
+            """
+            CREATE TABLE suppliers (
+                supplier_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                contact_person TEXT,
+                phone TEXT,
+                email TEXT,
+                address TEXT,
+                notes TEXT,
+                is_active BOOLEAN,
+                updated_at TEXT
+            );
+            """
+        ))
     return engine

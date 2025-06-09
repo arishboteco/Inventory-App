@@ -21,4 +21,3 @@ def test_add_new_item_inserts_row(sqlite_engine):
     with sqlite_engine.connect() as conn:
         row = conn.execute(text("SELECT name FROM items WHERE name='Widget'"))
         assert row.fetchone() is not None
-

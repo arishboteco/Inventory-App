@@ -2,7 +2,11 @@
 import streamlit as st
 import pandas as pd
 
-from app.ui.theme import load_css, render_sidebar_logo
+from app.ui.theme import (
+    load_css,
+    render_sidebar_logo,
+    render_dark_mode_toggle,
+)
 from app.ui import pagination_controls, render_search_toggle
 
 try:
@@ -53,6 +57,7 @@ def fetch_all_items_df_for_items_page(
 
 
 load_css()
+render_dark_mode_toggle()
 render_sidebar_logo()
 
 

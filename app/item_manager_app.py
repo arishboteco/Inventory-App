@@ -13,7 +13,11 @@ if _REPO_ROOT not in sys.path:
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from app.ui.theme import load_css, render_sidebar_logo
+from app.ui.theme import (
+    load_css,
+    render_sidebar_logo,
+    render_dark_mode_toggle,
+)
 
 # --- Import from our new/refactored modules ---
 from app.core.constants import STATUS_SUBMITTED
@@ -35,6 +39,7 @@ def run_dashboard():
         page_title="Restaurant Inventory Manager", page_icon="🍲", layout="wide"
     )
     load_css()
+    render_dark_mode_toggle()
     render_sidebar_logo()
     st.title("🍲 Restaurant Inventory Dashboard")
     st.caption(

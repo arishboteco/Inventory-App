@@ -3,6 +3,7 @@ import streamlit as st
 from .logo import get_logo_bytes
 
 CSS_PATH = Path(__file__).with_name("styles.css")
+DARK_MODE_STATE_KEY = "dark_mode"
 
 STATUS_CLASSES = {
     "Completed": "badge-success",
@@ -16,10 +17,31 @@ def load_css():
         css = CSS_PATH.read_text()
         st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
+    if st.session_state.get(DARK_MODE_STATE_KEY):
+        st.markdown(
+            "<script>document.body.classList.add('dark-mode');</script>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            "<script>document.body.classList.remove('dark-mode');</script>",
+            unsafe_allow_html=True,
+        )
+
 
 def format_status_badge(status: str) -> str:
     css_class = STATUS_CLASSES.get(status, "badge-success")
     return f"<span class='{css_class}'>{status}</span>"
+
+
+def render_dark_mode_toggle() -> None:
+    """Render a sidebar checkbox that toggles dark mode."""
+    if DARK_MODE_STATE_KEY not in st.session_state:
+        st.session_state[DARK_MODE_STATE_KEY] = False
+    st.session_state[DARK_MODE_STATE_KEY] = st.sidebar.checkbox(
+        "Dark mode",
+        value=st.session_state[DARK_MODE_STATE_KEY],
+    )
 
 
 def render_sidebar_logo() -> None:

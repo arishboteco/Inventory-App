@@ -2,7 +2,11 @@
 import streamlit as st
 import pandas as pd
 
-from app.ui.theme import load_css, render_sidebar_logo
+from app.ui.theme import (
+    load_css,
+    render_sidebar_logo,
+    render_dark_mode_toggle,
+)
 from app.ui import pagination_controls, render_search_toggle
 
 try:
@@ -44,6 +48,7 @@ def fetch_all_suppliers_df_pg2(
 
 
 load_css()
+render_dark_mode_toggle()
 render_sidebar_logo()
 
 

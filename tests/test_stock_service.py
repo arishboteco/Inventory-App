@@ -28,4 +28,3 @@ def test_record_stock_transaction_updates_stock_and_logs(sqlite_engine):
         assert current == 15
         count = conn.execute(text("SELECT COUNT(*) FROM stock_transactions WHERE item_id=:i"), {"i": item_id}).scalar_one()
         assert count == 1
-

@@ -26,6 +26,7 @@ try:
         PO_STATUS_PARTIALLY_RECEIVED,
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
+    from app.ui.navigation import render_sidebar_nav
     from app.ui import show_success, show_error
 except ImportError as e:
     show_error(
@@ -38,6 +39,7 @@ except Exception as e:  # Catch any other potential import errors
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 # --- Page Config and Title ---
 st.title("🛒 Purchase Order & Goods Receiving")
@@ -276,11 +278,39 @@ def grn_form_pg6(active_grn_po_details_data_ui):
             st.caption("")
 
         st.divider()
+# Submit GRN form
         submit_grn_button_ui = st.form_submit_button(
             "💾 Record Goods Received", type="primary", use_container_width=True
-            )
+        )
 
         return submit_grn_button_ui
+
+# --- Quick Navigation Tabs ---
+VIEW_MODE_LABELS_PG6 = {
+    "📋 PO List": "list_po",
+    "📝 Create/Edit PO": "create_po",
+    "📥 Record GRN": "create_grn_for_po",
+}
+
+def _pg6_tab_switch_callback():
+    label_selected_pg6 = st.session_state.po_tab_radio_pg6
+    change_view_mode(
+        VIEW_MODE_LABELS_PG6[label_selected_pg6],
+        clear_grn_state=False,
+        clear_po_form_state=False,
+    )
+
+st.radio(
+    "Select Section:",
+    options=list(VIEW_MODE_LABELS_PG6.keys()),
+    index=list(VIEW_MODE_LABELS_PG6.values()).index(
+        st.session_state.po_grn_view_mode
+    ),
+    key="po_tab_radio_pg6",
+    horizontal=True,
+    on_change=_pg6_tab_switch_callback,
+)
+st.divider()
 # --- Main Page Logic (Router) ---
 if st.session_state.po_grn_view_mode == "list_po":
     st.subheader("📋 Existing Purchase Orders")
@@ -957,6 +987,11 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                     )
                     if success_create:
                         show_success(f"✅ {msg_create} (ID: {new_po_id_create})")
+                        st.page_link(
+                            "pages/6_Purchase_Orders.py",
+                            label="Record Goods Received",
+                            icon="➡️",
+                        )
                         change_view_mode("list_po", clear_po_form_state=True)
                         st.rerun()
                     else:
@@ -1061,6 +1096,11 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
             )
             if success_grn_create:
                 show_success(f"✅ {msg_grn_create} (GRN ID: {new_grn_id_created})")
+                st.page_link(
+                    "pages/4_History_Reports.py",
+                    label="View in History Reports",
+                    icon="➡️",
+                )
                 change_view_mode("list_po", clear_grn_state=True, clear_po_form_state=True)
                 purchase_order_service.list_pos.clear()
                 st.rerun()

@@ -10,6 +10,7 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from app.ui.theme import load_css, render_sidebar_logo
+from app.ui.navigation import render_sidebar_nav
 from app.ui import (
     pagination_controls,
     render_search_toggle,
@@ -59,6 +60,7 @@ def fetch_all_suppliers_df_pg2(
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 
 st.title("🤝 Supplier Management")
@@ -133,6 +135,11 @@ with st.expander("➕ Add New Supplier Record", expanded=False):
                 )
                 if success_add_pg2:
                     show_success(message_add_pg2)
+                    st.page_link(
+                        "pages/6_Purchase_Orders.py",
+                        label="Create Purchase Order",
+                        icon="➡️",
+                    )
                     fetch_all_suppliers_df_pg2.clear()  # Clear page-specific cache
                     st.rerun()
                 else:
@@ -396,6 +403,11 @@ else:
                             )
                             if ok_update_pg2:
                                 show_success(msg_update_pg2)
+                                st.page_link(
+                                    "pages/6_Purchase_Orders.py",
+                                    label="Create Purchase Order",
+                                    icon="➡️",
+                                )
                                 st.session_state.pg2_show_edit_form_for_supplier_id = (
                                     None  # Close form
                                 )

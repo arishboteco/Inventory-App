@@ -24,6 +24,7 @@ try:
         FILTER_ALL_TYPES,
     )
     from app.ui.theme import load_css, render_sidebar_logo
+    from app.ui.navigation import render_sidebar_nav
     from app.ui import show_success, show_error
 except ImportError as e:
     show_error(f"Import error in 4_History_Reports.py: {e}.")
@@ -34,6 +35,7 @@ except Exception as e:
 
 load_css()
 render_sidebar_logo()
+render_sidebar_nav()
 
 st.title("📜 Stock Transaction History & Reports")
 st.write(

@@ -32,10 +32,15 @@ def pagination_controls(
     if items_per_page_options is None:
         items_per_page_options = [5, 10, 20, 50]
 
+    if items_per_page_key not in st.session_state:
+        st.session_state[items_per_page_key] = items_per_page_options[0]
+
     current_ipp = st.session_state.get(items_per_page_key, items_per_page_options[0])
     if current_ipp not in items_per_page_options:
         current_ipp = items_per_page_options[0]
-    st.session_state[items_per_page_key] = st.selectbox(
+        st.session_state[items_per_page_key] = current_ipp
+
+    st.selectbox(
         "Items per page:",
         options=items_per_page_options,
         index=items_per_page_options.index(current_ipp),

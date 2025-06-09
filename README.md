@@ -29,6 +29,17 @@ streamlit run app/item_manager_app.py
 
 Before running the app, create a `.streamlit/secrets.toml` file containing your database credentials. An example file can be found at `.streamlit/secrets.toml` in this repository—copy it and replace the placeholder values with your own. The committed sample uses obvious placeholders so you must supply real values.
 
+Alternatively you can provide the database settings via environment variables. If the following variables are set, they will be used instead of the values in `secrets.toml`:
+
+```
+DB_ENGINE
+DB_USER
+DB_PASSWORD
+DB_HOST
+DB_PORT
+DB_NAME
+```
+
 ## Customizing the Sidebar Logo
 
 The sidebar image displayed in the app is defined in `app/ui/logo.py` as a base64 encoded PNG. To use your own logo:

@@ -10,3 +10,28 @@ body { font-family: 'Roboto', sans-serif; }
 .badge-warning { background: #f2c037; color: black; padding: 2px 6px; border-radius: 4px; }
 .badge-error   { background: #db2828; color: white; padding: 2px 6px; border-radius: 4px; }
 
+/* Responsive typography */
+@media (max-width: 768px) {
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
+    .badge-success,
+    .badge-warning,
+    .badge-error { font-size: 0.8rem; padding: 2px 4px; }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1e1e1e;
+        color: #ffffff;
+    }
+
+    .sidebar .sidebar-content {
+        background-color: #0e1117;
+    }
+
+    .badge-success { background: #27963c; color: white; }
+    .badge-warning { background: #e0b437; color: black; }
+    .badge-error   { background: #cc0000; color: white; }
+}
+

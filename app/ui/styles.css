@@ -7,8 +7,8 @@ body { font-family: 'Roboto', sans-serif; }
 
 /* Compact sidebar layout */
 [data-testid="stSidebar"] {
-    width: 10rem !important;
-    min-width: 10rem;
+    /* Let Streamlit manage the sidebar width dynamically so the page content
+       expands when the sidebar is collapsed. */
     max-width: 10rem;
 }
 [data-testid="stSidebar"] .sidebar-content {

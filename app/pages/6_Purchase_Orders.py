@@ -26,7 +26,7 @@ try:
         PO_STATUS_PARTIALLY_RECEIVED,
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
-    from app.ui import render_sidebar_nav, show_success, show_error
+    from app.ui import show_success, show_error
 except ImportError as e:
     show_error(
         f"Import error in 6_Purchase_Orders.py: {e}. Please ensure all modules are correctly placed."
@@ -40,7 +40,6 @@ except Exception as e:  # Catch any other potential import errors
 
 load_css()
 render_sidebar_logo()
-render_sidebar_nav()
 
 # --- Page Config and Title ---
 st.title("🛒 Purchase Order & Goods Receiving")

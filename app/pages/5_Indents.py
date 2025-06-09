@@ -40,7 +40,7 @@ try:
         PLACEHOLDER_ERROR_LOADING_ITEMS,  # If applicable
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
-    from app.ui import render_sidebar_nav, show_success, show_error
+    from app.ui import show_success, show_error
 except ImportError as e:
     show_error(
         "Import error in 5_Indents.py: "
@@ -128,7 +128,6 @@ for key, default_val in [
 
 load_css()
 render_sidebar_logo()
-render_sidebar_nav()
 
 st.title("📝 Material Indents Management")
 st.write(

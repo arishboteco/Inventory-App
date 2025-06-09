@@ -5,6 +5,18 @@ body { font-family: 'Roboto', sans-serif; }
     background-color: #f0f2f6;
 }
 
+/* Compact sidebar layout */
+[data-testid="stSidebar"] {
+    width: 12rem;
+}
+[data-testid="stSidebar"] .sidebar-content {
+    padding: 0.5rem;
+}
+[data-testid="stSidebar"] img {
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+}
+
 /* Status badge classes */
 .badge-success { background: #21ba45; color: white; padding: 2px 6px; border-radius: 4px; }
 .badge-warning { background: #f2c037; color: black; padding: 2px 6px; border-radius: 4px; }

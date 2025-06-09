@@ -13,6 +13,10 @@ from sqlalchemy.engine import Engine, Connection
 import pandas as pd
 from typing import Any, Optional, Dict, Tuple
 
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 @st.cache_resource(show_spinner="Connecting to database…")
 def connect_db() -> Optional[Engine]:
@@ -46,7 +50,7 @@ def connect_db() -> Optional[Engine]:
         engine = create_engine(connection_url, pool_pre_ping=True, echo=False)
 
         with engine.connect():
-            print("Database connection successful using connect_db().")
+            logger.info("Database connection successful using connect_db().")
             return engine
 
     except OperationalError as e:
@@ -67,7 +71,7 @@ def fetch_data(
     db_obj can be an SQLAlchemy Engine or an active Connection.
     """
     if db_obj is None:
-        print("ERROR (fetch_data): Database object (engine/connection) not provided.")
+        logger.error("ERROR (fetch_data): Database object (engine/connection) not provided.")
         return pd.DataFrame()
 
     try:
@@ -81,8 +85,8 @@ def fetch_data(
                 df = pd.DataFrame(result.mappings().all())
                 return df
         else:
-            print(
-                f"ERROR (fetch_data): Invalid database object type passed: {type(db_obj)}"
+            logger.error(
+                "ERROR (fetch_data): Invalid database object type passed: %s", type(db_obj)
             )
             return pd.DataFrame()
 
@@ -91,13 +95,19 @@ def fetch_data(
         OperationalError,
         SQLAlchemyError,
     ) as e:  # IntegrityError is a subclass of SQLAlchemyError, but explicit catch is fine
-        print(
-            f"ERROR (fetch_data): Database query error: {e}. Query: {query[:150]}... Params: {params}"
+        logger.error(
+            "ERROR (fetch_data): Database query error: %s. Query: %s... Params: %s",
+            e,
+            query[:150],
+            params,
         )
         return pd.DataFrame()
     except Exception as e:
-        print(
-            f"ERROR (fetch_data): Unexpected error during data fetch: {e}. Query: {query[:150]}... Params: {params}"
+        logger.error(
+            "ERROR (fetch_data): Unexpected error during data fetch: %s. Query: %s... Params: %s",
+            e,
+            query[:150],
+            params,
         )
         return pd.DataFrame()
 
@@ -111,7 +121,7 @@ def execute_query(
     This function manages its own transaction.
     """
     if engine is None:
-        print("ERROR (execute_query): Database engine not available.")
+        logger.error("ERROR (execute_query): Database engine not available.")
         return False, None
     try:
         with engine.connect() as connection_obj:  # Use a different variable name
@@ -125,12 +135,18 @@ def execute_query(
         OperationalError,
         SQLAlchemyError,
     ) as e:  # Catch IntegrityError here
-        print(
-            f"ERROR (execute_query): Database execution error: {e}. Query: {query[:150]}... Params: {params}"
+        logger.error(
+            "ERROR (execute_query): Database execution error: %s. Query: %s... Params: %s",
+            e,
+            query[:150],
+            params,
         )
         return False, str(e)
     except Exception as e:
-        print(
-            f"ERROR (execute_query): Unexpected error: {e}. Query: {query[:150]}... Params: {params}"
+        logger.error(
+            "ERROR (execute_query): Unexpected error: %s. Query: %s... Params: %s",
+            e,
+            query[:150],
+            params,
         )
         return False, str(e)

@@ -9,7 +9,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
+from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
+
+logger = get_logger(__name__)
 
 
 # ─────────────────────────────────────────────────────────
@@ -27,7 +30,7 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
         Pandas DataFrame of items.
     """
     if _engine is None:
-        print(
+        logger.error(
             "ERROR [item_service.get_all_items_with_stock]: Database engine not available."
         )
         return pd.DataFrame()
@@ -50,7 +53,9 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
         Dictionary of item details or None if not found.
     """
     if engine is None:
-        print("ERROR [item_service.get_item_details]: Database engine not available.")
+        logger.error(
+            "ERROR [item_service.get_item_details]: Database engine not available."
+        )
         return None
     query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
     df = fetch_data(engine, query, {"item_id": item_id})
@@ -130,8 +135,10 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
             f"Item name '{params['name']}' already exists. Choose a unique name.",
         )
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [item_service.add_new_item]: Database error adding item: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [item_service.add_new_item]: Database error adding item: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while adding the item."
 
@@ -221,8 +228,11 @@ def update_item_details(
             f"Update failed: Potential duplicate name '{updates.get('name')}'.",
         )
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [item_service.update_item_details]: Database error updating item {item_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [item_service.update_item_details]: Database error updating item %s: %s\n%s",
+            item_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while updating the item."
 
@@ -251,8 +261,11 @@ def deactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
             return True, "Item deactivated successfully."
         return False, "Item not found or already inactive."
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [item_service.deactivate_item]: Error deactivating item {item_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [item_service.deactivate_item]: Error deactivating item %s: %s\n%s",
+            item_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred."
 
@@ -281,8 +294,11 @@ def reactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
             return True, "Item reactivated successfully."
         return False, "Item not found or already active."
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [item_service.reactivate_item]: Error reactivating item {item_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [item_service.reactivate_item]: Error reactivating item %s: %s\n%s",
+            item_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred."
 
@@ -300,7 +316,7 @@ def get_distinct_departments_from_items(_engine: Engine) -> List[str]:
         List of distinct department names.
     """
     if _engine is None:
-        print(
+        logger.error(
             "ERROR [item_service.get_distinct_departments_from_items]: Database engine not available."
         )
         return []
@@ -324,8 +340,10 @@ def get_distinct_departments_from_items(_engine: Engine) -> List[str]:
                 departments_set.update(departments)
         return sorted(list(departments_set))
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [item_service.get_distinct_departments_from_items]: Error fetching distinct departments: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [item_service.get_distinct_departments_from_items]: Error fetching distinct departments: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return []
 
@@ -344,7 +362,7 @@ def get_item_order_history_details(
         Dictionary with 'last_ordered_date' and 'median_quantity'.
     """
     if _engine is None or item_id is None:
-        print(
+        logger.error(
             "ERROR [item_service.get_item_order_history_details]: Database engine or item_id not available."
         )
         return {"last_ordered_date": None, "median_quantity": None}
@@ -385,8 +403,12 @@ def get_item_order_history_details(
             if qty_result is not None:
                 median_qty_val = float(qty_result)
     except Exception as e:
-        print(
-            f"WARNING [item_service.get_item_order_history_details]: Could not fetch full order history for item {item_id}, dept {department_name}: {type(e).__name__} - {e}"
+        logger.warning(
+            "WARNING [item_service.get_item_order_history_details]: Could not fetch full order history for item %s, dept %s: %s - %s",
+            item_id,
+            department_name,
+            type(e).__name__,
+            e,
         )
     return {"last_ordered_date": last_date_str, "median_quantity": median_qty_val}
 
@@ -406,7 +428,7 @@ def get_suggested_items_for_department(
         List of suggested item dictionaries.
     """
     if _engine is None or not department_name:
-        print(
+        logger.error(
             "ERROR [item_service.get_suggested_items_for_department]: Database engine or department_name not available."
         )
         return []
@@ -430,7 +452,11 @@ def get_suggested_items_for_department(
             result = connection.execute(query, params).mappings().all()
             return [dict(row) for row in result]
     except Exception as e:
-        print(
-            f"ERROR [item_service.get_suggested_items_for_department]: Could not fetch suggested items for dept '{department_name}'. Error: {type(e).__name__} - {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [item_service.get_suggested_items_for_department]: Could not fetch suggested items for dept '%s'. Error: %s - %s\n%s",
+            department_name,
+            type(e).__name__,
+            e,
+            traceback.format_exc(),
         )
         return []

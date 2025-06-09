@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
+from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
 from app.services import stock_service
 from app.services import purchase_order_service
@@ -18,6 +19,8 @@ from app.core.constants import (
     PO_STATUS_FULLY_RECEIVED,
     PO_STATUS_CANCELLED_PO,  # Use specific PO cancel status
 )
+
+logger = get_logger(__name__)
 
 
 # ─────────────────────────────────────────────────────────
@@ -32,7 +35,7 @@ def generate_grn_number(engine: Engine) -> Optional[str]:
         Formatted GRN number string or None on failure.
     """
     if engine is None:
-        print(
+        logger.error(
             "ERROR [goods_receiving_service.generate_grn_number]: Database engine not available."
         )
         return None
@@ -42,8 +45,10 @@ def generate_grn_number(engine: Engine) -> Optional[str]:
             seq_num = result.scalar_one()
             return f"GRN-{datetime.now().strftime('%Y%m')}-{seq_num:04d}"
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [goods_receiving_service.generate_grn_number]: Error generating GRN Number: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [goods_receiving_service.generate_grn_number]: Error generating GRN Number: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return None
 
@@ -261,13 +266,19 @@ def create_grn(
         msg = "Database integrity error creating GRN."
         if "goods_received_notes_grn_number_key" in str(e).lower():
             msg = f"GRN Number '{new_grn_number}' conflict."
-        print(
-            f"ERROR [goods_receiving_service.create_grn]: {msg} Details: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [goods_receiving_service.create_grn]: %s Details: %s\n%s",
+            msg,
+            e,
+            traceback.format_exc(),
         )
         return False, msg, None
     except Exception as e:
-        print(
-            f"ERROR [goods_receiving_service.create_grn]: Error during GRN creation for {new_grn_number}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [goods_receiving_service.create_grn]: Error during GRN creation for %s: %s\n%s",
+            new_grn_number,
+            e,
+            traceback.format_exc(),
         )
         return False, f"An unexpected error occurred: {str(e)}", None
 
@@ -283,7 +294,7 @@ def get_received_quantities_for_po(_engine: Engine, po_id: int) -> pd.DataFrame:
         Pandas DataFrame with 'po_item_id' and 'total_previously_received'.
     """
     if _engine is None or not po_id:
-        print(
+        logger.warning(
             "WARNING [goods_receiving_service.get_received_quantities_for_po]: Engine or PO ID not provided."
         )
         return pd.DataFrame(columns=["po_item_id", "total_previously_received"])
@@ -321,7 +332,7 @@ def list_grns(
         Pandas DataFrame of GRNs.
     """
     if _engine is None:
-        print(
+        logger.error(
             "ERROR [goods_receiving_service.list_grns]: Database engine not available."
         )
         return pd.DataFrame()
@@ -359,7 +370,7 @@ def get_grn_details(_engine: Engine, grn_id: int) -> Optional[Dict[str, Any]]:
         Dictionary of GRN details with items, or None if not found.
     """
     if _engine is None or not grn_id:
-        print(
+        logger.error(
             "ERROR [goods_receiving_service.get_grn_details]: Database engine or GRN ID not provided."
         )
         return None
@@ -379,8 +390,9 @@ def get_grn_details(_engine: Engine, grn_id: int) -> Optional[Dict[str, Any]]:
     try:
         grn_header_df = fetch_data(_engine, grn_header_query_str, {"grn_id": grn_id})
         if grn_header_df.empty:
-            print(
-                f"WARNING [goods_receiving_service.get_grn_details]: No GRN header found for grn_id {grn_id}."
+            logger.warning(
+                "WARNING [goods_receiving_service.get_grn_details]: No GRN header found for grn_id %s.",
+                grn_id,
             )
             return None
 
@@ -389,7 +401,10 @@ def get_grn_details(_engine: Engine, grn_id: int) -> Optional[Dict[str, Any]]:
         grn_header["items"] = grn_items_df.to_dict(orient="records")
         return grn_header
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [goods_receiving_service.get_grn_details]: DB error fetching GRN details for grn_id {grn_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [goods_receiving_service.get_grn_details]: DB error fetching GRN details for grn_id %s: %s\n%s",
+            grn_id,
+            e,
+            traceback.format_exc(),
         )
         return None

@@ -8,7 +8,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
+from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
+
+logger = get_logger(__name__)
 
 
 # ─────────────────────────────────────────────────────────
@@ -25,7 +28,7 @@ def get_all_suppliers(_engine: Engine, include_inactive=False) -> pd.DataFrame:
         Pandas DataFrame of suppliers.
     """
     if _engine is None:
-        print(
+        logger.error(
             "ERROR [supplier_service.get_all_suppliers]: Database engine not available."
         )
         return pd.DataFrame()
@@ -47,7 +50,7 @@ def get_supplier_details(engine: Engine, supplier_id: int) -> Optional[Dict[str,
         Dictionary of supplier details or None if not found.
     """
     if engine is None:
-        print(
+        logger.error(
             "ERROR [supplier_service.get_supplier_details]: Database engine not available."
         )
         return None
@@ -108,8 +111,10 @@ def add_supplier(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
             f"Supplier name '{params['name']}' already exists. Please use a unique name.",
         )
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [supplier_service.add_supplier]: Database error adding supplier: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [supplier_service.add_supplier]: Database error adding supplier: %s\n%s",
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while adding the supplier."
 
@@ -175,8 +180,11 @@ def update_supplier(
             f"Update failed: Potential duplicate name '{updates.get('name')}'.",
         )
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [supplier_service.update_supplier]: Database error updating supplier {supplier_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [supplier_service.update_supplier]: Database error updating supplier %s: %s\n%s",
+            supplier_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred while updating the supplier."
 
@@ -204,8 +212,11 @@ def deactivate_supplier(engine: Engine, supplier_id: int) -> Tuple[bool, str]:
             return True, "Supplier deactivated successfully."
         return False, "Supplier not found or already inactive."
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [supplier_service.deactivate_supplier]: Error deactivating supplier {supplier_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [supplier_service.deactivate_supplier]: Error deactivating supplier %s: %s\n%s",
+            supplier_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred."
 
@@ -233,7 +244,10 @@ def reactivate_supplier(engine: Engine, supplier_id: int) -> Tuple[bool, str]:
             return True, "Supplier reactivated successfully."
         return False, "Supplier not found or already active."
     except (SQLAlchemyError, Exception) as e:
-        print(
-            f"ERROR [supplier_service.reactivate_supplier]: Error reactivating supplier {supplier_id}: {e}\n{traceback.format_exc()}"
+        logger.error(
+            "ERROR [supplier_service.reactivate_supplier]: Error reactivating supplier %s: %s\n%s",
+            supplier_id,
+            e,
+            traceback.format_exc(),
         )
         return False, "A database error occurred."

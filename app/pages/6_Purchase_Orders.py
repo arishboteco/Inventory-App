@@ -193,6 +193,94 @@ def change_view_mode(
         st.session_state.form_reset_signal = True
 
 
+def grn_form_pg6(active_grn_po_details_data_ui):
+    """Render the GRN form and handle submission."""
+    with st.form("create_grn_form_v2_page6"):
+        st.markdown("##### 📋 GRN Header")
+        grn_header_cols_ui = st.columns(2)
+        with grn_header_cols_ui[0]:
+            st.session_state.grn_received_date_val = st.date_input(
+                "Received Date*",
+                value=st.session_state.grn_received_date_val,
+                key="grn_recv_date_v2",
+                help="Date when the goods were actually received.",
+            )
+        with grn_header_cols_ui[1]:
+            st.session_state.grn_received_by_val = get_current_user_id()
+            st.text_input(
+                "Received By",
+                value=st.session_state.grn_received_by_val,
+                key="grn_recv_by_v2",
+                disabled=True,
+            )
+        st.session_state.grn_header_notes_val = st.text_area(
+            "GRN Notes",
+            value=st.session_state.grn_header_notes_val,
+            key="grn_notes_header_v2",
+            placeholder="e.g., Invoice #, delivery condition...",
+            help="Optional notes for this Goods Received Note.",
+        )
+        st.divider()
+
+        st.markdown("##### 📦 Items Received")
+        grn_item_headers_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])
+        grn_item_headers_ui[0].markdown("**Item (Unit)**")
+        grn_item_headers_ui[1].markdown("**Ordered**")
+        grn_item_headers_ui[2].markdown("**Prev. Rcvd**")
+        grn_item_headers_ui[3].markdown("**Pending**")
+        grn_item_headers_ui[4].markdown("**Qty Rcv Now***")
+        grn_item_headers_ui[5].markdown("**Unit Price Rcvd***")
+
+        for i_grn_line, line_item_grn_ui in enumerate(st.session_state.grn_line_items):
+            item_cols_grn_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])
+            key_prefix_grn_line = f"grn_line_v2_{line_item_grn_ui.get('po_item_id', line_item_grn_ui.get('item_id', i_grn_line))}"
+
+            item_cols_grn_ui[0].write(
+                f"{line_item_grn_ui.get('item_name','N/A')} ({line_item_grn_ui.get('item_unit','N/A')})"
+            )
+            item_cols_grn_ui[1].write(
+                f"{line_item_grn_ui.get('quantity_ordered_on_po',0.0):.2f}"
+            )
+            item_cols_grn_ui[2].write(
+                f"{line_item_grn_ui.get('total_previously_received',0.0):.2f}"
+            )
+
+            qty_pending_grn_line = float(line_item_grn_ui.get("quantity_remaining_on_po", 0.0))
+            item_cols_grn_ui[3].write(f"{qty_pending_grn_line:.2f}")
+
+            st.session_state.grn_line_items[i_grn_line][
+                "quantity_received_now"
+            ] = item_cols_grn_ui[4].number_input(
+                f"QtyRcvNow_{key_prefix_grn_line}",
+                value=float(line_item_grn_ui.get("quantity_received_now", 0.0)),
+                min_value=0.0,
+                max_value=qty_pending_grn_line,
+                step=0.01,
+                format="%.2f",
+                key=f"{key_prefix_grn_line}_qty_v2",
+                label_visibility="collapsed",
+                help=f"Max quantity you can receive for this item is {qty_pending_grn_line:.2f}",
+            )
+            st.session_state.grn_line_items[i_grn_line][
+                "unit_price_at_receipt"
+            ] = item_cols_grn_ui[5].number_input(
+                f"PriceRcv_{key_prefix_grn_line}",
+                value=float(line_item_grn_ui.get("unit_price_at_receipt", 0.0)),
+                min_value=0.00,
+                step=0.01,
+                format="%.2f",
+                key=f"{key_prefix_grn_line}_price_v2",
+                label_visibility="collapsed",
+                help="Actual unit price at the time of receipt.",
+            )
+            st.caption("")
+
+        st.divider()
+        submit_grn_button_ui = st.form_submit_button(
+            "💾 Record Goods Received", type="primary", use_container_width=True
+            )
+
+        return submit_grn_button_ui
 # --- Main Page Logic (Router) ---
 if st.session_state.po_grn_view_mode == "list_po":
     st.subheader("📋 Existing Purchase Orders")
@@ -648,94 +736,6 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
 
         return submit_button_po_form, selected_supplier_id_for_submit
 
-    def grn_form_pg6(active_grn_po_details_data_ui):
-        """Render the GRN form and handle submission."""
-        with st.form("create_grn_form_v2_page6"):
-            st.markdown("##### 📋 GRN Header")
-            grn_header_cols_ui = st.columns(2)
-            with grn_header_cols_ui[0]:
-                st.session_state.grn_received_date_val = st.date_input(
-                    "Received Date*",
-                    value=st.session_state.grn_received_date_val,
-                    key="grn_recv_date_v2",
-                    help="Date when the goods were actually received.",
-                )
-            with grn_header_cols_ui[1]:
-                st.session_state.grn_received_by_val = get_current_user_id()
-                st.text_input(
-                    "Received By",
-                    value=st.session_state.grn_received_by_val,
-                    key="grn_recv_by_v2",
-                    disabled=True,
-                )
-            st.session_state.grn_header_notes_val = st.text_area(
-                "GRN Notes",
-                value=st.session_state.grn_header_notes_val,
-                key="grn_notes_header_v2",
-                placeholder="e.g., Invoice #, delivery condition...",
-                help="Optional notes for this Goods Received Note.",
-            )
-            st.divider()
-
-            st.markdown("##### 📦 Items Received")
-            grn_item_headers_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])
-            grn_item_headers_ui[0].markdown("**Item (Unit)**")
-            grn_item_headers_ui[1].markdown("**Ordered**")
-            grn_item_headers_ui[2].markdown("**Prev. Rcvd**")
-            grn_item_headers_ui[3].markdown("**Pending**")
-            grn_item_headers_ui[4].markdown("**Qty Rcv Now***")
-            grn_item_headers_ui[5].markdown("**Unit Price Rcvd***")
-
-            for i_grn_line, line_item_grn_ui in enumerate(st.session_state.grn_line_items):
-                item_cols_grn_ui = st.columns([2.5, 0.8, 1, 1, 1.2, 1.8])
-                key_prefix_grn_line = f"grn_line_v2_{line_item_grn_ui.get('po_item_id', line_item_grn_ui.get('item_id', i_grn_line))}"
-
-                item_cols_grn_ui[0].write(
-                    f"{line_item_grn_ui.get('item_name','N/A')} ({line_item_grn_ui.get('item_unit','N/A')})"
-                )
-                item_cols_grn_ui[1].write(
-                    f"{line_item_grn_ui.get('quantity_ordered_on_po',0.0):.2f}"
-                )
-                item_cols_grn_ui[2].write(
-                    f"{line_item_grn_ui.get('total_previously_received',0.0):.2f}"
-                )
-
-                qty_pending_grn_line = float(line_item_grn_ui.get("quantity_remaining_on_po", 0.0))
-                item_cols_grn_ui[3].write(f"{qty_pending_grn_line:.2f}")
-
-                st.session_state.grn_line_items[i_grn_line][
-                    "quantity_received_now"
-                ] = item_cols_grn_ui[4].number_input(
-                    f"QtyRcvNow_{key_prefix_grn_line}",
-                    value=float(line_item_grn_ui.get("quantity_received_now", 0.0)),
-                    min_value=0.0,
-                    max_value=qty_pending_grn_line,
-                    step=0.01,
-                    format="%.2f",
-                    key=f"{key_prefix_grn_line}_qty_v2",
-                    label_visibility="collapsed",
-                    help=f"Max quantity you can receive for this item is {qty_pending_grn_line:.2f}",
-                )
-                st.session_state.grn_line_items[i_grn_line][
-                    "unit_price_at_receipt"
-                ] = item_cols_grn_ui[5].number_input(
-                    f"PriceRcv_{key_prefix_grn_line}",
-                    value=float(line_item_grn_ui.get("unit_price_at_receipt", 0.0)),
-                    min_value=0.00,
-                    step=0.01,
-                    format="%.2f",
-                    key=f"{key_prefix_grn_line}_price_v2",
-                    label_visibility="collapsed",
-                    help="Actual unit price at the time of receipt.",
-                )
-                st.caption("")
-
-            st.divider()
-            submit_grn_button_ui = st.form_submit_button(
-                "💾 Record Goods Received", type="primary", use_container_width=True
-            )
-
-        return submit_grn_button_ui
 
     submit_button_po_form, selected_supplier_id_for_submit = po_header_form_pg6(
         is_edit_mode, supp_dict_form

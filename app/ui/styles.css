@@ -7,7 +7,7 @@ body { font-family: 'Roboto', sans-serif; }
 
 /* Compact sidebar layout */
 [data-testid="stSidebar"] {
-    width: 8rem;
+    width: 2rem;
 }
 [data-testid="stSidebar"] .sidebar-content {
     padding: 0.5rem;

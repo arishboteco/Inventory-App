@@ -23,6 +23,3 @@ def format_status_badge(status: str) -> str:
 
 
 def render_sidebar_logo() -> None:
-    """Display the logo image in the Streamlit sidebar."""
-    st.sidebar.image(get_logo_bytes(), use_column_width=True)
-

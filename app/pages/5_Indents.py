@@ -814,7 +814,7 @@ def process_indent_form_pg5(
                 f"{row_proc_item_disp_pg5['item_name']} ({row_proc_item_disp_pg5['item_unit']})"
             )
             item_display_cols_proc_pg5[1].write(f"{row_proc_item_disp_pg5['requested_qty']:.2f}")
-            item_display_cols_proc_pg5[2].write(f"{row_proc_item_disp_pg5['qty_issued']:.2f}")
+            item_display_cols_proc_pg5[2].write(f"{row_proc_item_disp_pg5['issued_qty']:.2f}")
             item_display_cols_proc_pg5[3].write(
                 f"{row_proc_item_disp_pg5['qty_remaining_to_issue']:.2f}"
             )

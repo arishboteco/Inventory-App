@@ -121,6 +121,9 @@ def run_dashboard():
             help="Material requests awaiting processing.",
         )
 
+    if not low_stock_df.empty:
+        st.bar_chart(low_stock_df.set_index("name")["current_stock"])
+
     st.divider()
 
     # Changed st.header to st.subheader

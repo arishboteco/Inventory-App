@@ -23,8 +23,3 @@ def format_status_badge(status: str) -> str:
 
 
 def render_sidebar_logo() -> None:
-    """Display the logo image in the Streamlit sidebar."""
-    # ``use_column_width`` is deprecated; use ``use_container_width``
-    # to automatically fit the image within the sidebar column.
-    st.sidebar.image(get_logo_bytes(), use_container_width=True)
-

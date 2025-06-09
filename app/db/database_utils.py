@@ -14,27 +14,21 @@ import pandas as pd
 from typing import Any, Optional, Dict, Tuple
 
 from app.core.logging import get_logger
+from app.config import load_db_config
 
 logger = get_logger(__name__)
 
 
 @st.cache_resource(show_spinner="Connecting to database…")
 def connect_db() -> Optional[Engine]:
-    """Establishes a connection to the database using credentials from secrets."""
+    """Establish a connection to the database."""
     try:
-        if "database" not in st.secrets:
-            st.error("Database configuration missing in secrets.toml!")
-            st.info(
-                "Ensure `.streamlit/secrets.toml` has [database] section with keys: engine, user, host, etc."
-            )
-            return None
-
-        db_config = st.secrets["database"]
+        db_config = load_db_config()
         required_keys = ["engine", "user", "password", "host", "port", "dbname"]
-        if not all(key in db_config for key in required_keys):
-            missing = [k for k in required_keys if k not in db_config]
-            st.error(f"Missing keys in database secrets: {', '.join(missing)}")
-            st.info(f"Expected keys: {', '.join(required_keys)}.")
+        if not db_config or not all(db_config.get(k) for k in required_keys):
+            st.error(
+                "Database configuration missing. Set environment variables or provide .streamlit/secrets.toml."
+            )
             return None
 
         db_user = db_config.get("user", "")

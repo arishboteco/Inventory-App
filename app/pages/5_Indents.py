@@ -31,6 +31,7 @@ try:
         PLACEHOLDER_NO_ITEMS_AVAILABLE,  # If applicable for item lists
         PLACEHOLDER_ERROR_LOADING_ITEMS,  # If applicable
     )
+    from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
 except ImportError as e:
     st.error(
         "Import error in 5_Indents.py: "
@@ -115,6 +116,9 @@ for key, default_val in [
 ]:
     if key not in st.session_state:
         st.session_state[key] = default_val
+
+load_css()
+render_sidebar_logo()
 
 st.title("📝 Material Indents Management")
 st.write(
@@ -1431,18 +1435,8 @@ elif st.session_state.pg5_active_indent_section == "view":
                     ).dt.strftime("%Y-%m-%d")
                 )
 
-        status_emoji_map_pg5 = {
-            STATUS_SUBMITTED: "📬 Submitted",
-            STATUS_PROCESSING: "⚙️ Processing",
-            STATUS_COMPLETED: "✅ Completed",
-            STATUS_CANCELLED: "❌ Cancelled",
-        }
         if "status" in display_df_pg5.columns:
-            display_df_pg5["status_display"] = (
-                display_df_pg5["status"]
-                .map(status_emoji_map_pg5)
-                .fillna(display_df_pg5["status"])
-            )
+            display_df_pg5["status_display"] = display_df_pg5["status"].apply(format_status_badge)
 
         cols_to_display_order_pg5 = [
             "mrn",

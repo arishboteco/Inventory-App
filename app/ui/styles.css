@@ -1,0 +1,12 @@
+/* General layout */
+body { font-family: 'Roboto', sans-serif; }
+
+.sidebar .sidebar-content {
+    background-color: #f0f2f6;
+}
+
+/* Status badge classes */
+.badge-success { background: #21ba45; color: white; padding: 2px 6px; border-radius: 4px; }
+.badge-warning { background: #f2c037; color: black; padding: 2px 6px; border-radius: 4px; }
+.badge-error   { background: #db2828; color: white; padding: 2px 6px; border-radius: 4px; }
+

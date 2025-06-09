@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 
 import math
+from app.ui.theme import load_css, render_sidebar_logo
 
 try:
     from app.db.database_utils import connect_db
@@ -49,6 +50,9 @@ def fetch_all_items_df_for_items_page(
     return item_service.get_all_items_with_stock(
         _engine, include_inactive=show_inactive
     )
+
+load_css()
+render_sidebar_logo()
 
 
 st.title("📦 Item Master Management")

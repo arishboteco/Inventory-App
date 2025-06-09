@@ -3,6 +3,13 @@
 import os
 import sys
 
+# Ensure this file works even when executed using a relative path (e.g.
+# `streamlit run app/item_manager_app.py`).
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(_CURRENT_DIR, os.pardir))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime

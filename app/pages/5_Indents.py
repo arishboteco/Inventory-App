@@ -908,11 +908,8 @@ def process_indent_form_pg5(
                         selected_mrn_pg5,
                     )
                 if success_p_pg5:
-                    show_success(message_p_pg5)
-                    st.page_link(
-                        "pages/6_Purchase_Orders.py",
-                        label="Create Purchase Order",
-                        icon="➡️",
+                    show_success(
+                        f"{message_p_pg5} Use the sidebar to create a purchase order."
                     )
                     st.session_state.pg5_process_indent_selected_tuple = (
                         pg5_placeholder_indent_process_tuple
@@ -950,11 +947,8 @@ if st.session_state.pg5_active_indent_section == "create":
         # ... (Success message and PDF/WhatsApp section - use pg5_ prefixed session state keys) ...
         # This section seems okay, just ensure all st.session_state access uses pg5_ prefixes if they were changed.
         mrn_to_print_pg5 = st.session_state.pg5_last_created_mrn_for_print  # Use pg5_ variable
-        show_success(f"Indent **{mrn_to_print_pg5}** was created successfully!")
-        st.page_link(
-            "pages/6_Purchase_Orders.py",
-            label="Create Purchase Order",
-            icon="➡️",
+        show_success(
+            f"Indent **{mrn_to_print_pg5}** was created successfully! Use the sidebar to create a purchase order."
         )
         if st.session_state.get("pg5_last_submitted_indent_details"):
             summary_header_pg5 = st.session_state.pg5_last_submitted_indent_details["header"]

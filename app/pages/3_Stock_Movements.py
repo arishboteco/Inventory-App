@@ -397,12 +397,7 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
                     else "Selected Item"
                 )
                 show_success(
-                    f"✅ Successfully recorded {active_section_prefix_val_pg3} for '{item_display_name_success_pg3}'."
-                )
-                st.page_link(
-                    "pages/4_History_Reports.py",
-                    label="View History Reports",
-                    icon="➡️",
+                    f"✅ Successfully recorded {active_section_prefix_val_pg3} for '{item_display_name_success_pg3}'. Use the sidebar to view reports."
                 )
 
                 fetch_active_items_for_stock_mv_page_pg3.clear()

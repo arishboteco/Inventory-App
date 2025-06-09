@@ -169,11 +169,8 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                     engine, item_data_to_add
                 )
                 if success_add:
-                    show_success(message_add)
-                    st.page_link(
-                        "pages/3_Stock_Movements.py",
-                        label="Record Stock Movement",
-                        icon="➡️",
+                    show_success(
+                        f"{message_add} Use the sidebar to record a stock movement."
                     )
                     fetch_all_items_df_for_items_page.clear()
                     st.rerun()
@@ -530,11 +527,8 @@ else:
                                 )
                             )
                             if ok_update_item:
-                                show_success(msg_update_item)
-                                st.page_link(
-                                    "pages/3_Stock_Movements.py",
-                                    label="Record Stock Movement",
-                                    icon="➡️",
+                                show_success(
+                                    f"{msg_update_item} Use the sidebar to record a stock movement."
                                 )
                                 st.session_state.ss_items_show_edit_form_flag = None
                                 st.session_state.ss_items_edit_form_data_dict = None

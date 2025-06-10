@@ -303,8 +303,10 @@ def _pg6_tab_switch_callback():
 st.radio(
     "Select Section:",
     options=list(VIEW_MODE_LABELS_PG6.keys()),
-    index=list(VIEW_MODE_LABELS_PG6.values()).index(
-        st.session_state.po_grn_view_mode
+    index=(
+        list(VIEW_MODE_LABELS_PG6.values()).index(st.session_state.po_grn_view_mode)
+        if st.session_state.po_grn_view_mode in VIEW_MODE_LABELS_PG6.values()
+        else 0
     ),
     key="po_tab_radio_pg6",
     horizontal=True,

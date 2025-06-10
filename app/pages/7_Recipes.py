@@ -17,7 +17,7 @@ from app.ui import show_success, show_error
 
 try:
     from app.db.database_utils import connect_db
-    from app.services import recipe_service, item_service
+    from app.services import recipe_service, menu_service
     from app.auth.auth import get_current_user_id
 except Exception as e:
     st.error(f"Import error in Recipes page: {e}")
@@ -39,7 +39,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
     with st.form("add_recipe_form"):
         name = st.text_input("Recipe Name*", key="recipe_name")
         desc = st.text_area("Description", key="recipe_desc")
-        items_df = item_service.get_all_items_with_stock(engine)
+        items_df = menu_service.get_all_menu_items(engine)
         item_opts = {
             f"{row['name']} ({row['unit']})": int(row["item_id"]) for _, row in items_df.iterrows()
         }

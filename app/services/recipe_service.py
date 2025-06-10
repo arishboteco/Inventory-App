@@ -73,6 +73,9 @@ def create_recipe(
     insert_item_q = text(
         "INSERT INTO recipe_items (recipe_id, item_id, quantity) VALUES (:r, :i, :q);"
     )
+    check_menu_item_q = text(
+        "SELECT 1 FROM menu_items WHERE item_id=:i AND is_active=TRUE;"
+    )
     try:
         with engine.connect() as conn:
             with conn.begin():
@@ -84,6 +87,9 @@ def create_recipe(
                     qty = ing.get("quantity", 0)
                     if not iid or qty is None or qty <= 0:
                         raise ValueError("Invalid ingredient data")
+                    valid = conn.execute(check_menu_item_q, {"i": iid}).scalar_one_or_none()
+                    if valid is None:
+                        raise ValueError(f"Item {iid} is not a menu item")
                     conn.execute(insert_item_q, {"r": rid, "i": iid, "q": float(qty)})
         return True, f"Recipe '{clean_name}' added.", rid
     except IntegrityError as ie:
@@ -129,6 +135,9 @@ def update_recipe(
     ins_item_q = text(
         "INSERT INTO recipe_items (recipe_id, item_id, quantity) VALUES (:r, :i, :q);"
     )
+    check_menu_item_q = text(
+        "SELECT 1 FROM menu_items WHERE item_id=:i AND is_active=TRUE;"
+    )
     try:
         with engine.connect() as conn:
             with conn.begin():
@@ -141,6 +150,9 @@ def update_recipe(
                     qty = ing.get("quantity", 0)
                     if not iid or qty is None or qty <= 0:
                         raise ValueError("Invalid ingredient data")
+                    valid = conn.execute(check_menu_item_q, {"i": iid}).scalar_one_or_none()
+                    if valid is None:
+                        raise ValueError(f"Item {iid} is not a menu item")
                     conn.execute(ins_item_q, {"r": recipe_id, "i": iid, "q": float(qty)})
         return True, f"Recipe '{clean_name}' updated."
     except IntegrityError as ie:

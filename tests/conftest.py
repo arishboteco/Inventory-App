@@ -36,6 +36,17 @@ def sqlite_engine():
             );
             """
         ))
+        conn.execute(text(
+            """
+            CREATE TABLE menu_items (
+                menu_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER UNIQUE,
+                is_active BOOLEAN,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """
+        ))
         conn.execute(text("""
             CREATE TABLE stock_transactions (
                 transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,

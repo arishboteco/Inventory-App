@@ -1,5 +1,8 @@
 import streamlit as st
 
+from app.db.database_utils import connect_db
+from app.auth.user_auth import verify_login
+
 
 def get_current_user_id(default: str = "System") -> str:
     """Return the current logged in user ID from session state."""
@@ -24,13 +27,24 @@ def login_sidebar() -> bool:
         # Wrap the login inputs in an expander to minimize sidebar height when
         # the user is not logged in.
         with st.expander("Login"):
-            st.text_input("User ID", key="login_user_id")
+            st.text_input("Username", key="login_user")
+            st.text_input("Password", type="password", key="login_pass")
             if st.button("Login", key="login_button"):
-                user = st.session_state.get("login_user_id", "").strip()
-                if user:
-                    st.session_state.user_id = user
-                    st.session_state.logged_in = True
-                    st.rerun()
+                username = st.session_state.get("login_user", "").strip()
+                password = st.session_state.get("login_pass", "")
+                if not username or not password:
+                    st.warning("Enter username and password")
                 else:
-                    st.warning("Please enter a user ID to login.")
+                    engine = connect_db()
+                    if engine:
+                        ok, role = verify_login(engine, username, password)
+                        if ok:
+                            st.session_state.user_id = username
+                            st.session_state.user_role = role
+                            st.session_state.logged_in = True
+                            st.rerun()
+                        else:
+                            st.error("Invalid credentials")
+                    else:
+                        st.error("Database connection failed")
     return False

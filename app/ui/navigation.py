@@ -11,3 +11,4 @@ def render_sidebar_nav() -> None:
         st.page_link("pages/4_History_Reports.py", label="History Reports")
         st.page_link("pages/5_Indents.py", label="Indents")
         st.page_link("pages/6_Purchase_Orders.py", label="Purchase Orders")
+        st.page_link("pages/7_Recipes.py", label="Recipes")

@@ -157,7 +157,7 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
             if is_valid_add:
                 item_data_to_add = {
                     "name": name_add_widget.strip(),
-                    "unit": unit_add_widget.strip(),
+                    "purchase_unit": unit_add_widget.strip(),
                     "category": category_add_widget.strip() or "Uncategorized",
                     "sub_category": sub_category_add_widget.strip() or "General",
                     "permitted_departments": permitted_departments_add_widget.strip()
@@ -355,7 +355,7 @@ else:
 
         cols_item_row = st.columns((3, 1, 2, 1, 1, 1, 2.5, 2.5))
         cols_item_row[0].write(item_name_disp)
-        cols_item_row[1].write(item_row_display.get("unit", "N/A"))
+        cols_item_row[1].write(item_row_display.get("purchase_unit", "N/A"))
         cols_item_row[2].write(item_row_display.get("category", "N/A"))
         cols_item_row[3].write(f"{item_row_display.get('current_stock', 0.0):.2f}")
         cols_item_row[4].write(f"{item_row_display.get('reorder_point', 0.0):.2f}")
@@ -459,7 +459,7 @@ else:
                         )
                         e_unit = st.text_input(
                             "UoM*",
-                            value=current_values_for_edit_form.get("unit", ""),
+                            value=current_values_for_edit_form.get("purchase_unit", ""),
                             key=f"widget_items_edit_form_unit_input_{item_id_disp}",
                         )
                         e_category = st.text_input(
@@ -516,7 +516,7 @@ else:
                         if is_valid_edit_form:
                             update_data_for_service = {
                                 "name": e_name.strip(),
-                                "unit": e_unit.strip(),
+                                "purchase_unit": e_unit.strip(),
                                 "category": e_category.strip() or "Uncategorized",
                                 "sub_category": e_sub_category.strip() or "General",
                                 "permitted_departments": e_permitted.strip() or None,

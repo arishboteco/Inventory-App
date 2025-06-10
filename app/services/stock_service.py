@@ -275,7 +275,7 @@ def get_stock_transactions(
         return pd.DataFrame()
 
     query = """
-        SELECT st.transaction_id, st.transaction_date, i.name AS item_name, i.unit AS item_unit, 
+        SELECT st.transaction_id, st.transaction_date, i.name AS item_name, i.purchase_unit AS item_unit,
                st.transaction_type, st.quantity_change, st.user_id, st.notes, 
                st.related_mrn, st.related_po_id, st.item_id
         FROM stock_transactions st

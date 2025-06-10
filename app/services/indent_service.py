@@ -341,7 +341,7 @@ def get_indent_items_for_display(engine: Engine, indent_id: int) -> pd.DataFrame
         return pd.DataFrame()
 
     query_str = """
-        SELECT ii.indent_item_id, ii.item_id, i.name AS item_name, i.unit AS item_unit,
+        SELECT ii.indent_item_id, ii.item_id, i.name AS item_name, i.purchase_unit AS item_unit,
                i.current_stock AS stock_on_hand, ii.requested_qty,
                ii.issued_qty, ii.item_status, ii.notes AS item_notes
         FROM indent_items ii
@@ -439,7 +439,7 @@ def get_indent_details_for_pdf(
 
             items_query = text(
                 """
-                SELECT ii.item_id, i.name AS item_name, i.unit AS item_unit,
+                SELECT ii.item_id, i.name AS item_name, i.purchase_unit AS item_unit,
                        COALESCE(i.category, 'Uncategorized') AS item_category,
                        COALESCE(i.sub_category, 'General') AS item_sub_category,
                        ii.requested_qty, ii.notes AS item_notes

@@ -95,7 +95,7 @@ def fetch_active_items_for_stock_mv_page_pg3(_engine):
     items_df = item_service.get_all_items_with_stock(_engine, include_inactive=False)
     if not items_df.empty:
         return [
-            (f"{r['name']} ({r['unit']})", r["item_id"])
+            (f"{r['name']} ({r['purchase_unit']})", r["item_id"])
             for _, r in items_df.sort_values("name").iterrows()
         ]
     return []

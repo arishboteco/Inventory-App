@@ -34,7 +34,10 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
             "ERROR [item_service.get_all_items_with_stock]: Database engine not available."
         )
         return pd.DataFrame()
-    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
+    query = (
+        "SELECT item_id, name, purchase_unit, base_unit, conversion_factor, "
+        "category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
+    )
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
@@ -57,7 +60,11 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
             "ERROR [item_service.get_item_details]: Database engine not available."
         )
         return None
-    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
+    query = (
+        "SELECT item_id, name, purchase_unit, base_unit, conversion_factor, "
+        "category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active "
+        "FROM items WHERE item_id = :item_id;"
+    )
     df = fetch_data(engine, query, {"item_id": item_id})
     if not df.empty:
         return df.iloc[0].to_dict()
@@ -77,7 +84,7 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """
     if engine is None:
         return False, "Database engine not available."
-    required = ["name", "unit"]
+    required = ["name", "purchase_unit"]
     if not all(details.get(k) and str(details.get(k)).strip() for k in required):
         missing = [
             k for k in required if not details.get(k) or not str(details.get(k)).strip()
@@ -102,19 +109,21 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
 
     params = {
         "name": details["name"].strip(),
-        "unit": details["unit"].strip(),
+        "purchase_unit": details["purchase_unit"].strip(),
+        "base_unit": details.get("base_unit"),
+        "conversion_factor": details.get("conversion_factor"),
         "category": (details.get("category", "").strip() or "Uncategorized"),
         "sub_category": (details.get("sub_category", "").strip() or "General"),
-        "permitted_departments": cleaned_permitted_departments,  # Use the cleaned value
+        "permitted_departments": cleaned_permitted_departments,
         "reorder_point": details.get("reorder_point", 0.0),
         "current_stock": details.get("current_stock", 0.0),
-        "notes": cleaned_notes_for_db,  # Use the cleaned value
+        "notes": cleaned_notes_for_db,
         "is_active": details.get("is_active", True),
     }
     query = text(
         """
-        INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
-        VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
+        INSERT INTO items (name, purchase_unit, base_unit, conversion_factor, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
+        VALUES (:name, :purchase_unit, :base_unit, :conversion_factor, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
         RETURNING item_id;
     """
     )  # No created_at, updated_at
@@ -165,7 +174,9 @@ def update_item_details(
     params = {"item_id": item_id}
     allowed_fields = [
         "name",
-        "unit",
+        "purchase_unit",
+        "base_unit",
+        "conversion_factor",
         "category",
         "sub_category",
         "permitted_departments",
@@ -175,8 +186,6 @@ def update_item_details(
 
     if "name" in updates and not updates["name"].strip():
         return False, "Item Name cannot be empty."
-    if "unit" in updates and not updates["unit"].strip():
-        return False, "Unit of Measure (UoM) cannot be empty."
 
     for key, value in updates.items():
         if key in allowed_fields:
@@ -190,13 +199,13 @@ def update_item_details(
                     params[key] = None
                 else:
                     params[key] = current_val
-            elif key == "reorder_point" and current_val is not None:
+            elif key in ["reorder_point", "conversion_factor"] and current_val is not None:
                 try:
                     params[key] = float(current_val)
                 except (ValueError, TypeError):
                     return (
                         False,
-                        f"Invalid numeric value for reorder_point: {current_val}",
+                        f"Invalid numeric value for {key}: {current_val}",
                     )
             else:
                 params[key] = current_val
@@ -436,10 +445,10 @@ def get_suggested_items_for_department(
     cutoff_date_val = datetime.now() - timedelta(days=days_recency)
     query = text(
         """
-        SELECT i.item_id, i.name AS item_name, i.unit, COUNT(ii.item_id) as order_frequency
+        SELECT i.item_id, i.name AS item_name, i.purchase_unit, COUNT(ii.item_id) as order_frequency
         FROM indent_items ii JOIN items i ON ii.item_id = i.item_id JOIN indents ind ON ii.indent_id = ind.indent_id
         WHERE ind.department = :department_name AND ind.date_submitted >= :cutoff_date AND i.is_active = TRUE
-        GROUP BY i.item_id, i.name, i.unit ORDER BY order_frequency DESC, i.name ASC LIMIT :top_n;
+        GROUP BY i.item_id, i.name, i.purchase_unit ORDER BY order_frequency DESC, i.name ASC LIMIT :top_n;
     """
     )
     params = {

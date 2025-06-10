@@ -24,7 +24,9 @@ def sqlite_engine():
             CREATE TABLE items (
                 item_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
-                unit TEXT,
+                purchase_unit TEXT,
+                base_unit TEXT,
+                conversion_factor REAL,
                 category TEXT,
                 sub_category TEXT,
                 permitted_departments TEXT,
@@ -33,6 +35,15 @@ def sqlite_engine():
                 notes TEXT,
                 is_active BOOLEAN,
                 updated_at TEXT
+            );
+            """
+        ))
+        conn.execute(text(
+            """
+            CREATE TABLE units (
+                unit_name TEXT PRIMARY KEY,
+                base_unit TEXT NOT NULL,
+                conversion_factor REAL NOT NULL
             );
             """
         ))

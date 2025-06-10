@@ -485,12 +485,12 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
     if not item_df_form.empty:
         item_dict_form.update(
             {
-                f"{r['name'].strip()} ({r['unit'].strip()}) {'[Inactive]' if not r['is_active'] else ''}": (
+                f"{r['name'].strip()} ({r['purchase_unit'].strip()}) {'[Inactive]' if not r['is_active'] else ''}": (
                     r["item_id"],
-                    r["unit"].strip(),
+                    r["purchase_unit"].strip(),
                 )
                 for _, r in item_df_form.iterrows()
-                if r["name"] and r["unit"]  # Ensure name and unit exist
+                if r["name"] and r["purchase_unit"]  # Ensure name and unit exist
             }
         )
 

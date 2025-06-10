@@ -41,7 +41,14 @@ def get_recipe_items(engine: Engine, recipe_id: int) -> pd.DataFrame:
         return pd.DataFrame()
     query = text(
         """
-        SELECT ri.recipe_item_id, ri.recipe_id, ri.item_id, i.name AS item_name, ri.quantity
+        SELECT ri.recipe_item_id,
+               ri.recipe_id,
+               ri.item_id,
+               i.name AS item_name,
+               i.purchase_unit,
+               i.base_unit,
+               i.conversion_factor,
+               ri.quantity
         FROM recipe_items ri
         JOIN items i ON ri.item_id = i.item_id
         WHERE ri.recipe_id = :rid
@@ -213,9 +220,14 @@ def record_sale(
                 conn.execute(sale_ins_q, {"r": recipe_id, "q": quantity, "u": user_id_clean, "n": notes_clean})
                 for _, row in items_df.iterrows():
                     total_qty = float(row["quantity"]) * quantity
+                    conv = row.get("conversion_factor")
+                    if conv and conv > 0:
+                        purchase_qty = total_qty / conv
+                    else:
+                        purchase_qty = total_qty
                     ok = stock_service.record_stock_transaction(
                         item_id=int(row["item_id"]),
-                        quantity_change=-total_qty,
+                        quantity_change=-purchase_qty,
                         transaction_type=TX_SALE,
                         user_id=user_id_clean,
                         related_mrn=None,

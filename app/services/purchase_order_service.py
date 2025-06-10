@@ -141,7 +141,7 @@ def get_po_by_id(_engine: Engine, po_id: int) -> Optional[Dict[str, Any]]:
     )
     po_items_query = text(
         """
-        SELECT poi.po_item_id, poi.item_id, i.name as item_name, i.unit as item_unit,
+        SELECT poi.po_item_id, poi.item_id, i.name as item_name, i.purchase_unit as item_unit,
                poi.quantity_ordered, poi.unit_price, poi.line_total
         FROM purchase_order_items poi JOIN items i ON poi.item_id = i.item_id
         WHERE poi.po_id = :po_id ORDER BY i.name;

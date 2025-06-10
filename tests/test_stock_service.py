@@ -8,8 +8,9 @@ def test_record_stock_transaction_updates_stock_and_logs(sqlite_engine):
     with sqlite_engine.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active) "
-                "VALUES ('Sample', 'pcs', 'cat', 'sub', 'dept', 0, 10, 'n', 1)"
+                "INSERT INTO items (name, purchase_unit, base_unit, conversion_factor, "
+                "category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active) "
+                "VALUES ('Sample', 'box', 'each', 1, 'cat', 'sub', 'dept', 0, 10, 'n', 1)"
             )
         )
         item_id = conn.execute(text("SELECT item_id FROM items LIMIT 1")).scalar_one()

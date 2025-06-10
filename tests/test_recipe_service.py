@@ -1,4 +1,5 @@
 from sqlalchemy import text
+import pytest
 
 from app.services import recipe_service
 
@@ -7,8 +8,9 @@ def setup_items(engine):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)"
-                " VALUES ('Flour', 'kg', 'cat', 'sub', 'dept', 0, 20, 'n', 1)"
+                "INSERT INTO items (name, purchase_unit, base_unit, conversion_factor, "
+                "category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)"
+                " VALUES ('Flour', 'bag', 'g', 1000, 'cat', 'sub', 'dept', 0, 20, 'n', 1)"
             )
         )
         item_id = conn.execute(text("SELECT item_id FROM items WHERE name='Flour'"))
@@ -46,4 +48,4 @@ def test_record_sale_reduces_stock(sqlite_engine):
         stock = conn.execute(
             text("SELECT current_stock FROM items WHERE item_id=:i"), {"i": item_id}
         ).scalar_one()
-        assert stock == 17
+        assert stock == pytest.approx(19.997)

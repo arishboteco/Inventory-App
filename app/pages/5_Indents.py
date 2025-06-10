@@ -1158,9 +1158,9 @@ if st.session_state.pg5_active_indent_section == "create":
                             args=(
                                 sugg_item_pg5["item_id"],
                                 sugg_item_pg5["item_name"],
-                                sugg_item_pg5["unit"],
+                                sugg_item_pg5["purchase_unit"],
                             ),
-                            help=f"Add {sugg_item_pg5['item_name']} ({sugg_item_pg5['unit']})",
+                            help=f"Add {sugg_item_pg5['item_name']} ({sugg_item_pg5['purchase_unit']})",
                             use_container_width=True,
                         )
                 elif items_in_current_indent_ids_pg5 and any(
@@ -1202,7 +1202,7 @@ if st.session_state.pg5_active_indent_section == "create":
                     else:
                         item_options_dict_pg5.update(
                             {
-                                f"{r['name']} ({r['unit']})": r["item_id"]
+                                f"{r['name']} ({r['purchase_unit']})": r["item_id"]
                                 for _, r in available_items_df_pg5.sort_values("name").iterrows()
                             }
                         )

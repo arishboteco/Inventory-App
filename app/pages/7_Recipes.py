@@ -41,7 +41,8 @@ with st.expander("➕ Add New Recipe", expanded=False):
         desc = st.text_area("Description", key="recipe_desc")
         items_df = item_service.get_all_items_with_stock(engine)
         item_opts = {
-            f"{row['name']} ({row['unit']})": int(row["item_id"]) for _, row in items_df.iterrows()
+            f"{row['name']} ({row.get('base_unit') or 'N/A'})": int(row["item_id"])
+            for _, row in items_df.iterrows()
         }
         selected = st.multiselect("Ingredients", list(item_opts.keys()))
         qty_inputs = {}

@@ -80,7 +80,7 @@ def fetch_filter_options_pg4(_engine):
             sorted(
                 [
                     (
-                        f"{r['name']} ({r.get('unit','N/A')}){' [Inactive]' if not r['is_active'] else ''}",
+                        f"{r['name']} ({r.get('purchase_unit','N/A')}){' [Inactive]' if not r['is_active'] else ''}",
                         r["item_id"],
                     )
                     for _, r in items_df.dropna(subset=["name"]).iterrows()

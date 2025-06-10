@@ -47,3 +47,33 @@ def test_record_sale_reduces_stock(sqlite_engine):
             text("SELECT current_stock FROM items WHERE item_id=:i"), {"i": item_id}
         ).scalar_one()
         assert stock == 17
+
+
+def test_clone_recipe_duplicates_rows(sqlite_engine):
+    item_id = setup_items(sqlite_engine)
+    data = {"name": "Pie", "description": "sweet", "is_active": True}
+    ingredients = [{"item_id": item_id, "quantity": 4}]
+    ok, _, rid = recipe_service.create_recipe(sqlite_engine, data, ingredients)
+    assert ok and rid
+
+    ok, msg, new_id = recipe_service.clone_recipe(
+        sqlite_engine, rid, "Pie Copy", data["description"]
+    )
+    assert ok and new_id and new_id != rid
+
+    with sqlite_engine.connect() as conn:
+        header = conn.execute(
+            text("SELECT description FROM recipes WHERE recipe_id=:r"), {"r": new_id}
+        ).mappings().fetchone()
+        assert header["description"] == "sweet"
+        count = conn.execute(
+            text("SELECT COUNT(*) FROM recipe_items WHERE recipe_id=:r"), {"r": new_id}
+        ).scalar_one()
+        assert count == 1
+        qty = conn.execute(
+            text(
+                "SELECT quantity FROM recipe_items WHERE recipe_id=:r AND item_id=:i"
+            ),
+            {"r": new_id, "i": item_id},
+        ).scalar_one()
+        assert qty == 4

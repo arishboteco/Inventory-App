@@ -184,6 +184,95 @@ def delete_recipe(engine: Engine, recipe_id: int) -> Tuple[bool, str]:
 
 
 # ─────────────────────────────────────────────────────────
+# CLONE RECIPE
+# ─────────────────────────────────────────────────────────
+
+def clone_recipe(
+    engine: Engine,
+    original_id: int,
+    new_name: str,
+    new_desc: Optional[str] = None,
+) -> Tuple[bool, str, Optional[int]]:
+    """Duplicate a recipe and its ingredient rows."""
+
+    if engine is None:
+        return False, "Database engine not available.", None
+    if not original_id:
+        return False, "Original recipe ID required.", None
+    if not new_name or not new_name.strip():
+        return False, "New recipe name required.", None
+
+    clean_name = new_name.strip()
+
+    try:
+        with engine.begin() as conn:
+            header = conn.execute(
+                text(
+                    "SELECT description, is_active FROM recipes WHERE recipe_id=:rid"
+                ),
+                {"rid": original_id},
+            ).mappings().fetchone()
+
+            if not header:
+                return False, "Original recipe not found.", None
+
+            desc = (
+                new_desc.strip()
+                if isinstance(new_desc, str) and new_desc.strip()
+                else header["description"]
+            )
+            is_active = header["is_active"]
+
+            items = conn.execute(
+                text(
+                    "SELECT item_id, quantity FROM recipe_items WHERE recipe_id=:rid"
+                ),
+                {"rid": original_id},
+            ).mappings().all()
+
+            if not items:
+                return False, "Original recipe has no ingredients.", None
+
+            new_id = conn.execute(
+                text(
+                    "INSERT INTO recipes (name, description, is_active) VALUES (:n, :d, :a) RETURNING recipe_id;"
+                ),
+                {"n": clean_name, "d": desc, "a": is_active},
+            ).scalar_one_or_none()
+            if not new_id:
+                raise Exception("Failed to insert cloned recipe header.")
+
+            for row in items:
+                conn.execute(
+                    text(
+                        "INSERT INTO recipe_items (recipe_id, item_id, quantity) VALUES (:r, :i, :q);"
+                    ),
+                    {"r": new_id, "i": row["item_id"], "q": row["quantity"]},
+                )
+
+        return True, f"Recipe '{clean_name}' cloned.", new_id
+    except IntegrityError as ie:
+        logger.error(
+            "ERROR [recipe_service.clone_recipe]: Integrity error: %s\n%s",
+            ie,
+            traceback.format_exc(),
+        )
+        msg = (
+            "Recipe with this name already exists."
+            if "unique" in str(ie).lower()
+            else "Integrity error."
+        )
+        return False, msg, None
+    except (SQLAlchemyError, Exception) as e:
+        logger.error(
+            "ERROR [recipe_service.clone_recipe]: DB error: %s\n%s",
+            e,
+            traceback.format_exc(),
+        )
+        return False, "A database error occurred.", None
+
+
+# ─────────────────────────────────────────────────────────
 # SALES RECORDING USING RECIPES
 # ─────────────────────────────────────────────────────────
 

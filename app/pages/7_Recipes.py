@@ -118,3 +118,25 @@ else:
                         st.session_state["edit_recipe_id"] = None
                     else:
                         st.warning(msg)
+
+            if st.button("Clone", key=f"clone_{rid}"):
+                st.session_state["clone_recipe_id"] = rid
+            if st.session_state.get("clone_recipe_id") == rid:
+                with st.form(f"clone_form_{rid}"):
+                    c_name = st.text_input("New Recipe Name*", key=f"cname_{rid}")
+                    c_desc = st.text_area(
+                        "Description", value=row["description"] or "", key=f"cdesc_{rid}"
+                    )
+                    st.dataframe(
+                        items[["item_name", "quantity"]], use_container_width=True
+                    )
+                    clone_sub = st.form_submit_button("Create Clone")
+                if clone_sub:
+                    ok, msg, _ = recipe_service.clone_recipe(
+                        engine, rid, c_name.strip(), c_desc.strip()
+                    )
+                    if ok:
+                        show_success(msg)
+                        st.session_state["clone_recipe_id"] = None
+                    else:
+                        st.warning(msg)

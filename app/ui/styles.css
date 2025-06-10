@@ -1,4 +1,8 @@
 /* General layout */
+:root {
+    --sidebar-width: 10rem;
+}
+
 body { font-family: 'Roboto', sans-serif; }
 
 .sidebar .sidebar-content {
@@ -7,9 +11,8 @@ body { font-family: 'Roboto', sans-serif; }
 
 /* Compact sidebar layout */
 [data-testid="stSidebar"] {
-    /* Let Streamlit manage the sidebar width dynamically so the page content
-       expands when the sidebar is collapsed. */
-    max-width: 10rem;
+    width: var(--sidebar-width);
+    /* Specify explicit sidebar width so page content expands when collapsed */
 }
 [data-testid="stSidebar"] .sidebar-content {
     padding: 0.5rem;

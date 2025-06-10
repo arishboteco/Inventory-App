@@ -18,18 +18,29 @@ logger = get_logger(__name__)
 # RECIPE CRUD FUNCTIONS
 # ─────────────────────────────────────────────────────────
 
-def list_recipes(engine: Engine, include_inactive: bool = False) -> pd.DataFrame:
-    """Return all recipes."""
+def list_recipes(
+    engine: Engine,
+    search_text: Optional[str] = None,
+    include_inactive: bool = False,
+) -> pd.DataFrame:
+    """Return recipes filtered by search text and active status."""
     if engine is None:
         logger.error(
             "ERROR [recipe_service.list_recipes]: Database engine not available."
         )
         return pd.DataFrame()
-    query = "SELECT recipe_id, name, description, is_active FROM recipes"
+
+    ilike_keyword = "ILIKE" if engine.dialect.name == "postgresql" else "LIKE"
+
+    query = "SELECT recipe_id, name, description, is_active FROM recipes WHERE 1=1"
+    params: Dict[str, Any] = {}
     if not include_inactive:
-        query += " WHERE is_active = TRUE"
+        query += " AND is_active = TRUE"
+    if search_text and search_text.strip():
+        query += f" AND (name {ilike_keyword} :search OR description {ilike_keyword} :search)"
+        params["search"] = f"%{search_text.strip()}%"
     query += " ORDER BY name;"
-    return fetch_data(engine, query)
+    return fetch_data(engine, query, params)
 
 
 def get_recipe_items(engine: Engine, recipe_id: int) -> pd.DataFrame:
@@ -154,6 +165,52 @@ def update_recipe(
     except (SQLAlchemyError, Exception) as e:
         logger.error(
             "ERROR [recipe_service.update_recipe]: DB error: %s\n%s",
+            e,
+            traceback.format_exc(),
+        )
+        return False, "A database error occurred."
+
+
+def archive_recipe(engine: Engine, recipe_id: int) -> Tuple[bool, str]:
+    """Set a recipe's ``is_active`` flag to ``FALSE``."""
+    if engine is None:
+        return False, "Database engine not available."
+    if not recipe_id:
+        return False, "Recipe ID required."
+    query = text("UPDATE recipes SET is_active = FALSE WHERE recipe_id = :rid;")
+    try:
+        with engine.connect() as conn:
+            with conn.begin():
+                result = conn.execute(query, {"rid": recipe_id})
+        if result.rowcount > 0:
+            return True, "Recipe archived successfully."
+        return False, "Recipe not found or already archived."
+    except (SQLAlchemyError, Exception) as e:
+        logger.error(
+            "ERROR [recipe_service.archive_recipe]: DB error: %s\n%s",
+            e,
+            traceback.format_exc(),
+        )
+        return False, "A database error occurred."
+
+
+def reactivate_recipe(engine: Engine, recipe_id: int) -> Tuple[bool, str]:
+    """Set a recipe's ``is_active`` flag to ``TRUE``."""
+    if engine is None:
+        return False, "Database engine not available."
+    if not recipe_id:
+        return False, "Recipe ID required."
+    query = text("UPDATE recipes SET is_active = TRUE WHERE recipe_id = :rid;")
+    try:
+        with engine.connect() as conn:
+            with conn.begin():
+                result = conn.execute(query, {"rid": recipe_id})
+        if result.rowcount > 0:
+            return True, "Recipe reactivated successfully."
+        return False, "Recipe not found or already active."
+    except (SQLAlchemyError, Exception) as e:
+        logger.error(
+            "ERROR [recipe_service.reactivate_recipe]: DB error: %s\n%s",
             e,
             traceback.format_exc(),
         )

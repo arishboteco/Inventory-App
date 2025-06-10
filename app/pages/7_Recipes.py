@@ -13,7 +13,7 @@ if _REPO_ROOT not in sys.path:
 
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
-from app.ui import show_success, show_error
+from app.ui import render_search_toggle, show_success, show_error
 
 try:
     from app.db.database_utils import connect_db
@@ -71,7 +71,23 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 st.warning(msg)
 
 # --- List and Edit Recipes ---
-recipes_df = recipe_service.list_recipes(engine, include_inactive=True)
+filter_col_search, filter_col_toggle = st.columns([3, 1])
+render_search_toggle(
+    search_container=filter_col_search,
+    toggle_container=filter_col_toggle,
+    search_label="Search Recipes",
+    search_key="pg7_recipe_search_term",
+    toggle_label="Show Archived",
+    toggle_key="pg7_show_archived",
+    placeholder="e.g., Bread or soup",
+    toggle_help="Toggle to include archived recipes",
+)
+
+recipes_df = recipe_service.list_recipes(
+    engine,
+    search_text=st.session_state.pg7_recipe_search_term,
+    include_inactive=st.session_state.pg7_show_archived,
+)
 if recipes_df.empty:
     st.info("No recipes found.")
 else:
@@ -82,8 +98,26 @@ else:
             st.write(row["description"] or "")
             items = recipe_service.get_recipe_items(engine, rid)
             st.dataframe(items[["item_name", "quantity"]], use_container_width=True)
-            if st.button("Edit", key=f"edit_{rid}"):
+
+            action_cols = st.columns(2)
+            if action_cols[0].button("Edit", key=f"edit_{rid}"):
                 st.session_state["edit_recipe_id"] = rid
+            if row["is_active"]:
+                if action_cols[1].button("Archive", key=f"arch_{rid}"):
+                    ok, msg = recipe_service.archive_recipe(engine, rid)
+                    if ok:
+                        show_success(msg)
+                        st.rerun()
+                    else:
+                        show_error(msg)
+            else:
+                if action_cols[1].button("Restore", key=f"react_{rid}"):
+                    ok, msg = recipe_service.reactivate_recipe(engine, rid)
+                    if ok:
+                        show_success(msg)
+                        st.rerun()
+                    else:
+                        show_error(msg)
             if st.session_state.get("edit_recipe_id") == rid:
                 with st.form(f"edit_form_{rid}"):
                     new_name = st.text_input("Recipe Name*", value=row["name"], key=f"ename_{rid}")

@@ -3,6 +3,8 @@ import os
 import sys
 import streamlit as st
 import pandas as pd
+
+st.set_page_config(page_title="Purchase Orders", layout="wide")
 from datetime import date
 from typing import Dict, Any, Optional, List
 

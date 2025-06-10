@@ -235,3 +235,23 @@ def record_sale(
             traceback.format_exc(),
         )
         return False, "A database error occurred during sale recording."
+
+
+def calculate_recipe_cost(engine: Engine, item_quantities: Dict[int, float]) -> float:
+    """Return estimated recipe cost based on last_unit_cost of items."""
+    if engine is None or not item_quantities:
+        return 0.0
+    total_cost = 0.0
+    for iid, qty in item_quantities.items():
+        if qty is None or qty <= 0:
+            continue
+        df = fetch_data(
+            engine,
+            "SELECT last_unit_cost FROM items WHERE item_id = :iid",
+            {"iid": iid},
+        )
+        if not df.empty:
+            cost = df.iloc[0]["last_unit_cost"]
+            unit_cost = float(cost) if cost is not None else 0.0
+            total_cost += unit_cost * qty
+    return total_cost

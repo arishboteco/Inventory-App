@@ -7,8 +7,8 @@ def setup_items(engine):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)"
-                " VALUES ('Flour', 'kg', 'cat', 'sub', 'dept', 0, 20, 'n', 1)"
+                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, last_unit_cost, notes, is_active)"
+                " VALUES ('Flour', 'kg', 'cat', 'sub', 'dept', 0, 20, 1.5, 'n', 1)"
             )
         )
         item_id = conn.execute(text("SELECT item_id FROM items WHERE name='Flour'"))
@@ -47,3 +47,9 @@ def test_record_sale_reduces_stock(sqlite_engine):
             text("SELECT current_stock FROM items WHERE item_id=:i"), {"i": item_id}
         ).scalar_one()
         assert stock == 17
+
+
+def test_calculate_recipe_cost(sqlite_engine):
+    item_id = setup_items(sqlite_engine)
+    cost = recipe_service.calculate_recipe_cost(sqlite_engine, {item_id: 2})
+    assert cost == 3.0

@@ -35,27 +35,40 @@ if engine is None:
 st.title("Recipe Management")
 
 # --- Add Recipe ---
+all_items_df = item_service.get_all_items_with_stock(engine)
+
 with st.expander("➕ Add New Recipe", expanded=False):
     with st.form("add_recipe_form"):
         name = st.text_input("Recipe Name*", key="recipe_name")
         desc = st.text_area("Description", key="recipe_desc")
-        items_df = item_service.get_all_items_with_stock(engine)
-        item_opts = {
-            f"{row['name']} ({row['unit']})": int(row["item_id"]) for _, row in items_df.iterrows()
-        }
-        selected = st.multiselect("Ingredients", list(item_opts.keys()))
-        qty_inputs = {}
-        for label in selected:
-            iid = item_opts[label]
-            qty_inputs[iid] = st.number_input(
-                f"Qty of {label}", min_value=0.0, step=0.01, format="%.2f", key=f"qty_{iid}"
-            )
+
+        grid_df = pd.DataFrame({
+            "item_id": all_items_df["item_id"].astype(int),
+            "Item": all_items_df["name"] + " (" + all_items_df["unit"] + ")",
+            "Quantity": 0.0,
+        })
+
+        edited_df = st.data_editor(
+            grid_df,
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "item_id": st.column_config.NumberColumn("ID", disabled=True),
+                "Item": st.column_config.TextColumn("Item", disabled=True),
+                "Quantity": st.column_config.NumberColumn(
+                    "Qty", min_value=0.0, step=0.01, format="%.2f"
+                ),
+            },
+            key="add_recipe_editor",
+        )
+
         submit = st.form_submit_button("Save Recipe")
+
     if submit:
         ingredients = [
-            {"item_id": iid, "quantity": q}
-            for iid, q in qty_inputs.items()
-            if q > 0
+            {"item_id": int(row["item_id"]), "quantity": float(row["Quantity"])}
+            for _, row in edited_df.iterrows()
+            if row["Quantity"] > 0
         ]
         if not name.strip() or not ingredients:
             st.warning("Name and at least one ingredient required.")
@@ -86,26 +99,45 @@ else:
                 st.session_state["edit_recipe_id"] = rid
             if st.session_state.get("edit_recipe_id") == rid:
                 with st.form(f"edit_form_{rid}"):
-                    new_name = st.text_input("Recipe Name*", value=row["name"], key=f"ename_{rid}")
-                    new_desc = st.text_area("Description", value=row["description"] or "", key=f"edesc_{rid}")
-                    item_opts_local = item_opts  # from earlier
-                    selected_local = st.multiselect(
-                        "Ingredients", list(item_opts_local.keys()),
-                        default=[k for k, v in item_opts_local.items() if v in items["item_id"].tolist()],
-                        key=f"sel_{rid}"
+                    new_name = st.text_input(
+                        "Recipe Name*", value=row["name"], key=f"ename_{rid}"
                     )
-                    qty_inputs_local = {}
-                    for label in selected_local:
-                        iid = item_opts_local[label]
-                        current_qty = items.loc[items["item_id"] == iid, "quantity"].iloc[0] if iid in items["item_id"].tolist() else 0
-                        qty_inputs_local[iid] = st.number_input(
-                            f"Qty of {label}", min_value=0.0, step=0.01, format="%.2f", value=float(current_qty), key=f"eqty_{iid}_{rid}"
-                        )
+                    new_desc = st.text_area(
+                        "Description", value=row["description"] or "", key=f"edesc_{rid}"
+                    )
+
+                    grid_df_local = pd.DataFrame({
+                        "item_id": all_items_df["item_id"].astype(int),
+                        "Item": all_items_df["name"] + " (" + all_items_df["unit"] + ")",
+                    })
+                    grid_df_local["Quantity"] = [
+                        items.loc[items["item_id"] == iid, "quantity"].iloc[0]
+                        if iid in items["item_id"].tolist()
+                        else 0.0
+                        for iid in all_items_df["item_id"]
+                    ]
+
+                    edited_local = st.data_editor(
+                        grid_df_local,
+                        hide_index=True,
+                        use_container_width=True,
+                        column_config={
+                            "item_id": st.column_config.NumberColumn("ID", disabled=True),
+                            "Item": st.column_config.TextColumn("Item", disabled=True),
+                            "Quantity": st.column_config.NumberColumn(
+                                "Qty", min_value=0.0, step=0.01, format="%.2f"
+                            ),
+                        },
+                        key=f"edit_editor_{rid}",
+                    )
+
                     save = st.form_submit_button("Update")
+
                 if save:
                     ing = [
-                        {"item_id": iid, "quantity": qty}
-                        for iid, qty in qty_inputs_local.items() if qty > 0
+                        {"item_id": int(row["item_id"]), "quantity": float(row["Quantity"])}
+                        for _, row in edited_local.iterrows()
+                        if row["Quantity"] > 0
                     ]
                     ok, msg = recipe_service.update_recipe(
                         engine,

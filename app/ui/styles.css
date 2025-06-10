@@ -2,7 +2,8 @@
 
 /* General layout */
 :root {
-    --sidebar-width: 10rem;
+    /* Increase the default sidebar width to prevent text wrapping */
+    --sidebar-width: 12rem;
 }
 
 body { font-family: 'Roboto', sans-serif; }
@@ -14,7 +15,7 @@ body { font-family: 'Roboto', sans-serif; }
 /* Compact sidebar layout */
 [data-testid="stSidebar"] {
     width: var(--sidebar-width);
-    /* Specify explicit sidebar width so page content expands when collapsed */
+    min-width: var(--sidebar-width); /* keep navigation items on one line */
 }
 [data-testid="stSidebar"] .sidebar-content {
     padding: 0.5rem;

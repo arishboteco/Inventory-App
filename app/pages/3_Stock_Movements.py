@@ -3,6 +3,8 @@ import os
 import sys
 import streamlit as st
 
+st.set_page_config(page_title="Stock Movements", layout="wide")
+
 _CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT = os.path.abspath(os.path.join(_CUR_DIR, os.pardir, os.pardir))
 if _REPO_ROOT not in sys.path:

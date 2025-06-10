@@ -3,6 +3,8 @@ import os
 import sys
 import streamlit as st
 import pandas as pd
+
+st.set_page_config(page_title="History Reports", layout="wide")
 from datetime import datetime, timedelta
 
 _CUR_DIR = os.path.dirname(os.path.abspath(__file__))

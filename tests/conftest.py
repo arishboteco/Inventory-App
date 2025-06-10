@@ -64,4 +64,41 @@ def sqlite_engine():
             );
             """
         ))
+        conn.execute(text(
+            """
+            CREATE TABLE recipes (
+                recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                description TEXT,
+                is_active BOOLEAN,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """
+        ))
+        conn.execute(text(
+            """
+            CREATE TABLE recipe_items (
+                recipe_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_id INTEGER,
+                item_id INTEGER,
+                quantity REAL,
+                created_at TEXT,
+                updated_at TEXT,
+                UNIQUE (recipe_id, item_id)
+            );
+            """
+        ))
+        conn.execute(text(
+            """
+            CREATE TABLE sales_transactions (
+                sale_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_id INTEGER,
+                quantity INTEGER,
+                user_id TEXT,
+                sale_date TEXT,
+                notes TEXT
+            );
+            """
+        ))
     return engine

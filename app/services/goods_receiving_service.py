@@ -190,6 +190,13 @@ def create_grn(
                             f"Failed to record stock transaction for item_id {item_d['item_id']} on GRN {new_grn_number}."
                         )
 
+                    conn.execute(
+                        text(
+                            "UPDATE items SET last_unit_cost = :cost, updated_at = NOW() WHERE item_id = :iid"
+                        ),
+                        {"cost": price_rcv, "iid": item_d["item_id"]},
+                    )
+
                 if item_p_list_for_db:
                     conn.execute(item_q_obj, item_p_list_for_db)
 

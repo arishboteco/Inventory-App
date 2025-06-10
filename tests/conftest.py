@@ -30,6 +30,7 @@ def sqlite_engine():
                 permitted_departments TEXT,
                 reorder_point REAL,
                 current_stock REAL,
+                last_unit_cost REAL,
                 notes TEXT,
                 is_active BOOLEAN,
                 updated_at TEXT

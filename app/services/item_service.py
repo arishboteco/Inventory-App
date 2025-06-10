@@ -34,7 +34,7 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
             "ERROR [item_service.get_all_items_with_stock]: Database engine not available."
         )
         return pd.DataFrame()
-    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
+    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, last_unit_cost, notes, is_active FROM items"
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
@@ -57,7 +57,7 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
             "ERROR [item_service.get_item_details]: Database engine not available."
         )
         return None
-    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
+    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, last_unit_cost, notes, is_active FROM items WHERE item_id = :item_id;"
     df = fetch_data(engine, query, {"item_id": item_id})
     if not df.empty:
         return df.iloc[0].to_dict()
@@ -108,13 +108,14 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
         "permitted_departments": cleaned_permitted_departments,  # Use the cleaned value
         "reorder_point": details.get("reorder_point", 0.0),
         "current_stock": details.get("current_stock", 0.0),
+        "last_unit_cost": details.get("last_unit_cost"),
         "notes": cleaned_notes_for_db,  # Use the cleaned value
         "is_active": details.get("is_active", True),
     }
     query = text(
         """
-        INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
-        VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
+        INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, last_unit_cost, notes, is_active)
+        VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :last_unit_cost, :notes, :is_active)
         RETURNING item_id;
     """
     )  # No created_at, updated_at
@@ -170,6 +171,7 @@ def update_item_details(
         "sub_category",
         "permitted_departments",
         "reorder_point",
+        "last_unit_cost",
         "notes",
     ]
 
@@ -198,6 +200,11 @@ def update_item_details(
                         False,
                         f"Invalid numeric value for reorder_point: {current_val}",
                     )
+            elif key == "last_unit_cost" and current_val is not None:
+                try:
+                    params[key] = float(current_val)
+                except (ValueError, TypeError):
+                    return False, f"Invalid numeric value for last_unit_cost: {current_val}"
             else:
                 params[key] = current_val
 

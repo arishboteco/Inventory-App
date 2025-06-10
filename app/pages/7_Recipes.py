@@ -50,6 +50,8 @@ with st.expander("➕ Add New Recipe", expanded=False):
             qty_inputs[iid] = st.number_input(
                 f"Qty of {label}", min_value=0.0, step=0.01, format="%.2f", key=f"qty_{iid}"
             )
+        est_cost = recipe_service.calculate_recipe_cost(engine, qty_inputs)
+        st.markdown(f"**Estimated Cost:** {est_cost:.2f}")
         submit = st.form_submit_button("Save Recipe")
     if submit:
         ingredients = [
@@ -101,6 +103,8 @@ else:
                         qty_inputs_local[iid] = st.number_input(
                             f"Qty of {label}", min_value=0.0, step=0.01, format="%.2f", value=float(current_qty), key=f"eqty_{iid}_{rid}"
                         )
+                    est_cost_local = recipe_service.calculate_recipe_cost(engine, qty_inputs_local)
+                    st.markdown(f"**Estimated Cost:** {est_cost_local:.2f}")
                     save = st.form_submit_button("Update")
                 if save:
                     ing = [

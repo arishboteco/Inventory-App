@@ -23,7 +23,7 @@ try:
     )
     from app.ui.theme import load_css, render_sidebar_logo
     from app.ui.navigation import render_sidebar_nav
-    from app.ui import show_success, show_error
+    from app.ui import show_success, show_error, show_warning
 except ImportError as e:
     show_error(f"Import error in 3_Stock_Movements.py: {e}.")
     st.stop()
@@ -321,32 +321,32 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
 
         is_valid_submission_pg3 = True
         if not selected_item_id_submit_pg3 or selected_item_id_submit_pg3 == -1:
-            st.warning("⚠️ Please select an item first.")
+            show_warning("⚠️ Please select an item first.")
             is_valid_submission_pg3 = False
 
         try:
             qty_float_submit_pg3 = float(qty_to_process_submit_pg3)
             if active_section_prefix_val_pg3 == "adjust" and qty_float_submit_pg3 == 0:
-                st.warning(
+                show_warning(
                     "⚠️ For 'Stock Adjustment', the quantity adjusted cannot be zero."
                 )
                 is_valid_submission_pg3 = False
             elif (
                 active_section_prefix_val_pg3 != "adjust" and qty_float_submit_pg3 <= 0
             ):
-                st.warning(
+                show_warning(
                     f"⚠️ Quantity for '{SECTIONS_PG3[active_section_prefix_val_pg3]}' must be greater than 0."
                 )
                 is_valid_submission_pg3 = False
         except (ValueError, TypeError):
-            st.warning("⚠️ Invalid quantity entered. Please enter a valid number.")
+            show_warning("⚠️ Invalid quantity entered. Please enter a valid number.")
             is_valid_submission_pg3 = False
 
         if (
             active_section_prefix_val_pg3 in ["adjust", "waste"]
             and not notes_to_process_submit_pg3.strip()
         ):
-            st.warning(
+            show_warning(
                 f"⚠️ A reason/note is mandatory for '{SECTIONS_PG3[active_section_prefix_val_pg3]}'."
             )
             is_valid_submission_pg3 = False
@@ -361,7 +361,7 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
                     st.session_state.get(current_po_id_ss_key_pg3).strip()
                 )
             except ValueError:
-                st.warning(
+                show_warning(
                     "⚠️ Related PO ID must be a numeric value if provided (enter only the number part)."
                 )
                 is_valid_submission_pg3 = False

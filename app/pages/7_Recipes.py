@@ -13,7 +13,7 @@ if _REPO_ROOT not in sys.path:
 
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
-from app.ui import show_success, show_error
+from app.ui import show_success, show_error, show_warning
 from app.ui.choices import build_item_choice_label, build_recipe_choice_label
 
 try:
@@ -206,9 +206,9 @@ with st.expander("➕ Add New Recipe", expanded=False):
         )
         if errors or not name.strip() or not components:
             for err in errors:
-                st.warning(err)
+                show_warning(err)
             if not name.strip() or not components:
-                st.warning("Name and at least one component required.")
+                show_warning("Name and at least one component required.")
         else:
             ok, msg, _ = recipe_service.create_recipe(
                 engine,
@@ -228,7 +228,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
             if ok:
                 show_success(msg)
             else:
-                st.warning(msg)
+                show_warning(msg)
 
 st.divider()
 
@@ -350,9 +350,9 @@ else:
                     )
                     if errors or not components:
                         for err in errors:
-                            st.warning(err)
+                            show_warning(err)
                         if not components:
-                            st.warning("At least one component required.")
+                            show_warning("At least one component required.")
                     else:
                         ok, msg = recipe_service.update_recipe(
                             engine,
@@ -376,7 +376,7 @@ else:
                             show_success(msg)
                             st.session_state.pg7_edit_recipe_id = None
                         else:
-                            st.warning(msg)
+                            show_warning(msg)
 
             if st.button("Clone", key=f"clone_{rid}"):
                 st.session_state.pg7_clone_recipe_id = rid
@@ -397,4 +397,4 @@ else:
                         show_success(msg)
                         st.session_state.pg7_clone_recipe_id = None
                     else:
-                        st.warning(msg)
+                        show_warning(msg)

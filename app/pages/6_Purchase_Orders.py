@@ -29,7 +29,7 @@ try:
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
     from app.ui.navigation import render_sidebar_nav
-    from app.ui import show_success, show_error
+    from app.ui import show_success, show_error, show_warning
 except ImportError as e:
     show_error(
         f"Import error in 6_Purchase_Orders.py: {e}. Please ensure all modules are correctly placed."
@@ -520,7 +520,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
                 st.stop()
 
             if po_data_to_edit.get("status") != PO_STATUS_DRAFT:
-                st.warning(
+                show_warning(
                     f"⚠️ PO {po_data_to_edit.get('po_number')} is in '{po_data_to_edit.get('status')}' status and cannot be edited."
                 )
                 change_view_mode("list_po")
@@ -890,7 +890,7 @@ elif st.session_state.po_grn_view_mode in ["create_po", "edit_po"]:
     if submit_button_po_form:
         # Validation for header
         if not selected_supplier_id_for_submit:
-            st.warning("⚠️ Supplier is required. Please select a supplier from the list.")
+            show_warning("⚠️ Supplier is required. Please select a supplier from the list.")
         else:
             # Prepare header data
             po_header_data_for_submit = {  # Renamed var
@@ -1013,7 +1013,7 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
         st.rerun()
 
     if not active_grn_po_details_data_ui or not st.session_state.grn_line_items:
-        st.warning(
+        show_warning(
             "⚠️ PO details not fully loaded or no items to receive. Attempting to reload or please go back to the PO list."
         )
         if st.session_state.po_for_grn_id:  # If po_id is known, try to re-trigger data load
@@ -1086,7 +1086,7 @@ elif st.session_state.po_grn_view_mode == "create_grn_for_po":
         if not grn_items_to_submit and at_least_one_item_received_flag:
             pass
         elif not at_least_one_item_received_flag:
-            st.warning("⚠️ Please enter a quantity for at least one item to record the GRN.")
+            show_warning("⚠️ Please enter a quantity for at least one item to record the GRN.")
         else:
             (
                 success_grn_create,
@@ -1114,7 +1114,7 @@ elif st.session_state.po_grn_view_mode == "view_po_details":
 
     po_id_to_view_ui = st.session_state.get("po_to_view_id")
     if not po_id_to_view_ui:
-        st.warning("⚠️ No PO selected to view. Please go back to the list.")
+        show_warning("⚠️ No PO selected to view. Please go back to the list.")
         st.stop()
 
     po_details_data_view_ui = purchase_order_service.get_po_by_id(db_engine, po_id_to_view_ui)

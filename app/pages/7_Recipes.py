@@ -68,12 +68,12 @@ with st.expander("➕ Add New Recipe", expanded=False):
 
         comp_df = pd.DataFrame(
             {
-                "component": [],
-                "quantity": [],
-                "unit": [],
-                "loss_pct": [],
-                "sort_order": [],
-                "notes": [],
+                "component": pd.Series(dtype="str"),
+                "quantity": pd.Series(dtype="float"),
+                "unit": pd.Series(dtype="str"),
+                "loss_pct": pd.Series(dtype="float"),
+                "sort_order": pd.Series(dtype="int"),
+                "notes": pd.Series(dtype="str"),
             }
         )
         edited_df = st.data_editor(
@@ -195,10 +195,10 @@ else:
                                 for _, r in comps.iterrows()
                             ],
                             "quantity": comps["quantity"],
-                            "unit": comps["unit"],
+                            "unit": comps["unit"].astype("string"),
                             "loss_pct": comps["loss_pct"],
                             "sort_order": comps["sort_order"],
-                            "notes": comps["notes"],
+                            "notes": comps["notes"].astype("string"),
                         }
                     )
                     edited_local = st.data_editor(

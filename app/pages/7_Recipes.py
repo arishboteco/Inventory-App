@@ -18,21 +18,35 @@ from app.ui import show_success, show_error
 try:
     from app.db.database_utils import connect_db
     from app.services import recipe_service, item_service
-    from app.auth.auth import get_current_user_id
-except Exception as e:
-    st.error(f"Import error in Recipes page: {e}")
+except ImportError as e:
+    show_error(f"Import error in 7_Recipes.py: {e}.")
     st.stop()
+except Exception as e:
+    show_error(
+        f"An unexpected error occurred during import in 7_Recipes.py: {e}"
+    )
+    st.stop()
+
+# --- Session State (pg7_ prefix) ---
+if "pg7_edit_recipe_id" not in st.session_state:
+    st.session_state.pg7_edit_recipe_id = None
+if "pg7_clone_recipe_id" not in st.session_state:
+    st.session_state.pg7_clone_recipe_id = None
 
 load_css()
 render_sidebar_logo()
 render_sidebar_nav()
 
+st.title("🍳 Recipe Management")
+st.write(
+    "Create, edit, and clone recipes with component breakdowns and standard yields."
+)
+st.divider()
+
 engine = connect_db()
-if engine is None:
+if not engine:
     show_error("Database connection failed.")
     st.stop()
-
-st.title("Recipe Management")
 
 # helper to display nested components
 def render_component_tree(recipe_id: int, indent: int = 0) -> None:
@@ -56,16 +70,48 @@ component_options = [
 
 with st.expander("➕ Add New Recipe", expanded=False):
     with st.form("add_recipe_form"):
-        name = st.text_input("Recipe Name*", key="recipe_name")
-        desc = st.text_area("Description", key="recipe_desc")
-        rtype = st.text_input("Type", key="recipe_type")
-        default_yield_qty = st.number_input(
-            "Default Yield Quantity", min_value=0.0, step=0.01, key="recipe_yield_qty"
+        st.subheader("Enter New Recipe Details")
+        col1, col2 = st.columns(2)
+        with col1:
+            name = st.text_input(
+                "Recipe Name*",
+                key="recipe_name",
+                help="Unique name for the recipe.",
+            )
+            rtype = st.text_input(
+                "Type",
+                key="recipe_type",
+                help="e.g., Starter, Main Course",
+            )
+            default_yield_qty = st.number_input(
+                "Default Yield Quantity",
+                min_value=0.0,
+                step=0.01,
+                key="recipe_yield_qty",
+                help="Standard yield quantity.",
+            )
+        with col2:
+            default_yield_unit = st.text_input(
+                "Default Yield Unit",
+                key="recipe_yield_unit",
+                help="e.g., kg, servings",
+            )
+            tags = st.text_input(
+                "Tags (comma separated)",
+                key="recipe_tags",
+                help="Optional tags for searching.",
+            )
+        desc = st.text_area(
+            "Description",
+            key="recipe_desc",
+            help="Optional recipe description.",
         )
-        default_yield_unit = st.text_input("Default Yield Unit", key="recipe_yield_unit")
-        plating_notes = st.text_area("Plating Notes", key="recipe_plating")
-        tags = st.text_input("Tags (comma separated)", key="recipe_tags")
-
+        plating_notes = st.text_area(
+            "Plating Notes",
+            key="recipe_plating",
+            help="Instructions for plating, if any.",
+        )
+        st.subheader("Components")
         comp_df = pd.DataFrame(
             {
                 "component": pd.Series(dtype="str"),
@@ -147,48 +193,56 @@ with st.expander("➕ Add New Recipe", expanded=False):
             else:
                 st.warning(msg)
 
+st.divider()
+
 # --- List and Edit Recipes ---
 recipes_df = recipe_service.list_recipes(engine, include_inactive=True)
 if recipes_df.empty:
     st.info("No recipes found.")
 else:
-    st.subheader("Existing Recipes")
+    st.subheader("📖 Existing Recipes")
     for _, row in recipes_df.iterrows():
         rid = int(row["recipe_id"])
         with st.expander(row["name"], expanded=False):
             st.write(row["description"] or "")
             render_component_tree(rid)
             if st.button("Edit", key=f"edit_{rid}"):
-                st.session_state["edit_recipe_id"] = rid
-            if st.session_state.get("edit_recipe_id") == rid:
+                st.session_state.pg7_edit_recipe_id = rid
+            if st.session_state.pg7_edit_recipe_id == rid:
                 with st.form(f"edit_form_{rid}"):
-                    new_name = st.text_input(
-                        "Recipe Name*", value=row["name"], key=f"ename_{rid}"
-                    )
+                    st.subheader("Edit Recipe Details")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        new_name = st.text_input(
+                            "Recipe Name*", value=row["name"], key=f"ename_{rid}"
+                        )
+                        new_type = st.text_input(
+                            "Type", value=row.get("type") or "", key=f"etype_{rid}"
+                        )
+                        new_yield_qty = st.number_input(
+                            "Default Yield Quantity",
+                            value=float(row.get("default_yield_qty") or 0),
+                            step=0.01,
+                            key=f"eyqty_{rid}",
+                        )
+                    with col2:
+                        new_yield_unit = st.text_input(
+                            "Default Yield Unit",
+                            value=row.get("default_yield_unit") or "",
+                            key=f"eyunit_{rid}",
+                        )
+                        new_tags = st.text_input(
+                            "Tags", value=row.get("tags") or "", key=f"etags_{rid}"
+                        )
                     new_desc = st.text_area(
                         "Description", value=row["description"] or "", key=f"edesc_{rid}"
                     )
-                    new_type = st.text_input(
-                        "Type", value=row.get("type") or "", key=f"etype_{rid}"
-                    )
-                    new_yield_qty = st.number_input(
-                        "Default Yield Quantity",
-                        value=float(row.get("default_yield_qty") or 0),
-                        step=0.01,
-                        key=f"eyqty_{rid}",
-                    )
-                    new_yield_unit = st.text_input(
-                        "Default Yield Unit",
-                        value=row.get("default_yield_unit") or "",
-                        key=f"eyunit_{rid}",
-                    )
                     new_plating = st.text_area(
-                        "Plating Notes", value=row.get("plating_notes") or "", key=f"eplating_{rid}"
+                        "Plating Notes",
+                        value=row.get("plating_notes") or "",
+                        key=f"eplating_{rid}",
                     )
-                    new_tags = st.text_input(
-                        "Tags", value=row.get("tags") or "", key=f"etags_{rid}"
-                    )
-
+                    st.subheader("Components")
                     comps = recipe_service.get_recipe_components(engine, rid)
                     grid_df_local = pd.DataFrame(
                         {
@@ -224,7 +278,6 @@ else:
                         },
                         key=f"edit_editor_{rid}",
                     )
-
                     save = st.form_submit_button("Update")
 
                 if save:
@@ -269,14 +322,15 @@ else:
                     )
                     if ok:
                         show_success(msg)
-                        st.session_state["edit_recipe_id"] = None
+                        st.session_state.pg7_edit_recipe_id = None
                     else:
                         st.warning(msg)
 
             if st.button("Clone", key=f"clone_{rid}"):
-                st.session_state["clone_recipe_id"] = rid
-            if st.session_state.get("clone_recipe_id") == rid:
+                st.session_state.pg7_clone_recipe_id = rid
+            if st.session_state.pg7_clone_recipe_id == rid:
                 with st.form(f"clone_form_{rid}"):
+                    st.subheader("Clone Recipe")
                     c_name = st.text_input("New Recipe Name*", key=f"cname_{rid}")
                     c_desc = st.text_area(
                         "Description", value=row["description"] or "", key=f"cdesc_{rid}"
@@ -289,6 +343,6 @@ else:
                     )
                     if ok:
                         show_success(msg)
-                        st.session_state["clone_recipe_id"] = None
+                        st.session_state.pg7_clone_recipe_id = None
                     else:
                         st.warning(msg)

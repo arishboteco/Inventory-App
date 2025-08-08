@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import text
 
 from app.services import recipe_service
@@ -133,5 +134,127 @@ def test_cycle_detection(sqlite_engine):
 
     comps_a.append({"component_kind": "RECIPE", "component_id": rid_b, "quantity": 1})
     ok, msg = recipe_service.update_recipe(sqlite_engine, rid_a, data_a, comps_a)
+    assert not ok
+
+
+def test_record_sale_nested_recipe_with_loss(sqlite_engine):
+    item_id = setup_items(sqlite_engine)
+    with sqlite_engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('PreMix', 1, 'kg')"
+            )
+        )
+        premix_id = conn.execute(
+            text("SELECT recipe_id FROM recipes WHERE name='PreMix'")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit, loss_pct) "
+                "VALUES (:r, 'ITEM', :i, 1, 'kg', 10)"
+            ),
+            {"r": premix_id, "i": item_id},
+        )
+        conn.execute(
+            text(
+                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
+            )
+        )
+        bread_id = conn.execute(
+            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit, loss_pct) "
+                "VALUES (:r, 'RECIPE', :c, 1, 'kg', 20)"
+            ),
+            {"r": bread_id, "c": premix_id},
+        )
+
+    ok, _ = recipe_service.record_sale(sqlite_engine, bread_id, 2, "tester")
+    assert ok
+    with sqlite_engine.connect() as conn:
+        stock = conn.execute(
+            text("SELECT current_stock FROM items WHERE item_id=:i"),
+            {"i": item_id},
+        ).scalar_one()
+        expected = 20 - (2 * 1 / (1 - 0.2) / (1 - 0.1))
+        assert stock == pytest.approx(expected)
+
+
+def test_record_sale_fails_inactive_component(sqlite_engine):
+    with sqlite_engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active) "
+                "VALUES ('Inactive', 'kg', 'c', 's', 'd', 0, 5, 'n', 0)"
+            )
+        )
+        item_id = conn.execute(
+            text("SELECT item_id FROM items WHERE name='Inactive'")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
+            )
+        )
+        recipe_id = conn.execute(
+            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit) "
+                "VALUES (:r, 'ITEM', :i, 1, 'kg')"
+            ),
+            {"r": recipe_id, "i": item_id},
+        )
+
+    ok, msg = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
+    assert not ok
+
+
+def test_record_sale_fails_unit_mismatch(sqlite_engine):
+    item_id = setup_items(sqlite_engine)
+    with sqlite_engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
+            )
+        )
+        recipe_id = conn.execute(
+            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit) "
+                "VALUES (:r, 'ITEM', :i, 1, 'g')"
+            ),
+            {"r": recipe_id, "i": item_id},
+        )
+
+    ok, msg = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
+    assert not ok
+
+
+def test_record_sale_fails_missing_unit(sqlite_engine):
+    item_id = setup_items(sqlite_engine)
+    with sqlite_engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
+            )
+        )
+        recipe_id = conn.execute(
+            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
+        ).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit) "
+                "VALUES (:r, 'ITEM', :i, 1, :u)"
+            ),
+            {"r": recipe_id, "i": item_id, "u": None},
+        )
+
+    ok, msg = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
     assert not ok
 

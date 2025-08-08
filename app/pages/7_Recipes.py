@@ -14,7 +14,7 @@ if _REPO_ROOT not in sys.path:
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
 from app.ui import show_success, show_error, show_warning
-from app.ui.choices import build_item_choice_label, build_recipe_choice_label
+from app.ui.choices import build_component_options
 
 try:
     from app.db.database_utils import connect_db
@@ -67,36 +67,14 @@ sub_recipes_df = recipe_service.list_recipes(
     engine, rtype="SUBRECIPE", include_inactive=False
 )
 
-# Build mapping from display label to metadata for quick lookups
-component_choice_map = {}
-item_labels = []
-for _, row in all_items_df.iterrows():
-    label = build_item_choice_label(row)
-    component_choice_map[label] = {
-        "kind": "ITEM",
-        "id": int(row["item_id"]),
-        "unit": row.get("unit"),
-        "category": row.get("category"),
-        "name": row.get("name"),
-    }
-    item_labels.append(label)
-
-subrecipe_labels = []
-for _, row in sub_recipes_df.iterrows():
-    label = build_recipe_choice_label(row)
-    component_choice_map[label] = {
-        "kind": "RECIPE",
-        "id": int(row["recipe_id"]),
-        "unit": row.get("default_yield_unit"),
-        "category": "Sub-recipe",
-        "name": row.get("name"),
-    }
-    subrecipe_labels.append(label)
-
-component_options = [PLACEHOLDER_SELECT_COMPONENT] + item_labels + subrecipe_labels
+# Build combined options and metadata map
+component_options, component_choice_map = build_component_options(
+    all_items_df.to_dict("records"),
+    sub_recipes_df.to_dict("records"),
+    placeholder=PLACEHOLDER_SELECT_COMPONENT,
+)
 reverse_choice_map = {
-    (meta["kind"], meta["id"]): label
-    for label, meta in component_choice_map.items()
+    (meta["kind"], meta["id"]): label for label, meta in component_choice_map.items()
 }
 
 

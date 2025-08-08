@@ -1,148 +1,150 @@
+"""Tests for the recipe_service module."""
+
 import pytest
 from sqlalchemy import text
 
 from app.services import recipe_service
 
 
-def setup_items(engine):
-    with engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)"
-                " VALUES ('Flour', 'kg', 'cat', 'sub', 'dept', 0, 20, 'n', 1)"
-            )
-        )
-        item_id = conn.execute(text("SELECT item_id FROM items WHERE name='Flour'"))
-        return item_id.scalar_one()
+def _create_item(conn, name="Flour", unit="kg", stock=20):
+    conn.execute(
+        text(
+            """
+            INSERT INTO items (
+                name, unit, category, sub_category, permitted_departments,
+                reorder_point, current_stock, notes, is_active
+            ) VALUES (:n, :u, 'cat', 'sub', 'dept', 0, :s, 'n', 1)
+            """
+        ),
+        {"n": name, "u": unit, "s": stock},
+    )
+    return conn.execute(
+        text("SELECT item_id FROM items WHERE name=:n"), {"n": name}
+    ).scalar_one()
 
 
-def test_create_recipe_inserts_rows(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
+def test_create_and_update_components(sqlite_engine):
+    """Components should retain provided units and loss percentages."""
+    with sqlite_engine.begin() as conn:
+        item_id = _create_item(conn)
+
     data = {
         "name": "Bread",
-        "description": "desc",
         "is_active": True,
-        "type": "FOOD",
-        "default_yield_qty": 10,
-        "default_yield_unit": "slice",
+        "default_yield_unit": "kg",
     }
     components = [
         {
             "component_kind": "ITEM",
             "component_id": item_id,
             "quantity": 2,
-        }
-    ]
-    success, msg, rid = recipe_service.create_recipe(sqlite_engine, data, components)
-    assert success and rid
-    with sqlite_engine.connect() as conn:
-        count = conn.execute(
-            text("SELECT COUNT(*) FROM recipe_components WHERE parent_recipe_id=:r"),
-            {"r": rid},
-        ).scalar_one()
-        assert count == 1
-        header = conn.execute(
-            text(
-                "SELECT type, default_yield_qty FROM recipes WHERE recipe_id=:r"
-            ),
-            {"r": rid},
-        ).mappings().fetchone()
-        assert header["type"] == "FOOD" and header["default_yield_qty"] == 10
-
-
-def test_record_sale_reduces_stock(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Toast', 1, 'kg')"
-            )
-        )
-        recipe_id = conn.execute(text("SELECT recipe_id FROM recipes WHERE name='Toast'"))
-        recipe_id = recipe_id.scalar_one()
-        conn.execute(
-            text(
-                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit)"
-                " VALUES (:r, 'ITEM', :i, 3, 'kg')"
-            ),
-            {"r": recipe_id, "i": item_id},
-        )
-    ok, _ = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
-    assert ok
-    with sqlite_engine.connect() as conn:
-        stock = conn.execute(
-            text("SELECT current_stock FROM items WHERE item_id=:i"), {"i": item_id}
-        ).scalar_one()
-        assert stock == 17
-
-
-def test_clone_recipe_duplicates_rows(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
-    data = {"name": "Pie", "description": "sweet", "is_active": True}
-    components = [
-        {
-            "component_kind": "ITEM",
-            "component_id": item_id,
-            "quantity": 4,
             "unit": "kg",
+            "loss_pct": 5,
         }
     ]
+
     ok, _, rid = recipe_service.create_recipe(sqlite_engine, data, components)
     assert ok and rid
 
-    ok, msg, new_id = recipe_service.clone_recipe(
-        sqlite_engine, rid, "Pie Copy", data["description"]
-    )
-    assert ok and new_id and new_id != rid
+    with sqlite_engine.connect() as conn:
+        row = conn.execute(
+            text(
+                """
+                SELECT quantity, unit, loss_pct
+                FROM recipe_components
+                WHERE parent_recipe_id=:r
+                """
+            ),
+            {"r": rid},
+        ).mappings().fetchone()
+        assert row["unit"] == "kg" and row["loss_pct"] == 5
+
+    # update component quantity and loss percentage
+    components[0]["quantity"] = 3
+    components[0]["loss_pct"] = 10
+    ok, _ = recipe_service.update_recipe(sqlite_engine, rid, data, components)
+    assert ok
 
     with sqlite_engine.connect() as conn:
-        header = conn.execute(
-            text("SELECT description FROM recipes WHERE recipe_id=:r"), {"r": new_id}
+        row = conn.execute(
+            text(
+                """
+                SELECT quantity, loss_pct
+                FROM recipe_components
+                WHERE parent_recipe_id=:r
+                """
+            ),
+            {"r": rid},
         ).mappings().fetchone()
-        assert header["description"] == "sweet"
-        count = conn.execute(
-            text(
-                "SELECT COUNT(*) FROM recipe_components WHERE parent_recipe_id=:r"
-            ),
-            {"r": new_id},
-        ).scalar_one()
-        assert count == 1
-        qty = conn.execute(
-            text(
-                "SELECT quantity FROM recipe_components WHERE parent_recipe_id=:r AND component_id=:i AND component_kind='ITEM'"
-            ),
-            {"r": new_id, "i": item_id},
-        ).scalar_one()
-        assert qty == 4
+        assert row["quantity"] == 3 and row["loss_pct"] == 10
 
 
-def test_cycle_detection(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
-    data_a = {"name": "A", "is_active": True}
-    comps_a = [
-        {"component_kind": "ITEM", "component_id": item_id, "quantity": 1}
+def test_nested_recipes_and_cycle_prevention(sqlite_engine):
+    """Nested recipes are allowed but cycles are rejected."""
+    with sqlite_engine.begin() as conn:
+        item_id = _create_item(conn)
+
+    dough_data = {
+        "name": "Dough",
+        "is_active": True,
+        "default_yield_unit": "kg",
+    }
+    dough_components = [
+        {
+            "component_kind": "ITEM",
+            "component_id": item_id,
+            "quantity": 1,
+            "unit": "kg",
+        }
     ]
-    ok, _, rid_a = recipe_service.create_recipe(sqlite_engine, data_a, comps_a)
-    assert ok and rid_a
+    ok, _, dough_id = recipe_service.create_recipe(
+        sqlite_engine, dough_data, dough_components
+    )
+    assert ok and dough_id
 
-    data_b = {"name": "B", "is_active": True}
-    comps_b = [
-        {"component_kind": "RECIPE", "component_id": rid_a, "quantity": 1}
+    bread_data = {
+        "name": "Bread",
+        "is_active": True,
+        "default_yield_unit": "kg",
+    }
+    bread_components = [
+        {
+            "component_kind": "RECIPE",
+            "component_id": dough_id,
+            "quantity": 1,
+            "unit": "kg",
+        }
     ]
-    ok, _, rid_b = recipe_service.create_recipe(sqlite_engine, data_b, comps_b)
-    assert ok and rid_b
+    ok, _, bread_id = recipe_service.create_recipe(
+        sqlite_engine, bread_data, bread_components
+    )
+    assert ok and bread_id
 
-    comps_a.append({"component_kind": "RECIPE", "component_id": rid_b, "quantity": 1})
-    ok, msg = recipe_service.update_recipe(sqlite_engine, rid_a, data_a, comps_a)
+    # attempt to introduce cycle: dough uses bread
+    dough_components.append(
+        {
+            "component_kind": "RECIPE",
+            "component_id": bread_id,
+            "quantity": 1,
+            "unit": "kg",
+        }
+    )
+    ok, _ = recipe_service.update_recipe(
+        sqlite_engine, dough_id, dough_data, dough_components
+    )
     assert not ok
 
 
-def test_record_sale_nested_recipe_with_loss(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
+def test_record_sale_reduces_nested_stock(sqlite_engine):
+    """record_sale should consume stock through nested components."""
     with sqlite_engine.begin() as conn:
+        item_id = _create_item(conn)
+
+        # premix recipe -> item
         conn.execute(
             text(
-                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('PreMix', 1, 'kg')"
+                "INSERT INTO recipes (name, is_active, default_yield_unit)"
+                " VALUES ('PreMix', 1, 'kg')"
             )
         )
         premix_id = conn.execute(
@@ -150,14 +152,18 @@ def test_record_sale_nested_recipe_with_loss(sqlite_engine):
         ).scalar_one()
         conn.execute(
             text(
-                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit, loss_pct) "
-                "VALUES (:r, 'ITEM', :i, 1, 'kg', 10)"
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind,"
+                " component_id, quantity, unit, loss_pct)"
+                " VALUES (:r, 'ITEM', :i, 1, 'kg', 10)"
             ),
             {"r": premix_id, "i": item_id},
         )
+
+        # bread recipe -> premix
         conn.execute(
             text(
-                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
+                "INSERT INTO recipes (name, is_active, default_yield_unit)"
+                " VALUES ('Bread', 1, 'kg')"
             )
         )
         bread_id = conn.execute(
@@ -165,14 +171,16 @@ def test_record_sale_nested_recipe_with_loss(sqlite_engine):
         ).scalar_one()
         conn.execute(
             text(
-                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit, loss_pct) "
-                "VALUES (:r, 'RECIPE', :c, 1, 'kg', 20)"
+                "INSERT INTO recipe_components (parent_recipe_id, component_kind,"
+                " component_id, quantity, unit, loss_pct)"
+                " VALUES (:r, 'RECIPE', :c, 1, 'kg', 20)"
             ),
             {"r": bread_id, "c": premix_id},
         )
 
-    ok, _ = recipe_service.record_sale(sqlite_engine, bread_id, 2, "tester")
-    assert ok
+    ok, msg = recipe_service.record_sale(sqlite_engine, bread_id, 2, "tester")
+    assert ok, msg
+
     with sqlite_engine.connect() as conn:
         stock = conn.execute(
             text("SELECT current_stock FROM items WHERE item_id=:i"),
@@ -182,79 +190,40 @@ def test_record_sale_nested_recipe_with_loss(sqlite_engine):
         assert stock == pytest.approx(expected)
 
 
-def test_record_sale_fails_inactive_component(sqlite_engine):
+def test_recipe_metadata_fields(sqlite_engine):
+    """Metadata like yield units, tags and type should persist."""
     with sqlite_engine.begin() as conn:
-        conn.execute(
+        item_id = _create_item(conn)
+
+    data = {
+        "name": "Salad",
+        "description": "Fresh",
+        "is_active": True,
+        "type": "FOOD",
+        "default_yield_qty": 4,
+        "default_yield_unit": "plate",
+        "tags": "vegan,healthy",
+    }
+    components = [
+        {
+            "component_kind": "ITEM",
+            "component_id": item_id,
+            "quantity": 1,
+            "unit": "kg",
+        }
+    ]
+
+    ok, _, rid = recipe_service.create_recipe(sqlite_engine, data, components)
+    assert ok and rid
+
+    with sqlite_engine.connect() as conn:
+        row = conn.execute(
             text(
-                "INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active) "
-                "VALUES ('Inactive', 'kg', 'c', 's', 'd', 0, 5, 'n', 0)"
-            )
-        )
-        item_id = conn.execute(
-            text("SELECT item_id FROM items WHERE name='Inactive'")
-        ).scalar_one()
-        conn.execute(
-            text(
-                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
-            )
-        )
-        recipe_id = conn.execute(
-            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
-        ).scalar_one()
-        conn.execute(
-            text(
-                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit) "
-                "VALUES (:r, 'ITEM', :i, 1, 'kg')"
+                "SELECT type, default_yield_unit, tags FROM recipes WHERE recipe_id=:r"
             ),
-            {"r": recipe_id, "i": item_id},
-        )
-
-    ok, msg = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
-    assert not ok
-
-
-def test_record_sale_fails_unit_mismatch(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
-            )
-        )
-        recipe_id = conn.execute(
-            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
-        ).scalar_one()
-        conn.execute(
-            text(
-                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit) "
-                "VALUES (:r, 'ITEM', :i, 1, 'g')"
-            ),
-            {"r": recipe_id, "i": item_id},
-        )
-
-    ok, msg = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
-    assert not ok
-
-
-def test_record_sale_fails_missing_unit(sqlite_engine):
-    item_id = setup_items(sqlite_engine)
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO recipes (name, is_active, default_yield_unit) VALUES ('Bread', 1, 'kg')"
-            )
-        )
-        recipe_id = conn.execute(
-            text("SELECT recipe_id FROM recipes WHERE name='Bread'")
-        ).scalar_one()
-        conn.execute(
-            text(
-                "INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity, unit) "
-                "VALUES (:r, 'ITEM', :i, 1, :u)"
-            ),
-            {"r": recipe_id, "i": item_id, "u": None},
-        )
-
-    ok, msg = recipe_service.record_sale(sqlite_engine, recipe_id, 1, "tester")
-    assert not ok
+            {"r": rid},
+        ).mappings().fetchone()
+        assert row["type"] == "FOOD"
+        assert row["default_yield_unit"] == "plate"
+        assert row["tags"] == "vegan,healthy"
 

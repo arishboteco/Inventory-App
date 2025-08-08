@@ -64,44 +64,50 @@ def sqlite_engine():
             );
             """
         ))
-        conn.execute(text(
-            """
-            CREATE TABLE recipes (
-                recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE,
-                description TEXT,
-                is_active BOOLEAN,
-                type TEXT,
-                default_yield_qty REAL,
-                default_yield_unit TEXT,
-                plating_notes TEXT,
-                tags TEXT,
-                version INTEGER,
-                effective_from TEXT,
-                effective_to TEXT,
-                created_at TEXT,
-                updated_at TEXT
-            );
-            """
-        ))
-        conn.execute(text(
-            """
-            CREATE TABLE recipe_components (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                parent_recipe_id INTEGER,
-                component_kind TEXT,
-                component_id INTEGER,
-                quantity REAL,
-                unit TEXT,
-                loss_pct REAL DEFAULT 0,
-                sort_order INTEGER,
-                notes TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                UNIQUE (parent_recipe_id, component_kind, component_id)
-            );
-            """
-        ))
+        # include extended metadata columns for recipe tests
+        conn.execute(
+            text(
+                """
+                CREATE TABLE recipes (
+                    recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE,
+                    description TEXT,
+                    is_active BOOLEAN,
+                    type TEXT,
+                    default_yield_qty REAL,
+                    default_yield_unit TEXT,
+                    plating_notes TEXT,
+                    tags TEXT,
+                    version INTEGER,
+                    effective_from TEXT,
+                    effective_to TEXT,
+                    created_at TEXT,
+                    updated_at TEXT
+                );
+                """
+            )
+        )
+        # store component units and loss percentages
+        conn.execute(
+            text(
+                """
+                CREATE TABLE recipe_components (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    parent_recipe_id INTEGER,
+                    component_kind TEXT,
+                    component_id INTEGER,
+                    quantity REAL,
+                    unit TEXT,
+                    loss_pct REAL DEFAULT 0,
+                    sort_order INTEGER,
+                    notes TEXT,
+                    created_at TEXT,
+                    updated_at TEXT,
+                    UNIQUE (parent_recipe_id, component_kind, component_id)
+                );
+                """
+            )
+        )
         conn.execute(text(
             """
             CREATE TABLE sales_transactions (

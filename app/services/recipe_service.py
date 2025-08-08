@@ -93,12 +93,31 @@ def list_recipes(engine: Engine, include_inactive: bool = False) -> pd.DataFrame
 
 
 def get_recipe_components(engine: Engine, recipe_id: int) -> pd.DataFrame:
-    """Return component breakdown (items or sub-recipes) for a recipe."""
+    """Return component breakdown (items or sub-recipes) for a recipe.
+
+    Ensures that expected columns are always present even when the query
+    returns no rows or the engine is unavailable.
+    """
+
+    columns = [
+        "id",
+        "parent_recipe_id",
+        "component_kind",
+        "component_id",
+        "component_name",
+        "quantity",
+        "unit",
+        "loss_pct",
+        "sort_order",
+        "notes",
+    ]
+
     if engine is None:
         logger.error(
             "ERROR [recipe_service.get_recipe_components]: Database engine not available."
         )
-        return pd.DataFrame()
+        return pd.DataFrame(columns=columns)
+
     query = text(
         """
         SELECT rc.id, rc.parent_recipe_id, rc.component_kind, rc.component_id,
@@ -111,7 +130,9 @@ def get_recipe_components(engine: Engine, recipe_id: int) -> pd.DataFrame:
         ORDER BY rc.sort_order;
         """
     )
-    return fetch_data(engine, query.text, {"rid": recipe_id})
+
+    df = fetch_data(engine, query.text, {"rid": recipe_id})
+    return df.reindex(columns=columns)
 
 
 def create_recipe(

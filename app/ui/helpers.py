@@ -99,6 +99,14 @@ def show_success(msg: str) -> None:
         st.success(msg)
 
 
+def show_warning(msg: str) -> None:
+    """Display a warning message using toast if available."""
+    if hasattr(st, "toast"):
+        st.toast(msg, icon="⚠️")
+    else:
+        st.warning(msg)
+
+
 def show_error(msg: str) -> None:
     """Display an error message using toast if available."""
     if hasattr(st, "toast"):

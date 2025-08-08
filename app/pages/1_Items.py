@@ -18,6 +18,7 @@ from app.ui import (
     render_search_toggle,
     show_success,
     show_error,
+    show_warning,
 )
 
 try:
@@ -148,10 +149,10 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
         ):
             is_valid_add = True
             if not name_add_widget.strip():
-                st.warning("Item Name is required.")
+                show_warning("Item Name is required.")
                 is_valid_add = False
             if not unit_add_widget.strip():
-                st.warning("Unit of Measure (UoM) is required.")
+                show_warning("Unit of Measure (UoM) is required.")
                 is_valid_add = False
 
             if is_valid_add:
@@ -507,10 +508,10 @@ else:
                     ):
                         is_valid_edit_form = True
                         if not e_name.strip():
-                            st.warning("Item Name is required.")
+                            show_warning("Item Name is required.")
                             is_valid_edit_form = False
                         if not e_unit.strip():
-                            st.warning("Unit of Measure (UoM) is required.")
+                            show_warning("Unit of Measure (UoM) is required.")
                             is_valid_edit_form = False
 
                         if is_valid_edit_form:

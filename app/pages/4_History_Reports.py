@@ -27,7 +27,7 @@ try:
     )
     from app.ui.theme import load_css, render_sidebar_logo
     from app.ui.navigation import render_sidebar_nav
-    from app.ui import show_success, show_error
+    from app.ui import show_success, show_error, show_warning
 except ImportError as e:
     show_error(f"Import error in 4_History_Reports.py: {e}.")
     st.stop()
@@ -221,7 +221,7 @@ with st.expander("More Filters (User, MRN)"):
         )  # .strip() will be applied when using the value
 
 if st.session_state.pg4_start_date_val > st.session_state.pg4_end_date_val:
-    st.warning("Start date cannot be after end date. Please adjust the dates.")
+    show_warning("Start date cannot be after end date. Please adjust the dates.")
 
 st.divider()
 st.subheader("📋 Transaction Records")

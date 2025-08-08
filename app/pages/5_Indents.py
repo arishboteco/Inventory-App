@@ -43,7 +43,7 @@ try:
     )
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
     from app.ui.navigation import render_sidebar_nav
-    from app.ui import show_success, show_error
+    from app.ui import show_success, show_error, show_warning
     from app.ui.choices import build_item_choice_label
 except ImportError as e:
     show_error(
@@ -1328,7 +1328,7 @@ if st.session_state.pg5_active_indent_section == "create":
                     and actual_qty_row_disp_pg5 > 0
                 ):
                     if actual_qty_row_disp_pg5 > median_qty_row_disp_pg5 * 3:
-                        st.warning(f"High! (Avg:~{median_qty_row_disp_pg5:.1f})", icon="❗")
+                        show_warning(f"High! (Avg:~{median_qty_row_disp_pg5:.1f})")
                     elif actual_qty_row_disp_pg5 < median_qty_row_disp_pg5 / 3:
                         st.info(f"Low (Avg:~{median_qty_row_disp_pg5:.1f})", icon="ℹ️")
 

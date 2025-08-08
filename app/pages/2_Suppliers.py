@@ -18,6 +18,7 @@ from app.ui import (
     render_search_toggle,
     show_success,
     show_error,
+    show_warning,
 )
 
 try:
@@ -119,7 +120,7 @@ with st.expander("➕ Add New Supplier Record", expanded=False):
 
         if st.form_submit_button("💾 Save Supplier Information"):
             if not s_name_add_pg2.strip():  # Check for empty stripped name
-                st.warning("Supplier Name is required.")
+                show_warning("Supplier Name is required.")
             else:
                 supplier_data_add_pg2 = {
                     "name": s_name_add_pg2.strip(),
@@ -385,7 +386,7 @@ else:
 
                     if st.form_submit_button("💾 Update Supplier Details"):
                         if not es_name_pg2.strip():
-                            st.warning("Supplier Name is required.")
+                            show_warning("Supplier Name is required.")
                         else:
                             update_s_data_pg2 = {
                                 "name": es_name_pg2.strip(),

@@ -18,15 +18,7 @@ ALTER TABLE recipes
     ADD COLUMN IF NOT EXISTS effective_from TIMESTAMP,
     ADD COLUMN IF NOT EXISTS effective_to TIMESTAMP;
 
-CREATE TABLE IF NOT EXISTS recipe_items (
-    recipe_item_id SERIAL PRIMARY KEY,
-    recipe_id INTEGER NOT NULL REFERENCES recipes(recipe_id) ON DELETE CASCADE,
-    item_id INTEGER NOT NULL REFERENCES items(item_id),
-    quantity REAL NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE (recipe_id, item_id)
-);
+-- Table recipe_items has been migrated into recipe_components and is no longer created.
 
 -- Table to store components for recipes (items or sub-recipes)
 CREATE TABLE IF NOT EXISTS recipe_components (

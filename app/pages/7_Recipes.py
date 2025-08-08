@@ -49,6 +49,7 @@ if not engine:
     show_error("Database connection failed.")
     st.stop()
 
+
 # helper to display nested components
 def render_component_tree(recipe_id: int, indent: int = 0) -> None:
     comps = recipe_service.get_recipe_components(engine, recipe_id)
@@ -57,6 +58,7 @@ def render_component_tree(recipe_id: int, indent: int = 0) -> None:
         st.write(label)
         if comp["component_kind"] == "RECIPE":
             render_component_tree(int(comp["component_id"]), indent + 4)
+
 
 # --- Add Recipe ---
 all_items_df = item_service.get_all_items_with_stock(engine)
@@ -95,6 +97,19 @@ reverse_choice_map = {
     (meta["kind"], meta["id"]): label
     for label, meta in component_choice_map.items()
 }
+
+
+def sync_component_meta(editor_key: str) -> None:
+    df = st.session_state.get(editor_key)
+    if df is None or "component" not in df:
+        return
+    for idx, comp in df["component"].items():
+        meta = component_choice_map.get(comp)
+        if meta:
+            df.at[idx, "unit"] = meta.get("unit")
+            df.at[idx, "category"] = meta.get("category")
+    st.session_state[editor_key] = df
+
 
 with st.expander("➕ Add New Recipe", expanded=False):
     with st.form("add_recipe_form"):
@@ -151,7 +166,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "notes": pd.Series(dtype="str"),
             }
         )
-        edited_df = st.data_editor(
+        st.data_editor(
             comp_df,
             num_rows="dynamic",
             hide_index=True,
@@ -172,7 +187,10 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "notes": st.column_config.TextColumn("Notes"),
             },
             key="add_recipe_editor",
+            on_change=lambda: sync_component_meta("add_recipe_editor"),
         )
+        sync_component_meta("add_recipe_editor")
+        edited_df = st.session_state["add_recipe_editor"]
 
         submit = st.form_submit_button("Save Recipe")
 
@@ -289,7 +307,8 @@ else:
                             and component_choice_map[label]["id"] == rid
                         )
                     ]
-                    edited_local = st.data_editor(
+                    key_edit = f"edit_editor_{rid}"
+                    st.data_editor(
                         grid_df_local,
                         num_rows="dynamic",
                         hide_index=True,
@@ -309,8 +328,11 @@ else:
                             "sort_order": st.column_config.NumberColumn("Sort"),
                             "notes": st.column_config.TextColumn("Notes"),
                         },
-                        key=f"edit_editor_{rid}",
+                        key=key_edit,
+                        on_change=lambda k=key_edit: sync_component_meta(k),
                     )
+                    sync_component_meta(key_edit)
+                    edited_local = st.session_state[key_edit]
                     save = st.form_submit_button("Update")
 
                 if save:

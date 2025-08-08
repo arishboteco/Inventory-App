@@ -65,18 +65,22 @@ with st.expander("➕ Add New Recipe", expanded=False):
         submit = st.form_submit_button("Save Recipe")
 
     if submit:
-        ingredients = [
-            {"item_id": int(row["item_id"]), "quantity": float(row["Quantity"])}
+        components = [
+            {
+                "component_kind": "ITEM",
+                "component_id": int(row["item_id"]),
+                "quantity": float(row["Quantity"]),
+            }
             for _, row in edited_df.iterrows()
             if row["Quantity"] > 0
         ]
-        if not name.strip() or not ingredients:
+        if not name.strip() or not components:
             st.warning("Name and at least one ingredient required.")
         else:
             ok, msg, _ = recipe_service.create_recipe(
                 engine,
                 {"name": name.strip(), "description": desc.strip()},
-                ingredients,
+                components,
             )
             if ok:
                 show_success(msg)
@@ -93,7 +97,7 @@ else:
         rid = int(row["recipe_id"])
         with st.expander(row["name"], expanded=False):
             st.write(row["description"] or "")
-            items = recipe_service.get_recipe_items(engine, rid)
+            items = recipe_service.get_recipe_components(engine, rid)
             st.dataframe(items[["item_name", "quantity"]], use_container_width=True)
             if st.button("Edit", key=f"edit_{rid}"):
                 st.session_state["edit_recipe_id"] = rid

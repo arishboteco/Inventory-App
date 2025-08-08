@@ -1,5 +1,6 @@
 """Service layer for recipe management."""
-from typing import Dict, List, Tuple, Any, Optional
+
+from typing import Dict, List, Tuple, Any, Optional, Set
 import traceback
 import pandas as pd
 from sqlalchemy import text
@@ -15,37 +16,99 @@ logger = get_logger(__name__)
 
 
 # ─────────────────────────────────────────────────────────
+# Helper functions
+# ─────────────────────────────────────────────────────────
+
+
+def _strip_or_none(val: Any) -> Optional[str]:
+    return val.strip() if isinstance(val, str) and val.strip() else None
+
+
+def _component_unit(
+    conn: Connection, kind: str, cid: int, unit: Optional[str]
+) -> Optional[str]:
+    if kind == "ITEM":
+        db_unit = conn.execute(
+            text("SELECT unit FROM items WHERE item_id=:i"), {"i": cid}
+        ).scalar_one_or_none()
+        if not db_unit:
+            raise ValueError(f"Item {cid} not found")
+        if unit is None:
+            return db_unit
+        if unit != db_unit:
+            raise ValueError("Unit mismatch for item component")
+        return unit
+    elif kind == "RECIPE":
+        db_unit = conn.execute(
+            text("SELECT default_yield_unit FROM recipes WHERE recipe_id=:r"),
+            {"r": cid},
+        ).scalar_one_or_none()
+        return unit if unit is not None else db_unit
+    else:
+        raise ValueError("Invalid component_kind")
+
+
+def _creates_cycle(conn: Connection, parent_id: int, child_id: int) -> bool:
+    if parent_id == child_id:
+        return True
+    query = text(
+        """
+        WITH RECURSIVE sub(id) AS (
+            SELECT component_id FROM recipe_components
+            WHERE parent_recipe_id=:c AND component_kind='RECIPE'
+            UNION
+            SELECT rc.component_id
+            FROM recipe_components rc
+            JOIN sub s ON rc.parent_recipe_id = s.id
+            WHERE rc.component_kind='RECIPE'
+        )
+        SELECT 1 FROM sub WHERE id=:p LIMIT 1;
+        """
+    )
+    res = conn.execute(query, {"c": child_id, "p": parent_id}).scalar_one_or_none()
+    return res is not None
+
+
+# ─────────────────────────────────────────────────────────
 # RECIPE CRUD FUNCTIONS
 # ─────────────────────────────────────────────────────────
 
+
 def list_recipes(engine: Engine, include_inactive: bool = False) -> pd.DataFrame:
-    """Return all recipes."""
+    """Return all recipes with metadata."""
     if engine is None:
         logger.error(
             "ERROR [recipe_service.list_recipes]: Database engine not available."
         )
         return pd.DataFrame()
-    query = "SELECT recipe_id, name, description, is_active FROM recipes"
+    query = (
+        "SELECT recipe_id, name, description, is_active, type, "
+        "default_yield_qty, default_yield_unit, plating_notes, tags, version, "
+        "effective_from, effective_to FROM recipes"
+    )
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
     return fetch_data(engine, query)
 
 
-def get_recipe_items(engine: Engine, recipe_id: int) -> pd.DataFrame:
-    """Return ingredient breakdown for a recipe."""
+def get_recipe_components(engine: Engine, recipe_id: int) -> pd.DataFrame:
+    """Return component breakdown (items or sub-recipes) for a recipe."""
     if engine is None:
         logger.error(
-            "ERROR [recipe_service.get_recipe_items]: Database engine not available."
+            "ERROR [recipe_service.get_recipe_components]: Database engine not available."
         )
         return pd.DataFrame()
     query = text(
         """
-        SELECT ri.recipe_item_id, ri.recipe_id, ri.item_id, i.name AS item_name, ri.quantity
-        FROM recipe_items ri
-        JOIN items i ON ri.item_id = i.item_id
-        WHERE ri.recipe_id = :rid
-        ORDER BY i.name;
+        SELECT rc.id, rc.parent_recipe_id, rc.component_kind, rc.component_id,
+               COALESCE(i.name, r.name) AS component_name,
+               rc.quantity, rc.unit, rc.loss_pct, rc.sort_order, rc.notes
+        FROM recipe_components rc
+        LEFT JOIN items i ON rc.component_kind='ITEM' AND rc.component_id=i.item_id
+        LEFT JOIN recipes r ON rc.component_kind='RECIPE' AND rc.component_id=r.recipe_id
+        WHERE rc.parent_recipe_id=:rid
+        ORDER BY rc.sort_order;
         """
     )
     return fetch_data(engine, query.text, {"rid": recipe_id})
@@ -54,45 +117,92 @@ def get_recipe_items(engine: Engine, recipe_id: int) -> pd.DataFrame:
 def create_recipe(
     engine: Engine,
     recipe_data: Dict[str, Any],
-    ingredients: List[Dict[str, Any]],
+    components: List[Dict[str, Any]],
 ) -> Tuple[bool, str, Optional[int]]:
-    """Create a recipe and its ingredient rows."""
+    """Create a recipe and its component rows."""
     if engine is None:
         return False, "Database engine not available.", None
     if not recipe_data.get("name") or not str(recipe_data.get("name")).strip():
         return False, "Recipe name is required.", None
-    if not ingredients:
-        return False, "At least one ingredient is required.", None
-    clean_name = recipe_data["name"].strip()
-    desc = recipe_data.get("description")
-    desc_clean = desc.strip() if isinstance(desc, str) and desc.strip() else None
-    is_active = bool(recipe_data.get("is_active", True))
+    if not components:
+        return False, "At least one component is required.", None
+
+    clean = {
+        "name": recipe_data["name"].strip(),
+        "description": _strip_or_none(recipe_data.get("description")),
+        "is_active": bool(recipe_data.get("is_active", True)),
+        "type": _strip_or_none(recipe_data.get("type")),
+        "default_yield_qty": recipe_data.get("default_yield_qty"),
+        "default_yield_unit": _strip_or_none(recipe_data.get("default_yield_unit")),
+        "plating_notes": _strip_or_none(recipe_data.get("plating_notes")),
+        "tags": recipe_data.get("tags"),
+        "version": recipe_data.get("version"),
+        "effective_from": recipe_data.get("effective_from"),
+        "effective_to": recipe_data.get("effective_to"),
+    }
+
     insert_recipe_q = text(
-        """INSERT INTO recipes (name, description, is_active) VALUES (:n, :d, :a) RETURNING recipe_id;"""
+        """
+        INSERT INTO recipes (name, description, is_active, type, default_yield_qty, default_yield_unit,
+                             plating_notes, tags, version, effective_from, effective_to)
+        VALUES (:name, :description, :is_active, :type, :default_yield_qty, :default_yield_unit,
+                :plating_notes, :tags, :version, :effective_from, :effective_to)
+        RETURNING recipe_id;
+        """
     )
-    insert_item_q = text(
-        "INSERT INTO recipe_items (recipe_id, item_id, quantity) VALUES (:r, :i, :q);"
+    insert_comp_q = text(
+        """
+        INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity,
+                                      unit, loss_pct, sort_order, notes)
+        VALUES (:parent_recipe_id, :component_kind, :component_id, :quantity,
+                :unit, :loss_pct, :sort_order, :notes);
+        """
     )
+
     try:
         with engine.connect() as conn:
             with conn.begin():
-                rid = conn.execute(insert_recipe_q, {"n": clean_name, "d": desc_clean, "a": is_active}).scalar_one_or_none()
+                rid = conn.execute(insert_recipe_q, clean).scalar_one_or_none()
                 if not rid:
                     raise Exception("Failed to insert recipe header.")
-                for ing in ingredients:
-                    iid = ing.get("item_id")
-                    qty = ing.get("quantity", 0)
-                    if not iid or qty is None or qty <= 0:
-                        raise ValueError("Invalid ingredient data")
-                    conn.execute(insert_item_q, {"r": rid, "i": iid, "q": float(qty)})
-        return True, f"Recipe '{clean_name}' added.", rid
+                for idx, comp in enumerate(components, start=1):
+                    kind = comp.get("component_kind")
+                    cid = comp.get("component_id")
+                    qty = comp.get("quantity")
+                    if kind not in {"ITEM", "RECIPE"} or not cid or qty is None or qty <= 0:
+                        raise ValueError("Invalid component data")
+                    unit = _strip_or_none(comp.get("unit"))
+                    unit = _component_unit(conn, kind, cid, unit)
+                    loss_pct = float(comp.get("loss_pct", 0) or 0)
+                    sort_order = comp.get("sort_order", idx)
+                    notes = _strip_or_none(comp.get("notes"))
+                    if kind == "RECIPE" and _creates_cycle(conn, rid, cid):
+                        raise ValueError("Circular recipe reference detected")
+                    conn.execute(
+                        insert_comp_q,
+                        {
+                            "parent_recipe_id": rid,
+                            "component_kind": kind,
+                            "component_id": cid,
+                            "quantity": float(qty),
+                            "unit": unit,
+                            "loss_pct": loss_pct,
+                            "sort_order": sort_order,
+                            "notes": notes,
+                        },
+                    )
+        return True, f"Recipe '{clean['name']}' added.", rid
     except IntegrityError as ie:
         logger.error(
             "ERROR [recipe_service.create_recipe]: Integrity error: %s\n%s",
             ie,
             traceback.format_exc(),
         )
-        msg = "Recipe with this name already exists." if "unique" in str(ie).lower() else "Integrity error."
+        msg = (
+            "Recipe with this name already exists."
+            if "unique" in str(ie).lower()
+            else "Integrity error."
+        )
         return False, msg, None
     except (SQLAlchemyError, Exception) as e:
         logger.error(
@@ -107,49 +217,106 @@ def update_recipe(
     engine: Engine,
     recipe_id: int,
     recipe_data: Dict[str, Any],
-    ingredients: List[Dict[str, Any]],
+    components: List[Dict[str, Any]],
 ) -> Tuple[bool, str]:
-    """Update recipe details and ingredients."""
+    """Update recipe details and components."""
     if engine is None:
         return False, "Database engine not available."
     if not recipe_id:
         return False, "Recipe ID required."
     if not recipe_data.get("name") or not str(recipe_data.get("name")).strip():
         return False, "Recipe name is required."
-    if not ingredients:
-        return False, "At least one ingredient is required."
-    clean_name = recipe_data["name"].strip()
-    desc = recipe_data.get("description")
-    desc_clean = desc.strip() if isinstance(desc, str) and desc.strip() else None
-    is_active = bool(recipe_data.get("is_active", True))
+    if not components:
+        return False, "At least one component is required."
+
+    clean = {
+        "name": recipe_data["name"].strip(),
+        "description": _strip_or_none(recipe_data.get("description")),
+        "is_active": bool(recipe_data.get("is_active", True)),
+        "type": _strip_or_none(recipe_data.get("type")),
+        "default_yield_qty": recipe_data.get("default_yield_qty"),
+        "default_yield_unit": _strip_or_none(recipe_data.get("default_yield_unit")),
+        "plating_notes": _strip_or_none(recipe_data.get("plating_notes")),
+        "tags": recipe_data.get("tags"),
+        "version": recipe_data.get("version"),
+        "effective_from": recipe_data.get("effective_from"),
+        "effective_to": recipe_data.get("effective_to"),
+        "rid": recipe_id,
+    }
+
     upd_q = text(
-        "UPDATE recipes SET name=:n, description=:d, is_active=:a, updated_at=NOW() WHERE recipe_id=:rid;"
+        """
+        UPDATE recipes
+        SET name=:name,
+            description=:description,
+            is_active=:is_active,
+            type=:type,
+            default_yield_qty=:default_yield_qty,
+            default_yield_unit=:default_yield_unit,
+            plating_notes=:plating_notes,
+            tags=:tags,
+            version=:version,
+            effective_from=:effective_from,
+            effective_to=:effective_to,
+            updated_at=NOW()
+        WHERE recipe_id=:rid;
+        """
     )
-    del_items_q = text("DELETE FROM recipe_items WHERE recipe_id=:rid;")
-    ins_item_q = text(
-        "INSERT INTO recipe_items (recipe_id, item_id, quantity) VALUES (:r, :i, :q);"
+    del_q = text("DELETE FROM recipe_components WHERE parent_recipe_id=:rid;")
+    ins_q = text(
+        """
+        INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id, quantity,
+                                      unit, loss_pct, sort_order, notes)
+        VALUES (:parent_recipe_id, :component_kind, :component_id, :quantity,
+                :unit, :loss_pct, :sort_order, :notes);
+        """
     )
+
     try:
         with engine.connect() as conn:
             with conn.begin():
-                res = conn.execute(upd_q, {"n": clean_name, "d": desc_clean, "a": is_active, "rid": recipe_id})
+                res = conn.execute(upd_q, clean)
                 if res.rowcount == 0:
                     return False, "Recipe not found."
-                conn.execute(del_items_q, {"rid": recipe_id})
-                for ing in ingredients:
-                    iid = ing.get("item_id")
-                    qty = ing.get("quantity", 0)
-                    if not iid or qty is None or qty <= 0:
-                        raise ValueError("Invalid ingredient data")
-                    conn.execute(ins_item_q, {"r": recipe_id, "i": iid, "q": float(qty)})
-        return True, f"Recipe '{clean_name}' updated."
+                conn.execute(del_q, {"rid": recipe_id})
+                for idx, comp in enumerate(components, start=1):
+                    kind = comp.get("component_kind")
+                    cid = comp.get("component_id")
+                    qty = comp.get("quantity")
+                    if kind not in {"ITEM", "RECIPE"} or not cid or qty is None or qty <= 0:
+                        raise ValueError("Invalid component data")
+                    unit = _strip_or_none(comp.get("unit"))
+                    unit = _component_unit(conn, kind, cid, unit)
+                    loss_pct = float(comp.get("loss_pct", 0) or 0)
+                    sort_order = comp.get("sort_order", idx)
+                    notes = _strip_or_none(comp.get("notes"))
+                    if kind == "RECIPE" and _creates_cycle(conn, recipe_id, cid):
+                        raise ValueError("Circular recipe reference detected")
+                    conn.execute(
+                        ins_q,
+                        {
+                            "parent_recipe_id": recipe_id,
+                            "component_kind": kind,
+                            "component_id": cid,
+                            "quantity": float(qty),
+                            "unit": unit,
+                            "loss_pct": loss_pct,
+                            "sort_order": sort_order,
+                            "notes": notes,
+                        },
+                    )
+        return True, f"Recipe '{clean['name']}' updated."
     except IntegrityError as ie:
         logger.error(
             "ERROR [recipe_service.update_recipe]: Integrity error: %s\n%s",
             ie,
             traceback.format_exc(),
         )
-        msg = "Duplicate recipe name." if "unique" in str(ie).lower() else "Integrity error."
+        msg = (
+            "Duplicate recipe name."
+            if "unique" in str(ie).lower()
+            else "Integrity error."
+        )
         return False, msg
     except (SQLAlchemyError, Exception) as e:
         logger.error(
@@ -168,7 +335,6 @@ def delete_recipe(engine: Engine, recipe_id: int) -> Tuple[bool, str]:
         return False, "Recipe ID required."
     del_q = text("DELETE FROM recipes WHERE recipe_id=:rid;")
     try:
-        success, _ = fetch_data(engine, "SELECT 1").empty, None
         with engine.begin() as conn:
             res = conn.execute(del_q, {"rid": recipe_id})
             if res.rowcount == 0:
@@ -187,13 +353,14 @@ def delete_recipe(engine: Engine, recipe_id: int) -> Tuple[bool, str]:
 # CLONE RECIPE
 # ─────────────────────────────────────────────────────────
 
+
 def clone_recipe(
     engine: Engine,
     original_id: int,
     new_name: str,
     new_desc: Optional[str] = None,
 ) -> Tuple[bool, str, Optional[int]]:
-    """Duplicate a recipe and its ingredient rows."""
+    """Duplicate a recipe and its component rows."""
 
     if engine is None:
         return False, "Database engine not available.", None
@@ -208,7 +375,9 @@ def clone_recipe(
         with engine.begin() as conn:
             header = conn.execute(
                 text(
-                    "SELECT description, is_active FROM recipes WHERE recipe_id=:rid"
+                    "SELECT description, is_active, type, default_yield_qty, default_yield_unit, "
+                    "plating_notes, tags, version, effective_from, effective_to "
+                    "FROM recipes WHERE recipe_id=:rid"
                 ),
                 {"rid": original_id},
             ).mappings().fetchone()
@@ -221,33 +390,60 @@ def clone_recipe(
                 if isinstance(new_desc, str) and new_desc.strip()
                 else header["description"]
             )
-            is_active = header["is_active"]
-
-            items = conn.execute(
-                text(
-                    "SELECT item_id, quantity FROM recipe_items WHERE recipe_id=:rid"
-                ),
-                {"rid": original_id},
-            ).mappings().all()
-
-            if not items:
-                return False, "Original recipe has no ingredients.", None
 
             new_id = conn.execute(
                 text(
-                    "INSERT INTO recipes (name, description, is_active) VALUES (:n, :d, :a) RETURNING recipe_id;"
+                    """
+                    INSERT INTO recipes (name, description, is_active, type, default_yield_qty, default_yield_unit,
+                                         plating_notes, tags, version, effective_from, effective_to)
+                    VALUES (:n, :d, :a, :t, :dyq, :dyu, :pn, :tags, :ver, :ef, :et)
+                    RETURNING recipe_id;
+                    """
                 ),
-                {"n": clean_name, "d": desc, "a": is_active},
+                {
+                    "n": clean_name,
+                    "d": desc,
+                    "a": header["is_active"],
+                    "t": header["type"],
+                    "dyq": header["default_yield_qty"],
+                    "dyu": header["default_yield_unit"],
+                    "pn": header["plating_notes"],
+                    "tags": header["tags"],
+                    "ver": header["version"],
+                    "ef": header["effective_from"],
+                    "et": header["effective_to"],
+                },
             ).scalar_one_or_none()
             if not new_id:
                 raise Exception("Failed to insert cloned recipe header.")
 
-            for row in items:
+            comps = conn.execute(
+                text(
+                    "SELECT component_kind, component_id, quantity, unit, loss_pct, sort_order, notes "
+                    "FROM recipe_components WHERE parent_recipe_id=:rid ORDER BY sort_order"
+                ),
+                {"rid": original_id},
+            ).mappings().all()
+
+            for row in comps:
                 conn.execute(
                     text(
-                        "INSERT INTO recipe_items (recipe_id, item_id, quantity) VALUES (:r, :i, :q);"
+                        """
+                        INSERT INTO recipe_components (parent_recipe_id, component_kind, component_id,
+                                                       quantity, unit, loss_pct, sort_order, notes)
+                        VALUES (:pr, :ck, :cid, :q, :u, :l, :s, :n);
+                        """
                     ),
-                    {"r": new_id, "i": row["item_id"], "q": row["quantity"]},
+                    {
+                        "pr": new_id,
+                        "ck": row["component_kind"],
+                        "cid": row["component_id"],
+                        "q": row["quantity"],
+                        "u": row["unit"],
+                        "l": row["loss_pct"],
+                        "s": row["sort_order"],
+                        "n": row["notes"],
+                    },
                 )
 
         return True, f"Recipe '{clean_name}' cloned.", new_id
@@ -276,6 +472,33 @@ def clone_recipe(
 # SALES RECORDING USING RECIPES
 # ─────────────────────────────────────────────────────────
 
+
+def _accumulate_items(
+    conn: Connection,
+    recipe_id: int,
+    multiplier: float,
+    totals: Dict[int, float],
+    visited: Set[int],
+) -> None:
+    if recipe_id in visited:
+        raise ValueError("Circular reference detected during expansion")
+    visited.add(recipe_id)
+    rows = conn.execute(
+        text(
+            "SELECT component_kind, component_id, quantity, loss_pct "
+            "FROM recipe_components WHERE parent_recipe_id=:r"
+        ),
+        {"r": recipe_id},
+    ).mappings().all()
+    for row in rows:
+        qty = multiplier * float(row["quantity"]) * (1 + float(row["loss_pct"] or 0) / 100.0)
+        if row["component_kind"] == "ITEM":
+            totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
+        else:
+            _accumulate_items(conn, row["component_id"], qty, totals, visited)
+    visited.remove(recipe_id)
+
+
 def record_sale(
     engine: Engine,
     recipe_id: int,
@@ -289,22 +512,23 @@ def record_sale(
     if not recipe_id or quantity <= 0:
         return False, "Invalid recipe or quantity."
     user_id_clean = user_id.strip() if user_id else "System"
-    notes_clean = notes.strip() if isinstance(notes, str) and notes.strip() else None
+    notes_clean = _strip_or_none(notes)
     sale_ins_q = text(
         "INSERT INTO sales_transactions (recipe_id, quantity, user_id, notes) VALUES (:r, :q, :u, :n);"
     )
-    items_df = get_recipe_items(engine, recipe_id)
-    if items_df.empty:
-        return False, "No ingredients defined for recipe."
     try:
         with engine.connect() as conn:
             with conn.begin():
-                conn.execute(sale_ins_q, {"r": recipe_id, "q": quantity, "u": user_id_clean, "n": notes_clean})
-                for _, row in items_df.iterrows():
-                    total_qty = float(row["quantity"]) * quantity
+                conn.execute(
+                    sale_ins_q,
+                    {"r": recipe_id, "q": quantity, "u": user_id_clean, "n": notes_clean},
+                )
+                totals: Dict[int, float] = {}
+                _accumulate_items(conn, recipe_id, quantity, totals, set())
+                for iid, qty in totals.items():
                     ok = stock_service.record_stock_transaction(
-                        item_id=int(row["item_id"]),
-                        quantity_change=-total_qty,
+                        item_id=iid,
+                        quantity_change=-qty,
                         transaction_type=TX_SALE,
                         user_id=user_id_clean,
                         related_mrn=None,
@@ -314,8 +538,7 @@ def record_sale(
                         db_connection_param=conn,
                     )
                     if not ok:
-                        raise Exception(
-                            f"Failed stock tx for item {row['item_id']} during sale.")
+                        raise Exception(f"Failed stock tx for item {iid} during sale.")
         return True, "Sale recorded."
     except (SQLAlchemyError, Exception) as e:
         logger.error(
@@ -324,3 +547,4 @@ def record_sale(
             traceback.format_exc(),
         )
         return False, "A database error occurred during sale recording."
+

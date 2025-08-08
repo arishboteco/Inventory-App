@@ -111,6 +111,8 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 kind, cid, _ = comp.split(":", 2)
             except ValueError:
                 continue
+            sort_val = row.get("sort_order")
+            sort_order = int(sort_val) if pd.notna(sort_val) else idx + 1
             components.append(
                 {
                     "component_kind": kind,
@@ -118,7 +120,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
                     "quantity": float(qty),
                     "unit": row.get("unit") or None,
                     "loss_pct": float(row.get("loss_pct") or 0),
-                    "sort_order": int(row.get("sort_order") or idx + 1),
+                    "sort_order": sort_order,
                     "notes": row.get("notes") or None,
                 }
             )
@@ -236,6 +238,8 @@ else:
                             kind, cid, _ = comp.split(":", 2)
                         except ValueError:
                             continue
+                        sort_val = rowc.get("sort_order")
+                        sort_order = int(sort_val) if pd.notna(sort_val) else idx + 1
                         components.append(
                             {
                                 "component_kind": kind,
@@ -243,7 +247,7 @@ else:
                                 "quantity": float(qty),
                                 "unit": rowc.get("unit") or None,
                                 "loss_pct": float(rowc.get("loss_pct") or 0),
-                                "sort_order": int(rowc.get("sort_order") or idx + 1),
+                                "sort_order": sort_order,
                                 "notes": rowc.get("notes") or None,
                             }
                         )

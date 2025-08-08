@@ -44,6 +44,7 @@ try:
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
     from app.ui.navigation import render_sidebar_nav
     from app.ui import show_success, show_error
+    from app.ui.choices import build_item_choice_label
 except ImportError as e:
     show_error(
         "Import error in 5_Indents.py: "
@@ -1202,7 +1203,7 @@ if st.session_state.pg5_active_indent_section == "create":
                     else:
                         item_options_dict_pg5.update(
                             {
-                                f"{r['name']} ({r['unit']})": r["item_id"]
+                                build_item_choice_label(r): r["item_id"]
                                 for _, r in available_items_df_pg5.sort_values("name").iterrows()
                             }
                         )

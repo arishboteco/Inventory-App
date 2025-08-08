@@ -10,6 +10,10 @@ Inventory-App is a Streamlit application for managing restaurant inventory. It h
 - Dashboard showing key metrics such as low-stock items
 - Unified sidebar navigation for quick access to all pages
 
+## Changelog
+
+- Recipes editor now reuses the Indents item selector and supports selecting stock items or sub-recipes with automatic unit and category population.
+
 ## Installation
 
 Install dependencies using `pip`:

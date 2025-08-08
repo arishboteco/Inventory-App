@@ -473,30 +473,70 @@ def clone_recipe(
 # ─────────────────────────────────────────────────────────
 
 
-def _accumulate_items(
+def _expand_requirements(
     conn: Connection,
     recipe_id: int,
     multiplier: float,
     totals: Dict[int, float],
     visited: Set[int],
 ) -> None:
+    """Recursively accumulate item requirements for a recipe."""
     if recipe_id in visited:
         raise ValueError("Circular reference detected during expansion")
     visited.add(recipe_id)
     rows = conn.execute(
         text(
-            "SELECT component_kind, component_id, quantity, loss_pct "
+            "SELECT component_kind, component_id, quantity, unit, loss_pct "
             "FROM recipe_components WHERE parent_recipe_id=:r"
         ),
         {"r": recipe_id},
     ).mappings().all()
     for row in rows:
-        qty = multiplier * float(row["quantity"]) * (1 + float(row["loss_pct"] or 0) / 100.0)
+        if row["unit"] is None:
+            raise ValueError("Component unit missing")
+        qty = multiplier * float(row["quantity"]) / (
+            1 - float(row["loss_pct"] or 0) / 100.0
+        )
         if row["component_kind"] == "ITEM":
+            item = conn.execute(
+                text("SELECT unit, is_active FROM items WHERE item_id=:i"),
+                {"i": row["component_id"]},
+            ).mappings().fetchone()
+            if not item:
+                raise ValueError(f"Item {row['component_id']} not found")
+            if not item["is_active"]:
+                raise ValueError("Inactive item component encountered")
+            if item["unit"] != row["unit"]:
+                raise ValueError("Unit mismatch for item component")
             totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
+        elif row["component_kind"] == "RECIPE":
+            sub = conn.execute(
+                text(
+                    "SELECT default_yield_unit, is_active FROM recipes WHERE recipe_id=:r"
+                ),
+                {"r": row["component_id"]},
+            ).mappings().fetchone()
+            if not sub:
+                raise ValueError(f"Recipe {row['component_id']} not found")
+            if not sub["is_active"]:
+                raise ValueError("Inactive sub-recipe encountered")
+            if not sub["default_yield_unit"]:
+                raise ValueError("Missing unit for recipe component")
+            if sub["default_yield_unit"] != row["unit"]:
+                raise ValueError("Unit mismatch for recipe component")
+            _expand_requirements(conn, row["component_id"], qty, totals, visited)
         else:
-            _accumulate_items(conn, row["component_id"], qty, totals, visited)
+            raise ValueError("Invalid component_kind")
     visited.remove(recipe_id)
+
+
+def _resolve_item_requirements(
+    conn: Connection, recipe_id: int, quantity: float
+) -> Dict[int, float]:
+    """Return total item requirements for given recipe quantity."""
+    totals: Dict[int, float] = {}
+    _expand_requirements(conn, recipe_id, quantity, totals, set())
+    return totals
 
 
 def record_sale(
@@ -519,12 +559,19 @@ def record_sale(
     try:
         with engine.connect() as conn:
             with conn.begin():
+                is_active = conn.execute(
+                    text("SELECT is_active FROM recipes WHERE recipe_id=:r"),
+                    {"r": recipe_id},
+                ).scalar_one_or_none()
+                if is_active is None:
+                    return False, "Recipe not found."
+                if not is_active:
+                    return False, "Recipe is inactive."
+                totals = _resolve_item_requirements(conn, recipe_id, quantity)
                 conn.execute(
                     sale_ins_q,
                     {"r": recipe_id, "q": quantity, "u": user_id_clean, "n": notes_clean},
                 )
-                totals: Dict[int, float] = {}
-                _accumulate_items(conn, recipe_id, quantity, totals, set())
                 for iid, qty in totals.items():
                     ok = stock_service.record_stock_transaction(
                         item_id=iid,
@@ -538,8 +585,13 @@ def record_sale(
                         db_connection_param=conn,
                     )
                     if not ok:
-                        raise Exception(f"Failed stock tx for item {iid} during sale.")
+                        raise Exception(
+                            f"Failed stock tx for item {iid} during sale."
+                        )
         return True, "Sale recorded."
+    except ValueError as ve:
+        logger.error("ERROR [recipe_service.record_sale]: %s", ve)
+        return False, str(ve)
     except (SQLAlchemyError, Exception) as e:
         logger.error(
             "ERROR [recipe_service.record_sale]: Error recording sale: %s\n%s",

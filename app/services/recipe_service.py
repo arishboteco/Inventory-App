@@ -69,13 +69,59 @@ def _creates_cycle(conn: Connection, parent_id: int, child_id: int) -> bool:
     return res is not None
 
 
+def build_components_from_editor(
+    df: pd.DataFrame, choice_map: Dict[str, Dict[str, Any]]
+) -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Convert a data-editor dataframe into component payload.
+
+    Returns (components, errors).
+    Automatically applies unit/category defaults and validates units.
+    """
+    components: List[Dict[str, Any]] = []
+    errors: List[str] = []
+    for idx, row in df.iterrows():
+        label = row.get("component")
+        if not label:
+            continue
+        meta = choice_map.get(label)
+        if not meta:
+            continue
+        qty = row.get("quantity")
+        if qty is None or float(qty) <= 0:
+            errors.append(f"Quantity must be greater than 0 for {label}.")
+            continue
+        unit = row.get("unit") or meta.get("unit")
+        if meta["kind"] == "ITEM":
+            base_unit = meta.get("unit")
+            if unit != base_unit:
+                errors.append(
+                    f"Unit mismatch for {meta.get('name')}. Use {base_unit}."
+                )
+                continue
+            unit = base_unit
+        components.append(
+            {
+                "component_kind": meta["kind"],
+                "component_id": meta["id"],
+                "quantity": float(qty),
+                "unit": unit,
+                "loss_pct": float(row.get("loss_pct") or 0),
+                "sort_order": int(row.get("sort_order") or idx + 1),
+                "notes": row.get("notes") or None,
+            }
+        )
+    return components, errors
+
+
 # ─────────────────────────────────────────────────────────
 # RECIPE CRUD FUNCTIONS
 # ─────────────────────────────────────────────────────────
 
 
-def list_recipes(engine: Engine, include_inactive: bool = False) -> pd.DataFrame:
-    """Return all recipes with metadata."""
+def list_recipes(
+    engine: Engine, include_inactive: bool = False, rtype: Optional[str] = None
+) -> pd.DataFrame:
+    """Return recipes with optional type filtering."""
     if engine is None:
         logger.error(
             "ERROR [recipe_service.list_recipes]: Database engine not available."
@@ -86,10 +132,17 @@ def list_recipes(engine: Engine, include_inactive: bool = False) -> pd.DataFrame
         "default_yield_qty, default_yield_unit, plating_notes, tags, version, "
         "effective_from, effective_to FROM recipes"
     )
+    conditions = []
+    params: Dict[str, Any] = {}
     if not include_inactive:
-        query += " WHERE is_active = TRUE"
+        conditions.append("is_active = TRUE")
+    if rtype:
+        conditions.append("type = :rtype")
+        params["rtype"] = rtype
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
     query += " ORDER BY name;"
-    return fetch_data(engine, query)
+    return fetch_data(engine, query, params)
 
 
 def get_recipe_components(engine: Engine, recipe_id: int) -> pd.DataFrame:

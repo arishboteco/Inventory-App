@@ -14,6 +14,7 @@ if _REPO_ROOT not in sys.path:
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
 from app.ui import show_success, show_error
+from app.ui.choices import build_item_choice_label, build_recipe_choice_label
 
 try:
     from app.db.database_utils import connect_db
@@ -59,14 +60,41 @@ def render_component_tree(recipe_id: int, indent: int = 0) -> None:
 
 # --- Add Recipe ---
 all_items_df = item_service.get_all_items_with_stock(engine)
-all_recipes_df = recipe_service.list_recipes(engine, include_inactive=True)
+sub_recipes_df = recipe_service.list_recipes(
+    engine, rtype="SUBRECIPE", include_inactive=False
+)
 
-component_options = [
-    f"ITEM:{row['item_id']}:{row['name']} ({row['unit']})" for _, row in all_items_df.iterrows()
-] + [
-    f"RECIPE:{row['recipe_id']}:{row['name']} ({row['default_yield_unit'] or ''})"
-    for _, row in all_recipes_df.iterrows()
-]
+# Build mapping from display label to metadata for quick lookups
+component_choice_map = {}
+item_labels = []
+for _, row in all_items_df.iterrows():
+    label = build_item_choice_label(row)
+    component_choice_map[label] = {
+        "kind": "ITEM",
+        "id": int(row["item_id"]),
+        "unit": row.get("unit"),
+        "category": row.get("category"),
+        "name": row.get("name"),
+    }
+    item_labels.append(label)
+
+subrecipe_labels = []
+for _, row in sub_recipes_df.iterrows():
+    label = build_recipe_choice_label(row)
+    component_choice_map[label] = {
+        "kind": "RECIPE",
+        "id": int(row["recipe_id"]),
+        "unit": row.get("default_yield_unit"),
+        "category": "Sub-recipe",
+        "name": row.get("name"),
+    }
+    subrecipe_labels.append(label)
+
+component_options = item_labels + subrecipe_labels
+reverse_choice_map = {
+    (meta["kind"], meta["id"]): label
+    for label, meta in component_choice_map.items()
+}
 
 with st.expander("➕ Add New Recipe", expanded=False):
     with st.form("add_recipe_form"):
@@ -117,6 +145,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "component": pd.Series(dtype="str"),
                 "quantity": pd.Series(dtype="float"),
                 "unit": pd.Series(dtype="str"),
+                "category": pd.Series(dtype="str"),
                 "loss_pct": pd.Series(dtype="float"),
                 "sort_order": pd.Series(dtype="int"),
                 "notes": pd.Series(dtype="str"),
@@ -135,6 +164,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
                     "Qty", min_value=0.0, step=0.01, format="%.2f"
                 ),
                 "unit": st.column_config.TextColumn("Unit"),
+                "category": st.column_config.TextColumn("Category"),
                 "loss_pct": st.column_config.NumberColumn(
                     "Loss %", min_value=0.0, step=0.01, format="%.2f"
                 ),
@@ -147,31 +177,14 @@ with st.expander("➕ Add New Recipe", expanded=False):
         submit = st.form_submit_button("Save Recipe")
 
     if submit:
-        components = []
-        for idx, row in edited_df.iterrows():
-            comp = row.get("component")
-            qty = row.get("quantity")
-            if not comp or qty is None or float(qty) <= 0:
-                continue
-            try:
-                kind, cid, _ = comp.split(":", 2)
-            except ValueError:
-                continue
-            sort_val = row.get("sort_order")
-            sort_order = int(sort_val) if pd.notna(sort_val) else idx + 1
-            components.append(
-                {
-                    "component_kind": kind,
-                    "component_id": int(cid),
-                    "quantity": float(qty),
-                    "unit": row.get("unit") or None,
-                    "loss_pct": float(row.get("loss_pct") or 0),
-                    "sort_order": sort_order,
-                    "notes": row.get("notes") or None,
-                }
-            )
-        if not name.strip() or not components:
-            st.warning("Name and at least one component required.")
+        components, errors = recipe_service.build_components_from_editor(
+            edited_df, component_choice_map
+        )
+        if errors or not name.strip() or not components:
+            for err in errors:
+                st.warning(err)
+            if not name.strip() or not components:
+                st.warning("Name and at least one component required.")
         else:
             ok, msg, _ = recipe_service.create_recipe(
                 engine,
@@ -247,16 +260,35 @@ else:
                     grid_df_local = pd.DataFrame(
                         {
                             "component": [
-                                f"{r.component_kind}:{r.component_id}:{r.component_name}"
+                                reverse_choice_map.get(
+                                    (r.component_kind, int(r.component_id)), None
+                                )
                                 for _, r in comps.iterrows()
                             ],
                             "quantity": comps["quantity"],
                             "unit": comps["unit"].astype("string"),
+                            "category": [
+                                component_choice_map.get(
+                                    reverse_choice_map.get(
+                                        (r.component_kind, int(r.component_id))
+                                    ),
+                                    {},
+                                ).get("category")
+                                for _, r in comps.iterrows()
+                            ],
                             "loss_pct": comps["loss_pct"],
                             "sort_order": comps["sort_order"],
                             "notes": comps["notes"].astype("string"),
                         }
                     )
+                    options_edit = [
+                        label
+                        for label in component_options
+                        if not (
+                            component_choice_map[label]["kind"] == "RECIPE"
+                            and component_choice_map[label]["id"] == rid
+                        )
+                    ]
                     edited_local = st.data_editor(
                         grid_df_local,
                         num_rows="dynamic",
@@ -264,12 +296,13 @@ else:
                         use_container_width=True,
                         column_config={
                             "component": st.column_config.SelectboxColumn(
-                                "Component", options=component_options
+                                "Component", options=options_edit
                             ),
                             "quantity": st.column_config.NumberColumn(
                                 "Qty", min_value=0.0, step=0.01, format="%.2f"
                             ),
                             "unit": st.column_config.TextColumn("Unit"),
+                            "category": st.column_config.TextColumn("Category"),
                             "loss_pct": st.column_config.NumberColumn(
                                 "Loss %", min_value=0.0, step=0.01, format="%.2f"
                             ),
@@ -281,50 +314,36 @@ else:
                     save = st.form_submit_button("Update")
 
                 if save:
-                    components = []
-                    for idx, rowc in edited_local.iterrows():
-                        comp = rowc.get("component")
-                        qty = rowc.get("quantity")
-                        if not comp or qty is None or float(qty) <= 0:
-                            continue
-                        try:
-                            kind, cid, _ = comp.split(":", 2)
-                        except ValueError:
-                            continue
-                        sort_val = rowc.get("sort_order")
-                        sort_order = int(sort_val) if pd.notna(sort_val) else idx + 1
-                        components.append(
-                            {
-                                "component_kind": kind,
-                                "component_id": int(cid),
-                                "quantity": float(qty),
-                                "unit": rowc.get("unit") or None,
-                                "loss_pct": float(rowc.get("loss_pct") or 0),
-                                "sort_order": sort_order,
-                                "notes": rowc.get("notes") or None,
-                            }
-                        )
-                    ok, msg = recipe_service.update_recipe(
-                        engine,
-                        rid,
-                        {
-                            "name": new_name.strip(),
-                            "description": new_desc.strip(),
-                            "type": new_type.strip() if new_type else None,
-                            "default_yield_qty": new_yield_qty,
-                            "default_yield_unit": new_yield_unit.strip()
-                            if new_yield_unit
-                            else None,
-                            "plating_notes": new_plating.strip() if new_plating else None,
-                            "tags": new_tags.strip() if new_tags else None,
-                        },
-                        components,
+                    components, errors = recipe_service.build_components_from_editor(
+                        edited_local, component_choice_map
                     )
-                    if ok:
-                        show_success(msg)
-                        st.session_state.pg7_edit_recipe_id = None
+                    if errors:
+                        for err in errors:
+                            st.warning(err)
                     else:
-                        st.warning(msg)
+                        ok, msg = recipe_service.update_recipe(
+                            engine,
+                            rid,
+                            {
+                                "name": new_name.strip(),
+                                "description": new_desc.strip(),
+                                "type": new_type.strip() if new_type else None,
+                                "default_yield_qty": new_yield_qty,
+                                "default_yield_unit": new_yield_unit.strip()
+                                if new_yield_unit
+                                else None,
+                                "plating_notes": new_plating.strip()
+                                if new_plating
+                                else None,
+                                "tags": new_tags.strip() if new_tags else None,
+                            },
+                            components,
+                        )
+                        if ok:
+                            show_success(msg)
+                            st.session_state.pg7_edit_recipe_id = None
+                        else:
+                            st.warning(msg)
 
             if st.button("Clone", key=f"clone_{rid}"):
                 st.session_state.pg7_clone_recipe_id = rid

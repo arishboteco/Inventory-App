@@ -171,7 +171,6 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "notes": st.column_config.TextColumn("Notes"),
             },
             key="add_recipe_editor",
-            on_change=lambda: sync_component_meta("add_recipe_editor"),
         )
         sync_component_meta("add_recipe_editor")
         edited_df = st.session_state["add_recipe_editor"]
@@ -316,7 +315,6 @@ else:
                             "notes": st.column_config.TextColumn("Notes"),
                         },
                         key=key_edit,
-                        on_change=lambda k=key_edit: sync_component_meta(k),
                     )
                     sync_component_meta(key_edit)
                     edited_local = st.session_state[key_edit]

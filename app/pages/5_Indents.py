@@ -44,7 +44,7 @@ try:
     from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
     from app.ui.navigation import render_sidebar_nav
     from app.ui import show_success, show_error, show_warning
-    from app.ui.choices import build_item_choice_label
+    from app.ui.choices import build_component_options
 except ImportError as e:
     show_error(
         "Import error in 5_Indents.py: "
@@ -1174,46 +1174,41 @@ if st.session_state.pg5_active_indent_section == "create":
                     st.caption("No frequent items found for this department recently.")
                 st.caption("")
 
-        # Item options dictionary construction using constants
-        item_options_dict_pg5: Dict[str, Optional[int]] = {
-            pg5_placeholder_select_item_tuple[0]: pg5_placeholder_select_item_tuple[1]
-        }
+        # Item options dictionary construction using shared helper
+        item_options_dict_pg5: Dict[str, Optional[int]]
         if st.session_state.get("pg5_selected_department_for_create_indent"):
             selected_dept_for_filter_pg5 = (
-                st.session_state.pg5_selected_department_for_create_indent
+                st.session_state.pg5_selected_department_for_create_indent.strip().lower()
             )
             if not all_active_items_df_pg5.empty:
                 try:
-                    available_items_df_pg5 = all_active_items_df_pg5[
-                        all_active_items_df_pg5["permitted_departments"]
-                        .fillna("")
-                        .astype(str)
-                        .str.lower()
-                        .apply(
-                            lambda depts_str: (
-                                selected_dept_for_filter_pg5.strip().lower()
-                                in [d.strip().lower() for d in depts_str.split(",")]
-                                if depts_str
-                                else False
-                            )
-                        )
-                    ].copy()
-                    if available_items_df_pg5.empty:
-                        item_options_dict_pg5.update({PLACEHOLDER_NO_ITEMS_FOR_DEPARTMENT: -2})
+                    _, meta_map_pg5 = build_component_options(
+                        all_active_items_df_pg5.sort_values("name").to_dict("records"),
+                        [],
+                        placeholder=pg5_placeholder_select_item_tuple[0],
+                        item_filter=lambda item: (
+                            selected_dept_for_filter_pg5
+                            in [d.strip().lower() for d in (item.get("permitted_departments") or "").split(",")]
+                            if item.get("permitted_departments")
+                            else False
+                        ),
+                    )
+                    if not meta_map_pg5:
+                        item_options_dict_pg5 = {PLACEHOLDER_NO_ITEMS_FOR_DEPARTMENT: -2}
                     else:
+                        item_options_dict_pg5 = {
+                            pg5_placeholder_select_item_tuple[0]: pg5_placeholder_select_item_tuple[1]
+                        }
                         item_options_dict_pg5.update(
-                            {
-                                build_item_choice_label(r): r["item_id"]
-                                for _, r in available_items_df_pg5.sort_values("name").iterrows()
-                            }
+                            {label: meta["id"] for label, meta in meta_map_pg5.items()}
                         )
                 except Exception as e_item_filter_pg5:
                     print(
                         f"ERROR [5_Indents.item_filtering_create]: Error filtering items: {e_item_filter_pg5}"
                     )
-                    item_options_dict_pg5.update({PLACEHOLDER_ERROR_LOADING_ITEMS: -3})
+                    item_options_dict_pg5 = {PLACEHOLDER_ERROR_LOADING_ITEMS: -3}
             else:
-                item_options_dict_pg5.update({PLACEHOLDER_NO_ITEMS_AVAILABLE: -4})
+                item_options_dict_pg5 = {PLACEHOLDER_NO_ITEMS_AVAILABLE: -4}
         else:
             item_options_dict_pg5 = {PLACEHOLDER_SELECT_DEPARTMENT_FIRST: -5}
 

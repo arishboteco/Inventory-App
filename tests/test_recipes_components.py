@@ -1,5 +1,6 @@
 import pandas as pd
 from app.services import recipe_service
+from app.core.constants import PLACEHOLDER_SELECT_COMPONENT
 
 def test_build_components_autofill_and_validation():
     df = pd.DataFrame([
@@ -64,3 +65,19 @@ def test_build_components_detects_unit_mismatch():
     comps, errs = recipe_service.build_components_from_editor(df, choice_map)
     assert errs and "Unit mismatch" in errs[0]
     assert not comps
+
+
+def test_build_components_skips_placeholder():
+    df = pd.DataFrame([
+        {
+            "component": PLACEHOLDER_SELECT_COMPONENT,
+            "quantity": 1,
+            "unit": None,
+            "loss_pct": 0,
+            "sort_order": 1,
+            "notes": None,
+        }
+    ])
+    comps, errs = recipe_service.build_components_from_editor(df, {})
+    assert not comps
+    assert not errs

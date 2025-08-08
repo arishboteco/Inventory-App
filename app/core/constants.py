@@ -69,6 +69,7 @@ PLACEHOLDER_SELECT_ITEM = "-- Select an Item --"
 PLACEHOLDER_SELECT_SUPPLIER = "-- Select Supplier --"
 PLACEHOLDER_SELECT_INDENT_PROCESS = "-- Select Indent (MRN) to Process --"
 PLACEHOLDER_SELECT_MRN_PDF = "-- Select MRN for PDF --"  # Used in 5_Indents.py
+PLACEHOLDER_SELECT_COMPONENT = "-- Select Component --"
 
 # Filter Defaults
 FILTER_ALL_TYPES = "-- All Types --"  # For transaction type filters

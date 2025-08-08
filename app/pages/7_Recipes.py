@@ -19,6 +19,7 @@ from app.ui.choices import build_item_choice_label, build_recipe_choice_label
 try:
     from app.db.database_utils import connect_db
     from app.services import recipe_service, item_service
+    from app.core.constants import PLACEHOLDER_SELECT_COMPONENT
 except ImportError as e:
     show_error(f"Import error in 7_Recipes.py: {e}.")
     st.stop()
@@ -92,7 +93,7 @@ for _, row in sub_recipes_df.iterrows():
     }
     subrecipe_labels.append(label)
 
-component_options = item_labels + subrecipe_labels
+component_options = [PLACEHOLDER_SELECT_COMPONENT] + item_labels + subrecipe_labels
 reverse_choice_map = {
     (meta["kind"], meta["id"]): label
     for label, meta in component_choice_map.items()
@@ -108,6 +109,9 @@ def sync_component_meta(editor_key: str) -> None:
         if meta:
             df.at[idx, "unit"] = meta.get("unit")
             df.at[idx, "category"] = meta.get("category")
+        else:
+            df.at[idx, "unit"] = None
+            df.at[idx, "category"] = None
     st.session_state[editor_key] = df
 
 
@@ -173,7 +177,9 @@ with st.expander("➕ Add New Recipe", expanded=False):
             use_container_width=True,
             column_config={
                 "component": st.column_config.SelectboxColumn(
-                    "Component", options=component_options
+                    "Component",
+                    options=component_options,
+                    default=PLACEHOLDER_SELECT_COMPONENT,
                 ),
                 "quantity": st.column_config.NumberColumn(
                     "Qty", min_value=0.0, step=0.01, format="%.2f"
@@ -302,7 +308,8 @@ else:
                     options_edit = [
                         label
                         for label in component_options
-                        if not (
+                        if label not in component_choice_map
+                        or not (
                             component_choice_map[label]["kind"] == "RECIPE"
                             and component_choice_map[label]["id"] == rid
                         )
@@ -315,7 +322,9 @@ else:
                         use_container_width=True,
                         column_config={
                             "component": st.column_config.SelectboxColumn(
-                                "Component", options=options_edit
+                                "Component",
+                                options=options_edit,
+                                default=PLACEHOLDER_SELECT_COMPONENT,
                             ),
                             "quantity": st.column_config.NumberColumn(
                                 "Qty", min_value=0.0, step=0.01, format="%.2f"
@@ -339,9 +348,11 @@ else:
                     components, errors = recipe_service.build_components_from_editor(
                         edited_local, component_choice_map
                     )
-                    if errors:
+                    if errors or not components:
                         for err in errors:
                             st.warning(err)
+                        if not components:
+                            st.warning("At least one component required.")
                     else:
                         ok, msg = recipe_service.update_recipe(
                             engine,

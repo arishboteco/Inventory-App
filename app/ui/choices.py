@@ -1,6 +1,12 @@
 """Shared helpers for building choice labels in dropdowns."""
 from typing import Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
+__all__ = [
+    "build_item_choice_label",
+    "build_recipe_choice_label",
+    "build_component_options",
+]
+
 def build_item_choice_label(item: Mapping) -> str:
     """Return standardized label for item choices.
 

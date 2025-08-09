@@ -13,7 +13,12 @@ if _REPO_ROOT not in sys.path:
 
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
-from app.ui import show_success, show_error, show_warning
+from app.ui.helpers import (
+    show_success,
+    show_error,
+    show_warning,
+    autofill_component_meta,
+)
 from app.ui.choices import build_component_options
 
 try:
@@ -79,18 +84,11 @@ reverse_choice_map = {
 
 
 def sync_component_meta(editor_key: str) -> None:
+    """Update session state's dataframe with component defaults."""
     df = st.session_state.get(editor_key)
-    if df is None or "component" not in df:
+    if df is None:
         return
-    for idx, comp in df["component"].items():
-        meta = component_choice_map.get(comp)
-        if meta:
-            df.at[idx, "unit"] = meta.get("unit")
-            df.at[idx, "category"] = meta.get("category")
-        else:
-            df.at[idx, "unit"] = None
-            df.at[idx, "category"] = None
-    st.session_state[editor_key] = df
+    st.session_state[editor_key] = autofill_component_meta(df, component_choice_map)
 
 
 with st.expander("➕ Add New Recipe", expanded=False):
@@ -148,6 +146,7 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "notes": pd.Series(dtype="str"),
             }
         )
+        sync_component_meta("add_recipe_editor")
         st.data_editor(
             comp_df,
             num_rows="dynamic",
@@ -172,7 +171,6 @@ with st.expander("➕ Add New Recipe", expanded=False):
             },
             key="add_recipe_editor",
         )
-        sync_component_meta("add_recipe_editor")
         edited_df = st.session_state["add_recipe_editor"]
 
         submit = st.form_submit_button("Save Recipe")
@@ -292,6 +290,7 @@ else:
                         )
                     ]
                     key_edit = f"edit_editor_{rid}"
+                    sync_component_meta(key_edit)
                     st.data_editor(
                         grid_df_local,
                         num_rows="dynamic",
@@ -316,7 +315,6 @@ else:
                         },
                         key=key_edit,
                     )
-                    sync_component_meta(key_edit)
                     edited_local = st.session_state[key_edit]
                     save = st.form_submit_button("Update")
 

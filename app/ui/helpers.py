@@ -1,5 +1,6 @@
 import math
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
+import pandas as pd
 import streamlit as st
 
 
@@ -113,3 +114,25 @@ def show_error(msg: str) -> None:
         st.toast(msg, icon="❌")
     else:
         st.error(msg)
+
+
+def autofill_component_meta(
+    df: pd.DataFrame, choice_map: Dict[str, Dict[str, Any]]
+) -> pd.DataFrame:
+    """Return dataframe with unit and category filled from choice_map.
+
+    Any row whose component label exists in choice_map receives the corresponding
+    unit and category; others are set to ``None``. The original dataframe is
+    modified in place and returned for convenience.
+    """
+    if df is None or "component" not in df:
+        return df
+    for idx, comp in df["component"].items():
+        meta = choice_map.get(comp)
+        if meta:
+            df.at[idx, "unit"] = meta.get("unit")
+            df.at[idx, "category"] = meta.get("category")
+        else:
+            df.at[idx, "unit"] = None
+            df.at[idx, "category"] = None
+    return df

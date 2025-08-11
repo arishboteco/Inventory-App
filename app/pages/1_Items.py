@@ -87,6 +87,31 @@ if not engine:
     )
     st.stop()
 
+
+def infer_item_units() -> None:
+    """Infer and prefill unit fields based on the current item name and category."""
+    item_name = st.session_state.get("widget_items_add_form_name_input", "").strip()
+    category_name = (
+        st.session_state.get("widget_items_add_form_category_input", "").strip() or None
+    )
+    if not item_name:
+        return
+
+    base_unit_suggestion, purchase_unit_suggestion = infer_units(
+        item_name, category_name
+    )
+    if base_unit_suggestion and not st.session_state.get(
+        "widget_items_add_form_base_unit_input", ""
+    ).strip():
+        st.session_state.widget_items_add_form_base_unit_input = base_unit_suggestion
+    if purchase_unit_suggestion and not st.session_state.get(
+        "widget_items_add_form_purchase_unit_input", ""
+    ).strip():
+        st.session_state.widget_items_add_form_purchase_unit_input = (
+            purchase_unit_suggestion
+        )
+    st.rerun()
+
 # --- ADD NEW ITEM Section ---
 with st.expander("➕ Add New Inventory Item", expanded=False):
     with st.form("widget_items_add_form", clear_on_submit=True):
@@ -97,6 +122,7 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                 "Item Name*",
                 help="Unique name for the item.",
                 key="widget_items_add_form_name_input",
+                on_change=infer_item_units,
             )
             base_unit_add_widget = st.text_input(
                 "Base Unit*",
@@ -150,16 +176,9 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
             key="widget_items_add_form_notes_area",
         )
 
-        # Display inferred unit suggestions when the user leaves the unit
-        # fields blank.  This gives them a chance to confirm or override
-        # before submission.
         suggested_base, suggested_purchase = infer_units(
             name_add_widget.strip(), category_add_widget.strip() or None
         )
-        if not base_unit_add_widget.strip():
-            st.caption(f"Inferred base unit: {suggested_base}")
-        if not purchase_unit_add_widget.strip() and suggested_purchase:
-            st.caption(f"Inferred purchase unit: {suggested_purchase}")
 
         if st.form_submit_button(
             "💾 Add Item to Master"

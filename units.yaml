@@ -1,0 +1,12 @@
+# Custom unit inference overrides.
+# Modify this file to extend or override the built-in heuristics.
+#
+# Example structure:
+# name_keywords:
+#   coffee beans: ["kg", "bag"]
+# categories:
+#   spices: ["g", "jar"]
+name_keywords:
+  tofu: ["pcs", "block"]
+categories:
+  spices: ["g", "jar"]

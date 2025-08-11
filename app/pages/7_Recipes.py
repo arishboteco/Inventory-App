@@ -3,6 +3,8 @@ import os
 import sys
 import streamlit as st
 import pandas as pd
+import traceback
+from typing import Optional
 
 st.set_page_config(page_title="Recipes", layout="wide")
 
@@ -13,12 +15,8 @@ if _REPO_ROOT not in sys.path:
 
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
-from app.ui.helpers import (
-    show_success,
-    show_error,
-    show_warning,
-    autofill_component_meta,
-)
+from app.ui import show_success, show_error, show_warning
+from app.ui.helpers import autofill_component_meta
 from app.ui.choices import build_component_options
 
 try:
@@ -39,6 +37,21 @@ if "pg7_edit_recipe_id" not in st.session_state:
     st.session_state.pg7_edit_recipe_id = None
 if "pg7_clone_recipe_id" not in st.session_state:
     st.session_state.pg7_clone_recipe_id = None
+
+
+@st.cache_data(ttl=60)
+def fetch_items_pg7(_engine):
+    return item_service.get_all_items_with_stock(_engine)
+
+
+@st.cache_data(ttl=60)
+def fetch_subrecipes_pg7(_engine):
+    return recipe_service.list_recipes(_engine, rtype="SUBRECIPE", include_inactive=False)
+
+
+@st.cache_data(ttl=60)
+def fetch_all_recipes_pg7(_engine):
+    return recipe_service.list_recipes(_engine, include_inactive=True)
 
 load_css()
 render_sidebar_logo()
@@ -67,10 +80,8 @@ def render_component_tree(recipe_id: int, indent: int = 0) -> None:
 
 
 # --- Add Recipe ---
-all_items_df = item_service.get_all_items_with_stock(engine)
-sub_recipes_df = recipe_service.list_recipes(
-    engine, rtype="SUBRECIPE", include_inactive=False
-)
+all_items_df = fetch_items_pg7(engine)
+sub_recipes_df = fetch_subrecipes_pg7(engine)
 
 # Build combined options and metadata map
 component_options, component_choice_map = build_component_options(
@@ -88,50 +99,95 @@ def sync_component_meta(editor_key: str) -> None:
     df = st.session_state.get(editor_key)
     if df is None:
         return
-    st.session_state[editor_key] = autofill_component_meta(df, component_choice_map)
+    updated = autofill_component_meta(df.copy(), component_choice_map)
+    if "category" in updated.columns:
+        updated = updated.drop(columns=["category"])
+    st.session_state[editor_key] = updated
+
+
+def build_components(df: pd.DataFrame, current_recipe_id: Optional[int] = None):
+    components = []
+    errors = []
+    seen = set()
+    for _, row in df.iterrows():
+        label = row.get("component")
+        if not label or label == PLACEHOLDER_SELECT_COMPONENT:
+            continue
+        meta = component_choice_map.get(label)
+        if not meta:
+            continue
+        qty = row.get("quantity")
+        if qty is None or float(qty) <= 0:
+            errors.append(f"Quantity must be greater than 0 for {label}.")
+            continue
+        kind = meta["kind"]
+        cid = int(meta["id"])
+        if current_recipe_id is not None and kind == "RECIPE" and cid == int(current_recipe_id):
+            errors.append("Recipe cannot reference itself.")
+            continue
+        key = (kind, cid)
+        if key in seen:
+            errors.append(f"Duplicate component {label}.")
+            continue
+        unit = row.get("unit") or meta.get("unit")
+        components.append(
+            {
+                "component_kind": kind,
+                "component_id": cid,
+                "quantity": float(qty),
+                "unit": unit,
+                "loss_pct": 0.0,
+                "sort_order": len(components) + 1,
+                "notes": row.get("notes") or None,
+            }
+        )
+        seen.add(key)
+    if not components:
+        errors.append("At least one component is required.")
+    return components, errors
 
 
 with st.expander("➕ Add New Recipe", expanded=False):
-    with st.form("add_recipe_form"):
+    with st.form("pg7_add_recipe_form", clear_on_submit=True):
         st.subheader("Enter New Recipe Details")
         col1, col2 = st.columns(2)
         with col1:
             name = st.text_input(
                 "Recipe Name*",
-                key="recipe_name",
+                key="pg7_recipe_name",
                 help="Unique name for the recipe.",
             )
             rtype = st.text_input(
                 "Type",
-                key="recipe_type",
+                key="pg7_recipe_type",
                 help="e.g., Starter, Main Course",
             )
             default_yield_qty = st.number_input(
                 "Default Yield Quantity",
                 min_value=0.0,
                 step=0.01,
-                key="recipe_yield_qty",
+                key="pg7_recipe_yield_qty",
                 help="Standard yield quantity.",
             )
         with col2:
             default_yield_unit = st.text_input(
                 "Default Yield Unit",
-                key="recipe_yield_unit",
+                key="pg7_recipe_yield_unit",
                 help="e.g., kg, servings",
             )
             tags = st.text_input(
                 "Tags (comma separated)",
-                key="recipe_tags",
+                key="pg7_recipe_tags",
                 help="Optional tags for searching.",
             )
         desc = st.text_area(
             "Description",
-            key="recipe_desc",
+            key="pg7_recipe_desc",
             help="Optional recipe description.",
         )
         plating_notes = st.text_area(
             "Plating Notes",
-            key="recipe_plating",
+            key="pg7_recipe_plating",
             help="Instructions for plating, if any.",
         )
         st.subheader("Components")
@@ -140,13 +196,10 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "component": pd.Series(dtype="str"),
                 "quantity": pd.Series(dtype="float"),
                 "unit": pd.Series(dtype="str"),
-                "category": pd.Series(dtype="str"),
-                "loss_pct": pd.Series(dtype="float"),
-                "sort_order": pd.Series(dtype="int"),
                 "notes": pd.Series(dtype="str"),
             }
         )
-        sync_component_meta("add_recipe_editor")
+        sync_component_meta("pg7_add_recipe_editor")
         st.data_editor(
             comp_df,
             num_rows="dynamic",
@@ -161,54 +214,67 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "quantity": st.column_config.NumberColumn(
                     "Qty", min_value=0.0, step=0.01, format="%.2f"
                 ),
-                "unit": st.column_config.TextColumn("Unit"),
-                "category": st.column_config.TextColumn("Category"),
-                "loss_pct": st.column_config.NumberColumn(
-                    "Loss %", min_value=0.0, step=0.01, format="%.2f"
-                ),
-                "sort_order": st.column_config.NumberColumn("Sort"),
+                "unit": st.column_config.TextColumn("Unit", disabled=True),
                 "notes": st.column_config.TextColumn("Notes"),
             },
-            key="add_recipe_editor",
+            key="pg7_add_recipe_editor",
         )
-        edited_df = st.session_state["add_recipe_editor"]
+        edited_df = st.session_state["pg7_add_recipe_editor"]
 
         submit = st.form_submit_button("Save Recipe")
 
     if submit:
-        components, errors = recipe_service.build_components_from_editor(
-            edited_df, component_choice_map
-        )
-        if errors or not name.strip() or not components:
+        components, errors = build_components(edited_df)
+        if not name.strip():
+            errors.append("Recipe name is required.")
+        if errors:
             for err in errors:
                 show_warning(err)
-            if not name.strip() or not components:
-                show_warning("Name and at least one component required.")
         else:
-            ok, msg, _ = recipe_service.create_recipe(
-                engine,
-                {
-                    "name": name.strip(),
-                    "description": desc.strip(),
-                    "type": rtype.strip() if rtype else None,
-                    "default_yield_qty": default_yield_qty,
-                    "default_yield_unit": default_yield_unit.strip()
-                    if default_yield_unit
-                    else None,
-                    "plating_notes": plating_notes.strip() if plating_notes else None,
-                    "tags": tags.strip() if tags else None,
-                },
-                components,
-            )
-            if ok:
-                show_success(msg)
+            try:
+                ok, msg, _ = recipe_service.create_recipe(
+                    engine,
+                    {
+                        "name": name.strip(),
+                        "description": desc.strip(),
+                        "type": rtype.strip() if rtype else None,
+                        "default_yield_qty": default_yield_qty,
+                        "default_yield_unit": default_yield_unit.strip()
+                        if default_yield_unit
+                        else None,
+                        "plating_notes": plating_notes.strip() if plating_notes else None,
+                        "tags": tags.strip() if tags else None,
+                    },
+                    components,
+                )
+            except Exception:
+                print(traceback.format_exc())
+                show_error("Could not save. See logs.")
             else:
-                show_warning(msg)
+                if ok:
+                    show_success(msg)
+                    fetch_items_pg7.clear()
+                    fetch_subrecipes_pg7.clear()
+                    fetch_all_recipes_pg7.clear()
+                    for key in [
+                        "pg7_recipe_name",
+                        "pg7_recipe_type",
+                        "pg7_recipe_yield_qty",
+                        "pg7_recipe_yield_unit",
+                        "pg7_recipe_tags",
+                        "pg7_recipe_desc",
+                        "pg7_recipe_plating",
+                        "pg7_add_recipe_editor",
+                    ]:
+                        st.session_state.pop(key, None)
+                    st.rerun()
+                else:
+                    show_warning(msg)
 
 st.divider()
 
 # --- List and Edit Recipes ---
-recipes_df = recipe_service.list_recipes(engine, include_inactive=True)
+recipes_df = fetch_all_recipes_pg7(engine)
 if recipes_df.empty:
     st.info("No recipes found.")
 else:
@@ -218,41 +284,41 @@ else:
         with st.expander(row["name"], expanded=False):
             st.write(row["description"] or "")
             render_component_tree(rid)
-            if st.button("Edit", key=f"edit_{rid}"):
+            if st.button("Edit", key=f"pg7_edit_btn_{rid}"):
                 st.session_state.pg7_edit_recipe_id = rid
             if st.session_state.pg7_edit_recipe_id == rid:
-                with st.form(f"edit_form_{rid}"):
+                with st.form(f"pg7_edit_form_{rid}"):
                     st.subheader("Edit Recipe Details")
                     col1, col2 = st.columns(2)
                     with col1:
                         new_name = st.text_input(
-                            "Recipe Name*", value=row["name"], key=f"ename_{rid}"
+                            "Recipe Name*", value=row["name"], key=f"pg7_ename_{rid}"
                         )
                         new_type = st.text_input(
-                            "Type", value=row.get("type") or "", key=f"etype_{rid}"
+                            "Type", value=row.get("type") or "", key=f"pg7_etype_{rid}"
                         )
                         new_yield_qty = st.number_input(
                             "Default Yield Quantity",
                             value=float(row.get("default_yield_qty") or 0),
                             step=0.01,
-                            key=f"eyqty_{rid}",
+                            key=f"pg7_eyqty_{rid}",
                         )
                     with col2:
                         new_yield_unit = st.text_input(
                             "Default Yield Unit",
                             value=row.get("default_yield_unit") or "",
-                            key=f"eyunit_{rid}",
+                            key=f"pg7_eyunit_{rid}",
                         )
                         new_tags = st.text_input(
-                            "Tags", value=row.get("tags") or "", key=f"etags_{rid}"
+                            "Tags", value=row.get("tags") or "", key=f"pg7_etags_{rid}"
                         )
                     new_desc = st.text_area(
-                        "Description", value=row["description"] or "", key=f"edesc_{rid}"
+                        "Description", value=row["description"] or "", key=f"pg7_edesc_{rid}"
                     )
                     new_plating = st.text_area(
                         "Plating Notes",
                         value=row.get("plating_notes") or "",
-                        key=f"eplating_{rid}",
+                        key=f"pg7_eplating_{rid}",
                     )
                     st.subheader("Components")
                     comps = recipe_service.get_recipe_components(engine, rid)
@@ -266,17 +332,6 @@ else:
                             ],
                             "quantity": comps["quantity"],
                             "unit": comps["unit"].astype("string"),
-                            "category": [
-                                component_choice_map.get(
-                                    reverse_choice_map.get(
-                                        (r.component_kind, int(r.component_id))
-                                    ),
-                                    {},
-                                ).get("category")
-                                for _, r in comps.iterrows()
-                            ],
-                            "loss_pct": comps["loss_pct"],
-                            "sort_order": comps["sort_order"],
                             "notes": comps["notes"].astype("string"),
                         }
                     )
@@ -289,7 +344,7 @@ else:
                             and component_choice_map[label]["id"] == rid
                         )
                     ]
-                    key_edit = f"edit_editor_{rid}"
+                    key_edit = f"pg7_edit_editor_{rid}"
                     sync_component_meta(key_edit)
                     st.data_editor(
                         grid_df_local,
@@ -305,12 +360,7 @@ else:
                             "quantity": st.column_config.NumberColumn(
                                 "Qty", min_value=0.0, step=0.01, format="%.2f"
                             ),
-                            "unit": st.column_config.TextColumn("Unit"),
-                            "category": st.column_config.TextColumn("Category"),
-                            "loss_pct": st.column_config.NumberColumn(
-                                "Loss %", min_value=0.0, step=0.01, format="%.2f"
-                            ),
-                            "sort_order": st.column_config.NumberColumn("Sort"),
+                            "unit": st.column_config.TextColumn("Unit", disabled=True),
                             "notes": st.column_config.TextColumn("Notes"),
                         },
                         key=key_edit,
@@ -319,56 +369,69 @@ else:
                     save = st.form_submit_button("Update")
 
                 if save:
-                    components, errors = recipe_service.build_components_from_editor(
-                        edited_local, component_choice_map
-                    )
-                    if errors or not components:
+                    components, errors = build_components(edited_local, current_recipe_id=rid)
+                    if not new_name.strip():
+                        errors.append("Recipe name is required.")
+                    if errors:
                         for err in errors:
                             show_warning(err)
-                        if not components:
-                            show_warning("At least one component required.")
                     else:
-                        ok, msg = recipe_service.update_recipe(
-                            engine,
-                            rid,
-                            {
-                                "name": new_name.strip(),
-                                "description": new_desc.strip(),
-                                "type": new_type.strip() if new_type else None,
-                                "default_yield_qty": new_yield_qty,
-                                "default_yield_unit": new_yield_unit.strip()
-                                if new_yield_unit
-                                else None,
-                                "plating_notes": new_plating.strip()
-                                if new_plating
-                                else None,
-                                "tags": new_tags.strip() if new_tags else None,
-                            },
-                            components,
-                        )
-                        if ok:
-                            show_success(msg)
-                            st.session_state.pg7_edit_recipe_id = None
+                        try:
+                            ok, msg = recipe_service.update_recipe(
+                                engine,
+                                rid,
+                                {
+                                    "name": new_name.strip(),
+                                    "description": new_desc.strip(),
+                                    "type": new_type.strip() if new_type else None,
+                                    "default_yield_qty": new_yield_qty,
+                                    "default_yield_unit": new_yield_unit.strip() if new_yield_unit else None,
+                                    "plating_notes": new_plating.strip() if new_plating else None,
+                                    "tags": new_tags.strip() if new_tags else None,
+                                },
+                                components,
+                            )
+                        except Exception:
+                            print(traceback.format_exc())
+                            show_error("Could not save. See logs.")
                         else:
-                            show_warning(msg)
+                            if ok:
+                                show_success(msg)
+                                st.session_state.pg7_edit_recipe_id = None
+                                fetch_items_pg7.clear()
+                                fetch_subrecipes_pg7.clear()
+                                fetch_all_recipes_pg7.clear()
+                                st.rerun()
+                            else:
+                                show_warning(msg)
 
-            if st.button("Clone", key=f"clone_{rid}"):
+            if st.button("Clone", key=f"pg7_clone_btn_{rid}"):
                 st.session_state.pg7_clone_recipe_id = rid
             if st.session_state.pg7_clone_recipe_id == rid:
-                with st.form(f"clone_form_{rid}"):
+                with st.form(f"pg7_clone_form_{rid}"):
                     st.subheader("Clone Recipe")
-                    c_name = st.text_input("New Recipe Name*", key=f"cname_{rid}")
+                    c_name = st.text_input("New Recipe Name*", key=f"pg7_cname_{rid}")
                     c_desc = st.text_area(
-                        "Description", value=row["description"] or "", key=f"cdesc_{rid}"
+                        "Description", value=row["description"] or "", key=f"pg7_cdesc_{rid}"
                     )
                     render_component_tree(rid)
                     clone_sub = st.form_submit_button("Create Clone")
                 if clone_sub:
-                    ok, msg, _ = recipe_service.clone_recipe(
-                        engine, rid, c_name.strip(), c_desc.strip()
-                    )
-                    if ok:
-                        show_success(msg)
-                        st.session_state.pg7_clone_recipe_id = None
+                    try:
+                        ok, msg, _ = recipe_service.clone_recipe(
+                            engine, rid, c_name.strip(), c_desc.strip()
+                        )
+                    except Exception:
+                        print(traceback.format_exc())
+                        show_error("Could not save. See logs.")
                     else:
-                        show_warning(msg)
+                        if ok:
+                            show_success(msg)
+                            st.toast("Cloned", icon="✅")
+                            st.session_state.pg7_clone_recipe_id = None
+                            fetch_items_pg7.clear()
+                            fetch_subrecipes_pg7.clear()
+                            fetch_all_recipes_pg7.clear()
+                            st.rerun()
+                        else:
+                            show_warning(msg)

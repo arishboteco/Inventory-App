@@ -43,7 +43,10 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
-    return fetch_data(_engine, query)
+    df = fetch_data(_engine, query)
+    # Duplicate base_unit into a user-facing 'unit' column for convenience
+    df["unit"] = df["base_unit"]
+    return df
 
 
 def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
@@ -68,7 +71,10 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
     )
     df = fetch_data(engine, query, {"item_id": item_id})
     if not df.empty:
-        return df.iloc[0].to_dict()
+        result = df.iloc[0].to_dict()
+        # Mirror base_unit into a 'unit' key for downstream consumers
+        result["unit"] = result.get("base_unit")
+        return result
     return None
 
 

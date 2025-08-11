@@ -29,7 +29,7 @@ def _component_unit(
 ) -> Optional[str]:
     if kind == "ITEM":
         db_unit = conn.execute(
-            text("SELECT unit FROM items WHERE item_id=:i"), {"i": cid}
+            text("SELECT base_unit FROM items WHERE item_id=:i"), {"i": cid}
         ).scalar_one_or_none()
         if not db_unit:
             raise ValueError(f"Item {cid} not found")
@@ -90,9 +90,9 @@ def build_components_from_editor(
         if qty is None or float(qty) <= 0:
             errors.append(f"Quantity must be greater than 0 for {label}.")
             continue
-        unit = row.get("unit") or meta.get("unit")
+        unit = row.get("unit") or meta.get("base_unit") or meta.get("unit")
         if meta["kind"] == "ITEM":
-            base_unit = meta.get("unit")
+            base_unit = meta.get("base_unit")
             purchase_unit = meta.get("purchase_unit")
             allowed_units: Set[str] = {
                 u for u in [base_unit, purchase_unit] if u
@@ -583,14 +583,14 @@ def _expand_requirements(
         )
         if row["component_kind"] == "ITEM":
             item = conn.execute(
-                text("SELECT unit, is_active FROM items WHERE item_id=:i"),
+                text("SELECT base_unit, is_active FROM items WHERE item_id=:i"),
                 {"i": row["component_id"]},
             ).mappings().fetchone()
             if not item:
                 raise ValueError(f"Item {row['component_id']} not found")
             if not item["is_active"]:
                 raise ValueError("Inactive item component encountered")
-            if item["unit"] != row["unit"]:
+            if item["base_unit"] != row["unit"]:
                 raise ValueError("Unit mismatch for item component")
             totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
         elif row["component_kind"] == "RECIPE":

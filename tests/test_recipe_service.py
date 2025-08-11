@@ -6,17 +6,17 @@ from sqlalchemy import text
 from app.services import recipe_service
 
 
-def _create_item(conn, name="Flour", unit="kg", stock=20):
+def _create_item(conn, name="Flour", base_unit="kg", purchase_unit="bag", stock=20):
     conn.execute(
         text(
             """
             INSERT INTO items (
-                name, unit, category, sub_category, permitted_departments,
+                name, base_unit, purchase_unit, category, sub_category, permitted_departments,
                 reorder_point, current_stock, notes, is_active
-            ) VALUES (:n, :u, 'cat', 'sub', 'dept', 0, :s, 'n', 1)
+            ) VALUES (:n, :bu, :pu, 'cat', 'sub', 'dept', 0, :s, 'n', 1)
             """
         ),
-        {"n": name, "u": unit, "s": stock},
+        {"n": name, "bu": base_unit, "pu": purchase_unit, "s": stock},
     )
     return conn.execute(
         text("SELECT item_id FROM items WHERE name=:n"), {"n": name}

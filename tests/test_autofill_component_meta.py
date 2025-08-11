@@ -11,7 +11,7 @@ def test_autofill_component_meta_populates_unit_and_category():
         }
     )
     choice_map = {
-        "Flour (1) | kg | Baking | 10.00": {"unit": "kg", "category": "Baking"}
+        "Flour (1) | kg | Baking | 10.00": {"base_unit": "kg", "category": "Baking"}
     }
     result = autofill_component_meta(df, choice_map)
     assert result.loc[0, "unit"] == "kg"

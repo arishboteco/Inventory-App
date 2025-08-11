@@ -25,7 +25,7 @@ def test_build_components_autofill_and_validation():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "unit": "kg",
+            "base_unit": "kg",
             "purchase_unit": "bag",
             "category": "Baking",
             "name": "Flour",
@@ -58,7 +58,7 @@ def test_build_components_detects_unit_mismatch():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "unit": "kg",
+            "base_unit": "kg",
             "purchase_unit": "bag",
             "category": "Baking",
             "name": "Flour",
@@ -84,7 +84,7 @@ def test_build_components_allows_purchase_unit():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "unit": "kg",
+            "base_unit": "kg",
             "purchase_unit": "bag",
             "category": "Baking",
             "name": "Flour",

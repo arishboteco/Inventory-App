@@ -6,7 +6,8 @@ from app.services import item_service
 def test_add_new_item_inserts_row(sqlite_engine):
     details = {
         "name": "Widget",
-        "unit": "pcs",
+        "base_unit": "pcs",
+        "purchase_unit": "box",
         "category": "cat",
         "sub_category": "sub",
         "permitted_departments": "dept",

@@ -6,7 +6,7 @@ def test_build_component_options_basic():
         {
             "item_id": 1,
             "name": "Flour",
-            "unit": "kg",
+            "base_unit": "kg",
             "purchase_unit": "bag",
             "category": "Baking",
             "current_stock": 10,
@@ -31,7 +31,7 @@ def test_build_component_options_basic():
     assert meta[flour_label] == {
         "kind": "ITEM",
         "id": 1,
-        "unit": "kg",
+        "base_unit": "kg",
         "purchase_unit": "bag",
         "category": "Baking",
         "name": "Flour",

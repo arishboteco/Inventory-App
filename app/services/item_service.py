@@ -36,7 +36,7 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
         return pd.DataFrame()
     # Include purchase_unit so UIs can offer both base and purchasing units
     query = (
-        "SELECT item_id, name, unit, purchase_unit, category, sub_category, "
+        "SELECT item_id, name, base_unit, purchase_unit, category, sub_category, "
         "permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
     )
     if not include_inactive:
@@ -62,7 +62,7 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
         )
         return None
     query = (
-        "SELECT item_id, name, unit, purchase_unit, category, sub_category, permitted_departments, "
+        "SELECT item_id, name, base_unit, purchase_unit, category, sub_category, permitted_departments, "
         "reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
     )
     df = fetch_data(engine, query, {"item_id": item_id})
@@ -84,7 +84,7 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """
     if engine is None:
         return False, "Database engine not available."
-    required = ["name", "unit"]
+    required = ["name", "base_unit"]
     if not all(details.get(k) and str(details.get(k)).strip() for k in required):
         missing = [
             k for k in required if not details.get(k) or not str(details.get(k)).strip()
@@ -107,9 +107,14 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
         if not cleaned_permitted_departments:
             cleaned_permitted_departments = None
 
+    purchase_unit_val = details.get("purchase_unit")
+    if isinstance(purchase_unit_val, str):
+        purchase_unit_val = purchase_unit_val.strip() or None
+
     params = {
         "name": details["name"].strip(),
-        "unit": details["unit"].strip(),
+        "base_unit": details["base_unit"].strip(),
+        "purchase_unit": purchase_unit_val,
         "category": (details.get("category", "").strip() or "Uncategorized"),
         "sub_category": (details.get("sub_category", "").strip() or "General"),
         "permitted_departments": cleaned_permitted_departments,  # Use the cleaned value
@@ -120,8 +125,8 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     }
     query = text(
         """
-        INSERT INTO items (name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
-        VALUES (:name, :unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
+        INSERT INTO items (name, base_unit, purchase_unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active)
+        VALUES (:name, :base_unit, :purchase_unit, :category, :sub_category, :permitted_departments, :reorder_point, :current_stock, :notes, :is_active)
         RETURNING item_id;
     """
     )  # No created_at, updated_at
@@ -172,7 +177,8 @@ def update_item_details(
     params = {"item_id": item_id}
     allowed_fields = [
         "name",
-        "unit",
+        "base_unit",
+        "purchase_unit",
         "category",
         "sub_category",
         "permitted_departments",
@@ -182,8 +188,8 @@ def update_item_details(
 
     if "name" in updates and not updates["name"].strip():
         return False, "Item Name cannot be empty."
-    if "unit" in updates and not updates["unit"].strip():
-        return False, "Unit of Measure (UoM) cannot be empty."
+    if "base_unit" in updates and not updates["base_unit"].strip():
+        return False, "Base unit cannot be empty."
 
     for key, value in updates.items():
         if key in allowed_fields:
@@ -443,10 +449,10 @@ def get_suggested_items_for_department(
     cutoff_date_val = datetime.now() - timedelta(days=days_recency)
     query = text(
         """
-        SELECT i.item_id, i.name AS item_name, i.unit, COUNT(ii.item_id) as order_frequency
+        SELECT i.item_id, i.name AS item_name, i.base_unit, COUNT(ii.item_id) as order_frequency
         FROM indent_items ii JOIN items i ON ii.item_id = i.item_id JOIN indents ind ON ii.indent_id = ind.indent_id
         WHERE ind.department = :department_name AND ind.date_submitted >= :cutoff_date AND i.is_active = TRUE
-        GROUP BY i.item_id, i.name, i.unit ORDER BY order_frequency DESC, i.name ASC LIMIT :top_n;
+        GROUP BY i.item_id, i.name, i.base_unit ORDER BY order_frequency DESC, i.name ASC LIMIT :top_n;
     """
     )
     params = {

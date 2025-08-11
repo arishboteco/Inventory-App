@@ -381,10 +381,10 @@ def get_grn_details(_engine: Engine, grn_id: int) -> Optional[Dict[str, Any]]:
                                JOIN suppliers s ON g.supplier_id = s.supplier_id
                                LEFT JOIN purchase_orders po ON g.po_id = po.po_id 
                                WHERE g.grn_id = :grn_id;"""
-    grn_items_query_str = """SELECT gi.grn_item_id, gi.item_id, i.name as item_name, i.unit as item_unit,
+    grn_items_query_str = """SELECT gi.grn_item_id, gi.item_id, i.name as item_name, i.purchase_unit as item_unit,
                                    gi.po_item_id, gi.quantity_ordered_on_po, gi.quantity_received,
                                    gi.unit_price_at_receipt, gi.notes as item_notes
-                               FROM grn_items gi 
+                               FROM grn_items gi
                                JOIN items i ON gi.item_id = i.item_id
                                WHERE gi.grn_id = :grn_id ORDER BY i.name;"""
     try:

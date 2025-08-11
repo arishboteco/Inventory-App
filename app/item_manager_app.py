@@ -92,7 +92,7 @@ def run_dashboard():
                 & (items_df["current_stock_num"] <= items_df["reorder_point_num"])
             )
             low_stock_df = items_df.loc[
-                mask, ["name", "unit", "current_stock", "reorder_point"]
+                mask, ["name", "base_unit", "current_stock", "reorder_point"]
             ].copy()
             low_stock_count = len(low_stock_df)
         except KeyError as e:
@@ -143,7 +143,7 @@ def run_dashboard():
             hide_index=True,
             column_config={
                 "name": st.column_config.TextColumn("Item Name"),
-                "unit": st.column_config.TextColumn(
+                "base_unit": st.column_config.TextColumn(
                     "UoM", width="small", help="Unit of Measure"
                 ),
                 "current_stock": st.column_config.NumberColumn(

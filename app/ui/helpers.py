@@ -130,7 +130,7 @@ def autofill_component_meta(
     for idx, comp in df["component"].items():
         meta = choice_map.get(comp)
         if meta:
-            df.at[idx, "unit"] = meta.get("unit")
+            df.at[idx, "unit"] = meta.get("base_unit")
             df.at[idx, "category"] = meta.get("category")
         else:
             df.at[idx, "unit"] = None

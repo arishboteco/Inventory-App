@@ -24,7 +24,8 @@ def sqlite_engine():
             CREATE TABLE items (
                 item_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
-                unit TEXT,
+                base_unit TEXT,
+                purchase_unit TEXT,
                 category TEXT,
                 sub_category TEXT,
                 permitted_departments TEXT,

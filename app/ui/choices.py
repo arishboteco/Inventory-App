@@ -15,7 +15,7 @@ def build_item_choice_label(item: Mapping) -> str:
     """
     name = item.get("name", "")
     sku = item.get("sku") or item.get("item_id")
-    unit = item.get("unit", "")
+    unit = item.get("base_unit", "")
     category = item.get("category", "")
     stock = item.get("current_stock")
     stock_part = f"{float(stock):.2f}" if isinstance(stock, (int, float)) else "?"
@@ -74,8 +74,7 @@ def build_component_options(
         meta_map[label] = {
             "kind": "ITEM",
             "id": int(item.get("item_id")),
-            # Base unit is stored under "unit" for backward compatibility
-            "unit": item.get("unit"),
+            "base_unit": item.get("base_unit"),
             # Include the purchase unit so downstream UIs can offer a choice
             # between the base unit and the purchase unit when selecting
             # component quantities.

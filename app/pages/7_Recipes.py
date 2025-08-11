@@ -96,8 +96,8 @@ reverse_choice_map = {
 # Build a sorted list of unit choices from both items and sub-recipes.
 # Items can expose a base unit and an optional purchase unit.
 item_units = set(
-    all_items_df["unit"].dropna().astype(str).unique()
-    if "unit" in all_items_df.columns
+    all_items_df["base_unit"].dropna().astype(str).unique()
+    if "base_unit" in all_items_df.columns
     else []
 )
 if "purchase_unit" in all_items_df.columns:
@@ -147,9 +147,9 @@ def build_components(df: pd.DataFrame, current_recipe_id: Optional[int] = None):
         if key in seen:
             errors.append(f"Duplicate component {label}.")
             continue
-        unit = row.get("unit") or meta.get("unit")
+        unit = row.get("unit") or meta.get("base_unit") or meta.get("unit")
         if kind == "ITEM":
-            base_unit = meta.get("unit")
+            base_unit = meta.get("base_unit")
             purchase_unit = meta.get("purchase_unit")
             allowed_units = {u for u in [base_unit, purchase_unit] if u}
             if unit not in allowed_units:

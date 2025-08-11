@@ -9,10 +9,30 @@ Inventory-App is a Streamlit application for managing restaurant inventory. It h
 - Indents and purchase order tracking
 - Dashboard showing key metrics such as low-stock items
 - Unified sidebar navigation for quick access to all pages
+- Automatic unit inference so new items get sensible base and purchase units
 
 ## Changelog
 
 - Recipes editor now reuses the Indents item selector and supports selecting stock items or sub-recipes with automatic unit and category population.
+
+## Unit Inference
+
+The app includes a lightweight **unit inference module** that guesses an item's base unit (e.g. `kg`, `ltr`, `pcs`) and optional purchase unit from its name or category. This removes the need for a separate database table of units – when a new item is added, the service automatically assigns sensible defaults so users don't have to enter them manually.
+
+To extend the behaviour, edit `app/core/unit_inference.py`:
+
+* Add keywords to the `_NAME_KEYWORD_MAP` for name-based matches.
+* Add categories to `_CATEGORY_DEFAULT_MAP` for category-based defaults.
+* Modify or replace the `infer_units` function if more advanced heuristics are needed.
+
+### Example
+
+```python
+from app.services.item_service import add_new_item
+
+# base_unit becomes 'ltr' and purchase_unit 'carton'
+success, msg = add_new_item(engine, {"name": "Whole Milk", "category": "Dairy"})
+```
 
 ## Installation
 

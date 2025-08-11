@@ -13,6 +13,12 @@ dependencies.
 from __future__ import annotations
 
 from typing import Dict, Tuple, Optional
+from pathlib import Path
+
+try:  # yaml is optional but recommended
+    import yaml
+except Exception:  # pragma: no cover - fallback if PyYAML isn't installed
+    yaml = None
 
 # Maps a keyword found in the *item name* to a tuple of (base_unit, purchase_unit)
 _NAME_KEYWORD_MAP: Dict[str, Tuple[str, Optional[str]]] = {
@@ -41,6 +47,42 @@ _CATEGORY_DEFAULT_MAP: Dict[str, Tuple[str, Optional[str]]] = {
     "baking": ("kg", "bag"),
     "bakery": ("pcs", "loaf"),
 }
+
+
+def _parse_units(value) -> Tuple[str, Optional[str]]:
+    """Normalize a value from YAML to a ``(base, purchase)`` tuple."""
+
+    if isinstance(value, str):
+        return value, None
+    if isinstance(value, (list, tuple)):
+        base = value[0]
+        purchase = value[1] if len(value) > 1 else None
+        return base, purchase
+    raise ValueError(f"Invalid units mapping: {value!r}")
+
+
+def _load_overrides() -> None:
+    """Load unit mapping overrides from ``units.yaml`` if present."""
+
+    if yaml is None:  # pragma: no cover - PyYAML not installed
+        return
+
+    config_path = Path(__file__).resolve().parents[2] / "units.yaml"
+    if not config_path.is_file():
+        return
+    try:
+        data = yaml.safe_load(config_path.read_text()) or {}
+    except Exception:  # pragma: no cover - invalid YAML
+        return
+
+    for key, units in (data.get("name_keywords") or {}).items():
+        _NAME_KEYWORD_MAP[key.lower()] = _parse_units(units)
+
+    for key, units in (data.get("categories") or {}).items():
+        _CATEGORY_DEFAULT_MAP[key.lower()] = _parse_units(units)
+
+
+_load_overrides()
 
 
 def infer_units(name: str, category: str | None) -> tuple[str, str | None]:

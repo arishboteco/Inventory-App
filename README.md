@@ -19,7 +19,16 @@ Inventory-App is a Streamlit application for managing restaurant inventory. It h
 
 The app includes a lightweight **unit inference module** that guesses an item's base unit (e.g. `kg`, `ltr`, `pcs`) and optional purchase unit from its name or category. This removes the need for a separate database table of units – when a new item is added, the service automatically assigns sensible defaults so users don't have to enter them manually.
 
-To extend the behaviour, edit `app/core/unit_inference.py`:
+You can override or extend these heuristics without touching the code by creating a `units.yaml` file in the project root. The file accepts two sections – `name_keywords` and `categories` – whose entries override the default mappings:
+
+```yaml
+name_keywords:
+  tofu: ["pcs", "block"]
+categories:
+  spices: ["g", "jar"]
+```
+
+To extend the behaviour programmatically, edit `app/core/unit_inference.py`:
 
 * Add keywords to the `_NAME_KEYWORD_MAP` for name-based matches.
 * Add categories to `_CATEGORY_DEFAULT_MAP` for category-based defaults.

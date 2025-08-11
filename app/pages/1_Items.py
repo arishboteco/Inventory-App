@@ -114,16 +114,16 @@ def infer_item_units() -> None:
 
 # --- ADD NEW ITEM Section ---
 with st.expander("➕ Add New Inventory Item", expanded=False):
+    st.text_input(
+        "Item Name*",
+        help="Unique name for the item.",
+        key="widget_items_add_form_name_input",
+        on_change=infer_item_units,
+    )
     with st.form("widget_items_add_form", clear_on_submit=True):
         st.subheader("Enter New Item Details")
         col1_add_items, col2_add_items = st.columns(2)
         with col1_add_items:
-            name_add_widget = st.text_input(
-                "Item Name*",
-                help="Unique name for the item.",
-                key="widget_items_add_form_name_input",
-                on_change=infer_item_units,
-            )
             base_unit_add_widget = st.text_input(
                 "Base Unit*",
                 help="e.g., KG, LTR, PCS",
@@ -177,12 +177,14 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
         )
 
         suggested_base, suggested_purchase = infer_units(
-            name_add_widget.strip(), category_add_widget.strip() or None
+            st.session_state.get("widget_items_add_form_name_input", "").strip(),
+            category_add_widget.strip() or None,
         )
 
-        if st.form_submit_button(
-            "💾 Add Item to Master"
-        ):
+        if st.form_submit_button("💾 Add Item to Master"):
+            name_add_widget = st.session_state.get(
+                "widget_items_add_form_name_input", ""
+            )
             is_valid_add = True
             if not name_add_widget.strip():
                 show_warning("Item Name is required.")
@@ -217,6 +219,7 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                         f"{message_add} Use the sidebar to record a stock movement."
                     )
                     fetch_all_items_df_for_items_page.clear()
+                    st.session_state.widget_items_add_form_name_input = ""
                     st.rerun()
                 else:
                     show_error(message_add)

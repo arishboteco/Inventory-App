@@ -25,6 +25,7 @@ try:
     from app.db.database_utils import connect_db
     from app.services import item_service
     from app.core.constants import FILTER_ALL_CATEGORIES, FILTER_ALL_SUBCATEGORIES
+    from app.core.unit_inference import infer_units
 except ImportError as e:
     show_error(f"Import error in 1_Items.py: {e}.")
     st.stop()
@@ -149,6 +150,17 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
             key="widget_items_add_form_notes_area",
         )
 
+        # Display inferred unit suggestions when the user leaves the unit
+        # fields blank.  This gives them a chance to confirm or override
+        # before submission.
+        suggested_base, suggested_purchase = infer_units(
+            name_add_widget.strip(), category_add_widget.strip() or None
+        )
+        if not base_unit_add_widget.strip():
+            st.caption(f"Inferred base unit: {suggested_base}")
+        if not purchase_unit_add_widget.strip() and suggested_purchase:
+            st.caption(f"Inferred purchase unit: {suggested_purchase}")
+
         if st.form_submit_button(
             "💾 Add Item to Master"
         ):
@@ -156,15 +168,19 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
             if not name_add_widget.strip():
                 show_warning("Item Name is required.")
                 is_valid_add = False
-            if not base_unit_add_widget.strip():
+            base_unit_final = base_unit_add_widget.strip() or suggested_base
+            purchase_unit_final = (
+                purchase_unit_add_widget.strip() or suggested_purchase
+            )
+            if not base_unit_final:
                 show_warning("Base Unit is required.")
                 is_valid_add = False
 
             if is_valid_add:
                 item_data_to_add = {
                     "name": name_add_widget.strip(),
-                    "base_unit": base_unit_add_widget.strip(),
-                    "purchase_unit": purchase_unit_add_widget.strip() or None,
+                    "base_unit": base_unit_final,
+                    "purchase_unit": purchase_unit_final,
                     "category": category_add_widget.strip() or "Uncategorized",
                     "sub_category": sub_category_add_widget.strip() or "General",
                     "permitted_departments": permitted_departments_add_widget.strip()

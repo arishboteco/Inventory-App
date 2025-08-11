@@ -34,7 +34,11 @@ def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.Data
             "ERROR [item_service.get_all_items_with_stock]: Database engine not available."
         )
         return pd.DataFrame()
-    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
+    # Include purchase_unit so UIs can offer both base and purchasing units
+    query = (
+        "SELECT item_id, name, unit, purchase_unit, category, sub_category, "
+        "permitted_departments, reorder_point, current_stock, notes, is_active FROM items"
+    )
     if not include_inactive:
         query += " WHERE is_active = TRUE"
     query += " ORDER BY name;"
@@ -57,7 +61,10 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
             "ERROR [item_service.get_item_details]: Database engine not available."
         )
         return None
-    query = "SELECT item_id, name, unit, category, sub_category, permitted_departments, reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
+    query = (
+        "SELECT item_id, name, unit, purchase_unit, category, sub_category, permitted_departments, "
+        "reorder_point, current_stock, notes, is_active FROM items WHERE item_id = :item_id;"
+    )
     df = fetch_data(engine, query, {"item_id": item_id})
     if not df.empty:
         return df.iloc[0].to_dict()

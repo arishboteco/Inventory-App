@@ -7,6 +7,7 @@ def test_build_component_options_basic():
             "item_id": 1,
             "name": "Flour",
             "unit": "kg",
+            "purchase_unit": "bag",
             "category": "Baking",
             "current_stock": 10,
         }
@@ -31,6 +32,7 @@ def test_build_component_options_basic():
         "kind": "ITEM",
         "id": 1,
         "unit": "kg",
+        "purchase_unit": "bag",
         "category": "Baking",
         "name": "Flour",
     }

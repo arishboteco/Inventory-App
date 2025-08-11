@@ -93,12 +93,22 @@ def build_components_from_editor(
         unit = row.get("unit") or meta.get("unit")
         if meta["kind"] == "ITEM":
             base_unit = meta.get("unit")
-            if unit != base_unit:
-                errors.append(
-                    f"Unit mismatch for {meta.get('name')}. Use {base_unit}."
-                )
+            purchase_unit = meta.get("purchase_unit")
+            allowed_units: Set[str] = {
+                u for u in [base_unit, purchase_unit] if u
+            }
+            if unit not in allowed_units:
+                if purchase_unit:
+                    errors.append(
+                        f"Unit mismatch for {meta.get('name')}. Use {base_unit} or {purchase_unit}."
+                    )
+                else:
+                    errors.append(
+                        f"Unit mismatch for {meta.get('name')}. Use {base_unit}."
+                    )
                 continue
-            unit = base_unit
+            # Normalize unit to the provided value (defaulting to base unit)
+            unit = unit or base_unit
         components.append(
             {
                 "component_kind": meta["kind"],

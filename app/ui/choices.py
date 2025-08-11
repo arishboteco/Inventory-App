@@ -74,7 +74,12 @@ def build_component_options(
         meta_map[label] = {
             "kind": "ITEM",
             "id": int(item.get("item_id")),
+            # Base unit is stored under "unit" for backward compatibility
             "unit": item.get("unit"),
+            # Include the purchase unit so downstream UIs can offer a choice
+            # between the base unit and the purchase unit when selecting
+            # component quantities.
+            "purchase_unit": item.get("purchase_unit"),
             "category": item.get("category"),
             "name": item.get("name"),
         }

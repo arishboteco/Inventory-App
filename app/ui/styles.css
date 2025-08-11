@@ -67,3 +67,9 @@ body { font-family: 'Roboto', sans-serif; }
     padding: 0.125rem 0.5rem;
 }
 
+/* High contrast styling for dropdowns in data editors */
+div[data-testid="stDataEditor"] select {
+    background-color: #004085;
+    color: #ffffff;
+}
+

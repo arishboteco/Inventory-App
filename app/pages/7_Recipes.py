@@ -93,6 +93,24 @@ reverse_choice_map = {
     (meta["kind"], meta["id"]): label for label, meta in component_choice_map.items()
 }
 
+# Build a sorted list of unit choices from both items and sub-recipes.
+# Items can expose a base unit and an optional purchase unit.
+item_units = set(
+    all_items_df["unit"].dropna().astype(str).unique()
+    if "unit" in all_items_df.columns
+    else []
+)
+if "purchase_unit" in all_items_df.columns:
+    item_units.update(
+        all_items_df["purchase_unit"].dropna().astype(str).unique()
+    )
+recipe_units = set(
+    sub_recipes_df["default_yield_unit"].dropna().astype(str).unique()
+    if "default_yield_unit" in sub_recipes_df.columns
+    else []
+)
+unit_choices = sorted(item_units.union(recipe_units))
+
 
 def sync_component_meta(editor_key: str) -> None:
     """Update session state's dataframe with component defaults."""
@@ -130,6 +148,21 @@ def build_components(df: pd.DataFrame, current_recipe_id: Optional[int] = None):
             errors.append(f"Duplicate component {label}.")
             continue
         unit = row.get("unit") or meta.get("unit")
+        if kind == "ITEM":
+            base_unit = meta.get("unit")
+            purchase_unit = meta.get("purchase_unit")
+            allowed_units = {u for u in [base_unit, purchase_unit] if u}
+            if unit not in allowed_units:
+                if purchase_unit:
+                    errors.append(
+                        f"Unit mismatch for {meta.get('name')}. Use {base_unit} or {purchase_unit}."
+                    )
+                else:
+                    errors.append(
+                        f"Unit mismatch for {meta.get('name')}. Use {base_unit}."
+                    )
+                continue
+            unit = unit or base_unit
         components.append(
             {
                 "component_kind": kind,
@@ -214,7 +247,9 @@ with st.expander("➕ Add New Recipe", expanded=False):
                 "quantity": st.column_config.NumberColumn(
                     "Qty", min_value=0.0, step=0.01, format="%.2f"
                 ),
-                "unit": st.column_config.TextColumn("Unit", disabled=True),
+                "unit": st.column_config.SelectboxColumn(
+                    "Unit", options=unit_choices, default=None
+                ),
                 "notes": st.column_config.TextColumn("Notes"),
             },
             key="pg7_add_recipe_editor",
@@ -360,7 +395,9 @@ else:
                             "quantity": st.column_config.NumberColumn(
                                 "Qty", min_value=0.0, step=0.01, format="%.2f"
                             ),
-                            "unit": st.column_config.TextColumn("Unit", disabled=True),
+                            "unit": st.column_config.SelectboxColumn(
+                                "Unit", options=unit_choices, default=None
+                            ),
                             "notes": st.column_config.TextColumn("Notes"),
                         },
                         key=key_edit,

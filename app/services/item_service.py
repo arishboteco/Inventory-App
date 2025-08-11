@@ -11,6 +11,7 @@ from sqlalchemy.engine import Engine
 
 from app.core.logging import get_logger
 from app.db.database_utils import fetch_data
+from app.core.unit_inference import infer_units
 
 logger = get_logger(__name__)
 
@@ -84,6 +85,25 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """
     if engine is None:
         return False, "Database engine not available."
+
+    # ------------------------------------------------------------------
+    # Infer units if they were not provided by the caller.  The inference
+    # logic is intentionally lightweight and lives in app.core.unit_inference.
+    # This allows the service to accept minimal details while still storing
+    # sensible defaults.
+    # ------------------------------------------------------------------
+    if not details.get("base_unit") or not str(details.get("base_unit")).strip() or not details.get("purchase_unit") or not str(details.get("purchase_unit")).strip():
+        inferred_base, inferred_purchase = infer_units(
+            details.get("name", ""), details.get("category")
+        )
+        if not details.get("base_unit") or not str(details.get("base_unit")).strip():
+            details["base_unit"] = inferred_base
+        if (
+            (not details.get("purchase_unit") or not str(details.get("purchase_unit")).strip())
+            and inferred_purchase
+        ):
+            details["purchase_unit"] = inferred_purchase
+
     required = ["name", "base_unit"]
     if not all(details.get(k) and str(details.get(k)).strip() for k in required):
         missing = [

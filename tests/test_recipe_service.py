@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy import text
 
-from app.services import recipe_service
+from legacy_streamlit.services import recipe_service
 
 
 def _create_item(conn, name="Flour", base_unit="kg", purchase_unit="bag", stock=20):

@@ -1,4 +1,4 @@
-# app/pages/1_Items.py
+# legacy_streamlit/pages/1_Items.py
 import os
 import sys
 import streamlit as st
@@ -11,9 +11,9 @@ _REPO_ROOT = os.path.abspath(os.path.join(_CUR_DIR, os.pardir, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.ui.theme import load_css, render_sidebar_logo
-from app.ui.navigation import render_sidebar_nav
-from app.ui import (
+from legacy_streamlit.ui.theme import load_css, render_sidebar_logo
+from legacy_streamlit.ui.navigation import render_sidebar_nav
+from legacy_streamlit.ui import (
     pagination_controls,
     render_search_toggle,
     show_success,
@@ -22,10 +22,10 @@ from app.ui import (
 )
 
 try:
-    from app.db.database_utils import connect_db
-    from app.services import item_service
-    from app.core.constants import FILTER_ALL_CATEGORIES, FILTER_ALL_SUBCATEGORIES
-    from app.core.unit_inference import infer_units
+    from legacy_streamlit.db.database_utils import connect_db
+    from legacy_streamlit.services import item_service
+    from legacy_streamlit.core.constants import FILTER_ALL_CATEGORIES, FILTER_ALL_SUBCATEGORIES
+    from legacy_streamlit.core.unit_inference import infer_units
 except ImportError as e:
     show_error(f"Import error in 1_Items.py: {e}.")
     st.stop()

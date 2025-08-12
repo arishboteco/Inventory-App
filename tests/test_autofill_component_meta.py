@@ -1,5 +1,5 @@
 import pandas as pd
-from app.ui.helpers import autofill_component_meta
+from legacy_streamlit.ui.helpers import autofill_component_meta
 
 
 def test_autofill_component_meta_populates_unit_and_category():

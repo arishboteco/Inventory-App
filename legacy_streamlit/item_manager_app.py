@@ -1,17 +1,17 @@
-# app/item_manager_app.py
+# legacy_streamlit/item_manager_app.py
 
 import os
 import sys
 from pathlib import Path
 
 # Ensure this file works even when executed using a relative path (e.g.
-# `streamlit run app/item_manager_app.py`).
+# `streamlit run legacy_streamlit/item_manager_app.py`).
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT = os.path.abspath(os.path.join(_CURRENT_DIR, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.core.logging import configure_logging, flush_logs, LOG_FILE
+from legacy_streamlit.core.logging import configure_logging, flush_logs, LOG_FILE
 
 # Configure logging before importing modules that use it
 configure_logging()
@@ -19,21 +19,21 @@ configure_logging()
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from app.ui.theme import load_css, render_sidebar_logo
-from app.ui.navigation import render_sidebar_nav
-from app.ui.helpers import read_recent_logs
+from legacy_streamlit.ui.theme import load_css, render_sidebar_logo
+from legacy_streamlit.ui.navigation import render_sidebar_nav
+from legacy_streamlit.ui.helpers import read_recent_logs
 
 # --- Import from our new/refactored modules ---
-from app.core.constants import STATUS_SUBMITTED
-from app.db.database_utils import connect_db
-from app.services import item_service
-from app.services import supplier_service
-from app.services import indent_service
-from app.auth.auth import login_sidebar
+from legacy_streamlit.core.constants import STATUS_SUBMITTED
+from legacy_streamlit.db.database_utils import connect_db
+from legacy_streamlit.services import item_service
+from legacy_streamlit.services import supplier_service
+from legacy_streamlit.services import indent_service
+from legacy_streamlit.auth.auth import login_sidebar
 
-# STATUS_SUBMITTED is already imported from app.core.constants above, no need to re-import separately
+# STATUS_SUBMITTED is already imported from legacy_streamlit.core.constants above, no need to re-import separately
 
-# NOTE: Item Master functions and Department Helper functions have been MOVED to app/services/item_service.py
+# NOTE: Item Master functions and Department Helper functions have been MOVED to legacy_streamlit/services/item_service.py
 
 
 # ─────────────────────────────────────────────────────────

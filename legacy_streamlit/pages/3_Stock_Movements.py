@@ -1,4 +1,4 @@
-# app/pages/3_Stock_Movements.py
+# legacy_streamlit/pages/3_Stock_Movements.py
 import os
 import sys
 import streamlit as st
@@ -12,19 +12,19 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 try:
-    from app.db.database_utils import connect_db
-    from app.services import item_service
-    from app.services import stock_service
-    from app.auth.auth import get_current_user_id
-    from app.core.constants import (
+    from legacy_streamlit.db.database_utils import connect_db
+    from legacy_streamlit.services import item_service
+    from legacy_streamlit.services import stock_service
+    from legacy_streamlit.auth.auth import get_current_user_id
+    from legacy_streamlit.core.constants import (
         TX_RECEIVING,
         TX_ADJUSTMENT,
         TX_WASTAGE,
         PLACEHOLDER_SELECT_ITEM,
     )
-    from app.ui.theme import load_css, render_sidebar_logo
-    from app.ui.navigation import render_sidebar_nav
-    from app.ui import show_success, show_error, show_warning
+    from legacy_streamlit.ui.theme import load_css, render_sidebar_logo
+    from legacy_streamlit.ui.navigation import render_sidebar_nav
+    from legacy_streamlit.ui import show_success, show_error, show_warning
 except ImportError as e:
     show_error(f"Import error in 3_Stock_Movements.py: {e}.")
     st.stop()

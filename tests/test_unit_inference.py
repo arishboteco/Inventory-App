@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from app.services import item_service
+from legacy_streamlit.services import item_service
 
 
 def test_suggest_from_similar_item(sqlite_engine):

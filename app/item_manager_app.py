@@ -10,7 +10,7 @@ _REPO_ROOT = os.path.abspath(os.path.join(_CURRENT_DIR, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.core.logging import configure_logging
+from app.core.logging import configure_logging, flush_logs
 
 # Configure logging before importing modules that use it
 configure_logging()
@@ -43,9 +43,12 @@ def run_dashboard():
     )
     load_css()
     render_sidebar_logo()
-    render_sidebar_nav()
+    render_sidebar_nav(include_clear_logs_button=False)
     if not login_sidebar():
         st.stop()
+    if st.sidebar.button("Clear Logs"):
+        flush_logs()
+        st.toast("Logs cleared")
     st.title("🍲 Restaurant Inventory Dashboard")
     st.caption(
         f"Current Overview as of: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"

@@ -243,6 +243,111 @@ def record_stock_transaction(
         return False
 
 
+def record_stock_transactions_bulk(
+    db_engine: Engine, transactions: List[Dict]
+) -> bool:
+    """Record multiple stock transactions inside a single DB transaction.
+
+    Args:
+        db_engine: SQLAlchemy Engine instance.
+        transactions: List of transaction dictionaries accepted by
+            :func:`record_stock_transaction`.
+
+    Returns:
+        True if all transactions are recorded successfully, otherwise False.
+    """
+    if not transactions:
+        return True
+
+    try:
+        with db_engine.begin() as conn:
+            for tx in transactions:
+                success = record_stock_transaction(
+                    item_id=tx.get("item_id"),
+                    quantity_change=tx.get("quantity_change", 0),
+                    transaction_type=tx.get("transaction_type"),
+                    user_id=tx.get("user_id"),
+                    related_mrn=tx.get("related_mrn"),
+                    related_po_id=tx.get("related_po_id"),
+                    notes=tx.get("notes"),
+                    db_connection_param=conn,
+                )
+                if not success:
+                    raise sqlalchemy_exc.SQLAlchemyError(
+                        "Failed to record stock transaction"
+                    )
+        return True
+    except Exception as e:
+        logger.error(
+            "ERROR [stock_service.record_stock_transactions_bulk]: %s", e
+        )
+        return False
+
+
+def remove_stock_transactions_bulk(
+    db_engine: Engine, transaction_ids: List[int]
+) -> bool:
+    """Remove multiple stock transactions and reverse their stock effects.
+
+    Args:
+        db_engine: SQLAlchemy Engine instance.
+        transaction_ids: List of transaction IDs to remove.
+
+    Returns:
+        True if all removals succeed, otherwise False.
+    """
+    if not transaction_ids:
+        return True
+
+    select_query = text(
+        "SELECT item_id, quantity_change FROM stock_transactions WHERE transaction_id = :tid"
+    )
+    update_query = text(
+        "UPDATE items SET current_stock = COALESCE(current_stock, 0) - :qty, updated_at = NOW() WHERE item_id = :item_id"
+    )
+    delete_query = text(
+        "DELETE FROM stock_transactions WHERE transaction_id = :tid"
+    )
+
+    try:
+        with db_engine.begin() as conn:
+            for tid in transaction_ids:
+                row = conn.execute(select_query, {"tid": tid}).fetchone()
+                if row is None:
+                    raise ValueError(f"Transaction ID {tid} does not exist")
+                item_id, qty = row
+                upd_result = conn.execute(
+                    update_query, {"qty": qty, "item_id": item_id}
+                )
+                if upd_result.rowcount == 0:
+                    raise sqlalchemy_exc.SQLAlchemyError(
+                        f"Failed to update item {item_id} when removing transaction {tid}"
+                    )
+                del_result = conn.execute(delete_query, {"tid": tid})
+                if del_result.rowcount == 0:
+                    raise sqlalchemy_exc.SQLAlchemyError(
+                        f"Failed to delete transaction {tid}"
+                    )
+
+        # Clear caches that depend on these tables
+        get_stock_transactions.clear()
+        try:
+            from app.services import item_service
+
+            item_service.get_all_items_with_stock.clear()
+        except ImportError:
+            logger.warning(
+                "WARNING [stock_service.remove_stock_transactions_bulk]: Could not import item_service to clear its cache."
+            )
+
+        return True
+    except Exception as e:
+        logger.error(
+            "ERROR [stock_service.remove_stock_transactions_bulk]: %s", e
+        )
+        return False
+
+
 @st.cache_data(ttl=120, show_spinner="Fetching transaction history...")
 def get_stock_transactions(
     _engine: Engine,

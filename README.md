@@ -60,6 +60,15 @@ Launch the Streamlit app from the repository root:
 streamlit run app/item_manager_app.py
 ```
 
+### Django development server
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env  # set your values
+python manage.py migrate
+python manage.py runserver
+```
+
 ## Configuration
 
 Before running the app, create a `.streamlit/secrets.toml` file containing your database credentials. An example file can be found at `.streamlit/secrets.toml` in this repository—copy it and replace the placeholder values with your own. The committed sample uses obvious placeholders so you must supply real values.

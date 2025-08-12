@@ -1,5 +1,6 @@
 # app/services/item_service.py
 from datetime import datetime, timedelta
+import re
 import traceback
 from typing import Any, Optional, Dict, List, Tuple, Set
 
@@ -78,6 +79,40 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
     return None
 
 
+def suggest_category_and_units(
+    engine: Engine, item_name: str
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """Suggest unit and category for ``item_name`` based on similar DB entries.
+
+    The function searches the ``items`` table for existing items whose names
+    contain any token from ``item_name``. If a match is found the matched
+    item's ``base_unit``, ``purchase_unit`` and ``category`` are returned.
+    If no similar item exists, ``(None, None, None)`` is returned.
+    """
+
+    if engine is None or not item_name:
+        return None, None, None
+
+    tokens = [t for t in re.split(r"\W+", item_name.lower()) if t]
+    if not tokens:
+        return None, None, None
+
+    query = text(
+        "SELECT base_unit, purchase_unit, category FROM items "
+        "WHERE lower(name) LIKE :pattern LIMIT 1"
+    )
+
+    with engine.connect() as connection:
+        for token in tokens:
+            row = (
+                connection.execute(query, {"pattern": f"%{token}%"}).mappings().first()
+            )
+            if row:
+                return row["base_unit"], row["purchase_unit"], row["category"]
+
+    return None, None, None
+
+
 def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
     """
     Adds a new item to the database.
@@ -93,12 +128,29 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
         return False, "Database engine not available."
 
     # ------------------------------------------------------------------
-    # Infer units if they were not provided by the caller.  The inference
-    # logic is intentionally lightweight and lives in app.core.unit_inference.
-    # This allows the service to accept minimal details while still storing
-    # sensible defaults.
+    # Suggest units and category from similar existing items.
     # ------------------------------------------------------------------
-    if not details.get("base_unit") or not str(details.get("base_unit")).strip() or not details.get("purchase_unit") or not str(details.get("purchase_unit")).strip():
+    s_base, s_purchase, s_category = suggest_category_and_units(
+        engine, details.get("name", "")
+    )
+    if s_base and (not details.get("base_unit") or not str(details.get("base_unit")).strip()):
+        details["base_unit"] = s_base
+    if s_purchase and (
+        not details.get("purchase_unit") or not str(details.get("purchase_unit")).strip()
+    ):
+        details["purchase_unit"] = s_purchase
+    if s_category and not details.get("category"):
+        details["category"] = s_category
+
+    # ------------------------------------------------------------------
+    # Fallback to heuristic inference if still missing units.
+    # ------------------------------------------------------------------
+    if (
+        not details.get("base_unit")
+        or not str(details.get("base_unit")).strip()
+        or not details.get("purchase_unit")
+        or not str(details.get("purchase_unit")).strip()
+    ):
         inferred_base, inferred_purchase = infer_units(
             details.get("name", ""), details.get("category")
         )
@@ -200,7 +252,20 @@ def add_items_bulk(engine: Engine, items: List[Dict[str, Any]]) -> Tuple[int, Li
     errors: List[str] = []
 
     for idx, details in enumerate(items):
-        # Infer units if necessary
+        # Suggest details from similar existing items
+        s_base, s_purchase, s_category = suggest_category_and_units(
+            engine, details.get("name", "")
+        )
+        if s_base and (not details.get("base_unit") or not str(details.get("base_unit")).strip()):
+            details["base_unit"] = s_base
+        if s_purchase and (
+            not details.get("purchase_unit") or not str(details.get("purchase_unit")).strip()
+        ):
+            details["purchase_unit"] = s_purchase
+        if s_category and not details.get("category"):
+            details["category"] = s_category
+
+        # Infer units heuristically if still missing
         if (
             not details.get("base_unit")
             or not str(details.get("base_unit")).strip()

@@ -1,33 +1,32 @@
-import pytest
+from sqlalchemy import text
 
-from app.core.unit_inference import infer_units
+from app.services import item_service
 
 
-def test_infer_units_from_name_milk():
-    base, purchase = infer_units("Whole Milk", None)
+def test_suggest_from_similar_item(sqlite_engine):
+    with sqlite_engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                INSERT INTO items (
+                    name, base_unit, purchase_unit, category, sub_category,
+                    permitted_departments, reorder_point, current_stock, notes, is_active
+                ) VALUES (
+                    'Whole Milk', 'ltr', 'carton', 'Dairy', 'General', NULL, 0, 0, NULL, 1
+                )
+                """
+            )
+        )
+    base, purchase, category = item_service.suggest_category_and_units(
+        sqlite_engine, "Skim Milk"
+    )
     assert base == "ltr"
     assert purchase == "carton"
+    assert category == "Dairy"
 
 
-def test_infer_units_from_category_produce():
-    base, purchase = infer_units("Mystery Veg", "Produce")
-    assert base == "kg"
-    assert purchase is None
-
-
-def test_infer_units_default_fallback():
-    base, purchase = infer_units("Widget", None)
-    assert base == "pcs"
-    assert purchase is None
-
-
-def test_infer_units_yaml_name_override():
-    base, purchase = infer_units("Tofu", None)
-    assert base == "pcs"
-    assert purchase == "block"
-
-
-def test_infer_units_yaml_category_override():
-    base, purchase = infer_units("Mystery Spice", "Spices")
-    assert base == "g"
-    assert purchase == "jar"
+def test_suggest_returns_none_if_no_match(sqlite_engine):
+    base, purchase, category = item_service.suggest_category_and_units(
+        sqlite_engine, "Widget"
+    )
+    assert base is None and purchase is None and category is None

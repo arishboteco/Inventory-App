@@ -61,7 +61,7 @@ ROOT_URLCONF = "inventory_app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -80,7 +80,7 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": env.db("DATABASE_URL"),
+    "default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3"),
 }
 
 

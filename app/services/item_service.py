@@ -79,20 +79,26 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
     return None
 
 
+@st.cache_data(ttl=300)
 def suggest_category_and_units(
-    engine: Engine, item_name: str
+    _engine: Engine, item_name: str
 ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
-    """Suggest unit and category for ``item_name`` based on similar DB entries.
+    """Guess units and category for a new item based on existing entries.
 
-    The function searches the ``items`` table for existing items whose names
-    contain any token from ``item_name``. If a match is found the matched
-    item's ``base_unit``, ``purchase_unit`` and ``category`` are returned.
-    If no similar item exists, ``(None, None, None)`` is returned.
+    The database is queried for items whose names share at least one token
+    with ``item_name``.  When a match is found, the matched row's
+    ``base_unit``, ``purchase_unit`` and ``category`` are returned.  If no
+    match exists the function returns ``(None, None, None)`` so callers can
+    fall back to heuristic inference.
     """
 
-    if engine is None or not item_name:
+    if _engine is None or not item_name:
         return None, None, None
 
+    # Break the item name into alphanumeric tokens and search for the first
+    # existing item that contains any of them.  This simple heuristic allows
+    # users to benefit from previously entered items without maintaining a
+    # separate lookup table.
     tokens = [t for t in re.split(r"\W+", item_name.lower()) if t]
     if not tokens:
         return None, None, None
@@ -102,11 +108,9 @@ def suggest_category_and_units(
         "WHERE lower(name) LIKE :pattern LIMIT 1"
     )
 
-    with engine.connect() as connection:
+    with _engine.connect() as conn:
         for token in tokens:
-            row = (
-                connection.execute(query, {"pattern": f"%{token}%"}).mappings().first()
-            )
+            row = conn.execute(query, {"pattern": f"%{token}%"}).mappings().first()
             if row:
                 return row["base_unit"], row["purchase_unit"], row["category"]
 

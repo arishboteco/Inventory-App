@@ -66,6 +66,28 @@ def test_get_item_details_includes_unit(sqlite_engine):
     assert details["unit"] == "pcs"
 
 
+def test_suggest_category_and_units(sqlite_engine):
+    """Database-backed suggestions should return units and category."""
+    with sqlite_engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                INSERT INTO items (
+                    name, base_unit, purchase_unit, category, sub_category,
+                    permitted_departments, reorder_point, current_stock, notes, is_active
+                ) VALUES (
+                    'Fresh Milk', 'L', 'case', 'Dairy', 'General', 'Kitchen', 0, 0, '', 1
+                )
+                """
+            )
+        )
+
+    base, purchase, category = item_service.suggest_category_and_units(
+        sqlite_engine, "Whole Milk"
+    )
+    assert (base, purchase, category) == ("L", "case", "Dairy")
+
+
 def test_add_items_bulk_inserts_rows(sqlite_engine):
     items = [
         {

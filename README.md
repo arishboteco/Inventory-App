@@ -78,13 +78,24 @@ DB_NAME
 ### Logging
 
 Logging output is written to a rotating file handler (`app.log` by default).
-You can control verbosity or the log file location with environment variables:
+You can control verbosity, log file location, and retention with environment variables:
 
 - `LOG_LEVEL` – set the minimum log level (`DEBUG`, `INFO`, etc.). Defaults to
   `INFO`.
 - `LOG_FILE` – path to the log file. Defaults to `app.log` in the project root.
+- `LOG_RETENTION_DAYS` – number of days to keep rotated log files. Defaults to
+  `30`.
 
-Call `flush_logs()` from `app.core.logging` to truncate the log file when
+Example `.env` entries:
+
+```
+LOG_LEVEL=INFO
+LOG_FILE=app.log
+LOG_RETENTION_DAYS=30
+```
+
+Rotated logs older than the retention period are removed when logging is configured.
+Call `flush_logs()` from `app.core.logging` to truncate the current log file when
 needed.
 
 ## Customizing the Sidebar Logo

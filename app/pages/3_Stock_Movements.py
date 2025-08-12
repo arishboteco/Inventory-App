@@ -207,9 +207,7 @@ with item_col_main_pg3:
             db_engine, selected_item_id_for_stock_disp_pg3
         )
         if item_details_stock_disp_pg3:
-            st.caption(
-                f"Current Stock: {item_details_stock_disp_pg3.get('current_stock', 0):.2f} {item_details_stock_disp_pg3.get('unit', '')}"
-            )
+            st.caption(f"Current Stock: {item_details_stock_disp_pg3.get('current_stock', 0):.2f} {item_details_stock_disp_pg3['unit']}")
         else:
             st.caption("Could not fetch current stock details for the selected item.")
 st.divider()
@@ -222,21 +220,25 @@ with st.form(form_key_main_pg3, clear_on_submit=False):
         qty_label_form_pg3 = "Quantity*"
         PRACTICAL_MAX_NEGATIVE_NUMBER_PG3 = -1.7976931348623157e308
         min_widget_val_form_pg3 = 0.01
-        help_text_qty_form_pg3 = "Enter the quantity for this movement."
+        help_text_qty_form_pg3 = (
+            "Enter the quantity for this movement. Quantities are recorded in base units."
+        )
 
         if active_section_prefix_val_pg3 == "receive":
             qty_label_form_pg3 = "Quantity Received*"
-            help_text_qty_form_pg3 = "Quantity of goods received."
+            help_text_qty_form_pg3 = (
+                "Quantity of goods received. Quantities are recorded in base units."
+            )
         elif active_section_prefix_val_pg3 == "adjust":
             qty_label_form_pg3 = "Quantity Adjusted*"
             min_widget_val_form_pg3 = PRACTICAL_MAX_NEGATIVE_NUMBER_PG3
             help_text_qty_form_pg3 = (
-                "Positive value for stock increase, negative value for decrease."
+                "Positive value for stock increase, negative value for decrease. Quantities are recorded in base units."
             )
         elif active_section_prefix_val_pg3 == "waste":
             qty_label_form_pg3 = "Quantity Wasted*"
             help_text_qty_form_pg3 = (
-                "Quantity of items wasted (will be deducted from stock)."
+                "Quantity of items wasted (will be deducted from stock). Quantities are recorded in base units."
             )
 
         # MODIFIED: Default initial_qty_value for number_input

@@ -108,7 +108,7 @@ item_options_with_placeholder_list_pg3 = [
 ] + active_item_options_list_pg3
 
 # --- BULK STOCK TRANSACTIONS UPLOAD ---
-with st.expander("\ud83d\udce4 Bulk Upload Stock Transactions", expanded=False):
+with st.expander("📤 Bulk Upload Stock Transactions", expanded=False):
     st.write(
         "Upload a CSV file with columns such as `item_id`, `quantity_change`, `transaction_type`, "
         "`user_id`, and `notes`."

@@ -97,6 +97,32 @@ def infer_item_units() -> None:
     if not item_name:
         return
 
+    # Try DB-based suggestions first
+    if engine is not None:
+        s_base, s_purchase, s_category = item_service.suggest_category_and_units(
+            engine, item_name
+        )
+        updated = False
+        if s_base and not st.session_state.get(
+            "widget_items_add_form_base_unit_input", ""
+        ).strip():
+            st.session_state.widget_items_add_form_base_unit_input = s_base
+            updated = True
+        if s_purchase and not st.session_state.get(
+            "widget_items_add_form_purchase_unit_input", ""
+        ).strip():
+            st.session_state.widget_items_add_form_purchase_unit_input = s_purchase
+            updated = True
+        if s_category and not st.session_state.get(
+            "widget_items_add_form_category_input", ""
+        ).strip():
+            st.session_state.widget_items_add_form_category_input = s_category
+            updated = True
+        if updated:
+            st.rerun()
+            return
+
+    # Fallback to heuristic inference
     base_unit_suggestion, purchase_unit_suggestion = infer_units(
         item_name, category_name
     )

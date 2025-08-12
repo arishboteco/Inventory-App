@@ -2,6 +2,7 @@
 
 import os
 import sys
+from pathlib import Path
 
 # Ensure this file works even when executed using a relative path (e.g.
 # `streamlit run app/item_manager_app.py`).
@@ -10,7 +11,7 @@ _REPO_ROOT = os.path.abspath(os.path.join(_CURRENT_DIR, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.core.logging import configure_logging, flush_logs
+from app.core.logging import configure_logging, flush_logs, LOG_FILE
 
 # Configure logging before importing modules that use it
 configure_logging()
@@ -20,6 +21,7 @@ import pandas as pd
 from datetime import datetime
 from app.ui.theme import load_css, render_sidebar_logo
 from app.ui.navigation import render_sidebar_nav
+from app.ui.helpers import read_recent_logs
 
 # --- Import from our new/refactored modules ---
 from app.core.constants import STATUS_SUBMITTED
@@ -49,6 +51,22 @@ def run_dashboard():
     if st.sidebar.button("Clear Logs"):
         flush_logs()
         st.toast("Logs cleared")
+    with st.sidebar.expander("Recent Logs"):
+        log_path = Path(LOG_FILE)
+        if log_path.exists():
+            preview = read_recent_logs()
+            if preview:
+                st.code(preview)
+            else:
+                st.write("Log file is empty.")
+            st.download_button(
+                "Download Logs",
+                data=log_path.read_bytes(),
+                file_name=log_path.name,
+                mime="text/plain",
+            )
+        else:
+            st.write("Log file not found.")
     st.title("🍲 Restaurant Inventory Dashboard")
     st.caption(
         f"Current Overview as of: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"

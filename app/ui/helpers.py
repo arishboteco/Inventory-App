@@ -1,7 +1,36 @@
 import math
+from pathlib import Path
 from typing import List, Tuple, Dict, Any
 import pandas as pd
 import streamlit as st
+
+from app.core.logging import LOG_FILE
+
+
+def read_recent_logs(limit: int = 100, log_file: str | Path = LOG_FILE) -> str:
+    """Return the last ``limit`` lines from the log file.
+
+    Parameters
+    ----------
+    limit:
+        Maximum number of lines to return from the end of the file.
+    log_file:
+        Path to the log file. Defaults to the application's configured
+        ``LOG_FILE``.
+
+    Returns
+    -------
+    str
+        Concatenated string of the last ``limit`` lines. If the file is
+        missing or unreadable an empty string is returned.
+    """
+
+    path = Path(log_file)
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            return "".join(fh.readlines()[-limit:])
+    except (FileNotFoundError, OSError):
+        return ""
 
 
 def render_search_toggle(

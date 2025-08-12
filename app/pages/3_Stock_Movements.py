@@ -2,6 +2,7 @@
 import os
 import sys
 import streamlit as st
+import pandas as pd
 
 st.set_page_config(page_title="Stock Movements", layout="wide")
 
@@ -105,6 +106,32 @@ active_item_options_list_pg3 = fetch_active_items_for_stock_mv_page_pg3(db_engin
 item_options_with_placeholder_list_pg3 = [
     placeholder_option_stock_select_pg3
 ] + active_item_options_list_pg3
+
+# --- BULK STOCK TRANSACTIONS UPLOAD ---
+with st.expander("\ud83d\udce4 Bulk Upload Stock Transactions", expanded=False):
+    st.write(
+        "Upload a CSV file with columns such as `item_id`, `quantity_change`, `transaction_type`, "
+        "`user_id`, and `notes`."
+    )
+    bulk_tx_file = st.file_uploader(
+        "Choose CSV file", type=["csv"], key="stock_bulk_upload_file"
+    )
+    if bulk_tx_file is not None:
+        try:
+            tx_df = pd.read_csv(bulk_tx_file)
+            tx_list = tx_df.to_dict(orient="records")
+            success_count, errors = stock_service.record_stock_transactions_bulk_with_status(
+                db_engine, tx_list
+            )
+            if success_count:
+                show_success(f"Recorded {success_count} transaction(s) successfully.")
+                fetch_active_items_for_stock_mv_page_pg3.clear()
+            if errors:
+                show_error(f"{len(errors)} transaction(s) failed. Details below:")
+                for err in errors:
+                    st.error(err)
+        except Exception as e:  # pylint: disable=broad-except
+            show_error(f"Failed to process file: {e}")
 
 
 def update_selected_item_id_callback_pg3(tuple_key_arg_pg3, id_key_arg_pg3):

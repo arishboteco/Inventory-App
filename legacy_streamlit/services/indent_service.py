@@ -1,4 +1,4 @@
-# app/services/indent_service.py
+# legacy_streamlit/services/indent_service.py
 from datetime import datetime
 import traceback
 from typing import Optional, Dict, List, Tuple, Any
@@ -10,9 +10,9 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine, Connection
 
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
-from app.core.constants import (
+from legacy_streamlit.core.logging import get_logger
+from legacy_streamlit.db.database_utils import fetch_data
+from legacy_streamlit.core.constants import (
     STATUS_SUBMITTED,
     STATUS_PROCESSING,
     STATUS_COMPLETED,
@@ -23,8 +23,8 @@ from app.core.constants import (
     ITEM_STATUS_CANCELLED_ITEM,
     TX_INDENT_FULFILL,
 )
-from app.services import item_service
-from app.services import stock_service
+from legacy_streamlit.services import item_service
+from legacy_streamlit.services import stock_service
 
 logger = get_logger(__name__)
 

@@ -29,7 +29,7 @@ categories:
   spices: ["g", "jar"]
 ```
 
-To extend the behaviour programmatically, edit `app/core/unit_inference.py`:
+To extend the behaviour programmatically, edit `legacy_streamlit/core/unit_inference.py`:
 
 * Add keywords to the `_NAME_KEYWORD_MAP` for name-based matches.
 * Add categories to `_CATEGORY_DEFAULT_MAP` for category-based defaults.
@@ -38,7 +38,7 @@ To extend the behaviour programmatically, edit `app/core/unit_inference.py`:
 ### Example
 
 ```python
-from app.services.item_service import add_new_item
+from legacy_streamlit.services.item_service import add_new_item
 
 # base_unit becomes 'ltr' and purchase_unit 'carton'
 success, msg = add_new_item(engine, {"name": "Whole Milk", "category": "Dairy"})
@@ -57,7 +57,7 @@ pip install -r requirements.txt
 Launch the Streamlit app from the repository root:
 
 ```bash
-streamlit run app/item_manager_app.py
+streamlit run legacy_streamlit/item_manager_app.py
 ```
 
 ## Configuration
@@ -77,12 +77,12 @@ DB_NAME
 
 ### Logging
 
-Logging output is written to a rotating file handler (`app.log` by default).
+Logging output is written to a rotating file handler (`legacy_streamlit.log` by default).
 You can control verbosity, log file location, and retention with environment variables:
 
 - `LOG_LEVEL` – set the minimum log level (`DEBUG`, `INFO`, etc.). Defaults to
   `INFO`.
-- `LOG_FILE` – path to the log file. Defaults to `app.log` in the project root.
+- `LOG_FILE` – path to the log file. Defaults to `legacy_streamlit.log` in the project root.
 - `LOG_RETENTION_DAYS` – number of days to keep rotated log files. Defaults to
   `30`.
 
@@ -90,17 +90,17 @@ Example `.env` entries:
 
 ```
 LOG_LEVEL=INFO
-LOG_FILE=app.log
+LOG_FILE=legacy_streamlit.log
 LOG_RETENTION_DAYS=30
 ```
 
 Rotated logs older than the retention period are removed when logging is configured.
-Call `flush_logs()` from `app.core.logging` to truncate the current log file when
+Call `flush_logs()` from `legacy_streamlit.core.logging` to truncate the current log file when
 needed.
 
 ## Customizing the Sidebar Logo
 
-The sidebar image displayed in the app is defined in `app/ui/logo.py` as a base64 encoded PNG. To use your own logo:
+The sidebar image displayed in the app is defined in `legacy_streamlit/ui/logo.py` as a base64 encoded PNG. To use your own logo:
 
 1. Convert your PNG image to a base64 string:
 
@@ -111,7 +111,7 @@ The sidebar image displayed in the app is defined in `app/ui/logo.py` as a base6
        print(base64.b64encode(f.read()).decode())
    ```
 
-2. Replace the `LOGO_BASE64` value in `app/ui/logo.py` with the string printed above.
+2. Replace the `LOGO_BASE64` value in `legacy_streamlit/ui/logo.py` with the string printed above.
 
 Restart the application and your logo will appear in the sidebar.
 

@@ -1,4 +1,4 @@
-# app/services/item_service.py
+# legacy_streamlit/services/item_service.py
 from datetime import datetime, timedelta
 import re
 import traceback
@@ -10,9 +10,9 @@ from sqlalchemy import text, bindparam
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
-from app.core.unit_inference import infer_units
+from legacy_streamlit.core.logging import get_logger
+from legacy_streamlit.db.database_utils import fetch_data
+from legacy_streamlit.core.unit_inference import infer_units
 
 logger = get_logger(__name__)
 

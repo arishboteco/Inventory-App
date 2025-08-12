@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from app.services import supplier_service
+from legacy_streamlit.services import supplier_service
 
 
 

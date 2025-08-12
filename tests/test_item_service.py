@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from app.services import item_service
+from legacy_streamlit.services import item_service
 
 
 def test_add_new_item_inserts_row(sqlite_engine):

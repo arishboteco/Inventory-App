@@ -173,13 +173,6 @@ def fetch_indent_page_data_pg5(_engine):  # Page-specific function
         "current_stock",
     ]
 
-    if not all(col in items_df_pg5.columns for col in required_cols_pg5):
-        missing_pg5 = [col for col in required_cols_pg5 if col not in items_df_pg5.columns]
-        print(
-            f"ERROR [5_Indents.fetch_indent_page_data_pg5]: Required columns missing: {', '.join(missing_pg5)}."
-        )
-        return pd.DataFrame(columns=required_cols_pg5), []
-
     return items_df_pg5[required_cols_pg5].copy(), item_service.get_distinct_departments_from_items(
         _engine
     )
@@ -377,7 +370,7 @@ def generate_indent_pdf(indent_header: Dict, indent_items: List[Dict]) -> Option
 
                 sno_str = str(item_serial_number_pdf)
                 name_str = item_pdf.get("item_name", "N/A") or "N/A"
-                unit_str = str(item_pdf.get("item_unit", "N/A"))
+                unit_str = str(item_pdf.get("item_unit", ""))
                 try:
                     qty_str = f"{float(item_pdf.get('requested_qty', 0)):.2f}"
                 except (ValueError, TypeError):
@@ -619,7 +612,7 @@ def update_row_item_details_callback_pg5(row_index, item_selectbox_key_arg, item
             category_val_pg5 = item_master_row_pg5["category"]
             sub_category_val_pg5 = item_master_row_pg5["sub_category"]
             current_stock_val_pg5 = item_master_row_pg5.get("current_stock", 0)
-            unit_val_pg5 = item_master_row_pg5.get("unit", "N/A")
+            unit_val_pg5 = item_master_row_pg5.get("unit")
 
         dept_for_history_pg5 = st.session_state.get(PG5_CREATE_INDENT_DEPT_SESS_KEY)
         history_pg5 = item_service.get_item_order_history_details(
@@ -961,7 +954,7 @@ if st.session_state.pg5_active_indent_section == "create":
                 {
                     "Item Name": itm.get("item_name", "N/A"),
                     "Qty": itm.get("requested_qty", 0),
-                    "Unit": itm.get("item_unit", "N/A"),
+                    "Unit": itm.get("item_unit", ""),
                     "Notes": itm.get("item_notes", ""),
                 }
                 for itm in summary_items_pg5

@@ -1,6 +1,6 @@
 import pandas as pd
-from legacy_streamlit.services import recipe_service
-from legacy_streamlit.core.constants import PLACEHOLDER_SELECT_COMPONENT
+from app.services import recipe_service
+from app.core.constants import PLACEHOLDER_SELECT_COMPONENT
 
 def test_build_components_autofill_and_validation():
     df = pd.DataFrame([

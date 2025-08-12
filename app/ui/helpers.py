@@ -4,7 +4,7 @@ from typing import List, Tuple, Dict, Any
 import pandas as pd
 import streamlit as st
 
-from legacy_streamlit.core.logging import LOG_FILE
+from app.core.logging import LOG_FILE
 
 
 def read_recent_logs(limit: int = 100, log_file: str | Path = LOG_FILE) -> str:

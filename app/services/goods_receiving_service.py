@@ -1,4 +1,4 @@
-# legacy_streamlit/services/goods_receiving_service.py
+# app/services/goods_receiving_service.py
 from datetime import datetime
 import traceback
 from typing import Optional, Dict, List, Tuple, Any
@@ -9,11 +9,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from legacy_streamlit.core.logging import get_logger
-from legacy_streamlit.db.database_utils import fetch_data
-from legacy_streamlit.services import stock_service
-from legacy_streamlit.services import purchase_order_service
-from legacy_streamlit.core.constants import (
+from app.core.logging import get_logger
+from app.db.database_utils import fetch_data
+from app.services import stock_service
+from app.services import purchase_order_service
+from app.core.constants import (
     TX_RECEIVING,
     PO_STATUS_PARTIALLY_RECEIVED,
     PO_STATUS_FULLY_RECEIVED,

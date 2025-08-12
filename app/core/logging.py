@@ -12,7 +12,7 @@ from pathlib import Path
 from stat import ST_MTIME
 
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-LOG_FILE = os.getenv("LOG_FILE", "legacy_streamlit.log")
+LOG_FILE = os.getenv("LOG_FILE", "app.log")
 LOG_RETENTION_DAYS = int(os.getenv("LOG_RETENTION_DAYS", "30"))
 
 _configured = False

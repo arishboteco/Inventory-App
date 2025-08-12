@@ -1,4 +1,4 @@
-# legacy_streamlit/pages/6_Purchase_Orders.py
+# app/pages/6_Purchase_Orders.py
 import os
 import sys
 import streamlit as st
@@ -15,21 +15,21 @@ if _REPO_ROOT not in sys.path:
 
 # --- Assuming your project structure for imports ---
 try:
-    from legacy_streamlit.db.database_utils import connect_db
-    from legacy_streamlit.services import purchase_order_service
-    from legacy_streamlit.services import supplier_service
-    from legacy_streamlit.services import item_service
-    from legacy_streamlit.services import goods_receiving_service
-    from legacy_streamlit.auth.auth import get_current_user_id
-    from legacy_streamlit.core.constants import (
+    from app.db.database_utils import connect_db
+    from app.services import purchase_order_service
+    from app.services import supplier_service
+    from app.services import item_service
+    from app.services import goods_receiving_service
+    from app.auth.auth import get_current_user_id
+    from app.core.constants import (
         ALL_PO_STATUSES,
         PO_STATUS_DRAFT,
         PO_STATUS_ORDERED,
         PO_STATUS_PARTIALLY_RECEIVED,
     )
-    from legacy_streamlit.ui.theme import load_css, format_status_badge, render_sidebar_logo
-    from legacy_streamlit.ui.navigation import render_sidebar_nav
-    from legacy_streamlit.ui import show_success, show_error, show_warning
+    from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
+    from app.ui.navigation import render_sidebar_nav
+    from app.ui import show_success, show_error, show_warning
 except ImportError as e:
     show_error(
         f"Import error in 6_Purchase_Orders.py: {e}. Please ensure all modules are correctly placed."

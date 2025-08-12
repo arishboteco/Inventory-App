@@ -1,4 +1,4 @@
-# legacy_streamlit/services/supplier_service.py
+# app/services/supplier_service.py
 import traceback
 from typing import Any, Optional, Dict, Tuple
 
@@ -8,8 +8,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from legacy_streamlit.core.logging import get_logger
-from legacy_streamlit.db.database_utils import fetch_data
+from app.core.logging import get_logger
+from app.db.database_utils import fetch_data
 
 logger = get_logger(__name__)
 

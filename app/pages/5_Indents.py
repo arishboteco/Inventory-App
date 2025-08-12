@@ -1,4 +1,4 @@
-# legacy_streamlit/pages/5_Indents.py
+# app/pages/5_Indents.py
 import os
 import sys
 import streamlit as st
@@ -18,11 +18,11 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 try:
-    from legacy_streamlit.db.database_utils import connect_db
-    from legacy_streamlit.services import item_service
-    from legacy_streamlit.services import indent_service
-    from legacy_streamlit.auth.auth import get_current_user_id
-    from legacy_streamlit.core.constants import (
+    from app.db.database_utils import connect_db
+    from app.services import item_service
+    from app.services import indent_service
+    from app.auth.auth import get_current_user_id
+    from app.core.constants import (
         ALL_INDENT_STATUSES,
         STATUS_SUBMITTED,
         STATUS_PROCESSING,
@@ -41,10 +41,10 @@ try:
         PLACEHOLDER_NO_ITEMS_AVAILABLE,  # If applicable for item lists
         PLACEHOLDER_ERROR_LOADING_ITEMS,  # If applicable
     )
-    from legacy_streamlit.ui.theme import load_css, format_status_badge, render_sidebar_logo
-    from legacy_streamlit.ui.navigation import render_sidebar_nav
-    from legacy_streamlit.ui import show_success, show_error, show_warning
-    from legacy_streamlit.ui.choices import build_component_options
+    from app.ui.theme import load_css, format_status_badge, render_sidebar_logo
+    from app.ui.navigation import render_sidebar_nav
+    from app.ui import show_success, show_error, show_warning
+    from app.ui.choices import build_component_options
 except ImportError as e:
     show_error(
         "Import error in 5_Indents.py: "

@@ -1,4 +1,4 @@
-# legacy_streamlit/services/stock_service.py
+# app/services/stock_service.py
 from datetime import date
 import traceback
 from typing import Optional, Dict, Any, List, Tuple
@@ -8,11 +8,11 @@ import streamlit as st  # For type hinting @st.cache_data
 from sqlalchemy import text, exc as sqlalchemy_exc
 from sqlalchemy.engine import Engine, Connection
 
-from legacy_streamlit.core.logging import get_logger
-from legacy_streamlit.db.database_utils import fetch_data
+from app.core.logging import get_logger
+from app.db.database_utils import fetch_data
 
 # Assuming item_service might be needed for future validation or fetching item names, though not directly used in current functions
-# from legacy_streamlit.services import item_service
+# from app.services import item_service
 
 logger = get_logger(__name__)
 
@@ -182,7 +182,7 @@ def record_stock_transaction(
             return False
 
         # Clear relevant caches that depend on stock levels or transaction history
-        # Example: from legacy_streamlit.services import item_service (if item_service had relevant caches)
+        # Example: from app.services import item_service (if item_service had relevant caches)
         # item_service.get_all_items_with_stock.clear() # Assuming get_all_items_with_stock is affected
         get_stock_transactions.clear()  # Defined below, depends on this data
 
@@ -190,7 +190,7 @@ def record_stock_transaction(
         # This requires item_service to be imported.
         # For loose coupling, this clear could be signaled differently, but for now, direct clear is acceptable.
         try:
-            from legacy_streamlit.services import item_service
+            from app.services import item_service
 
             item_service.get_all_items_with_stock.clear()
         except ImportError:
@@ -380,7 +380,7 @@ def remove_stock_transactions_bulk(
         # Clear caches that depend on these tables
         get_stock_transactions.clear()
         try:
-            from legacy_streamlit.services import item_service
+            from app.services import item_service
 
             item_service.get_all_items_with_stock.clear()
         except ImportError:

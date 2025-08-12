@@ -10,6 +10,7 @@ Inventory-App is a Streamlit application for managing restaurant inventory. It h
 - Dashboard showing key metrics such as low-stock items
 - Unified sidebar navigation for quick access to all pages
 - Automatic unit inference so new items get sensible base and purchase units
+- Bulk upload items and stock transactions from CSV files
 
 ## Changelog
 
@@ -90,3 +91,43 @@ The sidebar image displayed in the app is defined in `app/ui/logo.py` as a base6
 2. Replace the `LOGO_BASE64` value in `app/ui/logo.py` with the string printed above.
 
 Restart the application and your logo will appear in the sidebar.
+
+## Bulk Uploading Data
+
+The app supports uploading multiple records at once using CSV files.
+
+### Items
+
+On the **Item Master Management** page open the *Bulk Upload Items* expander and
+upload a CSV containing columns such as:
+
+```
+name,base_unit,purchase_unit,category,sub_category,permitted_departments,reorder_point,current_stock,notes,is_active
+```
+
+Example:
+
+```csv
+name,base_unit,purchase_unit,category,sub_category,permitted_departments,reorder_point,current_stock,notes,is_active
+Tomato,kg,,Vegetables,Fresh,KITCHEN,10,0,Fresh tomatoes,True
+```
+
+### Stock Transactions
+
+On the **Stock Movements Log** page use the *Bulk Upload Stock Transactions*
+expander and provide a CSV with columns:
+
+```
+item_id,quantity_change,transaction_type,user_id,notes
+```
+
+Example:
+
+```csv
+item_id,quantity_change,transaction_type,user_id,notes
+1,5,RECEIVING,manager,Initial stock
+2,-2,WASTAGE,chef,Expired batch
+```
+
+After the upload the app reports how many rows succeeded and lists any errors
+for rows that could not be processed.

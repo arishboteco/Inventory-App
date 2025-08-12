@@ -284,6 +284,54 @@ def record_stock_transactions_bulk(
         return False
 
 
+def record_stock_transactions_bulk_with_status(
+    db_engine: Engine, transactions: List[Dict]
+) -> Tuple[int, List[str]]:
+    """Record stock transactions individually and report results.
+
+    Each transaction is committed separately so that one failing row does not
+    prevent others from being saved.
+
+    Args:
+        db_engine: SQLAlchemy Engine instance.
+        transactions: List of transaction dictionaries accepted by
+            :func:`record_stock_transaction`.
+
+    Returns:
+        A tuple ``(success_count, errors)`` where ``errors`` contains messages
+        for rows that could not be processed.
+    """
+    if db_engine is None:
+        return 0, ["Database engine not available."]
+    if not transactions:
+        return 0, ["No transactions provided."]
+
+    success_count = 0
+    errors: List[str] = []
+
+    for idx, tx in enumerate(transactions):
+        try:
+            with db_engine.begin() as conn:
+                ok = record_stock_transaction(
+                    item_id=tx.get("item_id"),
+                    quantity_change=tx.get("quantity_change", 0),
+                    transaction_type=tx.get("transaction_type"),
+                    user_id=tx.get("user_id"),
+                    related_mrn=tx.get("related_mrn"),
+                    related_po_id=tx.get("related_po_id"),
+                    notes=tx.get("notes"),
+                    db_connection_param=conn,
+                )
+            if ok:
+                success_count += 1
+            else:
+                errors.append(f"Row {idx}: failed to record transaction")
+        except Exception as e:  # pylint: disable=broad-except
+            errors.append(f"Row {idx}: {e}")
+
+    return success_count, errors
+
+
 def remove_stock_transactions_bulk(
     db_engine: Engine, transaction_ids: List[int]
 ) -> bool:

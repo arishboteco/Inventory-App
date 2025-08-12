@@ -112,6 +112,7 @@ def infer_item_units() -> None:
         )
     st.rerun()
 
+
 # --- ADD NEW ITEM Section ---
 with st.expander("➕ Add New Inventory Item", expanded=False):
     st.text_input(
@@ -223,6 +224,32 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                     st.rerun()
                 else:
                     show_error(message_add)
+
+# --- BULK ADD ITEMS ---
+with st.expander("\ud83d\udce4 Bulk Upload Items", expanded=False):
+    st.write(
+        "Upload a CSV file with columns such as `name`, `base_unit`, `purchase_unit`, "
+        "`category`, `sub_category`, `permitted_departments`, `reorder_point`, "
+        "`current_stock`, `notes`, and `is_active`."
+    )
+    bulk_items_file = st.file_uploader(
+        "Choose CSV file", type=["csv"], key="items_bulk_upload_file"
+    )
+    if bulk_items_file is not None:
+        try:
+            bulk_df = pd.read_csv(bulk_items_file)
+            items_list = bulk_df.to_dict(orient="records")
+            inserted, errors = item_service.add_items_bulk(engine, items_list)
+            if inserted:
+                show_success(f"Successfully added {inserted} item(s).")
+                fetch_all_items_df_for_items_page.clear()
+            if errors:
+                show_error(f"{len(errors)} item(s) failed. Details below:")
+                for err in errors:
+                    st.error(err)
+        except Exception as e:  # pylint: disable=broad-except
+            show_error(f"Failed to process file: {e}")
+
 st.divider()
 
 # --- VIEW & MANAGE EXISTING ITEMS ---

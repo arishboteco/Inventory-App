@@ -5,7 +5,7 @@ from typing import Any, Optional, Dict, List, Tuple, Set
 
 import pandas as pd
 import streamlit as st  # Only for type hinting @st.cache_data
-from sqlalchemy import text
+from sqlalchemy import text, bindparam
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
@@ -179,6 +179,147 @@ def add_new_item(engine: Engine, details: Dict[str, Any]) -> Tuple[bool, str]:
             traceback.format_exc(),
         )
         return False, "A database error occurred while adding the item."
+
+
+def add_items_bulk(engine: Engine, items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
+    """Insert multiple items in one transaction.
+
+    Args:
+        engine: SQLAlchemy database engine instance.
+        items: List of item detail dictionaries.
+
+    Returns:
+        Tuple of (number_of_items_inserted, list_of_error_messages).
+    """
+    if engine is None:
+        return 0, ["Database engine not available."]
+    if not items:
+        return 0, ["No items provided."]
+
+    processed: List[Dict[str, Any]] = []
+    errors: List[str] = []
+
+    for idx, details in enumerate(items):
+        # Infer units if necessary
+        if (
+            not details.get("base_unit")
+            or not str(details.get("base_unit")).strip()
+            or not details.get("purchase_unit")
+            or not str(details.get("purchase_unit")).strip()
+        ):
+            inferred_base, inferred_purchase = infer_units(
+                details.get("name", ""), details.get("category")
+            )
+            if not details.get("base_unit") or not str(details.get("base_unit")).strip():
+                details["base_unit"] = inferred_base
+            if (
+                (not details.get("purchase_unit") or not str(details.get("purchase_unit")).strip())
+                and inferred_purchase
+            ):
+                details["purchase_unit"] = inferred_purchase
+
+        required = ["name", "base_unit"]
+        if not all(details.get(k) and str(details.get(k)).strip() for k in required):
+            missing = [
+                k for k in required if not details.get(k) or not str(details.get(k)).strip()
+            ]
+            errors.append(
+                f"Item {idx} missing required fields: {', '.join(missing)}"
+            )
+            continue
+
+        notes_value = details.get("notes")
+        cleaned_notes = None
+        if isinstance(notes_value, str):
+            cleaned_notes = notes_value.strip() or None
+
+        permitted_val = details.get("permitted_departments")
+        cleaned_permitted = None
+        if isinstance(permitted_val, str):
+            cleaned_permitted = permitted_val.strip() or None
+
+        purchase_unit_val = details.get("purchase_unit")
+        if isinstance(purchase_unit_val, str):
+            purchase_unit_val = purchase_unit_val.strip() or None
+
+        processed.append(
+            {
+                "name": details["name"].strip(),
+                "base_unit": details["base_unit"].strip(),
+                "purchase_unit": purchase_unit_val,
+                "category": (details.get("category", "").strip() or "Uncategorized"),
+                "sub_category": (details.get("sub_category", "").strip() or "General"),
+                "permitted_departments": cleaned_permitted,
+                "reorder_point": details.get("reorder_point", 0.0),
+                "current_stock": details.get("current_stock", 0.0),
+                "notes": cleaned_notes,
+                "is_active": details.get("is_active", True),
+            }
+        )
+
+    if errors:
+        return 0, errors
+
+    query = text(
+        """
+        INSERT INTO items (
+            name, base_unit, purchase_unit, category, sub_category,
+            permitted_departments, reorder_point, current_stock, notes, is_active
+        ) VALUES (
+            :name, :base_unit, :purchase_unit, :category, :sub_category,
+            :permitted_departments, :reorder_point, :current_stock, :notes, :is_active
+        );
+        """
+    )
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, processed)
+                inserted = result.rowcount or 0
+        if inserted:
+            get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear()
+        return inserted, []
+    except IntegrityError as e:
+        return 0, [str(e.orig) if hasattr(e, "orig") else str(e)]
+    except (SQLAlchemyError, Exception) as e:
+        logger.error(
+            "ERROR [item_service.add_items_bulk]: Database error adding items: %s\n%s",
+            e,
+            traceback.format_exc(),
+        )
+        return 0, ["A database error occurred while adding items."]
+
+
+def remove_items_bulk(engine: Engine, item_ids: List[int]) -> Tuple[int, List[str]]:
+    """Deactivate multiple items by ID in a single statement."""
+    if engine is None:
+        return 0, ["Database engine not available."]
+    if not item_ids:
+        return 0, ["No item IDs provided."]
+
+    query = (
+        text("UPDATE items SET is_active = FALSE WHERE item_id IN :ids")
+        .bindparams(bindparam("ids", expanding=True))
+    )
+
+    try:
+        with engine.connect() as connection:
+            with connection.begin():
+                result = connection.execute(query, {"ids": item_ids})
+                affected = result.rowcount or 0
+        if affected:
+            get_all_items_with_stock.clear()
+            get_distinct_departments_from_items.clear()
+        return affected, []
+    except (SQLAlchemyError, Exception) as e:
+        logger.error(
+            "ERROR [item_service.remove_items_bulk]: Database error removing items: %s\n%s",
+            e,
+            traceback.format_exc(),
+        )
+        return 0, ["A database error occurred while removing items."]
 
 
 def update_item_details(

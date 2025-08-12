@@ -10,6 +10,11 @@ _REPO_ROOT = os.path.abspath(os.path.join(_CURRENT_DIR, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
+from app.core.logging import configure_logging
+
+# Configure logging before importing modules that use it
+configure_logging()
+
 import streamlit as st
 import pandas as pd
 from datetime import datetime

@@ -75,6 +75,18 @@ DB_PORT
 DB_NAME
 ```
 
+### Logging
+
+Logging output is written to a rotating file handler (`app.log` by default).
+You can control verbosity or the log file location with environment variables:
+
+- `LOG_LEVEL` – set the minimum log level (`DEBUG`, `INFO`, etc.). Defaults to
+  `INFO`.
+- `LOG_FILE` – path to the log file. Defaults to `app.log` in the project root.
+
+Call `flush_logs()` from `app.core.logging` to truncate the log file when
+needed.
+
 ## Customizing the Sidebar Logo
 
 The sidebar image displayed in the app is defined in `app/ui/logo.py` as a base64 encoded PNG. To use your own logo:

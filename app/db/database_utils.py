@@ -1,4 +1,14 @@
-# app/db/database_utils.py
+"""Database utility helpers.
+
+This module provides helper functions to connect to the database and execute
+queries. Logging guidelines:
+
+* Routine success messages should not be logged. Use ``DEBUG`` for optional
+  diagnostic information.
+* Reserve ``WARNING`` and ``ERROR`` levels for exceptional or unexpected
+  conditions.
+"""
+
 import streamlit as st
 from sqlalchemy import create_engine, text
 
@@ -44,7 +54,7 @@ def connect_db() -> Optional[Engine]:
         engine = create_engine(connection_url, pool_pre_ping=True, echo=False)
 
         with engine.connect():
-            logger.info("Database connection successful using connect_db().")
+            logger.debug("Database connection established using connect_db().")
             return engine
 
     except OperationalError as e:

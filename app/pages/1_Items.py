@@ -226,7 +226,7 @@ with st.expander("➕ Add New Inventory Item", expanded=False):
                     show_error(message_add)
 
 # --- BULK ADD ITEMS ---
-with st.expander("\ud83d\udce4 Bulk Upload Items", expanded=False):
+with st.expander("📤 Bulk Upload Items", expanded=False):
     st.write(
         "Upload a CSV file with columns such as `name`, `base_unit`, `purchase_unit`, "
         "`category`, `sub_category`, `permitted_departments`, `reorder_point`, "

@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Item(models.Model):
-    item_id = models.AutoField(primary_key=True, blank=True, null=True)
+    item_id = models.AutoField(primary_key=True)
     name = models.TextField(blank=True, null=True)
     base_unit = models.TextField(blank=True, null=True)
     purchase_unit = models.TextField(blank=True, null=True)
@@ -21,7 +21,7 @@ class Item(models.Model):
 
 
 class Supplier(models.Model):
-    supplier_id = models.AutoField(primary_key=True, blank=True, null=True)
+    supplier_id = models.AutoField(primary_key=True)
     name = models.TextField(unique=True, blank=True, null=True)
     contact_person = models.TextField(blank=True, null=True)
     phone = models.TextField(blank=True, null=True)
@@ -37,7 +37,7 @@ class Supplier(models.Model):
 
 
 class StockTransaction(models.Model):
-    transaction_id = models.AutoField(primary_key=True, blank=True, null=True)
+    transaction_id = models.AutoField(primary_key=True)
     item = models.ForeignKey(
         Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
     )
@@ -55,7 +55,7 @@ class StockTransaction(models.Model):
 
 
 class Indent(models.Model):
-    indent_id = models.AutoField(primary_key=True, blank=True, null=True)
+    indent_id = models.AutoField(primary_key=True)
     mrn = models.TextField(unique=True, blank=True, null=True)
     requested_by = models.TextField(blank=True, null=True)
     department = models.TextField(blank=True, null=True)
@@ -74,7 +74,7 @@ class Indent(models.Model):
 
 
 class IndentItem(models.Model):
-    indent_item_id = models.AutoField(primary_key=True, blank=True, null=True)
+    indent_item_id = models.AutoField(primary_key=True)
     indent = models.ForeignKey(
         Indent, models.DO_NOTHING, db_column="indent_id", blank=True, null=True
     )

@@ -16,15 +16,13 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import path, include
 from core.views import health_check, home
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # HTML pages
     path("", home, name="root"),
-    path("", include("inventory.ui_urls")),
-    # API endpoints
     path("healthz", health_check, name="health-check"),
     path("api/", include("inventory.urls")),
+    path("", include("inventory.ui_urls")),
 ]

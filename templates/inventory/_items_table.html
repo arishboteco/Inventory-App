@@ -1,0 +1,48 @@
+<table class="min-w-full divide-y divide-gray-200">
+  <thead class="bg-gray-50">
+    <tr>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Current Stock</th>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reorder Point</th>
+      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Active</th>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    {% for item in page_obj %}
+      <tr>
+        <td class="px-4 py-2">{{ item.item_id }}</td>
+        <td class="px-4 py-2">{{ item.name }}</td>
+        <td class="px-4 py-2">{{ item.base_unit }}</td>
+        <td class="px-4 py-2">{{ item.category }}</td>
+        <td class="px-4 py-2">{{ item.current_stock }}</td>
+        <td class="px-4 py-2">{{ item.reorder_point }}</td>
+        <td class="px-4 py-2">{{ item.is_active }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="7" class="px-4 py-2 text-center">No items found.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="flex justify-between mt-2">
+  {% if page_obj.has_previous %}
+    <a
+      hx-get="{% url 'items_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}"
+      hx-target="#items_table"
+      class="text-blue-600 hover:underline"
+    >Previous</a>
+  {% else %}
+    <span></span>
+  {% endif %}
+  {% if page_obj.has_next %}
+    <a
+      hx-get="{% url 'items_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}"
+      hx-target="#items_table"
+      class="text-blue-600 hover:underline"
+    >Next</a>
+  {% endif %}
+</div>

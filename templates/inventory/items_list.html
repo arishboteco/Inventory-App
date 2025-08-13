@@ -1,21 +1,20 @@
 {% extends "_base.html" %}
-
 {% block content %}
-  <div class="mb-4">
-    <input
-      type="text"
-      name="q"
-      placeholder="Search items..."
-      class="border rounded px-2 py-1 w-full"
-      hx-get="{% url 'items_table' %}"
-      hx-target="#items_table"
-      hx-trigger="keyup changed delay:300ms"
-      hx-include="[name='q']"
-    />
-  </div>
-  <div
-    id="items_table"
+<div class="max-w-5xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold mb-4">Items</h1>
+  <input
+    type="text"
+    name="q"
+    placeholder="Search items..."
+    class="w-full border rounded p-2 mb-4"
     hx-get="{% url 'items_table' %}"
-    hx-trigger="load"
-  ></div>
+    hx-target="#items_table"
+    hx-trigger="keyup changed delay:300ms"
+    hx-include="[name='q']"
+  />
+  <div id="items_table"
+       hx-get="{% url 'items_table' %}"
+       hx-trigger="load">
+  </div>
+</div>
 {% endblock %}

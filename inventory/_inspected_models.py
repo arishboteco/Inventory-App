@@ -1,7 +1,14 @@
+# This is an auto-generated Django model module.
+# You'll have to do the following manually to clean this up:
+#   * Rearrange models' order
+#   * Make sure each model has one field with primary_key=True
+#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
+#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+# Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 
 
-class Item(models.Model):
+class Items(models.Model):
     item_id = models.AutoField(primary_key=True, blank=True, null=True)
     name = models.TextField(blank=True, null=True)
     base_unit = models.TextField(blank=True, null=True)
@@ -17,10 +24,10 @@ class Item(models.Model):
 
     class Meta:
         managed = False
-        db_table = "items"
+        db_table = 'items'
 
 
-class Supplier(models.Model):
+class Suppliers(models.Model):
     supplier_id = models.AutoField(primary_key=True, blank=True, null=True)
     name = models.TextField(unique=True, blank=True, null=True)
     contact_person = models.TextField(blank=True, null=True)
@@ -33,14 +40,12 @@ class Supplier(models.Model):
 
     class Meta:
         managed = False
-        db_table = "suppliers"
+        db_table = 'suppliers'
 
 
-class StockTransaction(models.Model):
+class StockTransactions(models.Model):
     transaction_id = models.AutoField(primary_key=True, blank=True, null=True)
-    item = models.ForeignKey(
-        Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
-    )
+    item = models.ForeignKey(Items, models.DO_NOTHING, blank=True, null=True)
     quantity_change = models.FloatField(blank=True, null=True)
     transaction_type = models.TextField(blank=True, null=True)
     user_id = models.TextField(blank=True, null=True)
@@ -51,10 +56,10 @@ class StockTransaction(models.Model):
 
     class Meta:
         managed = False
-        db_table = "stock_transactions"
+        db_table = 'stock_transactions'
 
 
-class Indent(models.Model):
+class Indents(models.Model):
     indent_id = models.AutoField(primary_key=True, blank=True, null=True)
     mrn = models.TextField(unique=True, blank=True, null=True)
     requested_by = models.TextField(blank=True, null=True)
@@ -70,17 +75,13 @@ class Indent(models.Model):
 
     class Meta:
         managed = False
-        db_table = "indents"
+        db_table = 'indents'
 
 
-class IndentItem(models.Model):
+class IndentItems(models.Model):
     indent_item_id = models.AutoField(primary_key=True, blank=True, null=True)
-    indent = models.ForeignKey(
-        Indent, models.DO_NOTHING, db_column="indent_id", blank=True, null=True
-    )
-    item = models.ForeignKey(
-        Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
-    )
+    indent = models.ForeignKey(Indents, models.DO_NOTHING, blank=True, null=True)
+    item = models.ForeignKey(Items, models.DO_NOTHING, blank=True, null=True)
     requested_qty = models.FloatField(blank=True, null=True)
     issued_qty = models.FloatField(blank=True, null=True)
     item_status = models.TextField(blank=True, null=True)
@@ -88,4 +89,4 @@ class IndentItem(models.Model):
 
     class Meta:
         managed = False
-        db_table = "indent_items"
+        db_table = 'indent_items'

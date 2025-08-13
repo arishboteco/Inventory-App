@@ -17,12 +17,21 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+<<<<<<< HEAD
 from core.views import health_check, home
+=======
+from core.views import root_view, health_check
+>>>>>>> e582bea (django_refactor_test)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", home, name="root"),
+    path("", root_view, name="root"),
     path("healthz", health_check, name="health-check"),
+<<<<<<< HEAD
     path("api/", include("inventory.urls")),
     path("", include("inventory.ui_urls")),
+=======
+    path("api/", include("inventory.urls")),   # DRF API
+    path("", include("inventory.ui_urls")),    # HTML UI routes  <-- add this line
+>>>>>>> e582bea (django_refactor_test)
 ]

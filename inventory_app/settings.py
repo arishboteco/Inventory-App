@@ -83,7 +83,7 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 }
-# Force SSL for Supabase
+# Force SSL and keep-alive
 if DATABASES["default"]["ENGINE"].endswith("postgresql"):
     DATABASES["default"].setdefault("OPTIONS", {})
     DATABASES["default"]["OPTIONS"]["sslmode"] = "require"

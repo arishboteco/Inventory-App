@@ -1,0 +1,40 @@
+<div class="overflow-x-auto">
+  <table class="min-w-full border divide-y">
+    <thead>
+      <tr class="bg-gray-50">
+        <th class="px-3 py-2 text-left">ID</th>
+        <th class="px-3 py-2 text-left">Name</th>
+        <th class="px-3 py-2 text-left">Contact</th>
+        <th class="px-3 py-2 text-left">Email</th>
+        <th class="px-3 py-2 text-left">Phone</th>
+        <th class="px-3 py-2 text-left">Active</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for row in page_obj %}
+      <tr>
+        <td class="px-3 py-2">{{ row.supplier_id }}</td>
+        <td class="px-3 py-2">{{ row.name }}</td>
+        <td class="px-3 py-2">{{ row.contact_person }}</td>
+        <td class="px-3 py-2">{{ row.email }}</td>
+        <td class="px-3 py-2">{{ row.phone }}</td>
+        <td class="px-3 py-2">{{ row.is_active }}</td>
+      </tr>
+      {% empty %}
+      <tr><td class="px-3 py-4" colspan="6">No suppliers found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="flex items-center gap-3 mt-3">
+  {% if page_obj.has_previous %}
+    <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}"
+       hx-target="#suppliers_table" class="px-3 py-1 border rounded">Prev</a>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}"
+       hx-target="#suppliers_table" class="px-3 py-1 border rounded">Next</a>
+  {% endif %}
+</div>
+

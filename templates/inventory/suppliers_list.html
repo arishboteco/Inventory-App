@@ -1,0 +1,21 @@
+{% extends "_base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold mb-4">Suppliers</h1>
+  <input
+    type="text"
+    name="q"
+    placeholder="Search suppliers..."
+    class="w-full border rounded p-2 mb-4"
+    hx-get="{% url 'suppliers_table' %}"
+    hx-target="#suppliers_table"
+    hx-trigger="keyup changed delay:300ms"
+    hx-include="[name='q']"
+  />
+  <div id="suppliers_table"
+       hx-get="{% url 'suppliers_table' %}"
+       hx-trigger="load">
+  </div>
+</div>
+{% endblock %}
+

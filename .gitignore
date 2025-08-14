@@ -1,9 +1,12 @@
 # Streamlit secrets
 .streamlit/secrets.toml
 
-# Python virtual environment (if you use one)
+# Django environment variables
+.env
+
+# Python virtual environment
 venv/
-*.venv/
+.venv/
 env/
 
 # Python cache files
@@ -12,7 +15,26 @@ __pycache__/
 *.pyo
 *.pyd
 
-# IDE / OS files (optional)
+# Database (SQLite local dev)
+db.sqlite3
+
+# Node / Tailwind build artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# IDE / OS files
 .vscode/
 .idea/
 *.DS_Store
+
+# Static files collected by Django
+staticfiles/
+
+# Logs
+*.log
+
+# pytest cache
+.pytest_cache/

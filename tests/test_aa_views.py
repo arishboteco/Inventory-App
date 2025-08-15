@@ -81,6 +81,20 @@ def test_item_edit_handles_save_error():
     assert resp.status_code == 200
 
 
+def test_item_edit_handles_non_numeric_values():
+    item = Item.objects.create(name="Flour")
+    with connection.cursor() as cur:
+        cur.execute(
+            "UPDATE items SET reorder_point='abc', current_stock='xyz' WHERE item_id=?",
+            [item.pk],
+        )
+    rf = RequestFactory()
+    request = rf.get(f"/items/{item.pk}/edit/")
+    with patch("inventory.views_ui.render", return_value=HttpResponse()):
+        resp = item_edit(request, pk=item.pk)
+    assert resp.status_code == 200
+
+
 def test_indent_create_atomic_on_error():
     item = Item.objects.create(name="Salt")
     rf = RequestFactory()

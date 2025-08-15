@@ -12,11 +12,11 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex-shrink-0">
-            <a href="/" class="text-white font-bold">Inventory App</a>
+            <a href="{% url 'root' %}" class="text-white font-bold">Inventory App</a>
           </div>
           <div class="flex space-x-4">
-            <a href="/" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
-            <a href="/items/" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Items</a>
+            <a href="{% url 'root' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
+            <a href="{% url 'items_list' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Items</a>
             <a href="{% url 'suppliers_list' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Suppliers</a>
             <a href="{% url 'stock_movements' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Stock</a>
             <a href="{% url 'history_reports' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Reports</a>

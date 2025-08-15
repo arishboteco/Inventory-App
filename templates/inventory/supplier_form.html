@@ -6,7 +6,30 @@
   </h1>
   <form method="post" class="space-y-4">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% if form.non_field_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for field in form %}
+    <div>
+      {{ field.label_tag }}
+      {% if field.field.widget.input_type == "checkbox" %}
+      {{ field.as_widget(attrs={'class': 'rounded border-gray-300'}) }}
+      {% else %}
+      {{ field.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
+      {% endif %}
+      {% if field.errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in field.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
     <div class="flex gap-2">
       <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
       <a href="{% url 'suppliers_list' %}" class="px-4 py-2 border rounded">Cancel</a>

@@ -3,7 +3,7 @@ import traceback
 from typing import Any, Optional, Dict, Tuple
 
 import pandas as pd
-import streamlit as st  # Only for type hinting @st.cache_data
+from . import cache_data
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 # ─────────────────────────────────────────────────────────
 # SUPPLIER MASTER FUNCTIONS
 # ─────────────────────────────────────────────────────────
-@st.cache_data(ttl=300, show_spinner="Fetching supplier data...")
+@cache_data(ttl=300, show_spinner="Fetching supplier data...")
 def get_all_suppliers(_engine: Engine, include_inactive=False) -> pd.DataFrame:
     """
     Fetches all suppliers, optionally including inactive ones.

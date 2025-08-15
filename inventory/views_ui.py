@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib import messages
+from django.http import HttpResponse
 
 from .models import Item, Supplier, StockTransaction
 from .forms import (
@@ -332,3 +333,91 @@ def stock_movements(request):
         "bulk_errors": bulk_errors,
     }
     return render(request, "inventory/stock_movements.html", ctx)
+
+
+def history_reports(request):
+    item = (request.GET.get("item") or "").strip()
+    tx_type = (request.GET.get("type") or "").strip()
+    user = (request.GET.get("user") or "").strip()
+    start_date = (request.GET.get("start_date") or "").strip()
+    end_date = (request.GET.get("end_date") or "").strip()
+
+    qs = StockTransaction.objects.select_related("item").all()
+    if item:
+        qs = qs.filter(item_id=item)
+    if tx_type:
+        qs = qs.filter(transaction_type=tx_type)
+    if user:
+        qs = qs.filter(user_id=user)
+    if start_date:
+        qs = qs.filter(transaction_date__gte=start_date)
+    if end_date:
+        qs = qs.filter(transaction_date__lte=end_date)
+
+    qs = qs.order_by("-transaction_date")
+
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=history_report.csv"
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "Transaction ID",
+                "Item",
+                "Quantity",
+                "Type",
+                "User",
+                "Date",
+                "Notes",
+            ]
+        )
+        for row in qs:
+            writer.writerow(
+                [
+                    row.transaction_id,
+                    getattr(row.item, "name", ""),
+                    row.quantity_change,
+                    row.transaction_type,
+                    row.user_id,
+                    row.transaction_date,
+                    row.notes,
+                ]
+            )
+        return response
+
+    paginator = Paginator(qs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    items = Item.objects.order_by("name")
+    transaction_types = (
+        StockTransaction.objects.values_list("transaction_type", flat=True)
+        .order_by("transaction_type")
+        .distinct()
+    )
+    users = (
+        StockTransaction.objects.exclude(user_id__isnull=True)
+        .exclude(user_id="")
+        .values_list("user_id", flat=True)
+        .order_by("user_id")
+        .distinct()
+    )
+
+    params = request.GET.copy()
+    params.pop("page", None)
+    params.pop("export", None)
+    query_string = params.urlencode()
+
+    ctx = {
+        "page_obj": page_obj,
+        "items": items,
+        "transaction_types": transaction_types,
+        "users": users,
+        "item": item,
+        "type": tx_type,
+        "user": user,
+        "start_date": start_date,
+        "end_date": end_date,
+        "query_string": query_string,
+    }
+    return render(request, "inventory/history_reports.html", ctx)

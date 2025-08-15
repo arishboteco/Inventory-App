@@ -29,4 +29,15 @@ urlpatterns = [
     ),
     path("stock-movements/", views_ui.stock_movements, name="stock_movements"),
     path("history-reports/", views_ui.history_reports, name="history_reports"),
+
+    path("indents/", views_ui.indents_list, name="indents_list"),
+    path("indents/table/", views_ui.indents_table, name="indents_table"),
+    path("indents/create/", views_ui.indent_create, name="indent_create"),
+    path("indents/<int:pk>/", views_ui.indent_detail, name="indent_detail"),
+    path(
+        "indents/<int:pk>/status/<str:status>/",
+        views_ui.indent_update_status,
+        name="indent_update_status",
+    ),
+    path("indents/<int:pk>/pdf/", views_ui.indent_pdf, name="indent_pdf"),
 ]

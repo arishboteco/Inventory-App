@@ -1,0 +1,37 @@
+<div class="overflow-x-auto">
+  <table class="min-w-full border divide-y">
+    <thead>
+      <tr class="bg-gray-50">
+        <th class="px-3 py-2 text-left">ID</th>
+        <th class="px-3 py-2 text-left">MRN</th>
+        <th class="px-3 py-2 text-left">Requested By</th>
+        <th class="px-3 py-2 text-left">Department</th>
+        <th class="px-3 py-2 text-left">Status</th>
+        <th class="px-3 py-2 text-left">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y">
+      {% for row in page_obj %}
+      <tr>
+        <td class="px-3 py-2">{{ row.indent_id }}</td>
+        <td class="px-3 py-2">{{ row.mrn }}</td>
+        <td class="px-3 py-2">{{ row.requested_by }}</td>
+        <td class="px-3 py-2">{{ row.department }}</td>
+        <td class="px-3 py-2"><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
+        <td class="px-3 py-2"><a href="{% url 'indent_detail' row.indent_id %}" class="text-blue-600">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td class="px-3 py-4" colspan="6">No indents found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="flex items-center gap-3 mt-3">
+  {% if page_obj.has_previous %}
+    <a hx-get="{% url 'indents_table' %}?page={{ page_obj.previous_page_number }}&status={{ status|urlencode }}" hx-target="#indents_table" class="px-3 py-1 border rounded">Prev</a>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a hx-get="{% url 'indents_table' %}?page={{ page_obj.next_page_number }}&status={{ status|urlencode }}" hx-target="#indents_table" class="px-3 py-1 border rounded">Next</a>
+  {% endif %}
+</div>

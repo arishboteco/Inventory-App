@@ -5,6 +5,10 @@ from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.http import HttpResponse
+from django.conf import settings
+
+from app.services import item_service
+from sqlalchemy import create_engine
 
 from .models import (
     Item,
@@ -31,6 +35,19 @@ from .forms import (
     GRNItemFormSet,
 )
 from .indent_pdf import generate_indent_pdf
+
+
+# Lazily create a SQLAlchemy engine for legacy service helpers
+_ITEM_ENGINE = None
+
+
+def _get_item_engine():
+    """Return a SQLAlchemy engine for the default Django database."""
+    global _ITEM_ENGINE
+    if _ITEM_ENGINE is None:
+        db_path = settings.DATABASES["default"]["NAME"]
+        _ITEM_ENGINE = create_engine(f"sqlite:///{db_path}")
+    return _ITEM_ENGINE
 
 
 INDENT_STATUS_BADGES = {
@@ -142,6 +159,16 @@ def item_edit(request, pk: int):
         form = ItemForm(instance=item)
     ctx = {"form": form, "is_edit": True, "item": item}
     return render(request, "inventory/item_form.html", ctx)
+
+
+def item_suggest(request):
+    """Suggest category and units for an item name using legacy service."""
+    name = (request.GET.get("name") or "").strip()
+    base, purchase, category = item_service.suggest_category_and_units(
+        _get_item_engine(), name
+    )
+    ctx = {"base": base or "", "purchase": purchase or "", "category": category or ""}
+    return render(request, "inventory/_item_suggest_fields.html", ctx)
 
 
 def items_bulk_upload(request):

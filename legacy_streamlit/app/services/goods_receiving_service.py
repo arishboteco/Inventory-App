@@ -4,7 +4,7 @@ import traceback
 from typing import Optional, Dict, List, Tuple, Any
 
 import pandas as pd
-import streamlit as st  # For type hinting @st.cache_data
+from . import cache_data
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
@@ -283,7 +283,7 @@ def create_grn(
         return False, f"An unexpected error occurred: {str(e)}", None
 
 
-@st.cache_data(ttl=60)
+@cache_data(ttl=60)
 def get_received_quantities_for_po(_engine: Engine, po_id: int) -> pd.DataFrame:
     """
     Fetches the total quantities already received for each line item of a specific PO.
@@ -319,7 +319,7 @@ def get_received_quantities_for_po(_engine: Engine, po_id: int) -> pd.DataFrame:
     return df
 
 
-@st.cache_data(ttl=120, show_spinner="Fetching GRN list...")
+@cache_data(ttl=120, show_spinner="Fetching GRN list...")
 def list_grns(
     _engine: Engine, filters: Optional[Dict[str, Any]] = None
 ) -> pd.DataFrame:
@@ -359,7 +359,7 @@ def list_grns(
     return fetch_data(_engine, query_list_grn_str, params_list_grn)
 
 
-@st.cache_data(ttl=60, show_spinner="Fetching GRN details...")
+@cache_data(ttl=60, show_spinner="Fetching GRN details...")
 def get_grn_details(_engine: Engine, grn_id: int) -> Optional[Dict[str, Any]]:
     """
     Fetches details for a specific GRN by its ID, including its line items.

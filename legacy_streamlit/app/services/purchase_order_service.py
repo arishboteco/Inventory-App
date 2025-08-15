@@ -4,7 +4,7 @@ import traceback
 from typing import Optional, Dict, List, Tuple, Any
 
 import pandas as pd
-import streamlit as st
+from . import cache_data
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
@@ -47,7 +47,7 @@ def generate_po_number(engine: Engine) -> Optional[str]:
         return None
 
 
-@st.cache_data(ttl=300, show_spinner="Fetching Purchase Orders...")
+@cache_data(ttl=300, show_spinner="Fetching Purchase Orders...")
 def list_pos(
     _engine: Engine,
     filters: Optional[Dict[str, Any]] = None,
@@ -122,7 +122,7 @@ def list_pos(
     return fetch_data(_engine, query_str, params)
 
 
-@st.cache_data(ttl=60, show_spinner="Fetching Purchase Order details...")
+@cache_data(ttl=60, show_spinner="Fetching Purchase Order details...")
 def get_po_by_id(_engine: Engine, po_id: int) -> Optional[Dict[str, Any]]:
     if _engine is None or not po_id:
         logger.error(

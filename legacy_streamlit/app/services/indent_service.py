@@ -4,7 +4,7 @@ import traceback
 from typing import Optional, Dict, List, Tuple, Any
 
 import pandas as pd
-import streamlit as st  # For type hinting @st.cache_data
+from . import cache_data
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine, Connection
@@ -191,7 +191,7 @@ def create_indent(
         return False, "A database error occurred while creating the indent."
 
 
-@st.cache_data(ttl=120, show_spinner="Fetching indent list...")
+@cache_data(ttl=120, show_spinner="Fetching indent list...")
 def get_indents(
     _engine: Engine,
     mrn_filter: Optional[str] = None,
@@ -290,7 +290,7 @@ def get_indents(
     return df
 
 
-@st.cache_data(ttl=120, show_spinner="Fetching indents to process...")
+@cache_data(ttl=120, show_spinner="Fetching indents to process...")
 def get_indents_for_processing(_engine: Engine) -> pd.DataFrame:
     """
     Fetches indents that are in 'Submitted' or 'Processing' status.

@@ -9,6 +9,7 @@ from django.conf import settings
 
 from app.services import item_service
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 from .models import (
     Item,
@@ -45,8 +46,22 @@ def _get_item_engine():
     """Return a SQLAlchemy engine for the default Django database."""
     global _ITEM_ENGINE
     if _ITEM_ENGINE is None:
-        db_path = settings.DATABASES["default"]["NAME"]
-        _ITEM_ENGINE = create_engine(f"sqlite:///{db_path}")
+        cfg = settings.DATABASES["default"]
+        engine = cfg.get("ENGINE", "")
+        if engine.endswith("sqlite3"):
+            url = f"sqlite:///{cfg['NAME']}"
+        elif "postgresql" in engine:
+            url = URL.create(
+                "postgresql+psycopg",
+                username=cfg.get("USER") or None,
+                password=cfg.get("PASSWORD") or None,
+                host=cfg.get("HOST") or None,
+                port=cfg.get("PORT") or None,
+                database=cfg.get("NAME"),
+            )
+        else:
+            raise ValueError(f"Unsupported database engine: {engine}")
+        _ITEM_ENGINE = create_engine(url)
     return _ITEM_ENGINE
 
 

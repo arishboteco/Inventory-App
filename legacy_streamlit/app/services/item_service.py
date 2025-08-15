@@ -5,7 +5,7 @@ import traceback
 from typing import Any, Optional, Dict, List, Tuple, Set
 
 import pandas as pd
-import streamlit as st  # Only for type hinting @st.cache_data
+from . import cache_data
 from sqlalchemy import text, bindparam
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 # ─────────────────────────────────────────────────────────
 # ITEM MASTER FUNCTIONS
 # ─────────────────────────────────────────────────────────
-@st.cache_data(ttl=300, show_spinner="Fetching item data...")
+@cache_data(ttl=300, show_spinner="Fetching item data...")
 def get_all_items_with_stock(_engine: Engine, include_inactive=False) -> pd.DataFrame:
     """
     Fetches all items, optionally including inactive ones, with their current stock.
@@ -79,7 +79,7 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
     return None
 
 
-@st.cache_data(ttl=300)
+@cache_data(ttl=300)
 def suggest_category_and_units(
     _engine: Engine, item_name: str
 ) -> Tuple[Optional[str], Optional[str], Optional[str]]:
@@ -555,7 +555,7 @@ def reactivate_item(engine: Engine, item_id: int) -> Tuple[bool, str]:
 # ─────────────────────────────────────────────────────────
 # DEPARTMENT & ITEM HISTORY/SUGGESTIONS FUNCTIONS
 # ─────────────────────────────────────────────────────────
-@st.cache_data(ttl=300, show_spinner="Fetching department list...")
+@cache_data(ttl=300, show_spinner="Fetching department list...")
 def get_distinct_departments_from_items(_engine: Engine) -> List[str]:
     """
     Fetches a sorted list of unique, non-empty department names from active items.
@@ -597,7 +597,7 @@ def get_distinct_departments_from_items(_engine: Engine) -> List[str]:
         return []
 
 
-@st.cache_data(ttl=300)
+@cache_data(ttl=300)
 def get_item_order_history_details(
     _engine: Engine, item_id: int, department_name: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -662,7 +662,7 @@ def get_item_order_history_details(
     return {"last_ordered_date": last_date_str, "median_quantity": median_qty_val}
 
 
-@st.cache_data(ttl=3600, show_spinner="Analyzing item suggestions...")
+@cache_data(ttl=3600, show_spinner="Analyzing item suggestions...")
 def get_suggested_items_for_department(
     _engine: Engine, department_name: str, top_n: int = 5, days_recency: int = 90
 ) -> List[Dict[str, Any]]:

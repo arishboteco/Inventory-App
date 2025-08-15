@@ -14,11 +14,16 @@ from __future__ import annotations
 
 from typing import Dict, Tuple, Optional
 from pathlib import Path
+import warnings
 
 try:  # yaml is optional but recommended
     import yaml
 except Exception:  # pragma: no cover - fallback if PyYAML isn't installed
     yaml = None
+    warnings.warn(
+        "PyYAML not installed; units.yaml overrides will be ignored.",
+        RuntimeWarning,
+    )
 
 # Maps a keyword found in the *item name* to a tuple of (base_unit, purchase_unit)
 _NAME_KEYWORD_MAP: Dict[str, Tuple[str, Optional[str]]] = {
@@ -65,7 +70,7 @@ def _load_overrides() -> None:
     """Load unit mapping overrides from ``units.yaml`` if present."""
 
     if yaml is None:  # pragma: no cover - PyYAML not installed
-        return
+        return  # overrides ignored without PyYAML
 
     config_path = Path(__file__).resolve().parents[2] / "units.yaml"
     if not config_path.is_file():

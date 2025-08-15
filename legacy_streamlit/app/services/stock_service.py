@@ -4,7 +4,7 @@ import traceback
 from typing import Optional, Dict, Any, List, Tuple
 
 import pandas as pd
-import streamlit as st  # For type hinting @st.cache_data
+from . import cache_data
 from sqlalchemy import text, exc as sqlalchemy_exc
 from sqlalchemy.engine import Engine, Connection
 
@@ -396,7 +396,7 @@ def remove_stock_transactions_bulk(
         return False
 
 
-@st.cache_data(ttl=120, show_spinner="Fetching transaction history...")
+@cache_data(ttl=120, show_spinner="Fetching transaction history...")
 def get_stock_transactions(
     _engine: Engine,
     item_id: Optional[int] = None,

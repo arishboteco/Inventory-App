@@ -6,7 +6,8 @@ from .models import Item, Supplier
 
 
 def items_list(request):
-    return render(request, "inventory/items_list.html")
+    q = (request.GET.get("q") or "").strip()
+    return render(request, "inventory/items_list.html", {"q": q})
 
 
 def items_table(request):
@@ -23,7 +24,8 @@ def items_table(request):
 
 
 def suppliers_list(request):
-    return render(request, "inventory/suppliers_list.html")
+    q = (request.GET.get("q") or "").strip()
+    return render(request, "inventory/suppliers_list.html", {"q": q})
 
 
 def suppliers_table(request):

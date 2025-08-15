@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Supplier, StockTransaction
+from .models import Item, Supplier, StockTransaction, Indent, IndentItem
 from legacy_streamlit.app.core.unit_inference import infer_units
 
 
@@ -110,3 +110,26 @@ class StockWastageForm(forms.ModelForm):
 
 class StockBulkUploadForm(forms.Form):
     file = forms.FileField()
+
+
+class IndentForm(forms.ModelForm):
+    class Meta:
+        model = Indent
+        fields = ["requested_by", "department", "date_required", "notes"]
+
+    def save(self, commit: bool = True):
+        obj = super().save(commit=False)
+        if not obj.status:
+            obj.status = "SUBMITTED"
+        if commit:
+            obj.save()
+        return obj
+
+
+IndentItemFormSet = forms.inlineformset_factory(
+    Indent,
+    IndentItem,
+    fields=["item", "requested_qty", "notes"],
+    extra=1,
+    can_delete=True,
+)

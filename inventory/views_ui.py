@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.contrib import messages
 from django.http import HttpResponse
 
-from .models import Item, Supplier, StockTransaction
+from .models import Item, Supplier, StockTransaction, Indent
 from .forms import (
     ItemForm,
     BulkUploadForm,
@@ -14,7 +14,18 @@ from .forms import (
     StockAdjustmentForm,
     StockWastageForm,
     StockBulkUploadForm,
+    IndentForm,
+    IndentItemFormSet,
 )
+from .indent_pdf import generate_indent_pdf
+
+
+INDENT_STATUS_BADGES = {
+    "SUBMITTED": "bg-gray-200 text-gray-800",
+    "PROCESSING": "bg-blue-200 text-blue-800",
+    "COMPLETED": "bg-green-200 text-green-800",
+    "CANCELLED": "bg-red-200 text-red-800",
+}
 
 import csv
 import io
@@ -421,3 +432,63 @@ def history_reports(request):
         "query_string": query_string,
     }
     return render(request, "inventory/history_reports.html", ctx)
+
+
+def indents_list(request):
+    status = (request.GET.get("status") or "").strip()
+    return render(request, "inventory/indents_list.html", {"status": status})
+
+
+def indents_table(request):
+    status = (request.GET.get("status") or "").strip()
+    qs = Indent.objects.all()
+    if status:
+        qs = qs.filter(status=status)
+    qs = qs.order_by("-indent_id")
+    paginator = Paginator(qs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    ctx = {"page_obj": page_obj, "status": status, "badges": INDENT_STATUS_BADGES}
+    return render(request, "inventory/_indents_table.html", ctx)
+
+
+def indent_create(request):
+    if request.method == "POST":
+        form = IndentForm(request.POST)
+        formset = IndentItemFormSet(request.POST, prefix="items")
+        if form.is_valid() and formset.is_valid():
+            indent = form.save()
+            formset.instance = indent
+            formset.save()
+            return redirect("indent_detail", pk=indent.pk)
+    else:
+        form = IndentForm()
+        formset = IndentItemFormSet(prefix="items")
+    return render(request, "inventory/indent_form.html", {"form": form, "formset": formset})
+
+
+def indent_detail(request, pk: int):
+    indent = get_object_or_404(Indent, pk=pk)
+    items = indent.indentitem_set.select_related("item").all()
+    return render(
+        request,
+        "inventory/indent_detail.html",
+        {"indent": indent, "items": items, "badges": INDENT_STATUS_BADGES},
+    )
+
+
+def indent_update_status(request, pk: int, status: str):
+    indent = get_object_or_404(Indent, pk=pk)
+    indent.status = status.upper()
+    indent.save()
+    return redirect("indent_detail", pk=pk)
+
+
+def indent_pdf(request, pk: int):
+    indent = get_object_or_404(Indent, pk=pk)
+    items = indent.indentitem_set.select_related("item").all()
+    pdf_bytes = generate_indent_pdf(indent, items)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    filename = f"indent_{indent.pk}.pdf"
+    response["Content-Disposition"] = f"attachment; filename={filename}"
+    return response

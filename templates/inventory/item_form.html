@@ -13,7 +13,56 @@
       {% endfor %}
     </ul>
     {% endif %}
+    <div>
+      {{ form.name.label_tag }}
+      {% url 'item_suggest' as suggest_url %}
+      {{ form.name.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2',
+                                   'hx-get': suggest_url,
+                                   'hx-trigger': 'keyup changed delay:500ms',
+                                   'hx-swap': 'none'}) }}
+      {% if form.name.errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in form.name.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div>
+      {{ form.base_unit.label_tag }}
+      {{ form.base_unit.as_widget(attrs={'id': 'id_base_unit', 'class': 'block w-full rounded border-gray-300 p-2'}) }}
+      {% if form.base_unit.errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in form.base_unit.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div>
+      {{ form.purchase_unit.label_tag }}
+      {{ form.purchase_unit.as_widget(attrs={'id': 'id_purchase_unit', 'class': 'block w-full rounded border-gray-300 p-2'}) }}
+      {% if form.purchase_unit.errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in form.purchase_unit.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <div>
+      {{ form.category.label_tag }}
+      {{ form.category.as_widget(attrs={'id': 'id_category', 'class': 'block w-full rounded border-gray-300 p-2'}) }}
+      {% if form.category.errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in form.category.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
     {% for field in form %}
+    {% if field.name not in ['name', 'base_unit', 'purchase_unit', 'category'] %}
     <div>
       {{ field.label_tag }}
       {% if field.field.widget.input_type == "checkbox" %}
@@ -29,6 +78,7 @@
       </ul>
       {% endif %}
     </div>
+    {% endif %}
     {% endfor %}
     <div class="flex gap-2">
       <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>

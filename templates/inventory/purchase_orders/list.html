@@ -5,22 +5,22 @@
   <div class="mb-4">
     <a href="{% url 'purchase_order_create' %}" class="px-4 py-2 bg-green-600 text-white rounded">New PO</a>
   </div>
-  <table class="min-w-full border">
+  <table class="table">
     <thead>
-      <tr class="border-b">
-        <th class="p-2 text-left">PO #</th>
-        <th class="p-2 text-left">Supplier</th>
-        <th class="p-2 text-left">Order Date</th>
-        <th class="p-2 text-left">Status</th>
+      <tr>
+        <th>PO #</th>
+        <th>Supplier</th>
+        <th>Order Date</th>
+        <th>Status</th>
       </tr>
     </thead>
     <tbody>
       {% for po in orders %}
-      <tr class="border-b">
-        <td class="p-2"><a class="text-blue-600" href="{% url 'purchase_order_detail' po.pk %}">{{ po.pk }}</a></td>
-        <td class="p-2">{{ po.supplier.name }}</td>
-        <td class="p-2">{{ po.order_date }}</td>
-        <td class="p-2"><span class="px-2 py-1 rounded text-xs {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
+      <tr>
+        <td><a class="text-blue-600" href="{% url 'purchase_order_detail' po.pk %}">{{ po.pk }}</a></td>
+        <td>{{ po.supplier.name }}</td>
+        <td>{{ po.order_date }}</td>
+        <td><span class="px-2 py-1 rounded text-xs {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
       </tr>
       {% empty %}
       <tr><td colspan="4" class="p-2">No purchase orders.</td></tr>

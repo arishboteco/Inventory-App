@@ -7,33 +7,33 @@
     <a href="{% url 'items_bulk_upload' %}" class="px-4 py-2 border rounded">Bulk Upload</a>
   </div>
   <form id="filters" class="flex flex-wrap gap-2 mb-4">
-    <input
-      type="text"
-      name="q"
-      placeholder="Search items..."
-      class="border rounded p-2 flex-grow"
-      value="{{ q }}"
-      hx-get="{% url 'items_table' %}"
-      hx-target="#items_table"
-      hx-trigger="keyup changed delay:300ms"
-      hx-include="#filters"
-    />
-    <select name="category" class="border rounded p-2"
-            hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
+      <input
+        type="text"
+        name="q"
+        placeholder="Search items..."
+        class="form-control flex-grow"
+        value="{{ q }}"
+        hx-get="{% url 'items_table' %}"
+        hx-target="#items_table"
+        hx-trigger="keyup changed delay:300ms"
+        hx-include="#filters"
+      />
+      <select name="category" class="form-control"
+              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
       <option value="">All Categories</option>
       {% for cat in categories %}
       <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
       {% endfor %}
     </select>
-    <select name="subcategory" class="border rounded p-2"
-            hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
+      <select name="subcategory" class="form-control"
+              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
       <option value="">All Subcategories</option>
       {% for sub in subcategories %}
       <option value="{{ sub }}" {% if sub == subcategory %}selected{% endif %}>{{ sub }}</option>
       {% endfor %}
     </select>
-    <select name="active" class="border rounded p-2"
-            hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
+      <select name="active" class="form-control"
+              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
       <option value="">All</option>
       <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
       <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>

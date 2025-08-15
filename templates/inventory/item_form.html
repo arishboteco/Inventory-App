@@ -16,10 +16,10 @@
     <div>
       {{ form.name.label_tag }}
       {% url 'item_suggest' as suggest_url %}
-      {{ form.name.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2',
-                                   'hx-get': suggest_url,
-                                   'hx-trigger': 'keyup changed delay:500ms',
-                                   'hx-swap': 'none'}) }}
+        {{ form.name.as_widget(attrs={'class': 'form-control',
+                                     'hx-get': suggest_url,
+                                     'hx-trigger': 'keyup changed delay:500ms',
+                                     'hx-swap': 'none'}) }}
       {% if form.name.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in form.name.errors %}
@@ -30,7 +30,7 @@
     </div>
     <div>
       {{ form.base_unit.label_tag }}
-      {{ form.base_unit.as_widget(attrs={'id': 'id_base_unit', 'class': 'block w-full rounded border-gray-300 p-2'}) }}
+        {{ form.base_unit.as_widget(attrs={'id': 'id_base_unit', 'class': 'form-control'}) }}
       {% if form.base_unit.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in form.base_unit.errors %}
@@ -41,7 +41,7 @@
     </div>
     <div>
       {{ form.purchase_unit.label_tag }}
-      {{ form.purchase_unit.as_widget(attrs={'id': 'id_purchase_unit', 'class': 'block w-full rounded border-gray-300 p-2'}) }}
+        {{ form.purchase_unit.as_widget(attrs={'id': 'id_purchase_unit', 'class': 'form-control'}) }}
       {% if form.purchase_unit.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in form.purchase_unit.errors %}
@@ -52,7 +52,7 @@
     </div>
     <div>
       {{ form.category.label_tag }}
-      {{ form.category.as_widget(attrs={'id': 'id_category', 'class': 'block w-full rounded border-gray-300 p-2'}) }}
+        {{ form.category.as_widget(attrs={'id': 'id_category', 'class': 'form-control'}) }}
       {% if form.category.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in form.category.errors %}
@@ -65,11 +65,11 @@
     {% if field.name not in ['name', 'base_unit', 'purchase_unit', 'category'] %}
     <div>
       {{ field.label_tag }}
-      {% if field.field.widget.input_type == "checkbox" %}
-      {{ field.as_widget(attrs={'class': 'rounded border-gray-300'}) }}
-      {% else %}
-      {{ field.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
-      {% endif %}
+        {% if field.field.widget.input_type == "checkbox" %}
+        {{ field.as_widget(attrs={'class': 'form-checkbox'}) }}
+        {% else %}
+        {{ field.as_widget(attrs={'class': 'form-control'}) }}
+        {% endif %}
       {% if field.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in field.errors %}

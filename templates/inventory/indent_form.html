@@ -17,9 +17,9 @@
       <div>
         {{ field.label_tag }}
         {% if field.field.widget.input_type == "checkbox" %}
-        {{ field.as_widget(attrs={'class': 'rounded border-gray-300'}) }}
+        {{ field.as_widget(attrs={'class': 'form-checkbox'}) }}
         {% else %}
-        {{ field.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
+        {{ field.as_widget(attrs={'class': 'form-control'}) }}
         {% endif %}
         {% if field.errors %}
         <ul class="text-red-600 list-disc pl-5">
@@ -39,43 +39,43 @@
       {% endfor %}
     </ul>
     {% endif %}
-    <table class="min-w-full border divide-y" id="items-table">
+    <table id="items-table" class="table">
       <thead>
-        <tr class="bg-gray-50">
-          <th class="px-3 py-2 text-left">Item</th>
-          <th class="px-3 py-2 text-left">Qty</th>
-          <th class="px-3 py-2 text-left">Notes</th>
-          <th class="px-3 py-2"></th>
+        <tr>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Notes</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
       {% for item_form in formset %}
         <tr class="form-row">
-          <td class="px-3 py-2">
-            {{ item_form.item.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
+          <td>
+            {{ item_form.item.as_widget(attrs={'class': 'form-control'}) }}
             {% if item_form.item.errors %}
             <ul class="text-red-600 list-disc pl-5">
               {% for error in item_form.item.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
             {% endif %}
           </td>
-          <td class="px-3 py-2">
-            {{ item_form.requested_qty.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
+          <td>
+            {{ item_form.requested_qty.as_widget(attrs={'class': 'form-control'}) }}
             {% if item_form.requested_qty.errors %}
             <ul class="text-red-600 list-disc pl-5">
               {% for error in item_form.requested_qty.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
             {% endif %}
           </td>
-          <td class="px-3 py-2">
-            {{ item_form.notes.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
+          <td>
+            {{ item_form.notes.as_widget(attrs={'class': 'form-control'}) }}
             {% if item_form.notes.errors %}
             <ul class="text-red-600 list-disc pl-5">
               {% for error in item_form.notes.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
             {% endif %}
           </td>
-          <td class="px-3 py-2"><button type="button" class="remove-row text-red-600">Remove</button></td>
+          <td><button type="button" class="remove-row text-red-600">Remove</button></td>
         </tr>
       {% endfor %}
       </tbody>

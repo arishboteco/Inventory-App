@@ -6,14 +6,14 @@
   <p class="mb-2"><strong>Order Date:</strong> {{ po.order_date }}</p>
   <p class="mb-4"><span class="px-2 py-1 rounded text-xs {{ badge_class }}">{{ po.get_status_display }}</span></p>
   <h2 class="text-xl mb-2">Items</h2>
-  <table class="min-w-full border mb-4">
-    <thead><tr class="border-b"><th class="p-2 text-left">Item</th><th class="p-2 text-left">Ordered</th><th class="p-2 text-left">Received</th></tr></thead>
+  <table class="table mb-4">
+    <thead><tr><th>Item</th><th>Ordered</th><th>Received</th></tr></thead>
     <tbody>
     {% for item in items %}
-      <tr class="border-b">
-        <td class="p-2">{{ item.item.name }}</td>
-        <td class="p-2">{{ item.quantity_ordered }}</td>
-        <td class="p-2">{{ item.quantity_received }}</td>
+      <tr>
+        <td>{{ item.item.name }}</td>
+        <td>{{ item.quantity_ordered }}</td>
+        <td>{{ item.quantity_received }}</td>
       </tr>
     {% endfor %}
     </tbody>

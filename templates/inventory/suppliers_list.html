@@ -8,22 +8,22 @@
     <a href="{% url 'suppliers_bulk_delete' %}" class="px-4 py-2 border rounded">Bulk Delete</a>
   </div>
   <form id="filters" class="flex flex-wrap gap-2 mb-4">
-    <input
-      type="text"
-      name="q"
-      placeholder="Search suppliers..."
-      class="border rounded p-2 flex-grow"
-      value="{{ q }}"
-      hx-get="{% url 'suppliers_table' %}"
-      hx-target="#suppliers_table"
-      hx-trigger="keyup changed delay:300ms"
-      hx-include="#filters"
-    />
-    <label class="flex items-center gap-2">
-      <input type="checkbox" name="show_inactive" value="1" {% if show_inactive %}checked{% endif %}
-             hx-get="{% url 'suppliers_table' %}" hx-target="#suppliers_table" hx-trigger="change" hx-include="#filters" />
-      Show Inactive
-    </label>
+      <input
+        type="text"
+        name="q"
+        placeholder="Search suppliers..."
+        class="form-control flex-grow"
+        value="{{ q }}"
+        hx-get="{% url 'suppliers_table' %}"
+        hx-target="#suppliers_table"
+        hx-trigger="keyup changed delay:300ms"
+        hx-include="#filters"
+      />
+      <label class="flex items-center gap-2">
+        <input type="checkbox" name="show_inactive" value="1" class="form-checkbox" {% if show_inactive %}checked{% endif %}
+               hx-get="{% url 'suppliers_table' %}" hx-target="#suppliers_table" hx-trigger="change" hx-include="#filters" />
+        Show Inactive
+      </label>
   </form>
   <div id="suppliers_table"
        hx-get="{% url 'suppliers_table' %}"

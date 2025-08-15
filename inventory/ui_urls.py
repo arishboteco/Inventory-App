@@ -28,4 +28,5 @@ urlpatterns = [
         name="suppliers_bulk_delete",
     ),
     path("stock-movements/", views_ui.stock_movements, name="stock_movements"),
+    path("history-reports/", views_ui.history_reports, name="history_reports"),
 ]

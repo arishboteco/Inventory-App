@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
+from django.db import transaction, DatabaseError
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.http import HttpResponse
 
@@ -131,8 +133,11 @@ def item_edit(request, pk: int):
     if request.method == "POST":
         form = ItemForm(request.POST, instance=item)
         if form.is_valid():
-            form.save()
-            return redirect("items_list")
+            try:
+                form.save()
+                return redirect("items_list")
+            except (ValidationError, DatabaseError):
+                messages.error(request, "Unable to save item")
     else:
         form = ItemForm(instance=item)
     ctx = {"form": form, "is_edit": True, "item": item}
@@ -477,10 +482,14 @@ def indent_create(request):
         form = IndentForm(request.POST)
         formset = IndentItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
-            indent = form.save()
-            formset.instance = indent
-            formset.save()
-            return redirect("indent_detail", pk=indent.pk)
+            try:
+                with transaction.atomic():
+                    indent = form.save()
+                    formset.instance = indent
+                    formset.save()
+                return redirect("indent_detail", pk=indent.pk)
+            except DatabaseError:
+                messages.error(request, "Unable to save indent")
     else:
         form = IndentForm()
         formset = IndentItemFormSet(prefix="items")

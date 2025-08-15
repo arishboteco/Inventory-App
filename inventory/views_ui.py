@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
 
-from app.services import item_service
+from inventory.services import item_service
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 

@@ -7,13 +7,14 @@
     name="q"
     placeholder="Search items..."
     class="w-full border rounded p-2 mb-4"
+    value="{{ q }}"
     hx-get="{% url 'items_table' %}"
     hx-target="#items_table"
     hx-trigger="keyup changed delay:300ms"
     hx-include="[name='q']"
   />
   <div id="items_table"
-       hx-get="{% url 'items_table' %}"
+       hx-get="{% url 'items_table' %}?q={{ q|urlencode }}"
        hx-trigger="load">
   </div>
 </div>

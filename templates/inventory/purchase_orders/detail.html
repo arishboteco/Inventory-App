@@ -1,0 +1,26 @@
+{% extends "_base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold mb-4">Purchase Order {{ po.pk }}</h1>
+  <p class="mb-2"><strong>Supplier:</strong> {{ po.supplier.name }}</p>
+  <p class="mb-2"><strong>Order Date:</strong> {{ po.order_date }}</p>
+  <p class="mb-4"><span class="px-2 py-1 rounded text-xs {{ badge_class }}">{{ po.get_status_display }}</span></p>
+  <h2 class="text-xl mb-2">Items</h2>
+  <table class="min-w-full border mb-4">
+    <thead><tr class="border-b"><th class="p-2 text-left">Item</th><th class="p-2 text-left">Ordered</th><th class="p-2 text-left">Received</th></tr></thead>
+    <tbody>
+    {% for item in items %}
+      <tr class="border-b">
+        <td class="p-2">{{ item.item.name }}</td>
+        <td class="p-2">{{ item.quantity_ordered }}</td>
+        <td class="p-2">{{ item.quantity_received }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="flex gap-2">
+    <a href="{% url 'purchase_order_edit' po.pk %}" class="px-4 py-2 bg-blue-600 text-white rounded">Edit</a>
+    <a href="{% url 'purchase_order_receive' po.pk %}" class="px-4 py-2 bg-green-600 text-white rounded">Receive Goods</a>
+  </div>
+</div>
+{% endblock %}

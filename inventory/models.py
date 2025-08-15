@@ -89,3 +89,71 @@ class IndentItem(models.Model):
     class Meta:
         managed = False
         db_table = "indent_items"
+
+
+class PurchaseOrder(models.Model):
+    po_id = models.AutoField(primary_key=True)
+    supplier = models.ForeignKey(
+        Supplier, models.CASCADE, db_column="supplier_id"
+    )
+    order_date = models.DateField()
+    expected_delivery_date = models.DateField(blank=True, null=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("DRAFT", "Draft"),
+            ("ORDERED", "Ordered"),
+            ("PARTIAL", "Partially Received"),
+            ("COMPLETE", "Completed"),
+            ("CANCELLED", "Cancelled"),
+        ],
+        default="DRAFT",
+    )
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = "purchase_orders"
+
+
+class PurchaseOrderItem(models.Model):
+    po_item_id = models.AutoField(primary_key=True)
+    purchase_order = models.ForeignKey(
+        PurchaseOrder, models.CASCADE, db_column="po_id"
+    )
+    item = models.ForeignKey(Item, models.DO_NOTHING, db_column="item_id")
+    quantity_ordered = models.FloatField()
+    quantity_received = models.FloatField(default=0)
+    unit_price = models.FloatField()
+
+    class Meta:
+        db_table = "purchase_order_items"
+
+
+class GoodsReceivedNote(models.Model):
+    grn_id = models.AutoField(primary_key=True)
+    purchase_order = models.ForeignKey(
+        PurchaseOrder, models.CASCADE, db_column="po_id"
+    )
+    supplier = models.ForeignKey(
+        Supplier, models.CASCADE, db_column="supplier_id"
+    )
+    received_date = models.DateField()
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = "goods_received_notes"
+
+
+class GRNItem(models.Model):
+    grn_item_id = models.AutoField(primary_key=True)
+    grn = models.ForeignKey(GoodsReceivedNote, models.CASCADE, db_column="grn_id")
+    po_item = models.ForeignKey(
+        PurchaseOrderItem, models.CASCADE, db_column="po_item_id"
+    )
+    quantity_ordered_on_po = models.FloatField()
+    quantity_received = models.FloatField()
+    unit_price_at_receipt = models.FloatField()
+    item_notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = "grn_items"

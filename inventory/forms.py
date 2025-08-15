@@ -1,5 +1,15 @@
 from django import forms
-from .models import Item, Supplier, StockTransaction, Indent, IndentItem
+from .models import (
+    Item,
+    Supplier,
+    StockTransaction,
+    Indent,
+    IndentItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    GoodsReceivedNote,
+    GRNItem,
+)
 from legacy_streamlit.app.core.unit_inference import infer_units
 
 
@@ -132,4 +142,46 @@ IndentItemFormSet = forms.inlineformset_factory(
     fields=["item", "requested_qty", "notes"],
     extra=1,
     can_delete=True,
+)
+
+
+class PurchaseOrderForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrder
+        fields = [
+            "supplier",
+            "order_date",
+            "expected_delivery_date",
+            "status",
+            "notes",
+        ]
+
+
+PurchaseOrderItemFormSet = forms.inlineformset_factory(
+    PurchaseOrder,
+    PurchaseOrderItem,
+    fields=["item", "quantity_ordered", "unit_price"],
+    extra=1,
+    can_delete=True,
+)
+
+
+class GRNForm(forms.ModelForm):
+    class Meta:
+        model = GoodsReceivedNote
+        fields = ["received_date", "notes"]
+
+
+GRNItemFormSet = forms.inlineformset_factory(
+    GoodsReceivedNote,
+    GRNItem,
+    fields=[
+        "po_item",
+        "quantity_ordered_on_po",
+        "quantity_received",
+        "unit_price_at_receipt",
+        "item_notes",
+    ],
+    extra=0,
+    can_delete=False,
 )

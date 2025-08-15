@@ -10,7 +10,7 @@ from .models import (
     GoodsReceivedNote,
     GRNItem,
 )
-from legacy_streamlit.app.core.unit_inference import infer_units
+from .unit_inference import infer_units
 
 
 class ItemForm(forms.ModelForm):

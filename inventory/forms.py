@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item
+from .models import Item, Supplier
 from legacy_streamlit.app.core.unit_inference import infer_units
 
 
@@ -36,3 +36,21 @@ class ItemForm(forms.ModelForm):
 
 class BulkUploadForm(forms.Form):
     file = forms.FileField()
+
+
+class BulkDeleteForm(forms.Form):
+    file = forms.FileField()
+
+
+class SupplierForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = [
+            "name",
+            "contact_person",
+            "phone",
+            "email",
+            "address",
+            "notes",
+            "is_active",
+        ]

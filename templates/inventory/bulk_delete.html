@@ -6,12 +6,12 @@
     {% csrf_token %}
     {{ form.as_p }}
     <div class="flex gap-2">
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Upload</button>
+      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
       <a href="{% url back_url %}" class="px-4 py-2 border rounded">Back</a>
     </div>
   </form>
-  {% if inserted %}
-  <p class="mt-4 text-green-700">Inserted {{ inserted }} record(s).</p>
+  {% if deleted %}
+  <p class="mt-4 text-green-700">Deleted {{ deleted }} supplier(s).</p>
   {% endif %}
   {% if errors %}
   <div class="mt-4">

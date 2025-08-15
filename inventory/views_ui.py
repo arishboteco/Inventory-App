@@ -18,6 +18,8 @@ from .models import (
     Indent,
     PurchaseOrder,
     PurchaseOrderItem,
+    GoodsReceivedNote,
+    GRNItem,
 )
 from .forms import (
     ItemForm,

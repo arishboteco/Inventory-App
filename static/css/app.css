@@ -1,5 +1,76 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-@import url('../../legacy_streamlit/app/ui/styles.css');
+/* General layout */
+:root {
+    /* Increase the default sidebar width to prevent text wrapping */
+    --sidebar-width: 12rem;
+}
+
+body { font-family: 'Roboto', sans-serif; }
+
+.sidebar .sidebar-content {
+    background-color: #f0f2f6;
+}
+
+/* Compact sidebar layout */
+[data-testid="stSidebar"] {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width); /* keep navigation items on one line */
+}
+[data-testid="stSidebar"] .sidebar-content {
+    padding: 0.5rem;
+}
+[data-testid="stSidebar"] img {
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Status badge classes */
+.badge-success { background: #21ba45; color: white; padding: 2px 6px; border-radius: 4px; }
+.badge-warning { background: #f2c037; color: black; padding: 2px 6px; border-radius: 4px; }
+.badge-error   { background: #db2828; color: white; padding: 2px 6px; border-radius: 4px; }
+
+/* Hide Streamlit's built-in page navigation so only custom links show */
+[data-testid="stSidebarNav"] {
+    display: none;
+}
+
+/* Responsive typography */
+@media (max-width: 768px) {
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
+    .badge-success,
+    .badge-warning,
+    .badge-error { font-size: 0.8rem; padding: 2px 4px; }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1e1e1e;
+        color: #ffffff;
+    }
+
+    .sidebar .sidebar-content {
+        background-color: #0e1117;
+    }
+
+    .badge-success { background: #27963c; color: white; }
+    .badge-warning { background: #e0b437; color: black; }
+    .badge-error   { background: #cc0000; color: white; }
+}
+
+/* Tighten spacing for sidebar navigation items */
+[data-testid="stSidebarNav"] li,
+[data-testid="stSidebarNavLink"] {
+    margin: 0.125rem 0;
+    padding: 0.125rem 0.5rem;
+}
+
+/* High contrast styling for dropdowns in data editors */
+div[data-testid="stDataEditor"] select {
+    background-color: #004085;
+    color: #ffffff;
+}
 
 /* Global form styling */
 label {

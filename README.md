@@ -38,7 +38,7 @@ To extend the behaviour programmatically, edit `app/core/unit_inference.py`:
 ### Example
 
 ```python
-from app.services.item_service import add_new_item
+from inventory.services.item_service import add_new_item
 
 # base_unit becomes 'ltr' and purchase_unit 'carton'
 success, msg = add_new_item(engine, {"name": "Whole Milk", "category": "Dairy"})

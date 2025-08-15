@@ -9,9 +9,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
-from app.core.constants import (
+from ..core.logging import get_logger
+from ..db.database_utils import fetch_data
+from ..core.constants import (
     PO_STATUS_DRAFT,
     PO_STATUS_ORDERED,
     PO_STATUS_FULLY_RECEIVED,

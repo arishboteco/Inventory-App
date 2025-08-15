@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from app.services import stock_service
+from legacy_streamlit.app.services import stock_service
 
 
 def test_record_stock_transaction_updates_stock_and_logs(sqlite_engine):

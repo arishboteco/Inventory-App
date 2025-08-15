@@ -11,9 +11,9 @@ _REPO_ROOT = os.path.abspath(os.path.join(_CUR_DIR, os.pardir, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.ui.theme import load_css, render_sidebar_logo
-from app.ui.navigation import render_sidebar_nav
-from app.ui import (
+from ..ui.theme import load_css, render_sidebar_logo
+from ..ui.navigation import render_sidebar_nav
+from ..ui import (
     pagination_controls,
     render_search_toggle,
     show_success,
@@ -22,12 +22,12 @@ from app.ui import (
 )
 
 try:
-    from app.db.database_utils import connect_db
-    from app.services import supplier_service
+    from ..db.database_utils import connect_db
+    from ..services import supplier_service
 
     # No specific UI placeholders from constants.py are heavily used here yet,
     # but good to keep imports organized if they are added later.
-    # from app.core.constants import SOME_CONSTANT
+    # from ..core.constants import SOME_CONSTANT
 except ImportError as e:
     show_error(f"Import error in 2_Suppliers.py: {e}.")
     st.stop()

@@ -9,11 +9,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
-from app.services import stock_service
-from app.services import purchase_order_service
-from app.core.constants import (
+from ..core.logging import get_logger
+from ..db.database_utils import fetch_data
+from . import stock_service
+from . import purchase_order_service
+from ..core.constants import (
     TX_RECEIVING,
     PO_STATUS_PARTIALLY_RECEIVED,
     PO_STATUS_FULLY_RECEIVED,

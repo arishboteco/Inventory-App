@@ -19,7 +19,7 @@ def test_purge_old_logs(tmp_path, monkeypatch):
     monkeypatch.setenv("LOG_FILE", str(log_file))
     monkeypatch.setenv("LOG_RETENTION_DAYS", "7")
 
-    import app.core.logging as logging_mod
+    import legacy_streamlit.app.core.logging as logging_mod
     importlib.reload(logging_mod)
 
     logging_mod.configure_logging()

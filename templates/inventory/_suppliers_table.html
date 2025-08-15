@@ -1,33 +1,33 @@
 <div class="overflow-x-auto">
-  <table class="min-w-full border divide-y">
+  <table class="table">
     <thead>
-      <tr class="bg-gray-50">
-        <th class="px-3 py-2 text-left">ID</th>
-        <th class="px-3 py-2 text-left">Name</th>
-        <th class="px-3 py-2 text-left">Contact</th>
-        <th class="px-3 py-2 text-left">Email</th>
-        <th class="px-3 py-2 text-left">Phone</th>
-        <th class="px-3 py-2 text-left">Active</th>
-        <th class="px-3 py-2 text-left">Actions</th>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Contact</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Active</th>
+        <th>Actions</th>
       </tr>
     </thead>
-    <tbody class="divide-y">
+    <tbody>
       {% for row in page_obj %}
       <tr>
-        <td class="px-3 py-2">{{ row.supplier_id }}</td>
-        <td class="px-3 py-2">{{ row.name }}</td>
-        <td class="px-3 py-2">{{ row.contact_person }}</td>
-        <td class="px-3 py-2">{{ row.email }}</td>
-        <td class="px-3 py-2">{{ row.phone }}</td>
-        <td class="px-3 py-2">{{ row.is_active }}</td>
-        <td class="px-3 py-2">
+        <td>{{ row.supplier_id }}</td>
+        <td>{{ row.name }}</td>
+        <td>{{ row.contact_person }}</td>
+        <td>{{ row.email }}</td>
+        <td>{{ row.phone }}</td>
+        <td>{{ row.is_active }}</td>
+        <td>
           <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-blue-600 mr-2">Edit</a>
           <a hx-get="{% url 'supplier_toggle_active' row.supplier_id %}?q={{ q|urlencode }}&page={{ page_obj.number }}&show_inactive={{ show_inactive|urlencode }}"
              hx-target="#suppliers_table" class="text-blue-600">Toggle</a>
         </td>
       </tr>
       {% empty %}
-      <tr><td class="px-3 py-4" colspan="7">No suppliers found.</td></tr>
+      <tr><td colspan="7" class="p-2">No suppliers found.</td></tr>
       {% endfor %}
     </tbody>
   </table>

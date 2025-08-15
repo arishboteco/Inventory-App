@@ -9,11 +9,11 @@
     <a href="{% url 'indent_pdf' indent.indent_id %}" class="text-blue-600">Download PDF</a>
   </div>
   <h2 class="text-xl font-semibold mb-2">Items</h2>
-  <table class="min-w-full border divide-y">
-    <thead><tr class="bg-gray-50"><th class="px-3 py-2 text-left">Item</th><th class="px-3 py-2 text-left">Qty</th></tr></thead>
-    <tbody class="divide-y">
+  <table class="table">
+    <thead><tr><th>Item</th><th>Qty</th></tr></thead>
+    <tbody>
     {% for row in items %}
-      <tr><td class="px-3 py-2">{{ row.item.name }}</td><td class="px-3 py-2">{{ row.requested_qty }}</td></tr>
+      <tr><td>{{ row.item.name }}</td><td>{{ row.requested_qty }}</td></tr>
     {% endfor %}
     </tbody>
   </table>

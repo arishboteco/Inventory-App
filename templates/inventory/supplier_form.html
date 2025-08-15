@@ -16,11 +16,11 @@
     {% for field in form %}
     <div>
       {{ field.label_tag }}
-      {% if field.field.widget.input_type == "checkbox" %}
-      {{ field.as_widget(attrs={'class': 'rounded border-gray-300'}) }}
-      {% else %}
-      {{ field.as_widget(attrs={'class': 'block w-full rounded border-gray-300 p-2'}) }}
-      {% endif %}
+        {% if field.field.widget.input_type == "checkbox" %}
+        {{ field.as_widget(attrs={'class': 'form-checkbox'}) }}
+        {% else %}
+        {{ field.as_widget(attrs={'class': 'form-control'}) }}
+        {% endif %}
       {% if field.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in field.errors %}

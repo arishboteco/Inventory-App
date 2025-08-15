@@ -5,15 +5,15 @@
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {{ form.as_p }}
-    <table class="min-w-full border">
-      <thead><tr class="border-b"><th class="p-2 text-left">Item</th><th class="p-2 text-left">Ordered</th><th class="p-2 text-left">Received</th><th class="p-2 text-left">Receive Now</th></tr></thead>
+    <table class="table">
+      <thead><tr><th>Item</th><th>Ordered</th><th>Received</th><th>Receive Now</th></tr></thead>
       <tbody>
       {% for item in items %}
-        <tr class="border-b">
-          <td class="p-2">{{ item.item.name }}</td>
-          <td class="p-2">{{ item.quantity_ordered }}</td>
-          <td class="p-2">{{ item.quantity_received }}</td>
-          <td class="p-2"><input type="number" step="any" name="item_{{ item.pk }}" class="border p-1 w-24" /></td>
+        <tr>
+          <td>{{ item.item.name }}</td>
+          <td>{{ item.quantity_ordered }}</td>
+          <td>{{ item.quantity_received }}</td>
+          <td><input type="number" step="any" name="item_{{ item.pk }}" class="form-control w-24" /></td>
         </tr>
       {% endfor %}
       </tbody>

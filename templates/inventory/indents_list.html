@@ -5,9 +5,9 @@
   <div class="mb-4 flex gap-2">
     <a href="{% url 'indent_create' %}" class="px-4 py-2 bg-green-600 text-white rounded">New Indent</a>
   </div>
-  <form id="filters" class="flex flex-wrap gap-2 mb-4">
-    <select name="status" class="border rounded p-2"
-            hx-get="{% url 'indents_table' %}" hx-target="#indents_table" hx-trigger="change" hx-include="#filters">
+    <form id="filters" class="flex flex-wrap gap-2 mb-4">
+      <select name="status" class="form-control"
+              hx-get="{% url 'indents_table' %}" hx-target="#indents_table" hx-trigger="change" hx-include="#filters">
       <option value="">All Statuses</option>
       <option value="SUBMITTED" {% if status == 'SUBMITTED' %}selected{% endif %}>Submitted</option>
       <option value="PROCESSING" {% if status == 'PROCESSING' %}selected{% endif %}>Processing</option>

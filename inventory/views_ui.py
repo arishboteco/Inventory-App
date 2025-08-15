@@ -4,7 +4,14 @@ from django.db.models import Q
 from django.contrib import messages
 from django.http import HttpResponse
 
-from .models import Item, Supplier, StockTransaction, Indent
+from .models import (
+    Item,
+    Supplier,
+    StockTransaction,
+    Indent,
+    PurchaseOrder,
+    PurchaseOrderItem,
+)
 from .forms import (
     ItemForm,
     BulkUploadForm,
@@ -16,6 +23,10 @@ from .forms import (
     StockBulkUploadForm,
     IndentForm,
     IndentItemFormSet,
+    PurchaseOrderForm,
+    PurchaseOrderItemFormSet,
+    GRNForm,
+    GRNItemFormSet,
 )
 from .indent_pdf import generate_indent_pdf
 
@@ -24,6 +35,15 @@ INDENT_STATUS_BADGES = {
     "SUBMITTED": "bg-gray-200 text-gray-800",
     "PROCESSING": "bg-blue-200 text-blue-800",
     "COMPLETED": "bg-green-200 text-green-800",
+    "CANCELLED": "bg-red-200 text-red-800",
+}
+
+
+PO_STATUS_BADGES = {
+    "DRAFT": "bg-gray-200 text-gray-800",
+    "ORDERED": "bg-blue-200 text-blue-800",
+    "PARTIAL": "bg-yellow-200 text-yellow-800",
+    "COMPLETE": "bg-green-200 text-green-800",
     "CANCELLED": "bg-red-200 text-red-800",
 }
 
@@ -492,3 +512,125 @@ def indent_pdf(request, pk: int):
     filename = f"indent_{indent.pk}.pdf"
     response["Content-Disposition"] = f"attachment; filename={filename}"
     return response
+
+
+# ─────────────────────────────────────────────────────────
+# PURCHASE ORDER VIEWS
+# ─────────────────────────────────────────────────────────
+
+
+def purchase_orders_list(request):
+    orders = PurchaseOrder.objects.select_related("supplier").order_by("-order_date")
+    for o in orders:
+        o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+    return render(
+        request,
+        "inventory/purchase_orders/list.html",
+        {"orders": orders},
+    )
+
+
+def purchase_order_create(request):
+    if request.method == "POST":
+        form = PurchaseOrderForm(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            po = form.save()
+            formset.instance = po
+            formset.save()
+            return redirect("purchase_orders_list")
+    else:
+        form = PurchaseOrderForm()
+        formset = PurchaseOrderItemFormSet()
+    return render(
+        request,
+        "inventory/purchase_orders/form.html",
+        {"form": form, "formset": formset, "is_edit": False},
+    )
+
+
+def purchase_order_edit(request, pk: int):
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    if request.method == "POST":
+        form = PurchaseOrderForm(request.POST, instance=po)
+        formset = PurchaseOrderItemFormSet(request.POST, instance=po)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return redirect("purchase_order_detail", pk=pk)
+    else:
+        form = PurchaseOrderForm(instance=po)
+        formset = PurchaseOrderItemFormSet(instance=po)
+    return render(
+        request,
+        "inventory/purchase_orders/form.html",
+        {"form": form, "formset": formset, "is_edit": True, "po": po},
+    )
+
+
+def purchase_order_detail(request, pk: int):
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    items = po.purchaseorderitem_set.select_related("item").all()
+    badge_class = PO_STATUS_BADGES.get(po.status, "")
+    return render(
+        request,
+        "inventory/purchase_orders/detail.html",
+        {"po": po, "items": items, "badge_class": badge_class},
+    )
+
+
+def purchase_order_receive(request, pk: int):
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    items = po.purchaseorderitem_set.select_related("item").all()
+    if request.method == "POST":
+        form = GRNForm(request.POST)
+        if form.is_valid():
+            grn = form.save(commit=False)
+            grn.purchase_order = po
+            grn.supplier = po.supplier
+            grn.save()
+            any_received = False
+            fully_received = True
+            for item in items:
+                qty_field = f"item_{item.pk}"
+                try:
+                    qty = float(request.POST.get(qty_field, 0) or 0)
+                except ValueError:
+                    qty = 0
+                if qty < 0:
+                    qty = 0
+                if qty:
+                    any_received = True
+                    remaining = item.quantity_ordered - item.quantity_received
+                    if qty > remaining:
+                        form.add_error(
+                            None,
+                            f"Received quantity for {item.item.name} exceeds remaining",
+                        )
+                        fully_received = False
+                        continue
+                    GRNItem.objects.create(
+                        grn=grn,
+                        po_item=item,
+                        quantity_ordered_on_po=item.quantity_ordered,
+                        quantity_received=qty,
+                        unit_price_at_receipt=item.unit_price,
+                    )
+                    item.quantity_received += qty
+                    item.save()
+                if item.quantity_received < item.quantity_ordered:
+                    fully_received = False
+            if not any_received:
+                form.add_error(None, "No quantities received")
+                grn.delete()
+            elif not form.errors:
+                po.status = "COMPLETE" if fully_received else "PARTIAL"
+                po.save()
+                return redirect("purchase_order_detail", pk=pk)
+    else:
+        form = GRNForm()
+    return render(
+        request,
+        "inventory/purchase_orders/receive.html",
+        {"form": form, "po": po, "items": items},
+    )

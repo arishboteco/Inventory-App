@@ -40,4 +40,26 @@ urlpatterns = [
         name="indent_update_status",
     ),
     path("indents/<int:pk>/pdf/", views_ui.indent_pdf, name="indent_pdf"),
+
+    path("purchase-orders/", views_ui.purchase_orders_list, name="purchase_orders_list"),
+    path(
+        "purchase-orders/create/",
+        views_ui.purchase_order_create,
+        name="purchase_order_create",
+    ),
+    path(
+        "purchase-orders/<int:pk>/edit/",
+        views_ui.purchase_order_edit,
+        name="purchase_order_edit",
+    ),
+    path(
+        "purchase-orders/<int:pk>/",
+        views_ui.purchase_order_detail,
+        name="purchase_order_detail",
+    ),
+    path(
+        "purchase-orders/<int:pk>/receive/",
+        views_ui.purchase_order_receive,
+        name="purchase_order_receive",
+    ),
 ]

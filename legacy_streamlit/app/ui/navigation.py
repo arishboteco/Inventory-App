@@ -1,5 +1,5 @@
 import streamlit as st
-from app.core.logging import flush_logs
+from ..core.logging import flush_logs
 
 
 def render_sidebar_nav(include_clear_logs_button: bool = True) -> None:

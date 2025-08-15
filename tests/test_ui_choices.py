@@ -1,4 +1,4 @@
-from app.ui.choices import build_component_options
+from legacy_streamlit.app.ui.choices import build_component_options
 
 
 def test_build_component_options_basic():

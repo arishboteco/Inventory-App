@@ -23,8 +23,8 @@ from sqlalchemy.engine import Engine, Connection
 import pandas as pd
 from typing import Any, Optional, Dict, Tuple
 
-from app.core.logging import get_logger
-from app.config import load_db_config
+from ..core.logging import get_logger
+from ..config import load_db_config
 
 logger = get_logger(__name__)
 

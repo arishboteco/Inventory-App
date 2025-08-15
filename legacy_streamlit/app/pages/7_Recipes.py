@@ -13,16 +13,16 @@ _REPO_ROOT = os.path.abspath(os.path.join(_CUR_DIR, os.pardir, os.pardir))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from app.ui.theme import load_css, render_sidebar_logo
-from app.ui.navigation import render_sidebar_nav
-from app.ui import show_success, show_error, show_warning
-from app.ui.helpers import autofill_component_meta
-from app.ui.choices import build_component_options
+from ..ui.theme import load_css, render_sidebar_logo
+from ..ui.navigation import render_sidebar_nav
+from ..ui import show_success, show_error, show_warning
+from ..ui.helpers import autofill_component_meta
+from ..ui.choices import build_component_options
 
 try:
-    from app.db.database_utils import connect_db
-    from app.services import recipe_service, item_service
-    from app.core.constants import PLACEHOLDER_SELECT_COMPONENT
+    from ..db.database_utils import connect_db
+    from ..services import recipe_service, item_service
+    from ..core.constants import PLACEHOLDER_SELECT_COMPONENT
 except ImportError as e:
     show_error(f"Import error in 7_Recipes.py: {e}.")
     st.stop()

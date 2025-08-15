@@ -8,8 +8,8 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
+from ..core.logging import get_logger
+from ..db.database_utils import fetch_data
 
 logger = get_logger(__name__)
 

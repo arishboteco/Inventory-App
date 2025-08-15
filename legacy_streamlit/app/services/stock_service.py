@@ -8,11 +8,11 @@ from . import cache_data
 from sqlalchemy import text, exc as sqlalchemy_exc
 from sqlalchemy.engine import Engine, Connection
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
+from ..core.logging import get_logger
+from ..db.database_utils import fetch_data
 
 # Assuming item_service might be needed for future validation or fetching item names, though not directly used in current functions
-# from app.services import item_service
+# from . import item_service
 
 logger = get_logger(__name__)
 
@@ -182,7 +182,7 @@ def record_stock_transaction(
             return False
 
         # Clear relevant caches that depend on stock levels or transaction history
-        # Example: from app.services import item_service (if item_service had relevant caches)
+        # Example: from . import item_service (if item_service had relevant caches)
         # item_service.get_all_items_with_stock.clear() # Assuming get_all_items_with_stock is affected
         get_stock_transactions.clear()  # Defined below, depends on this data
 
@@ -190,7 +190,7 @@ def record_stock_transaction(
         # This requires item_service to be imported.
         # For loose coupling, this clear could be signaled differently, but for now, direct clear is acceptable.
         try:
-            from app.services import item_service
+            from . import item_service
 
             item_service.get_all_items_with_stock.clear()
         except ImportError:
@@ -380,7 +380,7 @@ def remove_stock_transactions_bulk(
         # Clear caches that depend on these tables
         get_stock_transactions.clear()
         try:
-            from app.services import item_service
+            from . import item_service
 
             item_service.get_all_items_with_stock.clear()
         except ImportError:

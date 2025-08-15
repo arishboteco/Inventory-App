@@ -10,9 +10,9 @@ from sqlalchemy import text, bindparam
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.engine import Engine
 
-from app.core.logging import get_logger
-from app.db.database_utils import fetch_data
-from app.core.unit_inference import infer_units
+from ..core.logging import get_logger
+from ..db.database_utils import fetch_data
+from ..core.unit_inference import infer_units
 
 logger = get_logger(__name__)
 

@@ -1,6 +1,23 @@
 from django.db import models
 
 
+class CoerceFloatField(models.FloatField):
+    """FloatField that silently coerces invalid values to ``None``."""
+
+    def to_python(self, value):  # type: ignore[override]
+        if value in self.empty_values:
+            return None
+        if isinstance(value, float):
+            return value
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    def from_db_value(self, value, expression, connection):  # type: ignore[override]
+        return self.to_python(value)
+
+
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
     name = models.TextField(blank=True, null=True)
@@ -9,8 +26,8 @@ class Item(models.Model):
     category = models.TextField(blank=True, null=True)
     sub_category = models.TextField(blank=True, null=True)
     permitted_departments = models.TextField(blank=True, null=True)
-    reorder_point = models.FloatField(blank=True, null=True)
-    current_stock = models.FloatField(blank=True, null=True)
+    reorder_point = CoerceFloatField(blank=True, null=True)
+    current_stock = CoerceFloatField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(blank=True, null=True)
     updated_at = models.TextField(blank=True, null=True)

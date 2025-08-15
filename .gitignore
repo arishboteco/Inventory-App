@@ -1,7 +1,4 @@
-# Streamlit secrets
-.streamlit/secrets.toml
-
-# Django environment variables
+# Environment-based configuration
 .env
 
 # Python virtual environment

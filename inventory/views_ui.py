@@ -1,9 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.contrib import messages
 
-from .models import Item, Supplier
-from .forms import ItemForm, BulkUploadForm, BulkDeleteForm, SupplierForm
+from .models import Item, Supplier, StockTransaction
+from .forms import (
+    ItemForm,
+    BulkUploadForm,
+    BulkDeleteForm,
+    SupplierForm,
+    StockReceivingForm,
+    StockAdjustmentForm,
+    StockWastageForm,
+    StockBulkUploadForm,
+)
 
 import csv
 import io
@@ -248,3 +258,77 @@ def suppliers_bulk_delete(request):
         "back_url": "suppliers_list",
     }
     return render(request, "inventory/bulk_delete.html", ctx)
+
+
+def stock_movements(request):
+    sections = {
+        "receive": "Goods Received",
+        "adjust": "Stock Adjustment",
+        "waste": "Wastage/Spoilage",
+    }
+    active = request.GET.get("section", "receive")
+
+    receive_form = StockReceivingForm(prefix="receive")
+    adjust_form = StockAdjustmentForm(prefix="adjust")
+    waste_form = StockWastageForm(prefix="waste")
+    bulk_form = StockBulkUploadForm()
+    bulk_success_count = None
+    bulk_errors: list[str] | None = None
+
+    if request.method == "POST":
+        if "submit_receive" in request.POST:
+            receive_form = StockReceivingForm(request.POST, prefix="receive")
+            if receive_form.is_valid():
+                receive_form.save()
+                messages.success(request, "Receiving transaction recorded")
+                return redirect("stock_movements")
+            active = "receive"
+        elif "submit_adjust" in request.POST:
+            adjust_form = StockAdjustmentForm(request.POST, prefix="adjust")
+            if adjust_form.is_valid():
+                adjust_form.save()
+                messages.success(request, "Adjustment transaction recorded")
+                return redirect("stock_movements" + "?section=adjust")
+            active = "adjust"
+        elif "submit_waste" in request.POST:
+            waste_form = StockWastageForm(request.POST, prefix="waste")
+            if waste_form.is_valid():
+                waste_form.save()
+                messages.success(request, "Wastage transaction recorded")
+                return redirect("stock_movements" + "?section=waste")
+            active = "waste"
+        elif "bulk_upload" in request.POST:
+            bulk_form = StockBulkUploadForm(request.POST, request.FILES)
+            bulk_success_count = 0
+            bulk_errors = []
+            if bulk_form.is_valid():
+                file = bulk_form.cleaned_data["file"]
+                data = io.StringIO(file.read().decode("utf-8"))
+                reader = csv.DictReader(data)
+                for idx, row in enumerate(reader):
+                    try:
+                        StockTransaction.objects.create(
+                            item_id=row.get("item_id") or None,
+                            quantity_change=float(row.get("quantity_change") or 0),
+                            transaction_type=row.get("transaction_type"),
+                            user_id=row.get("user_id"),
+                            related_mrn=row.get("related_mrn"),
+                            related_po_id=row.get("related_po_id") or None,
+                            notes=row.get("notes"),
+                        )
+                        bulk_success_count += 1
+                    except Exception as exc:  # pylint: disable=broad-except
+                        bulk_errors.append(f"Row {idx}: {exc}")
+            active = request.GET.get("section", "receive")
+
+    ctx = {
+        "sections": sections,
+        "active_section": active,
+        "receive_form": receive_form,
+        "adjust_form": adjust_form,
+        "waste_form": waste_form,
+        "bulk_form": bulk_form,
+        "bulk_success_count": bulk_success_count,
+        "bulk_errors": bulk_errors,
+    }
+    return render(request, "inventory/stock_movements.html", ctx)

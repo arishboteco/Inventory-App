@@ -27,4 +27,5 @@ urlpatterns = [
         views_ui.suppliers_bulk_delete,
         name="suppliers_bulk_delete",
     ),
+    path("stock-movements/", views_ui.stock_movements, name="stock_movements"),
 ]

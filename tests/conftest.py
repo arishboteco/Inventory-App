@@ -3,13 +3,17 @@ import os
 import sys
 import pytest
 from sqlalchemy import create_engine, event, text
+import django
 
 # Ensure project root is on sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from legacy_streamlit.app.core.logging import configure_logging
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings")
+django.setup()
+
+from inventory_app.logging import configure_logging
 
 # Configure logging for tests once before other modules import loggers
 configure_logging()

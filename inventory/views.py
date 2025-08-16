@@ -10,7 +10,7 @@ from .serializers import (
 )
 
 
-class ItemViewSet(viewsets.ReadOnlyModelViewSet):
+class ItemViewSet(viewsets.ModelViewSet):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
 
@@ -22,17 +22,17 @@ class ItemViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class SupplierViewSet(viewsets.ReadOnlyModelViewSet):
+class SupplierViewSet(viewsets.ModelViewSet):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
 
 
-class StockTransactionViewSet(viewsets.ReadOnlyModelViewSet):
+class StockTransactionViewSet(viewsets.ModelViewSet):
     queryset = StockTransaction.objects.all().select_related("item")
     serializer_class = StockTransactionSerializer
 
 
-class IndentViewSet(viewsets.ReadOnlyModelViewSet):
+class IndentViewSet(viewsets.ModelViewSet):
     queryset = Indent.objects.all()
     serializer_class = IndentSerializer
 
@@ -47,6 +47,6 @@ class IndentViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
-class IndentItemViewSet(viewsets.ReadOnlyModelViewSet):
+class IndentItemViewSet(viewsets.ModelViewSet):
     queryset = IndentItem.objects.all().select_related("indent", "item")
     serializer_class = IndentItemSerializer

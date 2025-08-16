@@ -1,3 +1,5 @@
+"""API routes for the inventory app."""
+
 from rest_framework.routers import DefaultRouter
 
 from .views import (

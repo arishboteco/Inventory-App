@@ -1,0 +1,45 @@
+import pytest
+from django.db import connection
+
+from inventory.models import Supplier
+from inventory.services import supplier_service
+
+
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Supplier)
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(Supplier)
+
+
+@pytest.mark.django_db
+def test_add_supplier_inserts_row():
+    details = {"name": "Vendor A", "is_active": True}
+    success, _ = supplier_service.add_supplier(details)
+    assert success
+    assert Supplier.objects.filter(name="Vendor A").exists()
+
+
+@pytest.mark.django_db
+def test_update_supplier_changes_fields():
+    supplier = Supplier.objects.create(name="Vendor B", is_active=True)
+    success, _ = supplier_service.update_supplier(supplier.pk, {"phone": "999"})
+    assert success
+    supplier.refresh_from_db()
+    assert supplier.phone == "999"
+
+
+@pytest.mark.django_db
+def test_deactivate_and_reactivate_supplier():
+    supplier = Supplier.objects.create(name="Vendor C", is_active=True)
+    ok, _ = supplier_service.deactivate_supplier(supplier.pk)
+    assert ok
+    supplier.refresh_from_db()
+    assert supplier.is_active is False
+    ok, _ = supplier_service.reactivate_supplier(supplier.pk)
+    assert ok
+    supplier.refresh_from_db()
+    assert supplier.is_active is True

@@ -7,7 +7,13 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
 
-from inventory.services import item_service
+from inventory.services import (
+    item_service,
+    supplier_service,
+    stock_service,
+    purchase_order_service,
+    goods_receiving_service,
+)
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 
@@ -250,8 +256,10 @@ def supplier_create(request):
     if request.method == "POST":
         form = SupplierForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect("suppliers_list")
+            success, msg = supplier_service.add_supplier(form.cleaned_data)
+            if success:
+                return redirect("suppliers_list")
+            messages.error(request, msg)
     else:
         form = SupplierForm()
     return render(
@@ -266,8 +274,12 @@ def supplier_edit(request, pk: int):
     if request.method == "POST":
         form = SupplierForm(request.POST, instance=supplier)
         if form.is_valid():
-            form.save()
-            return redirect("suppliers_list")
+            success, msg = supplier_service.update_supplier(
+                supplier.pk, form.cleaned_data
+            )
+            if success:
+                return redirect("suppliers_list")
+            messages.error(request, msg)
     else:
         form = SupplierForm(instance=supplier)
     ctx = {"form": form, "is_edit": True, "supplier": supplier}
@@ -276,8 +288,10 @@ def supplier_edit(request, pk: int):
 
 def supplier_toggle_active(request, pk: int):
     supplier = get_object_or_404(Supplier, pk=pk)
-    supplier.is_active = not bool(supplier.is_active)
-    supplier.save()
+    if supplier.is_active:
+        supplier_service.deactivate_supplier(supplier.pk)
+    else:
+        supplier_service.reactivate_supplier(supplier.pk)
     return suppliers_table(request)
 
 
@@ -293,8 +307,13 @@ def suppliers_bulk_upload(request):
             for row in reader:
                 form_row = SupplierForm(row)
                 if form_row.is_valid():
-                    form_row.save()
-                    inserted += 1
+                    success, msg = supplier_service.add_supplier(
+                        form_row.cleaned_data
+                    )
+                    if success:
+                        inserted += 1
+                    else:
+                        errors.append(msg)
                 else:
                     errors.append(str(form_row.errors))
     else:
@@ -321,10 +340,13 @@ def suppliers_bulk_delete(request):
             for row in reader:
                 name = (row.get("name") or "").strip()
                 if name:
-                    qs = Supplier.objects.filter(name=name)
-                    count, _ = qs.delete()
-                    if count:
-                        deleted += count
+                    supplier = Supplier.objects.filter(name=name).first()
+                    if supplier:
+                        ok, _ = supplier_service.deactivate_supplier(supplier.pk)
+                        if ok:
+                            deleted += 1
+                        else:
+                            errors.append(f"Supplier '{name}' not found")
                     else:
                         errors.append(f"Supplier '{name}' not found")
                 else:
@@ -360,23 +382,52 @@ def stock_movements(request):
         if "submit_receive" in request.POST:
             receive_form = StockReceivingForm(request.POST, prefix="receive")
             if receive_form.is_valid():
-                receive_form.save()
-                messages.success(request, "Receiving transaction recorded")
-                return redirect("stock_movements")
+                cd = receive_form.cleaned_data
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=cd["quantity_change"],
+                    transaction_type="RECEIVING",
+                    user_id=cd.get("user_id"),
+                    related_po_id=cd.get("related_po_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Receiving transaction recorded")
+                    return redirect("stock_movements")
+                messages.error(request, "Failed to record transaction")
             active = "receive"
         elif "submit_adjust" in request.POST:
             adjust_form = StockAdjustmentForm(request.POST, prefix="adjust")
             if adjust_form.is_valid():
-                adjust_form.save()
-                messages.success(request, "Adjustment transaction recorded")
-                return redirect("stock_movements" + "?section=adjust")
+                cd = adjust_form.cleaned_data
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=cd["quantity_change"],
+                    transaction_type="ADJUSTMENT",
+                    user_id=cd.get("user_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Adjustment transaction recorded")
+                    return redirect("stock_movements" + "?section=adjust")
+                messages.error(request, "Failed to record transaction")
             active = "adjust"
         elif "submit_waste" in request.POST:
             waste_form = StockWastageForm(request.POST, prefix="waste")
             if waste_form.is_valid():
-                waste_form.save()
-                messages.success(request, "Wastage transaction recorded")
-                return redirect("stock_movements" + "?section=waste")
+                cd = waste_form.cleaned_data
+                qty = -abs(cd["quantity_change"])
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=qty,
+                    transaction_type="WASTAGE",
+                    user_id=cd.get("user_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Wastage transaction recorded")
+                    return redirect("stock_movements" + "?section=waste")
+                messages.error(request, "Failed to record transaction")
             active = "waste"
         elif "bulk_upload" in request.POST:
             bulk_form = StockBulkUploadForm(request.POST, request.FILES)
@@ -386,20 +437,30 @@ def stock_movements(request):
                 file = bulk_form.cleaned_data["file"]
                 data = io.StringIO(file.read().decode("utf-8"))
                 reader = csv.DictReader(data)
+                txs = []
                 for idx, row in enumerate(reader):
                     try:
-                        StockTransaction.objects.create(
-                            item_id=row.get("item_id") or None,
-                            quantity_change=float(row.get("quantity_change") or 0),
-                            transaction_type=row.get("transaction_type"),
-                            user_id=row.get("user_id"),
-                            related_mrn=row.get("related_mrn"),
-                            related_po_id=row.get("related_po_id") or None,
-                            notes=row.get("notes"),
+                        txs.append(
+                            {
+                                "item_id": int(row.get("item_id")),
+                                "quantity_change": float(row.get("quantity_change")),
+                                "transaction_type": row.get("transaction_type", ""),
+                                "user_id": row.get("user_id"),
+                                "related_mrn": row.get("related_mrn"),
+                                "related_po_id": (
+                                    int(row.get("related_po_id"))
+                                    if row.get("related_po_id")
+                                    else None
+                                ),
+                                "notes": row.get("notes"),
+                            }
                         )
-                        bulk_success_count += 1
                     except Exception as exc:  # pylint: disable=broad-except
                         bulk_errors.append(f"Row {idx}: {exc}")
+                if txs and stock_service.record_stock_transactions_bulk(txs):
+                    bulk_success_count = len(txs)
+                else:
+                    bulk_errors.append("Failed to record bulk transactions")
             active = request.GET.get("section", "receive")
 
     ctx = {
@@ -588,10 +649,29 @@ def purchase_order_create(request):
         form = PurchaseOrderForm(request.POST)
         formset = PurchaseOrderItemFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
-            po = form.save()
-            formset.instance = po
-            formset.save()
-            return redirect("purchase_orders_list")
+            po_data = {
+                "supplier_id": form.cleaned_data["supplier"].pk,
+                "order_date": form.cleaned_data["order_date"],
+                "expected_delivery_date": form.cleaned_data.get(
+                    "expected_delivery_date"
+                ),
+                "status": form.cleaned_data.get("status"),
+                "notes": form.cleaned_data.get("notes"),
+            }
+            items_data = []
+            for item_form in formset.cleaned_data:
+                if item_form and not item_form.get("DELETE", False):
+                    items_data.append(
+                        {
+                            "item_id": item_form["item"].pk,
+                            "quantity_ordered": item_form["quantity_ordered"],
+                            "unit_price": item_form["unit_price"],
+                        }
+                    )
+            success, msg, _ = purchase_order_service.create_po(po_data, items_data)
+            if success:
+                return redirect("purchase_orders_list")
+            messages.error(request, msg)
     else:
         form = PurchaseOrderForm()
         formset = PurchaseOrderItemFormSet()
@@ -638,11 +718,8 @@ def purchase_order_receive(request, pk: int):
     if request.method == "POST":
         form = GRNForm(request.POST)
         if form.is_valid():
-            grn = form.save(commit=False)
-            grn.purchase_order = po
-            grn.supplier = po.supplier
-            grn.save()
             any_received = False
+            items_data = []
             fully_received = True
             for item in items:
                 qty_field = f"item_{item.pk}"
@@ -662,24 +739,35 @@ def purchase_order_receive(request, pk: int):
                         )
                         fully_received = False
                         continue
-                    GRNItem.objects.create(
-                        grn=grn,
-                        po_item=item,
-                        quantity_ordered_on_po=item.quantity_ordered,
-                        quantity_received=qty,
-                        unit_price_at_receipt=item.unit_price,
+                    items_data.append(
+                        {
+                            "item_id": item.item_id,
+                            "po_item_id": item.pk,
+                            "quantity_ordered_on_po": item.quantity_ordered,
+                            "quantity_received": qty,
+                            "unit_price_at_receipt": item.unit_price,
+                        }
                     )
-                    item.quantity_received += qty
-                    item.save()
                 if item.quantity_received < item.quantity_ordered:
                     fully_received = False
             if not any_received:
                 form.add_error(None, "No quantities received")
-                grn.delete()
             elif not form.errors:
-                po.status = "COMPLETE" if fully_received else "PARTIAL"
-                po.save()
-                return redirect("purchase_order_detail", pk=pk)
+                grn_data = {
+                    "po_id": po.pk,
+                    "supplier_id": po.supplier_id,
+                    "received_date": form.cleaned_data["received_date"],
+                    "notes": form.cleaned_data.get("notes"),
+                    "received_by_user_id": getattr(
+                        request.user, "username", "System"
+                    ),
+                }
+                success, msg, _ = goods_receiving_service.create_grn(
+                    grn_data, items_data
+                )
+                if success:
+                    return redirect("purchase_order_detail", pk=pk)
+                messages.error(request, msg)
     else:
         form = GRNForm()
     return render(

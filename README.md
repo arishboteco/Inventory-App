@@ -39,6 +39,20 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+## Purchase Order Tables
+
+The project defines four tables used for purchasing and goods receiving workflows:
+
+- `purchase_orders`
+- `purchase_order_items`
+- `goods_received_notes`
+- `grn_items`
+
+These tables are created via Django migrations in `inventory/migrations/0001_initial.py`.
+Run `python manage.py migrate` against your Supabase database to ensure they are
+present. If the tables already exist, the models map to them via the `db_table`
+option.
+
 ## Unit Inference
 
 The project includes a lightweight **unit inference module** that guesses an item's base unit (e.g. `kg`, `ltr`, `pcs`) and optional purchase unit from its name or category. This removes the need for a separate database table of units – when a new item is added, the service automatically assigns sensible defaults so users don't have to enter them manually.

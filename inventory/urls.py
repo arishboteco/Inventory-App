@@ -8,6 +8,8 @@ from .views import (
     StockTransactionViewSet,
     IndentViewSet,
     IndentItemViewSet,
+    RecipeViewSet,
+    RecipeComponentViewSet,
 )
 
 router = DefaultRouter()
@@ -16,5 +18,7 @@ router.register(r"suppliers", SupplierViewSet)
 router.register(r"stock-transactions", StockTransactionViewSet)
 router.register(r"indents", IndentViewSet)
 router.register(r"indent-items", IndentItemViewSet)
+router.register(r"recipes", RecipeViewSet)
+router.register(r"recipe-components", RecipeComponentViewSet)
 
 urlpatterns = router.urls

@@ -1,12 +1,22 @@
 from rest_framework import viewsets
 
-from .models import Item, Supplier, StockTransaction, Indent, IndentItem
+from .models import (
+    Item,
+    Supplier,
+    StockTransaction,
+    Indent,
+    IndentItem,
+    Recipe,
+    RecipeComponent,
+)
 from .serializers import (
     ItemSerializer,
     SupplierSerializer,
     StockTransactionSerializer,
     IndentSerializer,
     IndentItemSerializer,
+    RecipeSerializer,
+    RecipeComponentSerializer,
 )
 
 
@@ -50,3 +60,13 @@ class IndentViewSet(viewsets.ModelViewSet):
 class IndentItemViewSet(viewsets.ModelViewSet):
     queryset = IndentItem.objects.all().select_related("indent", "item")
     serializer_class = IndentItemSerializer
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+    serializer_class = RecipeSerializer
+
+
+class RecipeComponentViewSet(viewsets.ModelViewSet):
+    queryset = RecipeComponent.objects.all().select_related("parent_recipe")
+    serializer_class = RecipeComponentSerializer

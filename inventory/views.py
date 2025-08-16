@@ -8,6 +8,10 @@ from .models import (
     IndentItem,
     Recipe,
     RecipeComponent,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    GoodsReceivedNote,
+    GRNItem,
 )
 from .serializers import (
     ItemSerializer,
@@ -17,6 +21,10 @@ from .serializers import (
     IndentItemSerializer,
     RecipeSerializer,
     RecipeComponentSerializer,
+    PurchaseOrderSerializer,
+    PurchaseOrderItemSerializer,
+    GoodsReceivedNoteSerializer,
+    GRNItemSerializer,
 )
 
 
@@ -60,6 +68,26 @@ class IndentViewSet(viewsets.ModelViewSet):
 class IndentItemViewSet(viewsets.ModelViewSet):
     queryset = IndentItem.objects.all().select_related("indent", "item")
     serializer_class = IndentItemSerializer
+
+
+class PurchaseOrderViewSet(viewsets.ModelViewSet):
+    queryset = PurchaseOrder.objects.all().select_related("supplier")
+    serializer_class = PurchaseOrderSerializer
+
+
+class PurchaseOrderItemViewSet(viewsets.ModelViewSet):
+    queryset = PurchaseOrderItem.objects.all().select_related("purchase_order", "item")
+    serializer_class = PurchaseOrderItemSerializer
+
+
+class GoodsReceivedNoteViewSet(viewsets.ModelViewSet):
+    queryset = GoodsReceivedNote.objects.all().select_related("purchase_order", "supplier")
+    serializer_class = GoodsReceivedNoteSerializer
+
+
+class GRNItemViewSet(viewsets.ModelViewSet):
+    queryset = GRNItem.objects.all().select_related("grn", "po_item")
+    serializer_class = GRNItemSerializer
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

@@ -67,3 +67,19 @@ from inventory.services.item_service import add_new_item
 success, msg = add_new_item(engine, {"name": "Whole Milk", "category": "Dairy"})
 ```
 
+## API Endpoints
+
+The application exposes the following REST endpoints under `/api/`:
+
+- `/api/items/` – manage items.
+- `/api/suppliers/` – manage suppliers.
+- `/api/stock-transactions/` – record stock movements.
+- `/api/indents/` – manage indents.
+- `/api/indent-items/` – manage indent items.
+- `/api/recipes/` – manage recipes.
+- `/api/recipe-components/` – manage recipe components.
+- `/api/purchase-orders/` – create and track purchase orders.
+- `/api/purchase-order-items/` – line items within a purchase order.
+- `/api/goods-received-notes/` – log received goods.
+- `/api/grn-items/` – items contained in a goods received note.
+

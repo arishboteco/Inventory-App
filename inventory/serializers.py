@@ -8,6 +8,10 @@ from .models import (
     Supplier,
     Recipe,
     RecipeComponent,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    GoodsReceivedNote,
+    GRNItem,
 )
 
 
@@ -38,6 +42,30 @@ class IndentSerializer(serializers.ModelSerializer):
 class IndentItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = IndentItem
+        fields = "__all__"
+
+
+class PurchaseOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseOrder
+        fields = "__all__"
+
+
+class PurchaseOrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseOrderItem
+        fields = "__all__"
+
+
+class GoodsReceivedNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GoodsReceivedNote
+        fields = "__all__"
+
+
+class GRNItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GRNItem
         fields = "__all__"
 
 

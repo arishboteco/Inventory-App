@@ -63,4 +63,13 @@ urlpatterns = [
         views_ui.purchase_order_receive,
         name="purchase_order_receive",
     ),
+
+    # Recipe pages
+    path("recipes/", views_ui.recipes_list, name="recipes_list"),
+    path("recipes/<int:pk>/", views_ui.recipe_detail, name="recipe_detail"),
+    path(
+        "recipes/<int:pk>/component-row/",
+        views_ui.recipe_component_row,
+        name="recipe_component_row",
+    ),
 ]

@@ -71,6 +71,51 @@ class StockTransaction(models.Model):
         db_table = "stock_transactions"
 
 
+class Recipe(models.Model):
+    recipe_id = models.AutoField(primary_key=True)
+    name = models.TextField(unique=True, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(blank=True, null=True)
+    type = models.TextField(blank=True, null=True)
+    default_yield_qty = CoerceFloatField(blank=True, null=True)
+    default_yield_unit = models.TextField(blank=True, null=True)
+    plating_notes = models.TextField(blank=True, null=True)
+    tags = models.TextField(blank=True, null=True)
+    version = models.IntegerField(blank=True, null=True)
+    effective_from = models.TextField(blank=True, null=True)
+    effective_to = models.TextField(blank=True, null=True)
+    created_at = models.TextField(blank=True, null=True)
+    updated_at = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "recipes"
+
+
+class RecipeComponent(models.Model):
+    id = models.AutoField(primary_key=True)
+    parent_recipe = models.ForeignKey(
+        Recipe,
+        models.DO_NOTHING,
+        db_column="parent_recipe_id",
+        related_name="components",
+    )
+    component_kind = models.TextField(blank=True, null=True)
+    component_id = models.IntegerField(blank=True, null=True)
+    quantity = CoerceFloatField(blank=True, null=True)
+    unit = models.TextField(blank=True, null=True)
+    loss_pct = CoerceFloatField(blank=True, null=True)
+    sort_order = models.IntegerField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.TextField(blank=True, null=True)
+    updated_at = models.TextField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "recipe_components"
+        unique_together = ("parent_recipe", "component_kind", "component_id")
+
+
 class Indent(models.Model):
     indent_id = models.AutoField(primary_key=True)
     mrn = models.TextField(unique=True, blank=True, null=True)

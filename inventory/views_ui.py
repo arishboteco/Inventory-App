@@ -13,6 +13,7 @@ from inventory.services import (
     stock_service,
     purchase_order_service,
     goods_receiving_service,
+    recipe_service,
 )
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
@@ -22,6 +23,8 @@ from .models import (
     Supplier,
     StockTransaction,
     Indent,
+    Recipe,
+    RecipeComponent,
     PurchaseOrder,
     PurchaseOrderItem,
     GoodsReceivedNote,
@@ -774,4 +777,36 @@ def purchase_order_receive(request, pk: int):
         request,
         "inventory/purchase_orders/receive.html",
         {"form": form, "po": po, "items": items},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Recipe UI views
+# ---------------------------------------------------------------------------
+
+
+def recipes_list(request):
+    recipes = Recipe.objects.all().order_by("name")
+    return render(request, "inventory/recipes/list.html", {"recipes": recipes})
+
+
+def recipe_detail(request, pk: int):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    components = RecipeComponent.objects.filter(parent_recipe=recipe).order_by(
+        "sort_order", "id"
+    )
+    return render(
+        request,
+        "inventory/recipes/detail.html",
+        {"recipe": recipe, "components": components},
+    )
+
+
+def recipe_component_row(request, pk: int):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    index = int(request.GET.get("index", 0))
+    return render(
+        request,
+        "inventory/recipes/_component_row.html",
+        {"recipe": recipe, "index": index, "comp": None},
     )

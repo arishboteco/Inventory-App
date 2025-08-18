@@ -28,13 +28,6 @@ class ItemForm(forms.ModelForm):
             "notes",
             "is_active",
         ]
-        required_fields = ["name", "base_unit", "purchase_unit", "category"]
-        error_messages = {
-            "name": {"required": "Item name is required."},
-            "base_unit": {"required": "Base unit is required."},
-            "purchase_unit": {"required": "Purchase unit is required."},
-            "category": {"required": "Category is required."},
-        }
 
     def clean(self):
         cleaned = super().clean()
@@ -44,19 +37,10 @@ class ItemForm(forms.ModelForm):
         purchase = cleaned.get("purchase_unit")
         if name and (not base or not purchase):
             inferred_base, inferred_purchase = infer_units(name, category)
-            if not base and inferred_base:
+            if not base:
                 cleaned["base_unit"] = inferred_base
-                base = inferred_base
             if not purchase and inferred_purchase:
                 cleaned["purchase_unit"] = inferred_purchase
-                purchase = inferred_purchase
-        for field in self.Meta.required_fields:
-            if not cleaned.get(field):
-                message = self.Meta.error_messages.get(field, {}).get(
-                    "required",
-                    f"{self.fields[field].label or field.replace('_', ' ').capitalize()} is required.",
-                )
-                self.add_error(field, message)
         return cleaned
 
 

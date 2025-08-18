@@ -4,5 +4,4 @@ sqlalchemy
 psycopg[binary]  # Postgres driver
 fpdf2
 pytest
-pytest-django
 pyyaml

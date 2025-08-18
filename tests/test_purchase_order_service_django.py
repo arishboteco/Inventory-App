@@ -6,6 +6,22 @@ from inventory.models import Supplier, Item, PurchaseOrder, PurchaseOrderItem
 from inventory.services import purchase_order_service
 
 
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Supplier)
+        editor.create_model(Item)
+        editor.create_model(PurchaseOrder)
+        editor.create_model(PurchaseOrderItem)
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(PurchaseOrderItem)
+        editor.delete_model(PurchaseOrder)
+        editor.delete_model(Item)
+        editor.delete_model(Supplier)
+
+
 @pytest.mark.django_db
 def test_create_po_and_get_po():
     supplier = Supplier.objects.create(name="Vendor")

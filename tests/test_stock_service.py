@@ -1,9 +1,20 @@
-import pytest
+from django.db import connection
 from inventory.models import Item, StockTransaction
 from inventory.services import stock_service
 
 
-@pytest.mark.django_db
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Item)
+        editor.create_model(StockTransaction)
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(StockTransaction)
+        editor.delete_model(Item)
+
+
 def test_record_stock_transaction_updates_stock_and_logs():
     StockTransaction.objects.all().delete()
     Item.objects.all().delete()
@@ -20,7 +31,6 @@ def test_record_stock_transaction_updates_stock_and_logs():
     assert StockTransaction.objects.filter(item=item).count() == 1
 
 
-@pytest.mark.django_db
 def test_record_stock_transactions_bulk():
     StockTransaction.objects.all().delete()
     Item.objects.all().delete()
@@ -38,7 +48,6 @@ def test_record_stock_transactions_bulk():
     assert StockTransaction.objects.count() == 2
 
 
-@pytest.mark.django_db
 def test_remove_stock_transactions_bulk():
     StockTransaction.objects.all().delete()
     Item.objects.all().delete()
@@ -55,7 +64,6 @@ def test_remove_stock_transactions_bulk():
     assert StockTransaction.objects.count() == 0
 
 
-@pytest.mark.django_db
 def test_record_stock_transactions_bulk_rollback_on_error():
     StockTransaction.objects.all().delete()
     Item.objects.all().delete()
@@ -70,7 +78,6 @@ def test_record_stock_transactions_bulk_rollback_on_error():
     assert StockTransaction.objects.count() == 0
 
 
-@pytest.mark.django_db
 def test_remove_stock_transactions_bulk_rollback_on_error():
     StockTransaction.objects.all().delete()
     Item.objects.all().delete()

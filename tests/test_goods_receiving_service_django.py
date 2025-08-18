@@ -14,6 +14,28 @@ from inventory.models import (
 from inventory.services import purchase_order_service, goods_receiving_service
 
 
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Supplier)
+        editor.create_model(Item)
+        editor.create_model(StockTransaction)
+        editor.create_model(PurchaseOrder)
+        editor.create_model(PurchaseOrderItem)
+        editor.create_model(GoodsReceivedNote)
+        editor.create_model(GRNItem)
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(GRNItem)
+        editor.delete_model(GoodsReceivedNote)
+        editor.delete_model(PurchaseOrderItem)
+        editor.delete_model(PurchaseOrder)
+        editor.delete_model(StockTransaction)
+        editor.delete_model(Item)
+        editor.delete_model(Supplier)
+
+
 @pytest.mark.django_db
 def test_create_grn_updates_stock_and_po():
     supplier = Supplier.objects.create(name="Vendor")

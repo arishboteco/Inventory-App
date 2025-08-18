@@ -1,10 +1,19 @@
-from sqlalchemy import text
+from django.db import connection
+from inventory.models import Supplier
+from inventory.services import supplier_service
 
-from app.services import supplier_service
+
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Supplier)
 
 
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(Supplier)
 
-def test_add_supplier_inserts_row(sqlite_engine):
+
+def test_add_supplier_inserts_row():
     details = {
         "name": "Vendor A",
         "contact_person": "John",
@@ -14,72 +23,45 @@ def test_add_supplier_inserts_row(sqlite_engine):
         "notes": "Note",
         "is_active": True,
     }
-    success, msg = supplier_service.add_supplier(sqlite_engine, details)
+    success, _ = supplier_service.add_supplier(details)
     assert success
-
-    with sqlite_engine.connect() as conn:
-        row = conn.execute(text("SELECT name FROM suppliers WHERE name='Vendor A'"))
-        assert row.fetchone() is not None
+    assert Supplier.objects.filter(name="Vendor A").exists()
 
 
-def test_add_supplier_duplicate_name_fails(sqlite_engine):
+def test_add_supplier_duplicate_name_fails():
     details = {"name": "Dup", "is_active": True}
-    supplier_service.add_supplier(sqlite_engine, details)
-    success, msg = supplier_service.add_supplier(sqlite_engine, details)
+    supplier_service.add_supplier(details)
+    success, _ = supplier_service.add_supplier(details)
     assert not success
 
 
-def test_add_supplier_requires_name(sqlite_engine):
-    details = {
-        "name": "  ",
-        "contact_person": "x",
-    }
-    success, msg = supplier_service.add_supplier(sqlite_engine, details)
+def test_add_supplier_requires_name():
+    details = {"name": "  ", "contact_person": "x"}
+    success, _ = supplier_service.add_supplier(details)
     assert not success
 
 
-def test_update_supplier_changes_fields(sqlite_engine):
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO suppliers (name, is_active) VALUES ('Vendor B', 1)"
-            )
-        )
-        supplier_id = conn.execute(text("SELECT supplier_id FROM suppliers WHERE name='Vendor B'"))
-        supplier_id = supplier_id.scalar_one()
-
-    success, msg = supplier_service.update_supplier(sqlite_engine, supplier_id, {"phone": "999"})
+def test_update_supplier_changes_fields():
+    supplier = Supplier.objects.create(name="Vendor B", is_active=True)
+    success, _ = supplier_service.update_supplier(supplier.pk, {"phone": "999"})
     assert success
-
-    with sqlite_engine.connect() as conn:
-        phone = conn.execute(text("SELECT phone FROM suppliers WHERE supplier_id=:i"), {"i": supplier_id}).scalar_one()
-        assert phone == "999"
+    supplier.refresh_from_db()
+    assert supplier.phone == "999"
 
 
-def test_update_supplier_invalid_id(sqlite_engine):
-    success, msg = supplier_service.update_supplier(sqlite_engine, 999, {"phone": "000"})
+def test_update_supplier_invalid_id():
+    success, _ = supplier_service.update_supplier(999, {"phone": "000"})
     assert not success
 
 
-def test_deactivate_and_reactivate_supplier(sqlite_engine):
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                "INSERT INTO suppliers (name, is_active) VALUES ('Vendor C', 1)"
-            )
-        )
-        supplier_id = conn.execute(text("SELECT supplier_id FROM suppliers WHERE name='Vendor C'"))
-        supplier_id = supplier_id.scalar_one()
-
-    success, _ = supplier_service.deactivate_supplier(sqlite_engine, supplier_id)
+def test_deactivate_and_reactivate_supplier():
+    supplier = Supplier.objects.create(name="Vendor C", is_active=True)
+    success, _ = supplier_service.deactivate_supplier(supplier.pk)
     assert success
-    with sqlite_engine.connect() as conn:
-        active = conn.execute(text("SELECT is_active FROM suppliers WHERE supplier_id=:i"), {"i": supplier_id}).scalar_one()
-        assert active == 0
-
-    success, _ = supplier_service.reactivate_supplier(sqlite_engine, supplier_id)
+    supplier.refresh_from_db()
+    assert supplier.is_active is False
+    success, _ = supplier_service.reactivate_supplier(supplier.pk)
     assert success
-    with sqlite_engine.connect() as conn:
-        active = conn.execute(text("SELECT is_active FROM suppliers WHERE supplier_id=:i"), {"i": supplier_id}).scalar_one()
-        assert active == 1
+    supplier.refresh_from_db()
+    assert supplier.is_active is True
 

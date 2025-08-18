@@ -1,0 +1,59 @@
+{% extends "_base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold mb-4">Stock Movements</h1>
+  <form method="get" id="section-form" class="mb-4">
+    {% for key, label in sections.items %}
+        <label class="mr-4">
+          <input type="radio" name="section" value="{{ key }}" class="form-checkbox" {% if key == active_section %}checked{% endif %} onchange="document.getElementById('section-form').submit();"> {{ label }}
+        </label>
+      {% endfor %}
+  </form>
+  {% if messages %}
+    <ul class="mb-4">
+      {% for message in messages %}
+        <li class="text-green-700">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if active_section == 'receive' %}
+    <h2 class="text-xl font-semibold mb-2">Goods Received</h2>
+    <form method="post" class="mb-4">
+      {% csrf_token %}
+      {{ receive_form.as_p }}
+      <button type="submit" name="submit_receive" class="px-4 py-2 bg-green-600 text-white rounded">Record</button>
+    </form>
+  {% elif active_section == 'adjust' %}
+    <h2 class="text-xl font-semibold mb-2">Stock Adjustment</h2>
+    <form method="post" class="mb-4">
+      {% csrf_token %}
+      {{ adjust_form.as_p }}
+      <button type="submit" name="submit_adjust" class="px-4 py-2 bg-green-600 text-white rounded">Record</button>
+    </form>
+  {% elif active_section == 'waste' %}
+    <h2 class="text-xl font-semibold mb-2">Wastage/Spoilage</h2>
+    <form method="post" class="mb-4">
+      {% csrf_token %}
+      {{ waste_form.as_p }}
+      <button type="submit" name="submit_waste" class="px-4 py-2 bg-green-600 text-white rounded">Record</button>
+    </form>
+  {% endif %}
+  <hr class="my-4"/>
+  <h2 class="text-xl font-semibold mb-2">Bulk Upload Stock Transactions</h2>
+  <form method="post" enctype="multipart/form-data" class="mb-4">
+    {% csrf_token %}
+    {{ bulk_form.as_p }}
+    <button type="submit" name="bulk_upload" class="px-4 py-2 bg-blue-600 text-white rounded">Upload</button>
+  </form>
+  {% if bulk_success_count is not None %}
+    <p>{{ bulk_success_count }} transaction(s) recorded successfully.</p>
+  {% endif %}
+  {% if bulk_errors %}
+    <ul class="text-red-700">
+      {% for e in bulk_errors %}
+        <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

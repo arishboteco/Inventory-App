@@ -3,7 +3,11 @@
 import pytest
 from sqlalchemy import text
 
-from app.services import recipe_service
+from inventory.services.recipe_service import (
+    create_recipe,
+    update_recipe,
+    record_sale,
+)
 
 
 def _create_item(conn, name="Flour", base_unit="kg", purchase_unit="bag", stock=20):
@@ -43,7 +47,7 @@ def test_create_and_update_components(sqlite_engine):
         }
     ]
 
-    ok, _, rid = recipe_service.create_recipe(sqlite_engine, data, components)
+    ok, _, rid = create_recipe(sqlite_engine, data, components)
     assert ok and rid
 
     with sqlite_engine.connect() as conn:
@@ -62,7 +66,7 @@ def test_create_and_update_components(sqlite_engine):
     # update component quantity and loss percentage
     components[0]["quantity"] = 3
     components[0]["loss_pct"] = 10
-    ok, _ = recipe_service.update_recipe(sqlite_engine, rid, data, components)
+    ok, _ = update_recipe(sqlite_engine, rid, data, components)
     assert ok
 
     with sqlite_engine.connect() as conn:
@@ -97,7 +101,7 @@ def test_nested_recipes_and_cycle_prevention(sqlite_engine):
             "unit": "kg",
         }
     ]
-    ok, _, dough_id = recipe_service.create_recipe(
+    ok, _, dough_id = create_recipe(
         sqlite_engine, dough_data, dough_components
     )
     assert ok and dough_id
@@ -115,7 +119,7 @@ def test_nested_recipes_and_cycle_prevention(sqlite_engine):
             "unit": "kg",
         }
     ]
-    ok, _, bread_id = recipe_service.create_recipe(
+    ok, _, bread_id = create_recipe(
         sqlite_engine, bread_data, bread_components
     )
     assert ok and bread_id
@@ -129,7 +133,7 @@ def test_nested_recipes_and_cycle_prevention(sqlite_engine):
             "unit": "kg",
         }
     )
-    ok, _ = recipe_service.update_recipe(
+    ok, _ = update_recipe(
         sqlite_engine, dough_id, dough_data, dough_components
     )
     assert not ok
@@ -178,7 +182,7 @@ def test_record_sale_reduces_nested_stock(sqlite_engine):
             {"r": bread_id, "c": premix_id},
         )
 
-    ok, msg = recipe_service.record_sale(sqlite_engine, bread_id, 2, "tester")
+    ok, msg = record_sale(sqlite_engine, bread_id, 2, "tester")
     assert ok, msg
 
     with sqlite_engine.connect() as conn:
@@ -213,7 +217,7 @@ def test_recipe_metadata_fields(sqlite_engine):
         }
     ]
 
-    ok, _, rid = recipe_service.create_recipe(sqlite_engine, data, components)
+    ok, _, rid = create_recipe(sqlite_engine, data, components)
     assert ok and rid
 
     with sqlite_engine.connect() as conn:

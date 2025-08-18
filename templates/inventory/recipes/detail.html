@@ -1,0 +1,21 @@
+{% extends "_base.html" %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">{{ recipe.name }}</h1>
+<table class="table-auto w-full" id="components">
+  <thead>
+    <tr>
+      <th class="px-2">Kind</th>
+      <th class="px-2">ID</th>
+      <th class="px-2">Qty</th>
+      <th class="px-2">Unit</th>
+      <th class="px-2">Loss %</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for comp in components %}
+    {% include "inventory/recipes/_component_row.html" with comp=comp index=forloop.counter0 %}
+  {% endfor %}
+  </tbody>
+</table>
+<button class="mt-4 px-3 py-1 bg-gray-200" hx-get="{% url 'recipe_component_row' recipe.recipe_id %}?index={{ components|length }}" hx-target="#components tbody" hx-swap="beforeend">Add Component</button>
+{% endblock %}

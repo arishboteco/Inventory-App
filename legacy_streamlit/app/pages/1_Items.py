@@ -1,0 +1,645 @@
+# app/pages/1_Items.py
+import os
+import sys
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(page_title="Item Management", layout="wide")
+
+_CUR_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(_CUR_DIR, os.pardir, os.pardir))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from ..ui.theme import load_css, render_sidebar_logo
+from ..ui.navigation import render_sidebar_nav
+from ..ui import (
+    pagination_controls,
+    render_search_toggle,
+    show_success,
+    show_error,
+    show_warning,
+)
+
+try:
+    from ..db.database_utils import connect_db
+    from ..services import item_service
+    from ..core.constants import FILTER_ALL_CATEGORIES, FILTER_ALL_SUBCATEGORIES
+    from ..core.unit_inference import infer_units
+except ImportError as e:
+    show_error(f"Import error in 1_Items.py: {e}.")
+    st.stop()
+except Exception as e:
+    show_error(f"An unexpected error occurred during import in 1_Items.py: {e}")
+    st.stop()
+
+# --- Session State (prefixed with ss_items_ for this page) ---
+if "ss_items_edit_item_id_val" not in st.session_state:
+    st.session_state.ss_items_edit_item_id_val = None
+if "ss_items_edit_form_data_dict" not in st.session_state:
+    st.session_state.ss_items_edit_form_data_dict = None  # Stores dict for edit form
+if "ss_items_show_edit_form_flag" not in st.session_state:
+    st.session_state.ss_items_show_edit_form_flag = (
+        None  # Stores item_id to show form for, or None
+    )
+if "ss_items_filter_show_inactive_flag" not in st.session_state:
+    st.session_state.ss_items_filter_show_inactive_flag = False
+if "ss_items_pagination_current_page_num" not in st.session_state:
+    st.session_state.ss_items_pagination_current_page_num = 1
+if "ss_items_pagination_items_per_page_val" not in st.session_state:
+    st.session_state.ss_items_pagination_items_per_page_val = 10
+if "ss_items_filter_search_name_val" not in st.session_state:
+    st.session_state.ss_items_filter_search_name_val = ""
+if "ss_items_filter_category_key" not in st.session_state:
+    st.session_state.ss_items_filter_category_key = (
+        FILTER_ALL_CATEGORIES  # Stores the key/name of category
+    )
+if "ss_items_filter_subcategory_key" not in st.session_state:
+    st.session_state.ss_items_filter_subcategory_key = (
+        FILTER_ALL_SUBCATEGORIES  # Stores the key/name of subcategory
+    )
+
+
+@st.cache_data(ttl=60)
+def fetch_all_items_df_for_items_page(
+    _engine, show_inactive: bool
+) -> pd.DataFrame:  # Renamed for clarity
+    return item_service.get_all_items_with_stock(
+        _engine, include_inactive=show_inactive
+    )
+
+
+load_css()
+render_sidebar_logo()
+render_sidebar_nav()
+
+
+st.title("📦 Item Master Management")
+st.write(
+    "Manage your inventory items: add new items, edit existing ones, and view stock levels."
+)
+st.divider()
+
+engine = connect_db()
+if not engine:
+    show_error(
+        "Database connection failed. Item Management functionality is unavailable."
+    )
+    st.stop()
+
+
+def infer_item_units() -> None:
+    """Infer and prefill unit fields based on the current item name and category."""
+    item_name = st.session_state.get("widget_items_add_form_name_input", "").strip()
+    category_name = (
+        st.session_state.get("widget_items_add_form_category_input", "").strip() or None
+    )
+    if not item_name:
+        return
+
+    # Try DB-based suggestions first
+    if engine is not None:
+        s_base, s_purchase, s_category = item_service.suggest_category_and_units(
+            engine, item_name
+        )
+        updated = False
+        if s_base and not st.session_state.get(
+            "widget_items_add_form_base_unit_input", ""
+        ).strip():
+            st.session_state.widget_items_add_form_base_unit_input = s_base
+            updated = True
+        if s_purchase and not st.session_state.get(
+            "widget_items_add_form_purchase_unit_input", ""
+        ).strip():
+            st.session_state.widget_items_add_form_purchase_unit_input = s_purchase
+            updated = True
+        if s_category and not st.session_state.get(
+            "widget_items_add_form_category_input", ""
+        ).strip():
+            st.session_state.widget_items_add_form_category_input = s_category
+            updated = True
+        if updated:
+            st.rerun()
+            return
+
+    # Fallback to heuristic inference
+    base_unit_suggestion, purchase_unit_suggestion = infer_units(
+        item_name, category_name
+    )
+    if base_unit_suggestion and not st.session_state.get(
+        "widget_items_add_form_base_unit_input", ""
+    ).strip():
+        st.session_state.widget_items_add_form_base_unit_input = base_unit_suggestion
+    if purchase_unit_suggestion and not st.session_state.get(
+        "widget_items_add_form_purchase_unit_input", ""
+    ).strip():
+        st.session_state.widget_items_add_form_purchase_unit_input = (
+            purchase_unit_suggestion
+        )
+    st.rerun()
+
+
+# --- ADD NEW ITEM Section ---
+with st.expander("➕ Add New Inventory Item", expanded=False):
+    st.text_input(
+        "Item Name*",
+        help="Unique name for the item.",
+        key="widget_items_add_form_name_input",
+        on_change=infer_item_units,
+    )
+    with st.form("widget_items_add_form", clear_on_submit=True):
+        st.subheader("Enter New Item Details")
+        col1_add_items, col2_add_items = st.columns(2)
+        with col1_add_items:
+            base_unit_add_widget = st.text_input(
+                "Base Unit*",
+                help="e.g., KG, LTR, PCS",
+                key="widget_items_add_form_base_unit_input",
+            )
+            purchase_unit_add_widget = st.text_input(
+                "Purchase Unit",
+                help="e.g., case, box (leave blank if same as base unit)",
+                key="widget_items_add_form_purchase_unit_input",
+            )
+            category_add_widget = st.text_input(
+                "Category",
+                value="Uncategorized",
+                help="e.g., Vegetables, Grains.",
+                key="widget_items_add_form_category_input",
+            )
+            sub_category_add_widget = st.text_input(
+                "Sub-Category",
+                value="General",
+                help="e.g., Leafy Greens, Rice.",
+                key="widget_items_add_form_subcategory_input",
+            )
+        with col2_add_items:
+            permitted_departments_add_widget = st.text_input(
+                "Permitted Departments",
+                help="Enter department names separated by commas (e.g., Kitchen, Bar).",
+                key="widget_items_add_form_depts_input",
+            )
+            reorder_point_add_widget = st.number_input(
+                "Reorder At",
+                min_value=0.0,
+                value=0.0,
+                step=0.01,
+                format="%.2f",
+                help="Stock level to reorder.",
+                key="widget_items_add_form_reorder_input",
+            )
+            initial_stock_add_widget = st.number_input(
+                "Initial Stock Quantity",
+                min_value=0.0,
+                value=0.0,
+                step=0.01,
+                format="%.2f",
+                help="Current stock on hand.",
+                key="widget_items_add_form_initial_stock_input",
+            )
+        notes_add_widget = st.text_area(
+            "Notes / Description",
+            placeholder="Optional details about the item.",
+            key="widget_items_add_form_notes_area",
+        )
+
+        suggested_base, suggested_purchase = infer_units(
+            st.session_state.get("widget_items_add_form_name_input", "").strip(),
+            category_add_widget.strip() or None,
+        )
+
+        if st.form_submit_button("💾 Add Item to Master"):
+            name_add_widget = st.session_state.get(
+                "widget_items_add_form_name_input", ""
+            )
+            is_valid_add = True
+            if not name_add_widget.strip():
+                show_warning("Item Name is required.")
+                is_valid_add = False
+            base_unit_final = base_unit_add_widget.strip() or suggested_base
+            purchase_unit_final = (
+                purchase_unit_add_widget.strip() or suggested_purchase
+            )
+            if not base_unit_final:
+                show_warning("Base Unit is required.")
+                is_valid_add = False
+
+            if is_valid_add:
+                item_data_to_add = {
+                    "name": name_add_widget.strip(),
+                    "base_unit": base_unit_final,
+                    "purchase_unit": purchase_unit_final,
+                    "category": category_add_widget.strip() or "Uncategorized",
+                    "sub_category": sub_category_add_widget.strip() or "General",
+                    "permitted_departments": permitted_departments_add_widget.strip()
+                    or None,
+                    "reorder_point": float(reorder_point_add_widget),
+                    "current_stock": float(initial_stock_add_widget),
+                    "notes": notes_add_widget.strip() or None,
+                    "is_active": True,
+                }
+                success_add, message_add = item_service.add_new_item(
+                    engine, item_data_to_add
+                )
+                if success_add:
+                    show_success(
+                        f"{message_add} Use the sidebar to record a stock movement."
+                    )
+                    fetch_all_items_df_for_items_page.clear()
+                    st.session_state.widget_items_add_form_name_input = ""
+                    st.rerun()
+                else:
+                    show_error(message_add)
+
+# --- BULK ADD ITEMS ---
+with st.expander("📤 Bulk Upload Items", expanded=False):
+    st.write(
+        "Upload a CSV file with columns such as `name`, `base_unit`, `purchase_unit`, "
+        "`category`, `sub_category`, `permitted_departments`, `reorder_point`, "
+        "`current_stock`, `notes`, and `is_active`."
+    )
+    bulk_items_file = st.file_uploader(
+        "Choose CSV file", type=["csv"], key="items_bulk_upload_file"
+    )
+    if bulk_items_file is not None:
+        try:
+            bulk_df = pd.read_csv(bulk_items_file)
+            items_list = bulk_df.to_dict(orient="records")
+            inserted, errors = item_service.add_items_bulk(engine, items_list)
+            if inserted:
+                show_success(f"Successfully added {inserted} item(s).")
+                fetch_all_items_df_for_items_page.clear()
+            if errors:
+                show_error(f"{len(errors)} item(s) failed. Details below:")
+                for err in errors:
+                    st.error(err)
+        except Exception as e:  # pylint: disable=broad-except
+            show_error(f"Failed to process file: {e}")
+
+st.divider()
+
+# --- VIEW & MANAGE EXISTING ITEMS ---
+st.subheader("🔍 View & Manage Existing Items")
+
+
+# --- Filter Callbacks ---
+def on_items_category_filter_change():
+    st.session_state.ss_items_filter_subcategory_key = FILTER_ALL_SUBCATEGORIES
+
+
+# Define filter widgets
+filter_col1_view, filter_col2_view, filter_col3_view, filter_col4_view = st.columns(
+    [2, 2, 2, 1]
+)
+render_search_toggle(
+    search_container=filter_col1_view,
+    toggle_container=filter_col4_view,
+    search_label="Search by Item Name",
+    search_key="ss_items_filter_search_name_val",
+    toggle_label="Show Inactive",
+    toggle_key="ss_items_filter_show_inactive_flag",
+    placeholder="e.g., Tomato, Rice",
+    toggle_help="Toggle to include inactive items in the list",
+)
+
+all_items_df = fetch_all_items_df_for_items_page(
+    engine, st.session_state.ss_items_filter_show_inactive_flag
+)
+filtered_items_df = (
+    all_items_df.copy()
+)  # Start with all items that match active/inactive toggle
+
+unique_categories_options = [FILTER_ALL_CATEGORIES]
+if not all_items_df.empty:
+    unique_categories_options.extend(
+        sorted(
+            all_items_df["category"]
+            .astype(str)
+            .replace("nan", "Uncategorized")
+            .replace("", "Uncategorized")
+            .unique()
+            .tolist()
+        )
+    )
+
+with filter_col2_view:
+    current_category_key = st.session_state.ss_items_filter_category_key
+    category_idx = 0
+    if current_category_key in unique_categories_options:
+        category_idx = unique_categories_options.index(current_category_key)
+    else:  # Should not happen if default is in options
+        st.session_state.ss_items_filter_category_key = FILTER_ALL_CATEGORIES
+
+    st.selectbox(
+        "Filter by Category",
+        options=unique_categories_options,
+        key="ss_items_filter_category_key",
+        index=category_idx,
+        on_change=on_items_category_filter_change,
+    )
+
+unique_subcategories_options = [FILTER_ALL_SUBCATEGORIES]
+if st.session_state.ss_items_filter_category_key != FILTER_ALL_CATEGORIES:
+    if not all_items_df.empty:
+        category_filtered_df = all_items_df[
+            all_items_df["category"].astype(str)
+            == st.session_state.ss_items_filter_category_key
+        ]
+        if not category_filtered_df.empty:
+            unique_subcategories_options.extend(
+                sorted(
+                    category_filtered_df["sub_category"]
+                    .astype(str)
+                    .replace("nan", "General")
+                    .replace("", "General")
+                    .unique()
+                    .tolist()
+                )
+            )
+else:
+    if not all_items_df.empty:
+        unique_subcategories_options.extend(
+            sorted(
+                all_items_df["sub_category"]
+                .astype(str)
+                .replace("nan", "General")
+                .replace("", "General")
+                .unique()
+                .tolist()
+            )
+        )
+unique_subcategories_options = sorted(list(set(unique_subcategories_options)))
+
+with filter_col3_view:
+    current_subcategory_key = st.session_state.ss_items_filter_subcategory_key
+    subcategory_idx = 0
+    if current_subcategory_key in unique_subcategories_options:
+        subcategory_idx = unique_subcategories_options.index(current_subcategory_key)
+    else:
+        st.session_state.ss_items_filter_subcategory_key = FILTER_ALL_SUBCATEGORIES
+        subcategory_idx = 0  # Index of FILTER_ALL_SUBCATEGORIES
+
+    st.selectbox(
+        "Filter by Sub-Category",
+        options=unique_subcategories_options,
+        key="ss_items_filter_subcategory_key",
+        index=subcategory_idx,
+    )
+
+# Apply filters
+if st.session_state.ss_items_filter_search_name_val:
+    search_term_filter = st.session_state.ss_items_filter_search_name_val.lower()
+    filtered_items_df = filtered_items_df[
+        filtered_items_df["name"]
+        .astype(str)
+        .str.lower()
+        .str.contains(search_term_filter, na=False)
+    ]
+if st.session_state.ss_items_filter_category_key != FILTER_ALL_CATEGORIES:
+    filtered_items_df = filtered_items_df[
+        filtered_items_df["category"].astype(str)
+        == st.session_state.ss_items_filter_category_key
+    ]
+if st.session_state.ss_items_filter_subcategory_key != FILTER_ALL_SUBCATEGORIES:
+    filtered_items_df = filtered_items_df[
+        filtered_items_df["sub_category"].astype(str)
+        == st.session_state.ss_items_filter_subcategory_key
+    ]
+
+if filtered_items_df.empty:
+    st.info(
+        "No items found matching your criteria."
+        if (
+            st.session_state.ss_items_filter_search_name_val
+            or st.session_state.ss_items_filter_category_key != FILTER_ALL_CATEGORIES
+            or st.session_state.ss_items_filter_subcategory_key
+            != FILTER_ALL_SUBCATEGORIES
+            or st.session_state.ss_items_filter_show_inactive_flag
+        )
+        else "No active items found. Add items or adjust filters."
+    )
+else:
+    total_items_display = len(filtered_items_df)
+    st.write(f"Found {total_items_display} item(s) matching your criteria.")
+
+    start_idx_display, end_idx_display = pagination_controls(
+        total_items_display,
+        current_page_key="ss_items_pagination_current_page_num",
+        items_per_page_key="ss_items_pagination_items_per_page_val",
+    )
+    paginated_items_df_display = filtered_items_df.iloc[
+        start_idx_display:end_idx_display
+    ]
+
+    cols_item_list_header = st.columns((3, 1, 2, 1, 1, 1, 2.5, 2.5))
+    headers_item_list = [
+        "Name",
+        "UoM",
+        "Category",
+        "Stock",
+        "Reorder At",
+        "Active",
+        "Permitted Departments",
+        "Actions",
+    ]
+    for col_item_h, header_item_h in zip(cols_item_list_header, headers_item_list):
+        col_item_h.markdown(f"**{header_item_h}**")
+    st.divider()
+
+    for _, item_row_display in paginated_items_df_display.iterrows():
+        item_id_disp = item_row_display["item_id"]
+        item_name_disp = item_row_display["name"]
+        is_active_disp = item_row_display["is_active"]
+
+        cols_item_row = st.columns((3, 1, 2, 1, 1, 1, 2.5, 2.5))
+        cols_item_row[0].write(item_name_disp)
+        cols_item_row[1].write(item_row_display.get("base_unit", "N/A"))
+        cols_item_row[2].write(item_row_display.get("category", "N/A"))
+        cols_item_row[3].write(f"{item_row_display.get('current_stock', 0.0):.2f}")
+        cols_item_row[4].write(f"{item_row_display.get('reorder_point', 0.0):.2f}")
+        cols_item_row[5].checkbox(
+            "",
+            value=is_active_disp,
+            disabled=True,
+            key=f"widget_items_list_active_checkbox_{item_id_disp}",
+        )
+        cols_item_row[6].caption(item_row_display.get("permitted_departments") or "N/A")
+
+        with cols_item_row[7]:
+            if st.session_state.get("ss_items_show_edit_form_flag") == item_id_disp:
+                if st.button(
+                    "✖️ Cancel Edit",
+                    key=f"widget_items_list_cancel_edit_btn_{item_id_disp}",
+                    type="secondary",
+                    use_container_width=True,
+                ):
+                    st.session_state.ss_items_show_edit_form_flag = None
+                    st.rerun()
+            else:
+                action_buttons_cols = st.columns(2)
+                if is_active_disp:
+                    if action_buttons_cols[0].button(
+                        "✏️",
+                        key=f"widget_items_list_edit_btn_{item_id_disp}",
+                        help="Edit Item",
+                        type="primary",
+                        use_container_width=True,
+                    ):
+                        st.session_state.ss_items_show_edit_form_flag = item_id_disp
+                        st.session_state.ss_items_edit_form_data_dict = (
+                            item_service.get_item_details(engine, item_id_disp)
+                        )
+                        st.rerun()
+                    if action_buttons_cols[1].button(
+                        "🗑️",
+                        key=f"widget_items_list_deactivate_btn_{item_id_disp}",
+                        help="Deactivate Item",
+                        use_container_width=True,
+                    ):
+                        success_deact_item, msg_deact_item = (
+                            item_service.deactivate_item(engine, item_id_disp)
+                        )
+                        if success_deact_item:
+                            show_success(msg_deact_item)
+                            fetch_all_items_df_for_items_page.clear()
+                            st.rerun()
+                        else:
+                            show_error(msg_deact_item)
+                else:
+                    if action_buttons_cols[0].button(
+                        "✅",
+                        key=f"widget_items_list_reactivate_btn_{item_id_disp}",
+                        help="Reactivate Item",
+                        use_container_width=True,
+                    ):
+                        success_react_item, msg_react_item = (
+                            item_service.reactivate_item(engine, item_id_disp)
+                        )
+                        if success_react_item:
+                            show_success(msg_react_item)
+                            fetch_all_items_df_for_items_page.clear()
+                            st.rerun()
+                        else:
+                            show_error(msg_react_item)
+        st.divider()
+
+        if st.session_state.get("ss_items_show_edit_form_flag") == item_id_disp:
+            current_values_for_edit_form = st.session_state.get(
+                "ss_items_edit_form_data_dict"
+            )
+            if (
+                not current_values_for_edit_form
+                or current_values_for_edit_form.get("item_id") != item_id_disp
+            ):
+                current_values_for_edit_form = item_service.get_item_details(
+                    engine, item_id_disp
+                )
+                st.session_state.ss_items_edit_form_data_dict = (
+                    current_values_for_edit_form
+                )
+
+            if current_values_for_edit_form:
+                with st.form(key=f"widget_items_edit_form_inline_{item_id_disp}"):
+                    st.subheader(
+                        f"✏️ Editing: {current_values_for_edit_form.get('name', 'Item')}"
+                    )
+                    stock_val = current_values_for_edit_form.get("current_stock", 0.0)
+                    st.caption(
+                        f"Item ID: {item_id_disp} | Current Stock: {stock_val:.2f}"
+                    )
+
+                    edit_form_col1_detail, edit_form_col2_detail = st.columns(2)
+                    with edit_form_col1_detail:
+                        e_name = st.text_input(
+                            "Item Name*",
+                            value=current_values_for_edit_form.get("name", ""),
+                            key=f"widget_items_edit_form_name_input_{item_id_disp}",
+                        )
+                        e_base_unit = st.text_input(
+                            "Base Unit*",
+                            value=current_values_for_edit_form.get("base_unit", ""),
+                            key=f"widget_items_edit_form_base_unit_input_{item_id_disp}",
+                        )
+                        e_purchase_unit = st.text_input(
+                            "Purchase Unit",
+                            value=current_values_for_edit_form.get("purchase_unit", ""),
+                            key=f"widget_items_edit_form_purchase_unit_input_{item_id_disp}",
+                        )
+                        e_category = st.text_input(
+                            "Category",
+                            value=current_values_for_edit_form.get(
+                                "category", "Uncategorized"
+                            ),
+                            key=f"widget_items_edit_form_category_input_{item_id_disp}",
+                        )
+                        e_sub_category = st.text_input(
+                            "Sub-Category",
+                            value=current_values_for_edit_form.get(
+                                "sub_category", "General"
+                            ),
+                            key=f"widget_items_edit_form_subcategory_input_{item_id_disp}",
+                        )
+                    with edit_form_col2_detail:
+                        e_permitted = st.text_input(
+                            "Permitted Departments",
+                            value=current_values_for_edit_form.get(
+                                "permitted_departments", ""
+                            )
+                            or "",
+                            key=f"widget_items_edit_form_depts_input_{item_id_disp}",
+                            help="Comma-separated list of departments.",
+                        )
+                        e_rp = st.number_input(
+                            "Reorder At",
+                            min_value=0.0,
+                            value=float(
+                                current_values_for_edit_form.get("reorder_point", 0.0)
+                            ),
+                            step=0.01,
+                            format="%.2f",
+                            key=f"widget_items_edit_form_reorder_input_{item_id_disp}",
+                        )
+                    e_notes = st.text_area(
+                        "Notes",
+                        value=current_values_for_edit_form.get("notes", "") or "",
+                        key=f"widget_items_edit_form_notes_area_{item_id_disp}",
+                    )
+
+                    if st.form_submit_button(
+                        "💾 Update Item Details",
+                    ):
+                        is_valid_edit_form = True
+                        if not e_name.strip():
+                            show_warning("Item Name is required.")
+                            is_valid_edit_form = False
+                        if not e_base_unit.strip():
+                            show_warning("Base Unit is required.")
+                            is_valid_edit_form = False
+
+                        if is_valid_edit_form:
+                            update_data_for_service = {
+                                "name": e_name.strip(),
+                                "base_unit": e_base_unit.strip(),
+                                "purchase_unit": e_purchase_unit.strip() or None,
+                                "category": e_category.strip() or "Uncategorized",
+                                "sub_category": e_sub_category.strip() or "General",
+                                "permitted_departments": e_permitted.strip() or None,
+                                "reorder_point": float(e_rp),
+                                "notes": e_notes.strip() or None,
+                            }
+                            ok_update_item, msg_update_item = (
+                                item_service.update_item_details(
+                                    engine, item_id_disp, update_data_for_service
+                                )
+                            )
+                            if ok_update_item:
+                                show_success(
+                                    f"{msg_update_item} Use the sidebar to record a stock movement."
+                                )
+                                st.session_state.ss_items_show_edit_form_flag = None
+                                st.session_state.ss_items_edit_form_data_dict = None
+                                fetch_all_items_df_for_items_page.clear()
+                                st.rerun()
+                            else:
+                                show_error(msg_update_item)
+                st.divider()

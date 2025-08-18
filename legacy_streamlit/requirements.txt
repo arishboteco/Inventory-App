@@ -1,0 +1,7 @@
+streamlit
+pandas
+sqlalchemy
+psycopg[binary]  # Postgres driver
+fpdf2
+pytest
+pyyaml

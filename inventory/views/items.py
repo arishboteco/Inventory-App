@@ -2,7 +2,6 @@ import csv
 import io
 import logging
 
-from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -12,38 +11,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
 
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
-
 from ..models import Item
 from ..forms import ItemForm, BulkUploadForm
 from ..services import item_service
 
 logger = logging.getLogger(__name__)
-
-_ITEM_ENGINE = None
-
-def _get_item_engine():
-    """Return a SQLAlchemy engine for the default Django database."""
-    global _ITEM_ENGINE
-    if _ITEM_ENGINE is None:
-        cfg = settings.DATABASES["default"]
-        engine = cfg.get("ENGINE", "")
-        if engine.endswith("sqlite3"):
-            url = f"sqlite:///{cfg['NAME']}"
-        elif "postgresql" in engine:
-            url = URL.create(
-                "postgresql+psycopg",
-                username=cfg.get("USER") or None,
-                password=cfg.get("PASSWORD") or None,
-                host=cfg.get("HOST") or None,
-                port=cfg.get("PORT") or None,
-                database=cfg.get("NAME"),
-            )
-        else:  # pragma: no cover - defensive
-            raise ValueError(f"Unsupported database engine: {engine}")
-        _ITEM_ENGINE = create_engine(url)
-    return _ITEM_ENGINE
 
 
 class ItemsListView(TemplateView):
@@ -189,9 +161,7 @@ class ItemSuggestView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         name = (self.request.GET.get("name") or "").strip()
-        base, purchase, category = item_service.suggest_category_and_units(
-            _get_item_engine(), name
-        )
+        base, purchase, category = item_service.suggest_category_and_units(name)
         ctx.update(
             {"base": base or "", "purchase": purchase or "", "category": category or ""}
         )

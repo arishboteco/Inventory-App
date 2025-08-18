@@ -1,19 +1,15 @@
-import pandas as pd
 from inventory.services.ui_service import autofill_component_meta
 
 
 def test_autofill_component_meta_populates_unit_and_category():
-    df = pd.DataFrame(
-        {
-            "component": ["Flour (1) | kg | Baking | 10.00", "Unknown"],
-            "unit": [None, None],
-            "category": [None, None],
-        }
-    )
+    rows = [
+        {"component": "Flour (1) | kg | Baking | 10.00", "unit": None, "category": None},
+        {"component": "Unknown", "unit": None, "category": None},
+    ]
     choice_map = {
         "Flour (1) | kg | Baking | 10.00": {"base_unit": "kg", "category": "Baking"}
     }
-    result = autofill_component_meta(df, choice_map)
-    assert result.loc[0, "unit"] == "kg"
-    assert result.loc[0, "category"] == "Baking"
-    assert pd.isna(result.loc[1, "unit"]) and pd.isna(result.loc[1, "category"])
+    result = autofill_component_meta(rows, choice_map)
+    assert result[0]["unit"] == "kg"
+    assert result[0]["category"] == "Baking"
+    assert result[1]["unit"] is None and result[1]["category"] is None

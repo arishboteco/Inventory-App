@@ -38,11 +38,23 @@ def add_supplier(details: Dict[str, Any]) -> Tuple[bool, str]:
         return False, "A database error occurred while adding the supplier."
 
 
-def get_all_suppliers(include_inactive: bool = False):
+def get_all_suppliers(include_inactive: bool = False) -> pd.DataFrame:
     qs = Supplier.objects.all()
     if not include_inactive:
         qs = qs.filter(is_active=True)
-    return qs
+    data = list(
+        qs.values(
+            "supplier_id",
+            "name",
+            "contact_person",
+            "phone",
+            "email",
+            "address",
+            "notes",
+            "is_active",
+        )
+    )
+    return pd.DataFrame(data)
 
 
 def get_supplier_details(supplier_id: int) -> Optional[Dict[str, Any]]:

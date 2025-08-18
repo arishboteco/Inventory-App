@@ -5,6 +5,16 @@ from inventory.models import Supplier
 from inventory.services import supplier_service
 
 
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Supplier)
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(Supplier)
+
+
 @pytest.mark.django_db
 def test_add_supplier_inserts_row():
     details = {"name": "Vendor A", "is_active": True}

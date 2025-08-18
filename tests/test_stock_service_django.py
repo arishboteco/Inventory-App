@@ -5,6 +5,18 @@ from inventory.models import Item, StockTransaction
 from inventory.services import stock_service
 
 
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Item)
+        editor.create_model(StockTransaction)
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(StockTransaction)
+        editor.delete_model(Item)
+
+
 @pytest.mark.django_db
 def test_record_stock_transaction_updates_stock_and_logs():
     item = Item.objects.create(name="Sample", current_stock=10)

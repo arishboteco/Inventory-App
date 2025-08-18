@@ -33,60 +33,57 @@ def _strip_or_none(val: Any) -> Optional[str]:
     return None
 
 
-def _component_unit(conn: Connection, kind: str, cid: int, unit: Optional[str]) -> Optional[str]:
-    """Validate and resolve a component's unit.
+from inventory.models import Item, Recipe
 
-    For ``ITEM`` components the unit must match the item's ``base_unit``.
-    For ``RECIPE`` components the unit must match the child recipe's
-    ``default_yield_unit``.
-    """
-
+def _component_unit(kind: str, cid: int, unit: Optional[str]) -> Optional[str]:
+    """Validate and resolve a component's unit."""
     if kind == "ITEM":
-        row = conn.execute(
-            text("SELECT base_unit FROM items WHERE item_id=:i"), {"i": cid}
-        ).mappings().fetchone()
-        if not row:
+        try:
+            item = Item.objects.get(pk=cid)
+            if unit is None:
+                return item.base_unit
+            if unit not in [item.base_unit, item.purchase_unit]:
+                raise ValueError("Unit mismatch for item component")
+            return unit
+        except Item.DoesNotExist:
             raise ValueError(f"Item {cid} not found")
-        base = row["base_unit"]
-        if unit is None:
-            return base
-        if unit != base:
-            raise ValueError("Unit mismatch for item component")
-        return unit
     if kind == "RECIPE":
-        row = conn.execute(
-            text("SELECT default_yield_unit FROM recipes WHERE recipe_id=:r"),
-            {"r": cid},
-        ).mappings().fetchone()
-        db_unit = row["default_yield_unit"] if row else None
-        if unit is not None and db_unit and unit != db_unit:
-            raise ValueError("Unit mismatch for recipe component")
-        return unit if unit is not None else db_unit
+        try:
+            recipe = Recipe.objects.get(pk=cid)
+            db_unit = recipe.default_yield_unit
+            if unit is not None and db_unit and unit != db_unit:
+                raise ValueError("Unit mismatch for recipe component")
+            return unit if unit is not None else db_unit
+        except Recipe.DoesNotExist:
+            raise ValueError(f"Recipe {cid} not found")
     raise ValueError("Invalid component_kind")
 
 
-def _has_path(conn: Connection, start: int, target: int) -> bool:
-    """Return True if ``start`` recipe references ``target`` recursively."""
-    if start == target:
+from inventory.models import RecipeComponent
+
+def _has_path(start_id: int, target_id: int, visited: Optional[Set[int]] = None) -> bool:
+    """Return True if ``start_id`` recipe references ``target_id`` recursively."""
+    if visited is None:
+        visited = set()
+    if start_id in visited:
+        return False  # Already checked this path
+    visited.add(start_id)
+
+    if start_id == target_id:
         return True
-    rows = conn.execute(
-        text(
-            "SELECT component_id FROM recipe_components "
-            "WHERE parent_recipe_id=:r AND component_kind='RECIPE'"
-        ),
-        {"r": start},
-    ).fetchall()
-    for (cid,) in rows:
-        if _has_path(conn, cid, target):
+
+    components = RecipeComponent.objects.filter(parent_recipe_id=start_id, component_kind='RECIPE')
+    for component in components:
+        if _has_path(component.component_id, target_id, visited):
             return True
     return False
 
 
-def _creates_cycle(conn: Connection, parent_id: int, child_id: int) -> bool:
+def _creates_cycle(parent_id: int, child_id: int) -> bool:
     """Check whether linking ``parent_id`` -> ``child_id`` creates a cycle."""
     if parent_id == child_id:
         return True
-    return _has_path(conn, child_id, parent_id)
+    return _has_path(child_id, parent_id)
 
 
 # ---------------------------------------------------------------------------
@@ -152,128 +149,88 @@ def build_components_from_editor(
 # ---------------------------------------------------------------------------
 
 
+from django.db import transaction
+
+@transaction.atomic
 def create_recipe(
-    engine: Engine, data: Dict[str, Any], components: List[Dict[str, Any]]
+    data: Dict[str, Any], components: List[Dict[str, Any]]
 ) -> Tuple[bool, str, Optional[int]]:
     """Create a recipe and associated components."""
-    if engine is None:
-        return False, "Database engine not available.", None
     try:
-        with engine.begin() as conn:
-            fields = [
-                "name",
-                "description",
-                "is_active",
-                "type",
-                "default_yield_qty",
-                "default_yield_unit",
-                "plating_notes",
-                "tags",
-            ]
-            ins = text(
-                f"INSERT INTO recipes ({', '.join(fields)}) "
-                f"VALUES ({', '.join(':'+f for f in fields)})"
+        recipe = Recipe.objects.create(**data)
+
+        for comp_data in components:
+            unit = _component_unit(
+                comp_data["component_kind"],
+                comp_data["component_id"],
+                comp_data.get("unit"),
             )
-            params = {f: data.get(f) for f in fields}
-            result = conn.execute(ins, params)
-            rid = result.lastrowid
-            for comp in components:
-                unit = _component_unit(
-                    conn,
-                    comp["component_kind"],
-                    comp["component_id"],
-                    comp.get("unit"),
-                )
-                if comp["component_kind"] == "RECIPE" and _creates_cycle(
-                    conn, rid, comp["component_id"]
-                ):
-                    raise ValueError("Adding this component creates a cycle")
-                conn.execute(
-                    text(
-                        """
-                        INSERT INTO recipe_components
-                        (parent_recipe_id, component_kind, component_id, quantity, unit, loss_pct, sort_order, notes)
-                        VALUES
-                        (:r, :k, :cid, :q, :u, :loss, :sort, :notes)
-                        """
-                    ),
-                    {
-                        "r": rid,
-                        "k": comp["component_kind"],
-                        "cid": comp["component_id"],
-                        "q": comp["quantity"],
-                        "u": unit,
-                        "loss": comp.get("loss_pct") or 0,
-                        "sort": comp.get("sort_order") or 0,
-                        "notes": _strip_or_none(comp.get("notes")),
-                    },
-                )
-        return True, "Recipe created.", rid
+            if comp_data["component_kind"] == "RECIPE" and _creates_cycle(
+                recipe.pk, comp_data["component_id"]
+            ):
+                raise ValueError("Adding this component creates a cycle")
+
+            RecipeComponent.objects.create(
+                parent_recipe=recipe,
+                component_kind=comp_data["component_kind"],
+                component_id=comp_data["component_id"],
+                quantity=comp_data["quantity"],
+                unit=unit,
+                loss_pct=comp_data.get("loss_pct", 0),
+                sort_order=comp_data.get("sort_order", 0),
+                notes=_strip_or_none(comp_data.get("notes")),
+            )
+
+        return True, "Recipe created.", recipe.pk
     except (IntegrityError, ValueError) as exc:
         logger.error("Error creating recipe: %s", exc)
         return False, str(exc), None
-    except SQLAlchemyError as exc:  # pragma: no cover - defensive
+    except Exception as exc:
         logger.error("DB error creating recipe: %s", exc)
         return False, "A database error occurred.", None
 
 
+@transaction.atomic
 def update_recipe(
-    engine: Engine,
     recipe_id: int,
     data: Dict[str, Any],
     components: List[Dict[str, Any]],
 ) -> Tuple[bool, str]:
     """Update a recipe and replace its components."""
-    if engine is None:
-        return False, "Database engine not available."
     try:
-        with engine.begin() as conn:
-            if data:
-                fields = ", ".join(f"{k}=:{k}" for k in data.keys())
-                conn.execute(
-                    text(f"UPDATE recipes SET {fields} WHERE recipe_id=:rid"),
-                    {**data, "rid": recipe_id},
-                )
-            conn.execute(
-                text("DELETE FROM recipe_components WHERE parent_recipe_id=:r"),
-                {"r": recipe_id},
+        if data:
+            Recipe.objects.filter(pk=recipe_id).update(**data)
+
+        RecipeComponent.objects.filter(parent_recipe_id=recipe_id).delete()
+
+        recipe = Recipe.objects.get(pk=recipe_id)
+        for comp_data in components:
+            unit = _component_unit(
+                comp_data["component_kind"],
+                comp_data["component_id"],
+                comp_data.get("unit"),
             )
-            for comp in components:
-                unit = _component_unit(
-                    conn,
-                    comp["component_kind"],
-                    comp["component_id"],
-                    comp.get("unit"),
-                )
-                if comp["component_kind"] == "RECIPE" and _creates_cycle(
-                    conn, recipe_id, comp["component_id"]
-                ):
-                    raise ValueError("Adding this component creates a cycle")
-                conn.execute(
-                    text(
-                        """
-                        INSERT INTO recipe_components
-                        (parent_recipe_id, component_kind, component_id, quantity, unit, loss_pct, sort_order, notes)
-                        VALUES
-                        (:r, :k, :cid, :q, :u, :loss, :sort, :notes)
-                        """
-                    ),
-                    {
-                        "r": recipe_id,
-                        "k": comp["component_kind"],
-                        "cid": comp["component_id"],
-                        "q": comp["quantity"],
-                        "u": unit,
-                        "loss": comp.get("loss_pct") or 0,
-                        "sort": comp.get("sort_order") or 0,
-                        "notes": _strip_or_none(comp.get("notes")),
-                    },
-                )
+            if comp_data["component_kind"] == "RECIPE" and _creates_cycle(
+                recipe_id, comp_data["component_id"]
+            ):
+                raise ValueError("Adding this component creates a cycle")
+
+            RecipeComponent.objects.create(
+                parent_recipe=recipe,
+                component_kind=comp_data["component_kind"],
+                component_id=comp_data["component_id"],
+                quantity=comp_data["quantity"],
+                unit=unit,
+                loss_pct=comp_data.get("loss_pct", 0),
+                sort_order=comp_data.get("sort_order", 0),
+                notes=_strip_or_none(comp_data.get("notes")),
+            )
+
         return True, "Recipe updated."
     except (IntegrityError, ValueError) as exc:
         logger.error("Error updating recipe: %s", exc)
         return False, str(exc)
-    except SQLAlchemyError as exc:  # pragma: no cover - defensive
+    except Exception as exc:
         logger.error("DB error updating recipe: %s", exc)
         return False, "A database error occurred."
 
@@ -284,7 +241,6 @@ def update_recipe(
 
 
 def _expand_requirements(
-    conn: Connection,
     recipe_id: int,
     multiplier: float,
     totals: Dict[int, float],
@@ -293,121 +249,83 @@ def _expand_requirements(
     if recipe_id in visited:
         raise ValueError("Circular reference detected during expansion")
     visited.add(recipe_id)
-    rows = conn.execute(
-        text(
-            "SELECT component_kind, component_id, quantity, unit, loss_pct "
-            "FROM recipe_components WHERE parent_recipe_id=:r"
-        ),
-        {"r": recipe_id},
-    ).mappings().all()
-    for row in rows:
-        qty = multiplier * float(row["quantity"]) / (
-            1 - float(row.get("loss_pct") or 0) / 100.0
-        )
-        if row["component_kind"] == "ITEM":
-            item = conn.execute(
-                text(
-                    "SELECT base_unit, is_active FROM items WHERE item_id=:i"
-                ),
-                {"i": row["component_id"]},
-            ).mappings().fetchone()
-            if not item:
-                raise ValueError(f"Item {row['component_id']} not found")
-            if not item["is_active"]:
+
+    components = RecipeComponent.objects.filter(parent_recipe_id=recipe_id)
+    for component in components:
+        qty = multiplier * float(component.quantity) / (1 - float(component.loss_pct or 0) / 100.0)
+        if component.component_kind == "ITEM":
+            item = Item.objects.get(pk=component.component_id)
+            if not item.is_active:
                 raise ValueError("Inactive item component encountered")
-            if item["base_unit"] != row["unit"]:
+            if item.base_unit != component.unit:
                 raise ValueError("Unit mismatch for item component")
-            totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
-        elif row["component_kind"] == "RECIPE":
-            sub = conn.execute(
-                text(
-                    "SELECT default_yield_unit, is_active FROM recipes WHERE recipe_id=:r"
-                ),
-                {"r": row["component_id"]},
-            ).mappings().fetchone()
-            if not sub:
-                raise ValueError(f"Recipe {row['component_id']} not found")
-            if not sub["is_active"]:
+            totals[component.component_id] = totals.get(component.component_id, 0) + qty
+        elif component.component_kind == "RECIPE":
+            sub_recipe = Recipe.objects.get(pk=component.component_id)
+            if not sub_recipe.is_active:
                 raise ValueError("Inactive sub-recipe encountered")
-            if not sub["default_yield_unit"]:
+            if not sub_recipe.default_yield_unit:
                 raise ValueError("Missing unit for recipe component")
-            if sub["default_yield_unit"] != row["unit"]:
+            if sub_recipe.default_yield_unit != component.unit:
                 raise ValueError("Unit mismatch for recipe component")
-            _expand_requirements(conn, row["component_id"], qty, totals, visited)
-        else:
-            raise ValueError("Invalid component_kind")
+            _expand_requirements(component.component_id, qty, totals, visited)
+
     visited.remove(recipe_id)
 
 
-def _resolve_item_requirements(
-    conn: Connection, recipe_id: int, quantity: float
-) -> Dict[int, float]:
+def _resolve_item_requirements(recipe_id: int, quantity: float) -> Dict[int, float]:
     totals: Dict[int, float] = {}
-    _expand_requirements(conn, recipe_id, quantity, totals, set())
+    _expand_requirements(recipe_id, quantity, totals, set())
     return totals
 
 
+from inventory.models import StockTransaction
+
+@transaction.atomic
 def record_sale(
-    engine: Engine,
     recipe_id: int,
     quantity: float,
     user_id: str,
     notes: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """Record sale of a recipe and reduce ingredient stock."""
-    if engine is None:
-        return False, "Database engine not available."
     if not recipe_id or quantity <= 0:
         return False, "Invalid recipe or quantity."
-    user_id_clean = user_id.strip() if user_id else "System"
-    notes_clean = _strip_or_none(notes)
-    sale_ins = text(
-        "INSERT INTO sales_transactions (recipe_id, quantity, user_id, notes) "
-        "VALUES (:r, :q, :u, :n);"
-    )
+
     try:
-        with engine.connect() as conn:
-            with conn.begin():
-                is_active = conn.execute(
-                    text("SELECT is_active FROM recipes WHERE recipe_id=:r"),
-                    {"r": recipe_id},
-                ).scalar_one_or_none()
-                if is_active is None:
-                    return False, "Recipe not found."
-                if not is_active:
-                    return False, "Recipe is inactive."
-                totals = _resolve_item_requirements(conn, recipe_id, quantity)
-                conn.execute(
-                    sale_ins,
-                    {"r": recipe_id, "q": quantity, "u": user_id_clean, "n": notes_clean},
-                )
-                for iid, qty in totals.items():
-                    conn.execute(
-                        text(
-                            "UPDATE items SET current_stock = COALESCE(current_stock,0) - :q WHERE item_id=:i"
-                        ),
-                        {"q": qty, "i": iid},
-                    )
-                    conn.execute(
-                        text(
-                            """
-                            INSERT INTO stock_transactions
-                            (item_id, quantity_change, transaction_type, user_id, notes, transaction_date)
-                            VALUES (:i, :q, :t, :u, :n, NOW())
-                            """
-                        ),
-                        {
-                            "i": iid,
-                            "q": -qty,
-                            "t": TX_SALE,
-                            "u": user_id_clean,
-                            "n": f"Recipe {recipe_id} sale",
-                        },
-                    )
+        recipe = Recipe.objects.get(pk=recipe_id)
+        if not recipe.is_active:
+            return False, "Recipe is inactive."
+
+        totals = _resolve_item_requirements(recipe_id, quantity)
+
+        # TODO: Create a SalesTransaction model and uncomment the following lines.
+        # SalesTransaction.objects.create(
+        #     recipe=recipe,
+        #     quantity=quantity,
+        #     user_id=user_id,
+        #     notes=notes,
+        # )
+
+        for item_id, qty in totals.items():
+            item = Item.objects.select_for_update().get(pk=item_id)
+            item.current_stock -= qty
+            item.save()
+            StockTransaction.objects.create(
+                item=item,
+                quantity_change=-qty,
+                transaction_type=TX_SALE,
+                user_id=user_id,
+                notes=f"Recipe {recipe_id} sale",
+            )
+
         return True, "Sale recorded."
-    except ValueError as ve:
-        logger.error("Error recording sale: %s", ve)
-        return False, str(ve)
-    except SQLAlchemyError as exc:  # pragma: no cover - defensive
-        logger.error("DB error recording sale: %s", exc)
-        return False, "A database error occurred during sale recording."
+    except Recipe.DoesNotExist:
+        return False, "Recipe not found."
+    except Item.DoesNotExist as e:
+        return False, str(e)
+    except ValueError as e:
+        return False, str(e)
+    except Exception as e:
+        logger.error("Error recording sale: %s", e)
+        return False, "A database error occurred."

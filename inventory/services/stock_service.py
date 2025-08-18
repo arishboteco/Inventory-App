@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from django.db import transaction
 from inventory.models import Item, StockTransaction
@@ -59,6 +59,8 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, any]]) -> bool:
         return False
 
 
+from datetime import date
+
 def remove_stock_transactions_bulk(transaction_ids: List[int]) -> bool:
     try:
         with transaction.atomic():
@@ -80,3 +82,64 @@ def remove_stock_transactions_bulk(transaction_ids: List[int]) -> bool:
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error removing stock transactions: %s", exc)
         return False
+
+
+def get_stock_transactions(
+    item_id: Optional[int] = None,
+    transaction_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    related_mrn: Optional[str] = None,
+    related_po_id: Optional[int] = None,
+):
+    """Fetches stock transaction records based on specified filters."""
+    qs = StockTransaction.objects.select_related("item").all()
+
+    if item_id is not None:
+        qs = qs.filter(item_id=item_id)
+    if transaction_type:
+        qs = qs.filter(transaction_type=transaction_type)
+    if user_id and user_id.strip():
+        qs = qs.filter(user_id__icontains=user_id.strip())
+    if related_mrn and related_mrn.strip():
+        qs = qs.filter(related_mrn__icontains=related_mrn.strip())
+    if related_po_id is not None:
+        qs = qs.filter(related_po_id=related_po_id)
+    if start_date:
+        qs = qs.filter(transaction_date__date__gte=start_date)
+    if end_date:
+        qs = qs.filter(transaction_date__date__lte=end_date)
+
+    return qs.order_by("-transaction_date", "-transaction_id")
+
+
+def record_stock_transactions_bulk_with_status(
+    transactions: List[Dict],
+) -> Tuple[int, List[str]]:
+    """Record stock transactions individually and report results."""
+    if not transactions:
+        return 0, ["No transactions provided."]
+
+    success_count = 0
+    errors: List[str] = []
+
+    for idx, tx in enumerate(transactions):
+        try:
+            ok = record_stock_transaction(
+                item_id=tx.get("item_id"),
+                quantity_change=tx.get("quantity_change", 0),
+                transaction_type=tx.get("transaction_type"),
+                user_id=tx.get("user_id"),
+                related_mrn=tx.get("related_mrn"),
+                related_po_id=tx.get("related_po_id"),
+                notes=tx.get("notes"),
+            )
+            if ok:
+                success_count += 1
+            else:
+                errors.append(f"Row {idx}: failed to record transaction")
+        except Exception as e:
+            errors.append(f"Row {idx}: {e}")
+
+    return success_count, errors

@@ -33,3 +33,25 @@ def test_deactivate_and_reactivate_supplier():
     assert ok
     supplier.refresh_from_db()
     assert supplier.is_active is True
+
+
+@pytest.mark.django_db
+def test_get_all_suppliers():
+    Supplier.objects.create(name="Vendor 1", is_active=True)
+    Supplier.objects.create(name="Vendor 2", is_active=True)
+    Supplier.objects.create(name="Vendor 3", is_active=False)
+
+    suppliers = supplier_service.get_all_suppliers()
+    assert suppliers.count() == 2
+
+    suppliers_all = supplier_service.get_all_suppliers(include_inactive=True)
+    assert suppliers_all.count() == 3
+
+
+@pytest.mark.django_db
+def test_get_supplier_details():
+    supplier = Supplier.objects.create(name="Vendor 1", contact_person="John Doe")
+    details = supplier_service.get_supplier_details(supplier.pk)
+    assert details is not None
+    assert details["name"] == "Vendor 1"
+    assert details["contact_person"] == "John Doe"

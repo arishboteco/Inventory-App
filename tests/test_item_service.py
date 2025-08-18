@@ -1,9 +1,35 @@
-from sqlalchemy import text
+import pytest
+from django.db import connection
 
+from inventory.models import Item, StockTransaction
 from inventory.services import item_service
 
 
-def test_add_new_item_inserts_row(sqlite_engine):
+@pytest.fixture(autouse=True)
+def clear_tables():
+    StockTransaction.objects.all().delete()
+    Item.objects.all().delete()
+    item_service.get_all_items_with_stock.clear()
+    item_service.get_distinct_departments_from_items.clear()
+    item_service.suggest_category_and_units.clear()
+
+
+def setup_module(module):
+    with connection.schema_editor() as editor:
+        editor.create_model(Item)
+        editor.create_model(StockTransaction)
+    item_service.get_all_items_with_stock.clear()
+    item_service.get_distinct_departments_from_items.clear()
+    item_service.suggest_category_and_units.clear()
+
+
+def teardown_module(module):
+    with connection.schema_editor() as editor:
+        editor.delete_model(StockTransaction)
+        editor.delete_model(Item)
+
+
+def test_add_new_item_inserts_row():
     details = {
         "name": "Widget",
         "base_unit": "pcs",
@@ -12,83 +38,68 @@ def test_add_new_item_inserts_row(sqlite_engine):
         "sub_category": "sub",
         "permitted_departments": "dept",
         "reorder_point": 1,
-        "current_stock": 0,
         "notes": "n",
         "is_active": True,
     }
-    success, msg = item_service.add_new_item(sqlite_engine, details)
+    success, _ = item_service.add_new_item(details)
     assert success
-
-    with sqlite_engine.connect() as conn:
-        row = conn.execute(text("SELECT name FROM items WHERE name='Widget'"))
-        assert row.fetchone() is not None
+    assert Item.objects.filter(name="Widget").exists()
 
 
-def test_get_all_items_with_stock_includes_unit(sqlite_engine):
-    """The service should provide a 'unit' column mirroring 'base_unit'."""
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO items (
-                    name, base_unit, purchase_unit, category, sub_category,
-                    permitted_departments, reorder_point, current_stock, notes, is_active
-                ) VALUES (
-                    'Widget', 'pcs', 'box', 'cat', 'sub', 'dept', 1, 5, 'n', 1
-                )
-                """
-            )
-        )
-    df = item_service.get_all_items_with_stock(sqlite_engine, include_inactive=True)
-    assert "unit" in df.columns
-    assert df.loc[df["name"] == "Widget", "unit"].iloc[0] == "pcs"
-
-
-def test_get_item_details_includes_unit(sqlite_engine):
-    """The detailed item lookup should include a 'unit' key."""
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO items (
-                    name, base_unit, purchase_unit, category, sub_category,
-                    permitted_departments, reorder_point, current_stock, notes, is_active
-                ) VALUES (
-                    'Widget', 'pcs', 'box', 'cat', 'sub', 'dept', 1, 5, 'n', 1
-                )
-                """
-            )
-        )
-        item_id = conn.execute(
-            text("SELECT item_id FROM items WHERE name='Widget'")
-        ).scalar_one()
-    details = item_service.get_item_details(sqlite_engine, item_id)
-    assert details["unit"] == "pcs"
-
-
-def test_suggest_category_and_units(sqlite_engine):
-    """Database-backed suggestions should return units and category."""
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO items (
-                    name, base_unit, purchase_unit, category, sub_category,
-                    permitted_departments, reorder_point, current_stock, notes, is_active
-                ) VALUES (
-                    'Fresh Milk', 'L', 'case', 'Dairy', 'General', 'Kitchen', 0, 0, '', 1
-                )
-                """
-            )
-        )
-
-    base, purchase, category = item_service.suggest_category_and_units(
-        sqlite_engine, "Whole Milk"
+def test_get_all_items_with_stock_includes_unit():
+    item = Item.objects.create(
+        name="Widget",
+        base_unit="pcs",
+        purchase_unit="box",
+        category="cat",
+        sub_category="sub",
+        permitted_departments="dept",
+        reorder_point=1,
+        notes="n",
+        is_active=True,
     )
+    StockTransaction.objects.create(item=item, quantity_change=5)
+    items = item_service.get_all_items_with_stock(include_inactive=True)
+    widget = next(i for i in items if i["name"] == "Widget")
+    assert widget["unit"] == "pcs"
+    assert widget["current_stock"] == 5
+
+
+def test_get_item_details_includes_unit():
+    item = Item.objects.create(
+        name="Widget",
+        base_unit="pcs",
+        purchase_unit="box",
+        category="cat",
+        sub_category="sub",
+        permitted_departments="dept",
+        reorder_point=1,
+        notes="n",
+        is_active=True,
+    )
+    StockTransaction.objects.create(item=item, quantity_change=5)
+    details = item_service.get_item_details(item.pk)
+    assert details["unit"] == "pcs"
+    assert details["current_stock"] == 5
+
+
+def test_suggest_category_and_units():
+    Item.objects.create(
+        name="Fresh Milk",
+        base_unit="L",
+        purchase_unit="case",
+        category="Dairy",
+        sub_category="General",
+        permitted_departments="Kitchen",
+        reorder_point=0,
+        notes="",
+        is_active=True,
+    )
+    base, purchase, category = item_service.suggest_category_and_units("Whole Milk")
     assert (base, purchase, category) == ("L", "case", "Dairy")
 
 
-def test_add_items_bulk_inserts_rows(sqlite_engine):
+def test_add_items_bulk_inserts_rows():
     items = [
         {
             "name": "Widget",
@@ -98,7 +109,6 @@ def test_add_items_bulk_inserts_rows(sqlite_engine):
             "sub_category": "sub",
             "permitted_departments": "dept",
             "reorder_point": 1,
-            "current_stock": 0,
             "notes": "n",
             "is_active": True,
         },
@@ -110,62 +120,58 @@ def test_add_items_bulk_inserts_rows(sqlite_engine):
             "sub_category": "sub",
             "permitted_departments": "dept2",
             "reorder_point": 2,
-            "current_stock": 0,
             "notes": "n",
             "is_active": True,
         },
     ]
-    inserted, errors = item_service.add_items_bulk(sqlite_engine, items)
+    inserted, errors = item_service.add_items_bulk(items)
     assert inserted == 2
     assert errors == []
-    with sqlite_engine.connect() as conn:
-        count = conn.execute(
-            text("SELECT COUNT(*) FROM items WHERE name IN ('Widget','Gadget')")
-        ).scalar_one()
-        assert count == 2
+    assert Item.objects.filter(name__in=["Widget", "Gadget"]).count() == 2
 
 
-def test_add_items_bulk_validation_failure(sqlite_engine):
+def test_add_items_bulk_validation_failure():
     items = [
         {"name": "Widget", "base_unit": "pcs"},
         {"name": "", "base_unit": "pcs"},
     ]
-    inserted, errors = item_service.add_items_bulk(sqlite_engine, items)
+    inserted, errors = item_service.add_items_bulk(items)
     assert inserted == 0
     assert errors
-    with sqlite_engine.connect() as conn:
-        count = conn.execute(text("SELECT COUNT(*) FROM items")).scalar_one()
-        assert count == 0
+    assert Item.objects.count() == 0
 
 
-def test_remove_items_bulk_marks_inactive(sqlite_engine):
-    with sqlite_engine.begin() as conn:
-        conn.execute(
-            text(
-                """
-                INSERT INTO items (
-                    name, base_unit, purchase_unit, category, sub_category,
-                    permitted_departments, reorder_point, current_stock, notes, is_active
-                ) VALUES
-                    ('Widget', 'pcs', 'box', 'cat', 'sub', 'dept', 1, 0, 'n', 1),
-                    ('Gadget', 'pcs', 'each', 'cat', 'sub', 'dept2', 2, 0, 'n', 1)
-                """
-            )
-        )
-        ids = conn.execute(text("SELECT item_id FROM items"))
-        item_ids = [row[0] for row in ids.fetchall()]
-    removed, errors = item_service.remove_items_bulk(sqlite_engine, item_ids)
-    assert removed == len(item_ids)
+def test_remove_items_bulk_marks_inactive():
+    widget = Item.objects.create(
+        name="Widget",
+        base_unit="pcs",
+        purchase_unit="box",
+        category="cat",
+        sub_category="sub",
+        permitted_departments="dept",
+        reorder_point=1,
+        notes="n",
+        is_active=True,
+    )
+    gadget = Item.objects.create(
+        name="Gadget",
+        base_unit="pcs",
+        purchase_unit="each",
+        category="cat",
+        sub_category="sub",
+        permitted_departments="dept2",
+        reorder_point=2,
+        notes="n",
+        is_active=True,
+    )
+    removed, errors = item_service.remove_items_bulk([widget.pk, gadget.pk])
+    assert removed == 2
     assert errors == []
-    with sqlite_engine.connect() as conn:
-        inactive = conn.execute(
-            text("SELECT COUNT(*) FROM items WHERE is_active = 0")
-        ).scalar_one()
-        assert inactive == len(item_ids)
+    assert Item.objects.filter(is_active=False).count() == 2
 
 
-def test_remove_items_bulk_requires_ids(sqlite_engine):
-    removed, errors = item_service.remove_items_bulk(sqlite_engine, [])
+def test_remove_items_bulk_requires_ids():
+    removed, errors = item_service.remove_items_bulk([])
     assert removed == 0
     assert errors
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.db import IntegrityError, transaction
 
@@ -82,9 +82,10 @@ def _creates_cycle(parent_id: int, child_id: int) -> bool:
 
 
 def build_components_from_editor(
-    df, choice_map: Dict[str, Dict[str, Any]]
+    rows: Iterable[Dict[str, Any]],
+    choice_map: Dict[str, Dict[str, Any]],
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
-    """Convert a data-editor DataFrame into component payload.
+    """Convert an iterable of editor rows into component payload.
 
     ``choice_map`` is expected to map the label from the UI to metadata about
     the component (kind, id, unit information etc.).
@@ -94,7 +95,7 @@ def build_components_from_editor(
 
     components: List[Dict[str, Any]] = []
     errors: List[str] = []
-    for idx, row in df.iterrows():
+    for idx, row in enumerate(rows):
         label = row.get("component")
         if not label or label == PLACEHOLDER_SELECT_COMPONENT:
             continue

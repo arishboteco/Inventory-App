@@ -43,3 +43,17 @@ def test_deactivate_and_reactivate_supplier():
     assert ok
     supplier.refresh_from_db()
     assert supplier.is_active is True
+
+
+@pytest.mark.django_db
+def test_get_all_suppliers_returns_list_of_dicts():
+    Supplier.objects.create(name="Vendor D", is_active=True)
+    Supplier.objects.create(name="Vendor E", is_active=False)
+    active_only = supplier_service.get_all_suppliers()
+    assert isinstance(active_only, list)
+    assert all(isinstance(row, dict) for row in active_only)
+    names = {row["name"] for row in active_only}
+    assert "Vendor D" in names and "Vendor E" not in names
+    all_suppliers = supplier_service.get_all_suppliers(include_inactive=True)
+    names_all = {row["name"] for row in all_suppliers}
+    assert {"Vendor D", "Vendor E"}.issubset(names_all)

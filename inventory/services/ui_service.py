@@ -6,8 +6,6 @@ used in tests and Django views."""
 
 from typing import Callable, Dict, Iterable, List, Mapping, Optional, Tuple, Any
 
-import pandas as pd
-
 __all__ = [
     "build_item_choice_label",
     "build_recipe_choice_label",
@@ -112,23 +110,23 @@ def build_component_options(
 
 
 def autofill_component_meta(
-    df: pd.DataFrame, choice_map: Dict[str, Dict[str, Any]]
-) -> pd.DataFrame:
-    """Fill the ``unit`` and ``category`` columns using ``choice_map``.
+    rows: Iterable[Dict[str, Any]], choice_map: Dict[str, Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Fill the ``unit`` and ``category`` fields using ``choice_map``.
 
-    Any row whose component label exists in ``choice_map`` receives the
-    corresponding unit and category; others are set to ``None``. The
-    dataframe is modified in place and returned for convenience.
+    The passed ``rows`` iterable is converted to a list, updated in place,
+    and returned. Any row whose component label exists in ``choice_map``
+    receives the corresponding unit and category; others are set to
+    ``None``.
     """
 
-    if df is None or "component" not in df:
-        return df
-    for idx, comp in df["component"].items():
-        meta = choice_map.get(comp)
+    result = [dict(row) for row in rows or []]
+    for row in result:
+        meta = choice_map.get(row.get("component"))
         if meta:
-            df.at[idx, "unit"] = meta.get("base_unit")
-            df.at[idx, "category"] = meta.get("category")
+            row["unit"] = meta.get("base_unit")
+            row["category"] = meta.get("category")
         else:
-            df.at[idx, "unit"] = None
-            df.at[idx, "category"] = None
-    return df
+            row["unit"] = None
+            row["category"] = None
+    return result

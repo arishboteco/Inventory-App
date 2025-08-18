@@ -1,2 +1,0 @@
-"""UI helper compatibility package."""
-

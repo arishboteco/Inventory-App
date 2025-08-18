@@ -1,6 +1,6 @@
 import pandas as pd
-from inventory.services.recipe_service import build_components_from_editor
-from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
+from app.services import recipe_service
+from app.core.constants import PLACEHOLDER_SELECT_COMPONENT
 
 def test_build_components_autofill_and_validation():
     df = pd.DataFrame([
@@ -38,7 +38,7 @@ def test_build_components_autofill_and_validation():
             "name": "Dough",
         },
     }
-    comps, errs = build_components_from_editor(df, choice_map)
+    comps, errs = recipe_service.build_components_from_editor(df, choice_map)
     assert not errs
     assert comps[0]["unit"] == "kg" and comps[0]["component_id"] == 1
     assert comps[1]["unit"] == "kg" and comps[1]["component_id"] == 2
@@ -64,7 +64,7 @@ def test_build_components_detects_unit_mismatch():
             "name": "Flour",
         }
     }
-    comps, errs = build_components_from_editor(df, choice_map)
+    comps, errs = recipe_service.build_components_from_editor(df, choice_map)
     assert errs and "Unit mismatch" in errs[0]
     assert not comps
 
@@ -90,7 +90,7 @@ def test_build_components_allows_purchase_unit():
             "name": "Flour",
         }
     }
-    comps, errs = build_components_from_editor(df, choice_map)
+    comps, errs = recipe_service.build_components_from_editor(df, choice_map)
     assert not errs
     assert comps and comps[0]["unit"] == "bag"
 
@@ -106,6 +106,6 @@ def test_build_components_skips_placeholder():
             "notes": None,
         }
     ])
-    comps, errs = build_components_from_editor(df, {})
+    comps, errs = recipe_service.build_components_from_editor(df, {})
     assert not comps
     assert not errs

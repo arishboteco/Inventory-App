@@ -5,7 +5,8 @@
   "customizations": {
     "codespaces": {
       "openFiles": [
-        "README.md"
+        "README.md",
+        "app/item_manager_app.py"
       ]
     },
     "vscode": {
@@ -16,17 +17,17 @@
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; echo '✅ Packages installed and requirements met'",
+  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
   "postAttachCommand": {
-    "server": "python manage.py runserver 0.0.0.0:8000"
+    "server": "streamlit run app/item_manager_app.py --server.enableCORS false --server.enableXsrfProtection false"
   },
   "portsAttributes": {
-    "8000": {
+    "8501": {
       "label": "Application",
       "onAutoForward": "openPreview"
     }
   },
   "forwardPorts": [
-    8000
+    8501
   ]
 }

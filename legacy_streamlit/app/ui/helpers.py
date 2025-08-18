@@ -1,8 +1,8 @@
 import math
 from pathlib import Path
 from typing import List, Tuple, Dict, Any
-import pandas as pd
 import streamlit as st
+from inventory.services.ui_service import autofill_component_meta as _autofill_component_meta
 
 from ..core.logging import LOG_FILE
 
@@ -145,23 +145,18 @@ def show_error(msg: str) -> None:
         st.error(msg)
 
 
-def autofill_component_meta(
-    df: pd.DataFrame, choice_map: Dict[str, Dict[str, Any]]
-) -> pd.DataFrame:
-    """Return dataframe with unit and category filled from choice_map.
+def autofill_component_meta(rows, choice_map: Dict[str, Dict[str, Any]]):
+    """Return rows with unit and category filled from ``choice_map``.
 
-    Any row whose component label exists in choice_map receives the corresponding
-    unit and category; others are set to ``None``. The original dataframe is
-    modified in place and returned for convenience.
+    Accepts either a sequence of row dicts or a pandas ``DataFrame``. A
+    ``DataFrame`` is converted to records and reconstructed to avoid a
+    hard dependency on pandas in this module.
     """
-    if df is None or "component" not in df:
-        return df
-    for idx, comp in df["component"].items():
-        meta = choice_map.get(comp)
-        if meta:
-            df.at[idx, "unit"] = meta.get("base_unit")
-            df.at[idx, "category"] = meta.get("category")
-        else:
-            df.at[idx, "unit"] = None
-            df.at[idx, "category"] = None
-    return df
+
+    if rows is None:
+        return rows
+    if hasattr(rows, "to_dict") and hasattr(rows.__class__, "__call"):
+        records = rows.to_dict("records")
+        updated = _autofill_component_meta(records, choice_map)
+        return rows.__class__(updated)
+    return _autofill_component_meta(rows, choice_map)

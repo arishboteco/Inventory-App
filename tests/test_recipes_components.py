@@ -1,5 +1,6 @@
 from inventory.services.recipe_service import build_components_from_editor
 from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
+from pydantic import BaseModel
 
 def test_build_components_autofill_and_validation():
     rows = [
@@ -108,3 +109,33 @@ def test_build_components_skips_placeholder():
     comps, errs = build_components_from_editor(rows, {})
     assert not comps
     assert not errs
+
+
+class ComponentRow(BaseModel):
+    component: str
+    quantity: float
+    unit: str | None = None
+    loss_pct: float = 0
+    sort_order: int = 1
+    notes: str | None = None
+
+
+def test_build_components_from_editor_accepts_models():
+    rows = [
+        ComponentRow(component="Flour (1) | kg | Baking | 10.00", quantity=2),
+        ComponentRow(component=PLACEHOLDER_SELECT_COMPONENT, quantity=1),
+    ]
+    choice_map = {
+        "Flour (1) | kg | Baking | 10.00": {
+            "kind": "ITEM",
+            "id": 1,
+            "base_unit": "kg",
+            "purchase_unit": "bag",
+            "category": "Baking",
+            "name": "Flour",
+        }
+    }
+    comps, errs = build_components_from_editor(rows, choice_map)
+    assert not errs
+    assert comps[0]["unit"] == "kg"
+    assert comps[0]["component_id"] == 1

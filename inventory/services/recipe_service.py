@@ -81,14 +81,27 @@ def _creates_cycle(parent_id: int, child_id: int) -> bool:
 # ---------------------------------------------------------------------------
 
 
+def _row_to_dict(obj: Any) -> Dict[str, Any]:
+    """Return a dict for ``obj`` supporting pydantic models."""
+
+    if isinstance(obj, dict):
+        return obj
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()  # type: ignore[no-any-return]
+    if hasattr(obj, "dict"):
+        return obj.dict()  # type: ignore[no-any-return]
+    return {k: getattr(obj, k) for k in dir(obj) if not k.startswith("_")}
+
+
 def build_components_from_editor(
-    rows: Iterable[Dict[str, Any]],
+    rows: Iterable[Any],
     choice_map: Dict[str, Dict[str, Any]],
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
     """Convert an iterable of editor rows into component payload.
 
     ``choice_map`` is expected to map the label from the UI to metadata about
-    the component (kind, id, unit information etc.).
+    the component (kind, id, unit information etc.). ``rows`` may contain
+    dictionaries, Pydantic models or similar objects.
     """
 
     from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
@@ -96,6 +109,7 @@ def build_components_from_editor(
     components: List[Dict[str, Any]] = []
     errors: List[str] = []
     for idx, row in enumerate(rows):
+        row = _row_to_dict(row)
         label = row.get("component")
         if not label or label == PLACEHOLDER_SELECT_COMPONENT:
             continue

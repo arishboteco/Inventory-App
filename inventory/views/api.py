@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 
-from .models import (
+from ..models import (
     Item,
     Supplier,
     StockTransaction,
@@ -13,7 +13,7 @@ from .models import (
     GoodsReceivedNote,
     GRNItem,
 )
-from .serializers import (
+from ..serializers import (
     ItemSerializer,
     SupplierSerializer,
     StockTransactionSerializer,

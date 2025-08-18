@@ -7,3 +7,4 @@ psycopg[binary]==3.2.9
 fpdf2
 sqlalchemy
 pyyaml
+pydantic

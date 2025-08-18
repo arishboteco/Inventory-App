@@ -29,11 +29,10 @@ class Item(models.Model):
     reorder_point = CoerceFloatField(blank=True, null=True)
     current_stock = CoerceFloatField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(blank=True, null=True)
-    updated_at = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=False, null=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "items"
 
 
@@ -45,11 +44,10 @@ class Supplier(models.Model):
     email = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(blank=True, null=True)
-    updated_at = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=False, null=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "suppliers"
 
 
@@ -64,10 +62,9 @@ class StockTransaction(models.Model):
     related_mrn = models.TextField(blank=True, null=True)
     related_po_id = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    transaction_date = models.TextField(blank=True, null=True)
+    transaction_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = "stock_transactions"
 
 
@@ -75,20 +72,19 @@ class Recipe(models.Model):
     recipe_id = models.AutoField(primary_key=True)
     name = models.TextField(unique=True, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(blank=True, null=True)
+    is_active = models.BooleanField(default=False, null=False)
     type = models.TextField(blank=True, null=True)
     default_yield_qty = CoerceFloatField(blank=True, null=True)
     default_yield_unit = models.TextField(blank=True, null=True)
     plating_notes = models.TextField(blank=True, null=True)
     tags = models.TextField(blank=True, null=True)
     version = models.IntegerField(blank=True, null=True)
-    effective_from = models.TextField(blank=True, null=True)
-    effective_to = models.TextField(blank=True, null=True)
-    created_at = models.TextField(blank=True, null=True)
-    updated_at = models.TextField(blank=True, null=True)
+    effective_from = models.DateField(auto_now_add=True)
+    effective_to = models.DateField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "recipes"
 
 
@@ -107,11 +103,10 @@ class RecipeComponent(models.Model):
     loss_pct = CoerceFloatField(blank=True, null=True)
     sort_order = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    created_at = models.TextField(blank=True, null=True)
-    updated_at = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "recipe_components"
         unique_together = ("parent_recipe", "component_kind", "component_id")
 
@@ -121,17 +116,16 @@ class Indent(models.Model):
     mrn = models.TextField(unique=True, blank=True, null=True)
     requested_by = models.TextField(blank=True, null=True)
     department = models.TextField(blank=True, null=True)
-    date_required = models.TextField(blank=True, null=True)
+    date_required = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     status = models.TextField(blank=True, null=True)
-    date_submitted = models.TextField(blank=True, null=True)
+    date_submitted = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     processed_by_user_id = models.TextField(blank=True, null=True)
-    date_processed = models.TextField(blank=True, null=True)
-    created_at = models.TextField(blank=True, null=True)
-    updated_at = models.TextField(blank=True, null=True)
+    date_processed = models.DateTimeField(auto_now=True, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "indents"
 
 
@@ -149,7 +143,6 @@ class IndentItem(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "indent_items"
 
 

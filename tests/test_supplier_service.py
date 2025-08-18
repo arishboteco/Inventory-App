@@ -1,18 +1,9 @@
-from django.db import connection
+import pytest
 from inventory.models import Supplier
 from inventory.services import supplier_service
 
 
-def setup_module(module):
-    with connection.schema_editor() as editor:
-        editor.create_model(Supplier)
-
-
-def teardown_module(module):
-    with connection.schema_editor() as editor:
-        editor.delete_model(Supplier)
-
-
+@pytest.mark.django_db
 def test_add_supplier_inserts_row():
     details = {
         "name": "Vendor A",
@@ -28,6 +19,7 @@ def test_add_supplier_inserts_row():
     assert Supplier.objects.filter(name="Vendor A").exists()
 
 
+@pytest.mark.django_db
 def test_add_supplier_duplicate_name_fails():
     details = {"name": "Dup", "is_active": True}
     supplier_service.add_supplier(details)
@@ -35,12 +27,14 @@ def test_add_supplier_duplicate_name_fails():
     assert not success
 
 
+@pytest.mark.django_db
 def test_add_supplier_requires_name():
     details = {"name": "  ", "contact_person": "x"}
     success, _ = supplier_service.add_supplier(details)
     assert not success
 
 
+@pytest.mark.django_db
 def test_update_supplier_changes_fields():
     supplier = Supplier.objects.create(name="Vendor B", is_active=True)
     success, _ = supplier_service.update_supplier(supplier.pk, {"phone": "999"})
@@ -49,11 +43,13 @@ def test_update_supplier_changes_fields():
     assert supplier.phone == "999"
 
 
+@pytest.mark.django_db
 def test_update_supplier_invalid_id():
     success, _ = supplier_service.update_supplier(999, {"phone": "000"})
     assert not success
 
 
+@pytest.mark.django_db
 def test_deactivate_and_reactivate_supplier():
     supplier = Supplier.objects.create(name="Vendor C", is_active=True)
     success, _ = supplier_service.deactivate_supplier(supplier.pk)

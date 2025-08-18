@@ -169,8 +169,12 @@ def item_create(request):
     if request.method == "POST":
         form = ItemForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect("items_list")
+            try:
+                form.save()
+                messages.success(request, "Item created successfully.")
+                return redirect("items_list")
+            except (ValidationError, DatabaseError):
+                messages.error(request, "Unable to save item")
     else:
         form = ItemForm()
     return render(request, "inventory/item_form.html", {"form": form, "is_edit": False})
@@ -196,6 +200,7 @@ def item_edit(request, pk: int):
     if request.method == "POST" and form.is_valid():
         try:
             form.save()
+            messages.success(request, "Item updated successfully.")
             return redirect("items_list")
         except (ValidationError, DatabaseError):
             messages.error(request, "Unable to save item")

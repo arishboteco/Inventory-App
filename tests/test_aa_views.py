@@ -48,7 +48,8 @@ from django.db import connection, DatabaseError
 from unittest.mock import patch
 
 from inventory.models import Item, Indent, IndentItem
-from inventory.views_ui import item_edit, indent_create
+from inventory.views.items import ItemEditView
+from inventory.views.indents import IndentCreateView
 
 
 def setup_module(module):
@@ -77,8 +78,8 @@ def test_item_edit_handles_save_error():
     request = rf.post("/items/%d/edit/" % item.pk, {"name": "Sugar"})
     _add_messages(request)
     with patch("inventory.forms.ItemForm.save", side_effect=DatabaseError):
-        with patch("inventory.views_ui.render", return_value=HttpResponse()):
-            resp = item_edit(request, pk=item.pk)
+        with patch("inventory.views.items.render", return_value=HttpResponse()):
+            resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
 
 
@@ -92,17 +93,17 @@ def test_item_edit_handles_non_numeric_values():
     rf = RequestFactory()
     request = rf.get(f"/items/{item.pk}/edit/")
     _add_messages(request)
-    with patch("inventory.views_ui.render", return_value=HttpResponse()):
-        resp = item_edit(request, pk=item.pk)
+    with patch("inventory.views.items.render", return_value=HttpResponse()):
+        resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
 
 
 def test_item_edit_db_error_returns_404():
     rf = RequestFactory()
     request = rf.get("/items/1/edit/")
-    with patch("inventory.views_ui.get_object_or_404", side_effect=DatabaseError):
+    with patch("inventory.views.items.get_object_or_404", side_effect=DatabaseError):
         with pytest.raises(Http404):
-            item_edit(request, pk=1)
+            ItemEditView.as_view()(request, pk=1)
 
 
 def test_indent_create_atomic_on_error():
@@ -124,7 +125,7 @@ def test_indent_create_atomic_on_error():
     request = rf.post("/indents/create/", post_data)
     _add_messages(request)
     with patch("inventory.forms.IndentItemFormSet.save", side_effect=DatabaseError):
-        with patch("inventory.views_ui.render", return_value=HttpResponse()):
-            resp = indent_create(request)
+        with patch("inventory.views.indents.render", return_value=HttpResponse()):
+            resp = IndentCreateView.as_view()(request)
     assert resp.status_code == 200
     assert Indent.objects.count() == 0

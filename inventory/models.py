@@ -116,6 +116,21 @@ class RecipeComponent(models.Model):
         unique_together = ("parent_recipe", "component_kind", "component_id")
 
 
+class SaleTransaction(models.Model):
+    sale_id = models.AutoField(primary_key=True)
+    recipe = models.ForeignKey(
+        Recipe, models.DO_NOTHING, db_column="recipe_id", blank=True, null=True
+    )
+    quantity = CoerceFloatField(blank=True, null=True)
+    user_id = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    sale_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = "sales_transactions"
+
+
 class Indent(models.Model):
     indent_id = models.AutoField(primary_key=True)
     mrn = models.TextField(unique=True, blank=True, null=True)

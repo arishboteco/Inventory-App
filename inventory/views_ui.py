@@ -1,10 +1,12 @@
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.db import transaction, DatabaseError
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.conf import settings
 
 from inventory.services import (
@@ -47,6 +49,9 @@ from .forms import (
     GRNItemFormSet,
 )
 from .indent_pdf import generate_indent_pdf
+
+
+logger = logging.getLogger(__name__)
 
 
 # Lazily create a SQLAlchemy engine for legacy service helpers
@@ -172,17 +177,28 @@ def item_create(request):
 
 
 def item_edit(request, pk: int):
-    item = get_object_or_404(Item, pk=pk)
-    if request.method == "POST":
-        form = ItemForm(request.POST, instance=item)
-        if form.is_valid():
-            try:
-                form.save()
-                return redirect("items_list")
-            except (ValidationError, DatabaseError):
-                messages.error(request, "Unable to save item")
-    else:
-        form = ItemForm(instance=item)
+    try:
+        item = get_object_or_404(Item, pk=pk)
+    except (DatabaseError, ValueError):  # pragma: no cover - defensive
+        logger.exception("Error retrieving item %s", pk)
+        raise Http404("Item not found")
+
+    try:
+        if request.method == "POST":
+            form = ItemForm(request.POST, instance=item)
+        else:
+            form = ItemForm(instance=item)
+    except (DatabaseError, ValueError):
+        logger.exception("Error loading form for item %s", pk)
+        messages.error(request, "Unable to load item")
+        return render(request, "inventory/item_form.html", {"form": None, "is_edit": True, "item": item})
+
+    if request.method == "POST" and form.is_valid():
+        try:
+            form.save()
+            return redirect("items_list")
+        except (ValidationError, DatabaseError):
+            messages.error(request, "Unable to save item")
     ctx = {"form": form, "is_edit": True, "item": item}
     return render(request, "inventory/item_form.html", ctx)
 

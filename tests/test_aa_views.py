@@ -1,6 +1,7 @@
 import django
 from django.conf import settings
 from pathlib import Path
+import pytest
 
 if not settings.configured:
     BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,7 +42,7 @@ if not settings.configured:
     django.setup()
 
 from django.test import RequestFactory
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.db import connection, DatabaseError
 from unittest.mock import patch
@@ -90,9 +91,18 @@ def test_item_edit_handles_non_numeric_values():
         )
     rf = RequestFactory()
     request = rf.get(f"/items/{item.pk}/edit/")
+    _add_messages(request)
     with patch("inventory.views_ui.render", return_value=HttpResponse()):
         resp = item_edit(request, pk=item.pk)
     assert resp.status_code == 200
+
+
+def test_item_edit_db_error_returns_404():
+    rf = RequestFactory()
+    request = rf.get("/items/1/edit/")
+    with patch("inventory.views_ui.get_object_or_404", side_effect=DatabaseError):
+        with pytest.raises(Http404):
+            item_edit(request, pk=1)
 
 
 def test_indent_create_atomic_on_error():

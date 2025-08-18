@@ -1,5 +1,5 @@
 import pandas as pd
-from inventory.ui.helpers import autofill_component_meta
+from inventory.services.ui_service import autofill_component_meta
 
 
 def test_autofill_component_meta_populates_unit_and_category():

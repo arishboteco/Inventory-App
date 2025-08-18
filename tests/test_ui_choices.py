@@ -1,4 +1,4 @@
-from inventory.ui.choices import build_component_options
+from inventory.services.ui_service import build_component_options
 
 
 def test_build_component_options_basic():

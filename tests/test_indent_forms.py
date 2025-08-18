@@ -1,33 +1,12 @@
 import django
 from django.conf import settings
 
-if not settings.configured:
-    settings.configure(
-        INSTALLED_APPS=["django.contrib.contenttypes", "django.contrib.auth", "inventory"],
-        DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
-        USE_TZ=True,
-    )
-    django.setup()
-
-from django.db import connection
-from inventory.models import Item, Indent, IndentItem
+import pytest
+from inventory.models import Item
 from inventory.forms import IndentForm, IndentItemFormSet
 
 
-def setup_module(module):
-    with connection.schema_editor() as editor:
-        editor.create_model(Item)
-        editor.create_model(Indent)
-        editor.create_model(IndentItem)
-
-
-def teardown_module(module):
-    with connection.schema_editor() as editor:
-        editor.delete_model(IndentItem)
-        editor.delete_model(Indent)
-        editor.delete_model(Item)
-
-
+@pytest.mark.django_db
 def test_indent_form_and_formset_save():
     item = Item.objects.create(name="Sugar")
     form = IndentForm(

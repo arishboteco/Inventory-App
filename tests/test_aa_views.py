@@ -3,44 +3,6 @@ from django.conf import settings
 from pathlib import Path
 import pytest
 
-if not settings.configured:
-    BASE_DIR = Path(__file__).resolve().parent.parent
-    settings.configure(
-        INSTALLED_APPS=[
-            "django.contrib.auth",
-            "django.contrib.contenttypes",
-            "django.contrib.sessions",
-            "django.contrib.messages",
-            "inventory",
-        ],
-        MIDDLEWARE=[
-            "django.contrib.sessions.middleware.SessionMiddleware",
-            "django.middleware.common.CommonMiddleware",
-            "django.contrib.auth.middleware.AuthenticationMiddleware",
-            "django.contrib.messages.middleware.MessageMiddleware",
-        ],
-        DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
-        ROOT_URLCONF="inventory.ui_urls",
-        TEMPLATES=[
-            {
-                "BACKEND": "django.template.backends.django.DjangoTemplates",
-                "DIRS": [BASE_DIR / "templates"],
-                "APP_DIRS": True,
-                "OPTIONS": {
-                    "context_processors": [
-                        "django.template.context_processors.request",
-                        "django.contrib.auth.context_processors.auth",
-                        "django.contrib.messages.context_processors.messages",
-                    ]
-                },
-            }
-        ],
-        SECRET_KEY="test",
-        ALLOWED_HOSTS=["testserver"],
-        USE_TZ=True,
-    )
-    django.setup()
-
 from django.test import RequestFactory
 from django.http import HttpResponse, Http404
 from django.contrib.messages.storage.fallback import FallbackStorage
@@ -52,26 +14,13 @@ from inventory.views.items import ItemEditView
 from inventory.views.indents import IndentCreateView
 
 
-def setup_module(module):
-    with connection.schema_editor() as editor:
-        editor.create_model(Item)
-        editor.create_model(Indent)
-        editor.create_model(IndentItem)
-
-
-def teardown_module(module):
-    with connection.schema_editor() as editor:
-        editor.delete_model(IndentItem)
-        editor.delete_model(Indent)
-        editor.delete_model(Item)
-
-
 def _add_messages(request):
     request.session = {}
     storage = FallbackStorage(request)
     setattr(request, "_messages", storage)
 
 
+@pytest.mark.django_db
 def test_item_edit_handles_save_error():
     item = Item.objects.create(name="Sugar")
     rf = RequestFactory()
@@ -83,6 +32,7 @@ def test_item_edit_handles_save_error():
     assert resp.status_code == 200
 
 
+@pytest.mark.django_db
 def test_item_edit_handles_non_numeric_values():
     item = Item.objects.create(name="Flour")
     with connection.cursor() as cur:
@@ -98,6 +48,7 @@ def test_item_edit_handles_non_numeric_values():
     assert resp.status_code == 200
 
 
+@pytest.mark.django_db
 def test_item_edit_db_error_returns_404():
     rf = RequestFactory()
     request = rf.get("/items/1/edit/")
@@ -106,6 +57,7 @@ def test_item_edit_db_error_returns_404():
             ItemEditView.as_view()(request, pk=1)
 
 
+@pytest.mark.django_db
 def test_indent_create_atomic_on_error():
     item = Item.objects.create(name="Salt")
     rf = RequestFactory()

@@ -33,7 +33,6 @@ class Item(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "items"
 
 
@@ -49,7 +48,6 @@ class Supplier(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "suppliers"
 
 
@@ -67,7 +65,6 @@ class StockTransaction(models.Model):
     transaction_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        managed = False
         db_table = "stock_transactions"
 
 
@@ -88,7 +85,6 @@ class Recipe(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "recipes"
 
 
@@ -111,7 +107,6 @@ class RecipeComponent(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "recipe_components"
         unique_together = ("parent_recipe", "component_kind", "component_id")
 
@@ -146,7 +141,6 @@ class Indent(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        managed = False
         db_table = "indents"
 
 
@@ -164,7 +158,6 @@ class IndentItem(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = "indent_items"
 
 

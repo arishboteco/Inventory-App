@@ -24,6 +24,7 @@ urlpatterns = [
     path("", root_view, name="root"),
     path("dashboard/", dashboard, name="dashboard"),
     path("healthz", health_check, name="health-check"),
+    path("accounts/", include("django.contrib.auth.urls")),
     path("api/", include("inventory.urls")),   # DRF API
     path("", include("inventory.ui_urls")),    # HTML UI routes
 ]

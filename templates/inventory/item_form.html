@@ -15,7 +15,6 @@
     {% endif %}
     <div>
       {{ form.name.label_tag }}
-      {% url 'item_suggest' as suggest_url %}
         {{ form.name.as_widget(attrs={'class': 'form-control',
                                      'hx-get': suggest_url,
                                      'hx-trigger': 'keyup changed delay:500ms',

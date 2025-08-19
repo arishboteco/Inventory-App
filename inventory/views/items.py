@@ -100,14 +100,19 @@ class ItemCreateView(LoginRequiredMixin, View):
 
     def get(self, request):
         form = ItemForm()
-        return render(request, self.template_name, {"form": form, "is_edit": False})
+        suggest_url = reverse("item_suggest")
+        ctx = {"form": form, "is_edit": False, "suggest_url": suggest_url}
+        return render(request, self.template_name, ctx)
 
     def post(self, request):
         form = ItemForm(request.POST)
+        suggest_url = reverse("item_suggest")
         if form.is_valid():
             form.save()
+            messages.success(request, "Item created")
             return redirect("items_list")
-        return render(request, self.template_name, {"form": form, "is_edit": False})
+        ctx = {"form": form, "is_edit": False, "suggest_url": suggest_url}
+        return render(request, self.template_name, ctx)
 
 
 class ItemEditView(LoginRequiredMixin, View):

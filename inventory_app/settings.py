@@ -83,12 +83,16 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 DATABASES = {
     "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 }
-# Force SSL and keep-alive
-if DATABASES["default"]["ENGINE"].endswith("postgresql"):
-    DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
-# Modest keep-alive
-DATABASES["default"]["CONN_MAX_AGE"] = 60
+
+# Only apply options if a database engine is specified
+if DATABASES["default"].get("ENGINE"):
+    # For PostgreSQL, make SSL mode conditional
+    if DATABASES["default"]["ENGINE"].endswith("postgresql"):
+        if env.bool("DATABASE_SSL_REQUIRE", default=True):
+            DATABASES["default"].setdefault("OPTIONS", {})
+            DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    # Modest keep-alive
+    DATABASES["default"]["CONN_MAX_AGE"] = 60
 
 
 # Password validation

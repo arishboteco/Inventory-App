@@ -1,6 +1,6 @@
 """Constants used across the inventory application."""
 
-from legacy_streamlit.app.core.constants import PLACEHOLDER_SELECT_COMPONENT
+PLACEHOLDER_SELECT_COMPONENT = "-- Select Component --"
 
 __all__ = ["PLACEHOLDER_SELECT_COMPONENT"]
 

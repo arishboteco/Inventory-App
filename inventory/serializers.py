@@ -12,6 +12,7 @@ from .models import (
     PurchaseOrderItem,
     GoodsReceivedNote,
     GRNItem,
+    SaleTransaction,
 )
 
 
@@ -66,6 +67,12 @@ class GoodsReceivedNoteSerializer(serializers.ModelSerializer):
 class GRNItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = GRNItem
+        fields = "__all__"
+
+
+class SaleTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SaleTransaction
         fields = "__all__"
 
 

@@ -17,11 +17,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from core.views import root_view, health_check
+from core.views import root_view, health_check, dashboard
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", root_view, name="root"),
+    path("dashboard/", dashboard, name="dashboard"),
     path("healthz", health_check, name="health-check"),
     path("api/", include("inventory.urls")),   # DRF API
     path("", include("inventory.ui_urls")),    # HTML UI routes

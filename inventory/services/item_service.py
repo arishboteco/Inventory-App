@@ -5,6 +5,7 @@ makes them available for the Django codebase. Any Streamlit-specific caching is
 replaced with :func:`functools.lru_cache` so that callers can clear caches after
 mutating operations.
 """
+
 from __future__ import annotations
 
 import logging
@@ -62,7 +63,9 @@ get_all_items_with_stock.clear = get_all_items_with_stock.cache_clear  # type: i
 
 
 @lru_cache(maxsize=None)
-def suggest_category_and_units(item_name: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+def suggest_category_and_units(
+    item_name: str,
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """Guess base unit, purchase unit and category for ``item_name``."""
 
     if not item_name:
@@ -116,58 +119,11 @@ get_distinct_departments_from_items.clear = (
 def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
     """Insert a single item into the database."""
 
-    s_base, s_purchase, s_category = suggest_category_and_units(details.get("name", ""))
-    if s_base and not str(details.get("base_unit", "")).strip():
-        details["base_unit"] = s_base
-    if s_purchase and not str(details.get("purchase_unit", "")).strip():
-        details["purchase_unit"] = s_purchase
-    if s_category and not details.get("category"):
-        details["category"] = s_category
-
-    if (
-        not details.get("base_unit")
-        or not str(details.get("base_unit")).strip()
-        or not details.get("purchase_unit")
-        or not str(details.get("purchase_unit")).strip()
-    ):
-        inferred_base, inferred_purchase = infer_units(
-            details.get("name", ""), details.get("category")
-        )
-        if not str(details.get("base_unit", "")).strip():
-            details["base_unit"] = inferred_base
-        if not str(details.get("purchase_unit", "")).strip() and inferred_purchase:
-            details["purchase_unit"] = inferred_purchase
-
-    required = ["name", "base_unit"]
-    if not all(details.get(k) and str(details.get(k)).strip() for k in required):
-        missing = [k for k in required if not details.get(k) or not str(details.get(k)).strip()]
+    _apply_unit_and_category_suggestions(details)
+    valid, missing = _validate_required(details, ["name", "base_unit"])
+    if not valid:
         return False, f"Missing or empty required fields: {', '.join(missing)}"
-
-    notes_val = details.get("notes")
-    cleaned_notes = notes_val.strip() if isinstance(notes_val, str) else None
-    if cleaned_notes == "":
-        cleaned_notes = None
-
-    permitted_val = details.get("permitted_departments")
-    cleaned_permitted = (
-        permitted_val.strip() if isinstance(permitted_val, str) and permitted_val.strip() else None
-    )
-
-    purchase_unit_val = details.get("purchase_unit")
-    if isinstance(purchase_unit_val, str):
-        purchase_unit_val = purchase_unit_val.strip() or None
-
-    params = dict(
-        name=details["name"].strip(),
-        base_unit=details["base_unit"].strip(),
-        purchase_unit=purchase_unit_val,
-        category=(details.get("category", "").strip() or "Uncategorized"),
-        sub_category=(details.get("sub_category", "").strip() or "General"),
-        permitted_departments=cleaned_permitted,
-        reorder_point=details.get("reorder_point", 0.0),
-        notes=cleaned_notes,
-        is_active=details.get("is_active", True),
-    )
+    params = _clean_create_params(details)
     try:
         item = Item.objects.create(**params)
         get_all_items_with_stock.clear()
@@ -185,6 +141,68 @@ def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
             traceback.format_exc(),
         )
         return False, "A database error occurred while adding the item."
+
+
+def _apply_unit_and_category_suggestions(details: Dict[str, Any]) -> None:
+    s_base, s_purchase, s_category = suggest_category_and_units(details.get("name", ""))
+    if s_base and not str(details.get("base_unit", "")).strip():
+        details["base_unit"] = s_base
+    if s_purchase and not str(details.get("purchase_unit", "")).strip():
+        details["purchase_unit"] = s_purchase
+    if s_category and not details.get("category"):
+        details["category"] = s_category
+    if (
+        not details.get("base_unit")
+        or not str(details.get("base_unit")).strip()
+        or not details.get("purchase_unit")
+        or not str(details.get("purchase_unit")).strip()
+    ):
+        inferred_base, inferred_purchase = infer_units(
+            details.get("name", ""), details.get("category")
+        )
+        if not str(details.get("base_unit", "")).strip():
+            details["base_unit"] = inferred_base
+        if not str(details.get("purchase_unit", "")).strip() and inferred_purchase:
+            details["purchase_unit"] = inferred_purchase
+
+
+def _validate_required(
+    details: Dict[str, Any], required: List[str]
+) -> Tuple[bool, List[str]]:
+    missing = [
+        k for k in required if not details.get(k) or not str(details.get(k)).strip()
+    ]
+    return (not missing, missing)
+
+
+def _clean_create_params(details: Dict[str, Any]) -> Dict[str, Any]:
+    notes_val = details.get("notes")
+    cleaned_notes = notes_val.strip() if isinstance(notes_val, str) else None
+    if cleaned_notes == "":
+        cleaned_notes = None
+
+    permitted_val = details.get("permitted_departments")
+    cleaned_permitted = (
+        permitted_val.strip()
+        if isinstance(permitted_val, str) and permitted_val.strip()
+        else None
+    )
+
+    purchase_unit_val = details.get("purchase_unit")
+    if isinstance(purchase_unit_val, str):
+        purchase_unit_val = purchase_unit_val.strip() or None
+
+    return dict(
+        name=details["name"].strip(),
+        base_unit=details["base_unit"].strip(),
+        purchase_unit=purchase_unit_val,
+        category=(details.get("category", "").strip() or "Uncategorized"),
+        sub_category=(details.get("sub_category", "").strip() or "General"),
+        permitted_departments=cleaned_permitted,
+        reorder_point=details.get("reorder_point", 0.0),
+        notes=cleaned_notes,
+        is_active=details.get("is_active", True),
+    )
 
 
 @transaction.atomic
@@ -223,7 +241,11 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
 
         required = ["name", "base_unit"]
         if not all(details.get(k) and str(details.get(k)).strip() for k in required):
-            missing = [k for k in required if not details.get(k) or not str(details.get(k)).strip()]
+            missing = [
+                k
+                for k in required
+                if not details.get(k) or not str(details.get(k)).strip()
+            ]
             errors.append(f"Item {idx} missing required fields: {', '.join(missing)}")
             continue
 
@@ -234,7 +256,9 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
 
         permitted_val = details.get("permitted_departments")
         cleaned_permitted = (
-            permitted_val.strip() if isinstance(permitted_val, str) and permitted_val.strip() else None
+            permitted_val.strip()
+            if isinstance(permitted_val, str) and permitted_val.strip()
+            else None
         )
 
         purchase_unit_val = details.get("purchase_unit")
@@ -344,7 +368,10 @@ def update_item(item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
         get_distinct_departments_from_items.clear()
         return True, f"Item ID {item_id} updated successfully."
     except IntegrityError:
-        return False, f"Update failed: Potential duplicate name '{updates.get('name')}'."
+        return (
+            False,
+            f"Update failed: Potential duplicate name '{updates.get('name')}'.",
+        )
     except Exception as exc:  # pragma: no cover - defensive logging
         logger.error(
             "ERROR [item_service.update_item]: Database error updating item %s: %s\n%s",

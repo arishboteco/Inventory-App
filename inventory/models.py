@@ -32,6 +32,9 @@ class Item(models.Model):
     is_active = models.BooleanField(default=False, null=False)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return self.name or f"Item {self.pk}"
+
     class Meta:
         db_table = "items"
 
@@ -46,6 +49,9 @@ class Supplier(models.Model):
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return self.name or f"Supplier {self.pk}"
 
     class Meta:
         db_table = "suppliers"
@@ -63,6 +69,9 @@ class StockTransaction(models.Model):
     related_po_id = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     transaction_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"Transaction {self.pk} for {self.item}"
 
     class Meta:
         db_table = "stock_transactions"
@@ -83,6 +92,9 @@ class Recipe(models.Model):
     effective_to = models.DateField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return self.name or f"Recipe {self.pk}"
 
     class Meta:
         db_table = "recipes"
@@ -106,6 +118,9 @@ class RecipeComponent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"{self.parent_recipe} component #{self.pk}"
+
     class Meta:
         db_table = "recipe_components"
         unique_together = ("parent_recipe", "component_kind", "component_id")
@@ -120,6 +135,9 @@ class SaleTransaction(models.Model):
     user_id = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     sale_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"Sale {self.pk} of {self.recipe}"
 
     class Meta:
         managed = False
@@ -140,6 +158,9 @@ class Indent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return self.mrn or f"Indent {self.pk}"
+
     class Meta:
         db_table = "indents"
 
@@ -156,6 +177,9 @@ class IndentItem(models.Model):
     issued_qty = models.FloatField(blank=True, null=True)
     item_status = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"{self.indent} - {self.item}"
 
     class Meta:
         db_table = "indent_items"
@@ -181,6 +205,9 @@ class PurchaseOrder(models.Model):
     )
     notes = models.TextField(blank=True, null=True)
 
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"PO {self.pk} to {self.supplier}"
+
     class Meta:
         db_table = "purchase_orders"
 
@@ -193,7 +220,10 @@ class PurchaseOrderItem(models.Model):
     item = models.ForeignKey(Item, models.DO_NOTHING, db_column="item_id")
     quantity_ordered = models.FloatField()
     quantity_received = models.FloatField(default=0)
-    unit_price = models.FloatField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"{self.purchase_order} - {self.item}"
 
     class Meta:
         db_table = "purchase_order_items"
@@ -210,6 +240,9 @@ class GoodsReceivedNote(models.Model):
     received_date = models.DateField()
     notes = models.TextField(blank=True, null=True)
 
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"GRN {self.pk} for PO {self.purchase_order_id}"
+
     class Meta:
         db_table = "goods_received_notes"
 
@@ -222,8 +255,11 @@ class GRNItem(models.Model):
     )
     quantity_ordered_on_po = models.FloatField()
     quantity_received = models.FloatField()
-    unit_price_at_receipt = models.FloatField()
+    unit_price_at_receipt = models.DecimalField(max_digits=10, decimal_places=2)
     item_notes = models.TextField(blank=True, null=True)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"{self.grn} item {self.po_item}"
 
     class Meta:
         db_table = "grn_items"

@@ -17,6 +17,8 @@ from inventory.services.recipe_service import (
 )
 
 pytestmark = pytest.mark.django_db
+
+
 @pytest.fixture(scope="module", autouse=True)
 def create_tables(django_db_blocker):
     with django_db_blocker.unblock():
@@ -191,4 +193,3 @@ def test_recipe_metadata_fields():
     assert recipe.type == "FOOD"
     assert recipe.default_yield_unit == "plate"
     assert recipe.tags == "vegan,healthy"
-

@@ -87,12 +87,12 @@ DATABASES = {
 # Only apply options if a database engine is specified
 if DATABASES["default"].get("ENGINE"):
     # For PostgreSQL, make SSL mode conditional
-if DATABASES["default"]["ENGINE"].endswith("postgresql"):
-            if env.bool("DATABASE_SSL_REQUIRE", default=True):
-    DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
-# Modest keep-alive
-DATABASES["default"]["CONN_MAX_AGE"] = 60
+    if DATABASES["default"]["ENGINE"].endswith("postgresql"):
+        if env.bool("DATABASE_SSL_REQUIRE", default=True):
+            DATABASES["default"].setdefault("OPTIONS", {})
+            DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
+    # Modest keep-alive
+    DATABASES["default"]["CONN_MAX_AGE"] = 60
 
 
 # Password validation

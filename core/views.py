@@ -5,8 +5,10 @@ from django.shortcuts import render
 
 from inventory.models import Item
 
+
 def root_view(request):
     return render(request, "core/home.html")
+
 
 def health_check(request):
     return HttpResponse("ok")

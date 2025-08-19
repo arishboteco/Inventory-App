@@ -1,2 +1,1 @@
 """UI helper compatibility package."""
-

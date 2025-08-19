@@ -1,6 +1,7 @@
 import logging
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
+from decimal import Decimal
 
 from django.db import IntegrityError, transaction
 from django.db.models import Max
@@ -40,7 +41,7 @@ def create_po(
                     purchase_order=po,
                     item=item,
                     quantity_ordered=float(item_d["quantity_ordered"]),
-                    unit_price=float(item_d["unit_price"]),
+                    unit_price=Decimal(str(item_d["unit_price"])),
                 )
             return True, "Purchase Order created", po.po_id
     except (Supplier.DoesNotExist, Item.DoesNotExist) as exc:

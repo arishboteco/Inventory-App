@@ -2,6 +2,7 @@ from inventory.services.recipe_service import build_components_from_editor
 from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
 from pydantic import BaseModel
 
+
 def test_build_components_autofill_and_validation():
     rows = [
         {
@@ -42,6 +43,7 @@ def test_build_components_autofill_and_validation():
     assert not errs
     assert comps[0]["unit"] == "kg" and comps[0]["component_id"] == 1
     assert comps[1]["unit"] == "kg" and comps[1]["component_id"] == 2
+
 
 def test_build_components_detects_unit_mismatch():
     rows = [

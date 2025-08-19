@@ -31,6 +31,13 @@
       </div>
     </nav>
     <div class="max-w-7xl mx-auto p-4">
+      {% if messages %}
+        <ul class="mb-4">
+          {% for message in messages %}
+            <li class="text-{{ message.tags }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
       {% block content %}{% endblock %}
     </div>
   </body>

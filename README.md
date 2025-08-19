@@ -39,6 +39,15 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+Create a user account and log in to access the dashboard:
+
+```bash
+python manage.py createsuperuser
+```
+
+Visit `http://localhost:8000/accounts/login/` to sign in. After a successful
+login you will be redirected to the dashboard at `/dashboard/`.
+
 ## Docker Deployment
 
 The project includes a production-ready deployment using Docker and

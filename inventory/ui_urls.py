@@ -38,6 +38,10 @@ from .views.recipes import (
     RecipeDetailView,
     RecipeComponentRowView,
 )
+from .views.goods_received import (
+    GRNListView,
+    GRNDetailView,
+)
 
 urlpatterns = [
     path("items/", ItemsListView.as_view(), name="items_list"),
@@ -70,6 +74,9 @@ urlpatterns = [
     path("purchase-orders/<int:pk>/edit/", purchase_order_edit, name="purchase_order_edit"),
     path("purchase-orders/<int:pk>/", purchase_order_detail, name="purchase_order_detail"),
     path("purchase-orders/<int:pk>/receive/", purchase_order_receive, name="purchase_order_receive"),
+
+    path("grns/", GRNListView.as_view(), name="grn_list"),
+    path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
 
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
     path("recipes/<int:pk>/", RecipeDetailView.as_view(), name="recipe_detail"),

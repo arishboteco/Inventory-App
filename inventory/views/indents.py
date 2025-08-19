@@ -2,6 +2,11 @@ import logging
 
 
 from django.contrib import messages
+import logging
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db import DatabaseError, transaction
 from django.http import HttpResponse
@@ -23,7 +28,7 @@ INDENT_STATUS_BADGES = {
 }
 
 
-class IndentsListView(TemplateView):
+class IndentsListView(LoginRequiredMixin, TemplateView):
     template_name = "inventory/indents_list.html"
 
     def get_context_data(self, **kwargs):
@@ -33,7 +38,7 @@ class IndentsListView(TemplateView):
         return ctx
 
 
-class IndentsTableView(TemplateView):
+class IndentsTableView(LoginRequiredMixin, TemplateView):
     template_name = "inventory/_indents_table.html"
 
     def get_context_data(self, **kwargs):
@@ -50,7 +55,7 @@ class IndentsTableView(TemplateView):
         return ctx
 
 
-class IndentCreateView(View):
+class IndentCreateView(LoginRequiredMixin, View):
     template_name = "inventory/indent_form.html"
 
     def get(self, request):
@@ -73,6 +78,7 @@ class IndentCreateView(View):
         return render(request, self.template_name, {"form": form, "formset": formset})
 
 
+@login_required
 def indent_detail(request, pk: int):
     indent = get_object_or_404(Indent, pk=pk)
     items = indent.indentitem_set.select_related("item").all()
@@ -83,6 +89,7 @@ def indent_detail(request, pk: int):
     )
 
 
+@login_required
 def indent_update_status(request, pk: int, status: str):
     indent = get_object_or_404(Indent, pk=pk)
     indent.status = status.upper()
@@ -90,6 +97,7 @@ def indent_update_status(request, pk: int, status: str):
     return redirect("indent_detail", pk=pk)
 
 
+@login_required
 def indent_pdf(request, pk: int):
     indent = get_object_or_404(Indent, pk=pk)
     items = indent.indentitem_set.select_related("item").all()

@@ -10,6 +10,7 @@ from .api import (
     PurchaseOrderItemViewSet,
     GoodsReceivedNoteViewSet,
     GRNItemViewSet,
+    SaleTransactionViewSet,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     'PurchaseOrderItemViewSet',
     'GoodsReceivedNoteViewSet',
     'GRNItemViewSet',
+    'SaleTransactionViewSet',
 ]

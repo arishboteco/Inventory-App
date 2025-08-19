@@ -1,0 +1,21 @@
+{% extends "_base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-4">
+  <h1 class="text-2xl font-semibold mb-4">GRN {{ grn.pk }}</h1>
+  <p class="mb-2"><strong>PO:</strong> {{ grn.purchase_order_id }}</p>
+  <p class="mb-2"><strong>Supplier:</strong> {{ grn.supplier.name }}</p>
+  <p class="mb-4"><strong>Date:</strong> {{ grn.received_date }}</p>
+  <table class="table">
+    <thead><tr><th>Item</th><th>Ordered</th><th>Received</th></tr></thead>
+    <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.po_item.item.name }}</td>
+        <td>{{ item.po_item.quantity_ordered }}</td>
+        <td>{{ item.quantity_received }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

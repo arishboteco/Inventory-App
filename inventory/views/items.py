@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db import DatabaseError
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -126,12 +127,14 @@ class ItemEditView(LoginRequiredMixin, View):
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
-            return render(
-                request,
-                self.template_name,
-                {"form": None, "is_edit": True, "item": item},
-            )
-        ctx = {"form": form, "is_edit": True, "item": item}
+            return redirect("items_list")
+        suggest_url = reverse("item_suggest")
+        ctx = {
+            "form": form,
+            "is_edit": True,
+            "item": item,
+            "suggest_url": suggest_url,
+        }
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk: int):
@@ -141,18 +144,21 @@ class ItemEditView(LoginRequiredMixin, View):
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
-            return render(
-                request,
-                self.template_name,
-                {"form": None, "is_edit": True, "item": item},
-            )
+            return redirect("items_list")
         if form.is_valid():
             try:
                 form.save()
+                messages.success(request, "Item updated")
                 return redirect("items_list")
             except (ValidationError, DatabaseError):
                 messages.error(request, "Unable to save item")
-        ctx = {"form": form, "is_edit": True, "item": item}
+        suggest_url = reverse("item_suggest")
+        ctx = {
+            "form": form,
+            "is_edit": True,
+            "item": item,
+            "suggest_url": suggest_url,
+        }
         return render(request, self.template_name, ctx)
 
 

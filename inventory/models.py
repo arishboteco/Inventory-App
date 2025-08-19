@@ -140,7 +140,6 @@ class SaleTransaction(models.Model):
         return f"Sale {self.pk} of {self.recipe}"
 
     class Meta:
-        managed = False
         db_table = "sales_transactions"
 
 

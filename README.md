@@ -39,6 +39,39 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+## Docker Deployment
+
+The project includes a production-ready deployment using Docker and
+Docker Compose. It sets up three services:
+
+- **web** – the Django application served by Gunicorn
+- **nginx** – reverse proxy serving static files
+- **db** – PostgreSQL database
+
+### Setup
+
+1. Ensure Docker and Docker Compose are installed.
+2. Copy `.env.example` to `.env` and provide values, including a
+   `DATABASE_URL` that points to the `db` service and credentials for the
+   Postgres container:
+
+   ```env
+   DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+   POSTGRES_DB=postgres
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   ```
+
+3. Build and start the stack:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   The web container automatically applies database migrations and
+   collects static files before launching Gunicorn. Visit
+   `http://localhost/` to access the application.
+
 ## Purchase Order Tables
 
 The project defines four tables used for purchasing and goods receiving workflows:

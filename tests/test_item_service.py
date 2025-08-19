@@ -1,8 +1,9 @@
 import pytest
-from django.db import connection
 
 from inventory.models import Item, StockTransaction
 from inventory.services import item_service
+
+pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
@@ -12,21 +13,6 @@ def clear_tables():
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
     item_service.suggest_category_and_units.clear()
-
-
-def setup_module(module):
-    with connection.schema_editor() as editor:
-        editor.create_model(Item)
-        editor.create_model(StockTransaction)
-    item_service.get_all_items_with_stock.clear()
-    item_service.get_distinct_departments_from_items.clear()
-    item_service.suggest_category_and_units.clear()
-
-
-def teardown_module(module):
-    with connection.schema_editor() as editor:
-        editor.delete_model(StockTransaction)
-        editor.delete_model(Item)
 
 
 def test_add_new_item_inserts_row():
@@ -174,4 +160,53 @@ def test_remove_items_bulk_requires_ids():
     removed, errors = item_service.remove_items_bulk([])
     assert removed == 0
     assert errors
+
+
+@pytest.mark.django_db
+def test_update_item_changes_fields():
+    item = Item.objects.create(
+        name="Widget",
+        base_unit="pcs",
+        purchase_unit="box",
+        category="cat",
+        sub_category="sub",
+        permitted_departments="dept",
+        reorder_point=1,
+        notes="n",
+        is_active=True,
+    )
+    success, _ = item_service.update_item(item.pk, {"name": "Widget2", "reorder_point": 5})
+    assert success
+    item.refresh_from_db()
+    assert item.name == "Widget2"
+    assert item.reorder_point == 5
+
+
+@pytest.mark.django_db
+def test_update_item_invalid_id():
+    success, _ = item_service.update_item(999, {"name": "Nope"})
+    assert not success
+
+
+@pytest.mark.django_db
+def test_deactivate_and_reactivate_item():
+    item = Item.objects.create(
+        name="Widget",
+        base_unit="pcs",
+        purchase_unit="box",
+        category="cat",
+        sub_category="sub",
+        permitted_departments="dept",
+        reorder_point=1,
+        notes="n",
+        is_active=True,
+    )
+    ok, _ = item_service.deactivate_item(item.pk)
+    assert ok
+    item.refresh_from_db()
+    assert item.is_active is False
+    ok, _ = item_service.reactivate_item(item.pk)
+    assert ok
+    item.refresh_from_db()
+    assert item.is_active is True
 

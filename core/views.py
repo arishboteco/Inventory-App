@@ -1,12 +1,13 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import F
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
-from inventory.models import Item
+from inventory.services import dashboard_service
 
 
 def root_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
     return render(request, "core/home.html")
 
 
@@ -16,8 +17,5 @@ def health_check(request):
 
 @login_required
 def dashboard(request):
-    low_stock = Item.objects.filter(
-        reorder_point__isnull=False,
-        current_stock__lt=F("reorder_point"),
-    ).order_by("name")
+    low_stock = dashboard_service.get_low_stock_items()
     return render(request, "core/dashboard.html", {"low_stock": low_stock})

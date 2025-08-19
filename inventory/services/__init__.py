@@ -1,6 +1,7 @@
 """Service layer for the inventory app."""
 
 from . import (
+    dashboard_service,
     item_service,
     supplier_service,
     stock_service,
@@ -12,6 +13,7 @@ from . import (
 )
 
 __all__ = [
+    "dashboard_service",
     "item_service",
     "supplier_service",
     "stock_service",

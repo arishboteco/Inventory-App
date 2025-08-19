@@ -357,4 +357,3 @@ def record_sale(
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("DB error recording sale: %s", exc)
         return False, "A database error occurred during sale recording."
-

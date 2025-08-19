@@ -1,5 +1,6 @@
 import logging
 from datetime import date
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 from django.db import transaction
@@ -71,7 +72,7 @@ def _process_items(
                 "quantity_ordered_on_po", po_item.quantity_ordered
             ),
             quantity_received=qty,
-            unit_price_at_receipt=float(item_d["unit_price_at_receipt"]),
+            unit_price_at_receipt=Decimal(str(item_d["unit_price_at_receipt"])),
             item_notes=item_d.get("item_notes"),
         )
         po_item.quantity_received += qty

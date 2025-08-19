@@ -14,4 +14,3 @@ from inventory_app.logging import configure_logging
 
 # Configure logging for tests once before other modules import loggers
 configure_logging()
-

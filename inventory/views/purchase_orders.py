@@ -114,7 +114,6 @@ def purchase_order_receive(request, pk: int):
         if form.is_valid():
             any_received = False
             items_data: list[dict[str, Any]] = []
-            fully_received = True
             for item in items:
                 qty_field = f"item_{item.pk}"
                 try:
@@ -131,7 +130,6 @@ def purchase_order_receive(request, pk: int):
                             None,
                             f"Received quantity for {item.item.name} exceeds remaining",
                         )
-                        fully_received = False
                         continue
                     items_data.append(
                         {
@@ -142,8 +140,6 @@ def purchase_order_receive(request, pk: int):
                             "unit_price_at_receipt": item.unit_price,
                         }
                     )
-                if item.quantity_received < item.quantity_ordered:
-                    fully_received = False
             if not any_received:
                 form.add_error(None, "No quantities received")
             elif not form.errors:

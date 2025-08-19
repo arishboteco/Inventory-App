@@ -1,5 +1,4 @@
 import pytest
-from django.db import connection
 
 from inventory.models import Supplier
 from inventory.services import supplier_service
@@ -14,12 +13,33 @@ def test_add_supplier_inserts_row():
 
 
 @pytest.mark.django_db
+def test_add_supplier_duplicate_name_fails():
+    details = {"name": "Dup", "is_active": True}
+    supplier_service.add_supplier(details)
+    success, _ = supplier_service.add_supplier(details)
+    assert not success
+
+
+@pytest.mark.django_db
+def test_add_supplier_requires_name():
+    details = {"name": "  ", "contact_person": "x"}
+    success, _ = supplier_service.add_supplier(details)
+    assert not success
+
+
+@pytest.mark.django_db
 def test_update_supplier_changes_fields():
     supplier = Supplier.objects.create(name="Vendor B", is_active=True)
     success, _ = supplier_service.update_supplier(supplier.pk, {"phone": "999"})
     assert success
     supplier.refresh_from_db()
     assert supplier.phone == "999"
+
+
+@pytest.mark.django_db
+def test_update_supplier_invalid_id():
+    success, _ = supplier_service.update_supplier(999, {"phone": "000"})
+    assert not success
 
 
 @pytest.mark.django_db

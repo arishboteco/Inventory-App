@@ -16,23 +16,16 @@ from inventory.services.recipe_service import (
     record_sale,
 )
 
-
-def setup_module(module):
-    with connection.schema_editor() as editor:
-        editor.create_model(Item)
-        editor.create_model(StockTransaction)
-        editor.create_model(Recipe)
-        editor.create_model(RecipeComponent)
-        editor.create_model(SaleTransaction)
-
-
-def teardown_module(module):
-    with connection.schema_editor() as editor:
-        editor.delete_model(SaleTransaction)
-        editor.delete_model(RecipeComponent)
-        editor.delete_model(Recipe)
-        editor.delete_model(StockTransaction)
-        editor.delete_model(Item)
+pytestmark = pytest.mark.django_db
+@pytest.fixture(scope="module", autouse=True)
+def create_tables(django_db_blocker):
+    with django_db_blocker.unblock():
+        with connection.schema_editor() as editor:
+            editor.create_model(SaleTransaction)
+    yield
+    with django_db_blocker.unblock():
+        with connection.schema_editor() as editor:
+            editor.delete_model(SaleTransaction)
 
 
 def _create_item(name="Flour", base_unit="kg", purchase_unit="bag", stock=20):

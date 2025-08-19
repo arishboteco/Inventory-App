@@ -297,6 +297,88 @@ def remove_items_bulk(item_ids: List[int]) -> Tuple[int, List[str]]:
         return 0, ["A database error occurred while removing items."]
 
 
+@transaction.atomic
+def update_item(item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
+    """Update an existing item."""
+
+    allowed_fields = [
+        "name",
+        "base_unit",
+        "purchase_unit",
+        "category",
+        "sub_category",
+        "permitted_departments",
+        "reorder_point",
+        "notes",
+    ]
+    if not updates or not any(k in allowed_fields for k in updates):
+        return False, "No valid fields provided for update."
+    try:
+        item = Item.objects.get(pk=item_id)
+    except Item.DoesNotExist:
+        return False, f"Update failed: Item ID {item_id} not found."
+
+    if "name" in updates and not str(updates["name"]).strip():
+        return False, "Item Name cannot be empty."
+    if "base_unit" in updates and not str(updates["base_unit"]).strip():
+        return False, "Base unit cannot be empty."
+
+    for field in allowed_fields:
+        if field in updates:
+            val = updates[field]
+            if isinstance(val, str):
+                val = val.strip()
+                if field in ["category", "sub_category"] and not val:
+                    val = "Uncategorized" if field == "category" else "General"
+                elif field in ["permitted_departments", "notes"] and not val:
+                    val = None
+            if field == "reorder_point" and val is not None:
+                try:
+                    val = float(val)
+                except (TypeError, ValueError):
+                    return False, f"Invalid numeric value for reorder_point: {val}"
+            setattr(item, field, val)
+    try:
+        item.save()
+        get_all_items_with_stock.clear()
+        get_distinct_departments_from_items.clear()
+        return True, f"Item ID {item_id} updated successfully."
+    except IntegrityError:
+        return False, f"Update failed: Potential duplicate name '{updates.get('name')}'."
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error(
+            "ERROR [item_service.update_item]: Database error updating item %s: %s\n%s",
+            item_id,
+            exc,
+            traceback.format_exc(),
+        )
+        return False, "A database error occurred while updating the item."
+
+
+@transaction.atomic
+def deactivate_item(item_id: int) -> Tuple[bool, str]:
+    """Mark an item as inactive."""
+
+    updated = Item.objects.filter(pk=item_id).update(is_active=False)
+    if updated:
+        get_all_items_with_stock.clear()
+        get_distinct_departments_from_items.clear()
+        return True, "Item deactivated successfully."
+    return False, "Item not found or already inactive."
+
+
+@transaction.atomic
+def reactivate_item(item_id: int) -> Tuple[bool, str]:
+    """Mark an item as active."""
+
+    updated = Item.objects.filter(pk=item_id).update(is_active=True)
+    if updated:
+        get_all_items_with_stock.clear()
+        get_distinct_departments_from_items.clear()
+        return True, "Item reactivated successfully."
+    return False, "Item not found or already active."
+
+
 # ---------------------------------------------------------------------------
 # Non-cached detail lookup
 # ---------------------------------------------------------------------------

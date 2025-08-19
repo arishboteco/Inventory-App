@@ -1,15 +1,33 @@
 import pytest
 
-from inventory.models import Item, StockTransaction
+from inventory.models import (
+    Item,
+    StockTransaction,
+    RecipeComponent,
+    Recipe,
+    IndentItem,
+    PurchaseOrderItem,
+)
+from django.db.utils import OperationalError
 from inventory.services import item_service
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
-def clear_tables():
-    StockTransaction.objects.all().delete()
-    Item.objects.all().delete()
+def clear_tables(db):
+    for model in (
+        RecipeComponent,
+        Recipe,
+        IndentItem,
+        PurchaseOrderItem,
+        StockTransaction,
+        Item,
+    ):
+        try:
+            model.objects.all().delete()
+        except OperationalError:
+            pass
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
     item_service.suggest_category_and_units.clear()
@@ -209,4 +227,3 @@ def test_deactivate_and_reactivate_item():
     assert ok
     item.refresh_from_db()
     assert item.is_active is True
-

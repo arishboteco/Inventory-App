@@ -1,8 +1,4 @@
-import django
-from django.conf import settings
-from pathlib import Path
 import pytest
-
 from django.test import RequestFactory
 from django.http import HttpResponse, Http404
 from django.contrib.messages.storage.fallback import FallbackStorage
@@ -14,17 +10,22 @@ from inventory.views.items import ItemEditView
 from inventory.views.indents import IndentCreateView
 
 
+class SimpleUser:
+    is_authenticated = True
+
+
 def _add_messages(request):
     request.session = {}
     storage = FallbackStorage(request)
     setattr(request, "_messages", storage)
+    request.user = SimpleUser()
 
 
 @pytest.mark.django_db
 def test_item_edit_handles_save_error():
     item = Item.objects.create(name="Sugar")
     rf = RequestFactory()
-    request = rf.post("/items/%d/edit/" % item.pk, {"name": "Sugar"})
+    request = rf.post(f"/items/{item.pk}/edit/", {"name": "Sugar"})
     _add_messages(request)
     with patch("inventory.forms.ItemForm.save", side_effect=DatabaseError):
         with patch("inventory.views.items.render", return_value=HttpResponse()):
@@ -52,6 +53,7 @@ def test_item_edit_handles_non_numeric_values():
 def test_item_edit_db_error_returns_404():
     rf = RequestFactory()
     request = rf.get("/items/1/edit/")
+    _add_messages(request)
     with patch("inventory.views.items.get_object_or_404", side_effect=DatabaseError):
         with pytest.raises(Http404):
             ItemEditView.as_view()(request, pk=1)

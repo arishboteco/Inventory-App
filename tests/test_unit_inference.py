@@ -1,15 +1,34 @@
 import pytest
 from django.db import connection
 
-from inventory.models import Item
+from inventory.models import (
+    Item,
+    StockTransaction,
+    RecipeComponent,
+    Recipe,
+    IndentItem,
+    PurchaseOrderItem,
+)
 from inventory.services import item_service
+from django.db.utils import OperationalError
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture(autouse=True)
-def clear_items():
-    Item.objects.all().delete()
+def clear_items(db):
+    for model in (
+        RecipeComponent,
+        Recipe,
+        IndentItem,
+        PurchaseOrderItem,
+        StockTransaction,
+        Item,
+    ):
+        try:
+            model.objects.all().delete()
+        except OperationalError:
+            pass
     item_service.suggest_category_and_units.clear()
 
 
@@ -34,4 +53,3 @@ def test_suggest_from_similar_item():
 def test_suggest_returns_none_if_no_match():
     base, purchase, category = item_service.suggest_category_and_units("Widget")
     assert base is None and purchase is None and category is None
-

@@ -17,29 +17,6 @@ from ..models import StockTransaction, Item
 from ..services import stock_service
 
 
-def _process_stock_form(request, form_class, prefix, transaction_type, success_url):
-    form = form_class(request.POST, prefix=prefix)
-    if form.is_valid():
-        cd = form.cleaned_data
-        quantity_change = cd["quantity_change"]
-        if transaction_type == "WASTAGE":
-            quantity_change = -abs(quantity_change)
-
-        ok = stock_service.record_stock_transaction(
-            item_id=cd["item"].pk,
-            quantity_change=quantity_change,
-            transaction_type=transaction_type,
-            user_id=cd.get("user_id"),
-            related_po_id=cd.get("related_po_id"),
-            notes=cd.get("notes"),
-        )
-        if ok:
-            messages.success(request, f"{transaction_type.capitalize()} transaction recorded")
-            return redirect(success_url)
-        messages.error(request, "Failed to record transaction")
-    return form
-
-
 @login_required
 def stock_movements(request):
     sections = {
@@ -58,13 +35,54 @@ def stock_movements(request):
 
     if request.method == "POST":
         if "submit_receive" in request.POST:
-            receive_form = _process_stock_form(request, StockReceivingForm, "receive", "RECEIVING", "stock_movements")
+            receive_form = StockReceivingForm(request.POST, prefix="receive")
+            if receive_form.is_valid():
+                cd = receive_form.cleaned_data
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=cd["quantity_change"],
+                    transaction_type="RECEIVING",
+                    user_id=cd.get("user_id"),
+                    related_po_id=cd.get("related_po_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Receiving transaction recorded")
+                    return redirect("stock_movements")
+                messages.error(request, "Failed to record transaction")
             active = "receive"
         elif "submit_adjust" in request.POST:
-            adjust_form = _process_stock_form(request, StockAdjustmentForm, "adjust", "ADJUSTMENT", "stock_movements" + "?section=adjust")
+            adjust_form = StockAdjustmentForm(request.POST, prefix="adjust")
+            if adjust_form.is_valid():
+                cd = adjust_form.cleaned_data
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=cd["quantity_change"],
+                    transaction_type="ADJUSTMENT",
+                    user_id=cd.get("user_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Adjustment transaction recorded")
+                    return redirect("stock_movements" + "?section=adjust")
+                messages.error(request, "Failed to record transaction")
             active = "adjust"
         elif "submit_waste" in request.POST:
-            waste_form = _process_stock_form(request, StockWastageForm, "waste", "WASTAGE", "stock_movements" + "?section=waste")
+            waste_form = StockWastageForm(request.POST, prefix="waste")
+            if waste_form.is_valid():
+                cd = waste_form.cleaned_data
+                qty = -abs(cd["quantity_change"])
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=qty,
+                    transaction_type="WASTAGE",
+                    user_id=cd.get("user_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Wastage transaction recorded")
+                    return redirect("stock_movements" + "?section=waste")
+                messages.error(request, "Failed to record transaction")
             active = "waste"
         elif "bulk_upload" in request.POST:
             bulk_form = StockBulkUploadForm(request.POST, request.FILES)
@@ -74,30 +92,39 @@ def stock_movements(request):
                 file = bulk_form.cleaned_data["file"]
                 data = io.StringIO(file.read().decode("utf-8"))
                 reader = csv.DictReader(data)
-                txs = []
+                txs_to_create = []
                 for idx, row in enumerate(reader):
+                    item_id_str = row.get("item_id", "").strip()
+                    quantity_str = row.get("quantity_change", "").strip()
+
+                    if not item_id_str or not quantity_str:
+                        bulk_errors.append(f"Row {idx+2}: Missing item_id or quantity_change")
+                        continue
+                    
                     try:
-                        txs.append(
-                            {
-                                "item_id": int(row.get("item_id")),
-                                "quantity_change": float(row.get("quantity_change")),
-                                "transaction_type": row.get("transaction_type", ""),
-                                "user_id": row.get("user_id"),
-                                "related_mrn": row.get("related_mrn"),
-                                "related_po_id": (
-                                    int(row.get("related_po_id"))
-                                    if row.get("related_po_id")
-                                    else None
-                                ),
-                                "notes": row.get("notes"),
-                            }
-                        )
-                    except Exception as exc:  # pylint: disable=broad-except
-                        bulk_errors.append(f"Row {idx}: {exc}")
-                if txs and stock_service.record_stock_transactions_bulk(txs):
-                    bulk_success_count = len(txs)
-                else:
-                    bulk_errors.append("Failed to record bulk transactions")
+                        item_id = int(item_id_str)
+                        quantity = float(quantity_str)
+                        
+                        txs_to_create.append({
+                            "item_id": item_id,
+                            "quantity_change": quantity,
+                            "transaction_type": row.get("transaction_type", "ADJUSTMENT").strip(),
+                            "user_id": row.get("user_id", "System").strip(),
+                            "related_mrn": row.get("related_mrn"),
+                            "related_po_id": int(row.get("related_po_id")) if row.get("related_po_id") else None,
+                            "notes": row.get("notes"),
+                        })
+                    except (ValueError, TypeError):
+                        bulk_errors.append(f"Row {idx+2}: Invalid number format for item_id or quantity_change")
+                
+                if not bulk_errors and txs_to_create:
+                    if stock_service.record_stock_transactions_bulk(txs_to_create):
+                        bulk_success_count = len(txs_to_create)
+                    else:
+                        bulk_errors.append("A database error occurred during the bulk transaction.")
+                elif not txs_to_create and not bulk_errors:
+                    bulk_errors.append("No valid rows found in the uploaded file.")
+
             active = request.GET.get("section", "receive")
 
     ctx = {

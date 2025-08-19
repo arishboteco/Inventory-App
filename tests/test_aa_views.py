@@ -2,7 +2,7 @@ import pytest
 from django.test import RequestFactory
 from django.http import HttpResponse, Http404
 from django.contrib.messages.storage.fallback import FallbackStorage
-from django.db import connection, DatabaseError
+from django.db import connection, DatabaseError, transaction
 from unittest.mock import patch
 
 from inventory.models import Item, Indent, IndentItem
@@ -15,6 +15,7 @@ class SimpleUser:
 
 
 def _add_messages(request):
+    # Add session and messages to the request for testing
     request.session = {}
     storage = FallbackStorage(request)
     setattr(request, "_messages", storage)
@@ -23,10 +24,14 @@ def _add_messages(request):
 
 @pytest.mark.django_db
 def test_item_edit_handles_save_error():
+    """
+    Test that ItemEditView handles a DatabaseError during ItemForm.save gracefully.
+    """
     item = Item.objects.create(name="Sugar")
     rf = RequestFactory()
     request = rf.post(f"/items/{item.pk}/edit/", {"name": "Sugar"})
     _add_messages(request)
+    # Simulate DB error on save
     with patch("inventory.forms.ItemForm.save", side_effect=DatabaseError):
         with patch("inventory.views.items.render", return_value=HttpResponse()):
             resp = ItemEditView.as_view()(request, pk=item.pk)
@@ -36,10 +41,15 @@ def test_item_edit_handles_save_error():
 @pytest.mark.django_db
 @pytest.mark.skip(reason="This test uses raw SQL that is incompatible with PostgreSQL's strict type checking.")
 def test_item_edit_handles_non_numeric_values():
+    """
+    Test that ItemEditView does not crash when non-numeric values are present in numeric DB fields.
+    Note: This is skipped for strict DBs like PostgreSQL, but works on SQLite.
+    """
     item = Item.objects.create(name="Flour")
+    # The following will fail on PostgreSQL; works in SQLite.
     with connection.cursor() as cur:
         cur.execute(
-                        "UPDATE items SET reorder_point='abc', current_stock='xyz' WHERE item_id=%s",
+            "UPDATE inventory_item SET reorder_point='abc', current_stock='xyz' WHERE id=%s",
             [item.pk],
         )
     rf = RequestFactory()
@@ -52,9 +62,13 @@ def test_item_edit_handles_non_numeric_values():
 
 @pytest.mark.django_db
 def test_item_edit_db_error_returns_404():
+    """
+    Test that ItemEditView returns 404 if there is a database error fetching the object.
+    """
     rf = RequestFactory()
     request = rf.get("/items/1/edit/")
     _add_messages(request)
+    # Simulate DB error when fetching the object
     with patch("inventory.views.items.get_object_or_404", side_effect=DatabaseError):
         with pytest.raises(Http404):
             ItemEditView.as_view()(request, pk=1)
@@ -62,6 +76,10 @@ def test_item_edit_db_error_returns_404():
 
 @pytest.mark.django_db
 def test_indent_create_atomic_on_error():
+    """
+    Test that IndentCreateView does not create an Indent if IndentItemFormSet.save fails.
+    Ensures atomicity.
+    """
     item = Item.objects.create(name="Salt")
     rf = RequestFactory()
     post_data = {
@@ -79,8 +97,10 @@ def test_indent_create_atomic_on_error():
     }
     request = rf.post("/indents/create/", post_data)
     _add_messages(request)
+    # Simulate DB error on formset save
     with patch("inventory.forms.IndentItemFormSet.save", side_effect=DatabaseError):
         with patch("inventory.views.indents.render", return_value=HttpResponse()):
             resp = IndentCreateView.as_view()(request)
     assert resp.status_code == 200
+    # No indent should be created on DB error
     assert Indent.objects.count() == 0

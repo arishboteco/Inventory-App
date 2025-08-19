@@ -17,6 +17,29 @@ from ..models import StockTransaction, Item
 from ..services import stock_service
 
 
+def _process_stock_form(request, form_class, prefix, transaction_type, success_url):
+    form = form_class(request.POST, prefix=prefix)
+    if form.is_valid():
+        cd = form.cleaned_data
+        quantity_change = cd["quantity_change"]
+        if transaction_type == "WASTAGE":
+            quantity_change = -abs(quantity_change)
+
+        ok = stock_service.record_stock_transaction(
+            item_id=cd["item"].pk,
+            quantity_change=quantity_change,
+            transaction_type=transaction_type,
+            user_id=cd.get("user_id"),
+            related_po_id=cd.get("related_po_id"),
+            notes=cd.get("notes"),
+        )
+        if ok:
+            messages.success(request, f"{transaction_type.capitalize()} transaction recorded")
+            return redirect(success_url)
+        messages.error(request, "Failed to record transaction")
+    return form
+
+
 @login_required
 def stock_movements(request):
     sections = {
@@ -35,54 +58,13 @@ def stock_movements(request):
 
     if request.method == "POST":
         if "submit_receive" in request.POST:
-            receive_form = StockReceivingForm(request.POST, prefix="receive")
-            if receive_form.is_valid():
-                cd = receive_form.cleaned_data
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=cd["quantity_change"],
-                    transaction_type="RECEIVING",
-                    user_id=cd.get("user_id"),
-                    related_po_id=cd.get("related_po_id"),
-                    notes=cd.get("notes"),
-                )
-                if ok:
-                    messages.success(request, "Receiving transaction recorded")
-                    return redirect("stock_movements")
-                messages.error(request, "Failed to record transaction")
+            receive_form = _process_stock_form(request, StockReceivingForm, "receive", "RECEIVING", "stock_movements")
             active = "receive"
         elif "submit_adjust" in request.POST:
-            adjust_form = StockAdjustmentForm(request.POST, prefix="adjust")
-            if adjust_form.is_valid():
-                cd = adjust_form.cleaned_data
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=cd["quantity_change"],
-                    transaction_type="ADJUSTMENT",
-                    user_id=cd.get("user_id"),
-                    notes=cd.get("notes"),
-                )
-                if ok:
-                    messages.success(request, "Adjustment transaction recorded")
-                    return redirect("stock_movements" + "?section=adjust")
-                messages.error(request, "Failed to record transaction")
+            adjust_form = _process_stock_form(request, StockAdjustmentForm, "adjust", "ADJUSTMENT", "stock_movements" + "?section=adjust")
             active = "adjust"
         elif "submit_waste" in request.POST:
-            waste_form = StockWastageForm(request.POST, prefix="waste")
-            if waste_form.is_valid():
-                cd = waste_form.cleaned_data
-                qty = -abs(cd["quantity_change"])
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=qty,
-                    transaction_type="WASTAGE",
-                    user_id=cd.get("user_id"),
-                    notes=cd.get("notes"),
-                )
-                if ok:
-                    messages.success(request, "Wastage transaction recorded")
-                    return redirect("stock_movements" + "?section=waste")
-                messages.error(request, "Failed to record transaction")
+            waste_form = _process_stock_form(request, StockWastageForm, "waste", "WASTAGE", "stock_movements" + "?section=waste")
             active = "waste"
         elif "bulk_upload" in request.POST:
             bulk_form = StockBulkUploadForm(request.POST, request.FILES)

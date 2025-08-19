@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from django.db import transaction
 from inventory.models import Item, StockTransaction
@@ -39,7 +39,7 @@ def record_stock_transaction(
         return False
 
 
-def record_stock_transactions_bulk(transactions: List[Dict[str, any]]) -> bool:
+def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
     try:
         with transaction.atomic():
             for tx in transactions:

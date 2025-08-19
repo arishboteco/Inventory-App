@@ -1,12 +1,35 @@
 import pytest
-from inventory.models import Item, StockTransaction
+
+from inventory.models import (
+    Item,
+    StockTransaction,
+    RecipeComponent,
+    Recipe,
+    IndentItem,
+    PurchaseOrderItem,
+)
 from inventory.services import stock_service
+from django.db.utils import OperationalError
+
+
+@pytest.fixture(autouse=True)
+def clear_tables(db):
+    for model in (
+        RecipeComponent,
+        Recipe,
+        IndentItem,
+        PurchaseOrderItem,
+        StockTransaction,
+        Item,
+    ):
+        try:
+            model.objects.all().delete()
+        except OperationalError:
+            pass
 
 
 @pytest.mark.django_db
 def test_record_stock_transaction_updates_stock_and_logs():
-    StockTransaction.objects.all().delete()
-    Item.objects.all().delete()
     item = Item.objects.create(name="Sample", current_stock=10)
     success = stock_service.record_stock_transaction(
         item_id=item.item_id,
@@ -22,8 +45,6 @@ def test_record_stock_transaction_updates_stock_and_logs():
 
 @pytest.mark.django_db
 def test_record_stock_transactions_bulk():
-    StockTransaction.objects.all().delete()
-    Item.objects.all().delete()
     item1 = Item.objects.create(name="Item1", current_stock=10)
     item2 = Item.objects.create(name="Item2", current_stock=10)
     txs = [
@@ -40,8 +61,6 @@ def test_record_stock_transactions_bulk():
 
 @pytest.mark.django_db
 def test_remove_stock_transactions_bulk():
-    StockTransaction.objects.all().delete()
-    Item.objects.all().delete()
     item = Item.objects.create(name="Item", current_stock=20)
     txs = [
         {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
@@ -57,8 +76,6 @@ def test_remove_stock_transactions_bulk():
 
 @pytest.mark.django_db
 def test_record_stock_transactions_bulk_rollback_on_error():
-    StockTransaction.objects.all().delete()
-    Item.objects.all().delete()
     item = Item.objects.create(name="Item", current_stock=10)
     txs = [
         {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
@@ -72,8 +89,6 @@ def test_record_stock_transactions_bulk_rollback_on_error():
 
 @pytest.mark.django_db
 def test_remove_stock_transactions_bulk_rollback_on_error():
-    StockTransaction.objects.all().delete()
-    Item.objects.all().delete()
     item = Item.objects.create(name="Item", current_stock=10)
     txs = [
         {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
@@ -88,4 +103,3 @@ def test_remove_stock_transactions_bulk_rollback_on_error():
     item.refresh_from_db()
     assert item.current_stock == current_stock
     assert StockTransaction.objects.count() == 2
-

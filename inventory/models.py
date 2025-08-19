@@ -2,19 +2,17 @@ from django.db import models
 
 
 class CoerceFloatField(models.FloatField):
-    """FloatField that silently coerces invalid values to ``None``."""
+    """FloatField that coerces invalid values to 0.0 and defaults to 0.0."""
 
-    def to_python(self, value):  # type: ignore[override]
+    def to_python(self, value):
         if value in self.empty_values:
-            return None
-        if isinstance(value, float):
-            return value
+            return 0.0
         try:
             return float(value)
         except (TypeError, ValueError):
-            return None
+            return 0.0
 
-    def from_db_value(self, value, expression, connection):  # type: ignore[override]
+    def from_db_value(self, value, expression, connection):
         return self.to_python(value)
 
 
@@ -26,8 +24,8 @@ class Item(models.Model):
     category = models.TextField(blank=True, null=True)
     sub_category = models.TextField(blank=True, null=True)
     permitted_departments = models.TextField(blank=True, null=True)
-    reorder_point = CoerceFloatField(blank=True, null=True)
-    current_stock = CoerceFloatField(blank=True, null=True)
+    reorder_point = CoerceFloatField(default=0.0, blank=True, null=True)
+    current_stock = CoerceFloatField(default=0.0, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
     updated_at = models.DateTimeField(auto_now=True)
@@ -83,7 +81,7 @@ class Recipe(models.Model):
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
     type = models.TextField(blank=True, null=True)
-    default_yield_qty = CoerceFloatField(blank=True, null=True)
+    default_yield_qty = CoerceFloatField(default=0.0, blank=True, null=True)
     default_yield_unit = models.TextField(blank=True, null=True)
     plating_notes = models.TextField(blank=True, null=True)
     tags = models.TextField(blank=True, null=True)
@@ -110,9 +108,9 @@ class RecipeComponent(models.Model):
     )
     component_kind = models.TextField(blank=True, null=True)
     component_id = models.IntegerField(blank=True, null=True)
-    quantity = CoerceFloatField(blank=True, null=True)
+    quantity = CoerceFloatField(default=0.0, blank=True, null=True)
     unit = models.TextField(blank=True, null=True)
-    loss_pct = CoerceFloatField(blank=True, null=True)
+    loss_pct = CoerceFloatField(default=0.0, blank=True, null=True)
     sort_order = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -131,7 +129,7 @@ class SaleTransaction(models.Model):
     recipe = models.ForeignKey(
         Recipe, models.DO_NOTHING, db_column="recipe_id", blank=True, null=True
     )
-    quantity = CoerceFloatField(blank=True, null=True)
+    quantity = CoerceFloatField(default=0.0, blank=True, null=True)
     user_id = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     sale_date = models.DateTimeField(auto_now_add=True)

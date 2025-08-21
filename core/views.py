@@ -2,12 +2,15 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import F, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from inventory.models import Item
 
 
 def root_view(request):
+    """Render the home page or redirect authenticated users to the dashboard."""
+    if request.user.is_authenticated:
+        return redirect("dashboard")
     return render(request, "core/home.html")
 
 

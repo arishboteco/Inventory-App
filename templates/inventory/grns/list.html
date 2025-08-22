@@ -4,12 +4,19 @@
   <form method="get" class="mb-4 grid gap-2 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
     <div class="space-y-1">
       <label class="block text-sm">Supplier</label>
-      <select name="supplier" class="border rounded px-2 py-1 w-full">
-        <option value="">All</option>
+      <input
+        type="text"
+        name="supplier"
+        list="grn-suppliers"
+        class="border rounded px-2 py-1 w-full"
+        value="{{ current_supplier }}"
+      />
+      <datalist id="grn-suppliers">
+        <option value="" label="All"></option>
         {% for s in suppliers %}
-        <option value="{{ s.pk }}" {% if current_supplier == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>
+        <option value="{{ s.pk }}" label="{{ s.name }}"></option>
         {% endfor %}
-      </select>
+      </datalist>
     </div>
     <div class="space-y-1">
       <label class="block text-sm">Start Date</label>

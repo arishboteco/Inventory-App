@@ -8,21 +8,35 @@
   <form method="get" class="mb-4 grid gap-2 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
     <div class="space-y-1">
       <label class="block text-sm">Status</label>
-      <select name="status" class="border rounded px-2 py-1 w-full">
-        <option value="">All</option>
+      <input
+        type="text"
+        name="status"
+        list="po-statuses"
+        class="border rounded px-2 py-1 w-full"
+        value="{{ current_status }}"
+      />
+      <datalist id="po-statuses">
+        <option value="" label="All"></option>
         {% for value, label in statuses %}
-        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+        <option value="{{ value }}" label="{{ label }}"></option>
         {% endfor %}
-      </select>
+      </datalist>
     </div>
     <div class="space-y-1">
       <label class="block text-sm">Supplier</label>
-      <select name="supplier" class="border rounded px-2 py-1 w-full">
-        <option value="">All</option>
+      <input
+        type="text"
+        name="supplier"
+        list="po-suppliers"
+        class="border rounded px-2 py-1 w-full"
+        value="{{ current_supplier }}"
+      />
+      <datalist id="po-suppliers">
+        <option value="" label="All"></option>
         {% for s in suppliers %}
-        <option value="{{ s.pk }}" {% if current_supplier == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>
+        <option value="{{ s.pk }}" label="{{ s.name }}"></option>
         {% endfor %}
-      </select>
+      </datalist>
     </div>
     <div class="space-y-1">
       <label class="block text-sm">Start Date</label>

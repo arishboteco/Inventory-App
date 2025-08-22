@@ -17,6 +17,7 @@
 }
 
 @layer components {
+  .active { @apply font-bold underline; }
   /* Status badge classes */
   .badge-success { @apply bg-green-600 text-white px-1.5 py-0.5 rounded; }
   .badge-warning { @apply bg-yellow-500 text-black px-1.5 py-0.5 rounded; }

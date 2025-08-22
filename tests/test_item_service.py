@@ -30,7 +30,6 @@ def clear_tables(db):
             pass
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
-    item_service.suggest_category_and_units.clear()
 
 
 def test_add_new_item_inserts_row():
@@ -85,22 +84,6 @@ def test_get_item_details_includes_unit():
     details = item_service.get_item_details(item.pk)
     assert details["unit"] == "pcs"
     assert details["current_stock"] == 5
-
-
-def test_suggest_category_and_units():
-    Item.objects.create(
-        name="Fresh Milk",
-        base_unit="L",
-        purchase_unit="case",
-        category="Dairy",
-        sub_category="General",
-        permitted_departments="Kitchen",
-        reorder_point=0,
-        notes="",
-        is_active=True,
-    )
-    base, purchase, category = item_service.suggest_category_and_units("Whole Milk")
-    assert (base, purchase, category) == ("L", "case", "Dairy")
 
 
 def test_add_items_bulk_inserts_rows():

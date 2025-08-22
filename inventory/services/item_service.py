@@ -9,7 +9,6 @@ mutating operations.
 from __future__ import annotations
 
 import logging
-import re
 import traceback
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -20,7 +19,6 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
 from inventory.models import Item, StockTransaction
-from inventory.unit_inference import infer_units
 
 logger = logging.getLogger(__name__)
 
@@ -65,31 +63,6 @@ def get_all_items_with_stock(include_inactive: bool = False) -> List[Dict[str, A
 get_all_items_with_stock.clear = get_all_items_with_stock.cache_clear  # type: ignore[attr-defined]
 
 
-@lru_cache(maxsize=None)
-def suggest_category_and_units(
-    item_name: str,
-) -> Tuple[Optional[str], Optional[str], Optional[str]]:
-    """Guess base unit, purchase unit and category for ``item_name``."""
-
-    if not item_name:
-        return None, None, None
-    tokens = [t for t in re.split(r"\W+", item_name.lower()) if t]
-    if not tokens:
-        return None, None, None
-    for token in tokens:
-        row = (
-            Item.objects.filter(name__icontains=token)
-            .values("base_unit", "purchase_unit", "category")
-            .first()
-        )
-        if row:
-            return row["base_unit"], row["purchase_unit"], row["category"]
-    return None, None, None
-
-
-suggest_category_and_units.clear = (
-    suggest_category_and_units.cache_clear
-)  # type: ignore[attr-defined]
 
 
 @lru_cache(maxsize=None)
@@ -122,7 +95,6 @@ get_distinct_departments_from_items.clear = (
 def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
     """Insert a single item into the database."""
 
-    _apply_unit_and_category_suggestions(details)
     valid, missing = _validate_required(details, ["name", "base_unit"])
     if not valid:
         return False, f"Missing or empty required fields: {', '.join(missing)}"
@@ -146,27 +118,6 @@ def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
         return False, "A database error occurred while adding the item."
 
 
-def _apply_unit_and_category_suggestions(details: Dict[str, Any]) -> None:
-    s_base, s_purchase, s_category = suggest_category_and_units(details.get("name", ""))
-    if s_base and not str(details.get("base_unit", "")).strip():
-        details["base_unit"] = s_base
-    if s_purchase and not str(details.get("purchase_unit", "")).strip():
-        details["purchase_unit"] = s_purchase
-    if s_category and not details.get("category"):
-        details["category"] = s_category
-    if (
-        not details.get("base_unit")
-        or not str(details.get("base_unit")).strip()
-        or not details.get("purchase_unit")
-        or not str(details.get("purchase_unit")).strip()
-    ):
-        inferred_base, inferred_purchase = infer_units(
-            details.get("name", ""), details.get("category")
-        )
-        if not str(details.get("base_unit", "")).strip():
-            details["base_unit"] = inferred_base
-        if not str(details.get("purchase_unit", "")).strip() and inferred_purchase:
-            details["purchase_unit"] = inferred_purchase
 
 
 def _validate_required(
@@ -218,30 +169,6 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
     processed: List[Dict[str, Any]] = []
     errors: List[str] = []
     for idx, details in enumerate(items):
-        s_base, s_purchase, s_category = suggest_category_and_units(
-            details.get("name", "")
-        )
-        if s_base and not str(details.get("base_unit", "")).strip():
-            details["base_unit"] = s_base
-        if s_purchase and not str(details.get("purchase_unit", "")).strip():
-            details["purchase_unit"] = s_purchase
-        if s_category and not details.get("category"):
-            details["category"] = s_category
-
-        if (
-            not details.get("base_unit")
-            or not str(details.get("base_unit")).strip()
-            or not details.get("purchase_unit")
-            or not str(details.get("purchase_unit")).strip()
-        ):
-            inferred_base, inferred_purchase = infer_units(
-                details.get("name", ""), details.get("category")
-            )
-            if not str(details.get("base_unit", "")).strip():
-                details["base_unit"] = inferred_base
-            if not str(details.get("purchase_unit", "")).strip() and inferred_purchase:
-                details["purchase_unit"] = inferred_purchase
-
         required = ["name", "base_unit"]
         if not all(details.get(k) and str(details.get(k)).strip() for k in required):
             missing = [

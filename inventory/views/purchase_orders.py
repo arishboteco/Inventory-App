@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import (
@@ -9,7 +10,7 @@ from ..forms import (
     PurchaseOrderItemFormSet,
     GRNForm,
 )
-from ..models import PurchaseOrder
+from ..models import PurchaseOrder, Supplier
 from ..services import purchase_order_service, goods_receiving_service
 
 logger = logging.getLogger(__name__)
@@ -25,12 +26,50 @@ PO_STATUS_BADGES = {
 
 def purchase_orders_list(request):
     orders = PurchaseOrder.objects.select_related("supplier").order_by("-order_date")
-    for o in orders:
+
+    status = request.GET.get("status")
+    supplier_id = request.GET.get("supplier")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    if status:
+        orders = orders.filter(status=status)
+    if supplier_id:
+        orders = orders.filter(supplier_id=supplier_id)
+    if start_date:
+        orders = orders.filter(order_date__gte=start_date)
+    if end_date:
+        orders = orders.filter(order_date__lte=end_date)
+
+    paginator = Paginator(orders, 20)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    for o in page_obj:
         o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+
+    statuses = PurchaseOrder._meta.get_field("status").choices
+    suppliers = Supplier.objects.all()
+
+    query_params = request.GET.copy()
+    if "page" in query_params:
+        query_params.pop("page")
+    querystring = query_params.urlencode()
+
     return render(
         request,
         "inventory/purchase_orders/list.html",
-        {"orders": orders},
+        {
+            "orders": page_obj,
+            "page_obj": page_obj,
+            "statuses": statuses,
+            "suppliers": suppliers,
+            "current_status": status,
+            "current_supplier": supplier_id,
+            "start_date": start_date,
+            "end_date": end_date,
+            "querystring": querystring,
+        },
     )
 
 

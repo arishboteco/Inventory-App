@@ -6,6 +6,37 @@
     <a href="{% url 'purchase_order_create' %}" class="px-4 py-2 bg-green-600 text-white rounded">New PO</a>
     <a href="{% url 'grn_list' %}" class="px-4 py-2 bg-blue-600 text-white rounded">GRNs</a>
   </div>
+  <form method="get" class="mb-4 flex flex-wrap items-end gap-2">
+    <div>
+      <label class="block text-sm">Status</label>
+      <select name="status" class="border rounded px-2 py-1">
+        <option value="">All</option>
+        {% for value, label in statuses %}
+        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm">Supplier</label>
+      <select name="supplier" class="border rounded px-2 py-1">
+        <option value="">All</option>
+        {% for s in suppliers %}
+        <option value="{{ s.pk }}" {% if current_supplier == s.pk|stringformat:'s' %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm">Start Date</label>
+      <input type="date" name="start_date" value="{{ start_date }}" class="border rounded px-2 py-1" />
+    </div>
+    <div>
+      <label class="block text-sm">End Date</label>
+      <input type="date" name="end_date" value="{{ end_date }}" class="border rounded px-2 py-1" />
+    </div>
+    <div>
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Filter</button>
+    </div>
+  </form>
   <table class="table">
     <thead>
       <tr>
@@ -28,5 +59,14 @@
       {% endfor %}
     </tbody>
   </table>
+  <div class="mt-4 flex justify-between">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-blue-600">Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-blue-600">Next</a>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

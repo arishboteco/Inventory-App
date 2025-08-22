@@ -309,18 +309,11 @@ filtered_items_df = (
     all_items_df.copy()
 )  # Start with all items that match active/inactive toggle
 
+category_map = item_service.get_category_dropdowns(engine)
+
 unique_categories_options = [FILTER_ALL_CATEGORIES]
-if not all_items_df.empty:
-    unique_categories_options.extend(
-        sorted(
-            all_items_df["category"]
-            .astype(str)
-            .replace("nan", "Uncategorized")
-            .replace("", "Uncategorized")
-            .unique()
-            .tolist()
-        )
-    )
+if category_map:
+    unique_categories_options.extend(sorted(category_map.keys()))
 
 with filter_col2_view:
     current_category_key = st.session_state.ss_items_filter_category_key
@@ -340,35 +333,19 @@ with filter_col2_view:
 
 unique_subcategories_options = [FILTER_ALL_SUBCATEGORIES]
 if st.session_state.ss_items_filter_category_key != FILTER_ALL_CATEGORIES:
-    if not all_items_df.empty:
-        category_filtered_df = all_items_df[
-            all_items_df["category"].astype(str)
-            == st.session_state.ss_items_filter_category_key
-        ]
-        if not category_filtered_df.empty:
-            unique_subcategories_options.extend(
-                sorted(
-                    category_filtered_df["sub_category"]
-                    .astype(str)
-                    .replace("nan", "General")
-                    .replace("", "General")
-                    .unique()
-                    .tolist()
-                )
-            )
-else:
-    if not all_items_df.empty:
-        unique_subcategories_options.extend(
-            sorted(
-                all_items_df["sub_category"]
-                .astype(str)
-                .replace("nan", "General")
-                .replace("", "General")
-                .unique()
-                .tolist()
-            )
+    unique_subcategories_options.extend(
+        category_map.get(
+            st.session_state.ss_items_filter_category_key, []
         )
-unique_subcategories_options = sorted(list(set(unique_subcategories_options)))
+    )
+else:
+    # Combine all sub-categories from the mapping
+    all_subs = sorted(
+        {sub for subs in category_map.values() for sub in subs}
+    )
+    unique_subcategories_options.extend(all_subs)
+
+unique_subcategories_options = sorted(list(dict.fromkeys(unique_subcategories_options)))
 
 with filter_col3_view:
     current_subcategory_key = st.session_state.ss_items_filter_subcategory_key

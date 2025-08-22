@@ -72,7 +72,11 @@
         <td class="text-right">{{ row.current_stock }}</td>
         <td class="text-right">{{ row.reorder_point }}</td>
         <td>{{ row.is_active }}</td>
-        <td><a href="{% url 'item_edit' row.item_id %}" class="text-blue-600">Edit</a></td>
+        <td>
+          <a href="{% url 'item_detail' row.item_id %}" class="text-blue-600 mr-2">View</a>
+          <a href="{% url 'item_edit' row.item_id %}" class="text-blue-600 mr-2">Edit</a>
+          <a href="{% url 'item_delete' row.item_id %}" class="text-blue-600">Delete/Deactivate</a>
+        </td>
       </tr>
       {% empty %}
       <tr>

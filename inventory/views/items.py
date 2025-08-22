@@ -98,19 +98,19 @@ class ItemCreateView(View):
     template_name = "inventory/item_form.html"
 
     def get(self, request):
-        form = ItemForm()
         suggest_url = reverse("item_suggest")
-        ctx = {"form": form, "is_edit": False, "suggest_url": suggest_url}
+        form = ItemForm(suggest_url=suggest_url)
+        ctx = {"form": form, "is_edit": False}
         return render(request, self.template_name, ctx)
 
     def post(self, request):
-        form = ItemForm(request.POST)
         suggest_url = reverse("item_suggest")
+        form = ItemForm(request.POST, suggest_url=suggest_url)
         if form.is_valid():
             form.save()
             messages.success(request, "Item created")
             return redirect("items_list")
-        ctx = {"form": form, "is_edit": False, "suggest_url": suggest_url}
+        ctx = {"form": form, "is_edit": False}
         return render(request, self.template_name, ctx)
 
 
@@ -127,24 +127,24 @@ class ItemEditView(View):
     def get(self, request, pk: int):
         item = self.get_object(pk)
         try:
-            form = ItemForm(instance=item)
+            suggest_url = reverse("item_suggest")
+            form = ItemForm(instance=item, suggest_url=suggest_url)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
             return redirect("items_list")
-        suggest_url = reverse("item_suggest")
         ctx = {
             "form": form,
             "is_edit": True,
             "item": item,
-            "suggest_url": suggest_url,
         }
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk: int):
         item = self.get_object(pk)
         try:
-            form = ItemForm(request.POST, instance=item)
+            suggest_url = reverse("item_suggest")
+            form = ItemForm(request.POST, instance=item, suggest_url=suggest_url)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
@@ -156,12 +156,10 @@ class ItemEditView(View):
                 return redirect("items_list")
             except (ValidationError, DatabaseError):
                 messages.error(request, "Unable to save item")
-        suggest_url = reverse("item_suggest")
         ctx = {
             "form": form,
             "is_edit": True,
             "item": item,
-            "suggest_url": suggest_url,
         }
         return render(request, self.template_name, ctx)
 

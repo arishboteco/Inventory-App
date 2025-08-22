@@ -16,11 +16,7 @@
     {% for field in form %}
     <div>
       {{ field.label_tag }}
-        {% if field.field.widget.input_type == "checkbox" %}
-        {{ field.as_widget(attrs={'class': 'form-checkbox'}) }}
-        {% else %}
-        {{ field.as_widget(attrs={'class': 'form-control'}) }}
-        {% endif %}
+        {{ field }}
       {% if field.errors %}
       <ul class="text-red-600 list-disc pl-5">
         {% for error in field.errors %}

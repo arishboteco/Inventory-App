@@ -1,7 +1,7 @@
 {% if message %}
-<div id="{{ toast_id|default:'toast' }}" class="toast absolute left-0 top-full mt-1 z-10 w-max max-w-xs bg-blue-100 text-blue-800 text-sm px-3 py-2 rounded shadow flex items-start gap-2" role="status" aria-live="polite">
+<div id="{{ toast_id|default:'toast' }}" class="toast w-max max-w-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-sm px-3 py-2 rounded shadow flex items-start gap-2" role="status" aria-live="polite">
   <span class="flex-1">{{ message }}</span>
-  <button type="button" class="text-blue-800" aria-label="Dismiss" onclick="this.parentElement.remove()">&times;</button>
+  <button type="button" class="text-blue-800 dark:bg-blue-900 dark:text-blue-100" aria-label="Dismiss" onclick="this.parentElement.remove()">&times;</button>
 </div>
 <script>
   setTimeout(() => document.getElementById('{{ toast_id|default:'toast' }}')?.remove(), 5000);

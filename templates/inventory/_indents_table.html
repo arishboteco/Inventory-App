@@ -1,28 +1,28 @@
 <div class="overflow-x-auto">
-  <table class="table">
-    <thead>
+  <table class="w-full table-auto text-sm divide-y divide-gray-200">
+    <thead class="bg-primary text-white">
       <tr>
-        <th>ID</th>
-        <th>MRN</th>
-        <th>Requested By</th>
-        <th>Department</th>
-        <th>Status</th>
-        <th>Actions</th>
+        <th class="px-4 py-2 text-right">ID</th>
+        <th class="px-4 py-2 text-right">MRN</th>
+        <th class="px-4 py-2">Requested By</th>
+        <th class="px-4 py-2">Department</th>
+        <th class="px-4 py-2">Status</th>
+        <th class="px-4 py-2">Actions</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody class="divide-y divide-gray-200">
       {% for row in page_obj %}
-      <tr>
-        <td>{{ row.indent_id }}</td>
-        <td>{{ row.mrn }}</td>
-        <td>{{ row.requested_by }}</td>
-        <td>{{ row.department }}</td>
-        <td><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
-        <td><a href="{% url 'indent_detail' row.indent_id %}" class="text-primary">View</a></td>
+      <tr class="odd:bg-gray-50 hover:bg-gray-100">
+        <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>
+        <td class="px-4 py-2 text-right">{{ row.mrn }}</td>
+        <td class="px-4 py-2">{{ row.requested_by }}</td>
+        <td class="px-4 py-2">{{ row.department }}</td>
+        <td class="px-4 py-2"><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
+        <td class="px-4 py-2"><a href="{% url 'indent_detail' row.indent_id %}" class="text-primary">View</a></td>
       </tr>
       {% empty %}
       <tr>
-        <td colspan="6" class="p-4 text-center">
+        <td colspan="6" class="px-4 py-2 text-center">
           0 indents yet.
           <a href="{% url 'indent_create' %}" class="btn-primary ml-2">New Indent</a>
         </td>

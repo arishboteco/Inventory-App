@@ -4,24 +4,17 @@ import logging
 from django import forms
 from django.urls import reverse
 
-from ..models import Item, Category
+from ..models import Item
 from ..services.supabase_units import get_units
+from ..services.supabase_categories import get_categories
 from .base import StyledFormMixin, INPUT_CLASS
 
 logger = logging.getLogger(__name__)
 
 
 class ItemForm(StyledFormMixin, forms.ModelForm):
-    category = forms.ModelChoiceField(
-        queryset=Category.objects.filter(parent__isnull=True).order_by("name"),
-        required=True,
-        empty_label="---------",
-    )
-    sub_category = forms.ModelChoiceField(
-        queryset=Category.objects.none(),
-        required=False,
-        empty_label="---------",
-    )
+    category = forms.ChoiceField(required=True)
+    sub_category = forms.ChoiceField(required=False)
 
     class Meta:
         model = Item
@@ -53,6 +46,19 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             units_map = {}
             logger.error("Failed to load units map", exc_info=True)
         self.units_map = units_map
+
+        try:
+            categories_map = get_categories()
+            logger.debug("Categories map loaded: %s", categories_map)
+        except Exception:
+            categories_map = {}
+            logger.error("Failed to load categories map", exc_info=True)
+        self.categories_map = categories_map
+        self.id_to_name = {
+            str(cat["id"]): cat["name"]
+            for children in categories_map.values()
+            for cat in children
+        }
 
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
@@ -88,7 +94,10 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             purchase_field.initial = self.initial.get("purchase_unit")
 
         category_field = self.fields["category"]
-        category_field.queryset = Category.objects.filter(parent__isnull=True).order_by("name")
+        top_categories = categories_map.get(None, [])
+        category_field.choices = [("", "---------")] + [
+            (str(cat["id"]), cat["name"]) for cat in top_categories
+        ]
         category_field.widget = forms.Select(
             attrs={
                 "id": "id_category",
@@ -103,32 +112,26 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         sub_field = self.fields["sub_category"]
         selected_category = self.data.get("category")
         if not selected_category and self.instance.pk and self.instance.category:
-            selected_category = (
-                Category.objects.filter(name=self.instance.category, parent__isnull=True)
-                .values_list("id", flat=True)
-                .first()
-            )
-            if selected_category:
-                category_field.initial = selected_category
+            for cat in top_categories:
+                if cat["name"] == self.instance.category:
+                    selected_category = str(cat["id"])
+                    category_field.initial = selected_category
+                    break
         if selected_category:
-            sub_field.queryset = (
-                Category.objects.filter(parent_id=selected_category).order_by("name")
-            )
+            sub_field.choices = [("", "---------")] + [
+                (str(cat["id"]), cat["name"])
+                for cat in categories_map.get(int(selected_category), [])
+            ]
         else:
-            sub_field.queryset = Category.objects.none()
+            sub_field.choices = [("", "---------")] 
         sub_field.widget = forms.Select(
             attrs={"id": "id_sub_category", "class": INPUT_CLASS}
         )
-        if self.instance.pk and self.instance.sub_category:
-            sub_initial = (
-                Category.objects.filter(
-                    name=self.instance.sub_category, parent_id=selected_category
-                )
-                .values_list("id", flat=True)
-                .first()
-            )
-            if sub_initial:
-                sub_field.initial = sub_initial
+        if self.instance.pk and self.instance.sub_category and selected_category:
+            for cat in categories_map.get(int(selected_category), []):
+                if cat["name"] == self.instance.sub_category:
+                    sub_field.initial = str(cat["id"])
+                    break
 
         # Reapply styling for any widgets replaced above
         self.apply_styling()
@@ -137,10 +140,10 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         obj = super().save(commit=False)
         category = self.cleaned_data.get("category")
         sub_category = self.cleaned_data.get("sub_category")
-        if isinstance(category, Category):
-            obj.category = category.name
-        if isinstance(sub_category, Category):
-            obj.sub_category = sub_category.name
+        if category:
+            obj.category = self.id_to_name.get(str(category), "")
+        if sub_category:
+            obj.sub_category = self.id_to_name.get(str(sub_category), "")
         if commit:
             obj.save()
         return obj

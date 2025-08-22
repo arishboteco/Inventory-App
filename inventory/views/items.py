@@ -10,10 +10,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..models import Item, StockTransaction, Category
+from ..models import Item, StockTransaction
 from ..forms.item_forms import ItemForm
 from ..forms.bulk_forms import BulkUploadForm
 from ..services import item_service, list_utils
+from ..services.supabase_categories import get_categories
 
 logger = logging.getLogger(__name__)
 
@@ -336,10 +337,13 @@ class SubCategoryOptionsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         cat_id = self.request.GET.get("category")
+        categories_map = get_categories()
+        subcats = []
         if cat_id:
-            subcats = Category.objects.filter(parent_id=cat_id).order_by("name")
-        else:
-            subcats = Category.objects.none()
+            try:
+                subcats = categories_map.get(int(cat_id), [])
+            except (ValueError, TypeError):
+                subcats = []
         ctx["subcategories"] = subcats
         return ctx
 

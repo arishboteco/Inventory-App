@@ -7,8 +7,7 @@ from django.urls import reverse
 
 from inventory.forms.item_forms import ItemForm
 from inventory.forms import item_forms as forms_module
-from inventory.services import supabase_units
-from inventory.models import Category
+from inventory.services import supabase_units, supabase_categories
 
 
 @pytest.mark.django_db
@@ -55,40 +54,54 @@ def test_item_form_units_fallback(monkeypatch, caplog):
 @pytest.mark.django_db
 def test_item_form_categories_and_subcategories(monkeypatch):
     monkeypatch.setattr(supabase_units, "get_units", lambda: {"kg": ["g"]})
-    parent = Category.objects.create(name="Food")
-    sub1 = Category.objects.create(name="Fruit", parent=parent)
-    sub2 = Category.objects.create(name="Veg", parent=parent)
-    other_parent = Category.objects.create(name="Tools")
-    Category.objects.create(name="Hammer", parent=other_parent)
+    categories_map = {
+        None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Tools"}],
+        1: [{"id": 3, "name": "Fruit"}, {"id": 4, "name": "Veg"}],
+        2: [{"id": 5, "name": "Hammer"}],
+    }
+    monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
 
     form = ItemForm()
-    cat_qs = list(form.fields["category"].queryset)
-    assert cat_qs == [parent, other_parent]
-    assert list(form.fields["sub_category"].queryset) == []
+    assert form.fields["category"].choices == [
+        ("", "---------"),
+        ("1", "Food"),
+        ("2", "Tools"),
+    ]
+    assert form.fields["sub_category"].choices == [("", "---------")]
 
     data = {
         "name": "Apple",
         "base_unit": "kg",
         "purchase_unit": "g",
-        "category": str(parent.pk),
-        "sub_category": str(sub1.pk),
+        "category": "1",
+        "sub_category": "3",
     }
     form = ItemForm(data=data)
-    assert list(form.fields["sub_category"].queryset) == [sub1, sub2]
+    assert form.fields["sub_category"].choices == [
+        ("", "---------"),
+        ("3", "Fruit"),
+        ("4", "Veg"),
+    ]
     assert form.is_valid()
     item = form.save()
-    assert item.category == parent.name
-    assert item.sub_category == sub1.name
+    assert item.category == "Food"
+    assert item.sub_category == "Fruit"
 
 
 @pytest.mark.django_db
-def test_subcategory_options_view(client):
-    parent = Category.objects.create(name="Food")
-    sub1 = Category.objects.create(name="Fruit", parent=parent)
-    sub2 = Category.objects.create(name="Veg", parent=parent)
+def test_subcategory_options_view(client, monkeypatch):
+    categories_map = {
+        None: [{"id": 1, "name": "Food"}],
+        1: [{"id": 3, "name": "Fruit"}, {"id": 4, "name": "Veg"}],
+    }
+    monkeypatch.setattr(
+        supabase_categories, "get_categories", lambda: categories_map
+    )
+    from inventory.views import items as items_views
+    monkeypatch.setattr(items_views, "get_categories", lambda: categories_map)
     url = reverse("item_subcategory_options")
-    resp = client.get(url, {"category": parent.pk})
+    resp = client.get(url, {"category": 1})
     assert resp.status_code == 200
     content = resp.content.decode()
-    assert f'value="{sub1.pk}"' in content
-    assert f'value="{sub2.pk}"' in content
+    assert 'value="3"' in content
+    assert 'value="4"' in content

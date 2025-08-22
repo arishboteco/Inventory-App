@@ -23,22 +23,48 @@
       </select>
       <input type="date" name="start_date" value="{{ start_date }}" class="form-control" />
       <input type="date" name="end_date" value="{{ end_date }}" class="form-control" />
-    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Filter</button>
-    <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="px-4 py-2 border rounded">Export CSV</a>
-  </form>
+      <input type="hidden" name="sort" value="{{ sort|default:'date' }}" />
+      <input type="hidden" name="direction" value="{{ direction|default:'desc' }}" />
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Filter</button>
+      <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="px-4 py-2 border rounded">Export CSV</a>
+    </form>
     <div class="overflow-x-auto">
       <table class="table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Item</th>
-            <th>Type</th>
-            <th>Qty</th>
-            <th>User</th>
-            <th>Date</th>
+            <th>
+              <a href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=id&direction={% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                ID{% if sort == 'id' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=item&direction={% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                Item{% if sort == 'item' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                Type{% if sort == 'type' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=qty&direction={% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                Qty{% if sort == 'qty' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=user&direction={% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                User{% if sort == 'user' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="?{% if sort_query %}{{ sort_query }}&{% endif %}sort=date&direction={% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                Date{% if sort == 'date' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+              </a>
+            </th>
             <th>Notes</th>
           </tr>
-        </thead>
+          </thead>
         <tbody>
           {% for row in page_obj %}
           <tr>
@@ -56,6 +82,13 @@
           </tr>
           {% endfor %}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="p-2 font-semibold text-right">Total</td>
+            <td class="p-2 font-semibold">{{ total_quantity }}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   <div class="flex items-center gap-3 mt-3">

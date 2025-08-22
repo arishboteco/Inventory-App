@@ -2,14 +2,55 @@
 {% block content %}
 <div class="max-w-5xl mx-auto p-4">
   <h1 class="text-2xl font-semibold mb-4">{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order</h1>
-  <form method="post" class="space-y-4">
+  <form method="post" class="space-y-4" id="po-form">
     {% csrf_token %}
     {{ form.as_p }}
-    {{ formset.management_form }}
-    {% for f in formset %}
-    <div class="border p-2">{{ f.as_p }}</div>
-    {% endfor %}
-    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+    <div id="items-formset">
+      {{ formset.management_form }}
+      {% for f in formset %}
+      <div class="border p-2 item-form">{{ f.as_p }}</div>
+      {% endfor %}
+    </div>
+    <div class="flex space-x-2">
+      <button type="button" id="add-item" class="px-3 py-1 bg-green-600 text-white rounded">Add Item</button>
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+    </div>
   </form>
+  <template id="item-empty-form">
+    <div class="border p-2 item-form">{{ formset.empty_form.as_p }}</div>
+  </template>
+  <script>
+    (function () {
+      const formsetPrefix = "{{ formset.prefix }}";
+      const addBtn = document.getElementById("add-item");
+      const formsetDiv = document.getElementById("items-formset");
+      const totalFormsInput = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`);
+      const emptyForm = document.getElementById("item-empty-form").content;
+
+      addBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const formCount = parseInt(totalFormsInput.value);
+        const newForm = emptyForm.cloneNode(true);
+        newForm.querySelectorAll("input, select, textarea").forEach(function (el) {
+          const name = el.getAttribute("name").replace("__prefix__", formCount);
+          const id = `id_${name}`;
+          el.setAttribute("name", name);
+          el.setAttribute("id", id);
+          if (el.type !== "hidden") {
+            el.value = "";
+          }
+        });
+        formsetDiv.appendChild(newForm);
+        totalFormsInput.value = formCount + 1;
+      });
+
+      document.getElementById("po-form").addEventListener("submit", function (e) {
+        if (!this.checkValidity()) {
+          e.preventDefault();
+          this.reportValidity();
+        }
+      });
+    })();
+  </script>
 </div>
 {% endblock %}

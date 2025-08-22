@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..models import Item, StockTransaction
+from ..models import Item, StockTransaction, Category
 from ..forms import ItemForm, BulkUploadForm
 from ..services import item_service, list_utils
 
@@ -273,6 +273,20 @@ class ItemSearchView(TemplateView):
                     break
         items = Item.objects.filter(name__icontains=query)[:20]
         ctx["items"] = items
+        return ctx
+
+
+class SubCategoryOptionsView(TemplateView):
+    template_name = "inventory/_subcategory_options.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        cat_id = self.request.GET.get("category")
+        if cat_id:
+            subcats = Category.objects.filter(parent_id=cat_id).order_by("name")
+        else:
+            subcats = Category.objects.none()
+        ctx["subcategories"] = subcats
         return ctx
 
 

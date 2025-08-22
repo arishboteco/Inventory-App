@@ -11,7 +11,9 @@ from .models import (
     GRNItem,
     Recipe,
     RecipeComponent,
+    Category,
 )
+from django.urls import reverse
 from .services.supabase_units import get_units
 
 
@@ -20,6 +22,17 @@ CHECKBOX_CLASS = "h-4 w-4 text-blue-600"
 
 
 class ItemForm(forms.ModelForm):
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.filter(parent__isnull=True).order_by("name"),
+        required=True,
+        empty_label="---------",
+    )
+    sub_category = forms.ModelChoiceField(
+        queryset=Category.objects.none(),
+        required=False,
+        empty_label="---------",
+    )
+
     class Meta:
         model = Item
         fields = [
@@ -78,17 +91,60 @@ class ItemForm(forms.ModelForm):
         elif self.initial.get("purchase_unit"):
             purchase_field.initial = self.initial.get("purchase_unit")
 
-        self.fields["category"].widget.attrs.update(
-            {"id": "id_category", "class": INPUT_CLASS}
+        category_field = self.fields["category"]
+        category_field.queryset = Category.objects.filter(parent__isnull=True).order_by("name")
+        category_field.widget = forms.Select(
+            attrs={
+                "id": "id_category",
+                "class": INPUT_CLASS,
+                "hx-get": reverse("item_subcategory_options"),
+                "hx-trigger": "change",
+                "hx-target": "#id_sub_category",
+                "hx-swap": "innerHTML",
+            }
         )
 
+        sub_field = self.fields["sub_category"]
+        selected_category = self.data.get("category")
+        if not selected_category and self.instance.pk and self.instance.category:
+            selected_category = Category.objects.filter(
+                name=self.instance.category, parent__isnull=True
+            ).values_list("id", flat=True).first()
+            if selected_category:
+                category_field.initial = selected_category
+        if selected_category:
+            sub_field.queryset = Category.objects.filter(parent_id=selected_category).order_by("name")
+        else:
+            sub_field.queryset = Category.objects.none()
+        sub_field.widget = forms.Select(
+            attrs={"id": "id_sub_category", "class": INPUT_CLASS}
+        )
+        if self.instance.pk and self.instance.sub_category:
+            sub_initial = Category.objects.filter(
+                name=self.instance.sub_category, parent_id=selected_category
+            ).values_list("id", flat=True).first()
+            if sub_initial:
+                sub_field.initial = sub_initial
+
         for name, field in self.fields.items():
-            if name in {"name", "base_unit", "purchase_unit", "category"}:
+            if name in {"name", "base_unit", "purchase_unit", "category", "sub_category"}:
                 continue
             if getattr(field.widget, "input_type", None) == "checkbox":
                 field.widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
                 field.widget.attrs.update({"class": INPUT_CLASS})
+
+    def save(self, commit: bool = True):
+        obj = super().save(commit=False)
+        category = self.cleaned_data.get("category")
+        sub_category = self.cleaned_data.get("sub_category")
+        if isinstance(category, Category):
+            obj.category = category.name
+        if isinstance(sub_category, Category):
+            obj.sub_category = sub_category.name
+        if commit:
+            obj.save()
+        return obj
 
 
 

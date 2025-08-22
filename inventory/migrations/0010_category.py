@@ -1,0 +1,32 @@
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("inventory", "0009_alter_item_base_unit_alter_item_category_and_more"),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="Category",
+            fields=[
+                ("id", models.AutoField(primary_key=True, serialize=False)),
+                ("name", models.CharField(max_length=100)),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name="children",
+                        db_column="parent_id",
+                        to="inventory.category",
+                    ),
+                ),
+            ],
+            options={"db_table": "category", "ordering": ("name",)},
+        ),
+    ]
+

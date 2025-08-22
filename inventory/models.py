@@ -23,6 +23,26 @@ class CoerceFloatField(models.DecimalField):
         return self.to_python(value)
 
 
+class Category(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100, blank=False, null=False)
+    parent = models.ForeignKey(
+        "self",
+        models.DO_NOTHING,
+        db_column="parent_id",
+        blank=True,
+        null=True,
+        related_name="children",
+    )
+
+    class Meta:
+        db_table = "category"
+        ordering = ("name",)
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return self.name or f"Category {self.pk}"
+
+
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, blank=False, null=False)

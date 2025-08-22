@@ -9,6 +9,8 @@ from .models import (
     PurchaseOrderItem,
     GoodsReceivedNote,
     GRNItem,
+    Recipe,
+    RecipeComponent,
 )
 from .unit_inference import infer_units
 
@@ -252,4 +254,54 @@ GRNItemFormSet = forms.inlineformset_factory(
     ],
     extra=0,
     can_delete=False,
+)
+
+
+class RecipeForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = [
+            "name",
+            "description",
+            "type",
+            "default_yield_qty",
+            "default_yield_unit",
+            "plating_notes",
+            "tags",
+            "is_active",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if getattr(field.widget, "input_type", None) == "checkbox":
+                field.widget.attrs.update({"class": "form-checkbox"})
+            else:
+                field.widget.attrs.update({"class": "form-control"})
+
+
+class RecipeComponentForm(forms.ModelForm):
+    class Meta:
+        model = RecipeComponent
+        fields = [
+            "component_kind",
+            "component_id",
+            "quantity",
+            "unit",
+            "loss_pct",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({"class": "form-control"})
+
+
+RecipeComponentFormSet = forms.inlineformset_factory(
+    Recipe,
+    RecipeComponent,
+    form=RecipeComponentForm,
+    fields=["component_kind", "component_id", "quantity", "unit", "loss_pct"],
+    extra=1,
+    can_delete=True,
 )

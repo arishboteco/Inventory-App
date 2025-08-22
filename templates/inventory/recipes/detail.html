@@ -1,21 +1,126 @@
 {% extends "_base.html" %}
 {% block content %}
-<h1 class="text-xl font-bold mb-4">{{ recipe.name }}</h1>
-<table class="table-auto w-full" id="components">
-  <thead>
-    <tr>
-      <th class="px-2">Kind</th>
-      <th class="px-2">ID</th>
-      <th class="px-2">Qty</th>
-      <th class="px-2">Unit</th>
-      <th class="px-2">Loss %</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for comp in components %}
-    {% include "inventory/recipes/_component_row.html" with comp=comp index=forloop.counter0 %}
-  {% endfor %}
-  </tbody>
-</table>
-<button class="mt-4 px-3 py-1 bg-gray-200 dark:bg-gray-700 dark:text-white" hx-get="{% url 'recipe_component_row' recipe.recipe_id %}?index={{ components|length }}" hx-target="#components tbody" hx-swap="beforeend">Add Component</button>
+<div class="w-full max-w-2xl mx-auto p-4">
+  <h1 class="text-xl font-bold mb-4">{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}</h1>
+  <form method="post" id="recipe-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="mb-4 space-y-4">
+      {% for field in form %}
+      <div>
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.errors %}
+        <ul class="text-red-600 list-disc pl-5">
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in formset.non_form_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <table id="components-table" class="table w-full">
+      <thead>
+        <tr>
+          <th>Kind</th>
+          <th>ID</th>
+          <th>Qty</th>
+          <th>Unit</th>
+          <th>Loss %</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for cform in formset %}
+        <tr class="form-row">
+          <td>
+            {{ cform.component_kind }}
+            {% for error in cform.component_kind.errors %}
+            <div class="text-red-600">{{ error }}</div>
+            {% endfor %}
+          </td>
+          <td>
+            {{ cform.component_id }}
+            {% for error in cform.component_id.errors %}
+            <div class="text-red-600">{{ error }}</div>
+            {% endfor %}
+          </td>
+          <td>
+            {{ cform.quantity }}
+            {% for error in cform.quantity.errors %}
+            <div class="text-red-600">{{ error }}</div>
+            {% endfor %}
+          </td>
+          <td>
+            {{ cform.unit }}
+            {% for error in cform.unit.errors %}
+            <div class="text-red-600">{{ error }}</div>
+            {% endfor %}
+          </td>
+          <td>
+            {{ cform.loss_pct }}
+            {% for error in cform.loss_pct.errors %}
+            <div class="text-red-600">{{ error }}</div>
+            {% endfor %}
+          </td>
+          <td>
+            {{ cform.DELETE }}<button type="button" class="remove-row text-red-600">Remove</button>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="mt-2">
+      <button type="button" id="add-row" class="px-4 py-2 border rounded">Add Component</button>
+    </div>
+    <div class="mt-4">
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+    </div>
+  </form>
+</div>
+<script>
+(function() {
+  const addBtn = document.getElementById('add-row');
+  const table = document.getElementById('components-table').getElementsByTagName('tbody')[0];
+  const totalForms = document.getElementById('id_components-TOTAL_FORMS');
+  addBtn.addEventListener('click', function() {
+    const newIndex = parseInt(totalForms.value, 10);
+    const emptyRow = table.querySelector('.form-row').cloneNode(true);
+    emptyRow.querySelectorAll('input').forEach(function(el) {
+      const name = el.getAttribute('name').replace(/-\d+-/, '-' + newIndex + '-');
+      const id = 'id_' + name;
+      el.setAttribute('name', name);
+      el.setAttribute('id', id);
+      if (el.type !== 'hidden') { el.value = ''; }
+    });
+    table.appendChild(emptyRow);
+    totalForms.value = newIndex + 1;
+  });
+  table.addEventListener('click', function(e){
+    if(e.target.classList.contains('remove-row')){
+      const rows = table.querySelectorAll('.form-row');
+      if(rows.length > 1){
+        e.target.closest('.form-row').remove();
+        totalForms.value = rows.length - 1;
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}
+

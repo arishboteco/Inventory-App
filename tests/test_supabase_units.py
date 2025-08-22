@@ -37,7 +37,7 @@ def test_load_units_from_supabase(monkeypatch):
     monkeypatch.setattr(supabase_units, "create_client", lambda url, key: DummyClient())
 
     units = supabase_units._load_units_from_supabase()
-    assert units == {"kg": ["g", "lb"], "ltr": ["ml"]}
+    assert units == {"kg": ["kg", "g", "lb"], "ltr": ["ltr", "ml"]}
 
 
 def test_load_units_supabase_exception(monkeypatch):

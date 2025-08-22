@@ -42,13 +42,22 @@ def _load_units_from_supabase() -> Dict[str, List[str]]:
         logger.exception("Failed to fetch units from Supabase")
         return {}
 
-    units: Dict[str, List[str]] = {}
+    units: Dict[str, set[str]] = {}
     for row in resp.data or []:
         base = row.get("base_unit")
         purchase = row.get("purchase_unit")
-        if base and purchase:
-            units.setdefault(base, []).append(purchase)
-    return units
+        if not base:
+            continue
+        options = units.setdefault(base, set())
+        if purchase:
+            options.add(purchase)
+
+    # Always allow the base unit itself as a purchase unit
+    # and return sorted lists of unique options
+    return {
+        base: [base] + sorted(opt for opt in options if opt != base)
+        for base, options in units.items()
+    }
 
 
 def get_units(force: bool = False) -> Dict[str, List[str]]:

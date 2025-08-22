@@ -14,17 +14,7 @@
     {% endif %}
     <div class="mb-4 space-y-4">
       {% for field in form %}
-      <div>
-        {{ field.label_tag }}
-        {{ field }}
-        {% if field.errors %}
-        <ul class="text-red-600 list-disc pl-5">
-          {% for error in field.errors %}
-          <li>{{ error }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
+        {% include "components/form_field.html" with field=field %}
       {% endfor %}
     </div>
     {{ formset.management_form }}
@@ -47,30 +37,9 @@
       <tbody>
       {% for item_form in formset %}
         <tr class="form-row">
-          <td>
-            {{ item_form.item }}
-            {% if item_form.item.errors %}
-            <ul class="text-red-600 list-disc pl-5">
-              {% for error in item_form.item.errors %}<li>{{ error }}</li>{% endfor %}
-            </ul>
-            {% endif %}
-          </td>
-          <td>
-            {{ item_form.requested_qty }}
-            {% if item_form.requested_qty.errors %}
-            <ul class="text-red-600 list-disc pl-5">
-              {% for error in item_form.requested_qty.errors %}<li>{{ error }}</li>{% endfor %}
-            </ul>
-            {% endif %}
-          </td>
-          <td>
-            {{ item_form.notes }}
-            {% if item_form.notes.errors %}
-            <ul class="text-red-600 list-disc pl-5">
-              {% for error in item_form.notes.errors %}<li>{{ error }}</li>{% endfor %}
-            </ul>
-            {% endif %}
-          </td>
+          <td>{% include "components/form_field.html" with field=item_form.item %}</td>
+          <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
+          <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
           <td><button type="button" class="remove-row text-red-600">Remove</button></td>
         </tr>
       {% endfor %}

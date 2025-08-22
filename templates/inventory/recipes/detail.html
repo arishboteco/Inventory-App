@@ -13,17 +13,7 @@
     {% endif %}
     <div class="mb-4 space-y-4">
       {% for field in form %}
-      <div>
-        {{ field.label_tag }}
-        {{ field }}
-        {% if field.errors %}
-        <ul class="text-red-600 list-disc pl-5">
-          {% for error in field.errors %}
-          <li>{{ error }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
+        {% include "components/form_field.html" with field=field %}
       {% endfor %}
     </div>
     {{ formset.management_form }}
@@ -48,36 +38,11 @@
       <tbody>
       {% for cform in formset %}
         <tr class="form-row">
-          <td>
-            {{ cform.component_kind }}
-            {% for error in cform.component_kind.errors %}
-            <div class="text-red-600">{{ error }}</div>
-            {% endfor %}
-          </td>
-          <td>
-            {{ cform.component_id }}
-            {% for error in cform.component_id.errors %}
-            <div class="text-red-600">{{ error }}</div>
-            {% endfor %}
-          </td>
-          <td>
-            {{ cform.quantity }}
-            {% for error in cform.quantity.errors %}
-            <div class="text-red-600">{{ error }}</div>
-            {% endfor %}
-          </td>
-          <td>
-            {{ cform.unit }}
-            {% for error in cform.unit.errors %}
-            <div class="text-red-600">{{ error }}</div>
-            {% endfor %}
-          </td>
-          <td>
-            {{ cform.loss_pct }}
-            {% for error in cform.loss_pct.errors %}
-            <div class="text-red-600">{{ error }}</div>
-            {% endfor %}
-          </td>
+          <td>{% include "components/form_field.html" with field=cform.component_kind %}</td>
+          <td>{% include "components/form_field.html" with field=cform.component_id %}</td>
+          <td>{% include "components/form_field.html" with field=cform.quantity %}</td>
+          <td>{% include "components/form_field.html" with field=cform.unit %}</td>
+          <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
           <td>
             {{ cform.DELETE }}<button type="button" class="remove-row text-red-600">Remove</button>
           </td>

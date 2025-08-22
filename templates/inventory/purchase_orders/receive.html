@@ -8,7 +8,7 @@
       {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
     </ul>
     {% endif %}
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
       {% for field in form %}
         {% include "components/form_field.html" with field=field %}
       {% endfor %}

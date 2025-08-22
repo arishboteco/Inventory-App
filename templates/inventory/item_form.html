@@ -14,64 +14,14 @@
       {% endfor %}
     </ul>
     {% endif %}
-    <div>
-      {{ form.name.label_tag }}
-        {{ form.name }}
-      {% if form.name.errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in form.name.errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-    <div>
-      {{ form.base_unit.label_tag }}
-        {{ form.base_unit }}
-      {% if form.base_unit.errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in form.base_unit.errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-    <div>
-      {{ form.purchase_unit.label_tag }}
-        {{ form.purchase_unit }}
-      {% if form.purchase_unit.errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in form.purchase_unit.errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
-    <div>
-      {{ form.category.label_tag }}
-        {{ form.category }}
-      {% if form.category.errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in form.category.errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-    </div>
+    {% include "components/form_field.html" with field=form.name %}
+    {% include "components/form_field.html" with field=form.base_unit %}
+    {% include "components/form_field.html" with field=form.purchase_unit %}
+    {% include "components/form_field.html" with field=form.category %}
     {% for field in form %}
-    {% if field.name not in excluded_fields %}
-    <div>
-      {{ field.label_tag }}
-        {{ field }}
-      {% if field.errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in field.errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
+      {% if field.name not in excluded_fields %}
+        {% include "components/form_field.html" with field=field %}
       {% endif %}
-    </div>
-    {% endif %}
     {% endfor %}
     <div class="flex gap-2">
       <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>

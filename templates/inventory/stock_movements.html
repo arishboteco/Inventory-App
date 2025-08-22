@@ -10,11 +10,7 @@
       {% endfor %}
   </form>
   {% if messages %}
-    <ul class="mb-4">
-      {% for message in messages %}
-        <li class="text-green-700">{{ message }}</li>
-      {% endfor %}
-    </ul>
+    {% include "components/alert.html" %}
   {% endif %}
   {% if active_section == 'receive' %}
     <h2 class="text-xl font-semibold mb-2">Goods Received</h2>

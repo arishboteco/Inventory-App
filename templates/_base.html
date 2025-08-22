@@ -139,14 +139,14 @@
           }
         });
 
-        btn.addEventListener('focus', function () {
+        group.addEventListener('focusin', function () {
           if (window.matchMedia('(min-width: 641px)').matches) {
             menu.classList.remove('hidden');
           }
         });
 
-        btn.addEventListener('blur', function () {
-          if (window.matchMedia('(min-width: 641px)').matches) {
+        group.addEventListener('focusout', function (e) {
+          if (window.matchMedia('(min-width: 641px)').matches && !group.contains(e.relatedTarget)) {
             menu.classList.add('hidden');
           }
         });

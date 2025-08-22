@@ -14,7 +14,16 @@ form textarea,
     color: var(--form-text);
     padding: 0.5rem;
     border-radius: 0.25rem;
-    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    form input:not([type="checkbox"]):not([type="radio"]),
+    form select,
+    form textarea,
+    .form-control {
+        width: 100%;
+    }
 }
 
 form input:not([type="checkbox"]):not([type="radio"]):focus,

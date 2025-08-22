@@ -2,6 +2,8 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from django.db import transaction
+from django.db.models import F
+
 from inventory.models import Item, StockTransaction
 
 logger = logging.getLogger(__name__)
@@ -18,11 +20,14 @@ def record_stock_transaction(
 ) -> bool:
     try:
         with transaction.atomic():
-            item = Item.objects.select_for_update().get(pk=item_id)
-            item.current_stock = (item.current_stock or 0) + quantity_change
-            item.save(update_fields=["current_stock"])
+            updated = Item.objects.filter(pk=item_id).update(
+                current_stock=F("current_stock") + quantity_change
+            )
+            if not updated:
+                logger.warning("Item %s not found", item_id)
+                return False
             StockTransaction.objects.create(
-                item=item,
+                item_id=item_id,
                 quantity_change=quantity_change,
                 transaction_type=transaction_type,
                 user_id=user_id,
@@ -31,9 +36,6 @@ def record_stock_transaction(
                 notes=notes,
             )
         return True
-    except Item.DoesNotExist:
-        logger.warning("Item %s not found", item_id)
-        return False
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error recording stock transaction: %s", exc)
         return False
@@ -43,16 +45,23 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
     try:
         with transaction.atomic():
             for tx in transactions:
-                if not record_stock_transaction(
-                    item_id=tx["item_id"],
-                    quantity_change=tx["quantity_change"],
+                item_id = tx["item_id"]
+                quantity_change = tx["quantity_change"]
+                updated = Item.objects.filter(pk=item_id).update(
+                    current_stock=F("current_stock") + quantity_change
+                )
+                if not updated:
+                    logger.warning("Item %s not found", item_id)
+                    raise ValueError("Stock transaction failed")
+                StockTransaction.objects.create(
+                    item_id=item_id,
+                    quantity_change=quantity_change,
                     transaction_type=tx["transaction_type"],
                     user_id=tx.get("user_id"),
                     related_mrn=tx.get("related_mrn"),
                     related_po_id=tx.get("related_po_id"),
                     notes=tx.get("notes"),
-                ):
-                    raise ValueError("Stock transaction failed")
+                )
         return True
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Bulk stock transaction failed: %s", exc)

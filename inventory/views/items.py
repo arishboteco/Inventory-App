@@ -11,11 +11,9 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..services.supabase_units import get_units
-
 from ..models import Item, StockTransaction
 from ..forms import ItemForm, BulkUploadForm
-from ..services import item_service, list_utils
+from ..services import item_service, list_utils, unit_suggestions
 
 logger = logging.getLogger(__name__)
 
@@ -266,22 +264,19 @@ class ItemDeleteView(View):
 
 
 class ItemSuggestView(TemplateView):
-    template_name = "inventory/_item_suggest_fields.html"
+    template_name = "inventory/_unit_suggestion_toast.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         name = (self.request.GET.get("name") or "").strip()
-        base, purchase, category = item_service.suggest_category_and_units(name)
-        units_map = get_units()
-        ctx.update(
-            {
-                "base": base or "",
-                "purchase": purchase or "",
-                "category": category or "",
-                "units_map": units_map,
-                "purchase_options": units_map.get(base or "", []),
-            }
-        )
+        base, purchase = unit_suggestions.suggest_units(name)
+        parts: list[str] = []
+        if base:
+            parts.append(f"Base: {base}")
+        if purchase:
+            parts.append(f"Purchase: {purchase}")
+        if parts:
+            ctx["unit_suggestion"] = ", ".join(parts)
         return ctx
 
 

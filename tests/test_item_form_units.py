@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 
 from inventory.forms import ItemForm
-from inventory.services import supabase_units, item_service
+from inventory.services import supabase_units, unit_suggestions
 
 pytestmark = pytest.mark.django_db
 
@@ -20,19 +20,9 @@ def test_item_form_uses_supabase_units(monkeypatch):
     assert "g" in purchase_choices and "lb" in purchase_choices
     assert "ml" not in purchase_choices
 
-def test_item_suggest_view_returns_filtered_units(client, monkeypatch):
-    mapping = {"kg": ["g", "lb"], "ltr": ["ml"]}
-    monkeypatch.setattr(supabase_units, "get_units", lambda force=False: mapping)
-    monkeypatch.setattr("inventory.views.items.get_units", lambda force=False: mapping)
-    monkeypatch.setattr(
-        item_service,
-        "suggest_category_and_units",
-        lambda name: ("kg", "g", "food"),
-    )
+def test_item_suggest_view_returns_message(client, monkeypatch):
+    monkeypatch.setattr(unit_suggestions, "suggest_units", lambda name: ("kg", "g"))
     url = reverse("item_suggest")
     resp = client.get(url, {"name": "milk"})
     html = resp.content.decode()
-    assert '<select name="base_unit"' in html
-    assert '<option value="kg"' in html
-    assert '<option value="g"' in html
-    assert '<option value="ml"' not in html
+    assert "Base: kg, Purchase: g" in html

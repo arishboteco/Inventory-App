@@ -17,21 +17,48 @@
     <h2 class="text-xl font-semibold mb-2">Goods Received</h2>
     <form method="post" class="mb-4">
       {% csrf_token %}
-      {{ receive_form.as_p }}
+      {% if receive_form.non_field_errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in receive_form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% for field in receive_form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
       <button type="submit" name="submit_receive" class="px-4 py-2 bg-green-600 text-white rounded">Record</button>
     </form>
   {% elif active_section == 'adjust' %}
     <h2 class="text-xl font-semibold mb-2">Stock Adjustment</h2>
     <form method="post" class="mb-4">
       {% csrf_token %}
-      {{ adjust_form.as_p }}
+      {% if adjust_form.non_field_errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in adjust_form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% for field in adjust_form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
       <button type="submit" name="submit_adjust" class="px-4 py-2 bg-green-600 text-white rounded">Record</button>
     </form>
   {% elif active_section == 'waste' %}
     <h2 class="text-xl font-semibold mb-2">Wastage/Spoilage</h2>
     <form method="post" class="mb-4">
       {% csrf_token %}
-      {{ waste_form.as_p }}
+      {% if waste_form.non_field_errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in waste_form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% for field in waste_form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
       <button type="submit" name="submit_waste" class="px-4 py-2 bg-green-600 text-white rounded">Record</button>
     </form>
   {% endif %}
@@ -40,7 +67,16 @@
   <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-blue-600 underline">Download sample CSV</a></p>
   <form method="post" enctype="multipart/form-data" class="mb-4">
     {% csrf_token %}
-    {{ bulk_form.as_p }}
+    {% if bulk_form.non_field_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in bulk_form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for field in bulk_form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
     <button type="submit" name="bulk_upload" class="px-4 py-2 bg-blue-600 text-white rounded">Upload</button>
   </form>
   {% if bulk_success_count is not None %}

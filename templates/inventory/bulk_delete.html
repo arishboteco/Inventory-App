@@ -4,7 +4,14 @@
   <h1 class="text-2xl font-semibold mb-4">{{ title }}</h1>
   <form method="post" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% if form.non_field_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
     <div class="flex gap-2">
       <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
       <a href="{% url back_url %}" class="px-4 py-2 border rounded">Back</a>

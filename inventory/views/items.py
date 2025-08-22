@@ -142,13 +142,13 @@ class ItemCreateView(View):
 
     def get(self, request):
         suggest_url = reverse("item_suggest")
-        form = ItemForm(suggest_url=suggest_url)
+        form = ItemForm(suggest_url=suggest_url, request=request)
         ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
         return render(request, self.template_name, ctx)
 
     def post(self, request):
         suggest_url = reverse("item_suggest")
-        form = ItemForm(request.POST, suggest_url=suggest_url)
+        form = ItemForm(request.POST, suggest_url=suggest_url, request=request)
         if form.is_valid():
             form.save()
             messages.success(request, "Item created")
@@ -171,7 +171,7 @@ class ItemEditView(View):
         item = self.get_object(pk)
         try:
             suggest_url = reverse("item_suggest")
-            form = ItemForm(instance=item, suggest_url=suggest_url)
+            form = ItemForm(instance=item, suggest_url=suggest_url, request=request)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
@@ -188,7 +188,12 @@ class ItemEditView(View):
         item = self.get_object(pk)
         try:
             suggest_url = reverse("item_suggest")
-            form = ItemForm(request.POST, instance=item, suggest_url=suggest_url)
+            form = ItemForm(
+                request.POST,
+                instance=item,
+                suggest_url=suggest_url,
+                request=request,
+            )
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")

@@ -1,4 +1,6 @@
 from django import forms
+from django.contrib import messages
+from django.http import HttpRequest
 from .models import (
     Item,
     Supplier,
@@ -12,8 +14,8 @@ from .models import (
     Recipe,
     RecipeComponent,
 )
-from .unit_inference import infer_units
 from .services.supabase_units import get_units
+from .services import unit_suggestions
 
 
 INPUT_CLASS = "w-full px-3 py-2 border rounded"
@@ -42,7 +44,14 @@ class ItemForm(forms.ModelForm):
             "category": {"required": "Category is required."},
         }
 
-    def __init__(self, *args, suggest_url: str | None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        suggest_url: str | None = None,
+        request: HttpRequest | None = None,
+        **kwargs,
+    ):
+        self.request = request
         super().__init__(*args, **kwargs)
 
         units_map = get_units()
@@ -100,15 +109,17 @@ class ItemForm(forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         name = cleaned.get("name", "")
-        category = cleaned.get("category")
         base = cleaned.get("base_unit")
         purchase = cleaned.get("purchase_unit")
         if name and (not base or not purchase):
-            inferred_base, inferred_purchase = infer_units(name, category)
-            if not base and inferred_base:
-                cleaned["base_unit"] = inferred_base
-            if not purchase and inferred_purchase:
-                cleaned["purchase_unit"] = inferred_purchase
+            suggested_base, suggested_purchase = unit_suggestions.suggest_units(name)
+            parts: list[str] = []
+            if not base and suggested_base:
+                parts.append(f"Base: {suggested_base}")
+            if not purchase and suggested_purchase:
+                parts.append(f"Purchase: {suggested_purchase}")
+            if parts and self.request:
+                messages.info(self.request, ", ".join(parts))
         return cleaned
 
 

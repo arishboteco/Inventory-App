@@ -2,34 +2,34 @@
 {% block content %}
 <div class="max-w-5xl mx-auto p-4">
   <h1 class="text-2xl font-semibold mb-4">History Reports</h1>
-    <form id="filters" method="get" class="flex flex-wrap gap-2 mb-4"
+    <form id="filters" method="get" class="grid gap-2 mb-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7"
           hx-get="{% url 'history_reports' %}"
           hx-target="#history_table"
           hx-indicator="#htmx-spinner">
-      <select name="item" class="form-control">
+      <select name="item" class="form-control w-full">
         <option value="">All Items</option>
       {% for it in items %}
       <option value="{{ it.item_id }}" {% if item|default:'' == it.item_id|stringformat:"s" %}selected{% endif %}>{{ it.name }}</option>
       {% endfor %}
       </select>
-      <select name="type" class="form-control">
+      <select name="type" class="form-control w-full">
       <option value="">All Types</option>
       {% for t in transaction_types %}
       <option value="{{ t }}" {% if type == t %}selected{% endif %}>{{ t }}</option>
       {% endfor %}
       </select>
-      <select name="user" class="form-control">
+      <select name="user" class="form-control w-full">
       <option value="">All Users</option>
       {% for u in users %}
       <option value="{{ u }}" {% if user == u %}selected{% endif %}>{{ u }}</option>
       {% endfor %}
       </select>
-      <input type="date" name="start_date" value="{{ start_date }}" class="form-control" />
-      <input type="date" name="end_date" value="{{ end_date }}" class="form-control" />
+      <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
+      <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
       <input type="hidden" name="sort" value="{{ sort|default:'date' }}" />
       <input type="hidden" name="direction" value="{{ direction|default:'desc' }}" />
-      <button type="submit" class="btn-primary">Filter</button>
-      <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="px-4 py-2 border rounded">Export CSV</a>
+      <button type="submit" class="btn-primary w-full">Filter</button>
+      <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="px-4 py-2 border rounded w-full">Export CSV</a>
     </form>
     <div id="history_table">
       {% include "inventory/_history_table.html" %}

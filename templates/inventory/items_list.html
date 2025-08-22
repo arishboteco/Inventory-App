@@ -6,12 +6,12 @@
     <a href="{% url 'item_create' %}" class="btn-primary">Add Item</a>
     <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
   </div>
-  <form id="filters" class="flex flex-wrap gap-2 mb-4" hx-indicator="#htmx-spinner">
+  <form id="filters" class="grid gap-2 mb-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5" hx-indicator="#htmx-spinner">
       <input
         type="text"
         name="q"
         placeholder="Search items..."
-        class="form-control flex-grow"
+        class="form-control w-full"
         value="{{ q }}"
         hx-get="{% url 'items_table' %}"
         hx-target="#items_table"
@@ -19,21 +19,21 @@
         hx-include="#filters"
         hx-indicator="#htmx-spinner"
       />
-      <select name="category" class="form-control"
+      <select name="category" class="form-control w-full"
               hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
       <option value="">All Categories</option>
       {% for cat in categories %}
       <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
       {% endfor %}
       </select>
-      <select name="subcategory" class="form-control"
+      <select name="subcategory" class="form-control w-full"
               hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
       <option value="">All Subcategories</option>
       {% for sub in subcategories %}
       <option value="{{ sub }}" {% if sub == subcategory %}selected{% endif %}>{{ sub }}</option>
       {% endfor %}
       </select>
-      <select name="active" class="form-control"
+      <select name="active" class="form-control w-full"
               hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
       <option value="">All</option>
       <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
@@ -42,7 +42,7 @@
       <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
       <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
       <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
-      <button type="submit" formaction="{% url 'items_export' %}" formmethod="get" class="btn-secondary">Export</button>
+      <button type="submit" formaction="{% url 'items_export' %}" formmethod="get" class="btn-secondary w-full">Export</button>
   </form>
   <div id="items_table"
        hx-get="{% url 'items_table' %}"

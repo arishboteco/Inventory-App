@@ -1,0 +1,88 @@
+<div class="overflow-x-auto">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>
+          <a hx-get="{% url 'history_reports' %}?sort=id&direction={% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+             hx-on:click="document.querySelector('#filters input[name=sort]').value='id';document.querySelector('#filters input[name=direction]').value='{% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+            ID{% if sort == 'id' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a hx-get="{% url 'history_reports' %}?sort=item&direction={% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+             hx-on:click="document.querySelector('#filters input[name=sort]').value='item';document.querySelector('#filters input[name=direction]').value='{% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+            Item{% if sort == 'item' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a hx-get="{% url 'history_reports' %}?sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+             hx-on:click="document.querySelector('#filters input[name=sort]').value='type';document.querySelector('#filters input[name=direction]').value='{% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+            Type{% if sort == 'type' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a hx-get="{% url 'history_reports' %}?sort=qty&direction={% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+             hx-on:click="document.querySelector('#filters input[name=sort]').value='qty';document.querySelector('#filters input[name=direction]').value='{% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+            Qty{% if sort == 'qty' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a hx-get="{% url 'history_reports' %}?sort=user&direction={% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+             hx-on:click="document.querySelector('#filters input[name=sort]').value='user';document.querySelector('#filters input[name=direction]').value='{% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+            User{% if sort == 'user' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+          </a>
+        </th>
+        <th>
+          <a hx-get="{% url 'history_reports' %}?sort=date&direction={% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+             hx-on:click="document.querySelector('#filters input[name=sort]').value='date';document.querySelector('#filters input[name=direction]').value='{% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+            Date{% if sort == 'date' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+          </a>
+        </th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in page_obj %}
+      <tr>
+        <td>{{ row.transaction_id }}</td>
+        <td>{{ row.item.name }}</td>
+        <td>{{ row.transaction_type }}</td>
+        <td>{{ row.quantity_change }}</td>
+        <td>{{ row.user_id }}</td>
+        <td>{{ row.transaction_date }}</td>
+        <td>{{ row.notes }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="p-2">No transactions found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3" class="p-2 font-semibold text-right">Total</td>
+        <td class="p-2 font-semibold">{{ total_quantity }}</td>
+        <td colspan="3"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<div class="flex items-center gap-3 mt-3">
+  {% if page_obj.has_previous %}
+  <a hx-get="{% url 'history_reports' %}?page={{ page_obj.previous_page_number }}"
+     hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+     class="px-3 py-1 border rounded">Prev</a>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a hx-get="{% url 'history_reports' %}?page={{ page_obj.next_page_number }}"
+     hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
+     class="px-3 py-1 border rounded">Next</a>
+  {% endif %}
+</div>

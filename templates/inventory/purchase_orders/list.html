@@ -1,6 +1,5 @@
 {% extends "_base.html" %}
 {% block content %}
-<div class="max-w-5xl mx-auto p-4">
   <h1 class="text-2xl font-semibold mb-4">Purchase Orders</h1>
   <div class="mb-4 flex justify-end gap-2">
     <a href="{% url 'purchase_order_create' %}" class="btn-primary">New PO</a>
@@ -38,5 +37,4 @@
     </div>
   </form>
   {% include "inventory/purchase_orders/_table.html" %}
-</div>
 {% endblock %}

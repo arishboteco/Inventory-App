@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 {% block content %}
-<div class="w-full max-w-2xl mx-auto p-4">
+<div class="w-full max-w-2xl mx-auto">
   <h1 class="text-xl font-bold mb-4">{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}</h1>
   <form method="post" id="recipe-form">
     {% csrf_token %}

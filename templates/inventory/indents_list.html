@@ -6,6 +6,17 @@
     <a href="{% url 'indent_create' %}" class="px-4 py-2 bg-green-600 text-white rounded">New Indent</a>
   </div>
     <form id="filters" class="flex flex-wrap gap-2 mb-4">
+      <input
+        type="text"
+        name="q"
+        placeholder="Search indents..."
+        class="form-control flex-grow"
+        value="{{ q }}"
+        hx-get="{% url 'indents_table' %}"
+        hx-target="#indents_table"
+        hx-trigger="keyup changed delay:300ms"
+        hx-include="#filters"
+      />
       <select name="status" class="form-control"
               hx-get="{% url 'indents_table' %}" hx-target="#indents_table" hx-trigger="change" hx-include="#filters">
       <option value="">All Statuses</option>

@@ -3,6 +3,7 @@ import logging
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import DatabaseError, transaction
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -28,7 +29,8 @@ class IndentsListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         status = (self.request.GET.get("status") or "").strip()
-        ctx.update({"status": status})
+        q = (self.request.GET.get("q") or "").strip()
+        ctx.update({"status": status, "q": q})
         return ctx
 
 
@@ -38,14 +40,28 @@ class IndentsTableView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         status = (self.request.GET.get("status") or "").strip()
+        q = (self.request.GET.get("q") or "").strip()
         qs = Indent.objects.all()
         if status:
             qs = qs.filter(status=status)
+        if q:
+            qs = qs.filter(
+                Q(mrn__icontains=q)
+                | Q(requested_by__icontains=q)
+                | Q(department__icontains=q)
+            )
         qs = qs.order_by("-indent_id")
         paginator = Paginator(qs, 25)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)
-        ctx.update({"page_obj": page_obj, "status": status, "badges": INDENT_STATUS_BADGES})
+        ctx.update(
+            {
+                "page_obj": page_obj,
+                "status": status,
+                "q": q,
+                "badges": INDENT_STATUS_BADGES,
+            }
+        )
         return ctx
 
 

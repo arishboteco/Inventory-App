@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 
 from inventory.models import Item, StockTransaction, Category
-from inventory.services import item_service, supabase_categories
+from inventory.services import item_service
 
 pytestmark = pytest.mark.django_db
 
@@ -59,15 +59,6 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     from inventory.forms import item_forms as forms_module
 
     monkeypatch.setattr(forms_module, "get_units", lambda: {"pcs": ["box"]})
-    categories_map = {
-        None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Drink"}],
-        1: [{"id": 3, "name": "Fruit"}],
-        2: [{"id": 4, "name": "Soda"}],
-    }
-    monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
-    monkeypatch.setattr(
-        supabase_categories, "get_categories", lambda: categories_map
-    )
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
 

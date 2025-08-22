@@ -2,7 +2,6 @@ import csv
 import io
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -17,7 +16,6 @@ from ..models import StockTransaction, Item
 from ..services import stock_service
 
 
-@login_required
 def stock_movements(request):
     sections = {
         "receive": "Goods Received",
@@ -140,7 +138,6 @@ def stock_movements(request):
     return render(request, "inventory/stock_movements.html", ctx)
 
 
-@login_required
 def history_reports(request):
     item = (request.GET.get("item") or "").strip()
     tx_type = (request.GET.get("type") or "").strip()

@@ -10,7 +10,3 @@ if PROJECT_ROOT not in sys.path:
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings")
 django.setup()
 
-from inventory_app.logging import configure_logging
-
-# Configure logging for tests once before other modules import loggers
-configure_logging()

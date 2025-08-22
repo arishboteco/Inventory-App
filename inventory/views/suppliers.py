@@ -3,7 +3,6 @@ import io
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,7 +16,7 @@ from ..services import supplier_service
 logger = logging.getLogger(__name__)
 
 
-class SuppliersListView(LoginRequiredMixin, TemplateView):
+class SuppliersListView(TemplateView):
     template_name = "inventory/suppliers_list.html"
 
     def get_context_data(self, **kwargs):
@@ -28,7 +27,7 @@ class SuppliersListView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class SuppliersTableView(LoginRequiredMixin, TemplateView):
+class SuppliersTableView(TemplateView):
     template_name = "inventory/_suppliers_table.html"
 
     def get_context_data(self, **kwargs):
@@ -52,7 +51,7 @@ class SuppliersTableView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class SupplierCreateView(LoginRequiredMixin, View):
+class SupplierCreateView(View):
     template_name = "inventory/supplier_form.html"
 
     def get(self, request):
@@ -69,7 +68,7 @@ class SupplierCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, {"form": form, "is_edit": False})
 
 
-class SupplierEditView(LoginRequiredMixin, View):
+class SupplierEditView(View):
     template_name = "inventory/supplier_form.html"
 
     def get(self, request, pk: int):
@@ -90,7 +89,7 @@ class SupplierEditView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
 
-class SupplierToggleActiveView(LoginRequiredMixin, View):
+class SupplierToggleActiveView(View):
     def get(self, request, pk: int):
         supplier = get_object_or_404(Supplier, pk=pk)
         if supplier.is_active:
@@ -101,7 +100,7 @@ class SupplierToggleActiveView(LoginRequiredMixin, View):
         return view(request)
 
 
-class SuppliersBulkUploadView(LoginRequiredMixin, View):
+class SuppliersBulkUploadView(View):
     template_name = "inventory/bulk_upload.html"
 
     def get(self, request):
@@ -143,7 +142,7 @@ class SuppliersBulkUploadView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
 
-class SuppliersBulkDeleteView(LoginRequiredMixin, View):
+class SuppliersBulkDeleteView(View):
     template_name = "inventory/bulk_delete.html"
 
     def get(self, request):

@@ -8,7 +8,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
-from ..forms import (
+from ..forms.stock_forms import (
     StockReceivingForm,
     StockAdjustmentForm,
     StockWastageForm,

@@ -32,7 +32,7 @@ def test_item_edit_handles_save_error(item_factory):
     request = rf.post(f"/items/{item.pk}/edit/", {"name": "Sugar"})
     _add_messages(request)
     # Simulate DB error on save
-    with patch("inventory.forms.ItemForm.save", side_effect=DatabaseError):
+    with patch("inventory.forms.item_forms.ItemForm.save", side_effect=DatabaseError):
         with patch("inventory.views.items.render", return_value=HttpResponse()):
             resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
@@ -98,7 +98,7 @@ def test_indent_create_atomic_on_error(item_factory):
     request = rf.post("/indents/create/", post_data)
     _add_messages(request)
     # Simulate DB error on formset save
-    with patch("inventory.forms.IndentItemFormSet.save", side_effect=DatabaseError):
+    with patch("inventory.forms.indent_forms.IndentItemFormSet.save", side_effect=DatabaseError):
         with patch("inventory.views.indents.render", return_value=HttpResponse()):
             resp = IndentCreateView.as_view()(request)
     assert resp.status_code == 200

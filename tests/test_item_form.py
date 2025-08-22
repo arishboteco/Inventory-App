@@ -3,8 +3,8 @@ from django import forms
 
 from django.urls import reverse
 
-from inventory.forms import ItemForm
-from inventory import forms as forms_module
+from inventory.forms.item_forms import ItemForm
+from inventory.forms import item_forms as forms_module
 from inventory.services import supabase_units
 from inventory.models import Category
 

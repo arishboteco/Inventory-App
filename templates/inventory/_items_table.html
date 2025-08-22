@@ -23,18 +23,18 @@
     </a>
   </th>
 <th class="px-4 py-2">
-  <a hx-get="{% url 'items_table' %}?sort=category&direction={% if sort == 'category' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a hx-get="{% url 'items_table' %}?sort=category__name&direction={% if sort == 'category__name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='category';document.querySelector('#filters input[name=direction]').value='{% if sort == 'category' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
-    Category{% if sort == 'category' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
-    </a>
+     hx-on:click="document.querySelector('#filters input[name=sort]').value='category__name';document.querySelector('#filters input[name=direction]').value='{% if sort == 'category__name' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+    Category{% if sort == 'category__name' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+  </a>
   </th>
 <th class="px-4 py-2">
-  <a hx-get="{% url 'items_table' %}?sort=sub_category&direction={% if sort == 'sub_category' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a hx-get="{% url 'items_table' %}?sort=sub_category__name&direction={% if sort == 'sub_category__name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='sub_category';document.querySelector('#filters input[name=direction]').value='{% if sort == 'sub_category' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
-    Subcategory{% if sort == 'sub_category' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
-    </a>
+     hx-on:click="document.querySelector('#filters input[name=sort]').value='sub_category__name';document.querySelector('#filters input[name=direction]').value='{% if sort == 'sub_category__name' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+    Subcategory{% if sort == 'sub_category__name' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+  </a>
   </th>
 <th class="px-4 py-2 text-right">
   <a hx-get="{% url 'items_table' %}?sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}"

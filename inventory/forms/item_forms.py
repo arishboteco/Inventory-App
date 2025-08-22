@@ -4,7 +4,7 @@ import logging
 from django import forms
 from django.urls import reverse
 
-from ..models import Item
+from ..models import Item, Category
 from ..services.supabase_units import get_units
 from ..services.supabase_categories import get_categories
 from .base import StyledFormMixin, INPUT_CLASS
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class ItemForm(StyledFormMixin, forms.ModelForm):
-    category = forms.ChoiceField(required=True)
-    sub_category = forms.ChoiceField(required=False)
+    category = forms.ModelChoiceField(queryset=Category.objects.all(), required=True)
+    sub_category = forms.ModelChoiceField(queryset=Category.objects.all(), required=False)
 
     class Meta:
         model = Item
@@ -54,11 +54,6 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             categories_map = {}
             logger.error("Failed to load categories map", exc_info=True)
         self.categories_map = categories_map
-        self.id_to_name = {
-            str(cat["id"]): cat["name"]
-            for children in categories_map.values()
-            for cat in children
-        }
 
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
@@ -95,9 +90,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
 
         category_field = self.fields["category"]
         top_categories = categories_map.get(None, [])
-        category_field.choices = [("", "---------")] + [
-            (str(cat["id"]), cat["name"]) for cat in top_categories
-        ]
+        top_ids = [cat["id"] for cat in top_categories]
+        category_field.queryset = Category.objects.filter(id__in=top_ids)
+        category_field.empty_label = "---------"
         category_field.widget = forms.Select(
             attrs={
                 "id": "id_category",
@@ -111,39 +106,29 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
 
         sub_field = self.fields["sub_category"]
         selected_category = self.data.get("category")
-        if not selected_category and self.instance.pk and self.instance.category:
-            for cat in top_categories:
-                if cat["name"] == self.instance.category:
-                    selected_category = str(cat["id"])
-                    category_field.initial = selected_category
-                    break
+        if not selected_category and self.instance.pk and self.instance.category_id:
+            selected_category = str(self.instance.category_id)
+            category_field.initial = self.instance.category
         if selected_category:
-            sub_field.choices = [("", "---------")] + [
-                (str(cat["id"]), cat["name"])
-                for cat in categories_map.get(int(selected_category), [])
-            ]
+            subcats = categories_map.get(int(selected_category), [])
+            sub_ids = [cat["id"] for cat in subcats]
+            sub_field.queryset = Category.objects.filter(id__in=sub_ids)
         else:
-            sub_field.choices = [("", "---------")] 
+            sub_field.queryset = Category.objects.none()
+        sub_field.empty_label = "---------"
         sub_field.widget = forms.Select(
             attrs={"id": "id_sub_category", "class": INPUT_CLASS}
         )
-        if self.instance.pk and self.instance.sub_category and selected_category:
-            for cat in categories_map.get(int(selected_category), []):
-                if cat["name"] == self.instance.sub_category:
-                    sub_field.initial = str(cat["id"])
-                    break
+        if self.instance.pk and self.instance.sub_category_id:
+            sub_field.initial = self.instance.sub_category
 
         # Reapply styling for any widgets replaced above
         self.apply_styling()
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
-        category = self.cleaned_data.get("category")
-        sub_category = self.cleaned_data.get("sub_category")
-        if category:
-            obj.category = self.id_to_name.get(str(category), "")
-        if sub_category:
-            obj.sub_category = self.id_to_name.get(str(sub_category), "")
+        obj.category = self.cleaned_data.get("category")
+        obj.sub_category = self.cleaned_data.get("sub_category")
         if commit:
             obj.save()
         return obj

@@ -23,18 +23,18 @@ EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category"]
 
 def _filter_and_sort_items(request, qs=None):
     """Return items queryset filtered and sorted according to request params."""
-    qs = qs or Item.objects.all()
+    qs = qs or Item.objects.select_related("category", "sub_category")
     filters = {
-        "category": "category",
-        "subcategory": "sub_category",
+        "category": "category__name",
+        "subcategory": "sub_category__name",
         "active": "is_active",
     }
     allowed_sorts = {
         "item_id",
         "name",
         "base_unit",
-        "category",
-        "sub_category",
+        "category__name",
+        "sub_category__name",
         "current_stock",
         "reorder_point",
         "is_active",
@@ -72,16 +72,14 @@ class ItemsListView(TemplateView):
         direction = (request.GET.get("direction") or "asc").strip()
         categories = (
             Item.objects.exclude(category__isnull=True)
-            .exclude(category="")
-            .order_by("category")
-            .values_list("category", flat=True)
+            .order_by("category__name")
+            .values_list("category__name", flat=True)
             .distinct()
         )
         subcategories = (
             Item.objects.exclude(sub_category__isnull=True)
-            .exclude(sub_category="")
-            .order_by("sub_category")
-            .values_list("sub_category", flat=True)
+            .order_by("sub_category__name")
+            .values_list("sub_category__name", flat=True)
             .distinct()
         )
         ctx.update(
@@ -147,8 +145,8 @@ class ItemsExportView(View):
                 item.item_id,
                 item.name,
                 item.base_unit,
-                item.category,
-                item.sub_category,
+                item.category.name if item.category else "",
+                item.sub_category.name if item.sub_category else "",
                 item.current_stock,
                 item.reorder_point,
                 item.is_active,

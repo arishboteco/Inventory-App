@@ -18,7 +18,7 @@ def test_apply_filters_sort(item_factory):
         request,
         Item.objects.all(),
         search_fields=["name"],
-        filter_fields={"category": "category"},
+        filter_fields={"category": "category__name"},
         allowed_sorts={"name"},
         default_sort="name",
     )
@@ -57,7 +57,7 @@ def test_apply_filters_sort_invalid(item_factory):
     qs, params = list_utils.apply_filters_sort(
         request,
         Item.objects.all(),
-        allowed_sorts={"category"},
+        allowed_sorts={"category__name"},
         default_sort="name",
         default_direction="asc",
     )

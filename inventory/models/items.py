@@ -29,8 +29,20 @@ class Item(models.Model):
     name = models.CharField(max_length=255, blank=False, null=False)
     base_unit = models.CharField(max_length=50, blank=False, null=False)
     purchase_unit = models.CharField(max_length=50, blank=False, null=False)
-    category = models.CharField(max_length=100, blank=False, null=False)
-    sub_category = models.CharField(max_length=100, blank=True, null=True)
+    category = models.ForeignKey(
+        Category,
+        models.DO_NOTHING,
+        related_name="items",
+        blank=True,
+        null=True,
+    )
+    sub_category = models.ForeignKey(
+        Category,
+        models.DO_NOTHING,
+        related_name="sub_items",
+        blank=True,
+        null=True,
+    )
     permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)

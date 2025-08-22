@@ -26,6 +26,7 @@ class SuppliersListView(TemplateView):
         page_size = (self.request.GET.get("page_size") or "25").strip()
         sort = (self.request.GET.get("sort") or "name").strip()
         direction = (self.request.GET.get("direction") or "asc").strip()
+        total_suppliers = Supplier.objects.count()
         ctx.update(
             {
                 "q": q,
@@ -33,6 +34,7 @@ class SuppliersListView(TemplateView):
                 "page_size": page_size,
                 "sort": sort,
                 "direction": direction,
+                "total_suppliers": total_suppliers,
             }
         )
         return ctx

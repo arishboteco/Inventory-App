@@ -33,7 +33,8 @@ class IndentsListView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         status = (self.request.GET.get("status") or "").strip()
         q = (self.request.GET.get("q") or "").strip()
-        ctx.update({"status": status, "q": q})
+        total_indents = Indent.objects.count()
+        ctx.update({"status": status, "q": q, "total_indents": total_indents})
         return ctx
 
 

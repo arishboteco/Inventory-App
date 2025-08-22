@@ -40,7 +40,7 @@ def create_po(
                 PurchaseOrderItem.objects.create(
                     purchase_order=po,
                     item=item,
-                    quantity_ordered=float(item_d["quantity_ordered"]),
+                    quantity_ordered=Decimal(str(item_d["quantity_ordered"])),
                     unit_price=Decimal(str(item_d["unit_price"])),
                 )
             return True, "Purchase Order created", po.po_id

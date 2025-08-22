@@ -4,6 +4,7 @@ This module provides small helper functions originally from the legacy
 Streamlit codebase. They avoid any Streamlit dependency so they can be
 used in tests and Django views."""
 
+from decimal import Decimal
 from typing import Callable, Dict, Iterable, List, Mapping, Optional, Tuple, Any
 
 __all__ = [
@@ -45,7 +46,9 @@ def build_item_choice_label(item: Any) -> str:
     unit = item.get("base_unit", "")
     category = item.get("category", "")
     stock = item.get("current_stock")
-    stock_part = f"{float(stock):.2f}" if isinstance(stock, (int, float)) else "?"
+    stock_part = (
+        f"{Decimal(stock):.2f}" if isinstance(stock, (int, float, Decimal)) else "?"
+    )
     return f"{name} ({sku}) | {unit} | {category} | {stock_part}"
 
 

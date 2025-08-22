@@ -1,4 +1,5 @@
 import pytest
+from decimal import Decimal
 from concurrent.futures import ThreadPoolExecutor
 
 from inventory.models import (
@@ -124,5 +125,5 @@ def test_concurrent_stock_updates():
             executor.submit(worker)
 
     item.refresh_from_db()
-    assert item.current_stock == 5
+    assert item.current_stock == Decimal("5")
     assert StockTransaction.objects.filter(item=item).count() == 5

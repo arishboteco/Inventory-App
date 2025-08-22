@@ -173,8 +173,8 @@ def test_record_sale_reduces_nested_stock():
     assert ok, msg
 
     item = Item.objects.get(pk=item_id)
-    expected = 20 - (2 * 1 / (1 - 0.2) / (1 - 0.1))
-    assert item.current_stock == pytest.approx(expected)
+    expected = round(20 - (2 * 1 / (1 - 0.2) / (1 - 0.1)), 2)
+    assert float(item.current_stock) == expected
 
 
 @pytest.mark.django_db

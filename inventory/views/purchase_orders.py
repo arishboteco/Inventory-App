@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from django.contrib import messages
+from decimal import Decimal
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
@@ -154,11 +155,11 @@ def purchase_order_receive(request, pk: int):
             for item in items:
                 qty_field = f"item_{item.pk}"
                 try:
-                    qty = float(request.POST.get(qty_field, 0) or 0)
-                except ValueError:
-                    qty = 0
+                    qty = Decimal(request.POST.get(qty_field, 0) or 0)
+                except Exception:
+                    qty = Decimal("0")
                 if qty < 0:
-                    qty = 0
+                    qty = Decimal("0")
                 if qty:
                     any_received = True
                     remaining = item.quantity_ordered - item.quantity_received

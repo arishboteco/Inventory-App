@@ -221,7 +221,6 @@ class Migration(migrations.Migration):
                 ("quantity_ordered_on_po", models.FloatField()),
                 ("quantity_received", models.FloatField()),
                 ("unit_price_at_receipt", models.FloatField()),
-                ("item_notes", models.TextField(blank=True, null=True)),
                 (
                     "grn",
                     models.ForeignKey(

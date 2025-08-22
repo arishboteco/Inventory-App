@@ -18,7 +18,7 @@
         <td>{{ row.requested_by }}</td>
         <td>{{ row.department }}</td>
         <td><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
-        <td><a href="{% url 'indent_detail' row.indent_id %}" class="text-blue-600">View</a></td>
+        <td><a href="{% url 'indent_detail' row.indent_id %}" class="text-primary">View</a></td>
       </tr>
       {% empty %}
       <tr><td colspan="6" class="p-2">No indents found.</td></tr>

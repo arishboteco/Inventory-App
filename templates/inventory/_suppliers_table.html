@@ -21,7 +21,7 @@
         <td>{{ row.phone }}</td>
         <td>{{ row.is_active }}</td>
         <td>
-          <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-blue-600 mr-2">Edit</a>
+          <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary mr-2">Edit</a>
           <form
             hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
             hx-target="#suppliers_table"
@@ -36,7 +36,7 @@
             <input type="hidden" name="page_size" value="{{ page_size }}" />
             <input type="hidden" name="sort" value="{{ sort }}" />
             <input type="hidden" name="direction" value="{{ direction }}" />
-            <button type="submit" class="text-blue-600">Toggle</button>
+            <button type="submit" class="text-primary">Toggle</button>
           </form>
         </td>
       </tr>

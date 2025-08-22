@@ -9,4 +9,3 @@ if PROJECT_ROOT not in sys.path:
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings")
 django.setup()
-

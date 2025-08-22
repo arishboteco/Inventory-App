@@ -1,19 +1,23 @@
 import pytest
 from django.urls import reverse
 
-from inventory.models import Item, StockTransaction
+from inventory.models import Item, StockTransaction, Category
 from inventory.services import item_service, supabase_categories
 
 pytestmark = pytest.mark.django_db
 
 
-def _create_item(**kwargs):
+def _create_item(category: Category | str | None = None, sub_category: Category | str | None = None, **kwargs):
+    if isinstance(category, str) or category is None:
+        category = Category.objects.create(name=category or "cat")
+    if isinstance(sub_category, str) or sub_category is None:
+        sub_category = Category.objects.create(name=sub_category or "sub", parent=category)
     defaults = {
         "name": "Widget",
         "base_unit": "pcs",
         "purchase_unit": "box",
-        "category": "cat",
-        "sub_category": "sub",
+        "category": category,
+        "sub_category": sub_category,
         "permitted_departments": "dept",
         "reorder_point": 1,
         "notes": "n",
@@ -67,7 +71,11 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
 
-    item = _create_item(category="Food", sub_category="Fruit")
+    cat_food = Category.objects.create(id=1, name="Food")
+    cat_drink = Category.objects.create(id=2, name="Drink")
+    sub_fruit = Category.objects.create(id=3, name="Fruit", parent=cat_food)
+    Category.objects.create(id=4, name="Soda", parent=cat_drink)
+    item = _create_item(category=cat_food, sub_category=sub_fruit)
 
     # Prime caches
     item_service.get_all_items_with_stock()
@@ -79,8 +87,8 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     resp = client.get(url)
     assert resp.status_code == 200
     form = resp.context["form"]
-    assert form.fields["category"].initial == "1"
-    assert form.fields["sub_category"].initial == "3"
+    assert form.fields["category"].initial == cat_food
+    assert form.fields["sub_category"].initial == sub_fruit
 
     data = {
         "name": "Gadget",
@@ -98,8 +106,8 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     assert resp.status_code == 302
     item.refresh_from_db()
     assert item.name == "Gadget"
-    assert item.category == "Drink"
-    assert item.sub_category == "Soda"
+    assert item.category.name == "Drink"
+    assert item.sub_category.name == "Soda"
 
     assert item_service.get_all_items_with_stock.cache_info().currsize == 0
     assert item_service.get_distinct_departments_from_items.cache_info().currsize == 0

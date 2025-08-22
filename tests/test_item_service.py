@@ -7,6 +7,7 @@ from inventory.models import (
     Recipe,
     IndentItem,
     PurchaseOrderItem,
+    Category,
 )
 from django.db.utils import OperationalError
 from inventory.services import item_service
@@ -23,6 +24,7 @@ def clear_tables(db):
         PurchaseOrderItem,
         StockTransaction,
         Item,
+        Category,
     ):
         try:
             model.objects.all().delete()
@@ -33,12 +35,14 @@ def clear_tables(db):
 
 
 def test_add_new_item_inserts_row():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     details = {
         "name": "Widget",
         "base_unit": "pcs",
         "purchase_unit": "box",
-        "category": "cat",
-        "sub_category": "sub",
+        "category": cat,
+        "sub_category": sub,
         "permitted_departments": "dept",
         "reorder_point": 1,
         "notes": "n",
@@ -50,12 +54,14 @@ def test_add_new_item_inserts_row():
 
 
 def test_get_all_items_with_stock_includes_unit():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     item = Item.objects.create(
         name="Widget",
         base_unit="pcs",
         purchase_unit="box",
-        category="cat",
-        sub_category="sub",
+        category=cat,
+        sub_category=sub,
         permitted_departments="dept",
         reorder_point=1,
         notes="n",
@@ -69,12 +75,14 @@ def test_get_all_items_with_stock_includes_unit():
 
 
 def test_get_item_details_includes_unit():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     item = Item.objects.create(
         name="Widget",
         base_unit="pcs",
         purchase_unit="box",
-        category="cat",
-        sub_category="sub",
+        category=cat,
+        sub_category=sub,
         permitted_departments="dept",
         reorder_point=1,
         notes="n",
@@ -87,13 +95,15 @@ def test_get_item_details_includes_unit():
 
 
 def test_add_items_bulk_inserts_rows():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     items = [
         {
             "name": "Widget",
             "base_unit": "pcs",
             "purchase_unit": "box",
-            "category": "cat",
-            "sub_category": "sub",
+            "category": cat,
+            "sub_category": sub,
             "permitted_departments": "dept",
             "reorder_point": 1,
             "notes": "n",
@@ -103,8 +113,8 @@ def test_add_items_bulk_inserts_rows():
             "name": "Gadget",
             "base_unit": "pcs",
             "purchase_unit": "each",
-            "category": "cat",
-            "sub_category": "sub",
+            "category": cat,
+            "sub_category": sub,
             "permitted_departments": "dept2",
             "reorder_point": 2,
             "notes": "n",
@@ -118,9 +128,10 @@ def test_add_items_bulk_inserts_rows():
 
 
 def test_add_items_bulk_validation_failure():
+    cat = Category.objects.create(name="cat")
     items = [
-        {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box", "category": "cat"},
-        {"name": "", "base_unit": "pcs", "purchase_unit": "box", "category": "cat"},
+        {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box", "category": cat},
+        {"name": "", "base_unit": "pcs", "purchase_unit": "box", "category": cat},
     ]
     inserted, errors = item_service.add_items_bulk(items)
     assert inserted == 0
@@ -129,12 +140,14 @@ def test_add_items_bulk_validation_failure():
 
 
 def test_remove_items_bulk_marks_inactive():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     widget = Item.objects.create(
         name="Widget",
         base_unit="pcs",
         purchase_unit="box",
-        category="cat",
-        sub_category="sub",
+        category=cat,
+        sub_category=sub,
         permitted_departments="dept",
         reorder_point=1,
         notes="n",
@@ -144,8 +157,8 @@ def test_remove_items_bulk_marks_inactive():
         name="Gadget",
         base_unit="pcs",
         purchase_unit="each",
-        category="cat",
-        sub_category="sub",
+        category=cat,
+        sub_category=sub,
         permitted_departments="dept2",
         reorder_point=2,
         notes="n",
@@ -165,12 +178,14 @@ def test_remove_items_bulk_requires_ids():
 
 @pytest.mark.django_db
 def test_update_item_changes_fields():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     item = Item.objects.create(
         name="Widget",
         base_unit="pcs",
         purchase_unit="box",
-        category="cat",
-        sub_category="sub",
+        category=cat,
+        sub_category=sub,
         permitted_departments="dept",
         reorder_point=1,
         notes="n",
@@ -191,12 +206,14 @@ def test_update_item_invalid_id():
 
 @pytest.mark.django_db
 def test_deactivate_and_reactivate_item():
+    cat = Category.objects.create(name="cat")
+    sub = Category.objects.create(name="sub", parent=cat)
     item = Item.objects.create(
         name="Widget",
         base_unit="pcs",
         purchase_unit="box",
-        category="cat",
-        sub_category="sub",
+        category=cat,
+        sub_category=sub,
         permitted_departments="dept",
         reorder_point=1,
         notes="n",

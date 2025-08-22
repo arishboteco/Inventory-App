@@ -29,7 +29,10 @@ def _add_messages(request):
 def test_item_edit_handles_save_error(item_factory):
     item = item_factory(name="Sugar")
     rf = RequestFactory()
-    request = rf.post(f"/items/{item.pk}/edit/", {"name": "Sugar"})
+    request = rf.post(
+        f"/items/{item.pk}/edit/",
+        {"name": "Sugar", "category": str(item.category_id), "sub_category": str(item.sub_category_id)},
+    )
     _add_messages(request)
     # Simulate DB error on save
     with patch("inventory.forms.item_forms.ItemForm.save", side_effect=DatabaseError):

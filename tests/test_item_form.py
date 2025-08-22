@@ -8,6 +8,7 @@ from django.urls import reverse
 from inventory.forms.item_forms import ItemForm
 from inventory.forms import item_forms as forms_module
 from inventory.services import supabase_units, supabase_categories
+from inventory.models import Category
 
 
 @pytest.mark.django_db
@@ -60,14 +61,27 @@ def test_item_form_categories_and_subcategories(monkeypatch):
         2: [{"id": 5, "name": "Hammer"}],
     }
     monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
+    Category.objects.create(id=1, name="Food")
+    Category.objects.create(id=2, name="Tools")
+    Category.objects.create(id=3, name="Fruit", parent_id=1)
+    Category.objects.create(id=4, name="Veg", parent_id=1)
+    Category.objects.create(id=5, name="Hammer", parent_id=2)
 
     form = ItemForm()
-    assert form.fields["category"].choices == [
+    cat_choices = [
+        (("" if val is None else str(val)), label)
+        for val, label in form.fields["category"].choices
+    ]
+    assert cat_choices == [
         ("", "---------"),
         ("1", "Food"),
         ("2", "Tools"),
     ]
-    assert form.fields["sub_category"].choices == [("", "---------")]
+    sub_choices = [
+        (("" if val is None else str(val)), label)
+        for val, label in form.fields["sub_category"].choices
+    ]
+    assert sub_choices == [("", "---------")]
 
     data = {
         "name": "Apple",
@@ -77,15 +91,19 @@ def test_item_form_categories_and_subcategories(monkeypatch):
         "sub_category": "3",
     }
     form = ItemForm(data=data)
-    assert form.fields["sub_category"].choices == [
+    sub_choices = [
+        (("" if val is None else str(val)), label)
+        for val, label in form.fields["sub_category"].choices
+    ]
+    assert sub_choices == [
         ("", "---------"),
         ("3", "Fruit"),
         ("4", "Veg"),
     ]
     assert form.is_valid()
     item = form.save()
-    assert item.category == "Food"
-    assert item.sub_category == "Fruit"
+    assert item.category.name == "Food"
+    assert item.sub_category.name == "Fruit"
 
 
 @pytest.mark.django_db

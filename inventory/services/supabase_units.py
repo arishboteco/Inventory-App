@@ -66,4 +66,3 @@ def get_units(force: bool = False) -> Dict[str, List[str]]:
     _cache = _load_units_from_supabase()
     _cache_time = now
     return _cache
-

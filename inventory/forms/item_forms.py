@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from ..models import Item, Category
 from ..services.supabase_units import get_units
-from ..services.supabase_categories import get_categories
 from .base import StyledFormMixin, INPUT_CLASS
 
 logger = logging.getLogger(__name__)
@@ -47,14 +46,6 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             logger.error("Failed to load units map", exc_info=True)
         self.units_map = units_map
 
-        try:
-            categories_map = get_categories()
-            logger.debug("Categories map loaded: %s", categories_map)
-        except Exception:
-            categories_map = {}
-            logger.error("Failed to load categories map", exc_info=True)
-        self.categories_map = categories_map
-
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
 
@@ -89,9 +80,8 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             purchase_field.initial = self.initial.get("purchase_unit")
 
         category_field = self.fields["category"]
-        top_categories = categories_map.get(None, [])
-        top_ids = [cat["id"] for cat in top_categories]
-        category_field.queryset = Category.objects.filter(id__in=top_ids)
+        top_categories = Category.objects.filter(parent__isnull=True).order_by("name")
+        category_field.queryset = top_categories
         category_field.empty_label = "---------"
         category_field.widget = forms.Select(
             attrs={
@@ -110,9 +100,13 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             selected_category = str(self.instance.category_id)
             category_field.initial = self.instance.category
         if selected_category:
-            subcats = categories_map.get(int(selected_category), [])
-            sub_ids = [cat["id"] for cat in subcats]
-            sub_field.queryset = Category.objects.filter(id__in=sub_ids)
+            try:
+                sub_field.queryset = (
+                    Category.objects.filter(parent_id=int(selected_category))
+                    .order_by("name")
+                )
+            except (ValueError, TypeError):
+                sub_field.queryset = Category.objects.none()
         else:
             sub_field.queryset = Category.objects.none()
         sub_field.empty_label = "---------"

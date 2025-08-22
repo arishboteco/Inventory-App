@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from inventory.forms.item_forms import ItemForm
 from inventory.forms import item_forms as forms_module
-from inventory.services import supabase_units, supabase_categories
+from inventory.services import supabase_units
 from inventory.models import Category
 
 
@@ -55,12 +55,6 @@ def test_item_form_units_fallback(monkeypatch, caplog):
 @pytest.mark.django_db
 def test_item_form_categories_and_subcategories(monkeypatch):
     monkeypatch.setattr(supabase_units, "get_units", lambda: {"kg": ["g"]})
-    categories_map = {
-        None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Tools"}],
-        1: [{"id": 3, "name": "Fruit"}, {"id": 4, "name": "Veg"}],
-        2: [{"id": 5, "name": "Hammer"}],
-    }
-    monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
     Category.objects.create(id=1, name="Food")
     Category.objects.create(id=2, name="Tools")
     Category.objects.create(id=3, name="Fruit", parent_id=1)
@@ -108,15 +102,9 @@ def test_item_form_categories_and_subcategories(monkeypatch):
 
 @pytest.mark.django_db
 def test_subcategory_options_view(client, monkeypatch):
-    categories_map = {
-        None: [{"id": 1, "name": "Food"}],
-        1: [{"id": 3, "name": "Fruit"}, {"id": 4, "name": "Veg"}],
-    }
-    monkeypatch.setattr(
-        supabase_categories, "get_categories", lambda: categories_map
-    )
-    from inventory.views import items as items_views
-    monkeypatch.setattr(items_views, "get_categories", lambda: categories_map)
+    Category.objects.create(id=1, name="Food")
+    Category.objects.create(id=3, name="Fruit", parent_id=1)
+    Category.objects.create(id=4, name="Veg", parent_id=1)
     url = reverse("item_subcategory_options")
     resp = client.get(url, {"category": 1})
     assert resp.status_code == 200

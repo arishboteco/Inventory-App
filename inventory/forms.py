@@ -15,6 +15,10 @@ from .models import (
 from .unit_inference import infer_units
 
 
+INPUT_CLASS = "w-full px-3 py-2 border rounded"
+CHECKBOX_CLASS = "h-4 w-4 text-blue-600"
+
+
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
@@ -42,7 +46,7 @@ class ItemForm(forms.ModelForm):
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
 
-        name_attrs = {"class": "form-control"}
+        name_attrs = {"class": INPUT_CLASS}
         if suggest_url:
             name_attrs.update(
                 {
@@ -54,22 +58,22 @@ class ItemForm(forms.ModelForm):
         self.fields["name"].widget.attrs.update(name_attrs)
 
         self.fields["base_unit"].widget.attrs.update(
-            {"id": "id_base_unit", "class": "form-control"}
+            {"id": "id_base_unit", "class": INPUT_CLASS}
         )
         self.fields["purchase_unit"].widget.attrs.update(
-            {"id": "id_purchase_unit", "class": "form-control"}
+            {"id": "id_purchase_unit", "class": INPUT_CLASS}
         )
         self.fields["category"].widget.attrs.update(
-            {"id": "id_category", "class": "form-control"}
+            {"id": "id_category", "class": INPUT_CLASS}
         )
 
         for name, field in self.fields.items():
             if name in {"name", "base_unit", "purchase_unit", "category"}:
                 continue
             if getattr(field.widget, "input_type", None) == "checkbox":
-                field.widget.attrs.update({"class": "form-checkbox"})
+                field.widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
-                field.widget.attrs.update({"class": "form-control"})
+                field.widget.attrs.update({"class": INPUT_CLASS})
 
     def clean(self):
         cleaned = super().clean()
@@ -111,9 +115,9 @@ class SupplierForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             if getattr(field.widget, "input_type", None) == "checkbox":
-                field.widget.attrs.update({"class": "form-checkbox"})
+                field.widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
-                field.widget.attrs.update({"class": "form-control"})
+                field.widget.attrs.update({"class": INPUT_CLASS})
 
 
 class StockReceivingForm(forms.ModelForm):
@@ -181,9 +185,9 @@ class IndentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             if getattr(field.widget, "input_type", None) == "checkbox":
-                field.widget.attrs.update({"class": "form-checkbox"})
+                field.widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
-                field.widget.attrs.update({"class": "form-control"})
+                field.widget.attrs.update({"class": INPUT_CLASS})
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
@@ -202,7 +206,7 @@ class IndentItemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.update({"class": "form-control"})
+            field.widget.attrs.update({"class": INPUT_CLASS})
 
 
 IndentItemFormSet = forms.inlineformset_factory(
@@ -275,9 +279,9 @@ class RecipeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             if getattr(field.widget, "input_type", None) == "checkbox":
-                field.widget.attrs.update({"class": "form-checkbox"})
+                field.widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
-                field.widget.attrs.update({"class": "form-control"})
+                field.widget.attrs.update({"class": INPUT_CLASS})
 
 
 class RecipeComponentForm(forms.ModelForm):
@@ -294,7 +298,7 @@ class RecipeComponentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.update({"class": "form-control"})
+            field.widget.attrs.update({"class": INPUT_CLASS})
 
 
 RecipeComponentFormSet = forms.inlineformset_factory(

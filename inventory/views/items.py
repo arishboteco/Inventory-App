@@ -31,6 +31,7 @@ class ItemsListView(TemplateView):
         category = (request.GET.get("category") or "").strip()
         subcategory = (request.GET.get("subcategory") or "").strip()
         active = (request.GET.get("active") or "").strip()
+        page_size = (request.GET.get("page_size") or "25").strip()
         categories = (
             Item.objects.exclude(category__isnull=True)
             .exclude(category="")
@@ -51,6 +52,7 @@ class ItemsListView(TemplateView):
                 "category": category,
                 "subcategory": subcategory,
                 "active": active,
+                "page_size": page_size,
                 "categories": categories,
                 "subcategories": subcategories,
             }
@@ -68,6 +70,7 @@ class ItemsTableView(TemplateView):
         category = (request.GET.get("category") or "").strip()
         subcategory = (request.GET.get("subcategory") or "").strip()
         active = (request.GET.get("active") or "").strip()
+        page_size = request.GET.get("page_size") or 25
         qs = Item.objects.all()
         if q:
             qs = qs.filter(name__icontains=q)
@@ -81,7 +84,11 @@ class ItemsTableView(TemplateView):
             elif active == "0":
                 qs = qs.filter(is_active=False)
         qs = qs.order_by("name")
-        paginator = Paginator(qs, 25)
+        try:
+            per_page = int(page_size)
+        except (TypeError, ValueError):
+            per_page = 25
+        paginator = Paginator(qs, per_page)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
         ctx.update(
@@ -91,6 +98,7 @@ class ItemsTableView(TemplateView):
                 "category": category,
                 "subcategory": subcategory,
                 "active": active,
+                "page_size": per_page,
             }
         )
         return ctx

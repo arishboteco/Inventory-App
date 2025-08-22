@@ -6,7 +6,7 @@
     <a href="{% url 'item_create' %}" class="px-4 py-2 bg-green-600 text-white rounded">Add Item</a>
     <a href="{% url 'items_bulk_upload' %}" class="px-4 py-2 border rounded">Bulk Upload</a>
   </div>
-  <form id="filters" class="flex flex-wrap gap-2 mb-4">
+  <form id="filters" class="flex flex-wrap gap-2 mb-4" hx-indicator="#htmx-spinner">
       <input
         type="text"
         name="q"
@@ -17,32 +17,35 @@
         hx-target="#items_table"
         hx-trigger="keyup changed delay:300ms"
         hx-include="#filters"
+        hx-indicator="#htmx-spinner"
       />
       <select name="category" class="form-control"
-              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
+              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
       <option value="">All Categories</option>
       {% for cat in categories %}
       <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
       {% endfor %}
-    </select>
+      </select>
       <select name="subcategory" class="form-control"
-              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
+              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
       <option value="">All Subcategories</option>
       {% for sub in subcategories %}
       <option value="{{ sub }}" {% if sub == subcategory %}selected{% endif %}>{{ sub }}</option>
       {% endfor %}
-    </select>
+      </select>
       <select name="active" class="form-control"
-              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters">
+              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
       <option value="">All</option>
       <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
       <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
-    </select>
+      </select>
+      <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
   </form>
   <div id="items_table"
        hx-get="{% url 'items_table' %}"
        hx-trigger="load"
-       hx-include="#filters">
+       hx-include="#filters"
+       hx-indicator="#htmx-spinner">
   </div>
 </div>
 {% endblock %}

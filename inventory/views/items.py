@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import DatabaseError
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
@@ -32,6 +32,8 @@ class ItemsListView(TemplateView):
         subcategory = (request.GET.get("subcategory") or "").strip()
         active = (request.GET.get("active") or "").strip()
         page_size = (request.GET.get("page_size") or "25").strip()
+        sort = (request.GET.get("sort") or "name").strip()
+        direction = (request.GET.get("direction") or "asc").strip()
         categories = (
             Item.objects.exclude(category__isnull=True)
             .exclude(category="")
@@ -53,6 +55,8 @@ class ItemsListView(TemplateView):
                 "subcategory": subcategory,
                 "active": active,
                 "page_size": page_size,
+                "sort": sort,
+                "direction": direction,
                 "categories": categories,
                 "subcategories": subcategories,
             }
@@ -70,6 +74,8 @@ class ItemsTableView(TemplateView):
         category = (request.GET.get("category") or "").strip()
         subcategory = (request.GET.get("subcategory") or "").strip()
         active = (request.GET.get("active") or "").strip()
+        sort = (request.GET.get("sort") or "name").strip()
+        direction = (request.GET.get("direction") or "asc").strip()
         page_size = request.GET.get("page_size") or 25
         qs = Item.objects.all()
         if q:
@@ -83,7 +89,20 @@ class ItemsTableView(TemplateView):
                 qs = qs.filter(is_active=True)
             elif active == "0":
                 qs = qs.filter(is_active=False)
-        qs = qs.order_by("name")
+        allowed_sorts = {
+            "item_id",
+            "name",
+            "base_unit",
+            "category",
+            "sub_category",
+            "current_stock",
+            "reorder_point",
+            "is_active",
+        }
+        if sort not in allowed_sorts:
+            sort = "name"
+        ordering = sort if direction != "desc" else f"-{sort}"
+        qs = qs.order_by(ordering)
         try:
             per_page = int(page_size)
         except (TypeError, ValueError):
@@ -99,9 +118,76 @@ class ItemsTableView(TemplateView):
                 "subcategory": subcategory,
                 "active": active,
                 "page_size": per_page,
+                "sort": sort,
+                "direction": direction,
             }
         )
         return ctx
+
+
+class ItemsExportView(View):
+    def get(self, request):
+        q = (request.GET.get("q") or "").strip()
+        category = (request.GET.get("category") or "").strip()
+        subcategory = (request.GET.get("subcategory") or "").strip()
+        active = (request.GET.get("active") or "").strip()
+        sort = (request.GET.get("sort") or "name").strip()
+        direction = (request.GET.get("direction") or "asc").strip()
+        qs = Item.objects.all()
+        if q:
+            qs = qs.filter(name__icontains=q)
+        if category:
+            qs = qs.filter(category=category)
+        if subcategory:
+            qs = qs.filter(sub_category=subcategory)
+        if active:
+            if active == "1":
+                qs = qs.filter(is_active=True)
+            elif active == "0":
+                qs = qs.filter(is_active=False)
+        allowed_sorts = {
+            "item_id",
+            "name",
+            "base_unit",
+            "category",
+            "sub_category",
+            "current_stock",
+            "reorder_point",
+            "is_active",
+        }
+        if sort not in allowed_sorts:
+            sort = "name"
+        ordering = sort if direction != "desc" else f"-{sort}"
+        qs = qs.order_by(ordering)
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=items.csv"
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "ID",
+                "Name",
+                "Base Unit",
+                "Category",
+                "Subcategory",
+                "Current Stock",
+                "Reorder Point",
+                "Active",
+            ]
+        )
+        for item in qs:
+            writer.writerow(
+                [
+                    item.item_id,
+                    item.name,
+                    item.base_unit,
+                    item.category,
+                    item.sub_category,
+                    item.current_stock,
+                    item.reorder_point,
+                    item.is_active,
+                ]
+            )
+        return response
 
 
 class ItemCreateView(View):

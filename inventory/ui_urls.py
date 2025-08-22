@@ -3,6 +3,7 @@ from django.urls import path
 from .views.items import (
     ItemsListView,
     ItemsTableView,
+    ItemsExportView,
     ItemCreateView,
     ItemEditView,
     ItemSuggestView,
@@ -46,6 +47,7 @@ from .views.goods_received import (
 urlpatterns = [
     path("items/", ItemsListView.as_view(), name="items_list"),
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
+    path("items/export/", ItemsExportView.as_view(), name="items_export"),
     path("items/create/", ItemCreateView.as_view(), name="item_create"),
     path("items/<int:pk>/edit/", ItemEditView.as_view(), name="item_edit"),
     path("items/suggest/", ItemSuggestView.as_view(), name="item_suggest"),

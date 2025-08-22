@@ -1,5 +1,6 @@
 """API routes for the inventory app."""
 
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
@@ -16,6 +17,7 @@ from .views import (
     GRNItemViewSet,
     SaleTransactionViewSet,
 )
+from .views.items import ItemsExportView
 
 router = DefaultRouter()
 router.register(r"items", ItemViewSet)
@@ -31,4 +33,6 @@ router.register(r"goods-received-notes", GoodsReceivedNoteViewSet)
 router.register(r"grn-items", GRNItemViewSet)
 router.register(r"sale-transactions", SaleTransactionViewSet)
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path("items/export/", ItemsExportView.as_view(), name="items_export_api"),
+]

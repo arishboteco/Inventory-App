@@ -5,7 +5,7 @@
     <a href="{% url 'item_create' %}" class="btn-primary">Add Item</a>
     <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
   </div>
-  <form id="filters" class="grid gap-2 mb-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5" hx-indicator="#htmx-spinner">
+  <form id="filters" class="grid gap-2 mb-4 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1" hx-indicator="#htmx-spinner">
       <input
         type="text"
         name="q"

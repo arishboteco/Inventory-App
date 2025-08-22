@@ -14,7 +14,7 @@
       {% endfor %}
     </ul>
     {% endif %}
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
       {% include "components/form_field.html" with field=form.name %}
       {% include "components/form_field.html" with field=form.base_unit %}
       {% include "components/form_field.html" with field=form.purchase_unit %}

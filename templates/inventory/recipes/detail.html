@@ -17,5 +17,5 @@
   {% endfor %}
   </tbody>
 </table>
-<button class="mt-4 px-3 py-1 bg-gray-200" hx-get="{% url 'recipe_component_row' recipe.recipe_id %}?index={{ components|length }}" hx-target="#components tbody" hx-swap="beforeend">Add Component</button>
+<button class="mt-4 px-3 py-1 bg-gray-200 dark:bg-gray-700 dark:text-white" hx-get="{% url 'recipe_component_row' recipe.recipe_id %}?index={{ components|length }}" hx-target="#components tbody" hx-swap="beforeend">Add Component</button>
 {% endblock %}

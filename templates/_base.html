@@ -11,20 +11,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   </head>
-  <body class="bg-gray-100 min-h-screen">
-    <nav class="bg-gray-800">
+  <body class="bg-gray-100 dark:bg-gray-900 min-h-screen">
+    <nav class="bg-gray-800 dark:bg-gray-950">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex-shrink-0">
             <a href="{% url 'root' %}" class="text-white font-bold">Inventory App</a>
           </div>
           <div class="flex space-x-4">
-            <a href="{% url 'dashboard' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-            <a href="{% url 'items_list' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Items</a>
-            <a href="{% url 'suppliers_list' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Suppliers</a>
-            <a href="{% url 'indents_list' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Indents</a>
-            <a href="{% url 'stock_movements' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Stock Movements</a>
-            <a href="{% url 'history_reports' %}" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Reports</a>
+            <a href="{% url 'dashboard' %}" class="text-gray-300 hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+            <a href="{% url 'items_list' %}" class="text-gray-300 hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Items</a>
+            <a href="{% url 'suppliers_list' %}" class="text-gray-300 hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Suppliers</a>
+            <a href="{% url 'indents_list' %}" class="text-gray-300 hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Indents</a>
+            <a href="{% url 'stock_movements' %}" class="text-gray-300 hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Stock Movements</a>
+            <a href="{% url 'history_reports' %}" class="text-gray-300 hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Reports</a>
           </div>
         </div>
       </div>

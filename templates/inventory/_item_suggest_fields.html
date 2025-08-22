@@ -1,3 +1,37 @@
-<input type="text" name="base_unit" value="{{ base }}" id="id_base_unit" class="form-control" hx-swap-oob="true">
-<input type="text" name="purchase_unit" value="{{ purchase }}" id="id_purchase_unit" class="form-control" hx-swap-oob="true">
+<select name="base_unit" id="id_base_unit" class="form-control" hx-swap-oob="true">
+  <option value="">---------</option>
+  {% for unit in units_map %}
+    <option value="{{ unit }}"{% if unit == base %} selected{% endif %}>{{ unit }}</option>
+  {% endfor %}
+</select>
+<select name="purchase_unit" id="id_purchase_unit" class="form-control" hx-swap-oob="true">
+  <option value="">---------</option>
+  {% for unit in purchase_options %}
+    <option value="{{ unit }}"{% if unit == purchase %} selected{% endif %}>{{ unit }}</option>
+  {% endfor %}
+</select>
 <input type="text" name="category" value="{{ category }}" id="id_category" class="form-control" hx-swap-oob="true">
+<script hx-swap-oob="true">
+  (function() {
+    const units = JSON.parse(document.getElementById('units-data').textContent);
+    const baseSelect = document.getElementById('id_base_unit');
+    const purchaseSelect = document.getElementById('id_purchase_unit');
+    function refresh(selected) {
+      const base = baseSelect.value;
+      const options = units[base] || [];
+      purchaseSelect.innerHTML = '<option value="">---------</option>';
+      options.forEach(function(opt) {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        purchaseSelect.appendChild(o);
+      });
+      if (selected && options.includes(selected)) {
+        purchaseSelect.value = selected;
+      }
+    }
+    const initial = purchaseSelect.value;
+    refresh(initial);
+    baseSelect.addEventListener('change', function() { refresh(); });
+  })();
+</script>

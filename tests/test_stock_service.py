@@ -1,4 +1,5 @@
 import pytest
+from concurrent.futures import ThreadPoolExecutor
 
 from inventory.models import (
     Item,
@@ -103,3 +104,25 @@ def test_remove_stock_transactions_bulk_rollback_on_error():
     item.refresh_from_db()
     assert item.current_stock == current_stock
     assert StockTransaction.objects.count() == 2
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_stock_updates():
+    item = Item.objects.create(name="Concurrent", current_stock=0)
+
+    def worker():
+        for _ in range(5):
+            if stock_service.record_stock_transaction(
+                item_id=item.item_id,
+                quantity_change=1,
+                transaction_type="TEST",
+            ):
+                break
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for _ in range(5):
+            executor.submit(worker)
+
+    item.refresh_from_db()
+    assert item.current_stock == 5
+    assert StockTransaction.objects.filter(item=item).count() == 5

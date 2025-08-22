@@ -2,8 +2,6 @@ import logging
 from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
-
-from decimal import Decimal
 from django.db import transaction
 from django.db.models import Max
 

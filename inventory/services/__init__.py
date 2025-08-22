@@ -11,6 +11,7 @@ from . import (
     ui_service,
     list_utils,
     sale_service,
+    kpis,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "ui_service",
     "list_utils",
     "sale_service",
+    "kpis",
 ]

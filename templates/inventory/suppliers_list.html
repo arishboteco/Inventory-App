@@ -2,10 +2,10 @@
 {% block content %}
 <div class="max-w-5xl mx-auto p-4">
   <h1 class="text-2xl font-semibold mb-4">Suppliers ({{ total_suppliers }})</h1>
-  <div class="mb-4 flex gap-2">
-    <a href="{% url 'supplier_create' %}" class="px-4 py-2 text-white rounded bg-primary">Add Supplier</a>
-    <a href="{% url 'suppliers_bulk_upload' %}" class="px-4 py-2 border rounded">Bulk Upload</a>
-    <a href="{% url 'suppliers_bulk_delete' %}" class="px-4 py-2 border rounded">Bulk Delete</a>
+  <div class="mb-4 flex justify-end gap-2">
+    <a href="{% url 'supplier_create' %}" class="btn-primary">Add Supplier</a>
+    <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
+    <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
   </div>
   <form id="filters" class="flex flex-wrap gap-2 mb-4">
       <input
@@ -28,17 +28,15 @@
       <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
       <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
       <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
-      <button type="submit" name="export" value="1" formaction="{% url 'suppliers_table' %}" formmethod="get" class="px-4 py-2 border rounded">Export</button>
+      <button type="submit" name="export" value="1" formaction="{% url 'suppliers_table' %}" formmethod="get" class="btn-secondary">Export</button>
   </form>
   <div id="suppliers_table"
        hx-get="{% url 'suppliers_table' %}"
        hx-trigger="load"
        hx-include="#filters">
     {% if total_suppliers == 0 %}
-    <div class="p-4 text-center border rounded">
-      <p class="mb-2">0 suppliers yet.</p>
-      <a href="{% url 'supplier_create' %}" class="px-4 py-2 text-white rounded bg-primary">Add Supplier</a>
-    </div>
+      {% url 'supplier_create' as supplier_create_url %}
+      {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="Add Supplier" cta_url=supplier_create_url %}
     {% endif %}
   </div>
 </div>

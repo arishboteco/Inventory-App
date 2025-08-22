@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from inventory.models import Item, Supplier, StockTransaction
+from inventory.models import Item, StockTransaction
 
 
 @pytest.mark.django_db
@@ -13,15 +13,10 @@ def test_dashboard_low_stock(client):
 
 
 @pytest.mark.django_db
-def test_dashboard_totals(client):
+def test_dashboard_kpis_endpoint(client):
     item1 = Item.objects.create(name="Foo", reorder_point=10, current_stock=5)
-    Item.objects.create(name="Bar", reorder_point=0, current_stock=0)
-    Supplier.objects.create(name="ACME")
-    Supplier.objects.create(name="Globex")
-    StockTransaction.objects.create(item=item1, quantity_change=1)
+    StockTransaction.objects.create(item=item1, quantity_change=1, transaction_type="RECEIVING")
 
-    resp = client.get(reverse("dashboard"))
+    resp = client.get(reverse("dashboard-kpis"))
     assert resp.status_code == 200
-    assert resp.context["total_items"] == 2
-    assert resp.context["total_suppliers"] == 2
-    assert resp.context["recent_transactions"] == 1
+    assert b"Stock Value" in resp.content

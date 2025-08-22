@@ -293,6 +293,24 @@ class ItemSuggestView(TemplateView):
         return ctx
 
 
+class ItemSearchView(TemplateView):
+    """Return item <option> elements matching a query."""
+
+    template_name = "inventory/_item_options.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        query = (self.request.GET.get("q") or "").strip()
+        if not query:
+            for key, val in self.request.GET.items():
+                if key.endswith("item"):
+                    query = val
+                    break
+        items = Item.objects.filter(name__icontains=query)[:20]
+        ctx["items"] = items
+        return ctx
+
+
 class ItemsBulkUploadView(View):
     template_name = "inventory/bulk_upload.html"
 

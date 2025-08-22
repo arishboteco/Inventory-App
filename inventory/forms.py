@@ -203,9 +203,23 @@ class IndentItemForm(forms.ModelForm):
         model = IndentItem
         fields = ["item", "requested_qty", "notes"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
+        item_attrs = {"class": INPUT_CLASS}
+        if item_suggest_url:
+            item_attrs.update(
+                {
+                    "hx-get": item_suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#item-options",
+                    "list": "item-options",
+                }
+            )
+        self.fields["item"].widget = forms.TextInput()
+        self.fields["item"].widget.attrs.update(item_attrs)
+        for name, field in self.fields.items():
+            if name == "item":
+                continue
             field.widget.attrs.update({"class": INPUT_CLASS})
 
 
@@ -230,10 +244,55 @@ class PurchaseOrderForm(forms.ModelForm):
             "notes",
         ]
 
+    def __init__(self, *args, supplier_suggest_url: str | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        supplier_attrs = {"class": INPUT_CLASS}
+        if supplier_suggest_url:
+            supplier_attrs.update(
+                {
+                    "hx-get": supplier_suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#supplier-options",
+                    "list": "supplier-options",
+                }
+            )
+        self.fields["supplier"].widget = forms.TextInput()
+        self.fields["supplier"].widget.attrs.update(supplier_attrs)
+        for name, field in self.fields.items():
+            if name == "supplier":
+                continue
+            field.widget.attrs.update({"class": INPUT_CLASS})
+
+
+class PurchaseOrderItemForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrderItem
+        fields = ["item", "quantity_ordered", "unit_price"]
+
+    def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        item_attrs = {"class": INPUT_CLASS}
+        if item_suggest_url:
+            item_attrs.update(
+                {
+                    "hx-get": item_suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#item-options",
+                    "list": "item-options",
+                }
+            )
+        self.fields["item"].widget = forms.TextInput()
+        self.fields["item"].widget.attrs.update(item_attrs)
+        for name, field in self.fields.items():
+            if name == "item":
+                continue
+            field.widget.attrs.update({"class": INPUT_CLASS})
+
 
 PurchaseOrderItemFormSet = forms.inlineformset_factory(
     PurchaseOrder,
     PurchaseOrderItem,
+    form=PurchaseOrderItemForm,
     fields=["item", "quantity_ordered", "unit_price"],
     extra=1,
     can_delete=True,

@@ -9,6 +9,7 @@ from .views.items import (
     ItemDetailView,
     ItemDeleteView,
     ItemSuggestView,
+    ItemSearchView,
     ItemsBulkUploadView,
 )
 from .views.suppliers import (
@@ -19,6 +20,7 @@ from .views.suppliers import (
     SupplierToggleActiveView,
     SuppliersBulkUploadView,
     SuppliersBulkDeleteView,
+    SupplierSearchView,
 )
 from .views.stock import stock_movements, history_reports
 from .views.indents import (
@@ -56,6 +58,7 @@ urlpatterns = [
     path("items/<int:pk>/delete/", ItemDeleteView.as_view(), name="item_delete"),
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
     path("items/suggest/", ItemSuggestView.as_view(), name="item_suggest"),
+    path("items/search/", ItemSearchView.as_view(), name="item_search"),
     path("items/bulk-upload/", ItemsBulkUploadView.as_view(), name="items_bulk_upload"),
 
     path("suppliers/", SuppliersListView.as_view(), name="suppliers_list"),
@@ -65,6 +68,7 @@ urlpatterns = [
     path("suppliers/<int:pk>/toggle/", SupplierToggleActiveView.as_view(), name="supplier_toggle_active"),
     path("suppliers/bulk-upload/", SuppliersBulkUploadView.as_view(), name="suppliers_bulk_upload"),
     path("suppliers/bulk-delete/", SuppliersBulkDeleteView.as_view(), name="suppliers_bulk_delete"),
+    path("suppliers/search/", SupplierSearchView.as_view(), name="supplier_search"),
 
     path("stock-movements/", stock_movements, name="stock_movements"),
     path("history-reports/", history_reports, name="history_reports"),

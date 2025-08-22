@@ -207,6 +207,7 @@ class SuppliersBulkDeleteView(View):
         }
         return render(request, self.template_name, ctx)
 
+
     def post(self, request):
         deleted = 0
         errors: list[str] = []
@@ -237,3 +238,21 @@ class SuppliersBulkDeleteView(View):
             "back_url": "suppliers_list",
         }
         return render(request, self.template_name, ctx)
+
+
+class SupplierSearchView(TemplateView):
+    """Return supplier <option> elements matching a query."""
+
+    template_name = "inventory/_supplier_options.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        query = (self.request.GET.get("q") or "").strip()
+        if not query:
+            for key, val in self.request.GET.items():
+                if key.endswith("supplier"):
+                    query = val
+                    break
+        suppliers = Supplier.objects.filter(name__icontains=query)[:20]
+        ctx["suppliers"] = suppliers
+        return ctx

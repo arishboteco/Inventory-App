@@ -24,12 +24,12 @@ class CoerceFloatField(models.DecimalField):
 
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
-    name = models.TextField(blank=True, null=True)
-    base_unit = models.TextField(blank=True, null=True)
-    purchase_unit = models.TextField(blank=True, null=True)
-    category = models.TextField(blank=True, null=True)
-    sub_category = models.TextField(blank=True, null=True)
-    permitted_departments = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    base_unit = models.CharField(max_length=50, blank=True, null=True)
+    purchase_unit = models.CharField(max_length=50, blank=True, null=True)
+    category = models.CharField(max_length=100, blank=True, null=True)
+    sub_category = models.CharField(max_length=100, blank=True, null=True)
+    permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
@@ -45,10 +45,10 @@ class Item(models.Model):
 
 class Supplier(models.Model):
     supplier_id = models.AutoField(primary_key=True)
-    name = models.TextField(unique=True, blank=True, null=True)
-    contact_person = models.TextField(blank=True, null=True)
-    phone = models.TextField(blank=True, null=True)
-    email = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=255, unique=True, null=False, blank=False)
+    contact_person = models.CharField(max_length=255, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.CharField(max_length=254, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
@@ -69,9 +69,9 @@ class StockTransaction(models.Model):
     quantity_change = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
-    transaction_type = models.TextField(blank=True, null=True)
-    user_id = models.TextField(blank=True, null=True)
-    related_mrn = models.TextField(blank=True, null=True)
+    transaction_type = models.CharField(max_length=50, blank=True, null=True)
+    user_id = models.CharField(max_length=50, blank=True, null=True)
+    related_mrn = models.CharField(max_length=100, blank=True, null=True)
     related_po_id = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     transaction_date = models.DateTimeField(auto_now_add=True)
@@ -85,14 +85,14 @@ class StockTransaction(models.Model):
 
 class Recipe(models.Model):
     recipe_id = models.AutoField(primary_key=True)
-    name = models.TextField(unique=True, blank=True, null=True)
+    name = models.CharField(max_length=255, unique=True, null=False, blank=False)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
-    type = models.TextField(blank=True, null=True)
+    type = models.CharField(max_length=50, blank=True, null=True)
     default_yield_qty = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
-    default_yield_unit = models.TextField(blank=True, null=True)
+    default_yield_unit = models.CharField(max_length=50, blank=True, null=True)
     plating_notes = models.TextField(blank=True, null=True)
-    tags = models.TextField(blank=True, null=True)
+    tags = models.CharField(max_length=255, blank=True, null=True)
     version = models.IntegerField(blank=True, null=True)
     effective_from = models.DateField(auto_now_add=True)
     effective_to = models.DateField(auto_now=True)
@@ -114,10 +114,10 @@ class RecipeComponent(models.Model):
         db_column="parent_recipe_id",
         related_name="components",
     )
-    component_kind = models.TextField(blank=True, null=True)
+    component_kind = models.CharField(max_length=50, blank=True, null=True)
     component_id = models.IntegerField(blank=True, null=True)
     quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
-    unit = models.TextField(blank=True, null=True)
+    unit = models.CharField(max_length=50, blank=True, null=True)
     loss_pct = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     sort_order = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
@@ -138,7 +138,7 @@ class SaleTransaction(models.Model):
         Recipe, models.DO_NOTHING, db_column="recipe_id", blank=True, null=True
     )
     quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
-    user_id = models.TextField(blank=True, null=True)
+    user_id = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     sale_date = models.DateTimeField(auto_now_add=True)
 
@@ -151,14 +151,14 @@ class SaleTransaction(models.Model):
 
 class Indent(models.Model):
     indent_id = models.AutoField(primary_key=True)
-    mrn = models.TextField(unique=True, blank=True, null=True)
-    requested_by = models.TextField(blank=True, null=True)
-    department = models.TextField(blank=True, null=True)
+    mrn = models.CharField(max_length=100, unique=True, null=False, blank=False)
+    requested_by = models.CharField(max_length=255, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True)
     date_required = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    status = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=50, blank=True, null=True)
     date_submitted = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    processed_by_user_id = models.TextField(blank=True, null=True)
+    processed_by_user_id = models.CharField(max_length=50, blank=True, null=True)
     date_processed = models.DateTimeField(auto_now=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -184,7 +184,7 @@ class IndentItem(models.Model):
     issued_qty = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
-    item_status = models.TextField(blank=True, null=True)
+    item_status = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation

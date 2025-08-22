@@ -76,7 +76,7 @@ def purchase_orders_list(request):
 def purchase_order_create(request):
     if request.method == "POST":
         form = PurchaseOrderForm(request.POST)
-        formset = PurchaseOrderItemFormSet(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             po_data = {
                 "supplier_id": form.cleaned_data["supplier"].pk,
@@ -101,7 +101,7 @@ def purchase_order_create(request):
             messages.error(request, msg)
     else:
         form = PurchaseOrderForm()
-        formset = PurchaseOrderItemFormSet()
+        formset = PurchaseOrderItemFormSet(prefix="items")
     return render(
         request,
         "inventory/purchase_orders/form.html",
@@ -113,14 +113,14 @@ def purchase_order_edit(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     if request.method == "POST":
         form = PurchaseOrderForm(request.POST, instance=po)
-        formset = PurchaseOrderItemFormSet(request.POST, instance=po)
+        formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             return redirect("purchase_order_detail", pk=pk)
     else:
         form = PurchaseOrderForm(instance=po)
-        formset = PurchaseOrderItemFormSet(instance=po)
+        formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
     return render(
         request,
         "inventory/purchase_orders/form.html",

@@ -11,14 +11,6 @@ Inventory-App is a Django application for managing restaurant inventory with a P
 - Automatic unit inference so new items get sensible base and purchase units
 - Bulk upload items and stock transactions from CSV files
 
-## Responsive Breakpoints
-
-This project uses a desktop-first Tailwind CSS strategy. Base styles target larger screens, while `max-*` variants provide overrides for smaller viewports. Custom `max-sm`, `max-md`, `max-lg`, and `max-xl` screens are defined in `tailwind.config.js`. Use these utilities when building templates so mobile adjustments are explicit:
-
-```html
-<div class="grid grid-cols-4 max-md:grid-cols-1"></div>
-```
-
 ## Installation
 
 Install dependencies using `pip`:

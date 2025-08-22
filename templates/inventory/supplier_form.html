@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 {% block content %}
-<div class="w-full max-w-md sm:max-w-lg mx-auto p-4 max-h-screen overflow-y-auto">
+<div class="w-full max-w-md sm:max-w-xl lg:max-w-2xl mx-auto p-4 max-h-screen overflow-y-auto">
   <h1 class="text-2xl font-semibold mb-4">
     {% if is_edit %}Edit Supplier{% else %}Add Supplier{% endif %}
   </h1>
@@ -13,9 +13,11 @@
       {% endfor %}
     </ul>
     {% endif %}
-    {% for field in form %}
-      {% include "components/form_field.html" with field=field %}
-    {% endfor %}
+    <div class="flex flex-wrap gap-4">
+      {% for field in form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
+    </div>
     <div class="flex gap-2">
       <button type="submit" class="px-4 py-2 text-white rounded bg-primary">Save</button>
       <a href="{% url 'suppliers_list' %}" class="px-4 py-2 border rounded">Cancel</a>

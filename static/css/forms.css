@@ -17,6 +17,16 @@ form textarea,
     max-width: 100%;
 }
 
+@media (min-width: 641px) {
+    form input:not([type="checkbox"]):not([type="radio"]),
+    form select,
+    form textarea,
+    .form-control {
+        width: 50%;
+        max-width: 32rem;
+    }
+}
+
 @media (max-width: 640px) {
     form input:not([type="checkbox"]):not([type="radio"]),
     form select,

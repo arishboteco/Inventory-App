@@ -7,19 +7,19 @@
     <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
     <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
   </div>
-  <form id="filters" class="flex flex-wrap gap-2 mb-4">
+  <form id="filters" class="grid gap-2 mb-4 sm:grid-cols-2 md:grid-cols-4">
       <input
         type="text"
         name="q"
         placeholder="Search suppliers..."
-        class="form-control flex-grow"
+        class="form-control w-full"
         value="{{ q }}"
         hx-get="{% url 'suppliers_table' %}"
         hx-target="#suppliers_table"
         hx-trigger="keyup changed delay:300ms"
         hx-include="#filters"
       />
-      <select name="active" class="form-control"
+      <select name="active" class="form-control w-full"
               hx-get="{% url 'suppliers_table' %}" hx-target="#suppliers_table" hx-trigger="change" hx-include="#filters">
         <option value="">All</option>
         <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
@@ -28,7 +28,7 @@
       <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
       <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
       <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
-      <button type="submit" name="export" value="1" formaction="{% url 'suppliers_table' %}" formmethod="get" class="btn-secondary">Export</button>
+      <button type="submit" name="export" value="1" formaction="{% url 'suppliers_table' %}" formmethod="get" class="btn-secondary w-full">Export</button>
   </form>
   <div id="suppliers_table"
        hx-get="{% url 'suppliers_table' %}"

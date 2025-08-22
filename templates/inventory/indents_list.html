@@ -5,19 +5,19 @@
   <div class="mb-4 flex justify-end gap-2">
     <a href="{% url 'indent_create' %}" class="btn-primary">New Indent</a>
   </div>
-    <form id="filters" class="flex flex-wrap gap-2 mb-4">
+    <form id="filters" class="grid gap-2 mb-4 sm:grid-cols-2">
       <input
         type="text"
         name="q"
         placeholder="Search indents..."
-        class="form-control flex-grow"
+        class="form-control w-full"
         value="{{ q }}"
         hx-get="{% url 'indents_table' %}"
         hx-target="#indents_table"
         hx-trigger="keyup changed delay:300ms"
         hx-include="#filters"
       />
-      <select name="status" class="form-control"
+      <select name="status" class="form-control w-full"
               hx-get="{% url 'indents_table' %}" hx-target="#indents_table" hx-trigger="change" hx-include="#filters">
       <option value="">All Statuses</option>
       <option value="SUBMITTED" {% if status == 'SUBMITTED' %}selected{% endif %}>Submitted</option>

@@ -9,9 +9,11 @@
       {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
     </ul>
     {% endif %}
-    {% for field in form %}
-      {% include "components/form_field.html" with field=field %}
-    {% endfor %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% for field in form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
+    </div>
     <table class="table">
       <thead><tr><th>Item</th><th>Ordered</th><th>Received</th><th>Receive Now</th></tr></thead>
       <tbody>

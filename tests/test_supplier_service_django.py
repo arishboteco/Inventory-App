@@ -1,5 +1,7 @@
 import pytest
 
+from django.urls import reverse
+
 from inventory.models import Supplier
 from inventory.services import supplier_service
 
@@ -67,3 +69,28 @@ def test_get_all_suppliers_returns_list_of_dicts():
     all_suppliers = supplier_service.get_all_suppliers(include_inactive=True)
     names_all = {row["name"] for row in all_suppliers}
     assert {"Vendor D", "Vendor E"}.issubset(names_all)
+
+
+@pytest.mark.django_db
+def test_suppliers_table_filters(client):
+    Supplier.objects.create(name="Alpha", is_active=True)
+    Supplier.objects.create(name="Beta", is_active=False)
+    url = reverse("suppliers_table")
+    resp = client.get(url, {"q": "Alpha", "active": "1"})
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert "Alpha" in content
+    assert "Beta" not in content
+
+
+@pytest.mark.django_db
+def test_suppliers_export(client):
+    Supplier.objects.create(name="Act", is_active=True)
+    Supplier.objects.create(name="Inact", is_active=False)
+    url = reverse("suppliers_table")
+    resp = client.get(url, {"active": "0", "export": "1"})
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "text/csv"
+    body = resp.content.decode()
+    assert "Inact" in body
+    assert "Act," not in body

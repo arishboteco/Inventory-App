@@ -19,11 +19,16 @@
         hx-trigger="keyup changed delay:300ms"
         hx-include="#filters"
       />
-      <label class="flex items-center gap-2">
-        <input type="checkbox" name="show_inactive" value="1" class="form-checkbox" {% if show_inactive %}checked{% endif %}
-               hx-get="{% url 'suppliers_table' %}" hx-target="#suppliers_table" hx-trigger="change" hx-include="#filters" />
-        Show Inactive
-      </label>
+      <select name="active" class="form-control"
+              hx-get="{% url 'suppliers_table' %}" hx-target="#suppliers_table" hx-trigger="change" hx-include="#filters">
+        <option value="">All</option>
+        <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
+        <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
+      </select>
+      <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
+      <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
+      <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
+      <button type="submit" name="export" value="1" formaction="{% url 'suppliers_table' %}" formmethod="get" class="px-4 py-2 border rounded">Export</button>
   </form>
   <div id="suppliers_table"
        hx-get="{% url 'suppliers_table' %}"

@@ -1,0 +1,33 @@
+{% extends "components/table.html" %}
+
+{% block headers %}
+<th class="px-4 py-2">PO #</th>
+<th class="px-4 py-2">Supplier</th>
+<th class="px-4 py-2">Order Date</th>
+<th class="px-4 py-2">Status</th>
+{% endblock %}
+
+{% block rows %}
+{% for po in orders %}
+<tr class="odd:bg-gray-50">
+  <td class="px-4 py-2"><a class="text-primary" href="{% url 'purchase_order_detail' po.pk %}">{{ po.pk }}</a></td>
+  <td class="px-4 py-2">{{ po.supplier.name }}</td>
+  <td class="px-4 py-2">{{ po.order_date }}</td>
+  <td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="px-4 py-2">No purchase orders.</td></tr>
+{% endfor %}
+{% endblock %}
+
+{% block footer %}
+<div class="mt-4 flex justify-between">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Previous</a>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Next</a>
+  {% endif %}
+</div>
+{% endblock %}

@@ -274,4 +274,9 @@ def history_reports(request):
         "direction": direction,
         "total_quantity": total_quantity,
     }
-    return render(request, "inventory/history_reports.html", ctx)
+    template = (
+        "inventory/_history_table.html"
+        if request.headers.get("HX-Request")
+        else "inventory/history_reports.html"
+    )
+    return render(request, template, ctx)

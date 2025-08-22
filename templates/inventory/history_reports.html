@@ -28,7 +28,7 @@
       <input type="date" name="end_date" value="{{ end_date }}" class="form-control" />
       <input type="hidden" name="sort" value="{{ sort|default:'date' }}" />
       <input type="hidden" name="direction" value="{{ direction|default:'desc' }}" />
-      <button type="submit" class="px-4 py-2 text-white rounded bg-primary">Filter</button>
+      <button type="submit" class="btn-primary">Filter</button>
       <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="px-4 py-2 border rounded">Export CSV</a>
     </form>
     <div id="history_table">

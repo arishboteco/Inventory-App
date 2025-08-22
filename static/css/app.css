@@ -78,21 +78,45 @@ body {
 /* Button styles */
 .btn-primary {
   background-color: var(--color-primary);
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
+  @apply text-white px-4 py-2 rounded transition-colors;
+}
+.btn-primary:hover {
+  @apply opacity-90;
+}
+.btn-primary:focus {
+  @apply outline-none ring-2 ring-offset-2;
+  --tw-ring-color: var(--color-primary);
+}
+.btn-primary:disabled {
+  @apply opacity-50 cursor-not-allowed;
 }
 
 .btn-secondary {
   background-color: var(--color-secondary);
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
+  @apply text-white px-4 py-2 rounded transition-colors;
+}
+.btn-secondary:hover {
+  @apply opacity-90;
+}
+.btn-secondary:focus {
+  @apply outline-none ring-2 ring-offset-2;
+  --tw-ring-color: var(--color-secondary);
+}
+.btn-secondary:disabled {
+  @apply opacity-50 cursor-not-allowed;
 }
 
 .btn-danger {
   background-color: var(--color-danger);
-  color: #ffffff;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
+  @apply text-white px-4 py-2 rounded transition-colors;
+}
+.btn-danger:hover {
+  @apply opacity-90;
+}
+.btn-danger:focus {
+  @apply outline-none ring-2 ring-offset-2;
+  --tw-ring-color: var(--color-danger);
+}
+.btn-danger:disabled {
+  @apply opacity-50 cursor-not-allowed;
 }

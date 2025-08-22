@@ -27,7 +27,7 @@
       {% for field in receive_form %}
         {% include "components/form_field.html" with field=field %}
       {% endfor %}
-      <button type="submit" name="submit_receive" class="px-4 py-2 text-white rounded bg-primary">Record</button>
+      <button type="submit" name="submit_receive" class="btn-primary">Record</button>
     </form>
   {% elif active_section == 'adjust' %}
     <h2 class="text-xl font-semibold mb-2">Stock Adjustment</h2>
@@ -43,7 +43,7 @@
       {% for field in adjust_form %}
         {% include "components/form_field.html" with field=field %}
       {% endfor %}
-      <button type="submit" name="submit_adjust" class="px-4 py-2 text-white rounded bg-primary">Record</button>
+      <button type="submit" name="submit_adjust" class="btn-primary">Record</button>
     </form>
   {% elif active_section == 'waste' %}
     <h2 class="text-xl font-semibold mb-2">Wastage/Spoilage</h2>
@@ -59,7 +59,7 @@
       {% for field in waste_form %}
         {% include "components/form_field.html" with field=field %}
       {% endfor %}
-      <button type="submit" name="submit_waste" class="px-4 py-2 text-white rounded bg-primary">Record</button>
+      <button type="submit" name="submit_waste" class="btn-primary">Record</button>
     </form>
   {% endif %}
   <hr class="my-4"/>
@@ -77,7 +77,7 @@
     {% for field in bulk_form %}
       {% include "components/form_field.html" with field=field %}
     {% endfor %}
-    <button type="submit" name="bulk_upload" class="px-4 py-2 text-white rounded bg-primary">Upload</button>
+    <button type="submit" name="bulk_upload" class="btn-primary">Upload</button>
   </form>
   {% if bulk_success_count is not None %}
     <p>{{ bulk_success_count }} transaction(s) recorded successfully.</p>

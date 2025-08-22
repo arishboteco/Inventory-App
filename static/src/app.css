@@ -27,6 +27,9 @@
   .dark .badge-warning { @apply bg-amber-600 text-gray-900; }
   .dark .badge-error { @apply bg-red-700 text-white; }
 
+  /* Toast component styles */
+  .toast { @apply absolute left-0 top-full mt-1 z-10; }
+
   /* Button styles */
   .btn-primary {
     background-color: theme('colors.primary.DEFAULT');

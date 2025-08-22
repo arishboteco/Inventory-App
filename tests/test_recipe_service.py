@@ -18,7 +18,6 @@ from inventory.services.recipe_service import (
 
 pytestmark = pytest.mark.django_db
 
-
 @pytest.fixture(scope="module", autouse=True)
 def create_tables(django_db_blocker):
     """Ensure the temporary SaleTransaction table exists for this module.

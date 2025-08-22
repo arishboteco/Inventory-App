@@ -40,23 +40,23 @@ class ItemViewSet(viewsets.ModelViewSet):
         name = self.request.query_params.get("name")
         if name:
             queryset = queryset.filter(name__icontains=name)
-        return queryset
+        return queryset.order_by("name")
 
 
 class SupplierViewSet(viewsets.ModelViewSet):
-    queryset = Supplier.objects.all()
+    queryset = Supplier.objects.all().order_by("name")
     serializer_class = SupplierSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class StockTransactionViewSet(viewsets.ModelViewSet):
-    queryset = StockTransaction.objects.all().select_related("item")
+    queryset = StockTransaction.objects.all().select_related("item").order_by("-transaction_date")
     serializer_class = StockTransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class IndentViewSet(viewsets.ModelViewSet):
-    queryset = Indent.objects.all()
+    queryset = Indent.objects.all().order_by("-created_at")
     serializer_class = IndentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -78,7 +78,7 @@ class IndentItemViewSet(viewsets.ModelViewSet):
 
 
 class PurchaseOrderViewSet(viewsets.ModelViewSet):
-    queryset = PurchaseOrder.objects.all().select_related("supplier")
+    queryset = PurchaseOrder.objects.all().select_related("supplier").order_by("-order_date")
     serializer_class = PurchaseOrderSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -90,7 +90,7 @@ class PurchaseOrderItemViewSet(viewsets.ModelViewSet):
 
 
 class GoodsReceivedNoteViewSet(viewsets.ModelViewSet):
-    queryset = GoodsReceivedNote.objects.all().select_related("purchase_order", "supplier")
+    queryset = GoodsReceivedNote.objects.all().select_related("purchase_order", "supplier").order_by("-received_date")
     serializer_class = GoodsReceivedNoteSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -102,7 +102,7 @@ class GRNItemViewSet(viewsets.ModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all().order_by("name")
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -114,6 +114,6 @@ class RecipeComponentViewSet(viewsets.ModelViewSet):
 
 
 class SaleTransactionViewSet(viewsets.ModelViewSet):
-    queryset = SaleTransaction.objects.all().select_related("recipe")
+    queryset = SaleTransaction.objects.all().select_related("recipe").order_by("-sale_date")
     serializer_class = SaleTransactionSerializer
     permission_classes = [permissions.IsAuthenticated]

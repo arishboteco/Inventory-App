@@ -1,4 +1,5 @@
 {% extends "_base.html" %}
+{% load static %}
 {% block content %}
 <div class="max-w-4xl mx-auto p-4">
   <h1 class="text-2xl font-semibold mb-4">Stock Movements</h1>
@@ -36,6 +37,7 @@
   {% endif %}
   <hr class="my-4"/>
   <h2 class="text-xl font-semibold mb-2">Bulk Upload Stock Transactions</h2>
+  <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-blue-600 underline">Download sample CSV</a></p>
   <form method="post" enctype="multipart/form-data" class="mb-4">
     {% csrf_token %}
     {{ bulk_form.as_p }}

@@ -21,7 +21,7 @@
       <input type="date" name="end_date" value="{{ end_date }}" class="border rounded px-2 py-1" />
     </div>
     <div>
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Filter</button>
+      <button type="submit" class="px-4 py-2 text-white rounded bg-primary">Filter</button>
     </div>
   </form>
   <table class="table">
@@ -29,7 +29,7 @@
     <tbody>
     {% for grn in grns %}
       <tr>
-        <td><a class="text-blue-600" href="{% url 'grn_detail' grn.pk %}">{{ grn.pk }}</a></td>
+        <td><a class="text-primary" href="{% url 'grn_detail' grn.pk %}">{{ grn.pk }}</a></td>
         <td>{{ grn.purchase_order_id }}</td>
         <td>{{ grn.supplier.name }}</td>
         <td>{{ grn.received_date }}</td>
@@ -41,11 +41,11 @@
   </table>
   <div class="mt-4 flex justify-between">
     {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-blue-600">Previous</a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Previous</a>
     {% endif %}
     <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-blue-600">Next</a>
+    <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Next</a>
     {% endif %}
   </div>
 </div>

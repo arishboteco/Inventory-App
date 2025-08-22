@@ -73,9 +73,9 @@
         <td class="text-right">{{ row.reorder_point }}</td>
         <td>{{ row.is_active }}</td>
         <td>
-          <a href="{% url 'item_detail' row.item_id %}" class="text-blue-600 mr-2">View</a>
-          <a href="{% url 'item_edit' row.item_id %}" class="text-blue-600 mr-2">Edit</a>
-          <a href="{% url 'item_delete' row.item_id %}" class="text-blue-600">Delete/Deactivate</a>
+          <a href="{% url 'item_detail' row.item_id %}" class="text-primary mr-2">View</a>
+          <a href="{% url 'item_edit' row.item_id %}" class="text-primary mr-2">Edit</a>
+          <a href="{% url 'item_delete' row.item_id %}" class="text-primary">Delete/Deactivate</a>
         </td>
       </tr>
       {% empty %}
@@ -84,7 +84,7 @@
           <div class="text-center py-6 text-gray-500">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             <p class="mt-2">No items found.</p>
-            <a href="{% url 'item_create' %}" class="mt-2 inline-block text-blue-600 underline">Create the first item</a>
+            <a href="{% url 'item_create' %}" class="mt-2 inline-block text-primary underline">Create the first item</a>
           </div>
         </td>
       </tr>

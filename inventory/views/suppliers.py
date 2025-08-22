@@ -207,7 +207,6 @@ class SuppliersBulkDeleteView(View):
         }
         return render(request, self.template_name, ctx)
 
-
     def post(self, request):
         deleted = 0
         errors: list[str] = []

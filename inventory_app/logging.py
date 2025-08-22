@@ -19,4 +19,3 @@ def flush_logs() -> None:
 
 
 __all__ = ["configure_logging", "get_logger", "flush_logs"]
-

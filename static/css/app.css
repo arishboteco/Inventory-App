@@ -3,6 +3,7 @@
 :root {
   --color-body-bg: #f9fafb;
   --color-body-text: #1a202c;
+  --color-primary: #3b82f6;
   --form-bg: #ffffff;
   --form-border: #cbd5e0;
   --form-text: #1a202c;
@@ -16,6 +17,7 @@
   :root {
     --color-body-bg: #1e1e1e;
     --color-body-text: #ffffff;
+    --color-primary: #63b3ed;
     --form-bg: #2d3748;
     --form-border: #4a5568;
     --form-text: #f7fafc;
@@ -52,3 +54,8 @@ body {
     .badge-warning { background: #e0b437; color: black; }
     .badge-error   { background: #cc0000; color: white; }
 }
+
+/* Custom utility classes */
+.bg-primary { background-color: var(--color-primary); }
+.border-primary { border-color: var(--color-primary); }
+.text-primary { color: var(--color-primary); }

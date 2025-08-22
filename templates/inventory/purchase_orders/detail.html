@@ -19,9 +19,9 @@
     </tbody>
   </table>
   <div class="flex gap-2">
-    <a href="{% url 'purchase_order_edit' po.pk %}" class="px-4 py-2 bg-blue-600 text-white rounded">Edit</a>
-    <a href="{% url 'purchase_order_receive' po.pk %}" class="px-4 py-2 bg-green-600 text-white rounded">Receive Goods</a>
-    <a href="{% url 'grn_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded">View GRNs</a>
+    <a href="{% url 'purchase_order_edit' po.pk %}" class="px-4 py-2 text-white rounded bg-primary">Edit</a>
+    <a href="{% url 'purchase_order_receive' po.pk %}" class="px-4 py-2 text-white rounded bg-primary">Receive Goods</a>
+    <a href="{% url 'grn_list' %}" class="px-4 py-2 text-white rounded bg-primary">View GRNs</a>
   </div>
 </div>
 {% endblock %}

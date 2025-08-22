@@ -15,6 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 class GRNListView(TemplateView):
+    """List goods received notes with filter and sort options.
+
+    GET params:
+        supplier: supplier ID to filter by.
+        start_date, end_date: restrict by received date range.
+        sort, direction: control ordering of results.
+    Template: inventory/grns/list.html.
+    """
+
     template_name = "inventory/grns/list.html"
 
     def get_context_data(self, **kwargs):
@@ -52,6 +61,11 @@ class GRNListView(TemplateView):
 
 
 class GRNDetailView(TemplateView):
+    """Display details for a single goods received note.
+
+    Template: inventory/grns/detail.html.
+    """
+
     template_name = "inventory/grns/detail.html"
 
     def get_context_data(self, **kwargs):

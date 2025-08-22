@@ -4,13 +4,14 @@ from django import forms
 from django.urls import reverse
 
 from inventory.forms import ItemForm
+from inventory import forms as forms_module
 from inventory.services import supabase_units
 from inventory.models import Category
 
 
 @pytest.mark.django_db
 def test_item_form_preserves_metadata(monkeypatch):
-    monkeypatch.setattr(supabase_units, "get_units", lambda: {"kg": ["g"]})
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
     form = ItemForm()
     base_field = form.fields["base_unit"]
     purchase_field = form.fields["purchase_unit"]
@@ -20,6 +21,14 @@ def test_item_form_preserves_metadata(monkeypatch):
     assert purchase_field.label == "Purchase unit"
     assert purchase_field.max_length == 50
     assert isinstance(purchase_field.widget, forms.Select)
+
+
+@pytest.mark.django_db
+def test_purchase_unit_includes_base(monkeypatch):
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["kg", "g"]})
+    form = ItemForm(data={"base_unit": "kg"})
+    purchase_choices = [c[0] for c in form.fields["purchase_unit"].choices]
+    assert "kg" in purchase_choices
 
 
 @pytest.mark.django_db

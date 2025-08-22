@@ -2,7 +2,6 @@ import logging
 from typing import Any
 
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..forms import (
@@ -24,7 +23,6 @@ PO_STATUS_BADGES = {
 }
 
 
-@login_required
 def purchase_orders_list(request):
     orders = PurchaseOrder.objects.select_related("supplier").order_by("-order_date")
     for o in orders:
@@ -36,7 +34,6 @@ def purchase_orders_list(request):
     )
 
 
-@login_required
 def purchase_order_create(request):
     if request.method == "POST":
         form = PurchaseOrderForm(request.POST)
@@ -73,7 +70,6 @@ def purchase_order_create(request):
     )
 
 
-@login_required
 def purchase_order_edit(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     if request.method == "POST":
@@ -93,7 +89,6 @@ def purchase_order_edit(request, pk: int):
     )
 
 
-@login_required
 def purchase_order_detail(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     items = po.purchaseorderitem_set.select_related("item").all()
@@ -105,7 +100,6 @@ def purchase_order_detail(request, pk: int):
     )
 
 
-@login_required
 def purchase_order_receive(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     items = po.purchaseorderitem_set.select_related("item").all()

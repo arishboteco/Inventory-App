@@ -1,6 +1,5 @@
 import logging
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
 
@@ -9,7 +8,7 @@ from ..models import GoodsReceivedNote
 logger = logging.getLogger(__name__)
 
 
-class GRNListView(LoginRequiredMixin, TemplateView):
+class GRNListView(TemplateView):
     template_name = "inventory/grns/list.html"
 
     def get_context_data(self, **kwargs):
@@ -18,7 +17,7 @@ class GRNListView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class GRNDetailView(LoginRequiredMixin, TemplateView):
+class GRNDetailView(TemplateView):
     template_name = "inventory/grns/detail.html"
 
     def get_context_data(self, **kwargs):

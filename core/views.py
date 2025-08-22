@@ -1,16 +1,13 @@
-from django.contrib.auth.decorators import login_required
 from django.db.models import F, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 
 from inventory.models import Item
 
 
 def root_view(request):
-    """Render the home page or redirect authenticated users to the dashboard."""
-    if request.user.is_authenticated:
-        return redirect("dashboard")
+    """Render the home page."""
     return render(request, "core/home.html")
 
 
@@ -18,7 +15,6 @@ def health_check(request):
     return HttpResponse("ok")
 
 
-@login_required
 def dashboard(request):
     # Use Coalesce to safely handle potential NULL values in the database,
     # treating them as 0.0 for the comparison. This prevents the 500 error.

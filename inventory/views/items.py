@@ -3,7 +3,6 @@ import io
 import logging
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import DatabaseError
@@ -20,7 +19,7 @@ from ..services import item_service
 logger = logging.getLogger(__name__)
 
 
-class ItemsListView(LoginRequiredMixin, TemplateView):
+class ItemsListView(TemplateView):
     template_name = "inventory/items_list.html"
 
     def get_context_data(self, **kwargs):
@@ -57,7 +56,7 @@ class ItemsListView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class ItemsTableView(LoginRequiredMixin, TemplateView):
+class ItemsTableView(TemplateView):
     template_name = "inventory/_items_table.html"
 
     def get_context_data(self, **kwargs):
@@ -95,7 +94,7 @@ class ItemsTableView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class ItemCreateView(LoginRequiredMixin, View):
+class ItemCreateView(View):
     template_name = "inventory/item_form.html"
 
     def get(self, request):
@@ -115,7 +114,7 @@ class ItemCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
 
-class ItemEditView(LoginRequiredMixin, View):
+class ItemEditView(View):
     template_name = "inventory/item_form.html"
 
     def get_object(self, pk: int):
@@ -167,7 +166,7 @@ class ItemEditView(LoginRequiredMixin, View):
         return render(request, self.template_name, ctx)
 
 
-class ItemSuggestView(LoginRequiredMixin, TemplateView):
+class ItemSuggestView(TemplateView):
     template_name = "inventory/_item_suggest_fields.html"
 
     def get_context_data(self, **kwargs):
@@ -180,7 +179,7 @@ class ItemSuggestView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class ItemsBulkUploadView(LoginRequiredMixin, View):
+class ItemsBulkUploadView(View):
     template_name = "inventory/bulk_upload.html"
 
     def get(self, request):

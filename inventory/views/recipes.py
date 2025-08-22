@@ -1,12 +1,11 @@
 from django.shortcuts import get_object_or_404, render
 from django.views import View
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 
 from ..models import Recipe, RecipeComponent
 
 
-class RecipesListView(LoginRequiredMixin, TemplateView):
+class RecipesListView(TemplateView):
     template_name = "inventory/recipes/list.html"
 
     def get_context_data(self, **kwargs):
@@ -15,7 +14,7 @@ class RecipesListView(LoginRequiredMixin, TemplateView):
         return ctx
 
 
-class RecipeDetailView(LoginRequiredMixin, View):
+class RecipeDetailView(View):
     template_name = "inventory/recipes/detail.html"
 
     def get(self, request, pk: int):
@@ -30,7 +29,7 @@ class RecipeDetailView(LoginRequiredMixin, View):
         )
 
 
-class RecipeComponentRowView(LoginRequiredMixin, View):
+class RecipeComponentRowView(View):
     template_name = "inventory/recipes/_component_row.html"
 
     def get(self, request, pk: int):

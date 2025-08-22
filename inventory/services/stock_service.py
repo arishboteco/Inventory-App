@@ -1,4 +1,5 @@
 import logging
+import time
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
@@ -20,7 +21,7 @@ def record_stock_transaction(
     notes: Optional[str] = None,
 ) -> bool:
     quantity_change = Decimal(str(quantity_change))
-    for _ in range(3):
+    for attempt in range(5):
         try:
             with transaction.atomic():
                 updated = Item.objects.filter(pk=item_id).update(
@@ -41,6 +42,7 @@ def record_stock_transaction(
             return True
         except OperationalError as exc:  # pragma: no cover - retry on lock
             logger.error("Error recording stock transaction: %s", exc)
+            time.sleep(0.1 * attempt)
             continue
         except Exception as exc:  # pragma: no cover - defensive
             logger.error("Error recording stock transaction: %s", exc)

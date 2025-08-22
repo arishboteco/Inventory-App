@@ -1,12 +1,10 @@
-import csv
 import io
 import logging
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError
-from django.http import Http404, HttpResponse
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
@@ -14,7 +12,7 @@ from django.views.generic import TemplateView
 
 from ..models import Item, StockTransaction
 from ..forms import ItemForm, BulkUploadForm
-from ..services import item_service
+from ..services import item_service, list_utils
 
 logger = logging.getLogger(__name__)
 
@@ -67,28 +65,13 @@ class ItemsListView(TemplateView):
 class ItemsTableView(TemplateView):
     template_name = "inventory/_items_table.html"
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        request = self.request
-        q = (request.GET.get("q") or "").strip()
-        category = (request.GET.get("category") or "").strip()
-        subcategory = (request.GET.get("subcategory") or "").strip()
-        active = (request.GET.get("active") or "").strip()
-        sort = (request.GET.get("sort") or "name").strip()
-        direction = (request.GET.get("direction") or "asc").strip()
-        page_size = request.GET.get("page_size") or 25
+    def _get_queryset(self):
         qs = Item.objects.all()
-        if q:
-            qs = qs.filter(name__icontains=q)
-        if category:
-            qs = qs.filter(category=category)
-        if subcategory:
-            qs = qs.filter(sub_category=subcategory)
-        if active:
-            if active == "1":
-                qs = qs.filter(is_active=True)
-            elif active == "0":
-                qs = qs.filter(is_active=False)
+        filters = {
+            "category": "category",
+            "subcategory": "sub_category",
+            "active": "is_active",
+        }
         allowed_sorts = {
             "item_id",
             "name",
@@ -99,52 +82,34 @@ class ItemsTableView(TemplateView):
             "reorder_point",
             "is_active",
         }
-        if sort not in allowed_sorts:
-            sort = "name"
-        ordering = sort if direction != "desc" else f"-{sort}"
-        qs = qs.order_by(ordering)
-        try:
-            per_page = int(page_size)
-        except (TypeError, ValueError):
-            per_page = 25
-        paginator = Paginator(qs, per_page)
-        page_number = request.GET.get("page")
-        page_obj = paginator.get_page(page_number)
-        ctx.update(
-            {
-                "page_obj": page_obj,
-                "q": q,
-                "category": category,
-                "subcategory": subcategory,
-                "active": active,
-                "page_size": per_page,
-                "sort": sort,
-                "direction": direction,
-            }
+        qs, params = list_utils.apply_filters_sort(
+            self.request,
+            qs,
+            search_fields=["name"],
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="name",
         )
+        self._filter_params = params
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs = self._get_queryset()
+        page_obj, per_page = list_utils.paginate(self.request, qs)
+        ctx.update(self._filter_params)
+        ctx.update({"page_obj": page_obj, "page_size": per_page})
         return ctx
 
 
 class ItemsExportView(View):
     def get(self, request):
-        q = (request.GET.get("q") or "").strip()
-        category = (request.GET.get("category") or "").strip()
-        subcategory = (request.GET.get("subcategory") or "").strip()
-        active = (request.GET.get("active") or "").strip()
-        sort = (request.GET.get("sort") or "name").strip()
-        direction = (request.GET.get("direction") or "asc").strip()
         qs = Item.objects.all()
-        if q:
-            qs = qs.filter(name__icontains=q)
-        if category:
-            qs = qs.filter(category=category)
-        if subcategory:
-            qs = qs.filter(sub_category=subcategory)
-        if active:
-            if active == "1":
-                qs = qs.filter(is_active=True)
-            elif active == "0":
-                qs = qs.filter(is_active=False)
+        filters = {
+            "category": "category",
+            "subcategory": "sub_category",
+            "active": "is_active",
+        }
         allowed_sorts = {
             "item_id",
             "name",
@@ -155,39 +120,38 @@ class ItemsExportView(View):
             "reorder_point",
             "is_active",
         }
-        if sort not in allowed_sorts:
-            sort = "name"
-        ordering = sort if direction != "desc" else f"-{sort}"
-        qs = qs.order_by(ordering)
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=items.csv"
-        writer = csv.writer(response)
-        writer.writerow(
-            [
-                "ID",
-                "Name",
-                "Base Unit",
-                "Category",
-                "Subcategory",
-                "Current Stock",
-                "Reorder Point",
-                "Active",
-            ]
+        qs, _ = list_utils.apply_filters_sort(
+            request,
+            qs,
+            search_fields=["name"],
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="name",
         )
-        for item in qs:
-            writer.writerow(
-                [
-                    item.item_id,
-                    item.name,
-                    item.base_unit,
-                    item.category,
-                    item.sub_category,
-                    item.current_stock,
-                    item.reorder_point,
-                    item.is_active,
-                ]
-            )
-        return response
+        headers = [
+            "ID",
+            "Name",
+            "Base Unit",
+            "Category",
+            "Subcategory",
+            "Current Stock",
+            "Reorder Point",
+            "Active",
+        ]
+
+        def row(item: Item):
+            return [
+                item.item_id,
+                item.name,
+                item.base_unit,
+                item.category,
+                item.sub_category,
+                item.current_stock,
+                item.reorder_point,
+                item.is_active,
+            ]
+
+        return list_utils.export_as_csv(qs, headers, row, "items.csv")
 
 
 class ItemCreateView(View):

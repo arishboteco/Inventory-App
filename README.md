@@ -123,6 +123,29 @@ from inventory.services.item_service import add_new_item
 success, msg = add_new_item(engine, {"name": "Whole Milk", "category": "Dairy"})
 ```
 
+## List View Utilities
+
+Reusable helpers for filtering, sorting, pagination and CSV export live in
+`inventory/services/list_utils.py`. The Items, Suppliers, GRN and Purchase
+Order list views use these functions to avoid duplicating boilerplate code.
+
+```python
+from inventory.services import list_utils
+
+qs, params = list_utils.apply_filters_sort(
+    request,
+    Item.objects.all(),
+    search_fields=["name"],
+    filter_fields={"category": "category"},
+    allowed_sorts={"name"},
+    default_sort="name",
+)
+page_obj, _ = list_utils.paginate(request, qs)
+```
+
+`list_utils.export_as_csv` can turn any iterable into a downloadable CSV by
+supplying the header row and a function that builds each data row.
+
 ## API Endpoints
 
 The application exposes the following REST endpoints under `/api/`:

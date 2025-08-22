@@ -32,22 +32,17 @@ def _load_units_from_supabase() -> Dict[str, List[str]]:
         return {}
     try:  # pragma: no cover - network interaction
         client: Client = create_client(url, key)
-        # The ``units`` table contains a ``name`` column for the base unit and
-        # a ``purchase_units`` column with a list of compatible units.
-        resp = client.table("units").select("name,purchase_units").execute()
-        data = resp.data or []
+        resp = client.table("units").select("base_unit,purchase_unit").execute()
     except Exception as exc:
         logger.warning("Failed to fetch units from Supabase: %s", exc)
         return {}
 
     units: Dict[str, List[str]] = {}
-    for row in data:
-        name = row.get("name")
-        purchase = row.get("purchase_units") or []
-        if isinstance(purchase, str):
-            purchase = [purchase]
-        if name:
-            units[name] = purchase
+    for row in resp.data or []:
+        base = row.get("base_unit")
+        purchase = row.get("purchase_unit")
+        if base and purchase:
+            units.setdefault(base, []).append(purchase)
     return units
 
 

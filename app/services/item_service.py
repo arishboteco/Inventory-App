@@ -80,47 +80,6 @@ def get_item_details(engine: Engine, item_id: int) -> Optional[Dict[str, Any]]:
 
 
 @st.cache_data(ttl=300)
-def get_category_dropdowns(engine: Engine) -> Dict[str, List[str]]:
-    """Return mapping of parent categories to their sub-categories.
-
-    Parameters
-    ----------
-    engine : Engine
-        SQLAlchemy database engine instance.
-
-    Returns
-    -------
-    Dict[str, List[str]]
-        Dictionary where keys are top-level category names and values are
-        sorted lists of sub-category names. Categories without children map to
-        an empty list.
-    """
-    if engine is None:
-        logger.error(
-            "ERROR [item_service.get_category_dropdowns]: Database engine not available."
-        )
-        return {}
-
-    query = (
-        "SELECT id, name, parent_id FROM category ORDER BY name"
-    )
-    df = fetch_data(engine, query)
-    if df.empty:
-        return {}
-
-    mapping: Dict[str, List[str]] = {}
-    parents = df[df["parent_id"].isna()]
-    for _, parent_row in parents.iterrows():
-        parent_id = parent_row["id"]
-        parent_name = parent_row["name"]
-        children = (
-            df[df["parent_id"] == parent_id]["name"].sort_values().tolist()
-        )
-        mapping[parent_name] = children
-    return mapping
-
-
-@st.cache_data(ttl=300)
 def suggest_category_and_units(
     _engine: Engine, item_name: str
 ) -> Tuple[Optional[str], Optional[str], Optional[str]]:

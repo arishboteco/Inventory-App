@@ -1,8 +1,8 @@
 import pytest
 from django.urls import reverse
 
-from inventory.models import Item, StockTransaction, Category
-from inventory.services import item_service
+from inventory.models import Item, StockTransaction
+from inventory.services import item_service, supabase_categories
 
 pytestmark = pytest.mark.django_db
 
@@ -55,13 +55,18 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     from inventory.forms import item_forms as forms_module
 
     monkeypatch.setattr(forms_module, "get_units", lambda: {"pcs": ["box"]})
+    categories_map = {
+        None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Drink"}],
+        1: [{"id": 3, "name": "Fruit"}],
+        2: [{"id": 4, "name": "Soda"}],
+    }
+    monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
+    monkeypatch.setattr(
+        supabase_categories, "get_categories", lambda: categories_map
+    )
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
 
-    parent1 = Category.objects.create(name="Food")
-    sub1 = Category.objects.create(name="Fruit", parent=parent1)
-    parent2 = Category.objects.create(name="Drink")
-    sub2 = Category.objects.create(name="Soda", parent=parent2)
     item = _create_item(category="Food", sub_category="Fruit")
 
     # Prime caches
@@ -74,15 +79,15 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     resp = client.get(url)
     assert resp.status_code == 200
     form = resp.context["form"]
-    assert form.fields["category"].initial == parent1.id
-    assert form.fields["sub_category"].initial == sub1.id
+    assert form.fields["category"].initial == "1"
+    assert form.fields["sub_category"].initial == "3"
 
     data = {
         "name": "Gadget",
         "base_unit": "pcs",
         "purchase_unit": "box",
-        "category": str(parent2.pk),
-        "sub_category": str(sub2.pk),
+        "category": "2",
+        "sub_category": "4",
         "permitted_departments": "dept2",
         "reorder_point": "5",
         "current_stock": "0",

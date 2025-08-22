@@ -13,6 +13,7 @@ from . import (
     sale_service,
     kpis,
     supabase_units,
+    supabase_categories,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     "sale_service",
     "kpis",
     "supabase_units",
+    "supabase_categories",
 ]

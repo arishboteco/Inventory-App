@@ -59,7 +59,7 @@
       {% endif %}
     </div>
     {% for field in form %}
-    {% if field.name not in ['name', 'base_unit', 'purchase_unit', 'category'] %}
+    {% if field.name not in excluded_fields %}
     <div>
       {{ field.label_tag }}
         {{ field }}

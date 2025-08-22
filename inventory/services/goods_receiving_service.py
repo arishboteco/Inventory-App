@@ -74,8 +74,6 @@ def _process_items(
             unit_price_at_receipt=Decimal(str(item_d["unit_price_at_receipt"])),
             item_notes=item_d.get("item_notes"),
         )
-        po_item.quantity_received += qty
-        po_item.save()
         stock_service.record_stock_transaction(
             item_id=item.item_id,
             quantity_change=qty,
@@ -89,9 +87,13 @@ def _process_items(
 
 
 def _update_po_status(po: PurchaseOrder) -> None:
+    from django.db.models import Sum
+
     fully_received = all(
-        i.quantity_received >= i.quantity_ordered
-        for i in po.purchaseorderitem_set.all()
+        i.received_total >= i.quantity_ordered
+        for i in po.purchaseorderitem_set.annotate(
+            _received_total=Sum("grnitem__quantity_received")
+        )
     )
     po.status = "COMPLETE" if fully_received else "PARTIAL"
     po.save()

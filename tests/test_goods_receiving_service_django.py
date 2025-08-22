@@ -44,6 +44,6 @@ def test_create_grn_updates_stock_and_po():
     item.refresh_from_db()
     assert item.current_stock == 5
     po_item.refresh_from_db()
-    assert po_item.quantity_received == 5
+    assert po_item.received_total == 5
     po = PurchaseOrder.objects.get(pk=po_id)
     assert po.status == "PARTIAL"

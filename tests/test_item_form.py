@@ -1,8 +1,11 @@
 import pytest
 from django import forms
 
+from django.urls import reverse
+
 from inventory.forms import ItemForm
 from inventory.services import supabase_units
+from inventory.models import Category
 
 
 @pytest.mark.django_db
@@ -17,3 +20,45 @@ def test_item_form_preserves_metadata(monkeypatch):
     assert purchase_field.label == "Purchase unit"
     assert purchase_field.max_length == 50
     assert isinstance(purchase_field.widget, forms.Select)
+
+
+@pytest.mark.django_db
+def test_item_form_categories_and_subcategories(monkeypatch):
+    monkeypatch.setattr(supabase_units, "get_units", lambda: {"kg": ["g"]})
+    parent = Category.objects.create(name="Food")
+    sub1 = Category.objects.create(name="Fruit", parent=parent)
+    sub2 = Category.objects.create(name="Veg", parent=parent)
+    other_parent = Category.objects.create(name="Tools")
+    Category.objects.create(name="Hammer", parent=other_parent)
+
+    form = ItemForm()
+    cat_qs = list(form.fields["category"].queryset)
+    assert cat_qs == [parent, other_parent]
+    assert list(form.fields["sub_category"].queryset) == []
+
+    data = {
+        "name": "Apple",
+        "base_unit": "kg",
+        "purchase_unit": "g",
+        "category": str(parent.pk),
+        "sub_category": str(sub1.pk),
+    }
+    form = ItemForm(data=data)
+    assert list(form.fields["sub_category"].queryset) == [sub1, sub2]
+    assert form.is_valid()
+    item = form.save()
+    assert item.category == parent.name
+    assert item.sub_category == sub1.name
+
+
+@pytest.mark.django_db
+def test_subcategory_options_view(client):
+    parent = Category.objects.create(name="Food")
+    sub1 = Category.objects.create(name="Fruit", parent=parent)
+    sub2 = Category.objects.create(name="Veg", parent=parent)
+    url = reverse("item_subcategory_options")
+    resp = client.get(url, {"category": parent.pk})
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert f'value="{sub1.pk}"' in content
+    assert f'value="{sub2.pk}"' in content

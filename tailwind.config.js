@@ -1,5 +1,3 @@
-const defaultTheme = require('tailwindcss/defaultTheme');
-
 module.exports = {
   content: [
     "./templates/**/*.{html,js}",
@@ -7,7 +5,11 @@ module.exports = {
   ],
   theme: {
     screens: {
-      ...defaultTheme.screens,
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
       'max-sm': { max: '639px' },
       'max-md': { max: '767px' },
       'max-lg': { max: '1023px' },
@@ -23,8 +25,34 @@ module.exports = {
           light: '#111827',
           dark: '#ffffff',
         },
-        primary: '#1e40af',
-        secondary: '#059669',
+        primary: {
+          DEFAULT: '#1e40af',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
+        },
+        secondary: {
+          DEFAULT: '#047857',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981',
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
+        },
         accent: '#f59e0b',
         danger: '#dc2626',
         form: {

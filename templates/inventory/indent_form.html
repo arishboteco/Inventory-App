@@ -16,11 +16,7 @@
       {% for field in form %}
       <div>
         {{ field.label_tag }}
-        {% if field.field.widget.input_type == "checkbox" %}
-        {{ field.as_widget(attrs={'class': 'form-checkbox'}) }}
-        {% else %}
-        {{ field.as_widget(attrs={'class': 'form-control'}) }}
-        {% endif %}
+        {{ field }}
         {% if field.errors %}
         <ul class="text-red-600 list-disc pl-5">
           {% for error in field.errors %}
@@ -52,7 +48,7 @@
       {% for item_form in formset %}
         <tr class="form-row">
           <td>
-            {{ item_form.item.as_widget(attrs={'class': 'form-control'}) }}
+            {{ item_form.item }}
             {% if item_form.item.errors %}
             <ul class="text-red-600 list-disc pl-5">
               {% for error in item_form.item.errors %}<li>{{ error }}</li>{% endfor %}
@@ -60,7 +56,7 @@
             {% endif %}
           </td>
           <td>
-            {{ item_form.requested_qty.as_widget(attrs={'class': 'form-control'}) }}
+            {{ item_form.requested_qty }}
             {% if item_form.requested_qty.errors %}
             <ul class="text-red-600 list-disc pl-5">
               {% for error in item_form.requested_qty.errors %}<li>{{ error }}</li>{% endfor %}
@@ -68,7 +64,7 @@
             {% endif %}
           </td>
           <td>
-            {{ item_form.notes.as_widget(attrs={'class': 'form-control'}) }}
+            {{ item_form.notes }}
             {% if item_form.notes.errors %}
             <ul class="text-red-600 list-disc pl-5">
               {% for error in item_form.notes.errors %}<li>{{ error }}</li>{% endfor %}

@@ -35,10 +35,39 @@ class ItemForm(forms.ModelForm):
             "category": {"required": "Category is required."},
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
+
+        name_attrs = {"class": "form-control"}
+        if suggest_url:
+            name_attrs.update(
+                {
+                    "hx-get": suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-swap": "none",
+                }
+            )
+        self.fields["name"].widget.attrs.update(name_attrs)
+
+        self.fields["base_unit"].widget.attrs.update(
+            {"id": "id_base_unit", "class": "form-control"}
+        )
+        self.fields["purchase_unit"].widget.attrs.update(
+            {"id": "id_purchase_unit", "class": "form-control"}
+        )
+        self.fields["category"].widget.attrs.update(
+            {"id": "id_category", "class": "form-control"}
+        )
+
+        for name, field in self.fields.items():
+            if name in {"name", "base_unit", "purchase_unit", "category"}:
+                continue
+            if getattr(field.widget, "input_type", None) == "checkbox":
+                field.widget.attrs.update({"class": "form-checkbox"})
+            else:
+                field.widget.attrs.update({"class": "form-control"})
 
     def clean(self):
         cleaned = super().clean()
@@ -75,6 +104,14 @@ class SupplierForm(forms.ModelForm):
             "notes",
             "is_active",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if getattr(field.widget, "input_type", None) == "checkbox":
+                field.widget.attrs.update({"class": "form-checkbox"})
+            else:
+                field.widget.attrs.update({"class": "form-control"})
 
 
 class StockReceivingForm(forms.ModelForm):
@@ -138,6 +175,14 @@ class IndentForm(forms.ModelForm):
         model = Indent
         fields = ["requested_by", "department", "date_required", "notes"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if getattr(field.widget, "input_type", None) == "checkbox":
+                field.widget.attrs.update({"class": "form-checkbox"})
+            else:
+                field.widget.attrs.update({"class": "form-control"})
+
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
         if not obj.status:
@@ -147,9 +192,21 @@ class IndentForm(forms.ModelForm):
         return obj
 
 
+class IndentItemForm(forms.ModelForm):
+    class Meta:
+        model = IndentItem
+        fields = ["item", "requested_qty", "notes"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({"class": "form-control"})
+
+
 IndentItemFormSet = forms.inlineformset_factory(
     Indent,
     IndentItem,
+    form=IndentItemForm,
     fields=["item", "requested_qty", "notes"],
     extra=1,
     can_delete=True,

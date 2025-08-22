@@ -15,6 +15,10 @@ from .models import (
 )
 from django.urls import reverse
 from .services.supabase_units import get_units
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 INPUT_CLASS = "w-full px-3 py-2 border rounded"
@@ -58,6 +62,7 @@ class ItemForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         units_map = get_units()
+        logger.debug("Units map loaded: %s", units_map)
         self.units_map = units_map
 
         for field in ("name", "base_unit", "purchase_unit", "category"):
@@ -67,6 +72,7 @@ class ItemForm(forms.ModelForm):
 
         base_choices = [(u, u) for u in sorted(units_map.keys())]
         base_selected = self.data.get("base_unit") or self.initial.get("base_unit")
+        logger.debug("Base unit selected: %s", base_selected)
 
         base_field = self.fields["base_unit"]
         base_field.choices = [("", "---------")] + base_choices
@@ -78,6 +84,7 @@ class ItemForm(forms.ModelForm):
             base_field.initial = base_selected
 
         purchase_options = units_map.get(base_selected, [])
+        logger.debug("Purchase options for %s: %s", base_selected, purchase_options)
         purchase_field = self.fields["purchase_unit"]
         purchase_field.choices = [("", "---------")] + [
             (u, u) for u in purchase_options

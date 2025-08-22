@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.db.models import F, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 
-from inventory.models import Item
+from inventory.models import Item, Supplier, StockTransaction
 
 
 def root_view(request):
@@ -25,5 +28,18 @@ def dashboard(request):
         reorder_safe__gt=0,  # Only consider items with a reorder point > 0
         stock_safe__lt=F("reorder_safe")
     ).order_by("name")
-    
-    return render(request, "core/dashboard.html", {"low_stock": low_stock})
+
+    total_items = Item.objects.count()
+    total_suppliers = Supplier.objects.count()
+    recent_transactions = StockTransaction.objects.filter(
+        transaction_date__gte=timezone.now() - timedelta(days=7)
+    ).count()
+
+    context = {
+        "low_stock": low_stock,
+        "total_items": total_items,
+        "total_suppliers": total_suppliers,
+        "recent_transactions": recent_transactions,
+    }
+
+    return render(request, "core/dashboard.html", context)

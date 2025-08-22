@@ -9,6 +9,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 
 from ..models import Supplier
 from ..forms import SupplierForm, BulkUploadForm, BulkDeleteForm
@@ -154,15 +156,27 @@ class SupplierEditView(View):
         return render(request, self.template_name, ctx)
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class SupplierToggleActiveView(View):
-    def get(self, request, pk: int):
+    def _toggle(self, request, pk: int):
         supplier = get_object_or_404(Supplier, pk=pk)
         if supplier.is_active:
             supplier_service.deactivate_supplier(supplier.pk)
         else:
             supplier_service.reactivate_supplier(supplier.pk)
+        if request.method == "POST":
+            params = request.POST.copy()
+            params.pop("csrfmiddlewaretoken", None)
+            request.GET = params
+            request.method = "GET"
         view = SuppliersTableView.as_view()
         return view(request)
+
+    def post(self, request, pk: int):
+        return self._toggle(request, pk)
+
+    def get(self, request, pk: int):
+        return self._toggle(request, pk)
 
 
 class SuppliersBulkUploadView(View):

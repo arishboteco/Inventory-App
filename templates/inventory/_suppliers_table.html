@@ -22,8 +22,22 @@
         <td>{{ row.is_active }}</td>
         <td>
           <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-blue-600 mr-2">Edit</a>
-          <a hx-get="{% url 'supplier_toggle_active' row.supplier_id %}?q={{ q|urlencode }}&page={{ page_obj.number }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-             hx-target="#suppliers_table" class="text-blue-600">Toggle</a>
+          <form
+            hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
+            hx-target="#suppliers_table"
+            hx-confirm="Are you sure you want to toggle this supplier?"
+            method="post"
+            class="inline"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="q" value="{{ q }}" />
+            <input type="hidden" name="page" value="{{ page_obj.number }}" />
+            <input type="hidden" name="active" value="{{ active }}" />
+            <input type="hidden" name="page_size" value="{{ page_size }}" />
+            <input type="hidden" name="sort" value="{{ sort }}" />
+            <input type="hidden" name="direction" value="{{ direction }}" />
+            <button type="submit" class="text-blue-600">Toggle</button>
+          </form>
         </td>
       </tr>
       {% empty %}

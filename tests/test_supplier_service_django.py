@@ -94,3 +94,17 @@ def test_suppliers_export(client):
     body = resp.content.decode()
     assert "Inact" in body
     assert "Act," not in body
+
+
+@pytest.mark.django_db
+def test_toggle_supplier_post(client):
+    supplier = Supplier.objects.create(name="ToggleMe", is_active=True)
+    url = reverse("supplier_toggle_active", args=[supplier.pk])
+    resp = client.post(url, {"page": "1"})
+    assert resp.status_code == 200
+    supplier.refresh_from_db()
+    assert supplier.is_active is False
+    resp = client.post(url, {"page": "1"})
+    assert resp.status_code == 200
+    supplier.refresh_from_db()
+    assert supplier.is_active is True

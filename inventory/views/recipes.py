@@ -1,8 +1,9 @@
-from django.shortcuts import get_object_or_404, render
-from django.views import View
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import TemplateView
 
-from ..models import Recipe, RecipeComponent
+from ..forms import RecipeForm, RecipeComponentFormSet
+from ..models import Recipe
 
 
 class RecipesListView(TemplateView):
@@ -14,29 +15,43 @@ class RecipesListView(TemplateView):
         return ctx
 
 
-class RecipeDetailView(View):
-    template_name = "inventory/recipes/detail.html"
+def recipe_create(request):
+    if request.method == "POST":
+        form = RecipeForm(request.POST)
+        formset = RecipeComponentFormSet(request.POST, prefix="components")
+        if form.is_valid() and formset.is_valid():
+            recipe = form.save()
+            formset.instance = recipe
+            formset.save()
+            messages.success(request, "Recipe created")
+            return redirect("recipe_detail", pk=recipe.pk)
+    else:
+        form = RecipeForm()
+        formset = RecipeComponentFormSet(prefix="components")
+    return render(
+        request,
+        "inventory/recipes/detail.html",
+        {"form": form, "formset": formset, "recipe": None, "is_edit": False},
+    )
 
-    def get(self, request, pk: int):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        components = RecipeComponent.objects.filter(parent_recipe=recipe).order_by(
-            "sort_order", "id"
+
+def recipe_detail(request, pk: int):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    if request.method == "POST":
+        form = RecipeForm(request.POST, instance=recipe)
+        formset = RecipeComponentFormSet(
+            request.POST, instance=recipe, prefix="components"
         )
-        return render(
-            request,
-            self.template_name,
-            {"recipe": recipe, "components": components},
-        )
-
-
-class RecipeComponentRowView(View):
-    template_name = "inventory/recipes/_component_row.html"
-
-    def get(self, request, pk: int):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        index = int(request.GET.get("index", 0))
-        return render(
-            request,
-            self.template_name,
-            {"recipe": recipe, "index": index, "comp": None},
-        )
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "Recipe updated")
+            return redirect("recipe_detail", pk=recipe.pk)
+    else:
+        form = RecipeForm(instance=recipe)
+        formset = RecipeComponentFormSet(instance=recipe, prefix="components")
+    return render(
+        request,
+        "inventory/recipes/detail.html",
+        {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
+    )

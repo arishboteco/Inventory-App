@@ -11,7 +11,7 @@
   </head>
   <body class="min-h-screen">
     <nav class="bg-primary">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex-shrink-0">
             <a href="{% url 'root' %}" class="text-white font-bold">Inventory App</a>
@@ -69,7 +69,7 @@
     <div id="htmx-spinner" class="hidden fixed inset-0 flex items-center justify-center bg-black/25">
       <div class="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
     </div>
-    <div class="max-w-7xl mx-auto p-4">
+    <div class="container mx-auto p-4">
       {% if messages %}
         {% include "components/alert.html" %}
       {% endif %}

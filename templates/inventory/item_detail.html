@@ -1,6 +1,5 @@
 {% extends "_base.html" %}
 {% block content %}
-<div class="max-w-3xl mx-auto p-4">
   <h1 class="text-2xl font-semibold mb-4">{{ item.name }}</h1>
   <table class="table">
     <tbody>
@@ -18,5 +17,4 @@
   <div class="mt-4">
     <a href="{% url 'items_list' %}" class="text-primary">Back to list</a>
   </div>
-</div>
 {% endblock %}

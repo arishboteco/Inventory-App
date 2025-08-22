@@ -19,15 +19,6 @@ from inventory.services.recipe_service import (
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture(scope="module", autouse=True)
-def create_tables(django_db_blocker):
-    with django_db_blocker.unblock():
-        with connection.schema_editor() as editor:
-            editor.create_model(SaleTransaction)
-    yield
-    with django_db_blocker.unblock():
-        with connection.schema_editor() as editor:
-            editor.delete_model(SaleTransaction)
 
 
 def _create_item(name="Flour", base_unit="kg", purchase_unit="bag", stock=20):

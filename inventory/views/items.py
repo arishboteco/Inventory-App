@@ -222,6 +222,8 @@ class ItemEditView(View):
         if form.is_valid():
             try:
                 form.save()
+                item_service.get_all_items_with_stock.clear()
+                item_service.get_distinct_departments_from_items.clear()
                 messages.success(request, "Item updated")
                 return redirect("items_list")
             except (ValidationError, DatabaseError):

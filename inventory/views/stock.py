@@ -3,6 +3,7 @@ import io
 
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
@@ -168,6 +169,8 @@ def history_reports(request):
     user = (request.GET.get("user") or "").strip()
     start_date = (request.GET.get("start_date") or "").strip()
     end_date = (request.GET.get("end_date") or "").strip()
+    sort = (request.GET.get("sort") or "date").strip()
+    direction = (request.GET.get("direction") or "desc").strip()
 
     qs = StockTransaction.objects.select_related("item").all()
     if item:
@@ -181,7 +184,21 @@ def history_reports(request):
     if end_date:
         qs = qs.filter(transaction_date__lte=end_date)
 
-    qs = qs.order_by("-transaction_date")
+    allowed_sorts = {
+        "id": "transaction_id",
+        "item": "item__name",
+        "type": "transaction_type",
+        "qty": "quantity_change",
+        "user": "user_id",
+        "date": "transaction_date",
+    }
+    if sort not in allowed_sorts:
+        sort = "date"
+    ordering = allowed_sorts[sort]
+    ordering = ordering if direction != "desc" else f"-{ordering}"
+    qs = qs.order_by(ordering)
+
+    total_quantity = qs.aggregate(total=Sum("quantity_change"))["total"] or 0
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -231,9 +248,15 @@ def history_reports(request):
     )
 
     params = request.GET.copy()
-    params.pop("page", None)
-    params.pop("export", None)
-    query_string = params.urlencode()
+    pagination_params = params.copy()
+    pagination_params.pop("page", None)
+    pagination_params.pop("export", None)
+    query_string = pagination_params.urlencode()
+
+    sort_params = pagination_params.copy()
+    sort_params.pop("sort", None)
+    sort_params.pop("direction", None)
+    sort_query = sort_params.urlencode()
 
     ctx = {
         "page_obj": page_obj,
@@ -246,5 +269,9 @@ def history_reports(request):
         "start_date": start_date,
         "end_date": end_date,
         "query_string": query_string,
+        "sort_query": sort_query,
+        "sort": sort,
+        "direction": direction,
+        "total_quantity": total_quantity,
     }
     return render(request, "inventory/history_reports.html", ctx)

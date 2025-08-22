@@ -3,6 +3,7 @@ import io
 
 from django.contrib import messages
 from django.core.paginator import Paginator
+from decimal import Decimal
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -104,7 +105,7 @@ def stock_movements(request):
 
                     try:
                         item_id = int(item_id_str)
-                        quantity = float(quantity_str)
+                        quantity = Decimal(quantity_str)
 
                         txs_to_create.append(
                             {
@@ -198,7 +199,7 @@ def history_reports(request):
     ordering = ordering if direction != "desc" else f"-{ordering}"
     qs = qs.order_by(ordering)
 
-    total_quantity = qs.aggregate(total=Sum("quantity_change"))["total"] or 0
+    total_quantity = qs.aggregate(total=Sum("quantity_change"))["total"] or Decimal("0")
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")

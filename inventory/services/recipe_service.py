@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.db import IntegrityError, transaction
@@ -319,11 +320,12 @@ def _resolve_item_requirements(recipe_id: int, quantity: float) -> Dict[int, flo
 
 def record_sale(
     recipe_id: int,
-    quantity: float,
+    quantity: Decimal,
     user_id: str,
     notes: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """Record sale of a recipe and reduce ingredient stock."""
+    quantity = Decimal(str(quantity))
     if not recipe_id or quantity <= 0:
         return False, "Invalid recipe or quantity."
     user_id_clean = user_id.strip() if user_id else "System"
@@ -333,17 +335,18 @@ def record_sale(
             recipe = Recipe.objects.get(pk=recipe_id)
             if not recipe.is_active:
                 return False, "Recipe is inactive."
-            totals = _resolve_item_requirements(recipe_id, quantity)
+            totals = _resolve_item_requirements(recipe_id, float(quantity))
             SaleTransaction.objects.create(
                 recipe=recipe, quantity=quantity, user_id=user_id_clean, notes=notes_clean
             )
             for iid, qty in totals.items():
+                qty_dec = Decimal(str(qty))
                 item = Item.objects.get(pk=iid)
-                item.current_stock = (item.current_stock or 0) - qty
+                item.current_stock = (item.current_stock or Decimal("0")) - qty_dec
                 item.save(update_fields=["current_stock"])
                 StockTransaction.objects.create(
                     item=item,
-                    quantity_change=-qty,
+                    quantity_change=Decimal("-1") * qty_dec,
                     transaction_type=TX_SALE,
                     user_id=user_id_clean,
                     notes=f"Recipe {recipe_id} sale",

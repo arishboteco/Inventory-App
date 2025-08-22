@@ -3,6 +3,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
+from decimal import Decimal
 from django.db import transaction
 from django.db.models import Max
 
@@ -64,12 +65,12 @@ def _process_items(
     for item_d in items_received_data:
         item = Item.objects.get(pk=item_d["item_id"])
         po_item = PurchaseOrderItem.objects.get(pk=item_d["po_item_id"])
-        qty = float(item_d["quantity_received"])
+        qty = Decimal(str(item_d["quantity_received"]))
         GRNItem.objects.create(
             grn=grn,
             po_item=po_item,
-            quantity_ordered_on_po=item_d.get(
-                "quantity_ordered_on_po", po_item.quantity_ordered
+            quantity_ordered_on_po=Decimal(
+                str(item_d.get("quantity_ordered_on_po", po_item.quantity_ordered))
             ),
             quantity_received=qty,
             unit_price_at_receipt=Decimal(str(item_d["unit_price_at_receipt"])),

@@ -1,16 +1,22 @@
+from decimal import Decimal, InvalidOperation
 from django.db import models
 
 
-class CoerceFloatField(models.FloatField):
-    """FloatField that coerces invalid values to 0.0 and defaults to 0.0."""
+class CoerceFloatField(models.DecimalField):
+    """DecimalField that coerces invalid values to Decimal('0')."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("max_digits", 10)
+        kwargs.setdefault("decimal_places", 2)
+        super().__init__(*args, **kwargs)
 
     def to_python(self, value):
         if value in self.empty_values:
-            return 0.0
+            return Decimal("0")
         try:
-            return float(value)
-        except (TypeError, ValueError):
-            return 0.0
+            return Decimal(value)
+        except (TypeError, ValueError, InvalidOperation):
+            return Decimal("0")
 
     def from_db_value(self, value, expression, connection):
         return self.to_python(value)
@@ -24,8 +30,8 @@ class Item(models.Model):
     category = models.TextField(blank=True, null=True)
     sub_category = models.TextField(blank=True, null=True)
     permitted_departments = models.TextField(blank=True, null=True)
-    reorder_point = CoerceFloatField(default=0.0, blank=True, null=True)
-    current_stock = CoerceFloatField(default=0.0, blank=True, null=True)
+    reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
+    current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
     updated_at = models.DateTimeField(auto_now=True)
@@ -60,7 +66,9 @@ class StockTransaction(models.Model):
     item = models.ForeignKey(
         Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
     )
-    quantity_change = models.FloatField(blank=True, null=True)
+    quantity_change = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
     transaction_type = models.TextField(blank=True, null=True)
     user_id = models.TextField(blank=True, null=True)
     related_mrn = models.TextField(blank=True, null=True)
@@ -81,7 +89,7 @@ class Recipe(models.Model):
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
     type = models.TextField(blank=True, null=True)
-    default_yield_qty = CoerceFloatField(default=0.0, blank=True, null=True)
+    default_yield_qty = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     default_yield_unit = models.TextField(blank=True, null=True)
     plating_notes = models.TextField(blank=True, null=True)
     tags = models.TextField(blank=True, null=True)
@@ -108,9 +116,9 @@ class RecipeComponent(models.Model):
     )
     component_kind = models.TextField(blank=True, null=True)
     component_id = models.IntegerField(blank=True, null=True)
-    quantity = CoerceFloatField(default=0.0, blank=True, null=True)
+    quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     unit = models.TextField(blank=True, null=True)
-    loss_pct = CoerceFloatField(default=0.0, blank=True, null=True)
+    loss_pct = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     sort_order = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -129,7 +137,7 @@ class SaleTransaction(models.Model):
     recipe = models.ForeignKey(
         Recipe, models.DO_NOTHING, db_column="recipe_id", blank=True, null=True
     )
-    quantity = CoerceFloatField(default=0.0, blank=True, null=True)
+    quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     user_id = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     sale_date = models.DateTimeField(auto_now_add=True)
@@ -170,8 +178,12 @@ class IndentItem(models.Model):
     item = models.ForeignKey(
         Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
     )
-    requested_qty = models.FloatField(blank=True, null=True)
-    issued_qty = models.FloatField(blank=True, null=True)
+    requested_qty = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
+    issued_qty = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
     item_status = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
 
@@ -215,8 +227,10 @@ class PurchaseOrderItem(models.Model):
         PurchaseOrder, models.CASCADE, db_column="po_id"
     )
     item = models.ForeignKey(Item, models.DO_NOTHING, db_column="item_id")
-    quantity_ordered = models.FloatField()
-    quantity_received = models.FloatField(default=0)
+    quantity_ordered = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity_received = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0")
+    )
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
@@ -250,8 +264,8 @@ class GRNItem(models.Model):
     po_item = models.ForeignKey(
         PurchaseOrderItem, models.CASCADE, db_column="po_item_id"
     )
-    quantity_ordered_on_po = models.FloatField()
-    quantity_received = models.FloatField()
+    quantity_ordered_on_po = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity_received = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price_at_receipt = models.DecimalField(max_digits=10, decimal_places=2)
     item_notes = models.TextField(blank=True, null=True)
 

@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from decimal import Decimal
 from django.db.models import F, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
@@ -22,8 +23,12 @@ def dashboard(request):
     # Use Coalesce to safely handle potential NULL values in the database,
     # treating them as 0.0 for the comparison. This prevents the 500 error.
     low_stock = Item.objects.annotate(
-        stock_safe=Coalesce("current_stock", Value(0.0)),
-        reorder_safe=Coalesce("reorder_point", Value(0.0))
+        stock_safe=Coalesce(
+            "current_stock", Value(Decimal("0"))
+        ),
+        reorder_safe=Coalesce(
+            "reorder_point", Value(Decimal("0"))
+        )
     ).filter(
         reorder_safe__gt=0,  # Only consider items with a reorder point > 0
         stock_safe__lt=F("reorder_safe")

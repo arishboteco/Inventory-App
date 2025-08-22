@@ -14,6 +14,7 @@ import traceback
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from decimal import Decimal, InvalidOperation
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
@@ -36,7 +37,9 @@ def get_all_items_with_stock(include_inactive: bool = False) -> List[Dict[str, A
     qs = Item.objects.all()
     if not include_inactive:
         qs = qs.filter(is_active=True)
-    qs = qs.annotate(_stock=Coalesce(Sum("stocktransaction__quantity_change"), 0.0))
+    qs = qs.annotate(
+        _stock=Coalesce(Sum("stocktransaction__quantity_change"), Decimal("0"))
+    )
     data = list(
         qs.values(
             "item_id",
@@ -199,7 +202,7 @@ def _clean_create_params(details: Dict[str, Any]) -> Dict[str, Any]:
         category=(details.get("category", "").strip() or "Uncategorized"),
         sub_category=(details.get("sub_category", "").strip() or "General"),
         permitted_departments=cleaned_permitted,
-        reorder_point=details.get("reorder_point", 0.0),
+        reorder_point=details.get("reorder_point", Decimal("0")),
         notes=cleaned_notes,
         is_active=details.get("is_active", True),
     )
@@ -273,7 +276,7 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
                 category=(details.get("category", "").strip() or "Uncategorized"),
                 sub_category=(details.get("sub_category", "").strip() or "General"),
                 permitted_departments=cleaned_permitted,
-                reorder_point=details.get("reorder_point", 0.0),
+                reorder_point=details.get("reorder_point", Decimal("0")),
                 notes=cleaned_notes,
                 is_active=details.get("is_active", True),
             )
@@ -358,8 +361,8 @@ def update_item(item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
                     val = None
             if field == "reorder_point" and val is not None:
                 try:
-                    val = float(val)
-                except (TypeError, ValueError):
+                    val = Decimal(str(val))
+                except (TypeError, ValueError, InvalidOperation):
                     return False, f"Invalid numeric value for reorder_point: {val}"
             setattr(item, field, val)
     try:
@@ -416,7 +419,9 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
 
     row = (
         Item.objects.filter(pk=item_id)
-        .annotate(_stock=Coalesce(Sum("stocktransaction__quantity_change"), 0.0))
+        .annotate(
+            _stock=Coalesce(Sum("stocktransaction__quantity_change"), Decimal("0"))
+        )
         .values(
             "item_id",
             "name",

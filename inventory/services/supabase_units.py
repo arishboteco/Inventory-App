@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 from typing import Dict, List
@@ -8,12 +9,8 @@ except Exception:  # pragma: no cover - supabase optional
     Client = None  # type: ignore
     create_client = None  # type: ignore
 
-# Fallback units used when Supabase is not configured or unreachable
-DEFAULT_UNITS: Dict[str, List[str]] = {
-    "kg": ["kg", "bag"],
-    "ltr": ["ltr", "carton"],
-    "pcs": ["pcs", "box", "case", "each"],
-}
+
+logger = logging.getLogger(__name__)
 
 _CACHE_TTL = 300  # seconds
 _cache: Dict[str, List[str]] | None = None
@@ -23,31 +20,35 @@ _cache_time: float | None = None
 def _load_units_from_supabase() -> Dict[str, List[str]]:
     """Fetch units mapping from the Supabase ``units`` table.
 
-    Returns a mapping of base units to a list of compatible purchase units.
-    Falls back to ``DEFAULT_UNITS`` if Supabase is not configured or request
-    fails.
+    Returns a mapping of base units to a list of compatible purchase units. If
+    the Supabase client cannot be initialised or the request fails, an empty
+    mapping is returned.
     """
 
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
     if not url or not key or create_client is None:
-        return DEFAULT_UNITS
+        logger.warning("Supabase is not configured; no units loaded")
+        return {}
     try:  # pragma: no cover - network interaction
         client: Client = create_client(url, key)
-        resp = client.table("units").select("base_unit,purchase_units").execute()
+        # The ``units`` table contains a ``name`` column for the base unit and
+        # a ``purchase_units`` column with a list of compatible units.
+        resp = client.table("units").select("name,purchase_units").execute()
         data = resp.data or []
-    except Exception:
-        return DEFAULT_UNITS
+    except Exception as exc:
+        logger.warning("Failed to fetch units from Supabase: %s", exc)
+        return {}
 
     units: Dict[str, List[str]] = {}
     for row in data:
-        base = row.get("base_unit") or row.get("name")
-        purchase = row.get("purchase_units") or row.get("compatible_units") or []
+        name = row.get("name")
+        purchase = row.get("purchase_units") or []
         if isinstance(purchase, str):
             purchase = [purchase]
-        if base:
-            units[base] = purchase
-    return units or DEFAULT_UNITS
+        if name:
+            units[name] = purchase
+    return units
 
 
 def get_units(force: bool = False) -> Dict[str, List[str]]:
@@ -65,4 +66,3 @@ def get_units(force: bool = False) -> Dict[str, List[str]]:
     _cache = _load_units_from_supabase()
     _cache_time = now
     return _cache
-

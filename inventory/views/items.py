@@ -20,6 +20,34 @@ logger = logging.getLogger(__name__)
 EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category"]
 
 
+def _filter_and_sort_items(request, qs=None):
+    """Return items queryset filtered and sorted according to request params."""
+    qs = qs or Item.objects.all()
+    filters = {
+        "category": "category",
+        "subcategory": "sub_category",
+        "active": "is_active",
+    }
+    allowed_sorts = {
+        "item_id",
+        "name",
+        "base_unit",
+        "category",
+        "sub_category",
+        "current_stock",
+        "reorder_point",
+        "is_active",
+    }
+    return list_utils.apply_filters_sort(
+        request,
+        qs,
+        search_fields=["name"],
+        filter_fields=filters,
+        allowed_sorts=allowed_sorts,
+        default_sort="name",
+    )
+
+
 class ItemsListView(TemplateView):
     template_name = "inventory/items_list.html"
 
@@ -67,30 +95,7 @@ class ItemsTableView(TemplateView):
     template_name = "inventory/_items_table.html"
 
     def _get_queryset(self):
-        qs = Item.objects.all()
-        filters = {
-            "category": "category",
-            "subcategory": "sub_category",
-            "active": "is_active",
-        }
-        allowed_sorts = {
-            "item_id",
-            "name",
-            "base_unit",
-            "category",
-            "sub_category",
-            "current_stock",
-            "reorder_point",
-            "is_active",
-        }
-        qs, params = list_utils.apply_filters_sort(
-            self.request,
-            qs,
-            search_fields=["name"],
-            filter_fields=filters,
-            allowed_sorts=allowed_sorts,
-            default_sort="name",
-        )
+        qs, params = _filter_and_sort_items(self.request)
         self._filter_params = params
         return qs
 
@@ -105,30 +110,7 @@ class ItemsTableView(TemplateView):
 
 class ItemsExportView(View):
     def get(self, request):
-        qs = Item.objects.all()
-        filters = {
-            "category": "category",
-            "subcategory": "sub_category",
-            "active": "is_active",
-        }
-        allowed_sorts = {
-            "item_id",
-            "name",
-            "base_unit",
-            "category",
-            "sub_category",
-            "current_stock",
-            "reorder_point",
-            "is_active",
-        }
-        qs, _ = list_utils.apply_filters_sort(
-            request,
-            qs,
-            search_fields=["name"],
-            filter_fields=filters,
-            allowed_sorts=allowed_sorts,
-            default_sort="name",
-        )
+        qs, _ = _filter_and_sort_items(request)
         headers = [
             "ID",
             "Name",

@@ -37,36 +37,6 @@
       <button type="submit" class="px-4 py-2 text-white rounded bg-primary">Filter</button>
     </div>
   </form>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>PO #</th>
-        <th>Supplier</th>
-        <th>Order Date</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for po in orders %}
-      <tr>
-        <td><a class="text-primary" href="{% url 'purchase_order_detail' po.pk %}">{{ po.pk }}</a></td>
-        <td>{{ po.supplier.name }}</td>
-        <td>{{ po.order_date }}</td>
-        <td><span class="px-2 py-1 rounded text-xs {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="4" class="p-2">No purchase orders.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <div class="mt-4 flex justify-between">
-    {% if page_obj.has_previous %}
-    <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Previous</a>
-    {% endif %}
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-    <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Next</a>
-    {% endif %}
-  </div>
+  {% include "inventory/purchase_orders/_table.html" %}
 </div>
 {% endblock %}

@@ -9,6 +9,7 @@ from . import (
     goods_receiving_service,
     recipe_service,
     ui_service,
+    list_utils,
     sale_service,
 )
 
@@ -21,5 +22,6 @@ __all__ = [
     "goods_receiving_service",
     "recipe_service",
     "ui_service",
+    "list_utils",
     "sale_service",
 ]

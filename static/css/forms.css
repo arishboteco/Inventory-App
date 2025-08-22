@@ -9,7 +9,9 @@ form select,
 form textarea,
 .form-control {
     font-family: 'Roboto', sans-serif;
-    border: 1px solid #cbd5e0;
+    border: 1px solid var(--form-border);
+    background-color: var(--form-bg);
+    color: var(--form-text);
     padding: 0.5rem;
     border-radius: 0.25rem;
     width: 100%;
@@ -20,11 +22,13 @@ form select:focus,
 form textarea:focus,
 .form-control:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+    border-color: var(--form-focus-border);
+    box-shadow: 0 0 0 2px var(--form-focus-shadow);
 }
 
 .form-checkbox {
-    border: 1px solid #cbd5e0;
+    border: 1px solid var(--form-border);
+    background-color: var(--form-bg);
+    color: var(--form-text);
     border-radius: 0.25rem;
 }

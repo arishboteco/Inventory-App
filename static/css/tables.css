@@ -6,11 +6,11 @@
 
 .table th,
 .table td {
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--table-border);
     padding: 0.5rem 1rem;
     text-align: left;
 }
 
 .table thead {
-    background-color: #f9fafb;
+    background-color: var(--table-header-bg);
 }

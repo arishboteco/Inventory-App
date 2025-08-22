@@ -5,7 +5,6 @@
     {% if is_edit %}Edit Item{% else %}Add Item{% endif %}
   </h1>
   {% if form %}
-  <div id="unit-suggestion"></div>
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -16,7 +15,20 @@
     </ul>
     {% endif %}
     <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
-      {% include "components/form_field.html" with field=form.name %}
+      <div id="name-field" class="space-y-1 relative">
+        <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% if form.name.help_text %}
+          <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
+        {% endif %}
+        {% if form.name.errors %}
+          <ul class="text-sm text-red-600 list-disc pl-5">
+            {% for error in form.name.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
       {% include "components/form_field.html" with field=form.base_unit %}
       {% include "components/form_field.html" with field=form.purchase_unit %}
       {% include "components/form_field.html" with field=form.category %}
@@ -61,9 +73,12 @@
   <script>
     document.body.addEventListener('htmx:afterRequest', function(evt) {
       if (evt.detail.target && evt.detail.target.id === 'id_name') {
-        const container = document.getElementById('unit-suggestion');
-        container.innerHTML = '';
-        container.insertAdjacentHTML('beforeend', evt.detail.xhr.response);
+        const container = document.getElementById('name-field');
+        if (container) {
+          const existing = container.querySelector('.toast');
+          if (existing) existing.remove();
+          container.insertAdjacentHTML('beforeend', evt.detail.xhr.response);
+        }
       }
     });
   </script>

@@ -18,6 +18,8 @@ from ..services import item_service
 
 logger = logging.getLogger(__name__)
 
+EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category"]
+
 
 class ItemsListView(TemplateView):
     template_name = "inventory/items_list.html"
@@ -100,7 +102,7 @@ class ItemCreateView(View):
     def get(self, request):
         suggest_url = reverse("item_suggest")
         form = ItemForm(suggest_url=suggest_url)
-        ctx = {"form": form, "is_edit": False}
+        ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
         return render(request, self.template_name, ctx)
 
     def post(self, request):
@@ -110,7 +112,7 @@ class ItemCreateView(View):
             form.save()
             messages.success(request, "Item created")
             return redirect("items_list")
-        ctx = {"form": form, "is_edit": False}
+        ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
         return render(request, self.template_name, ctx)
 
 
@@ -137,6 +139,7 @@ class ItemEditView(View):
             "form": form,
             "is_edit": True,
             "item": item,
+            "excluded_fields": EXCLUDED_FIELDS,
         }
         return render(request, self.template_name, ctx)
 
@@ -160,6 +163,7 @@ class ItemEditView(View):
             "form": form,
             "is_edit": True,
             "item": item,
+            "excluded_fields": EXCLUDED_FIELDS,
         }
         return render(request, self.template_name, ctx)
 

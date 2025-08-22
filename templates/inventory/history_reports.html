@@ -5,24 +5,45 @@
           hx-get="{% url 'history_reports' %}"
           hx-target="#history_table"
           hx-indicator="#htmx-spinner">
-      <select name="item" class="form-control w-full">
-        <option value="">All Items</option>
-      {% for it in items %}
-      <option value="{{ it.item_id }}" {% if item|default:'' == it.item_id|stringformat:"s" %}selected{% endif %}>{{ it.name }}</option>
-      {% endfor %}
-      </select>
-      <select name="type" class="form-control w-full">
-      <option value="">All Types</option>
-      {% for t in transaction_types %}
-      <option value="{{ t }}" {% if type == t %}selected{% endif %}>{{ t }}</option>
-      {% endfor %}
-      </select>
-      <select name="user" class="form-control w-full">
-      <option value="">All Users</option>
-      {% for u in users %}
-      <option value="{{ u }}" {% if user == u %}selected{% endif %}>{{ u }}</option>
-      {% endfor %}
-      </select>
+      <input
+        type="text"
+        name="item"
+        list="history-items"
+        class="form-control w-full"
+        value="{{ item|default:'' }}"
+      />
+      <datalist id="history-items">
+        <option value="" label="All Items"></option>
+        {% for it in items %}
+        <option value="{{ it.item_id }}" label="{{ it.name }}"></option>
+        {% endfor %}
+      </datalist>
+      <input
+        type="text"
+        name="type"
+        list="history-types"
+        class="form-control w-full"
+        value="{{ type }}"
+      />
+      <datalist id="history-types">
+        <option value="" label="All Types"></option>
+        {% for t in transaction_types %}
+        <option value="{{ t }}"></option>
+        {% endfor %}
+      </datalist>
+      <input
+        type="text"
+        name="user"
+        list="history-users"
+        class="form-control w-full"
+        value="{{ user }}"
+      />
+      <datalist id="history-users">
+        <option value="" label="All Users"></option>
+        {% for u in users %}
+        <option value="{{ u }}"></option>
+        {% endfor %}
+      </datalist>
       <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
       <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
       <input type="hidden" name="sort" value="{{ sort|default:'date' }}" />

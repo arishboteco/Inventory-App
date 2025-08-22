@@ -16,14 +16,24 @@
         hx-trigger="keyup changed delay:300ms"
         hx-include="#filters"
       />
-      <select name="status" class="form-control w-full"
-              hx-get="{% url 'indents_table' %}" hx-target="#indents_table" hx-trigger="change" hx-include="#filters">
-      <option value="">All Statuses</option>
-      <option value="SUBMITTED" {% if status == 'SUBMITTED' %}selected{% endif %}>Submitted</option>
-      <option value="PROCESSING" {% if status == 'PROCESSING' %}selected{% endif %}>Processing</option>
-      <option value="COMPLETED" {% if status == 'COMPLETED' %}selected{% endif %}>Completed</option>
-      <option value="CANCELLED" {% if status == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
-    </select>
+      <input
+        type="text"
+        name="status"
+        list="indent-statuses"
+        class="form-control w-full"
+        value="{{ status }}"
+        hx-get="{% url 'indents_table' %}"
+        hx-target="#indents_table"
+        hx-trigger="change"
+        hx-include="#filters"
+      />
+      <datalist id="indent-statuses">
+        <option value="" label="All Statuses"></option>
+        <option value="SUBMITTED" label="Submitted"></option>
+        <option value="PROCESSING" label="Processing"></option>
+        <option value="COMPLETED" label="Completed"></option>
+        <option value="CANCELLED" label="Cancelled"></option>
+      </datalist>
   </form>
   <div id="indents_table"
        hx-get="{% url 'indents_table' %}"

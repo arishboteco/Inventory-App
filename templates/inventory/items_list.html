@@ -18,26 +18,59 @@
         hx-include="#filters"
         hx-indicator="#htmx-spinner"
       />
-      <select name="category" class="form-control w-full"
-              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
-      <option value="">All Categories</option>
-      {% for cat in categories %}
-      <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
-      {% endfor %}
-      </select>
-      <select name="subcategory" class="form-control w-full"
-              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
-      <option value="">All Subcategories</option>
-      {% for sub in subcategories %}
-      <option value="{{ sub }}" {% if sub == subcategory %}selected{% endif %}>{{ sub }}</option>
-      {% endfor %}
-      </select>
-      <select name="active" class="form-control w-full"
-              hx-get="{% url 'items_table' %}" hx-target="#items_table" hx-trigger="change" hx-include="#filters" hx-indicator="#htmx-spinner">
-      <option value="">All</option>
-      <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
-      <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
-      </select>
+      <input
+        type="text"
+        name="category"
+        list="item-categories"
+        class="form-control w-full"
+        value="{{ category }}"
+        hx-get="{% url 'items_table' %}"
+        hx-target="#items_table"
+        hx-trigger="change"
+        hx-include="#filters"
+        hx-indicator="#htmx-spinner"
+      />
+      <datalist id="item-categories">
+        <option value="" label="All Categories"></option>
+        {% for cat in categories %}
+        <option value="{{ cat }}"></option>
+        {% endfor %}
+      </datalist>
+      <input
+        type="text"
+        name="subcategory"
+        list="item-subcategories"
+        class="form-control w-full"
+        value="{{ subcategory }}"
+        hx-get="{% url 'items_table' %}"
+        hx-target="#items_table"
+        hx-trigger="change"
+        hx-include="#filters"
+        hx-indicator="#htmx-spinner"
+      />
+      <datalist id="item-subcategories">
+        <option value="" label="All Subcategories"></option>
+        {% for sub in subcategories %}
+        <option value="{{ sub }}"></option>
+        {% endfor %}
+      </datalist>
+      <input
+        type="text"
+        name="active"
+        list="item-active"
+        class="form-control w-full"
+        value="{{ active }}"
+        hx-get="{% url 'items_table' %}"
+        hx-target="#items_table"
+        hx-trigger="change"
+        hx-include="#filters"
+        hx-indicator="#htmx-spinner"
+      />
+      <datalist id="item-active">
+        <option value="" label="All"></option>
+        <option value="1" label="Active"></option>
+        <option value="0" label="Inactive"></option>
+      </datalist>
       <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
       <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
       <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">

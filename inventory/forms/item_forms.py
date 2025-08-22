@@ -46,9 +46,12 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        units_map = get_units()
-        logger.debug("Units map loaded: %s", units_map)
+        try:
+            units_map = get_units()
+            logger.debug("Units map loaded: %s", units_map)
+        except Exception:
+            units_map = {}
+            logger.error("Failed to load units map", exc_info=True)
         self.units_map = units_map
 
         for field in ("name", "base_unit", "purchase_unit", "category"):

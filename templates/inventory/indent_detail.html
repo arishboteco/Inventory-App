@@ -18,9 +18,18 @@
     </tbody>
   </table>
   <div class="mt-4 flex gap-2">
-    <a href="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" class="px-3 py-2 border rounded">Mark Processing</a>
-    <a href="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" class="px-3 py-2 border rounded">Mark Completed</a>
-    <a href="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" class="px-3 py-2 border rounded">Cancel</a>
+    <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
+      {% csrf_token %}
+      <button type="submit" class="px-3 py-2 border rounded">Mark Processing</button>
+    </form>
+    <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
+      {% csrf_token %}
+      <button type="submit" class="px-3 py-2 border rounded">Mark Completed</button>
+    </form>
+    <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
+      {% csrf_token %}
+      <button type="submit" class="px-3 py-2 border rounded">Cancel</button>
+    </form>
   </div>
 </div>
 {% endblock %}

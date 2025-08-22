@@ -8,6 +8,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
 
 from ..forms import IndentForm, IndentItemFormSet
 from ..indent_pdf import generate_indent_pdf
@@ -98,6 +100,8 @@ def indent_detail(request, pk: int):
     )
 
 
+@require_POST
+@csrf_protect
 def indent_update_status(request, pk: int, status: str):
     indent = get_object_or_404(Indent, pk=pk)
     indent.status = status.upper()

@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: theme('colors.body.light');
+    color: theme('colors.bodyText.light');
+    font-family: theme('fontFamily.sans');
+  }
+  .dark body {
+    background-color: theme('colors.body.dark');
+    color: theme('colors.bodyText.dark');
+  }
+}
+
+@layer components {
+  /* Status badge classes */
+  .badge-success { @apply bg-green-600 text-white px-1.5 py-0.5 rounded; }
+  .badge-warning { @apply bg-yellow-500 text-black px-1.5 py-0.5 rounded; }
+  .badge-error { @apply bg-red-600 text-white px-1.5 py-0.5 rounded; }
+
+  .dark .badge-success { @apply bg-green-700 text-white; }
+  .dark .badge-warning { @apply bg-yellow-600 text-black; }
+  .dark .badge-error { @apply bg-red-700 text-white; }
+
+  /* Button styles */
+  .btn-primary {
+    background-color: theme('colors.primary');
+    @apply text-white px-4 py-2 rounded transition-colors;
+  }
+  .btn-primary:hover { @apply opacity-90; }
+  .btn-primary:focus {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: theme('colors.primary');
+  }
+  .btn-primary:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .btn-secondary {
+    background-color: theme('colors.secondary');
+    @apply text-white px-4 py-2 rounded transition-colors;
+  }
+  .btn-secondary:hover { @apply opacity-90; }
+  .btn-secondary:focus {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: theme('colors.secondary');
+  }
+  .btn-secondary:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  .btn-danger {
+    background-color: theme('colors.danger');
+    @apply text-white px-4 py-2 rounded transition-colors;
+  }
+  .btn-danger:hover { @apply opacity-90; }
+  .btn-danger:focus {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: theme('colors.danger');
+  }
+  .btn-danger:disabled { @apply opacity-50 cursor-not-allowed; }
+
+  /* Form component styles */
+  form label { @apply block mb-2; }
+  form input:not([type='checkbox']):not([type='radio']),
+  form select,
+  form textarea,
+  .form-control {
+    font-family: theme('fontFamily.sans');
+    border: 1px solid theme('colors.form.border');
+    background-color: theme('colors.form.bg');
+    color: theme('colors.form.text');
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    width: 100%;
+  }
+  form input:not([type='checkbox']):not([type='radio']):focus,
+  form select:focus,
+  form textarea:focus,
+  .form-control:focus {
+    outline: none;
+    border-color: theme('colors.primary');
+    @apply shadow-form-focus-light;
+  }
+
+  .form-checkbox {
+    border: 1px solid theme('colors.form.border');
+    background-color: theme('colors.form.bg');
+    color: theme('colors.form.text');
+    border-radius: 0.25rem;
+  }
+
+  .dark form input:not([type='checkbox']):not([type='radio']),
+  .dark form select,
+  .dark form textarea,
+  .dark .form-control {
+    border: 1px solid theme('colors.form.darkBorder');
+    background-color: theme('colors.form.darkBg');
+    color: theme('colors.form.darkText');
+  }
+
+  .dark form input:not([type='checkbox']):not([type='radio']):focus,
+  .dark form select:focus,
+  .dark form textarea:focus,
+  .dark .form-control:focus {
+    outline: none;
+    border-color: theme('colors.primary');
+    @apply shadow-form-focus-dark;
+  }
+
+  .dark .form-checkbox {
+    border: 1px solid theme('colors.form.darkBorder');
+    background-color: theme('colors.form.darkBg');
+    color: theme('colors.form.darkText');
+  }
+
+  /* Table component styles */
+  .table { width: 100%; border-collapse: collapse; }
+  .table th,
+  .table td {
+    border: 1px solid theme('colors.table.border');
+    padding: 0.5rem 1rem;
+    text-align: left;
+  }
+  .table thead {
+    background-color: theme('colors.table.headerBg');
+    color: theme('colors.table.headerText');
+  }
+  .table tbody tr:hover { background-color: theme('colors.table.hoverBg'); }
+
+  .dark .table th,
+  .dark .table td { border: 1px solid theme('colors.table.darkBorder'); }
+  .dark .table tbody tr:hover { background-color: theme('colors.table.darkHoverBg'); }
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.3rem; }
+  .badge-success,
+  .badge-warning,
+  .badge-error { font-size: 0.8rem; padding: 2px 4px; }
+}

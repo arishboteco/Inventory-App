@@ -25,10 +25,10 @@ class CoerceFloatField(models.DecimalField):
 
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255, blank=True, null=True)
-    base_unit = models.CharField(max_length=50, blank=True, null=True)
-    purchase_unit = models.CharField(max_length=50, blank=True, null=True)
-    category = models.CharField(max_length=100, blank=True, null=True)
+    name = models.CharField(max_length=255, blank=False, null=False)
+    base_unit = models.CharField(max_length=50, blank=False, null=False)
+    purchase_unit = models.CharField(max_length=50, blank=False, null=False)
+    category = models.CharField(max_length=100, blank=False, null=False)
     sub_category = models.CharField(max_length=100, blank=True, null=True)
     permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)

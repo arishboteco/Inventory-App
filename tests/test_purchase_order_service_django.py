@@ -2,14 +2,14 @@ import pytest
 from datetime import date
 from django.db import connection
 
-from inventory.models import Supplier, Item, PurchaseOrder, PurchaseOrderItem
+from inventory.models import Supplier, PurchaseOrder, PurchaseOrderItem
 from inventory.services import purchase_order_service
 
 
 @pytest.mark.django_db
-def test_create_po_and_get_po():
+def test_create_po_and_get_po(item_factory):
     supplier = Supplier.objects.create(name="Vendor")
-    item = Item.objects.create(name="Widget")
+    item = item_factory(name="Widget")
     success, msg, po_id = purchase_order_service.create_po(
         {"supplier_id": supplier.pk, "order_date": date.today()},
         [{"item_id": item.item_id, "quantity_ordered": 5, "unit_price": 2.0}],

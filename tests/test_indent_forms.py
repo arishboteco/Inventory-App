@@ -2,13 +2,12 @@ import django
 from django.conf import settings
 
 import pytest
-from inventory.models import Item
 from inventory.forms import IndentForm, IndentItemFormSet
 
 
 @pytest.mark.django_db
-def test_indent_form_and_formset_save():
-    item = Item.objects.create(name="Sugar")
+def test_indent_form_and_formset_save(item_factory):
+    item = item_factory(name="Sugar")
     form = IndentForm(
         {
             "requested_by": "Alice",

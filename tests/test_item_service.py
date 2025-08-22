@@ -119,8 +119,8 @@ def test_add_items_bulk_inserts_rows():
 
 def test_add_items_bulk_validation_failure():
     items = [
-        {"name": "Widget", "base_unit": "pcs"},
-        {"name": "", "base_unit": "pcs"},
+        {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box", "category": "cat"},
+        {"name": "", "base_unit": "pcs", "purchase_unit": "box", "category": "cat"},
     ]
     inserted, errors = item_service.add_items_bulk(items)
     assert inserted == 0

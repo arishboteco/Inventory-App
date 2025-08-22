@@ -6,10 +6,10 @@ from inventory.services import list_utils
 
 
 @pytest.mark.django_db
-def test_apply_filters_sort():
-    Item.objects.create(name="Apple", category="Fruit", base_unit="kg")
-    Item.objects.create(name="Banana", category="Fruit", base_unit="kg")
-    Item.objects.create(name="Carrot", category="Veg", base_unit="kg")
+def test_apply_filters_sort(item_factory):
+    item_factory(name="Apple", category="Fruit")
+    item_factory(name="Banana", category="Fruit")
+    item_factory(name="Carrot", category="Veg")
     request = RequestFactory().get(
         "/items",
         {"q": "a", "category": "Fruit", "sort": "name", "direction": "desc"},
@@ -29,9 +29,9 @@ def test_apply_filters_sort():
 
 
 @pytest.mark.django_db
-def test_paginate():
+def test_paginate(item_factory):
     for i in range(3):
-        Item.objects.create(name=f"Item{i}", category="Cat", base_unit="kg")
+        item_factory(name=f"Item{i}", category="Cat")
     request = RequestFactory().get("/items", {"page_size": "2", "page": "2"})
     page_obj, per_page = list_utils.paginate(
         request, Item.objects.all().order_by("item_id")
@@ -41,13 +41,28 @@ def test_paginate():
 
 
 @pytest.mark.django_db
-def test_export_as_csv():
-    Item.objects.create(name="Apple", category="Fruit", base_unit="kg")
+def test_export_as_csv(item_factory):
+    item_factory(name="Apple", category="Fruit")
     qs = Item.objects.all()
     response = list_utils.export_as_csv(qs, ["Name"], lambda i: [i.name], "items.csv")
     content = response.content.decode().strip().splitlines()
     assert content[0] == "Name"
     assert content[1] == "Apple"
+
+
+@pytest.mark.django_db
+def test_apply_filters_sort_invalid(item_factory):
+    item_factory(name="Apple", category="Fruit")
+    request = RequestFactory().get("/items", {"sort": "bogus", "direction": "sideways"})
+    qs, params = list_utils.apply_filters_sort(
+        request,
+        Item.objects.all(),
+        allowed_sorts={"category"},
+        default_sort="name",
+        default_direction="asc",
+    )
+    assert params["sort"] == "name"
+    assert params["direction"] == "asc"
 
 
 def test_build_querystring():

@@ -54,26 +54,29 @@ class ItemForm(forms.ModelForm):
 
         base_choices = [(u, u) for u in sorted(units_map.keys())]
         base_selected = self.data.get("base_unit") or self.initial.get("base_unit")
-        self.fields["base_unit"] = forms.ChoiceField(
-            choices=[("", "---------")] + base_choices,
-            required=True,
-            widget=forms.Select(attrs={"id": "id_base_unit", "class": INPUT_CLASS}),
+
+        base_field = self.fields["base_unit"]
+        base_field.choices = [("", "---------")] + base_choices
+        base_field.widget = forms.Select(
+            choices=base_field.choices,
+            attrs={"id": "id_base_unit", "class": INPUT_CLASS},
         )
         if base_selected:
-            self.fields["base_unit"].initial = base_selected
+            base_field.initial = base_selected
 
         purchase_options = units_map.get(base_selected, [])
-        self.fields["purchase_unit"] = forms.ChoiceField(
-            choices=[("", "---------")] + [(u, u) for u in purchase_options],
-            required=True,
-            widget=forms.Select(
-                attrs={"id": "id_purchase_unit", "class": INPUT_CLASS}
-            ),
+        purchase_field = self.fields["purchase_unit"]
+        purchase_field.choices = [("", "---------")] + [
+            (u, u) for u in purchase_options
+        ]
+        purchase_field.widget = forms.Select(
+            choices=purchase_field.choices,
+            attrs={"id": "id_purchase_unit", "class": INPUT_CLASS},
         )
         if self.data.get("purchase_unit"):
-            self.fields["purchase_unit"].initial = self.data.get("purchase_unit")
+            purchase_field.initial = self.data.get("purchase_unit")
         elif self.initial.get("purchase_unit"):
-            self.fields["purchase_unit"].initial = self.initial.get("purchase_unit")
+            purchase_field.initial = self.initial.get("purchase_unit")
 
         self.fields["category"].widget.attrs.update(
             {"id": "id_category", "class": INPUT_CLASS}

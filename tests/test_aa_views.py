@@ -22,12 +22,12 @@ def _add_messages(request):
     request.user = SimpleUser()
 
 
-@pytest.mark.django_db
-def test_item_edit_handles_save_error():
     """
     Test that ItemEditView handles a DatabaseError during ItemForm.save gracefully.
     """
-    item = Item.objects.create(name="Sugar")
+@pytest.mark.django_db
+def test_item_edit_handles_save_error(item_factory):
+    item = item_factory(name="Sugar")
     rf = RequestFactory()
     request = rf.post(f"/items/{item.pk}/edit/", {"name": "Sugar"})
     _add_messages(request)
@@ -40,12 +40,12 @@ def test_item_edit_handles_save_error():
 
 @pytest.mark.django_db
 @pytest.mark.skip(reason="This test uses raw SQL that is incompatible with PostgreSQL's strict type checking.")
-def test_item_edit_handles_non_numeric_values():
+def test_item_edit_handles_non_numeric_values(item_factory):
     """
     Test that ItemEditView does not crash when non-numeric values are present in numeric DB fields.
     Note: This is skipped for strict DBs like PostgreSQL, but works on SQLite.
     """
-    item = Item.objects.create(name="Flour")
+    item = item_factory(name="Flour")
     # The following will fail on PostgreSQL; works in SQLite.
     with connection.cursor() as cur:
         cur.execute(
@@ -74,13 +74,13 @@ def test_item_edit_db_error_returns_404():
             ItemEditView.as_view()(request, pk=1)
 
 
-@pytest.mark.django_db
-def test_indent_create_atomic_on_error():
     """
     Test that IndentCreateView does not create an Indent if IndentItemFormSet.save fails.
     Ensures atomicity.
     """
-    item = Item.objects.create(name="Salt")
+@pytest.mark.django_db
+def test_indent_create_atomic_on_error(item_factory):
+    item = item_factory(name="Salt")
     rf = RequestFactory()
     post_data = {
         "requested_by": "Bob",

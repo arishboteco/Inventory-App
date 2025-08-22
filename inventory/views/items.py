@@ -11,6 +11,8 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
+from ..services.supabase_units import get_units
+
 from ..models import Item, StockTransaction
 from ..forms import ItemForm, BulkUploadForm
 from ..services import item_service, list_utils
@@ -270,8 +272,15 @@ class ItemSuggestView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         name = (self.request.GET.get("name") or "").strip()
         base, purchase, category = item_service.suggest_category_and_units(name)
+        units_map = get_units()
         ctx.update(
-            {"base": base or "", "purchase": purchase or "", "category": category or ""}
+            {
+                "base": base or "",
+                "purchase": purchase or "",
+                "category": category or "",
+                "units_map": units_map,
+                "purchase_options": units_map.get(base or "", []),
+            }
         )
         return ctx
 

@@ -1,6 +1,4 @@
 from django import forms
-from django.contrib import messages
-from django.http import HttpRequest
 from .models import (
     Item,
     Supplier,
@@ -15,7 +13,6 @@ from .models import (
     RecipeComponent,
 )
 from .services.supabase_units import get_units
-from .services import unit_suggestions
 
 
 INPUT_CLASS = "w-full px-3 py-2 border rounded"
@@ -44,14 +41,7 @@ class ItemForm(forms.ModelForm):
             "category": {"required": "Category is required."},
         }
 
-    def __init__(
-        self,
-        *args,
-        suggest_url: str | None = None,
-        request: HttpRequest | None = None,
-        **kwargs,
-    ):
-        self.request = request
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         units_map = get_units()
@@ -60,16 +50,7 @@ class ItemForm(forms.ModelForm):
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
 
-        name_attrs = {"class": INPUT_CLASS}
-        if suggest_url:
-            name_attrs.update(
-                {
-                    "hx-get": suggest_url,
-                    "hx-trigger": "keyup changed delay:500ms",
-                    "hx-swap": "none",
-                }
-            )
-        self.fields["name"].widget.attrs.update(name_attrs)
+        self.fields["name"].widget.attrs.update({"class": INPUT_CLASS})
 
         base_choices = [(u, u) for u in sorted(units_map.keys())]
         base_selected = self.data.get("base_unit") or self.initial.get("base_unit")
@@ -106,21 +87,6 @@ class ItemForm(forms.ModelForm):
             else:
                 field.widget.attrs.update({"class": INPUT_CLASS})
 
-    def clean(self):
-        cleaned = super().clean()
-        name = cleaned.get("name", "")
-        base = cleaned.get("base_unit")
-        purchase = cleaned.get("purchase_unit")
-        if name and (not base or not purchase):
-            suggested_base, suggested_purchase = unit_suggestions.suggest_units(name)
-            parts: list[str] = []
-            if not base and suggested_base:
-                parts.append(f"Base: {suggested_base}")
-            if not purchase and suggested_purchase:
-                parts.append(f"Purchase: {suggested_purchase}")
-            if parts and self.request:
-                messages.info(self.request, ", ".join(parts))
-        return cleaned
 
 
 class BulkUploadForm(forms.Form):

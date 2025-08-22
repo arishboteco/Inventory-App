@@ -70,18 +70,6 @@
       baseSelect.addEventListener('change', function () { refresh(); });
     });
   </script>
-  <script>
-    document.body.addEventListener('htmx:afterRequest', function(evt) {
-      if (evt.detail.target && evt.detail.target.id === 'id_name') {
-        const container = document.getElementById('name-field');
-        if (container) {
-          const existing = container.querySelector('.toast');
-          if (existing) existing.remove();
-          container.insertAdjacentHTML('beforeend', evt.detail.xhr.response);
-        }
-      }
-    });
-  </script>
   {% else %}
   <p>Unable to load form.</p>
   {% endif %}

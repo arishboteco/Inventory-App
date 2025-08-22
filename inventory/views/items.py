@@ -7,13 +7,12 @@ from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
 from ..models import Item, StockTransaction
 from ..forms import ItemForm, BulkUploadForm
-from ..services import item_service, list_utils, unit_suggestions
+from ..services import item_service, list_utils
 
 logger = logging.getLogger(__name__)
 
@@ -141,14 +140,12 @@ class ItemCreateView(View):
     template_name = "inventory/item_form.html"
 
     def get(self, request):
-        suggest_url = reverse("item_suggest")
-        form = ItemForm(suggest_url=suggest_url, request=request)
+        form = ItemForm()
         ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
         return render(request, self.template_name, ctx)
 
     def post(self, request):
-        suggest_url = reverse("item_suggest")
-        form = ItemForm(request.POST, suggest_url=suggest_url, request=request)
+        form = ItemForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Item created")
@@ -170,8 +167,7 @@ class ItemEditView(View):
     def get(self, request, pk: int):
         item = self.get_object(pk)
         try:
-            suggest_url = reverse("item_suggest")
-            form = ItemForm(instance=item, suggest_url=suggest_url, request=request)
+            form = ItemForm(instance=item)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
@@ -187,13 +183,7 @@ class ItemEditView(View):
     def post(self, request, pk: int):
         item = self.get_object(pk)
         try:
-            suggest_url = reverse("item_suggest")
-            form = ItemForm(
-                request.POST,
-                instance=item,
-                suggest_url=suggest_url,
-                request=request,
-            )
+            form = ItemForm(request.POST, instance=item)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
             messages.error(request, "Unable to load item")
@@ -266,24 +256,6 @@ class ItemDeleteView(View):
             logger.exception("Error deleting item %s", pk)
             messages.error(request, "Unable to delete item")
         return redirect("items_list")
-
-
-class ItemSuggestView(TemplateView):
-    template_name = "components/toast.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        name = (self.request.GET.get("name") or "").strip()
-        base, purchase = unit_suggestions.suggest_units(name)
-        parts: list[str] = []
-        if base:
-            parts.append(f"Base: {base}")
-        if purchase:
-            parts.append(f"Purchase: {purchase}")
-        if parts:
-            ctx["message"] = ", ".join(parts)
-            ctx["toast_id"] = "unit-suggestion-toast"
-        return ctx
 
 
 class ItemSearchView(TemplateView):

@@ -9,14 +9,19 @@
 
 {% block rows %}
 {% for po in orders %}
-<tr class="odd:bg-gray-50">
+<tr class="odd:bg-gray-50 hover:bg-gray-100">
   <td class="px-4 py-2"><a class="text-primary" href="{% url 'purchase_order_detail' po.pk %}">{{ po.pk }}</a></td>
   <td class="px-4 py-2">{{ po.supplier.name }}</td>
   <td class="px-4 py-2">{{ po.order_date }}</td>
   <td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
 </tr>
 {% empty %}
-<tr><td colspan="4" class="px-4 py-2">No purchase orders.</td></tr>
+<tr>
+  <td colspan="4" class="px-4 py-2">
+    {% url 'purchase_order_create' as po_create_url %}
+    {% include "components/empty_state.html" with title="No Purchase Orders" message="Create a new purchase order to get started." cta_label="New PO" cta_url=po_create_url %}
+  </td>
+</tr>
 {% endfor %}
 {% endblock %}
 

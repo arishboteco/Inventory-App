@@ -13,4 +13,9 @@
 
 .table thead {
     background-color: var(--table-header-bg);
+    color: var(--table-header-text);
+}
+
+.table tbody tr:hover {
+    background-color: var(--table-hover-bg);
 }

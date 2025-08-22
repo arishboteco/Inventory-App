@@ -3,6 +3,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from ..forms import (
     PurchaseOrderForm,
@@ -60,9 +61,13 @@ def purchase_orders_list(request):
 
 
 def purchase_order_create(request):
+    item_url = reverse("item_search")
+    supplier_url = reverse("supplier_search")
     if request.method == "POST":
-        form = PurchaseOrderForm(request.POST)
-        formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
+        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            request.POST, prefix="items", form_kwargs={"item_suggest_url": item_url}
+        )
         if form.is_valid() and formset.is_valid():
             po_data = {
                 "supplier_id": form.cleaned_data["supplier"].pk,
@@ -86,8 +91,10 @@ def purchase_order_create(request):
                 return redirect("purchase_orders_list")
             messages.error(request, msg)
     else:
-        form = PurchaseOrderForm()
-        formset = PurchaseOrderItemFormSet(prefix="items")
+        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            prefix="items", form_kwargs={"item_suggest_url": item_url}
+        )
     return render(
         request,
         "inventory/purchase_orders/form.html",
@@ -97,16 +104,27 @@ def purchase_order_create(request):
 
 def purchase_order_edit(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
+    item_url = reverse("item_search")
+    supplier_url = reverse("supplier_search")
     if request.method == "POST":
-        form = PurchaseOrderForm(request.POST, instance=po)
-        formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
+        form = PurchaseOrderForm(
+            request.POST, instance=po, supplier_suggest_url=supplier_url
+        )
+        formset = PurchaseOrderItemFormSet(
+            request.POST,
+            instance=po,
+            prefix="items",
+            form_kwargs={"item_suggest_url": item_url},
+        )
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             return redirect("purchase_order_detail", pk=pk)
     else:
-        form = PurchaseOrderForm(instance=po)
-        formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
+        form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            instance=po, prefix="items", form_kwargs={"item_suggest_url": item_url}
+        )
     return render(
         request,
         "inventory/purchase_orders/form.html",

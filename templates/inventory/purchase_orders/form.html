@@ -14,6 +14,7 @@
     {% for field in form %}
       {% include "components/form_field.html" with field=field %}
     {% endfor %}
+    <datalist id="supplier-options"></datalist>
     <div id="items-formset">
       {{ formset.management_form }}
       {% if formset.non_form_errors %}
@@ -36,6 +37,7 @@
       </div>
       {% endfor %}
     </div>
+    <datalist id="item-options"></datalist>
     <div class="flex space-x-2">
       <button type="button" id="add-item" class="px-3 py-1 bg-green-600 text-white rounded">Add Item</button>
       <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>

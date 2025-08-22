@@ -6,6 +6,7 @@ from django.db import DatabaseError, transaction
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 from django.views.decorators.http import require_POST
@@ -72,12 +73,20 @@ class IndentCreateView(View):
 
     def get(self, request):
         form = IndentForm()
-        formset = IndentItemFormSet(prefix="items")
+        suggest_url = reverse("item_search")
+        formset = IndentItemFormSet(
+            prefix="items", form_kwargs={"item_suggest_url": suggest_url}
+        )
         return render(request, self.template_name, {"form": form, "formset": formset})
 
     def post(self, request):
         form = IndentForm(request.POST)
-        formset = IndentItemFormSet(request.POST, prefix="items")
+        suggest_url = reverse("item_search")
+        formset = IndentItemFormSet(
+            request.POST,
+            prefix="items",
+            form_kwargs={"item_suggest_url": suggest_url},
+        )
         if form.is_valid() and formset.is_valid():
             try:
                 with transaction.atomic():

@@ -30,6 +30,33 @@
       <a href="{% url 'items_list' %}" class="px-4 py-2 border rounded">Cancel</a>
     </div>
   </form>
+  {{ form.units_map|json_script:"units-data" }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const units = JSON.parse(document.getElementById('units-data').textContent);
+      const baseSelect = document.getElementById('id_base_unit');
+      const purchaseSelect = document.getElementById('id_purchase_unit');
+
+      function refresh(selected) {
+        const base = baseSelect.value;
+        const options = units[base] || [];
+        purchaseSelect.innerHTML = '<option value="">---------</option>';
+        options.forEach(function (opt) {
+          const o = document.createElement('option');
+          o.value = opt;
+          o.textContent = opt;
+          purchaseSelect.appendChild(o);
+        });
+        if (selected && options.includes(selected)) {
+          purchaseSelect.value = selected;
+        }
+      }
+
+      const initial = purchaseSelect.value;
+      refresh(initial);
+      baseSelect.addEventListener('change', function () { refresh(); });
+    });
+  </script>
   {% else %}
   <p>Unable to load form.</p>
   {% endif %}

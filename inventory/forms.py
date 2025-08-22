@@ -13,6 +13,7 @@ from .models import (
     RecipeComponent,
 )
 from .unit_inference import infer_units
+from .services.supabase_units import get_units
 
 
 INPUT_CLASS = "w-full px-3 py-2 border rounded"
@@ -43,6 +44,10 @@ class ItemForm(forms.ModelForm):
 
     def __init__(self, *args, suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        units_map = get_units()
+        self.units_map = units_map
+
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True
 
@@ -57,12 +62,29 @@ class ItemForm(forms.ModelForm):
             )
         self.fields["name"].widget.attrs.update(name_attrs)
 
-        self.fields["base_unit"].widget.attrs.update(
-            {"id": "id_base_unit", "class": INPUT_CLASS}
+        base_choices = [(u, u) for u in sorted(units_map.keys())]
+        base_selected = self.data.get("base_unit") or self.initial.get("base_unit")
+        self.fields["base_unit"] = forms.ChoiceField(
+            choices=[("", "---------")] + base_choices,
+            required=True,
+            widget=forms.Select(attrs={"id": "id_base_unit", "class": INPUT_CLASS}),
         )
-        self.fields["purchase_unit"].widget.attrs.update(
-            {"id": "id_purchase_unit", "class": INPUT_CLASS}
+        if base_selected:
+            self.fields["base_unit"].initial = base_selected
+
+        purchase_options = units_map.get(base_selected, [])
+        self.fields["purchase_unit"] = forms.ChoiceField(
+            choices=[("", "---------")] + [(u, u) for u in purchase_options],
+            required=True,
+            widget=forms.Select(
+                attrs={"id": "id_purchase_unit", "class": INPUT_CLASS}
+            ),
         )
+        if self.data.get("purchase_unit"):
+            self.fields["purchase_unit"].initial = self.data.get("purchase_unit")
+        elif self.initial.get("purchase_unit"):
+            self.fields["purchase_unit"].initial = self.initial.get("purchase_unit")
+
         self.fields["category"].widget.attrs.update(
             {"id": "id_category", "class": INPUT_CLASS}
         )

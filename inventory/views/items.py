@@ -269,7 +269,7 @@ class ItemDeleteView(View):
 
 
 class ItemSuggestView(TemplateView):
-    template_name = "inventory/_unit_suggestion_toast.html"
+    template_name = "components/toast.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -281,7 +281,8 @@ class ItemSuggestView(TemplateView):
         if purchase:
             parts.append(f"Purchase: {purchase}")
         if parts:
-            ctx["unit_suggestion"] = ", ".join(parts)
+            ctx["message"] = ", ".join(parts)
+            ctx["toast_id"] = "unit-suggestion-toast"
         return ctx
 
 

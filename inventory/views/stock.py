@@ -96,34 +96,56 @@ def stock_movements(request):
                     quantity_str = row.get("quantity_change", "").strip()
 
                     if not item_id_str or not quantity_str:
-                        bulk_errors.append(f"Row {idx+2}: Missing item_id or quantity_change")
+                        bulk_errors.append(
+                            f"Row {idx+2}: Missing item_id or quantity_change"
+                        )
                         continue
-                    
+
                     try:
                         item_id = int(item_id_str)
                         quantity = float(quantity_str)
-                        
-                        txs_to_create.append({
-                            "item_id": item_id,
-                            "quantity_change": quantity,
-                            "transaction_type": row.get("transaction_type", "ADJUSTMENT").strip(),
-                            "user_id": row.get("user_id", "System").strip(),
-                            "related_mrn": row.get("related_mrn"),
-                            "related_po_id": int(row.get("related_po_id")) if row.get("related_po_id") else None,
-                            "notes": row.get("notes"),
-                        })
+
+                        txs_to_create.append(
+                            {
+                                "item_id": item_id,
+                                "quantity_change": quantity,
+                                "transaction_type": row.get(
+                                    "transaction_type", "ADJUSTMENT"
+                                ).strip(),
+                                "user_id": row.get("user_id", "System").strip(),
+                                "related_mrn": row.get("related_mrn"),
+                                "related_po_id": (
+                                    int(row.get("related_po_id"))
+                                    if row.get("related_po_id")
+                                    else None
+                                ),
+                                "notes": row.get("notes"),
+                            }
+                        )
                     except (ValueError, TypeError):
-                        bulk_errors.append(f"Row {idx+2}: Invalid number format for item_id or quantity_change")
-                
+                        bulk_errors.append(
+                            f"Row {idx+2}: Invalid number format for item_id or quantity_change"
+                        )
+
                 if not bulk_errors and txs_to_create:
                     if stock_service.record_stock_transactions_bulk(txs_to_create):
                         bulk_success_count = len(txs_to_create)
                     else:
-                        bulk_errors.append("A database error occurred during the bulk transaction.")
+                        bulk_errors.append(
+                            "A database error occurred during the bulk transaction."
+                        )
                 elif not txs_to_create and not bulk_errors:
                     bulk_errors.append("No valid rows found in the uploaded file.")
 
             active = request.GET.get("section", "receive")
+    qs = StockTransaction.objects.select_related("item").order_by("-transaction_date")
+    paginator = Paginator(qs, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    params = request.GET.copy()
+    params.pop("page", None)
+    query_string = params.urlencode()
 
     ctx = {
         "sections": sections,
@@ -134,6 +156,8 @@ def stock_movements(request):
         "bulk_form": bulk_form,
         "bulk_success_count": bulk_success_count,
         "bulk_errors": bulk_errors,
+        "page_obj": page_obj,
+        "query_string": query_string,
     }
     return render(request, "inventory/stock_movements.html", ctx)
 

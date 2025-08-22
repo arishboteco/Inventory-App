@@ -27,6 +27,14 @@ INDENT_STATUS_BADGES = {
 
 
 class IndentsListView(TemplateView):
+    """Show search and filter options for indents.
+
+    GET params:
+        status: filter by indent status.
+        q: search term for MRN, requester or department.
+    Template: inventory/indents_list.html.
+    """
+
     template_name = "inventory/indents_list.html"
 
     def get_context_data(self, **kwargs):
@@ -39,6 +47,14 @@ class IndentsListView(TemplateView):
 
 
 class IndentsTableView(TemplateView):
+    """Render the paginated table of indents.
+
+    GET params:
+        status and q: same filters as the list view.
+        page: page number for pagination.
+    Template: inventory/_indents_table.html.
+    """
+
     template_name = "inventory/_indents_table.html"
 
     def get_context_data(self, **kwargs):
@@ -70,6 +86,13 @@ class IndentsTableView(TemplateView):
 
 
 class IndentCreateView(View):
+    """Handle creation of a new indent with item lines.
+
+    GET renders an empty indent form and formset.
+    POST expects IndentForm and IndentItemFormSet data.
+    Template: inventory/indent_form.html.
+    """
+
     template_name = "inventory/indent_form.html"
 
     def get(self, request):

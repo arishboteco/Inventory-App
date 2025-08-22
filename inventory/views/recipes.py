@@ -7,6 +7,11 @@ from ..models import Recipe
 
 
 class RecipesListView(TemplateView):
+    """Display all recipes ordered by name.
+
+    Template: inventory/recipes/list.html.
+    """
+
     template_name = "inventory/recipes/list.html"
 
     def get_context_data(self, **kwargs):

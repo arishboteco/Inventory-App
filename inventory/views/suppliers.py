@@ -18,6 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 class SuppliersListView(TemplateView):
+    """Display supplier list filters and counts.
+
+    GET params:
+        q, active, page_size, sort, direction control filtering and
+        ordering. Template: inventory/suppliers_list.html.
+    """
+
     template_name = "inventory/suppliers_list.html"
 
     def get_context_data(self, **kwargs):
@@ -42,6 +49,13 @@ class SuppliersListView(TemplateView):
 
 
 class SuppliersTableView(TemplateView):
+    """Render the paginated table of suppliers or export as CSV.
+
+    GET params:
+        q, active, sort, direction, page. `export=1` returns a CSV
+        file. Template: inventory/_suppliers_table.html.
+    """
+
     template_name = "inventory/_suppliers_table.html"
 
     def _get_queryset(self):
@@ -94,6 +108,12 @@ class SuppliersTableView(TemplateView):
 
 
 class SupplierCreateView(View):
+    """Create a new supplier using SupplierForm.
+
+    GET renders a blank form; POST persists the supplier.
+    Template: inventory/supplier_form.html.
+    """
+
     template_name = "inventory/supplier_form.html"
 
     def get(self, request):
@@ -111,6 +131,11 @@ class SupplierCreateView(View):
 
 
 class SupplierEditView(View):
+    """Edit an existing supplier.
+
+    Template: inventory/supplier_form.html.
+    """
+
     template_name = "inventory/supplier_form.html"
 
     def get(self, request, pk: int):
@@ -133,6 +158,11 @@ class SupplierEditView(View):
 
 @method_decorator(csrf_protect, name="dispatch")
 class SupplierToggleActiveView(View):
+    """Toggle a supplier's active flag and return updated table.
+
+    Accepts GET or POST and delegates to SuppliersTableView.
+    """
+
     def _toggle(self, request, pk: int):
         supplier = get_object_or_404(Supplier, pk=pk)
         if supplier.is_active:
@@ -155,6 +185,12 @@ class SupplierToggleActiveView(View):
 
 
 class SuppliersBulkUploadView(View):
+    """Bulk create suppliers from an uploaded CSV file.
+
+    GET shows the upload form; POST processes the file and reports
+    inserted rows and errors. Template: inventory/bulk_upload.html.
+    """
+
     template_name = "inventory/bulk_upload.html"
 
     def get(self, request):
@@ -197,6 +233,12 @@ class SuppliersBulkUploadView(View):
 
 
 class SuppliersBulkDeleteView(View):
+    """Deactivate suppliers using a CSV list of names.
+
+    GET shows the upload form; POST processes deletions.
+    Template: inventory/bulk_delete.html.
+    """
+
     template_name = "inventory/bulk_delete.html"
 
     def get(self, request):
@@ -243,7 +285,11 @@ class SuppliersBulkDeleteView(View):
 
 
 class SupplierSearchView(TemplateView):
-    """Return supplier <option> elements matching a query."""
+    """Return supplier ``<option>`` elements for autocomplete.
+
+    GET param `q` or first `*supplier` value provides the search term.
+    Template: inventory/_supplier_options.html.
+    """
 
     template_name = "inventory/_supplier_options.html"
 

@@ -49,6 +49,14 @@ def _filter_and_sort_items(request, qs=None):
 
 
 class ItemsListView(TemplateView):
+    """Show item filters and options for the list view.
+
+    GET params:
+        q, category, subcategory, active, page_size, sort, direction
+        control filtering, pagination and ordering.
+    Template: inventory/items_list.html.
+    """
+
     template_name = "inventory/items_list.html"
 
     def get_context_data(self, **kwargs):
@@ -92,6 +100,12 @@ class ItemsListView(TemplateView):
 
 
 class ItemsTableView(TemplateView):
+    """Render the paginated table of items.
+
+    Accepts the same GET filters as ItemsListView plus a page number.
+    Template: inventory/_items_table.html.
+    """
+
     template_name = "inventory/_items_table.html"
 
     def _get_queryset(self):
@@ -109,6 +123,11 @@ class ItemsTableView(TemplateView):
 
 
 class ItemsExportView(View):
+    """Export the filtered item list as CSV.
+
+    Uses the same GET parameters as ItemsListView for filtering.
+    """
+
     def get(self, request):
         qs, _ = _filter_and_sort_items(request)
         headers = [
@@ -138,6 +157,12 @@ class ItemsExportView(View):
 
 
 class ItemCreateView(View):
+    """Create a new item using ItemForm.
+
+    GET renders an empty form; POST saves the item.
+    Template: inventory/item_form.html.
+    """
+
     template_name = "inventory/item_form.html"
 
     def get(self, request):
@@ -156,6 +181,11 @@ class ItemCreateView(View):
 
 
 class ItemEditView(View):
+    """Edit an existing item.
+
+    Template: inventory/item_form.html.
+    """
+
     template_name = "inventory/item_form.html"
 
     def get_object(self, pk: int):
@@ -206,6 +236,11 @@ class ItemEditView(View):
 
 
 class ItemDetailView(View):
+    """Display detailed information and stock for an item.
+
+    Template: inventory/item_detail.html.
+    """
+
     template_name = "inventory/item_detail.html"
 
     def get(self, request, pk: int):
@@ -220,6 +255,11 @@ class ItemDetailView(View):
 
 
 class ItemDeleteView(View):
+    """Confirm and process deletion or deactivation of an item.
+
+    Template: inventory/item_confirm_delete.html.
+    """
+
     template_name = "inventory/item_confirm_delete.html"
 
     def get_object(self, pk: int):
@@ -260,7 +300,12 @@ class ItemDeleteView(View):
 
 
 class ItemSearchView(TemplateView):
-    """Return item <option> elements matching a query."""
+    """Return item ``<option>`` elements for autocomplete widgets.
+
+    GET param `q` supplies the search term. If absent, the first GET
+    value with a key ending in "item" is used. Template:
+    inventory/_item_options.html.
+    """
 
     template_name = "inventory/_item_options.html"
 
@@ -278,6 +323,12 @@ class ItemSearchView(TemplateView):
 
 
 class SubCategoryOptionsView(TemplateView):
+    """Return ``<option>`` tags for subcategories of a category.
+
+    GET param `category` specifies the parent category ID.
+    Template: inventory/_subcategory_options.html.
+    """
+
     template_name = "inventory/_subcategory_options.html"
 
     def get_context_data(self, **kwargs):
@@ -292,6 +343,12 @@ class SubCategoryOptionsView(TemplateView):
 
 
 class ItemsBulkUploadView(View):
+    """Bulk create items from an uploaded CSV file.
+
+    GET shows the upload form; POST processes the file and reports
+    inserted rows and errors. Template: inventory/bulk_upload.html.
+    """
+
     template_name = "inventory/bulk_upload.html"
 
     def get(self, request):

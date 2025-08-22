@@ -5,14 +5,14 @@ import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import DatabaseError
+from django.db import DatabaseError, IntegrityError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..models import Item
+from ..models import Item, StockTransaction
 from ..forms import ItemForm, BulkUploadForm
 from ..services import item_service
 
@@ -260,6 +260,60 @@ class ItemEditView(View):
             "excluded_fields": EXCLUDED_FIELDS,
         }
         return render(request, self.template_name, ctx)
+
+
+class ItemDetailView(View):
+    template_name = "inventory/item_detail.html"
+
+    def get(self, request, pk: int):
+        try:
+            details = item_service.get_item_details(pk)
+        except (DatabaseError, ValueError):  # pragma: no cover - defensive
+            logger.exception("Error retrieving item %s", pk)
+            raise Http404("Item not found")
+        if not details:
+            raise Http404("Item not found")
+        return render(request, self.template_name, {"item": details})
+
+
+class ItemDeleteView(View):
+    template_name = "inventory/item_confirm_delete.html"
+
+    def get_object(self, pk: int):
+        try:
+            return get_object_or_404(Item, pk=pk)
+        except (DatabaseError, ValueError):  # pragma: no cover - defensive
+            logger.exception("Error retrieving item %s", pk)
+            raise Http404("Item not found")
+
+    def get(self, request, pk: int):
+        item = self.get_object(pk)
+        return render(request, self.template_name, {"item": item})
+
+    def post(self, request, pk: int):
+        item = self.get_object(pk)
+        if StockTransaction.objects.filter(item=item).exists():
+            ok, _ = item_service.deactivate_item(item.pk)
+            if ok:
+                messages.success(request, "Item deactivated")
+            else:  # pragma: no cover - defensive
+                messages.error(request, "Unable to delete item")
+            return redirect("items_list")
+        try:
+            item.delete()
+            item_service.get_all_items_with_stock.clear()
+            item_service.get_distinct_departments_from_items.clear()
+            messages.success(request, "Item deleted")
+        except IntegrityError:
+            ok, _ = item_service.deactivate_item(item.pk)
+            if ok:
+                messages.success(request, "Item deactivated")
+            else:  # pragma: no cover - defensive
+                messages.error(request, "Unable to delete item")
+        except DatabaseError:  # pragma: no cover - defensive
+            logger.exception("Error deleting item %s", pk)
+            messages.error(request, "Unable to delete item")
+        return redirect("items_list")
 
 
 class ItemSuggestView(TemplateView):

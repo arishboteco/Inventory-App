@@ -23,12 +23,13 @@ def test_item_form_uses_supabase_units(monkeypatch):
     assert "g" in purchase_choices and "lb" in purchase_choices
     assert "ml" not in purchase_choices
 
-def test_item_suggest_view_returns_message(client, monkeypatch):
+def test_item_suggest_view_returns_toast_message(client, monkeypatch):
     monkeypatch.setattr(unit_suggestions, "suggest_units", lambda name: ("kg", "g"))
     url = reverse("item_suggest")
     resp = client.get(url, {"name": "milk"})
     html = resp.content.decode()
     assert "Base: kg, Purchase: g" in html
+    assert "<select" not in html
 
 
 def _add_messages(request):
@@ -37,11 +38,18 @@ def _add_messages(request):
     setattr(request, "_messages", storage)
 
 
-def test_item_form_adds_unit_suggestion_message(monkeypatch):
+def test_item_form_requires_units_after_suggestion_toast(client, monkeypatch):
     mapping = {"kg": ["g"]}
     monkeypatch.setattr(supabase_units, "get_units", lambda force=False: mapping)
     monkeypatch.setattr("inventory.forms.get_units", lambda force=False: mapping)
     monkeypatch.setattr(unit_suggestions, "suggest_units", lambda name: ("kg", "g"))
+
+    url = reverse("item_suggest")
+    resp = client.get(url, {"name": "Flour"})
+    html = resp.content.decode()
+    assert "Base: kg, Purchase: g" in html
+    assert "<select" not in html
+
     rf = RequestFactory()
     request = rf.post("/items/add/", {"name": "Flour"})
     _add_messages(request)
@@ -55,11 +63,18 @@ def test_item_form_adds_unit_suggestion_message(monkeypatch):
     assert "purchase_unit" not in form.cleaned_data
 
 
-def test_item_form_suggests_missing_purchase_unit(monkeypatch):
+def test_item_form_requires_purchase_unit_after_toast(client, monkeypatch):
     mapping = {"kg": ["g"]}
     monkeypatch.setattr(supabase_units, "get_units", lambda force=False: mapping)
     monkeypatch.setattr("inventory.forms.get_units", lambda force=False: mapping)
     monkeypatch.setattr(unit_suggestions, "suggest_units", lambda name: ("kg", "g"))
+
+    url = reverse("item_suggest")
+    resp = client.get(url, {"name": "Flour"})
+    html = resp.content.decode()
+    assert "Base: kg, Purchase: g" in html
+    assert "<select" not in html
+
     rf = RequestFactory()
     request = rf.post("/items/add/", {"name": "Flour", "base_unit": "kg"})
     _add_messages(request)

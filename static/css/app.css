@@ -18,8 +18,7 @@
   --table-hover-bg: #f3f4f6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+.dark:root {
     --color-body-bg: #1f2937;
     --color-body-text: #ffffff;
     --color-primary: #1e3a8a;
@@ -35,7 +34,6 @@
     --table-header-bg: var(--color-primary);
     --table-header-text: #ffffff;
     --table-hover-bg: #1f2937;
-  }
 }
 
 body {
@@ -59,11 +57,9 @@ body {
 }
 
 /* Dark mode support for badges */
-@media (prefers-color-scheme: dark) {
-    .badge-success { background: #27963c; color: white; }
-    .badge-warning { background: #e0b437; color: black; }
-    .badge-error   { background: #cc0000; color: white; }
-}
+.dark .badge-success { background: #27963c; color: white; }
+.dark .badge-warning { background: #e0b437; color: black; }
+.dark .badge-error   { background: #cc0000; color: white; }
 
 /* Custom utility classes */
 .bg-primary { background-color: var(--color-primary); }

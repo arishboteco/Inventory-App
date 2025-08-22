@@ -10,3 +10,4 @@ pyyaml
 pydantic
 pytest
 pytest-django
+supabase

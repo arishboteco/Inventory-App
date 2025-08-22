@@ -5,6 +5,7 @@
     {% if is_edit %}Edit Item{% else %}Add Item{% endif %}
   </h1>
   {% if form %}
+  <div id="unit-suggestion"></div>
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -55,6 +56,15 @@
       const initial = purchaseSelect.value;
       refresh(initial);
       baseSelect.addEventListener('change', function () { refresh(); });
+    });
+  </script>
+  <script>
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      if (evt.detail.target && evt.detail.target.id === 'id_name') {
+        const container = document.getElementById('unit-suggestion');
+        container.innerHTML = '';
+        container.insertAdjacentHTML('beforeend', evt.detail.xhr.response);
+      }
     });
   </script>
   {% else %}

@@ -22,7 +22,7 @@
         <td>{{ row.is_active }}</td>
         <td>
           <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-blue-600 mr-2">Edit</a>
-          <a hx-get="{% url 'supplier_toggle_active' row.supplier_id %}?q={{ q|urlencode }}&page={{ page_obj.number }}&show_inactive={{ show_inactive|urlencode }}"
+          <a hx-get="{% url 'supplier_toggle_active' row.supplier_id %}?q={{ q|urlencode }}&page={{ page_obj.number }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
              hx-target="#suppliers_table" class="text-blue-600">Toggle</a>
         </td>
       </tr>
@@ -34,12 +34,12 @@
 </div>
 <div class="flex items-center gap-3 mt-3">
   {% if page_obj.has_previous %}
-    <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&show_inactive={{ show_inactive|urlencode }}"
+    <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
        hx-target="#suppliers_table" class="px-3 py-1 border rounded">Prev</a>
   {% endif %}
   <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
   {% if page_obj.has_next %}
-    <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&show_inactive={{ show_inactive|urlencode }}"
+    <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
        hx-target="#suppliers_table" class="px-3 py-1 border rounded">Next</a>
   {% endif %}
 </div>

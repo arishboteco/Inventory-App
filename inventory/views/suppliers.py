@@ -5,6 +5,7 @@ import logging
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
@@ -22,18 +23,31 @@ class SuppliersListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         q = (self.request.GET.get("q") or "").strip()
-        show_inactive = (self.request.GET.get("show_inactive") or "").strip()
-        ctx.update({"q": q, "show_inactive": show_inactive})
+        active = (self.request.GET.get("active") or "").strip()
+        page_size = (self.request.GET.get("page_size") or "25").strip()
+        sort = (self.request.GET.get("sort") or "name").strip()
+        direction = (self.request.GET.get("direction") or "asc").strip()
+        ctx.update(
+            {
+                "q": q,
+                "active": active,
+                "page_size": page_size,
+                "sort": sort,
+                "direction": direction,
+            }
+        )
         return ctx
 
 
 class SuppliersTableView(TemplateView):
     template_name = "inventory/_suppliers_table.html"
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        q = (self.request.GET.get("q") or "").strip()
-        show_inactive = (self.request.GET.get("show_inactive") or "").strip()
+    def get_queryset(self):
+        request = self.request
+        q = (request.GET.get("q") or "").strip()
+        active = (request.GET.get("active") or "").strip()
+        sort = (request.GET.get("sort") or "name").strip()
+        direction = (request.GET.get("direction") or "asc").strip()
         qs = Supplier.objects.all()
         if q:
             qs = qs.filter(
@@ -41,14 +55,65 @@ class SuppliersTableView(TemplateView):
                 | Q(contact_person__icontains=q)
                 | Q(email__icontains=q)
             )
-        if not show_inactive:
-            qs = qs.filter(is_active=True)
-        qs = qs.order_by("name")
-        paginator = Paginator(qs, 25)
-        page_number = self.request.GET.get("page")
+        if active:
+            if active == "1":
+                qs = qs.filter(is_active=True)
+            elif active == "0":
+                qs = qs.filter(is_active=False)
+        allowed_sorts = {"supplier_id", "name", "contact_person", "email", "phone", "is_active"}
+        if sort not in allowed_sorts:
+            sort = "name"
+        ordering = sort if direction != "desc" else f"-{sort}"
+        return qs.order_by(ordering)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        request = self.request
+        q = (request.GET.get("q") or "").strip()
+        active = (request.GET.get("active") or "").strip()
+        sort = (request.GET.get("sort") or "name").strip()
+        direction = (request.GET.get("direction") or "asc").strip()
+        page_size = request.GET.get("page_size") or 25
+        qs = self.get_queryset()
+        try:
+            per_page = int(page_size)
+        except (TypeError, ValueError):
+            per_page = 25
+        paginator = Paginator(qs, per_page)
+        page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
-        ctx.update({"page_obj": page_obj, "q": q, "show_inactive": show_inactive})
+        ctx.update(
+            {
+                "page_obj": page_obj,
+                "q": q,
+                "active": active,
+                "sort": sort,
+                "direction": direction,
+                "page_size": per_page,
+            }
+        )
         return ctx
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get("export") == "1":
+            qs = self.get_queryset()
+            response = HttpResponse(content_type="text/csv")
+            response["Content-Disposition"] = "attachment; filename=suppliers.csv"
+            writer = csv.writer(response)
+            writer.writerow(["ID", "Name", "Contact", "Email", "Phone", "Active"])
+            for sup in qs:
+                writer.writerow(
+                    [
+                        sup.supplier_id,
+                        sup.name,
+                        sup.contact_person,
+                        sup.email,
+                        sup.phone,
+                        sup.is_active,
+                    ]
+                )
+            return response
+        return super().get(request, *args, **kwargs)
 
 
 class SupplierCreateView(View):

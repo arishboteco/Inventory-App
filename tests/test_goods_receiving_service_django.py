@@ -4,7 +4,6 @@ from django.db import connection
 
 from inventory.models import (
     Supplier,
-    Item,
     StockTransaction,
     PurchaseOrder,
     PurchaseOrderItem,
@@ -15,9 +14,9 @@ from inventory.services import purchase_order_service, goods_receiving_service
 
 
 @pytest.mark.django_db
-def test_create_grn_updates_stock_and_po():
+def test_create_grn_updates_stock_and_po(item_factory):
     supplier = Supplier.objects.create(name="Vendor")
-    item = Item.objects.create(name="Widget", current_stock=0)
+    item = item_factory(name="Widget", current_stock=0)
     success, msg, po_id = purchase_order_service.create_po(
         {"supplier_id": supplier.pk, "order_date": date.today()},
         [{"item_id": item.item_id, "quantity_ordered": 10, "unit_price": 1.0}],

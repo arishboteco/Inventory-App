@@ -74,11 +74,14 @@ def apply_filters_sort(
         params[param] = value
 
     allowed_sorts = set(allowed_sorts or [])
+    allowed_sorts.add(default_sort)
     sort = (request.GET.get("sort") or default_sort).strip()
-    direction = (request.GET.get("direction") or default_direction).strip()
+    direction = (request.GET.get("direction") or default_direction).strip().lower()
     if sort not in allowed_sorts:
         sort = default_sort
-    ordering = sort if direction != "desc" else f"-{sort}"
+    if direction not in {"asc", "desc"}:
+        direction = default_direction
+    ordering = sort if direction == "asc" else f"-{sort}"
     qs = qs.order_by(ordering)
     params.update({"sort": sort, "direction": direction})
     return qs, params

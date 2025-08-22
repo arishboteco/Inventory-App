@@ -31,8 +31,8 @@ def clear_tables(db):
 
 
 @pytest.mark.django_db
-def test_record_stock_transaction_updates_stock_and_logs():
-    item = Item.objects.create(name="Sample", current_stock=10)
+def test_record_stock_transaction_updates_stock_and_logs(item_factory):
+    item = item_factory(name="Sample", current_stock=10)
     success = stock_service.record_stock_transaction(
         item_id=item.item_id,
         quantity_change=5,
@@ -46,9 +46,9 @@ def test_record_stock_transaction_updates_stock_and_logs():
 
 
 @pytest.mark.django_db
-def test_record_stock_transactions_bulk():
-    item1 = Item.objects.create(name="Item1", current_stock=10)
-    item2 = Item.objects.create(name="Item2", current_stock=10)
+def test_record_stock_transactions_bulk(item_factory):
+    item1 = item_factory(name="Item1", current_stock=10)
+    item2 = item_factory(name="Item2", current_stock=10)
     txs = [
         {"item_id": item1.item_id, "quantity_change": 5, "transaction_type": "RECEIVING", "user_id": "u1"},
         {"item_id": item2.item_id, "quantity_change": -3, "transaction_type": "ISSUE", "user_id": "u2"},
@@ -62,8 +62,8 @@ def test_record_stock_transactions_bulk():
 
 
 @pytest.mark.django_db
-def test_remove_stock_transactions_bulk():
-    item = Item.objects.create(name="Item", current_stock=20)
+def test_remove_stock_transactions_bulk(item_factory):
+    item = item_factory(name="Item", current_stock=20)
     txs = [
         {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
         {"item_id": item.item_id, "quantity_change": -2, "transaction_type": "ISSUE"},
@@ -77,8 +77,8 @@ def test_remove_stock_transactions_bulk():
 
 
 @pytest.mark.django_db
-def test_record_stock_transactions_bulk_rollback_on_error():
-    item = Item.objects.create(name="Item", current_stock=10)
+def test_record_stock_transactions_bulk_rollback_on_error(item_factory):
+    item = item_factory(name="Item", current_stock=10)
     txs = [
         {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
         {"item_id": 9999, "quantity_change": 3, "transaction_type": "RECEIVING"},
@@ -90,8 +90,8 @@ def test_record_stock_transactions_bulk_rollback_on_error():
 
 
 @pytest.mark.django_db
-def test_remove_stock_transactions_bulk_rollback_on_error():
-    item = Item.objects.create(name="Item", current_stock=10)
+def test_remove_stock_transactions_bulk_rollback_on_error(item_factory):
+    item = item_factory(name="Item", current_stock=10)
     txs = [
         {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
         {"item_id": item.item_id, "quantity_change": -2, "transaction_type": "ISSUE"},
@@ -108,8 +108,8 @@ def test_remove_stock_transactions_bulk_rollback_on_error():
 
 
 @pytest.mark.django_db(transaction=True)
-def test_concurrent_stock_updates():
-    item = Item.objects.create(name="Concurrent", current_stock=0)
+def test_concurrent_stock_updates(item_factory):
+    item = item_factory(name="Concurrent", current_stock=0)
 
     def worker():
         for _ in range(5):

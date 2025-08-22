@@ -5,76 +5,98 @@
     <a href="{% url 'item_create' %}" class="btn-primary">Add Item</a>
     <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
   </div>
-  <form id="filters" class="grid gap-2 mb-4 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1" hx-indicator="#htmx-spinner">
-      <input
-        type="text"
-        name="q"
-        placeholder="Search items..."
-        class="form-control w-full"
-        value="{{ q }}"
-        hx-get="{% url 'items_table' %}"
-        hx-target="#items_table"
-        hx-trigger="keyup changed delay:300ms"
-        hx-include="#filters"
-        hx-indicator="#htmx-spinner"
-      />
-      <input
-        type="text"
-        name="category"
-        list="item-categories"
-        class="form-control w-full"
-        value="{{ category }}"
-        hx-get="{% url 'items_table' %}"
-        hx-target="#items_table"
-        hx-trigger="change"
-        hx-include="#filters"
-        hx-indicator="#htmx-spinner"
-      />
-      <datalist id="item-categories">
-        <option value="" label="All Categories"></option>
-        {% for cat in categories %}
-        <option value="{{ cat }}"></option>
-        {% endfor %}
-      </datalist>
-      <input
-        type="text"
-        name="subcategory"
-        list="item-subcategories"
-        class="form-control w-full"
-        value="{{ subcategory }}"
-        hx-get="{% url 'items_table' %}"
-        hx-target="#items_table"
-        hx-trigger="change"
-        hx-include="#filters"
-        hx-indicator="#htmx-spinner"
-      />
-      <datalist id="item-subcategories">
-        <option value="" label="All Subcategories"></option>
-        {% for sub in subcategories %}
-        <option value="{{ sub }}"></option>
-        {% endfor %}
-      </datalist>
-      <input
-        type="text"
-        name="active"
-        list="item-active"
-        class="form-control w-full"
-        value="{{ active }}"
-        hx-get="{% url 'items_table' %}"
-        hx-target="#items_table"
-        hx-trigger="change"
-        hx-include="#filters"
-        hx-indicator="#htmx-spinner"
-      />
-      <datalist id="item-active">
-        <option value="" label="All"></option>
-        <option value="1" label="Active"></option>
-        <option value="0" label="Inactive"></option>
-      </datalist>
-      <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
-      <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
-      <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
-      <button type="submit" formaction="{% url 'items_export' %}" formmethod="get" class="btn-secondary w-full">Export</button>
+  <form id="filters" class="mb-4" hx-indicator="#htmx-spinner">
+    <fieldset class="grid gap-4 grid-cols-5 max-md:grid-cols-2 max-sm:grid-cols-1">
+      <legend class="sr-only">Filter Items</legend>
+      <div class="flex flex-col gap-1">
+        <label for="filter-q" class="text-sm font-medium">Search</label>
+        <input
+          id="filter-q"
+          type="text"
+          name="q"
+          placeholder="Search items..."
+          class="form-control w-full"
+          value="{{ q }}"
+          hx-get="{% url 'items_table' %}"
+          hx-target="#items_table"
+          hx-trigger="keyup changed delay:300ms"
+          hx-include="#filters"
+          hx-indicator="#htmx-spinner"
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label for="filter-category" class="text-sm font-medium">Category</label>
+        <input
+          id="filter-category"
+          type="text"
+          name="category"
+          list="item-categories"
+          class="form-control w-full"
+          value="{{ category }}"
+          hx-get="{% url 'items_table' %}"
+          hx-target="#items_table"
+          hx-trigger="change"
+          hx-include="#filters"
+          hx-indicator="#htmx-spinner"
+        />
+        <datalist id="item-categories">
+          <option value="" label="All Categories"></option>
+          {% for cat in categories %}
+          <option value="{{ cat }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label for="filter-subcategory" class="text-sm font-medium">Subcategory</label>
+        <input
+          id="filter-subcategory"
+          type="text"
+          name="subcategory"
+          list="item-subcategories"
+          class="form-control w-full"
+          value="{{ subcategory }}"
+          hx-get="{% url 'items_table' %}"
+          hx-target="#items_table"
+          hx-trigger="change"
+          hx-include="#filters"
+          hx-indicator="#htmx-spinner"
+        />
+        <datalist id="item-subcategories">
+          <option value="" label="All Subcategories"></option>
+          {% for sub in subcategories %}
+          <option value="{{ sub }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label for="filter-active" class="text-sm font-medium">Status</label>
+        <input
+          id="filter-active"
+          type="text"
+          name="active"
+          list="item-active"
+          class="form-control w-full"
+          value="{{ active }}"
+          hx-get="{% url 'items_table' %}"
+          hx-target="#items_table"
+          hx-trigger="change"
+          hx-include="#filters"
+          hx-indicator="#htmx-spinner"
+        />
+        <datalist id="item-active">
+          <option value="" label="All"></option>
+          <option value="1" label="Active"></option>
+          <option value="0" label="Inactive"></option>
+        </datalist>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" for="export-btn">&nbsp;</label>
+        <button id="export-btn" type="submit" formaction="{% url 'items_export' %}" formmethod="get" class="btn-secondary w-full">Export</button>
+      </div>
+    </fieldset>
+    <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
+    <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
+    <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
   </form>
   <div id="items_table"
        hx-get="{% url 'items_table' %}"

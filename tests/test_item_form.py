@@ -39,7 +39,7 @@ def test_item_form_units_fallback(monkeypatch, caplog):
         raise Exception("boom")
 
     monkeypatch.setattr(forms_module, "get_units", fail)
-    with caplog.at_level("ERROR"):
+    with caplog.at_level("WARNING"):
         form = ItemForm()
     assert form.units_map == {}
     request = RequestFactory().get("/")

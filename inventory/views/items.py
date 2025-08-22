@@ -199,8 +199,8 @@ class ItemEditView(View):
         item = self.get_object(pk)
         try:
             form = ItemForm(instance=item)
-        except (DatabaseError, ValueError):
-            logger.exception("Error loading form for item %s", pk)
+        except Exception:
+            logger.exception("Error loading form for item %s", item.pk)
             messages.error(request, "Unable to load item")
             return redirect("items_list")
         ctx = {
@@ -215,8 +215,8 @@ class ItemEditView(View):
         item = self.get_object(pk)
         try:
             form = ItemForm(request.POST, instance=item)
-        except (DatabaseError, ValueError):
-            logger.exception("Error loading form for item %s", pk)
+        except Exception:
+            logger.exception("Error loading form for item %s", item.pk)
             messages.error(request, "Unable to load item")
             return redirect("items_list")
         if form.is_valid():

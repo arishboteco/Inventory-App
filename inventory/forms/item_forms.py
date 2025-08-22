@@ -51,7 +51,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             logger.debug("Units map loaded: %s", units_map)
         except Exception:
             units_map = {}
-            logger.error("Failed to load units map", exc_info=True)
+            logger.warning("Failed to load units map", exc_info=True)
         self.units_map = units_map
 
         for field in ("name", "base_unit", "purchase_unit", "category"):
@@ -88,7 +88,37 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             purchase_field.initial = self.initial.get("purchase_unit")
 
         category_field = self.fields["category"]
-        category_field.queryset = Category.objects.filter(parent__isnull=True).order_by("name")
+        sub_field = self.fields["sub_category"]
+        category_field.queryset = Category.objects.none()
+        sub_field.queryset = Category.objects.none()
+        selected_category = None
+        try:
+            category_field.queryset = Category.objects.filter(parent__isnull=True).order_by("name")
+            selected_category = self.data.get("category")
+            if not selected_category and self.instance.pk and self.instance.category:
+                selected_category = (
+                    Category.objects.filter(name=self.instance.category, parent__isnull=True)
+                    .values_list("id", flat=True)
+                    .first()
+                )
+                if selected_category:
+                    category_field.initial = selected_category
+            if selected_category:
+                sub_field.queryset = (
+                    Category.objects.filter(parent_id=selected_category).order_by("name")
+                )
+                if self.instance.pk and self.instance.sub_category:
+                    sub_initial = (
+                        Category.objects.filter(
+                            name=self.instance.sub_category, parent_id=selected_category
+                        )
+                        .values_list("id", flat=True)
+                        .first()
+                    )
+                    if sub_initial:
+                        sub_field.initial = sub_initial
+        except Exception:
+            logger.warning("Failed to load categories", exc_info=True)
         category_field.widget = forms.Select(
             attrs={
                 "id": "id_category",
@@ -99,36 +129,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                 "hx-swap": "innerHTML",
             }
         )
-
-        sub_field = self.fields["sub_category"]
-        selected_category = self.data.get("category")
-        if not selected_category and self.instance.pk and self.instance.category:
-            selected_category = (
-                Category.objects.filter(name=self.instance.category, parent__isnull=True)
-                .values_list("id", flat=True)
-                .first()
-            )
-            if selected_category:
-                category_field.initial = selected_category
-        if selected_category:
-            sub_field.queryset = (
-                Category.objects.filter(parent_id=selected_category).order_by("name")
-            )
-        else:
-            sub_field.queryset = Category.objects.none()
         sub_field.widget = forms.Select(
             attrs={"id": "id_sub_category", "class": INPUT_CLASS}
         )
-        if self.instance.pk and self.instance.sub_category:
-            sub_initial = (
-                Category.objects.filter(
-                    name=self.instance.sub_category, parent_id=selected_category
-                )
-                .values_list("id", flat=True)
-                .first()
-            )
-            if sub_initial:
-                sub_field.initial = sub_initial
 
         # Reapply styling for any widgets replaced above
         self.apply_styling()

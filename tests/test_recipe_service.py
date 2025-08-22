@@ -1,7 +1,7 @@
 """Tests for the recipe_service module."""
 
 import pytest
-from django.db import connection
+from django.db import connection, OperationalError
 
 from inventory.models import (
     Item,
@@ -18,7 +18,29 @@ from inventory.services.recipe_service import (
 
 pytestmark = pytest.mark.django_db
 
+@pytest.fixture(scope="module", autouse=True)
+def create_tables(django_db_blocker):
+    """Ensure the temporary SaleTransaction table exists for this module.
 
+    The table is created by migrations in normal operation, so it may already
+    be present. Attempting to create it again raises an ``OperationalError``.
+    To make the tests resilient we ignore the error if the table already exists
+    and likewise ignore missing-table errors on cleanup.
+    """
+
+    with django_db_blocker.unblock():
+        with connection.schema_editor() as editor:
+            try:
+                editor.create_model(SaleTransaction)
+            except OperationalError:
+                pass
+    yield
+    with django_db_blocker.unblock():
+        with connection.schema_editor() as editor:
+            try:
+                editor.delete_model(SaleTransaction)
+            except OperationalError:
+                pass
 
 
 def _create_item(name="Flour", base_unit="kg", purchase_unit="bag", stock=20):

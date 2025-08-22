@@ -2,7 +2,7 @@ import django
 from django.conf import settings
 
 import pytest
-from inventory.forms import IndentForm, IndentItemFormSet
+from inventory.forms.indent_forms import IndentForm, IndentItemFormSet
 
 
 @pytest.mark.django_db

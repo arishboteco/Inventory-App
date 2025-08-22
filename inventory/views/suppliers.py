@@ -10,7 +10,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 
 from ..models import Supplier
-from ..forms import SupplierForm, BulkUploadForm, BulkDeleteForm
+from ..forms.supplier_forms import SupplierForm
+from ..forms.bulk_forms import BulkUploadForm, BulkDeleteForm
 from ..services import supplier_service, list_utils
 
 logger = logging.getLogger(__name__)

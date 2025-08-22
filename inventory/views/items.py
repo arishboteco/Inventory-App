@@ -11,7 +11,8 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from ..models import Item, StockTransaction, Category
-from ..forms import ItemForm, BulkUploadForm
+from ..forms.item_forms import ItemForm
+from ..forms.bulk_forms import BulkUploadForm
 from ..services import item_service, list_utils
 
 logger = logging.getLogger(__name__)

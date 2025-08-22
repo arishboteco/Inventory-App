@@ -12,7 +12,7 @@ from django.views.generic import TemplateView
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
 
-from ..forms import IndentForm, IndentItemFormSet
+from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..indent_pdf import generate_indent_pdf
 from ..models import Indent
 

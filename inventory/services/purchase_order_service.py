@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from decimal import Decimal
 
 from django.db import IntegrityError, transaction
-from django.db.models import Max
+from django.db.models import Max, Sum
 
 from inventory.models import Item, PurchaseOrder, PurchaseOrderItem, Supplier
 
@@ -72,12 +72,13 @@ def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:
     items = list(
         PurchaseOrderItem.objects.filter(purchase_order=po)
         .select_related("item")
+        .annotate(_received_total=Sum("grnitem__quantity_received"))
         .values(
             "po_item_id",
             "item_id",
             "item__name",
             "quantity_ordered",
-            "quantity_received",
+            "_received_total",
             "unit_price",
         )
     )
@@ -87,7 +88,7 @@ def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:
             "item_id": i["item_id"],
             "item_name": i["item__name"],
             "quantity_ordered": i["quantity_ordered"],
-            "quantity_received": i["quantity_received"],
+            "received_total": i["_received_total"] or Decimal("0"),
             "unit_price": i["unit_price"],
         }
         for i in items

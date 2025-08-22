@@ -5,6 +5,7 @@ from django.contrib import messages
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.db.models import Sum
 
 from ..forms import (
     PurchaseOrderForm,
@@ -135,7 +136,11 @@ def purchase_order_edit(request, pk: int):
 
 def purchase_order_detail(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
-    items = po.purchaseorderitem_set.select_related("item").all()
+    items = (
+        po.purchaseorderitem_set.select_related("item")
+        .annotate(_received_total=Sum("grnitem__quantity_received"))
+        .all()
+    )
     badge_class = PO_STATUS_BADGES.get(po.status, "")
     return render(
         request,
@@ -146,7 +151,11 @@ def purchase_order_detail(request, pk: int):
 
 def purchase_order_receive(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
-    items = po.purchaseorderitem_set.select_related("item").all()
+    items = (
+        po.purchaseorderitem_set.select_related("item")
+        .annotate(_received_total=Sum("grnitem__quantity_received"))
+        .all()
+    )
     if request.method == "POST":
         form = GRNForm(request.POST)
         if form.is_valid():
@@ -162,7 +171,7 @@ def purchase_order_receive(request, pk: int):
                     qty = Decimal("0")
                 if qty:
                     any_received = True
-                    remaining = item.quantity_ordered - item.quantity_received
+                    remaining = item.quantity_ordered - item.received_total
                     if qty > remaining:
                         form.add_error(
                             None,

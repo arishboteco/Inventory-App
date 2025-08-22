@@ -1,5 +1,6 @@
 from decimal import Decimal, InvalidOperation
 from django.db import models
+from django.db.models import Sum
 
 
 class CoerceFloatField(models.DecimalField):
@@ -228,10 +229,18 @@ class PurchaseOrderItem(models.Model):
     )
     item = models.ForeignKey(Item, models.DO_NOTHING, db_column="item_id")
     quantity_ordered = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity_received = models.DecimalField(
-        max_digits=10, decimal_places=2, default=Decimal("0")
-    )
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    @property
+    def received_total(self) -> Decimal:
+        value = self.__dict__.get("_received_total")
+        if value is not None:
+            return value or Decimal("0")
+        total = (
+            self.grnitem_set.aggregate(total=Sum("quantity_received"))["total"]
+            or Decimal("0")
+        )
+        return total
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.purchase_order} - {self.item}"

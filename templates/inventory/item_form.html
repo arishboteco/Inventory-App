@@ -46,13 +46,17 @@
     </div>
   </form>
   {{ form.units_map|json_script:"units-data" }}
+  {{ form.categories_map|json_script:"categories-data" }}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const units = JSON.parse(document.getElementById('units-data').textContent);
+      const categories = JSON.parse(document.getElementById('categories-data').textContent);
       const baseSelect = document.getElementById('id_base_unit');
       const purchaseSelect = document.getElementById('id_purchase_unit');
+      const categorySelect = document.getElementById('id_category');
+      const subSelect = document.getElementById('id_sub_category');
 
-      function refresh(selected) {
+      function refreshUnits(selected) {
         const base = baseSelect.value;
         const options = units[base] || [];
         purchaseSelect.innerHTML = '<option value="">---------</option>';
@@ -67,9 +71,37 @@
         }
       }
 
-      const initial = purchaseSelect.value;
-      refresh(initial);
-      baseSelect.addEventListener('change', function () { refresh(); });
+      function refreshCategories(selected) {
+        const cat = categorySelect.value;
+        const options = categories[cat] || [];
+        subSelect.innerHTML = '<option value="">---------</option>';
+        options.forEach(function (opt) {
+          const o = document.createElement('option');
+          o.value = opt.name;
+          o.textContent = opt.name;
+          subSelect.appendChild(o);
+        });
+        if (
+          selected &&
+          options.some(function (o) {
+            return o.name === selected;
+          })
+        ) {
+          subSelect.value = selected;
+        }
+      }
+
+      const initialPurchase = purchaseSelect.value;
+      refreshUnits(initialPurchase);
+      baseSelect.addEventListener('change', function () {
+        refreshUnits();
+      });
+
+      const initialSub = subSelect.value;
+      refreshCategories(initialSub);
+      categorySelect.addEventListener('change', function () {
+        refreshCategories();
+      });
     });
   </script>
   {% else %}

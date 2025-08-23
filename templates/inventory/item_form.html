@@ -27,6 +27,26 @@
       {% endif %}
     {% endfor %}
   </div>
+  <datalist id="base-unit-options">
+    {% for u in form.base_units %}
+      <option value="{{ u }}"></option>
+    {% endfor %}
+  </datalist>
+  <datalist id="purchase-unit-options">
+    {% for u in form.purchase_units %}
+      <option value="{{ u }}"></option>
+    {% endfor %}
+  </datalist>
+  <datalist id="category-options">
+    {% for c in form.category_options %}
+      <option value="{{ c }}"></option>
+    {% endfor %}
+  </datalist>
+  <datalist id="sub-category-options">
+    {% for c in form.sub_category_options %}
+      <option value="{{ c }}"></option>
+    {% endfor %}
+  </datalist>
 {% endblock %}
 {% block back_url %}{% url 'items_list' %}{% endblock %}
 {% block extra %}
@@ -36,35 +56,35 @@
     document.addEventListener('DOMContentLoaded', function () {
       const units = JSON.parse(document.getElementById('units-data').textContent);
       const categories = JSON.parse(document.getElementById('categories-data').textContent);
-      const baseSelect = document.getElementById('id_base_unit');
-      const purchaseSelect = document.getElementById('id_purchase_unit');
-      const categorySelect = document.getElementById('id_category');
-      const subSelect = document.getElementById('id_sub_category');
+      const baseInput = document.getElementById('id_base_unit');
+      const purchaseInput = document.getElementById('id_purchase_unit');
+      const categoryInput = document.getElementById('id_category');
+      const subInput = document.getElementById('id_sub_category');
+      const purchaseList = document.getElementById('purchase-unit-options');
+      const subList = document.getElementById('sub-category-options');
 
       function refreshUnits(selected) {
-        const base = baseSelect.value;
+        const base = baseInput.value;
         const options = units[base] || [];
-        purchaseSelect.innerHTML = '<option value="">---------</option>';
+        purchaseList.innerHTML = '';
         options.forEach(function (opt) {
           const o = document.createElement('option');
           o.value = opt;
-          o.textContent = opt;
-          purchaseSelect.appendChild(o);
+          purchaseList.appendChild(o);
         });
         if (selected && options.includes(selected)) {
-          purchaseSelect.value = selected;
+          purchaseInput.value = selected;
         }
       }
 
       function refreshCategories(selected) {
-        const cat = categorySelect.value;
+        const cat = categoryInput.value;
         const options = categories[cat] || [];
-        subSelect.innerHTML = '<option value="">---------</option>';
+        subList.innerHTML = '';
         options.forEach(function (opt) {
           const o = document.createElement('option');
           o.value = opt.name;
-          o.textContent = opt.name;
-          subSelect.appendChild(o);
+          subList.appendChild(o);
         });
         if (
           selected &&
@@ -72,19 +92,19 @@
             return o.name === selected;
           })
         ) {
-          subSelect.value = selected;
+          subInput.value = selected;
         }
       }
 
-      const initialPurchase = purchaseSelect.value;
+      const initialPurchase = purchaseInput.value;
       refreshUnits(initialPurchase);
-      baseSelect.addEventListener('change', function () {
+      baseInput.addEventListener('change', function () {
         refreshUnits();
       });
 
-      const initialSub = subSelect.value;
+      const initialSub = subInput.value;
       refreshCategories(initialSub);
-      categorySelect.addEventListener('change', function () {
+      categoryInput.addEventListener('change', function () {
         refreshCategories();
       });
     });

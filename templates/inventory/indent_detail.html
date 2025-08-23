@@ -19,15 +19,15 @@
   <div class="mt-4 flex gap-2">
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="px-3 py-2 border dark:border-form-darkBorder rounded">Mark Processing</button>
+      <button type="submit" class="btn-outline">Mark Processing</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="px-3 py-2 border dark:border-form-darkBorder rounded">Mark Completed</button>
+      <button type="submit" class="btn-outline">Mark Completed</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="px-3 py-2 border dark:border-form-darkBorder rounded">Cancel</button>
+      <button type="submit" class="btn-danger">Cancel</button>
     </form>
   </div>
 {% endblock %}

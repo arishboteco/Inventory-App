@@ -102,3 +102,28 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
 
     assert item_service.get_all_items_with_stock.cache_info().currsize == 0
     assert item_service.get_distinct_departments_from_items.cache_info().currsize == 0
+
+
+def test_items_list_view_shows_categories_without_items(client):
+    cat_food = Category.objects.create(name="Food")
+    Category.objects.create(name="Fruit", parent=cat_food)
+    url = reverse("items_list")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    assert resp.context["categories"] == ["Food"]
+    assert resp.context["subcategories"] == ["Fruit"]
+
+
+def test_items_list_view_uses_supabase_categories(monkeypatch, client):
+    from inventory.views import items as items_module
+
+    monkeypatch.setattr(
+        items_module,
+        "get_supabase_categories",
+        lambda: {None: [{"id": 1, "name": "Food"}], 1: [{"id": 2, "name": "Fruit"}]},
+    )
+    url = reverse("items_list")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    assert resp.context["categories"] == ["Food"]
+    assert resp.context["subcategories"] == ["Fruit"]

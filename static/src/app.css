@@ -7,14 +7,20 @@
 
 @layer base {
   body {
-    background-color: theme('colors.body.light');
-    color: theme('colors.bodyText.light');
+    background-color: var(--color-body);
+    color: var(--color-body-text);
     font-family: theme('fontFamily.sans');
   }
-  .dark body {
-    background-color: theme('colors.body.dark');
-    color: theme('colors.bodyText.dark');
+
+  .dark {
+    --color-body: var(--color-body-dark);
+    --color-body-text: var(--color-body-text-dark);
+    --color-primary: var(--color-primary-dark);
+    --color-primary-dark: #0D3A99;
+    --color-secondary: var(--color-secondary-dark);
+    --color-secondary-dark: #024427;
   }
+
   /* Base link styles: underlined with primary color.
      Button classes (.btn-*) remove the underline. */
   a {
@@ -24,13 +30,6 @@
   a:hover,
   a:focus {
     color: var(--color-primary-dark);
-  }
-  .dark a {
-    color: var(--color-primary-dark);
-  }
-  .dark a:hover,
-  .dark a:focus {
-    color: var(--color-primary);
   }
 }
 
@@ -53,7 +52,9 @@
     background-color: var(--color-primary);
     @apply text-white px-4 py-2 rounded transition-colors no-underline;
   }
-  .btn-primary:hover { @apply opacity-90; }
+  .btn-primary:hover {
+    background-color: var(--color-primary-dark);
+  }
   .btn-primary:focus {
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: var(--color-primary);
@@ -64,7 +65,9 @@
     background-color: var(--color-secondary);
     @apply text-white px-4 py-2 rounded transition-colors no-underline;
   }
-  .btn-secondary:hover { @apply opacity-90; }
+  .btn-secondary:hover {
+    background-color: var(--color-secondary-dark);
+  }
   .btn-secondary:focus {
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: var(--color-secondary);
@@ -95,7 +98,9 @@
     background-color: theme('colors.danger');
     @apply text-white px-4 py-2 rounded transition-colors no-underline;
   }
-  .btn-danger:hover { @apply opacity-90; }
+  .btn-danger:hover {
+    background-color: #992626;
+  }
   .btn-danger:focus {
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: theme('colors.danger');
@@ -222,7 +227,7 @@
 }
 
 @layer utilities {
-  .dark .text-primary { color: var(--color-primary-dark); }
+  /* Utilities rely on CSS variables for theming */
 }
 
 @media (max-width: 768px) {

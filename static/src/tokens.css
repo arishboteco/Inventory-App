@@ -4,8 +4,16 @@
   /* Dark mode variant */
   --color-primary-dark: #93C5FD;
   --color-secondary: #024427;
+  /* Dark mode variant */
+  --color-secondary-dark: #165E2D;
   --color-accent: #8C4A02;
   --color-danger: #B91C1C;
+
+  /* Body and text colors */
+  --color-body: #ffffff;
+  --color-body-dark: #0f172a;
+  --color-body-text: #111827;
+  --color-body-text-dark: #f8fafc;
 
   /* Spacing tokens */
   --space-0-5: 0.125rem;

@@ -17,19 +17,18 @@ except ModuleNotFoundError:  # pragma: no cover - supabase optional
 logger = logging.getLogger(__name__)
 
 _CACHE_TTL = 300  # seconds
-_cache: Dict[Optional[int], List[dict]] | None = None
+_cache: Dict[Optional[str], List[dict]] | None = None
 _cache_time: float | None = None
 _lock = threading.Lock()
 
 
-def _load_categories_from_supabase() -> Dict[Optional[int], List[dict]]:
-    """Fetch categories mapping from the Supabase ``category_pairs`` view.
+def _load_categories_from_supabase() -> Dict[Optional[str], List[dict]]:
+    """Fetch categories mapping from the Supabase ``category`` table.
 
-    Returns a mapping of parent category IDs to a list of child categories. Top
-    level categories are stored under the ``None`` key. Each entry in the
-    mapping is a dict containing ``id`` and ``name`` keys. If the Supabase
-    client cannot be initialised or the request fails, an empty mapping is
-    returned.
+    Returns a mapping of category names to lists of subcategories. Top level
+    categories are stored under the ``None`` key. Each entry in the mapping is a
+    dict containing ``id`` and ``name`` keys. If the Supabase client cannot be
+    initialised or the request fails, an empty mapping is returned.
     """
 
     url = os.getenv("SUPABASE_URL")
@@ -40,43 +39,42 @@ def _load_categories_from_supabase() -> Dict[Optional[int], List[dict]]:
     try:  # pragma: no cover - network interaction
         client: Client = create_client(url, key)
         resp = (
-            client.table("category_pairs")
-            .select("category_id,category,sub_category_id,sub_category")
+            client.table("category")
+            .select("category_id,category,sub_category")
             .execute()
         )
     except SupabaseException:  # pragma: no cover - network interaction
         logger.exception("Failed to fetch categories from Supabase")
         return {}
 
-    cats: Dict[Optional[int], List[dict]] = {}
-    top_seen: set[int] = set()
-    child_seen: Dict[int, set[int]] = {}
+    cats: Dict[Optional[str], List[dict]] = {}
+    top_seen: set[str] = set()
+    child_seen: Dict[str, set[str]] = {}
 
     for row in resp.data or []:
         cat_id = row.get("category_id")
         cat_name = row.get("category")
-        sub_id = row.get("sub_category_id")
         sub_name = row.get("sub_category")
 
         if cat_id is not None and cat_name:
-            if cat_id not in top_seen:
+            if cat_name not in top_seen:
                 cats.setdefault(None, []).append({"id": cat_id, "name": cat_name})
-                top_seen.add(cat_id)
+                top_seen.add(cat_name)
 
-            if sub_id is not None and sub_name:
-                seen = child_seen.setdefault(cat_id, set())
-                if sub_id not in seen:
-                    cats.setdefault(cat_id, []).append(
-                        {"id": sub_id, "name": sub_name}
+            if sub_name:
+                seen = child_seen.setdefault(cat_name, set())
+                if sub_name not in seen:
+                    cats.setdefault(cat_name, []).append(
+                        {"id": cat_id, "name": sub_name}
                     )
-                    seen.add(sub_id)
+                    seen.add(sub_name)
 
     for children in cats.values():
         children.sort(key=lambda c: c["name"])
     return cats
 
 
-def get_categories(force: bool = False) -> Dict[Optional[int], List[dict]]:
+def get_categories(force: bool = False) -> Dict[Optional[str], List[dict]]:
     """Return cached categories mapping, refreshing from Supabase if expired."""
     global _cache, _cache_time
     with _lock:

@@ -82,7 +82,7 @@
 
   .btn-tertiary {
     @apply px-4 py-2 rounded border transition-colors no-underline;
-    background-color: theme('colors.form.bg');
+    background-color: theme('colors.form.bg', '#ffffff');
     color: theme('colors.bodyText.light');
     border-color: theme('colors.form.border');
   }
@@ -181,7 +181,7 @@
   .form-control {
     font-family: theme('fontFamily.sans');
     border: 1px solid theme('colors.form.border');
-    background-color: theme('colors.form.bg');
+    background-color: theme('colors.form.bg', '#ffffff');
     color: theme('colors.form.text');
     padding: var(--space-2);
     border-radius: var(--space-1);
@@ -198,14 +198,14 @@
 
   .form-checkbox {
     border: 1px solid theme('colors.form.border');
-    background-color: theme('colors.form.bg');
+    background-color: theme('colors.form.bg', '#ffffff');
     color: theme('colors.form.text');
     border-radius: var(--space-1);
   }
 
   .form-radio {
     border: 1px solid theme('colors.form.border');
-    background-color: theme('colors.form.bg');
+    background-color: theme('colors.form.bg', '#ffffff');
     color: theme('colors.form.text');
     border-radius: 9999px;
     accent-color: var(--color-primary);
@@ -255,7 +255,7 @@
     background-color: var(--color-primary);
     color: theme('colors.table.headerText');
   }
-  .table tbody tr { background-color: theme('colors.form.bg'); }
+  .table tbody tr { background-color: theme('colors.form.bg', '#ffffff'); }
   .table tbody tr:hover { background-color: theme('colors.table.hoverBg'); }
 
   .dark .table th,

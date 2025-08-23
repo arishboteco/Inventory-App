@@ -18,6 +18,10 @@ This project uses a desktop-first Tailwind CSS strategy. Base styles target larg
 <div class="grid grid-cols-4 max-md:grid-cols-1"></div>
 ```
 
+## Predictive Dropdowns
+
+Any `<select>` element with the `predictive` class is automatically enhanced with a text input and datalist that filters options as you type. Django forms that use `StyledFormMixin` add this class to select widgets by default. To enable the predictive behaviour on your own dropdown, add `class="predictive"` to the `<select>` or include the class in the widget's `attrs` when defining the form field.
+
 ## Installation
 
 Install dependencies using `pip`:

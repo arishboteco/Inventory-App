@@ -1,13 +1,13 @@
 {% comment %}Reusable table component with sticky headers and optional actions and footer slots{% endcomment %}
 <div class="max-md:overflow-x-auto">
   {% block actions %}{% endblock %}
-  <table class="w-full table-auto text-sm divide-y divide-gray-200 dark:divide-gray-700 dark:text-white">
+  <table class="table w-full table-auto text-sm dark:text-white">
     <thead class="sticky top-0 bg-primary text-white dark:bg-primary-700 dark:text-white">
       <tr>
         {% block headers %}{% endblock %}
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-200 dark:divide-gray-700 [&>tr:hover]:bg-table-hoverBg dark:[&>tr:hover]:bg-table-darkHoverBg">
+    <tbody class="[&>tr:hover]:bg-table-hoverBg dark:[&>tr:hover]:bg-table-darkHoverBg">
       {% block rows %}{% endblock %}
     </tbody>
   </table>

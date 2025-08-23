@@ -95,6 +95,38 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     assert item_service.get_distinct_departments_from_items.cache_info().currsize == 0
 
 
+def test_item_edit_view_preselects_category_and_subcategory(client, monkeypatch):
+    from inventory.forms import item_forms as forms_module
+
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"pcs": ["box"]})
+    monkeypatch.setattr(
+        forms_module,
+        "get_categories",
+        lambda: {
+            None: [{"id": 1, "name": "Food"}],
+            "Food": [{"id": 2, "name": "Fruit"}],
+        },
+    )
+
+    item = _create_item(category_id=2)
+    url = reverse("item_edit", args=[item.pk])
+    resp = client.get(url)
+    assert resp.status_code == 200
+    content = resp.content.decode()
+
+    assert 'id="categories-data"' in content
+    assert '<option value="Food" selected>' in content
+    assert '<option value="Fruit" selected>' in content
+
+    categories_map = {
+        None: [{"id": 1, "name": "Food"}],
+        "Food": [{"id": 2, "name": "Fruit"}],
+    }
+    sub_options = [c["name"] for c in categories_map.get("Food", [])]
+    selected = "Fruit" if "Fruit" in sub_options else ""
+    assert selected == "Fruit"
+
+
 def test_items_list_view_shows_empty_categories(client):
     url = reverse("items_list")
     resp = client.get(url)

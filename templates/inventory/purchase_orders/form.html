@@ -1,73 +1,64 @@
-{% extends "_base.html" %}
-{% block content %}
-<div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order</h1>
-  <form method="post" class="space-y-4" id="po-form">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
+{% extends "components/form_layout.html" %}
+{% block heading %}{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order{% endblock %}
+{% block form_attrs %}id="po-form"{% endblock %}
+{% block fields %}
+  <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+  </div>
+  <datalist id="supplier-options"></datalist>
+  <div id="items-formset">
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}
       <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
-        {% for error in form.non_field_errors %}
+        {% for error in formset.non_form_errors %}
           <li>{{ error }}</li>
         {% endfor %}
       </ul>
     {% endif %}
-    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-      {% for field in form %}
-        {% include "components/form_field.html" with field=field %}
-      {% endfor %}
-    </div>
-    <datalist id="supplier-options"></datalist>
-    <div id="items-formset">
-      {{ formset.management_form }}
-      {% if formset.non_form_errors %}
+    {% for f in formset %}
+    <div class="border dark:border-form-darkBorder p-2 item-form">
+      {% if f.non_field_errors %}
         <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
-          {% for error in formset.non_form_errors %}
-            <li>{{ error }}</li>
-          {% endfor %}
+          {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         </ul>
       {% endif %}
-      {% for f in formset %}
-      <div class="border dark:border-form-darkBorder p-2 item-form">
-        {% if f.non_field_errors %}
-          <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
-            {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-          </ul>
-        {% endif %}
-        {% for field in f %}
-          {% include "components/form_field.html" with field=field %}
-        {% endfor %}
-      </div>
-      {% endfor %}
-    </div>
-    <datalist id="item-options"></datalist>
-    <div class="flex space-x-2">
-      <button type="button" id="add-item" class="btn-secondary">Add Item</button>
-      <button type="submit" class="btn-primary">Save</button>
-    </div>
-  </form>
-  <template id="item-empty-form">
-    <div class="border dark:border-form-darkBorder p-2 item-form">
-      {% for field in formset.empty_form %}
+      {% for field in f %}
         {% include "components/form_field.html" with field=field %}
       {% endfor %}
     </div>
-  </template>
-</div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      initFormset({
-        formsetPrefix: '{{ formset.prefix }}',
-        addButtonId: 'add-item',
-        formContainer: '#items-formset',
-        formClass: 'item-form',
-        templateId: 'item-empty-form'
-      });
-      document.getElementById('po-form').addEventListener('submit', function (e) {
-        if (!this.checkValidity()) {
-          e.preventDefault();
-          this.reportValidity();
-        }
-      });
+    {% endfor %}
+  </div>
+  <datalist id="item-options"></datalist>
+  <div>
+    <button type="button" id="add-item" class="btn-secondary">Add Item</button>
+  </div>
+{% endblock %}
+{% block back_url %}{% url 'purchase_orders_list' %}{% endblock %}
+{% block extra %}
+<template id="item-empty-form">
+  <div class="border dark:border-form-darkBorder p-2 item-form">
+    {% for field in formset.empty_form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+  </div>
+</template>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initFormset({
+      formsetPrefix: '{{ formset.prefix }}',
+      addButtonId: 'add-item',
+      formContainer: '#items-formset',
+      formClass: 'item-form',
+      templateId: 'item-empty-form'
     });
-  </script>
+    document.getElementById('po-form').addEventListener('submit', function (e) {
+      if (!this.checkValidity()) {
+        e.preventDefault();
+        this.reportValidity();
+      }
+    });
+  });
+</script>
 {% endblock %}

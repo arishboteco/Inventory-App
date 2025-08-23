@@ -54,12 +54,12 @@
 <div class="flex items-center gap-3 mt-3">
   {% if page_obj.has_previous %}
     <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-       hx-target="#suppliers_table" class="px-3 py-1 border rounded">Prev</a>
+       hx-target="#suppliers_table" class="btn-outline">Prev</a>
   {% endif %}
   <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
   {% if page_obj.has_next %}
     <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-       hx-target="#suppliers_table" class="px-3 py-1 border rounded">Next</a>
+       hx-target="#suppliers_table" class="btn-outline">Next</a>
   {% endif %}
 </div>
 

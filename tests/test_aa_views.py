@@ -31,11 +31,12 @@ def test_item_edit_handles_save_error(item_factory):
     rf = RequestFactory()
     request = rf.post(
         f"/items/{item.pk}/edit/",
-        {"name": "Sugar", "category_id": "1"},
+        {"name": "Sugar"},
     )
     _add_messages(request)
     # Simulate DB error on save
     with patch("inventory.forms.item_forms.get_units", return_value={}), \
+        patch("inventory.forms.item_forms.get_categories", return_value={}), \
         patch("inventory.forms.item_forms.ItemForm.save", side_effect=DatabaseError), \
         patch("inventory.views.items.render", return_value=HttpResponse()):
         resp = ItemEditView.as_view()(request, pk=item.pk)

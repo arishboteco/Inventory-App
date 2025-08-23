@@ -1,5 +1,5 @@
 <nav aria-label="Pagination">
-  <div class="flex items-center gap-1 flex-wrap">
+  <div class="flex items-center gap-2 flex-wrap">
     {% if page_obj.has_previous %}
       <a href="{{ base_url }}?page={{ page_obj.previous_page_number }}{% if extra_query %}&{{ extra_query }}{% endif %}"
          {% if hx_target %}hx-get="{{ base_url }}?page={{ page_obj.previous_page_number }}{% if extra_query %}&{{ extra_query }}{% endif %}" hx-target="{{ hx_target }}"{% if hx_include %} hx-include="{{ hx_include }}"{% endif %}{% if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif %}{% endif %}

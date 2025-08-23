@@ -1,46 +1,46 @@
 # Style Guide
 
-This project uses Tailwind CSS and additional utility classes defined in `app.css`.
+This project uses Tailwind CSS and additional utility classes defined in [app.css](app.css).
 Follow this guide when building new templates or JavaScript‑driven components.
 
 ## Design Tokens
 
-Tokens are provided via CSS variables in `app.css` and extended through
-`tailwind.config.js`.
+Tokens are provided via CSS variables in [app.css](app.css) and surfaced to
+[Tailwind via `tailwind.config.js`](tailwind.config.js).
 
 ### Colors
 
-| Token | Usage |
-|-------|-------|
-| `--color-primary` / `primary` | Brand color for buttons, links and highlights |
-| `--color-secondary` / `secondary` | Secondary actions and accents |
-| `--color-accent` / `accent` | Emphasis elements |
-| `--color-danger` / `danger` | Destructive actions |
-| `body.light` / `body.dark` | Page background in light/dark mode |
-| `bodyText.light` / `bodyText.dark` | Base text color |
+| Token (CSS / Tailwind) | Light Mode | Dark Mode | When to Use |
+|------------------------|------------|-----------|-------------|
+| `body` / `bg-body-light`, `bg-body-dark` | `#ffffff` | `#0f172a` | Page background |
+| `bodyText` / `text-bodyText-light`, `text-bodyText-dark` | `#111827` | `#f8fafc` | Base text color |
+| `--color-primary` / `primary` | `var(--color-primary)` | `var(--color-primary-dark)` | Links and primary actions |
+| `--color-secondary` / `secondary` | `var(--color-secondary)` | `var(--color-secondary)` | Secondary buttons and accents |
+| `--color-accent` / `accent` | `var(--color-accent)` | `var(--color-accent)` | Highlights and callouts |
+| `--color-danger` / `danger` | `var(--color-danger)` | `var(--color-danger)` | Destructive actions |
 
 ### Spacing
 
-Spacing utilities map to CSS variables:
+Spacing utilities map to CSS variables and are mode‑independent:
 
-| Tailwind class | Variable |
-|----------------|----------|
-| `p-0.5` | `--space-0-5` |
-| `p-1` | `--space-1` |
-| `p-2` | `--space-2` |
-| `p-4` | `--space-4` |
-| `p-6` | `--space-6` |
-| `p-8` | `--space-8` |
+| Token (Tailwind / CSS) | When to Use |
+|------------------------|-------------|
+| `p-0.5` / `--space-0-5` | Hairline gaps and subtle adjustments |
+| `p-1` / `--space-1` | Tight spacing around small elements |
+| `p-2` / `--space-2` | Default padding for compact components |
+| `p-4` / `--space-4` | Standard padding and grid gaps |
+| `p-6` / `--space-6` | Large section spacing |
+| `p-8` / `--space-8` | Layout gutters and container padding |
 
 ### Typography
 
-| Token | Description |
-|-------|-------------|
-| `--font-size-base` (`text-base`) | Default text size |
-| `--font-size-h1` (`text-h1`) | Page titles |
-| `--font-size-h2` (`text-h2`) | Section titles |
-| `--font-size-badge` (`text-badge`) | Badges and labels |
-| Font family | Roboto via Google Fonts |
+| Token (Tailwind / CSS) | When to Use |
+|------------------------|-------------|
+| `text-base` / `--font-size-base` | Body copy |
+| `text-h1` / `--font-size-h1` | Page titles |
+| `text-h2` / `--font-size-h2` | Section headings |
+| `text-badge` / `--font-size-badge` | Badges and labels |
+| Font family `sans` | Roboto via Google Fonts for all text |
 
 ## Components
 

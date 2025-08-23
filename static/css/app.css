@@ -117,12 +117,24 @@ h6 {
 }
 
 /*
-Reset links to optimize for opt-in styling instead of opt-out.
+Base link styles use an underline and the primary color.
+Button-like links (.btn-*) intentionally remove the underline.
 */
 
 a {
-  color: inherit;
-  text-decoration: inherit;
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+a:hover,
+a:focus {
+  color: var(--color-primary-dark);
+}
+.dark a {
+  color: var(--color-primary-dark);
+}
+.dark a:hover,
+.dark a:focus {
+  color: var(--color-primary);
 }
 
 /*
@@ -648,6 +660,7 @@ body {
   padding-bottom: 0.5rem;
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+  text-decoration: none;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -681,6 +694,7 @@ body {
   padding-bottom: 0.5rem;
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+  text-decoration: none;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -714,6 +728,7 @@ body {
   padding-bottom: 0.5rem;
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+  text-decoration: none;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;

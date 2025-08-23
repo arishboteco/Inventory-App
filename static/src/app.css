@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+:root {
+  --color-primary: #1a46c2;
+  --color-secondary: #036045;
+  --color-accent: #ad5f04;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,24 +38,24 @@
 
   /* Button styles */
   .btn-primary {
-    background-color: theme('colors.primary.DEFAULT');
+    background-color: var(--color-primary);
     @apply text-white px-4 py-2 rounded transition-colors;
   }
   .btn-primary:hover { @apply opacity-90; }
   .btn-primary:focus {
     @apply outline-none ring-2 ring-offset-2;
-    --tw-ring-color: theme('colors.primary.DEFAULT');
+    --tw-ring-color: var(--color-primary);
   }
   .btn-primary:disabled { @apply opacity-50 cursor-not-allowed; }
 
   .btn-secondary {
-    background-color: theme('colors.secondary.DEFAULT');
+    background-color: var(--color-secondary);
     @apply text-white px-4 py-2 rounded transition-colors;
   }
   .btn-secondary:hover { @apply opacity-90; }
   .btn-secondary:focus {
     @apply outline-none ring-2 ring-offset-2;
-    --tw-ring-color: theme('colors.secondary.DEFAULT');
+    --tw-ring-color: var(--color-secondary);
   }
   .btn-secondary:disabled { @apply opacity-50 cursor-not-allowed; }
 
@@ -83,7 +89,7 @@
   form textarea:focus,
   .form-control:focus {
     outline: none;
-    border-color: theme('colors.primary.DEFAULT');
+    border-color: var(--color-primary);
     @apply shadow-form-focus-light;
   }
 
@@ -99,7 +105,7 @@
     background-color: theme('colors.form.bg');
     color: theme('colors.form.text');
     border-radius: 9999px;
-    accent-color: theme('colors.primary.DEFAULT');
+    accent-color: var(--color-primary);
   }
 
   .dark form input:not([type='checkbox']):not([type='radio']),
@@ -116,7 +122,7 @@
   .dark form textarea:focus,
   .dark .form-control:focus {
     outline: none;
-    border-color: theme('colors.primary.DEFAULT');
+    border-color: var(--color-primary);
     @apply shadow-form-focus-dark;
   }
 
@@ -131,7 +137,7 @@
     background-color: theme('colors.form.darkBg');
     color: theme('colors.form.darkText');
     border-radius: 9999px;
-    accent-color: theme('colors.primary.DEFAULT');
+    accent-color: var(--color-primary);
   }
 
   /* Table component styles */
@@ -154,7 +160,7 @@
 }
 
 @layer utilities {
-  .dark .text-primary { color: theme('colors.primary.300'); }
+  .dark .text-primary { color: var(--color-primary); }
 }
 
 @media (max-width: 768px) {

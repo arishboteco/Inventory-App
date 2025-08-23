@@ -21,5 +21,37 @@
         localStorage.setItem('theme', newTheme);
       });
     }
+
+    ['primary', 'secondary', 'accent'].forEach(function(key) {
+      const storedColor = localStorage.getItem('color-' + key);
+      const picker = document.getElementById('picker-' + key);
+      if (storedColor) {
+        document.documentElement.style.setProperty('--color-' + key, storedColor);
+        if (picker) {
+          picker.value = storedColor;
+        }
+      }
+      if (picker) {
+        picker.addEventListener('input', function() {
+          document.documentElement.style.setProperty('--color-' + key, picker.value);
+          localStorage.setItem('color-' + key, picker.value);
+        });
+      }
+    });
+
+    const reset = document.getElementById('colour-reset');
+    if (reset) {
+      reset.addEventListener('click', function() {
+        ['primary', 'secondary', 'accent'].forEach(function(key) {
+          const picker = document.getElementById('picker-' + key);
+          if (picker) {
+            const defaultVal = picker.getAttribute('value');
+            document.documentElement.style.setProperty('--color-' + key, defaultVal);
+            picker.value = defaultVal;
+          }
+          localStorage.removeItem('color-' + key);
+        });
+      });
+    }
   });
 })();

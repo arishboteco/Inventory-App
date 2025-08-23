@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
+:root {
+  --color-primary: #1a46c2;
+  --color-secondary: #036045;
+  --color-accent: #ad5f04;
+}
+
 /*
 ! tailwindcss v3.4.1 | MIT License | https://tailwindcss.com
 */
@@ -632,7 +638,7 @@ body {
 /* Button styles */
 
 .btn-primary {
-  background-color: #1a46c2;
+  background-color: var(--color-primary);
   border-radius: 0.25rem;
   padding-left: 1rem;
   padding-right: 1rem;
@@ -656,7 +662,7 @@ body {
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
   --tw-ring-offset-width: 2px;
-  --tw-ring-color: #1a46c2;
+  --tw-ring-color: var(--color-primary);
 }
 
 .btn-primary:disabled{
@@ -665,7 +671,7 @@ body {
 }
 
 .btn-secondary {
-  background-color: #036045;
+  background-color: var(--color-secondary);
   border-radius: 0.25rem;
   padding-left: 1rem;
   padding-right: 1rem;
@@ -689,7 +695,7 @@ body {
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
   --tw-ring-offset-width: 2px;
-  --tw-ring-color: #036045;
+  --tw-ring-color: var(--color-secondary);
 }
 
 .btn-secondary:disabled{
@@ -755,7 +761,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   form textarea:focus,
   .form-control:focus {
   outline: none;
-  border-color: #1a46c2;
+  border-color: var(--color-primary);
   --tw-shadow: 0 0 0 2px rgba(29, 78, 216, 0.4);
   --tw-shadow-colored: 0 0 0 2px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -766,7 +772,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   background-color: #ffffff;
   color: #111827;
   border-radius: 9999px;
-  accent-color: #1a46c2;
+  accent-color: var(--color-primary);
 }
 
 .dark form input:not([type='checkbox']):not([type='radio']),
@@ -783,7 +789,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   .dark form textarea:focus,
   .dark .form-control:focus {
   outline: none;
-  border-color: #1a46c2;
+  border-color: var(--color-primary);
   --tw-shadow: 0 0 0 2px rgba(29, 78, 216, 0.6);
   --tw-shadow-colored: 0 0 0 2px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -800,7 +806,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   background-color: #1e293b;
   color: #f8fafc;
   border-radius: 9999px;
-  accent-color: #1a46c2;
+  accent-color: var(--color-primary);
 }
 
 /* Table component styles */
@@ -869,6 +875,14 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 
 .inset-0{
   inset: 0px;
+}
+
+.bottom-4{
+  bottom: 1rem;
+}
+
+.right-4{
+  right: 1rem;
 }
 
 .top-0{
@@ -1130,6 +1144,12 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
 }
 
+.space-y-2 > :not([hidden]) ~ :not([hidden]){
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+
 .space-y-4 > :not([hidden]) ~ :not([hidden]){
   --tw-space-y-reverse: 0;
   margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
@@ -1180,8 +1200,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .border-primary{
-  --tw-border-opacity: 1;
-  border-color: rgb(26 70 194 / var(--tw-border-opacity));
+  border-color: var(--color-primary);
 }
 
 .border-red-500{
@@ -1223,13 +1242,17 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .bg-primary{
-  --tw-bg-opacity: 1;
-  background-color: rgb(26 70 194 / var(--tw-bg-opacity));
+  background-color: var(--color-primary);
 }
 
 .bg-red-100{
   --tw-bg-opacity: 1;
   background-color: rgb(254 226 226 / var(--tw-bg-opacity));
+}
+
+.bg-white{
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
 
 .bg-yellow-100{
@@ -1243,6 +1266,10 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 
 .p-2{
   padding: 0.5rem;
+}
+
+.p-4{
+  padding: 1rem;
 }
 
 .p-8{
@@ -1377,8 +1404,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .text-primary{
-  --tw-text-opacity: 1;
-  color: rgb(26 70 194 / var(--tw-text-opacity));
+  color: var(--color-primary);
 }
 
 .text-red-600{
@@ -1412,7 +1438,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .dark .text-primary {
-  color: #93c5fd;
+  color: var(--color-primary);
 }
 
 @media (max-width: 768px) {
@@ -1467,9 +1493,13 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   background-color: rgb(30 41 59 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:bg-primary-700){
+:is(.dark .dark\:bg-primary){
+  background-color: var(--color-primary);
+}
+
+:is(.dark .dark\:bg-slate-800){
   --tw-bg-opacity: 1;
-  background-color: rgb(26 70 194 / var(--tw-bg-opacity));
+  background-color: rgb(30 41 59 / var(--tw-bg-opacity));
 }
 
 :is(.dark .dark\:text-blue-100){

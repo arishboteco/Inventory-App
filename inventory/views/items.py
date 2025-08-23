@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.views import View
 from django.views.generic import TemplateView
 
@@ -59,13 +60,11 @@ class ItemsListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         request = self.request
-        q = (request.GET.get("q") or "").strip()
+
+        # Resolve category related data for the filter form
         category = (request.GET.get("category") or "").strip()
         subcategory = (request.GET.get("subcategory") or "").strip()
-        active = (request.GET.get("active") or "").strip()
-        page_size = (request.GET.get("page_size") or "25").strip()
-        sort = (request.GET.get("sort") or "name").strip()
-        direction = (request.GET.get("direction") or "asc").strip()
+
         categories_map: dict | None = None
         try:
             categories_map = get_supabase_categories()
@@ -75,21 +74,26 @@ class ItemsListView(TemplateView):
         categories = [c["name"] for c in categories_map.get(None, [])]
         subcategories: list[str] = []
         if category:
-            subcategories = [
-                c["name"] for c in categories_map.get(category, [])
-            ]
+            subcategories = [c["name"] for c in categories_map.get(category, [])]
+
+        # Build initial queryset and render the table fragment
+        qs, params = _filter_and_sort_items(request)
+        page_obj, per_page = list_utils.paginate(request, qs)
+        table_ctx = {**params, "page_obj": page_obj, "page_size": per_page}
+        items_table = render_to_string(
+            "inventory/_items_table.html", table_ctx, request=request
+        )
+
+        ctx.update(params)
         ctx.update(
             {
-                "q": q,
                 "category": category,
                 "subcategory": subcategory,
-                "active": active,
-                "page_size": page_size,
-                "sort": sort,
-                "direction": direction,
                 "categories": categories,
                 "subcategories": subcategories,
                 "categories_map": categories_map,
+                "page_size": per_page,
+                "items_table": items_table,
             }
         )
         return ctx

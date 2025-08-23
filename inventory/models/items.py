@@ -5,6 +5,7 @@ from . import CoerceFloatField
 
 
 class Item(models.Model):
+    """An inventory item and its stock tracking details."""
     item_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, blank=False, null=False)
     base_unit = models.CharField(max_length=50, blank=False, null=False)
@@ -25,6 +26,7 @@ class Item(models.Model):
 
 
 class StockTransaction(models.Model):
+    """Records inventory stock increases or decreases for an item."""
     transaction_id = models.AutoField(primary_key=True)
     item = models.ForeignKey(
         Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True

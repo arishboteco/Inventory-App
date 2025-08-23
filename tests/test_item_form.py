@@ -13,6 +13,7 @@ from inventory.services import supabase_units
 @pytest.mark.django_db
 def test_item_form_preserves_metadata(monkeypatch):
     monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     form = ItemForm()
     base_field = form.fields["base_unit"]
     purchase_field = form.fields["purchase_unit"]
@@ -27,6 +28,7 @@ def test_item_form_preserves_metadata(monkeypatch):
 @pytest.mark.django_db
 def test_purchase_unit_includes_base(monkeypatch):
     monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["kg", "g"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     form = ItemForm(data={"base_unit": "kg"})
     purchase_choices = [c[0] for c in form.fields["purchase_unit"].choices]
     assert "kg" in purchase_choices
@@ -38,6 +40,7 @@ def test_item_form_units_fallback(monkeypatch, caplog):
         raise Exception("boom")
 
     monkeypatch.setattr(forms_module, "get_units", fail)
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     with caplog.at_level("ERROR"):
         form = ItemForm()
     assert form.units_map == {}
@@ -49,5 +52,36 @@ def test_item_form_units_fallback(monkeypatch, caplog):
     )
     assert "Could not load unit options" in content
     assert "Failed to load units map" in caplog.text
+
+
+@pytest.mark.django_db
+def test_item_form_categories_and_save(monkeypatch):
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
+    monkeypatch.setattr(
+        forms_module,
+        "get_categories",
+        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
+    )
+
+    form = ItemForm()
+    categories = [c[0] for c in form.fields["category"].choices]
+    assert "Food" in categories
+
+    form = ItemForm(data={"category": "Food"})
+    sub_choices = [c[0] for c in form.fields["sub_category"].choices]
+    assert "Fruit" in sub_choices
+
+    data = {
+        "name": "Apple",
+        "base_unit": "kg",
+        "purchase_unit": "g",
+        "category": "Food",
+        "sub_category": "Fruit",
+        "is_active": True,
+    }
+    form = ItemForm(data=data)
+    assert form.is_valid()
+    item = form.save()
+    assert item.category_id == 2
 
 

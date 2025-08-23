@@ -16,6 +16,7 @@ def _create_item(**kwargs):
         "reorder_point": 1,
         "notes": "n",
         "is_active": True,
+        "category_id": 1,
     }
     defaults.update(kwargs)
     return Item.objects.create(**defaults)

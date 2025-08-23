@@ -22,6 +22,7 @@ def item_factory():
             "name": "Item",
             "base_unit": "kg",
             "purchase_unit": "g",
+            "category_id": 1,
         }
         defaults.update(kwargs)
         return Item.objects.create(**defaults)

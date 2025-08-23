@@ -54,6 +54,26 @@
   }
   .btn-secondary:disabled { @apply opacity-50 cursor-not-allowed; }
 
+  .btn-tertiary {
+    @apply px-4 py-2 rounded border transition-colors;
+    background-color: theme('colors.form.bg');
+    color: theme('colors.bodyText.light');
+    border-color: theme('colors.form.border');
+  }
+  .btn-tertiary:hover { @apply bg-gray-100; }
+  .btn-tertiary:focus {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: theme('colors.form.border');
+  }
+  .btn-tertiary:disabled { @apply opacity-50 cursor-not-allowed; }
+  .dark .btn-tertiary {
+    background-color: theme('colors.form.darkBg');
+    color: theme('colors.bodyText.dark');
+    border-color: theme('colors.form.darkBorder');
+  }
+  .dark .btn-tertiary:hover { @apply bg-gray-700; }
+  .dark .btn-tertiary:focus { --tw-ring-color: theme('colors.form.darkBorder'); }
+
   .btn-danger {
     background-color: theme('colors.danger');
     @apply text-white px-4 py-2 rounded transition-colors;

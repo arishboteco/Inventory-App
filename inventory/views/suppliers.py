@@ -4,6 +4,7 @@ import logging
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
@@ -35,6 +36,18 @@ class SuppliersListView(TemplateView):
         sort = (self.request.GET.get("sort") or "name").strip()
         direction = (self.request.GET.get("direction") or "asc").strip()
         total_suppliers = Supplier.objects.count()
+        filters = [
+            {
+                "name": "active",
+                "value": active,
+                "list_id": "active-statuses",
+                "options": [
+                    {"value": "", "label": "All"},
+                    {"value": "1", "label": "Active"},
+                    {"value": "0", "label": "Inactive"},
+                ],
+            }
+        ]
         ctx.update(
             {
                 "q": q,
@@ -43,6 +56,8 @@ class SuppliersListView(TemplateView):
                 "sort": sort,
                 "direction": direction,
                 "total_suppliers": total_suppliers,
+                "filters": filters,
+                "export_url": reverse("suppliers_table"),
             }
         )
         return ctx

@@ -54,33 +54,15 @@
     </div>
   </form>
 </div>
-<script>
-(function() {
-  const addBtn = document.getElementById('add-row');
-  const table = document.getElementById('items-table').getElementsByTagName('tbody')[0];
-  const totalForms = document.getElementById('id_items-TOTAL_FORMS');
-  addBtn.addEventListener('click', function() {
-    const newIndex = parseInt(totalForms.value, 10);
-    const emptyRow = table.querySelector('.form-row').cloneNode(true);
-    emptyRow.querySelectorAll('input,select,textarea').forEach(function(el) {
-      const name = el.getAttribute('name').replace(/-\d+-/, '-' + newIndex + '-');
-      const id = 'id_' + name;
-      el.setAttribute('name', name);
-      el.setAttribute('id', id);
-      if (el.type !== 'hidden') { el.value = ''; }
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      initFormset({
+        formsetPrefix: 'items',
+        addButtonId: 'add-row',
+        formContainer: '#items-table tbody',
+        formClass: 'form-row',
+        removeButtonClass: 'remove-row'
+      });
     });
-    table.appendChild(emptyRow);
-    totalForms.value = newIndex + 1;
-  });
-  table.addEventListener('click', function(e){
-    if(e.target.classList.contains('remove-row')){
-      const rows = table.querySelectorAll('.form-row');
-      if(rows.length > 1){
-        e.target.closest('.form-row').remove();
-        totalForms.value = rows.length - 1;
-      }
-    }
-  });
-})();
-</script>
+  </script>
 {% endblock %}

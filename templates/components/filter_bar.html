@@ -1,0 +1,45 @@
+<form id="filters" class="grid gap-2 mb-4 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1" method="get">
+  <input
+    type="text"
+    name="q"
+    placeholder="{{ search_placeholder }}"
+    class="form-control w-full"
+    value="{{ q }}"
+    hx-get="{{ hx_get }}"
+    hx-target="{{ hx_target }}"
+    hx-trigger="keyup changed delay:300ms"
+    hx-include="#filters"
+    {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+  />
+  {% for f in filters %}
+    <input
+      type="text"
+      name="{{ f.name }}"
+      list="{{ f.list_id }}"
+      class="form-control w-full"
+      value="{{ f.value }}"
+      hx-get="{{ hx_get }}"
+      hx-target="{{ hx_target }}"
+      hx-trigger="change"
+      hx-include="#filters"
+      {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+      {% if f.id %}id="{{ f.id }}"{% endif %}
+    />
+    <datalist id="{{ f.list_id }}">
+      {% for opt in f.options %}
+        <option value="{{ opt.value }}"{% if opt.label %} label="{{ opt.label }}"{% endif %}></option>
+      {% endfor %}
+    </datalist>
+  {% endfor %}
+  {% if export_url %}
+    <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-tertiary w-full">{{ export_label|default:'Export' }}</button>
+  {% endif %}
+  {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
+  {% if sort %}<input type="hidden" name="sort" value="{{ sort|default:'name' }}">{% endif %}
+  {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
+  <noscript>
+    <div class="mt-2">
+      <button type="submit" class="btn-primary">Apply</button>
+    </div>
+  </noscript>
+</form>

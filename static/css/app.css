@@ -1149,13 +1149,14 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 var(--space-2);
 }
 
 .table th,
   .table td {
   border: 1px solid var(--color-border);
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-4) var(--space-8);
   text-align: left;
 }
 
@@ -1170,7 +1171,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .table tbody tr:hover {
-  background-color: #d1d5db;
+  background-color: #e5e7eb;
 }
 
 .dark .table th,
@@ -1188,7 +1189,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .dark .table tbody tr:hover {
-  background-color: #334155;
+  background-color: #475569;
 }
 
 /* Pagination controls */

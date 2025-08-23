@@ -244,11 +244,15 @@
   }
 
   /* Table component styles */
-  .table { width: 100%; border-collapse: collapse; }
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 var(--space-2);
+  }
   .table th,
   .table td {
     border: 1px solid theme('colors.table.border');
-    padding: var(--space-4) var(--space-6);
+    padding: var(--space-4) var(--space-8);
     text-align: left;
   }
   .table thead {
@@ -259,7 +263,9 @@
     background-color: theme('colors.form.bg', '#ffffff');
     transition: background-color 0.15s ease-in-out;
   }
-  .table tbody tr:hover { background-color: theme('colors.table.hoverBg'); }
+  .table tbody tr:hover {
+    background-color: theme('colors.table.hoverBg');
+  }
 
   .dark .table th,
   .dark .table td { border: 1px solid theme('colors.table.darkBorder'); }
@@ -268,7 +274,9 @@
     color: theme('colors.table.headerText');
   }
   .dark .table tbody tr { background-color: theme('colors.body.dark'); }
-  .dark .table tbody tr:hover { background-color: theme('colors.table.darkHoverBg'); }
+  .dark .table tbody tr:hover {
+    background-color: theme('colors.table.darkHoverBg');
+  }
 
   /* Pagination controls */
   .pagination-active { @apply px-3 py-1 border rounded bg-gray-200; }

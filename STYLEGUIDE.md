@@ -70,7 +70,9 @@ Use these variants to target smaller viewports:
 
 Use the classes in `app.css` to ensure a consistent look:
 
-- **Buttons**: `.btn-primary`, `.btn-secondary`, `.btn-danger`
+- **Buttons**: `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-outline`, `.btn-tertiary`
+  - `.btn-outline` – neutral bordered buttons for navigation links or cancel/back actions.
+  - `.btn-tertiary` – subtle buttons that blend with form backgrounds for utility actions like export or download.
 - **Status badges**: `.badge-success`, `.badge-warning`, `.badge-error`
 - **Navigation buttons**: `.nav-btn`
 - **Tables**: `.table`

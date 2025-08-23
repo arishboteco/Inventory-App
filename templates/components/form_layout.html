@@ -1,20 +1,20 @@
 {% extends "_base.html" %}
 {% block title %}Form – Inventory App{% endblock %}
 {% block content %}
-<div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
+<div class="w-full max-w-4xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
   <h1 class="text-2xl font-semibold mb-4">
     {% block heading %}{% endblock %}
   </h1>
   {% if form %}
-  <form method="post" {% block form_attrs %}{% endblock %} class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+  <form method="post" {% block form_attrs %}{% endblock %} class="grid grid-cols-1 gap-4">
     {% csrf_token %}
     {% if form.non_field_errors %}
-    <ul class="text-red-600 dark:text-red-400 list-disc pl-5" style="grid-column: 1 / -1;">
+    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
       {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
     </ul>
     {% endif %}
     {% block fields %}{% endblock %}
-    <div class="flex gap-2" style="grid-column: 1 / -1;">
+    <div class="flex gap-2">
       <button type="submit" class="btn-primary">{% block submit_text %}Save{% endblock %}</button>
       <a href="{% block back_url %}{% endblock %}" class="btn-outline">{% block back_text %}Cancel{% endblock %}</a>
     </div>

@@ -12,7 +12,7 @@ Inventory-App is a Django application for managing restaurant inventory with a P
 
 ## Style Guide
 
-Refer to [STYLEGUIDE.md](STYLEGUIDE.md) for design tokens, reusable components and usage examples. When creating new templates or JavaScript-driven components, prefer Tailwind CSS utilities and the classes defined in `app.css` before adding custom styles.
+Refer to [STYLEGUIDE.md](STYLEGUIDE.md) for design tokens, reusable components and usage examples. When creating new templates or JavaScript-driven components, prefer Tailwind CSS utilities and the classes defined in `static/css/app.css` before adding custom styles.
 
 ## Responsive Breakpoints
 
@@ -32,6 +32,15 @@ Install dependencies using `pip`:
 
 ```bash
 pip install -r requirements.txt
+```
+
+## Static Assets
+
+Build the Tailwind CSS bundle and collect static files:
+
+```bash
+npx tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify
+python manage.py collectstatic --noinput
 ```
 
 ## Configuration

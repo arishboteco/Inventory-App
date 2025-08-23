@@ -26,13 +26,7 @@
 {% endblock %}
 
 {% block footer %}
-<div class="mt-4 flex justify-between">
-  {% if page_obj.has_previous %}
-  <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Previous</a>
-  {% endif %}
-  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-  {% if page_obj.has_next %}
-  <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="text-primary">Next</a>
-  {% endif %}
+<div class="mt-4">
+  {% include "components/pagination.html" with page_obj=page_obj base_url="" extra_query=querystring %}
 </div>
 {% endblock %}

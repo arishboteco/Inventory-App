@@ -79,27 +79,10 @@
 
 {% block footer %}
 <div class="flex items-center gap-3 mt-3 flex-wrap">
-  <div class="flex items-center gap-1">
-    {% if page_obj.has_previous %}
-      <a href="{% url 'items_list' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-         hx-get="{% url 'items_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-         hx-target="#items_table" class="btn-outline">Prev</a>
-    {% endif %}
-    {% for num in page_obj.paginator.page_range %}
-      {% if num == page_obj.number %}
-        <span class="pagination-active">{{ num }}</span>
-      {% else %}
-        <a href="{% url 'items_list' %}?page={{ num }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-           hx-get="{% url 'items_table' %}?page={{ num }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-           hx-target="#items_table" class="btn-outline">{{ num }}</a>
-      {% endif %}
-    {% endfor %}
-    {% if page_obj.has_next %}
-      <a href="{% url 'items_list' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-         hx-get="{% url 'items_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-         hx-target="#items_table" class="btn-outline">Next</a>
-    {% endif %}
-  </div>
+    {% url 'items_table' as table_url %}
+    {% with extra_query='q='|add:q|urlencode|add:'&active='|add:active|urlencode|add:'&page_size='|add:page_size|add:'&sort='|add:sort|urlencode|add:'&direction='|add:direction|urlencode %}
+      {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#items_table" hx_include="#filters" %}
+    {% endwith %}
   <div class="ml-auto flex items-center gap-2">
     <label for="page_size" class="text-sm">Per page:</label>
     <input

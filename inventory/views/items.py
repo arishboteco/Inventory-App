@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views import View
 from django.views.generic import TemplateView
+from django.urls import reverse
 
 from ..models import Item, StockTransaction
 from ..forms.item_forms import ItemForm
@@ -85,6 +86,33 @@ class ItemsListView(TemplateView):
         )
 
         ctx.update(params)
+        filters = [
+            {
+                "name": "active",
+                "value": params.get("active", ""),
+                "list_id": "item-active",
+                "id": "filter-active",
+                "options": [
+                    {"value": "", "label": "All"},
+                    {"value": "1", "label": "Active"},
+                    {"value": "0", "label": "Inactive"},
+                ],
+            },
+            {
+                "name": "category",
+                "value": category,
+                "list_id": "item-category",
+                "id": "filter-category",
+                "options": [{"value": "", "label": "All"}] + [{"value": c} for c in categories],
+            },
+            {
+                "name": "subcategory",
+                "value": subcategory,
+                "list_id": "item-subcategory",
+                "id": "filter-subcategory",
+                "options": [{"value": "", "label": "All"}] + [{"value": sc} for sc in subcategories],
+            },
+        ]
         ctx.update(
             {
                 "category": category,
@@ -94,6 +122,8 @@ class ItemsListView(TemplateView):
                 "categories_map": categories_map,
                 "page_size": per_page,
                 "items_table": items_table,
+                "filters": filters,
+                "export_url": reverse("items_export"),
             }
         )
         return ctx
@@ -318,7 +348,6 @@ class ItemSearchView(TemplateView):
         items = Item.objects.filter(name__icontains=query)[:20]
         ctx["items"] = items
         return ctx
-
 
 
 class ItemsBulkUploadView(View):

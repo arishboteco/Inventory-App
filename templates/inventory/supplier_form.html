@@ -1,5 +1,5 @@
 {% extends "components/form_layout.html" %}
-{% block heading %}{% if is_edit %}Edit Supplier{% else %}Add Supplier{% endif %}{% endblock %}
+{% block heading %}{% if is_edit %}Edit Supplier{% else %}New Supplier{% endif %}{% endblock %}
 {% block fields %}
   <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
     {% for field in form %}

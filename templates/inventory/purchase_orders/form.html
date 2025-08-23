@@ -54,36 +54,20 @@
   </template>
 </div>
   <script>
-    (function () {
-      const formsetPrefix = "{{ formset.prefix }}";
-      const addBtn = document.getElementById("add-item");
-      const formsetDiv = document.getElementById("items-formset");
-      const totalFormsInput = document.getElementById(`id_${formsetPrefix}-TOTAL_FORMS`);
-      const emptyForm = document.getElementById("item-empty-form").content;
-
-      addBtn.addEventListener("click", function (e) {
-        e.preventDefault();
-        const formCount = parseInt(totalFormsInput.value);
-        const newForm = emptyForm.cloneNode(true);
-        newForm.querySelectorAll("input, select, textarea").forEach(function (el) {
-          const name = el.getAttribute("name").replace("__prefix__", formCount);
-          const id = `id_${name}`;
-          el.setAttribute("name", name);
-          el.setAttribute("id", id);
-          if (el.type !== "hidden") {
-            el.value = "";
-          }
-        });
-        formsetDiv.appendChild(newForm);
-        totalFormsInput.value = formCount + 1;
+    document.addEventListener('DOMContentLoaded', function () {
+      initFormset({
+        formsetPrefix: '{{ formset.prefix }}',
+        addButtonId: 'add-item',
+        formContainer: '#items-formset',
+        formClass: 'item-form',
+        templateId: 'item-empty-form'
       });
-
-      document.getElementById("po-form").addEventListener("submit", function (e) {
+      document.getElementById('po-form').addEventListener('submit', function (e) {
         if (!this.checkValidity()) {
           e.preventDefault();
           this.reportValidity();
         }
       });
-    })();
+    });
   </script>
 {% endblock %}

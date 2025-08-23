@@ -42,7 +42,21 @@ class IndentsListView(TemplateView):
         status = (self.request.GET.get("status") or "").strip()
         q = (self.request.GET.get("q") or "").strip()
         total_indents = Indent.objects.count()
-        ctx.update({"status": status, "q": q, "total_indents": total_indents})
+        filters = [
+            {
+                "name": "status",
+                "value": status,
+                "list_id": "indent-statuses",
+                "options": [
+                    {"value": "", "label": "All Statuses"},
+                    {"value": "SUBMITTED", "label": "Submitted"},
+                    {"value": "PROCESSING", "label": "Processing"},
+                    {"value": "COMPLETED", "label": "Completed"},
+                    {"value": "CANCELLED", "label": "Cancelled"},
+                ],
+            }
+        ]
+        ctx.update({"status": status, "q": q, "total_indents": total_indents, "filters": filters})
         return ctx
 
 

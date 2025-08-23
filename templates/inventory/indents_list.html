@@ -4,37 +4,8 @@
   <div class="mb-4 flex justify-end gap-2">
     <a href="{% url 'indent_create' %}" class="btn-primary">New Indent</a>
   </div>
-    <form id="filters" class="grid gap-2 mb-4 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1">
-      <input
-        type="text"
-        name="q"
-        placeholder="Search indents..."
-        class="form-control w-full"
-        value="{{ q }}"
-        hx-get="{% url 'indents_table' %}"
-        hx-target="#indents_table"
-        hx-trigger="keyup changed delay:300ms"
-        hx-include="#filters"
-      />
-      <input
-        type="text"
-        name="status"
-        list="indent-statuses"
-        class="form-control w-full"
-        value="{{ status }}"
-        hx-get="{% url 'indents_table' %}"
-        hx-target="#indents_table"
-        hx-trigger="change"
-        hx-include="#filters"
-      />
-      <datalist id="indent-statuses">
-        <option value="" label="All Statuses"></option>
-        <option value="SUBMITTED" label="Submitted"></option>
-        <option value="PROCESSING" label="Processing"></option>
-        <option value="COMPLETED" label="Completed"></option>
-        <option value="CANCELLED" label="Cancelled"></option>
-      </datalist>
-  </form>
+  {% url 'indents_table' as indents_table_url %}
+  {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters %}
   <div id="indents_table"
        hx-get="{% url 'indents_table' %}"
        hx-trigger="load"

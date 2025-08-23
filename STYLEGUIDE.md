@@ -42,6 +42,12 @@ Spacing utilities map to CSS variables and are mode‑independent:
 | `text-badge` / `--font-size-badge` | Badges and labels |
 | Font family `sans` | Roboto via Google Fonts for all text |
 
+#### Usage Rules
+
+- **`text-h1`**: Reserve for the main page title. Only one `text-h1` should appear per page.
+- **`text-h2`**: Use for section headings beneath the page title. Maintain sequential order without skipping levels.
+- **`text-base`**: Default body copy size. Apply to paragraphs and long-form text for consistent readability.
+
 ## Layout & Breakpoints
 
 ### Container

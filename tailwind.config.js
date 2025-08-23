@@ -69,10 +69,10 @@ module.exports = {
         '8': 'var(--space-8)',
       },
       fontSize: {
-        base: 'var(--font-size-base)',
-        h1: 'var(--font-size-h1)',
-        h2: 'var(--font-size-h2)',
-        badge: 'var(--font-size-badge)',
+        base: ['var(--font-size-base)', { lineHeight: '1.5' }],
+        h1: ['var(--font-size-h1)', { lineHeight: '1.25' }],
+        h2: ['var(--font-size-h2)', { lineHeight: '1.3' }],
+        badge: ['var(--font-size-badge)', { lineHeight: '1' }],
       },
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],

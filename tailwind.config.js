@@ -52,14 +52,14 @@ module.exports = {
           darkBorder: 'var(--color-border-dark)',
           darkText: '#f8fafc',
         },
-          table: {
-            border: 'var(--color-border)',
-            headerBg: 'var(--color-primary)',
-            headerText: '#ffffff',
-            hoverBg: '#d1d5db',
-            darkBorder: 'var(--color-border-dark)',
-            darkHoverBg: '#334155',
-          },
+            table: {
+              border: 'var(--color-border)',
+              headerBg: 'var(--color-primary)',
+              headerText: '#ffffff',
+              hoverBg: '#e5e7eb',
+              darkBorder: 'var(--color-border-dark)',
+              darkHoverBg: '#475569',
+            },
       },
       spacing: {
         '0.5': 'var(--space-0-5)',

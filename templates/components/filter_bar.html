@@ -1,38 +1,48 @@
-<form id="filters" class="grid gap-2 mb-4 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1" method="get">
-  <input
-    type="text"
-    name="q"
-    placeholder="{{ search_placeholder }}"
-    class="form-control w-full"
-    value="{{ q }}"
-    hx-get="{{ hx_get }}"
-    hx-target="{{ hx_target }}"
-    hx-trigger="keyup changed delay:300ms"
-    hx-include="#filters"
-    {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-  />
-  {% for f in filters %}
+<form id="filters" class="grid gap-4 mb-4 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1" method="get">
+  <div class="flex flex-col">
+    <label for="filter-q" class="text-sm font-medium">{{ search_label|default:'Search' }}</label>
     <input
+      id="filter-q"
       type="text"
-      name="{{ f.name }}"
-      list="{{ f.list_id }}"
+      name="q"
+      placeholder="{{ search_placeholder }}"
       class="form-control w-full"
-      value="{{ f.value }}"
+      value="{{ q }}"
       hx-get="{{ hx_get }}"
       hx-target="{{ hx_target }}"
-      hx-trigger="change"
+      hx-trigger="keyup changed delay:300ms"
       hx-include="#filters"
       {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-      {% if f.id %}id="{{ f.id }}"{% endif %}
     />
-    <datalist id="{{ f.list_id }}">
-      {% for opt in f.options %}
-        <option value="{{ opt.value }}"{% if opt.label %} label="{{ opt.label }}"{% endif %}></option>
-      {% endfor %}
-    </datalist>
+  </div>
+  {% for f in filters %}
+    <div class="flex flex-col">
+      <label for="{{ f.id|default:f.name }}" class="text-sm font-medium">{{ f.label|default:f.name|capfirst }}</label>
+      <input
+        type="text"
+        name="{{ f.name }}"
+        list="{{ f.list_id }}"
+        class="form-control w-full"
+        value="{{ f.value }}"
+        hx-get="{{ hx_get }}"
+        hx-target="{{ hx_target }}"
+        hx-trigger="change"
+        hx-include="#filters"
+        {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+        id="{{ f.id|default:f.name }}"
+      />
+      <datalist id="{{ f.list_id }}">
+        {% for opt in f.options %}
+          <option value="{{ opt.value }}"{% if opt.label %} label="{{ opt.label }}"{% endif %}></option>
+        {% endfor %}
+      </datalist>
+    </div>
   {% endfor %}
   {% if export_url %}
-    <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-tertiary w-full">{{ export_label|default:'Export' }}</button>
+    <div class="flex flex-col">
+      <span class="text-sm font-medium">&nbsp;</span>
+      <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-tertiary w-full">{{ export_label|default:'Export' }}</button>
+    </div>
   {% endif %}
   {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
   {% if sort %}<input type="hidden" name="sort" value="{{ sort|default:'name' }}">{% endif %}

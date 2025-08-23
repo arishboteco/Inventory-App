@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from django import forms
 
 from ..models import StockTransaction
-from .base import StyledFormMixin
+from .base import StyledFormMixin, INPUT_CLASS
 
 
 class StockReceivingForm(StyledFormMixin, forms.ModelForm):
@@ -12,6 +14,22 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
             "quantity_change": "Quantity",
             "related_po_id": "PO ID",
         }
+
+    def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        item_attrs = {"class": INPUT_CLASS}
+        if item_suggest_url:
+            item_attrs.update(
+                {
+                    "hx-get": item_suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#item-options",
+                    "list": "item-options",
+                }
+            )
+        self.fields["item"].widget = forms.TextInput()
+        self.fields["item"].widget.attrs.update(item_attrs)
+        self.apply_styling()
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
@@ -27,6 +45,22 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
         fields = ["item", "quantity_change", "user_id", "notes"]
         labels = {"quantity_change": "Quantity Change"}
 
+    def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        item_attrs = {"class": INPUT_CLASS}
+        if item_suggest_url:
+            item_attrs.update(
+                {
+                    "hx-get": item_suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#item-options",
+                    "list": "item-options",
+                }
+            )
+        self.fields["item"].widget = forms.TextInput()
+        self.fields["item"].widget.attrs.update(item_attrs)
+        self.apply_styling()
+
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
         obj.transaction_type = "ADJUSTMENT"
@@ -40,6 +74,22 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "notes"]
         labels = {"quantity_change": "Quantity"}
+
+    def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        item_attrs = {"class": INPUT_CLASS}
+        if item_suggest_url:
+            item_attrs.update(
+                {
+                    "hx-get": item_suggest_url,
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#item-options",
+                    "list": "item-options",
+                }
+            )
+        self.fields["item"].widget = forms.TextInput()
+        self.fields["item"].widget.attrs.update(item_attrs)
+        self.apply_styling()
 
     def clean_quantity_change(self):
         qty = self.cleaned_data.get("quantity_change")

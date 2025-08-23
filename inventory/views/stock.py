@@ -7,6 +7,7 @@ from decimal import Decimal
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 
 from ..forms.stock_forms import (
     StockReceivingForm,
@@ -26,16 +27,20 @@ def stock_movements(request):
     }
     active = request.GET.get("section", "receive")
 
-    receive_form = StockReceivingForm(prefix="receive")
-    adjust_form = StockAdjustmentForm(prefix="adjust")
-    waste_form = StockWastageForm(prefix="waste")
+    item_url = reverse("item_search")
+
+    receive_form = StockReceivingForm(prefix="receive", item_suggest_url=item_url)
+    adjust_form = StockAdjustmentForm(prefix="adjust", item_suggest_url=item_url)
+    waste_form = StockWastageForm(prefix="waste", item_suggest_url=item_url)
     bulk_form = StockBulkUploadForm()
     bulk_success_count = None
     bulk_errors: list[str] | None = None
 
     if request.method == "POST":
         if "submit_receive" in request.POST:
-            receive_form = StockReceivingForm(request.POST, prefix="receive")
+            receive_form = StockReceivingForm(
+                request.POST, prefix="receive", item_suggest_url=item_url
+            )
             if receive_form.is_valid():
                 cd = receive_form.cleaned_data
                 ok = stock_service.record_stock_transaction(
@@ -52,7 +57,9 @@ def stock_movements(request):
                 messages.error(request, "Failed to record transaction")
             active = "receive"
         elif "submit_adjust" in request.POST:
-            adjust_form = StockAdjustmentForm(request.POST, prefix="adjust")
+            adjust_form = StockAdjustmentForm(
+                request.POST, prefix="adjust", item_suggest_url=item_url
+            )
             if adjust_form.is_valid():
                 cd = adjust_form.cleaned_data
                 ok = stock_service.record_stock_transaction(
@@ -68,7 +75,9 @@ def stock_movements(request):
                 messages.error(request, "Failed to record transaction")
             active = "adjust"
         elif "submit_waste" in request.POST:
-            waste_form = StockWastageForm(request.POST, prefix="waste")
+            waste_form = StockWastageForm(
+                request.POST, prefix="waste", item_suggest_url=item_url
+            )
             if waste_form.is_valid():
                 cd = waste_form.cleaned_data
                 qty = -abs(cd["quantity_change"])

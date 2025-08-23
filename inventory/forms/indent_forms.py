@@ -41,6 +41,12 @@ class IndentItemForm(StyledFormMixin, forms.ModelForm):
         self.fields["item"].widget.attrs.update(item_attrs)
         self.apply_styling()
 
+    def clean_requested_qty(self):
+        qty = self.cleaned_data.get("requested_qty")
+        if qty is None or qty <= 0:
+            raise forms.ValidationError("Quantity must be positive")
+        return qty
+
 
 IndentItemFormSet = forms.inlineformset_factory(
     Indent,

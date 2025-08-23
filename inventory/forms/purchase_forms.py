@@ -58,6 +58,18 @@ class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
         self.fields["item"].widget.attrs.update(item_attrs)
         self.apply_styling()
 
+    def clean_quantity_ordered(self):
+        qty = self.cleaned_data.get("quantity_ordered")
+        if qty is None or qty <= 0:
+            raise forms.ValidationError("Quantity must be positive")
+        return qty
+
+    def clean_unit_price(self):
+        price = self.cleaned_data.get("unit_price")
+        if price is None or price <= 0:
+            raise forms.ValidationError("Unit price must be positive")
+        return price
+
 
 PurchaseOrderItemFormSet = forms.inlineformset_factory(
     PurchaseOrder,

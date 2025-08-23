@@ -2,7 +2,7 @@ import django
 from django.conf import settings
 
 import pytest
-from inventory.forms.indent_forms import IndentForm, IndentItemFormSet
+from inventory.forms.indent_forms import IndentForm, IndentItemFormSet, IndentItemForm
 
 
 @pytest.mark.django_db
@@ -35,3 +35,12 @@ def test_indent_form_and_formset_save(item_factory):
     assert indent.status == "SUBMITTED"
     assert indent.indentitem_set.count() == 1
     assert indent.indentitem_set.first().item_id == item.pk
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("qty", [0, -1])
+def test_indent_item_form_requires_positive_quantity(item_factory, qty):
+    item = item_factory(name="Sugar")
+    form = IndentItemForm(data={"item": item.pk, "requested_qty": qty})
+    assert not form.is_valid()
+    assert form.errors["requested_qty"] == ["Quantity must be positive"]

@@ -14,8 +14,16 @@
   </head>
   <body class="min-h-screen">
     {% include "components/nav.html" %}
-    <div id="htmx-spinner" class="hidden fixed inset-0 flex items-center justify-center bg-black/25">
-      <div class="h-12 w-12 border-4 border-primary dark:border-primary border-t-transparent rounded-full animate-spin"></div>
+    <div
+      id="htmx-spinner"
+      role="status"
+      aria-live="polite"
+      class="hidden fixed inset-0 flex items-center justify-center bg-black/25"
+    >
+      <div
+        aria-hidden="true"
+        class="h-12 w-12 border-4 border-primary dark:border-primary border-t-transparent rounded-full animate-spin"
+      ></div>
     </div>
     <div class="container max-md:px-6 max-sm:px-4 py-4 grid gap-4">
       {% if messages %}
@@ -25,11 +33,19 @@
     </div>
     {% include "components/colour_customizer.html" %}
     <script>
-      document.body.addEventListener('htmx:request', function () {
-        document.getElementById('htmx-spinner').classList.remove('hidden');
+      const body = document.body;
+      const spinner = document.getElementById('htmx-spinner');
+
+      body.addEventListener('htmx:request', function () {
+        spinner.classList.remove('hidden');
+        body.setAttribute('aria-hidden', 'true');
+        body.setAttribute('aria-busy', 'true');
       });
-      document.body.addEventListener('htmx:afterRequest', function () {
-        document.getElementById('htmx-spinner').classList.add('hidden');
+
+      body.addEventListener('htmx:afterRequest', function () {
+        spinner.classList.add('hidden');
+        body.removeAttribute('aria-hidden');
+        body.removeAttribute('aria-busy');
       });
     </script>
   </body>

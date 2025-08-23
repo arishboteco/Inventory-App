@@ -1,9 +1,11 @@
 from django import forms
 
+from .base import StyledFormMixin
 
-class BulkUploadForm(forms.Form):
+
+class BulkUploadForm(StyledFormMixin, forms.Form):
     file = forms.FileField()
 
 
-class BulkDeleteForm(forms.Form):
+class BulkDeleteForm(StyledFormMixin, forms.Form):
     file = forms.FileField()

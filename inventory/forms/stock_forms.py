@@ -106,5 +106,5 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
         return obj
 
 
-class StockBulkUploadForm(forms.Form):
+class StockBulkUploadForm(StyledFormMixin, forms.Form):
     file = forms.FileField()

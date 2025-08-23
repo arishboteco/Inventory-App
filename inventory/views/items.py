@@ -60,19 +60,36 @@ class ItemsListView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         request = self.request
         q = (request.GET.get("q") or "").strip()
+        category = (request.GET.get("category") or "").strip()
+        subcategory = (request.GET.get("subcategory") or "").strip()
         active = (request.GET.get("active") or "").strip()
         page_size = (request.GET.get("page_size") or "25").strip()
         sort = (request.GET.get("sort") or "name").strip()
         direction = (request.GET.get("direction") or "asc").strip()
+        categories_map: dict | None = None
+        try:
+            categories_map = get_supabase_categories()
+        except Exception:  # pragma: no cover - defensive
+            categories_map = {}
+            logger.exception("Failed to load categories")
+        categories = [c["name"] for c in categories_map.get(None, [])]
+        subcategories: list[str] = []
+        if category:
+            subcategories = [
+                c["name"] for c in categories_map.get(category, [])
+            ]
         ctx.update(
             {
                 "q": q,
+                "category": category,
+                "subcategory": subcategory,
                 "active": active,
                 "page_size": page_size,
                 "sort": sort,
                 "direction": direction,
-                "categories": [],
-                "subcategories": [],
+                "categories": categories,
+                "subcategories": subcategories,
+                "categories_map": categories_map,
             }
         )
         return ctx

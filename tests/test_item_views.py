@@ -135,6 +135,20 @@ def test_items_list_view_shows_empty_categories(client):
     assert resp.context["subcategories"] == []
 
 
+def test_items_list_view_populates_categories(client, monkeypatch):
+    monkeypatch.setattr(
+        "inventory.views.items.get_supabase_categories",
+        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
+    )
+    url = reverse("items_list") + "?category=Food&subcategory=Fruit"
+    resp = client.get(url)
+    assert resp.status_code == 200
+    assert resp.context["categories"] == ["Food"]
+    assert resp.context["subcategories"] == ["Fruit"]
+    assert resp.context["category"] == "Food"
+    assert resp.context["subcategory"] == "Fruit"
+
+
 def test_items_export_view_returns_csv(client):
     _create_item()
     url = reverse("items_export")

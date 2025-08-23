@@ -47,39 +47,47 @@
       </div>
       <div class="flex flex-col gap-1">
         <label for="filter-category" class="text-sm font-medium">Category</label>
-        <select
+        <input
           id="filter-category"
+          type="text"
           name="category"
+          list="item-category"
           class="form-control w-full"
+          value="{{ category }}"
           hx-get="{% url 'items_table' %}"
           hx-target="#items_table"
           hx-trigger="change"
           hx-include="#filters"
           hx-indicator="#htmx-spinner"
-        >
-          <option value="">All</option>
+        />
+        <datalist id="item-category">
+          <option value="" label="All"></option>
           {% for c in categories %}
-          <option value="{{ c }}"{% if c == category %} selected{% endif %}>{{ c }}</option>
+          <option value="{{ c }}"></option>
           {% endfor %}
-        </select>
+        </datalist>
       </div>
       <div class="flex flex-col gap-1">
         <label for="filter-subcategory" class="text-sm font-medium">Subcategory</label>
-        <select
+        <input
           id="filter-subcategory"
+          type="text"
           name="subcategory"
+          list="item-subcategory"
           class="form-control w-full"
+          value="{{ subcategory }}"
           hx-get="{% url 'items_table' %}"
           hx-target="#items_table"
           hx-trigger="change"
           hx-include="#filters"
           hx-indicator="#htmx-spinner"
-        >
-          <option value="">All</option>
+        />
+        <datalist id="item-subcategory">
+          <option value="" label="All"></option>
           {% for sc in subcategories %}
-          <option value="{{ sc }}"{% if sc == subcategory %} selected{% endif %}>{{ sc }}</option>
+          <option value="{{ sc }}"></option>
           {% endfor %}
-        </select>
+        </datalist>
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium" for="export-btn">&nbsp;</label>
@@ -97,19 +105,21 @@
   {{ categories_map|json_script:"categories-data" }}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const categories = JSON.parse(document.getElementById('categories-data').textContent);
-      const categorySelect = document.getElementById('filter-category');
-      const subSelect = document.getElementById('filter-subcategory');
+      const categories = JSON.parse(
+        document.getElementById('categories-data').textContent
+      );
+      const categoryInput = document.getElementById('filter-category');
+      const subInput = document.getElementById('filter-subcategory');
+      const subDatalist = document.getElementById('item-subcategory');
 
       function refreshSubcategories(selected) {
-        const cat = categorySelect.value;
+        const cat = categoryInput.value;
         const options = categories[cat] || [];
-        subSelect.innerHTML = '<option value="">All</option>';
+        subDatalist.innerHTML = '<option value="" label="All"></option>';
         options.forEach(function (opt) {
           const o = document.createElement('option');
           o.value = opt.name;
-          o.textContent = opt.name;
-          subSelect.appendChild(o);
+          subDatalist.appendChild(o);
         });
         if (
           selected &&
@@ -117,13 +127,15 @@
             return o.name === selected;
           })
         ) {
-          subSelect.value = selected;
+          subInput.value = selected;
+        } else {
+          subInput.value = '';
         }
       }
 
-      const initialSub = subSelect.value;
+      const initialSub = subInput.value;
       refreshSubcategories(initialSub);
-      categorySelect.addEventListener('change', function () {
+      categoryInput.addEventListener('change', function () {
         refreshSubcategories();
       });
     });

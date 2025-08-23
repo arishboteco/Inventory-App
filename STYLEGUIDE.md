@@ -42,6 +42,24 @@ Spacing utilities map to CSS variables and are mode‑independent:
 | `text-badge` / `--font-size-badge` | Badges and labels |
 | Font family `sans` | Roboto via Google Fonts for all text |
 
+## Layout & Breakpoints
+
+### Container
+
+- The `.container` utility is centered and applies `var(--space-8)` padding by default.
+
+### Custom `max-*` breakpoints
+
+Use these variants to target smaller viewports:
+
+| Breakpoint | Applies up to |
+|------------|---------------|
+| `max-sm`   | 639px |
+| `max-md`   | 767px |
+| `max-lg`   | 1023px |
+| `max-xl`   | 1279px |
+| `max-2xl`  | 1535px |
+
 ## Components
 
 Use the classes in `app.css` to ensure a consistent look:
@@ -163,6 +181,11 @@ Use the classes in `app.css` to ensure a consistent look:
   <textarea class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark" placeholder="Details"></textarea>
 </form>
 ```
+
+## Accessibility
+
+- Color variables in `app.css` are tuned for high contrast in light and dark modes. Ensure text and UI elements meet WCAG AA contrast ratios.
+- Interactive components must include the 2px focus ring styles defined in `app.css` (e.g., button and form control focus states) to remain keyboard accessible.
 
 ## Guidelines
 

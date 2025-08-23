@@ -300,8 +300,9 @@ form textarea:focus {
   color: #ffffff;
 }
 
+/* Improve table row hover visibility */
 .table tbody tr:hover {
-  background-color: #f3f4f6; /* Improved hover contrast */
+  background-color: #d1d5db; /* Improved hover contrast */
 }
 
 .dark .table thead {
@@ -309,5 +310,5 @@ form textarea:focus {
 }
 
 .dark .table tbody tr:hover {
-  background-color: #1e293b; /* Dark mode hover contrast */
+  background-color: #334155; /* Dark mode hover contrast */
 }

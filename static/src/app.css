@@ -35,10 +35,15 @@
 
 @layer components {
   .active { @apply font-bold underline; }
-  /* Status badge classes */
-  .badge-success { @apply bg-green-700 text-white px-1.5 py-0.5 rounded; }
-  .badge-warning { @apply bg-amber-500 text-gray-900 px-1.5 py-0.5 rounded; }
-  .badge-error { @apply bg-red-600 text-white px-1.5 py-0.5 rounded; }
+  /* Badge component styles */
+  .badge-success,
+  .badge-warning,
+  .badge-error {
+    @apply px-1.5 py-0.5 rounded;
+  }
+  .badge-success { @apply bg-green-700 text-white; }
+  .badge-warning { @apply bg-amber-500 text-gray-900; }
+  .badge-error { @apply bg-red-600 text-white; }
 
   .dark .badge-success { @apply bg-green-800 text-white; }
   .dark .badge-warning { @apply bg-amber-600 text-gray-900; }
@@ -118,12 +123,54 @@
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: theme('colors.form.border');
   }
+  .btn-outline:disabled { @apply opacity-50 cursor-not-allowed; }
   .dark .btn-outline {
     color: theme('colors.bodyText.dark');
     border-color: theme('colors.form.darkBorder');
   }
   .dark .btn-outline:hover { @apply bg-gray-700; }
   .dark .btn-outline:focus { --tw-ring-color: theme('colors.form.darkBorder'); }
+
+  /* Navigation button styles */
+  .nav-btn {
+    @apply flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors outline-none text-white;
+    background-color: transparent;
+  }
+  .nav-btn:hover,
+  .nav-btn:focus {
+    background-color: var(--color-primary-dark);
+    color: #ffffff;
+  }
+  .nav-btn:focus {
+    @apply ring-2 ring-offset-2;
+    --tw-ring-color: var(--color-primary-dark);
+  }
+  .dark .nav-btn {
+    color: var(--color-primary-dark);
+  }
+  .dark .nav-btn:hover,
+  .dark .nav-btn:focus {
+    background-color: var(--color-primary);
+    color: #ffffff;
+  }
+  .dark .nav-btn:focus { --tw-ring-color: var(--color-primary); }
+
+  /* Alert component styles */
+  .alert {
+    @apply px-8 max-md:px-6 max-sm:px-4 py-4 mb-4 border-l-4 rounded;
+  }
+  .alert-success {
+    @apply bg-green-100 text-green-700 border-green-500 dark:bg-green-900 dark:text-green-300 dark:border-green-700;
+  }
+  .alert-warning {
+    @apply bg-yellow-100 text-yellow-700 border-yellow-500 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700;
+  }
+  .alert-error {
+    @apply bg-red-100 text-red-700 border-red-500 dark:bg-red-900 dark:text-red-300 dark:border-red-700;
+  }
+  .alert-info {
+    @apply bg-blue-100 text-blue-700 border-blue-500 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700;
+  }
 
   /* Form component styles */
   form label { @apply block mb-2; }
@@ -222,6 +269,11 @@
   /* Pagination controls */
   .pagination-active { @apply px-3 py-1 border rounded bg-gray-200; }
   .pagination-input { @apply border rounded p-1; }
+  .pagination-active:focus,
+  .pagination-input:focus {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: var(--color-primary);
+  }
   .dark .pagination-active { @apply border-form-darkBorder bg-gray-700; }
   .dark .pagination-input { @apply border-form-darkBorder bg-form-darkBg text-form-darkText; }
 }

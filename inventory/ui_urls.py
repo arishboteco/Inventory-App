@@ -10,7 +10,6 @@ from .views.items import (
     ItemDeleteView,
     ItemSearchView,
     ItemsBulkUploadView,
-    SubCategoryOptionsView,
 )
 from .views.suppliers import (
     SuppliersListView,
@@ -59,7 +58,6 @@ urlpatterns = [
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
     path("items/search/", ItemSearchView.as_view(), name="item_search"),
     path("items/bulk-upload/", ItemsBulkUploadView.as_view(), name="items_bulk_upload"),
-    path("items/subcategories/", SubCategoryOptionsView.as_view(), name="item_subcategory_options"),
 
     path("suppliers/", SuppliersListView.as_view(), name="suppliers_list"),
     path("suppliers/table/", SuppliersTableView.as_view(), name="suppliers_table"),

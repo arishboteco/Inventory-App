@@ -4,45 +4,12 @@ from django.db import models
 from . import CoerceFloatField
 
 
-class Category(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=100, blank=False, null=False)
-    parent = models.ForeignKey(
-        "self",
-        models.DO_NOTHING,
-        db_column="parent_id",
-        blank=True,
-        null=True,
-        related_name="children",
-    )
-
-    class Meta:
-        db_table = "category"
-        ordering = ("name",)
-
-    def __str__(self) -> str:  # pragma: no cover - simple representation
-        return self.name or f"Category {self.pk}"
-
-
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, blank=False, null=False)
     base_unit = models.CharField(max_length=50, blank=False, null=False)
     purchase_unit = models.CharField(max_length=50, blank=False, null=False)
-    category = models.ForeignKey(
-        Category,
-        models.DO_NOTHING,
-        related_name="items",
-        blank=True,
-        null=True,
-    )
-    sub_category = models.ForeignKey(
-        Category,
-        models.DO_NOTHING,
-        related_name="sub_items",
-        blank=True,
-        null=True,
-    )
+    category_id = models.IntegerField(blank=True, null=True)
     permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)

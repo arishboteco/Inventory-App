@@ -2,19 +2,15 @@ from __future__ import annotations
 
 import logging
 from django import forms
-from django.urls import reverse
 
-from ..models import Item, Category
+from ..models import Item
 from ..services.supabase_units import get_units
-from ..services.supabase_categories import get_categories
 from .base import StyledFormMixin, INPUT_CLASS
 
 logger = logging.getLogger(__name__)
 
 
 class ItemForm(StyledFormMixin, forms.ModelForm):
-    category = forms.ModelChoiceField(queryset=Category.objects.all(), required=True)
-    sub_category = forms.ModelChoiceField(queryset=Category.objects.all(), required=False)
 
     class Meta:
         model = Item
@@ -22,8 +18,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             "name",
             "base_unit",
             "purchase_unit",
-            "category",
-            "sub_category",
+            "category_id",
             "permitted_departments",
             "reorder_point",
             "current_stock",
@@ -34,7 +29,6 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             "name": {"required": "Item name is required."},
             "base_unit": {"required": "Base unit is required."},
             "purchase_unit": {"required": "Purchase unit is required."},
-            "category": {"required": "Category is required."},
         }
 
     def __init__(self, *args, **kwargs):
@@ -47,32 +41,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             logger.error("Failed to load units map", exc_info=True)
         self.units_map = units_map
 
-        try:
-            categories_map = get_categories()
-            logger.debug("Categories map loaded: %s", categories_map)
-        except Exception:
-            categories_map = {}
-            logger.error("Failed to load categories map", exc_info=True)
-        self.categories_map = categories_map
-        self.supabase_categories_failed = not categories_map
-        if categories_map:
-            top_ids: dict[str, int] = {}
-            for cat in categories_map.get(None, []):
-                Category.objects.update_or_create(
-                    id=cat["id"], defaults={"name": cat["name"], "parent_id": None}
-                )
-                top_ids[cat["name"]] = cat["id"]
-            for cat_name, children in categories_map.items():
-                if cat_name is None:
-                    continue
-                parent_id = top_ids.get(cat_name)
-                for child in children:
-                    Category.objects.update_or_create(
-                        id=child["id"],
-                        defaults={"name": child["name"], "parent_id": parent_id},
-                    )
-
-        for field in ("name", "base_unit", "purchase_unit", "category"):
+        for field in ("name", "base_unit", "purchase_unit"):
             self.fields[field].required = True
 
         self.fields["name"].widget.attrs.update({"class": INPUT_CLASS})
@@ -105,50 +74,5 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         elif self.initial.get("purchase_unit"):
             purchase_field.initial = self.initial.get("purchase_unit")
 
-        category_field = self.fields["category"]
-        top_categories = Category.objects.filter(parent__isnull=True).order_by("name")
-        category_field.queryset = top_categories
-        category_field.empty_label = "---------"
-        category_field.widget = forms.Select(
-            attrs={
-                "id": "id_category",
-                "class": INPUT_CLASS,
-                "hx-get": reverse("item_subcategory_options"),
-                "hx-trigger": "change",
-                "hx-target": "#id_sub_category",
-                "hx-swap": "innerHTML",
-            }
-        )
-
-        sub_field = self.fields["sub_category"]
-        selected_category = self.data.get("category")
-        if not selected_category and self.instance.pk and self.instance.category_id:
-            selected_category = str(self.instance.category_id)
-            category_field.initial = self.instance.category
-        if selected_category:
-            try:
-                sub_field.queryset = (
-                    Category.objects.filter(parent_id=int(selected_category))
-                    .order_by("name")
-                )
-            except (ValueError, TypeError):
-                sub_field.queryset = Category.objects.none()
-        else:
-            sub_field.queryset = Category.objects.none()
-        sub_field.empty_label = "---------"
-        sub_field.widget = forms.Select(
-            attrs={"id": "id_sub_category", "class": INPUT_CLASS}
-        )
-        if self.instance.pk and self.instance.sub_category_id:
-            sub_field.initial = self.instance.sub_category
-
         # Reapply styling for any widgets replaced above
         self.apply_styling()
-
-    def save(self, commit: bool = True):
-        obj = super().save(commit=False)
-        obj.category = self.cleaned_data.get("category")
-        obj.sub_category = self.cleaned_data.get("sub_category")
-        if commit:
-            obj.save()
-        return obj

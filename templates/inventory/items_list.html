@@ -25,50 +25,6 @@
         />
       </div>
       <div class="flex flex-col gap-1">
-        <label for="filter-category" class="text-sm font-medium">Category</label>
-        <input
-          id="filter-category"
-          type="text"
-          name="category"
-          list="item-categories"
-          class="form-control w-full"
-          value="{{ category }}"
-          hx-get="{% url 'items_table' %}"
-          hx-target="#items_table"
-          hx-trigger="change"
-          hx-include="#filters"
-          hx-indicator="#htmx-spinner"
-        />
-        <datalist id="item-categories">
-          <option value="" label="All Categories"></option>
-          {% for cat in categories %}
-          <option value="{{ cat }}"></option>
-          {% endfor %}
-        </datalist>
-      </div>
-      <div class="flex flex-col gap-1">
-        <label for="filter-subcategory" class="text-sm font-medium">Subcategory</label>
-        <input
-          id="filter-subcategory"
-          type="text"
-          name="subcategory"
-          list="item-subcategories"
-          class="form-control w-full"
-          value="{{ subcategory }}"
-          hx-get="{% url 'items_table' %}"
-          hx-target="#items_table"
-          hx-trigger="change"
-          hx-include="#filters"
-          hx-indicator="#htmx-spinner"
-        />
-        <datalist id="item-subcategories">
-          <option value="" label="All Subcategories"></option>
-          {% for sub in subcategories %}
-          <option value="{{ sub }}"></option>
-          {% endfor %}
-        </datalist>
-      </div>
-      <div class="flex flex-col gap-1">
         <label for="filter-active" class="text-sm font-medium">Status</label>
         <input
           id="filter-active"

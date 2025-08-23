@@ -10,9 +10,6 @@
     {% if not form.units_map %}
     <p class="text-sm text-red-600">Could not load unit options. Please try again later.</p>
     {% endif %}
-    {% if form.supabase_categories_failed %}
-    <p class="text-sm text-red-600">Could not load category options. Please try again later.</p>
-    {% endif %}
     {% if form.non_field_errors %}
     <ul class="text-red-600 list-disc pl-5">
       {% for error in form.non_field_errors %}
@@ -37,7 +34,6 @@
       </div>
       {% include "components/form_field.html" with field=form.base_unit %}
       {% include "components/form_field.html" with field=form.purchase_unit %}
-      {% include "components/form_field.html" with field=form.category %}
       {% for field in form %}
         {% if field.name not in excluded_fields %}
           {% include "components/form_field.html" with field=field %}

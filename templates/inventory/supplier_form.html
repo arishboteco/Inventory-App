@@ -1,27 +1,10 @@
-{% extends "_base.html" %}
-{% block content %}
-<div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">
-    {% if is_edit %}Edit Supplier{% else %}Add Supplier{% endif %}
-  </h1>
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
-      {% for field in form %}
-        {% include "components/form_field.html" with field=field %}
-      {% endfor %}
-    </div>
-    <div class="flex gap-2">
-      <button type="submit" class="btn-primary">Save</button>
-      <a href="{% url 'suppliers_list' %}" class="btn-outline">Cancel</a>
-    </div>
-  </form>
-</div>
+{% extends "components/form_layout.html" %}
+{% block heading %}{% if is_edit %}Edit Supplier{% else %}Add Supplier{% endif %}{% endblock %}
+{% block fields %}
+  <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+  </div>
 {% endblock %}
+{% block back_url %}{% url 'suppliers_list' %}{% endblock %}

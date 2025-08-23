@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+:root {
+  --color-primary: #0d3a99; /* Improved contrast */
+  --color-primary-dark: #3d82d1; /* Dark mode variant with better contrast */
+  --color-secondary: #024427; /* Enhanced secondary color contrast */
+  --color-accent: #8c4a02; /* Optimized accent color for visibility */
+}
+
+/* Base link styles use an underline and the primary color */
+a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+a:hover,
+a:focus {
+  color: var(--color-primary-dark);
+}
+.dark a {
+  color: var(--color-primary-dark);
+}
+.dark a:hover,
+.dark a:focus {
+  color: var(--color-primary);
+}
+
+/* Background and text colors for better readability */
+body {
+  background-color: #ffffff;
+  color: #111827;
+  font-family: Roboto, sans-serif;
+}
+
+.dark body {
+  background-color: #0e1a33; /* Dark mode background with improved contrast */
+  color: #e5e5e5; /* Text color for better visibility in dark mode */
+}
+
+/* Status badge classes */
+.dark .badge-success {
+  background-color: #165e2d; /* Adjusted green for contrast */
+  color: #ffffff; /* White text for readability */
+}
+
+.dark .badge-warning {
+  background-color: #d17b06; /* Optimized orange for visibility */
+  color: #1f2937; /* Dark text for contrast */
+}
+
+.dark .badge-error {
+  background-color: #b91c1c; /* Improved red for readability */
+  color: #ffffff; /* White text for visibility */
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  text-decoration: none;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark); /* Better hover contrast */
+}
+
+.btn-primary:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-primary-dark); /* Focus ring for accessibility */
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background-color: #04603a; /* Improved hover contrast */
+}
+
+.btn-secondary:focus {
+  box-shadow: 0 0 0 2px #04603a; /* Focus ring for accessibility */
+}
+
+.btn-danger {
+  background-color: #b91c1c;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: #992626; /* Enhanced hover contrast */
+}
+
+.btn-danger:focus {
+  box-shadow: 0 0 0 2px #992626; /* Focus ring for accessibility */
+}
+
+/* Form component styles */
+form input:not([type='checkbox']):not([type='radio']),
+form select,
+form textarea {
+  border: 1px solid #6b7280;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+form input:not([type='checkbox']):not([type='radio']):focus,
+form select:focus,
+form textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-dark); /* Focus ring for accessibility */
+}
+
+.dark form input:not([type='checkbox']):not([type='radio']),
+.dark form select,
+.dark form textarea {
+  border: 1px solid #64748b;
+  background-color: #1e293b; /* Dark mode form background */
+  color: #e5e5e5; /* Text color for better contrast */
+}
+
+.dark form input:not([type='checkbox']):not([type='radio']):focus,
+.dark form select:focus,
+.dark form textarea:focus {
+  border-color: var(--color-primary-dark); /* Focus border for visibility */
+}
+
+/* Table component styles */
+.table thead {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.table tbody tr:hover {
+  background-color: #f3f4f6; /* Improved hover contrast */
+}
+
+.dark .table thead {
+  background-color: var(--color-primary-dark);
+}
+
+.dark .table tbody tr:hover {
+  background-color: #1e293b; /* Dark mode hover contrast */
+}

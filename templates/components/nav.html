@@ -5,12 +5,12 @@
         <a href="{% url 'root' %}" class="text-white font-bold">Inventory App</a>
       </div>
       <div class="flex items-center">
-        <button id="nav-toggle" class="hidden max-sm:block text-white hover:text-white focus:outline-none" aria-label="Toggle navigation">
+          <button id="nav-toggle" class="nav-btn hidden max-sm:block" aria-label="Toggle navigation">
           <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
         <div id="nav-menu" class="flex space-x-4 ml-4 max-sm:hidden">
           <div class="relative nav-group">
-            <button data-dropdown="overview-menu" class="flex items-center justify-between text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Overview</button>
+              <button data-dropdown="overview-menu" class="nav-btn">Overview</button>
             <div id="overview-menu" class="hidden flex-col absolute bg-primary mt-2 rounded-md max-sm:static max-sm:bg-transparent max-sm:mt-0 max-sm:rounded-none">
               {% url 'dashboard' as dashboard_url %}
               <a href="{{ dashboard_url }}" class="flex items-center text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.path == dashboard_url %}active{% endif %}">
@@ -25,7 +25,7 @@
             </div>
           </div>
           <div class="relative nav-group">
-            <button data-dropdown="inventory-menu" class="flex items-center justify-between text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Inventory</button>
+              <button data-dropdown="inventory-menu" class="nav-btn">Inventory</button>
             <div id="inventory-menu" class="hidden flex-col absolute bg-primary mt-2 rounded-md max-sm:static max-sm:bg-transparent max-sm:mt-0 max-sm:rounded-none">
               {% url 'items_list' as items_url %}
               <a href="{{ items_url }}" class="flex items-center text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.path == items_url %}active{% endif %}">
@@ -40,7 +40,7 @@
             </div>
           </div>
           <div class="relative nav-group">
-            <button data-dropdown="procurement-menu" class="flex items-center justify-between text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Procurement</button>
+              <button data-dropdown="procurement-menu" class="nav-btn">Procurement</button>
             <div id="procurement-menu" class="hidden flex-col absolute bg-primary mt-2 rounded-md max-sm:static max-sm:bg-transparent max-sm:mt-0 max-sm:rounded-none">
               {% url 'suppliers_list' as suppliers_url %}
               <a href="{{ suppliers_url }}" class="flex items-center text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.path == suppliers_url %}active{% endif %}">
@@ -65,7 +65,7 @@
             </div>
           </div>
           <div class="relative nav-group">
-            <button data-dropdown="production-menu" class="flex items-center justify-between text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Production</button>
+              <button data-dropdown="production-menu" class="nav-btn">Production</button>
             <div id="production-menu" class="hidden flex-col absolute bg-primary mt-2 rounded-md max-sm:static max-sm:bg-transparent max-sm:mt-0 max-sm:rounded-none">
               {% url 'recipes_list' as recipes_url %}
               <a href="{{ recipes_url }}" class="flex items-center text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium {% if request.path == recipes_url %}active{% endif %}">
@@ -75,7 +75,7 @@
             </div>
           </div>
           <div class="relative nav-group">
-            <button data-dropdown="account-menu" class="flex items-center justify-between text-white hover:text-white dark:text-gray-200 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Account</button>
+              <button data-dropdown="account-menu" class="nav-btn">Account</button>
             <div id="account-menu" class="hidden flex-col absolute bg-primary mt-2 rounded-md max-sm:static max-sm:bg-transparent max-sm:mt-0 max-sm:rounded-none">
               {% if user.is_authenticated %}
                 {% url 'logout' as logout_url %}
@@ -93,7 +93,7 @@
             </div>
           </div>
         </div>
-        <button id="theme-toggle" class="ml-4 text-white hover:text-white dark:text-gray-200" aria-label="Toggle theme">🌓</button>
+          <button id="theme-toggle" class="nav-btn ml-4" aria-label="Toggle theme">🌓</button>
       </div>
     </div>
   </div>

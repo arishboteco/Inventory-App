@@ -6,16 +6,17 @@
 
 <h2 class="text-xl mb-2 mt-8">Low Stock Items</h2>
 <table class="table">
-  <thead><tr><th>Item</th><th>Stock</th><th>Reorder Point</th></tr></thead>
+  <thead><tr><th>Item</th><th>Stock</th><th>Reorder Point</th><th>Actions</th></tr></thead>
   <tbody>
   {% for item in low_stock %}
     <tr>
       <td>{{ item.name }}</td>
       <td>{{ item.current_stock }}</td>
       <td>{{ item.reorder_point }}</td>
+      <td><a href="{% url 'item_detail' item.pk %}" class="text-primary hover:underline">View Item</a></td>
     </tr>
   {% empty %}
-    <tr><td colspan="3">No low stock items.</td></tr>
+    <tr><td colspan="4">No low stock items.</td></tr>
   {% endfor %}
   </tbody>
 </table>

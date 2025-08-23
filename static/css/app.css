@@ -824,8 +824,12 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .table thead {
-  background-color: #1a46c2;
+  background-color: var(--color-primary);
   color: #ffffff;
+}
+
+.table tbody tr {
+  background-color: #ffffff;
 }
 
 .table tbody tr:hover {
@@ -833,8 +837,17 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .dark .table th,
-  .dark .table td {
+.dark .table td {
   border: 1px solid #64748b;
+}
+
+.dark .table thead {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.dark .table tbody tr {
+  background-color: #0f172a;
 }
 
 .dark .table tbody tr:hover {

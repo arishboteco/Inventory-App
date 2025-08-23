@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 def get_all_items_with_stock(include_inactive: bool = False) -> List[Dict[str, Any]]:
     """Return all items with their current stock as a list of dictionaries."""
 
-    qs = Item.objects.select_related("category", "sub_category")
+    qs = Item.objects.all()
     if not include_inactive:
         qs = qs.filter(is_active=True)
     qs = qs.annotate(
@@ -44,8 +44,7 @@ def get_all_items_with_stock(include_inactive: bool = False) -> List[Dict[str, A
             "name",
             "base_unit",
             "purchase_unit",
-            "category__name",
-            "sub_category__name",
+            "category_id",
             "permitted_departments",
             "reorder_point",
             "notes",
@@ -56,8 +55,7 @@ def get_all_items_with_stock(include_inactive: bool = False) -> List[Dict[str, A
     for row in data:
         row["unit"] = row.get("base_unit")
         row["current_stock"] = row.pop("_stock")
-        row["category"] = row.pop("category__name")
-        row["sub_category"] = row.pop("sub_category__name")
+        row["category_id"] = row.get("category_id")
     return data
 
 
@@ -152,8 +150,7 @@ def _clean_create_params(details: Dict[str, Any]) -> Dict[str, Any]:
         name=details["name"].strip(),
         base_unit=details["base_unit"].strip(),
         purchase_unit=purchase_unit_val,
-        category=details.get("category"),
-        sub_category=details.get("sub_category"),
+        category_id=details.get("category_id"),
         permitted_departments=cleaned_permitted,
         reorder_point=details.get("reorder_point", Decimal("0")),
         notes=cleaned_notes,
@@ -202,8 +199,7 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
                 name=details["name"].strip(),
                 base_unit=details["base_unit"].strip(),
                 purchase_unit=purchase_unit_val,
-                category=details.get("category"),
-                sub_category=details.get("sub_category"),
+                category_id=details.get("category_id"),
                 permitted_departments=cleaned_permitted,
                 reorder_point=details.get("reorder_point", Decimal("0")),
                 notes=cleaned_notes,
@@ -261,8 +257,7 @@ def update_item(item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
         "name",
         "base_unit",
         "purchase_unit",
-        "category",
-        "sub_category",
+        "category_id",
         "permitted_departments",
         "reorder_point",
         "notes",
@@ -346,7 +341,6 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
 
     row = (
         Item.objects.filter(pk=item_id)
-        .select_related("category", "sub_category")
         .annotate(
             _stock=Coalesce(Sum("stocktransaction__quantity_change"), Decimal("0"))
         )
@@ -355,8 +349,7 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
             "name",
             "base_unit",
             "purchase_unit",
-            "category__name",
-            "sub_category__name",
+            "category_id",
             "permitted_departments",
             "reorder_point",
             "notes",
@@ -368,7 +361,5 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
     if row:
         row["unit"] = row.get("base_unit")
         row["current_stock"] = row.pop("_stock")
-        row["category"] = row.pop("category__name")
-        row["sub_category"] = row.pop("sub_category__name")
         return row
     return None

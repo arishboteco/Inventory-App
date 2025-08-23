@@ -22,7 +22,7 @@ class CoerceFloatField(models.DecimalField):
         return self.to_python(value)
 
 
-from .items import Category, Item, StockTransaction
+from .items import Item, StockTransaction
 from .suppliers import Supplier
 from .orders import (
     Indent,
@@ -102,7 +102,6 @@ class SaleTransaction(models.Model):
 
 __all__ = [
     "CoerceFloatField",
-    "Category",
     "Item",
     "StockTransaction",
     "Supplier",

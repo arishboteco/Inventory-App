@@ -31,12 +31,11 @@ def test_item_edit_handles_save_error(item_factory):
     rf = RequestFactory()
     request = rf.post(
         f"/items/{item.pk}/edit/",
-        {"name": "Sugar", "category": str(item.category_id), "sub_category": str(item.sub_category_id)},
+        {"name": "Sugar", "category_id": "1"},
     )
     _add_messages(request)
     # Simulate DB error on save
     with patch("inventory.forms.item_forms.get_units", return_value={}), \
-        patch("inventory.forms.item_forms.get_categories", return_value={}), \
         patch("inventory.forms.item_forms.ItemForm.save", side_effect=DatabaseError), \
         patch("inventory.views.items.render", return_value=HttpResponse()):
         resp = ItemEditView.as_view()(request, pk=item.pk)
@@ -61,7 +60,6 @@ def test_item_edit_handles_non_numeric_values(item_factory):
     request = rf.get(f"/items/{item.pk}/edit/")
     _add_messages(request)
     with patch("inventory.forms.item_forms.get_units", return_value={}), \
-        patch("inventory.forms.item_forms.get_categories", return_value={}), \
         patch("inventory.views.items.render", return_value=HttpResponse()):
         resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
@@ -77,7 +75,6 @@ def test_item_edit_db_error_returns_404():
     _add_messages(request)
     # Simulate DB error when fetching the object
     with patch("inventory.forms.item_forms.get_units", return_value={}), \
-        patch("inventory.forms.item_forms.get_categories", return_value={}), \
         patch("inventory.views.items.get_object_or_404", side_effect=DatabaseError):
         with pytest.raises(Http404):
             ItemEditView.as_view()(request, pk=1)

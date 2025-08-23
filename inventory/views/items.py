@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..models import Item, StockTransaction, Category
+from ..models import Item, StockTransaction
 from ..forms.item_forms import ItemForm
 from ..forms.bulk_forms import BulkUploadForm
 from ..services import item_service, list_utils
@@ -18,23 +18,19 @@ from ..services.supabase_categories import get_categories as get_supabase_catego
 
 logger = logging.getLogger(__name__)
 
-EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category"]
+EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit"]
 
 
 def _filter_and_sort_items(request, qs=None):
     """Return items queryset filtered and sorted according to request params."""
-    qs = qs or Item.objects.select_related("category", "sub_category")
+    qs = qs or Item.objects.all()
     filters = {
-        "category": "category__name",
-        "subcategory": "sub_category__name",
         "active": "is_active",
     }
     allowed_sorts = {
         "item_id",
         "name",
         "base_unit",
-        "category__name",
-        "sub_category__name",
         "current_stock",
         "reorder_point",
         "is_active",
@@ -64,48 +60,19 @@ class ItemsListView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         request = self.request
         q = (request.GET.get("q") or "").strip()
-        category = (request.GET.get("category") or "").strip()
-        subcategory = (request.GET.get("subcategory") or "").strip()
         active = (request.GET.get("active") or "").strip()
         page_size = (request.GET.get("page_size") or "25").strip()
         sort = (request.GET.get("sort") or "name").strip()
         direction = (request.GET.get("direction") or "asc").strip()
-        categories_qs = (
-            Category.objects.filter(parent__isnull=True)
-            .order_by("name")
-            .values_list("name", flat=True)
-        )
-        subcategories_qs = (
-            Category.objects.filter(parent__isnull=False)
-            .order_by("name")
-            .values_list("name", flat=True)
-        )
-        categories = list(categories_qs)
-        subcategories = list(subcategories_qs)
-        if not categories and not subcategories:
-            try:
-                cats_map = get_supabase_categories()
-            except Exception:
-                cats_map = {}
-            if cats_map:
-                categories = [c["name"] for c in cats_map.get(None, [])]
-                subcategories = [
-                    c["name"]
-                    for pid, children in cats_map.items()
-                    if pid is not None
-                    for c in children
-                ]
         ctx.update(
             {
                 "q": q,
-                "category": category,
-                "subcategory": subcategory,
                 "active": active,
                 "page_size": page_size,
                 "sort": sort,
                 "direction": direction,
-                "categories": categories,
-                "subcategories": subcategories,
+                "categories": [],
+                "subcategories": [],
             }
         )
         return ctx
@@ -146,8 +113,6 @@ class ItemsExportView(View):
             "ID",
             "Name",
             "Base Unit",
-            "Category",
-            "Subcategory",
             "Current Stock",
             "Reorder Point",
             "Active",
@@ -158,8 +123,6 @@ class ItemsExportView(View):
                 item.item_id,
                 item.name,
                 item.base_unit,
-                item.category.name if item.category else "",
-                item.sub_category.name if item.sub_category else "",
                 item.current_stock,
                 item.reorder_point,
                 item.is_active,
@@ -335,23 +298,6 @@ class ItemSearchView(TemplateView):
         ctx["items"] = items
         return ctx
 
-
-class SubCategoryOptionsView(TemplateView):
-    """Return ``<option>`` tags for subcategories of a category."""
-
-    template_name = "inventory/_subcategory_options.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        cat_id = self.request.GET.get("category")
-        subcats = Category.objects.none()
-        if cat_id:
-            try:
-                subcats = Category.objects.filter(parent_id=int(cat_id)).order_by("name")
-            except (ValueError, TypeError):
-                subcats = Category.objects.none()
-        ctx["subcategories"] = subcats
-        return ctx
 
 
 class ItemsBulkUploadView(View):

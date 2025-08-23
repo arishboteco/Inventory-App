@@ -9,7 +9,6 @@ from inventory.models import (
     RecipeComponent,
     StockTransaction,
     SaleTransaction,
-    Category,
 )
 from inventory.services.recipe_service import (
     create_recipe,
@@ -46,14 +45,11 @@ def create_tables(django_db_blocker):
 
 
 def _create_item(name="Flour", base_unit="kg", purchase_unit="bag", stock=20):
-    cat = Category.objects.create(name="cat")
-    sub = Category.objects.create(name="sub", parent=cat)
     item = Item.objects.create(
         name=name,
         base_unit=base_unit,
         purchase_unit=purchase_unit,
-        category=cat,
-        sub_category=sub,
+        category_id=1,
         permitted_departments="dept",
         reorder_point=0,
         current_stock=stock,

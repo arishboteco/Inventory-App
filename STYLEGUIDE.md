@@ -1,11 +1,11 @@
 # Style Guide
 
-This project uses Tailwind CSS and additional utility classes defined in [app.css](app.css).
+This project uses Tailwind CSS and additional utility classes defined in [static/css/app.css](static/css/app.css).
 Follow this guide when building new templates or JavaScript‑driven components.
 
 ## Design Tokens
 
-Tokens are provided via CSS variables in [app.css](app.css) and surfaced to
+Tokens are provided via CSS variables in [static/css/app.css](static/css/app.css) and surfaced to
 [Tailwind via `tailwind.config.js`](tailwind.config.js).
 
 ### Colors
@@ -69,7 +69,7 @@ Use these variants to target smaller viewports:
 
 ## Components
 
-Use the classes in `app.css` to ensure a consistent look:
+Use the classes in `static/css/app.css` to ensure a consistent look:
 
 - **Buttons**: `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-outline`, `.btn-tertiary`
   - `.btn-outline` – neutral bordered buttons for navigation links or cancel/back actions.
@@ -193,14 +193,14 @@ Use the classes in `app.css` to ensure a consistent look:
 
 ## Accessibility
 
-- Color variables in `app.css` are tuned for high contrast in light and dark modes. Ensure text and UI elements meet WCAG AA contrast ratios.
-- Interactive components must include the 2px focus ring styles defined in `app.css` (e.g., button and form control focus states) to remain keyboard accessible.
+- Color variables in `static/css/app.css` are tuned for high contrast in light and dark modes. Ensure text and UI elements meet WCAG AA contrast ratios.
+- Interactive components must include the 2px focus ring styles defined in `static/css/app.css` (e.g., button and form control focus states) to remain keyboard accessible.
 
 ## Guidelines
 
 - Prefer Tailwind utility classes for layout and spacing.
-- Reuse predefined components from `app.css` instead of creating new custom styles.
+- Reuse predefined components from `static/css/app.css` instead of creating new custom styles.
 - Keep responsive behaviour explicit using custom `max-*` breakpoints defined in `tailwind.config.js`.
 - When adding new templates or JavaScript‑driven components, always apply Tailwind
-  utilities and existing `app.css` classes before introducing custom CSS.
+  utilities and existing `static/css/app.css` classes before introducing custom CSS.
 

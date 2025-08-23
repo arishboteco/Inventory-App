@@ -120,7 +120,7 @@ def test_items_list_view_uses_supabase_categories(monkeypatch, client):
     monkeypatch.setattr(
         items_module,
         "get_supabase_categories",
-        lambda: {None: [{"id": 1, "name": "Food"}], 1: [{"id": 2, "name": "Fruit"}]},
+        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
     )
     url = reverse("items_list")
     resp = client.get(url)

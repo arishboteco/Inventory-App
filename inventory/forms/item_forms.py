@@ -56,13 +56,16 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         self.categories_map = categories_map
         self.supabase_categories_failed = not categories_map
         if categories_map:
+            top_ids: dict[str, int] = {}
             for cat in categories_map.get(None, []):
                 Category.objects.update_or_create(
                     id=cat["id"], defaults={"name": cat["name"], "parent_id": None}
                 )
-            for parent_id, children in categories_map.items():
-                if parent_id is None:
+                top_ids[cat["name"]] = cat["id"]
+            for cat_name, children in categories_map.items():
+                if cat_name is None:
                     continue
+                parent_id = top_ids.get(cat_name)
                 for child in children:
                     Category.objects.update_or_create(
                         id=child["id"],

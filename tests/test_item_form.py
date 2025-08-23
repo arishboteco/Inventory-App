@@ -109,7 +109,7 @@ def test_item_form_supabase_categories(monkeypatch):
     monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
     categories_map = {
         None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Tools"}],
-        1: [{"id": 3, "name": "Fruit"}],
+        "Food": [{"id": 3, "name": "Fruit"}],
     }
     monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
 

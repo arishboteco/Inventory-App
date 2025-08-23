@@ -16,6 +16,9 @@
   --color-body-dark: #0f172a;
   --color-body-text: #111827;
   --color-body-text-dark: #f8fafc;
+  --color-form-bg-dark: #1e293b;
+  --color-table-hover-bg: #e5e7eb;
+  --color-table-hover-bg-dark: #475569;
 
   /* Spacing tokens */
   --space-0-5: 0.125rem;

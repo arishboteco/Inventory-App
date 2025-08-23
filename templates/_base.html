@@ -119,6 +119,7 @@
       {% endif %}
       {% block content %}{% endblock %}
     </div>
+    {% include "components/colour_customizer.html" %}
     <script>
       document.getElementById('nav-toggle').addEventListener('click', function () {
         document.getElementById('nav-menu').classList.toggle('max-sm:hidden');

@@ -65,25 +65,103 @@ Use the classes in `app.css` to ensure a consistent look:
 </div>
 ```
 
-### Button
+### Buttons
 
 ```html
-<button class="btn-primary px-4 py-2 rounded">Save</button>
+<div class="flex gap-2">
+  <button class="btn-primary px-4 py-2 rounded">Primary</button>
+  <button class="btn-secondary px-4 py-2 rounded">Secondary</button>
+  <button class="btn-danger px-4 py-2 rounded">Danger</button>
+</div>
+
+<!-- Hover & focus states -->
+<button class="btn-primary px-4 py-2 rounded hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Save</button>
+
+<!-- Dark mode -->
+<div class="dark p-4">
+  <button class="btn-primary px-4 py-2 rounded">Dark Mode</button>
+</div>
 ```
 
-### Form Input
+### Badges
 
 ```html
-<input class="w-full p-2" type="text" placeholder="Search" />
+<div class="space-x-2">
+  <span class="badge-success">Active</span>
+  <span class="badge-warning">Pending</span>
+  <span class="badge-error">Failed</span>
+</div>
+
+<!-- Hover & focus -->
+<span tabindex="0" class="badge-success hover:opacity-80 focus:outline-none focus:ring-2">Hover me</span>
+
+<!-- Dark mode -->
+<div class="dark p-4 space-x-2">
+  <span class="badge-success">Active</span>
+  <span class="badge-warning">Pending</span>
+  <span class="badge-error">Failed</span>
+</div>
 ```
 
-### Predictive Dropdown
+### Navigation Button
 
 ```html
-<select class="predictive w-full">
-  <option>Item A</option>
-  <option>Item B</option>
-</select>
+<a href="#" class="nav-btn hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Dashboard</a>
+
+<!-- Dark mode -->
+<div class="dark p-4">
+  <a href="#" class="nav-btn hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary">Dark Nav</a>
+</div>
+```
+
+### Table
+
+```html
+<table class="table w-full">
+  <thead>
+    <tr>
+      <th class="p-2">Name</th>
+      <th class="p-2">Qty</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10 dark:hover:bg-slate-800 dark:focus:bg-primary-dark/20" tabindex="0">
+      <td class="p-2">Pens</td>
+      <td class="p-2">12</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Dark mode -->
+<div class="dark p-4">
+  <table class="table w-full">
+    <thead>
+      <tr>
+        <th class="p-2">Name</th>
+        <th class="p-2">Qty</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10 dark:hover:bg-slate-800 dark:focus:bg-primary-dark/20" tabindex="0">
+        <td class="p-2">Pens</td>
+        <td class="p-2">12</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+### Form Controls
+
+```html
+<form class="space-y-2">
+  <input class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark" type="text" placeholder="Name" />
+  <select class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark">
+    <option>Option A</option>
+    <option>Option B</option>
+  </select>
+  <textarea class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark" placeholder="Details"></textarea>
+</form>
 ```
 
 ## Guidelines

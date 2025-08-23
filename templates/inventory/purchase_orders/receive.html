@@ -1,7 +1,7 @@
 {% extends "_base.html" %}
 {% block content %}
 <div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">Receive Goods for PO {{ po.pk }}</h1>
+  <h1 class="mb-4">Receive Goods for PO {{ po.pk }}</h1>
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {% if form.non_field_errors %}

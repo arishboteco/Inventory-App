@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 {% block content %}
-  <h1 class="text-2xl font-semibold mb-4">GRN {{ grn.pk }}</h1>
+  <h1 class="mb-4">GRN {{ grn.pk }}</h1>
   <p class="mb-2"><strong>PO:</strong> <a class="text-primary" href="{% url 'purchase_order_detail' grn.purchase_order_id %}">{{ grn.purchase_order_id }}</a></p>
   <p class="mb-2"><strong>Supplier:</strong> {{ grn.supplier.name }}</p>
   <p class="mb-4"><strong>Date:</strong> {{ grn.received_date }}</p>

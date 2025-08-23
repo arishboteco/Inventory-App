@@ -6,13 +6,16 @@
       document.documentElement.classList.remove('dark');
     }
   }
+
+  // Apply the user's preferred theme immediately to avoid flashes of incorrect styling
+  const stored = localStorage.getItem('theme');
+  if (stored) {
+    applyTheme(stored);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    applyTheme('dark');
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
-    const stored = localStorage.getItem('theme');
-    if (stored) {
-      applyTheme(stored);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      applyTheme('dark');
-    }
     const toggle = document.getElementById('theme-toggle');
     if (toggle) {
       toggle.addEventListener('click', function() {

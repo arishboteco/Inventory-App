@@ -149,13 +149,19 @@
     text-align: left;
   }
   .table thead {
-    background-color: theme('colors.table.headerBg');
+    background-color: var(--color-primary);
     color: theme('colors.table.headerText');
   }
+  .table tbody tr { background-color: theme('colors.form.bg'); }
   .table tbody tr:hover { background-color: theme('colors.table.hoverBg'); }
 
   .dark .table th,
   .dark .table td { border: 1px solid theme('colors.table.darkBorder'); }
+  .dark .table thead {
+    background-color: var(--color-primary);
+    color: theme('colors.table.headerText');
+  }
+  .dark .table tbody tr { background-color: theme('colors.body.dark'); }
   .dark .table tbody tr:hover { background-color: theme('colors.table.darkHoverBg'); }
 }
 

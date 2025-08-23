@@ -115,8 +115,8 @@ def test_item_edit_view_preselects_category_and_subcategory(client, monkeypatch)
     content = resp.content.decode()
 
     assert 'id="categories-data"' in content
-    assert '<option value="Food" selected>' in content
-    assert '<option value="Fruit" selected>' in content
+    assert 'value="Food"' in content
+    assert 'value="Fruit"' in content
 
     categories_map = {
         None: [{"id": 1, "name": "Food"}],

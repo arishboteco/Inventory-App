@@ -19,10 +19,12 @@ def test_item_form_preserves_metadata(monkeypatch):
     purchase_field = form.fields["purchase_unit"]
     assert base_field.label == "Base unit"
     assert base_field.max_length == 50
-    assert isinstance(base_field.widget, forms.Select)
+    assert isinstance(base_field.widget, forms.TextInput)
+    assert base_field.widget.attrs.get("list") == "base-unit-options"
     assert purchase_field.label == "Purchase unit"
     assert purchase_field.max_length == 50
-    assert isinstance(purchase_field.widget, forms.Select)
+    assert isinstance(purchase_field.widget, forms.TextInput)
+    assert purchase_field.widget.attrs.get("list") == "purchase-unit-options"
 
 
 @pytest.mark.django_db
@@ -30,8 +32,14 @@ def test_purchase_unit_includes_base(monkeypatch):
     monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["kg", "g"]})
     monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     form = ItemForm(data={"base_unit": "kg"})
-    purchase_choices = [c[0] for c in form.fields["purchase_unit"].choices]
-    assert "kg" in purchase_choices
+    request = RequestFactory().get("/")
+    content = render_to_string(
+        "inventory/item_form.html",
+        {"form": form, "is_edit": False, "excluded_fields": []},
+        request=request,
+    )
+    assert '<datalist id="purchase-unit-options">' in content
+    assert '<option value="kg"></option>' in content
 
 
 @pytest.mark.django_db
@@ -64,12 +72,10 @@ def test_item_form_categories_and_save(monkeypatch):
     )
 
     form = ItemForm()
-    categories = [c[0] for c in form.fields["category"].choices]
-    assert "Food" in categories
+    assert "Food" in form.category_options
 
     form = ItemForm(data={"category": "Food"})
-    sub_choices = [c[0] for c in form.fields["sub_category"].choices]
-    assert "Fruit" in sub_choices
+    assert "Fruit" in form.sub_category_options
 
     data = {
         "name": "Apple",

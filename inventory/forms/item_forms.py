@@ -54,33 +54,38 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
 
         self.fields["name"].widget.attrs.update({"class": INPUT_CLASS})
 
-        base_choices = [(u, u) for u in sorted(units_map.keys())]
         base_selected = self.data.get("base_unit") or self.initial.get("base_unit")
         logger.debug("Base unit selected: %s", base_selected)
 
+        # Base unit field as text input with datalist
         base_field = self.fields["base_unit"]
-        base_field.choices = [("", "---------")] + base_choices
-        base_field.widget = forms.Select(
-            choices=base_field.choices,
-            attrs={"id": "id_base_unit", "class": INPUT_CLASS},
+        base_field.widget = forms.TextInput(
+            attrs={
+                "id": "id_base_unit",
+                "class": INPUT_CLASS,
+                "list": "base-unit-options",
+            }
         )
         if base_selected:
             base_field.initial = base_selected
 
-        purchase_options = units_map.get(base_selected, [])
-        logger.debug("Purchase options for %s: %s", base_selected, purchase_options)
+        # Purchase unit field with datalist options based on base unit
         purchase_field = self.fields["purchase_unit"]
-        purchase_field.choices = [("", "---------")] + [
-            (u, u) for u in purchase_options
-        ]
-        purchase_field.widget = forms.Select(
-            choices=purchase_field.choices,
-            attrs={"id": "id_purchase_unit", "class": INPUT_CLASS},
+        purchase_field.widget = forms.TextInput(
+            attrs={
+                "id": "id_purchase_unit",
+                "class": INPUT_CLASS,
+                "list": "purchase-unit-options",
+            }
         )
         if self.data.get("purchase_unit"):
             purchase_field.initial = self.data.get("purchase_unit")
         elif self.initial.get("purchase_unit"):
             purchase_field.initial = self.initial.get("purchase_unit")
+
+        # Build helper lists for template datalists
+        self.base_units = sorted(units_map.keys())
+        self.purchase_units = units_map.get(base_selected, [])
 
         # Category fields
         selected_category = self.data.get("category")
@@ -103,33 +108,40 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                     if selected_category:
                         break
 
-        self.fields["category"] = forms.ChoiceField(
-            choices=[("", "---------")] + [
-                (c["name"], c["name"]) for c in categories_map.get(None, [])
-            ],
+        self.fields["category"] = forms.CharField(
             required=False,
-        )
-        self.fields["category"].widget.attrs.update(
-            {"id": "id_category", "class": INPUT_CLASS}
+            widget=forms.TextInput(
+                attrs={
+                    "id": "id_category",
+                    "class": INPUT_CLASS,
+                    "list": "category-options",
+                }
+            ),
         )
 
-        sub_choices = [("", "---------")]
-        if selected_category:
-            sub_choices += [
-                (c["name"], c["name"]) for c in categories_map.get(selected_category, [])
-            ]
-        self.fields["sub_category"] = forms.ChoiceField(
-            choices=sub_choices,
+        self.fields["sub_category"] = forms.CharField(
             required=False,
-        )
-        self.fields["sub_category"].widget.attrs.update(
-            {"id": "id_sub_category", "class": INPUT_CLASS}
+            widget=forms.TextInput(
+                attrs={
+                    "id": "id_sub_category",
+                    "class": INPUT_CLASS,
+                    "list": "sub-category-options",
+                }
+            ),
         )
 
         if selected_category:
             self.fields["category"].initial = selected_category
         if selected_sub:
             self.fields["sub_category"].initial = selected_sub
+
+        # Lists for datalist population
+        self.category_options = [c["name"] for c in categories_map.get(None, [])]
+        self.sub_category_options = []
+        if selected_category:
+            self.sub_category_options = [
+                c["name"] for c in categories_map.get(selected_category, [])
+            ]
 
         # Reapply styling for any widgets replaced above
         self.apply_styling()

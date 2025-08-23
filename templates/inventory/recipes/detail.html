@@ -44,14 +44,14 @@
           <td>{% include "components/form_field.html" with field=cform.unit %}</td>
           <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
           <td>
-            {{ cform.DELETE }}<button type="button" class="remove-row text-red-600 dark:text-red-400">Remove</button>
+            {{ cform.DELETE }}<button type="button" class="remove-row btn-danger">Remove</button>
           </td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
     <div class="mt-2">
-      <button type="button" id="add-row" class="px-4 py-2 border dark:border-form-darkBorder rounded">Add Component</button>
+      <button type="button" id="add-row" class="btn-secondary">Add Component</button>
     </div>
     <div class="mt-4">
       <button type="submit" class="btn-primary">Save</button>

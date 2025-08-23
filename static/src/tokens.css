@@ -1,6 +1,8 @@
 :root {
   /* Color tokens */
   --color-primary: #1a46c2;
+  /* Dark mode variant */
+  --color-primary-dark: #60a5fa;
   --color-secondary: #036045;
   --color-accent: #ad5f04;
 

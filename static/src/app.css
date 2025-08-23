@@ -205,7 +205,7 @@
 }
 
 @layer utilities {
-  .dark .text-primary { color: var(--color-primary); }
+  .dark .text-primary { color: var(--color-primary-dark); }
 }
 
 @media (max-width: 768px) {

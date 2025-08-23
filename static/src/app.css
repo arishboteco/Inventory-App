@@ -94,6 +94,14 @@
     border-radius: 0.25rem;
   }
 
+  .form-radio {
+    border: 1px solid theme('colors.form.border');
+    background-color: theme('colors.form.bg');
+    color: theme('colors.form.text');
+    border-radius: 9999px;
+    accent-color: theme('colors.primary.DEFAULT');
+  }
+
   .dark form input:not([type='checkbox']):not([type='radio']),
   .dark form select,
   .dark form textarea,
@@ -116,6 +124,14 @@
     border: 1px solid theme('colors.form.darkBorder');
     background-color: theme('colors.form.darkBg');
     color: theme('colors.form.darkText');
+  }
+
+  .dark .form-radio {
+    border: 1px solid theme('colors.form.darkBorder');
+    background-color: theme('colors.form.darkBg');
+    color: theme('colors.form.darkText');
+    border-radius: 9999px;
+    accent-color: theme('colors.primary.DEFAULT');
   }
 
   /* Table component styles */

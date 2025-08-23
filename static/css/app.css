@@ -751,11 +751,12 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
-.form-checkbox {
+.form-radio {
   border: 1px solid #6b7280;
   background-color: #ffffff;
   color: #111827;
-  border-radius: 0.25rem;
+  border-radius: 9999px;
+  accent-color: #1a46c2;
 }
 
 .dark form input:not([type='checkbox']):not([type='radio']),
@@ -782,6 +783,14 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   border: 1px solid #64748b;
   background-color: #1e293b;
   color: #f8fafc;
+}
+
+.dark .form-radio {
+  border: 1px solid #64748b;
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-radius: 9999px;
+  accent-color: #1a46c2;
 }
 
 /* Table component styles */
@@ -1351,11 +1360,6 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 .text-form-text{
   --tw-text-opacity: 1;
   color: rgb(17 24 39 / var(--tw-text-opacity));
-}
-
-.text-gray-300{
-  --tw-text-opacity: 1;
-  color: rgb(209 213 219 / var(--tw-text-opacity));
 }
 
 .text-gray-400{

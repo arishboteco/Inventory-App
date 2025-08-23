@@ -13,21 +13,54 @@ class DummyResp:
 
 class DummyClient:
     def table(self, name):
-        assert name == "category"
+        assert name == "category_pairs"
         return self
 
     def select(self, fields):
-        assert fields == "id,name,parent_id"
+        assert fields == "category_id,category,sub_category_id,sub_category"
         return self
 
     def execute(self):
-        return DummyResp([
-            {"id": 1, "name": "Food", "parent_id": None},
-            {"id": 2, "name": "Tools", "parent_id": None},
-            {"id": 3, "name": "Fruit", "parent_id": 1},
-            {"id": None, "name": "Bad", "parent_id": None},
-            {"id": 4, "name": None, "parent_id": None},
-        ])
+        return DummyResp(
+            [
+                {
+                    "category_id": 1,
+                    "category": "Food",
+                    "sub_category_id": 3,
+                    "sub_category": "Fruit",
+                },
+                {
+                    "category_id": 1,
+                    "category": "Food",
+                    "sub_category_id": 4,
+                    "sub_category": "Veg",
+                },
+                {
+                    "category_id": 2,
+                    "category": "Tools",
+                    "sub_category_id": None,
+                    "sub_category": None,
+                },
+                {
+                    "category_id": 1,
+                    "category": "Food",
+                    "sub_category_id": 3,
+                    "sub_category": "Fruit",
+                },
+                {
+                    "category_id": None,
+                    "category": "Bad",
+                    "sub_category_id": None,
+                    "sub_category": None,
+                },
+                {
+                    "category_id": 4,
+                    "category": None,
+                    "sub_category_id": None,
+                    "sub_category": None,
+                },
+            ]
+        )
 
 
 def test_load_categories_from_supabase(monkeypatch):
@@ -39,7 +72,7 @@ def test_load_categories_from_supabase(monkeypatch):
     cats = supabase_categories._load_categories_from_supabase()
     assert cats == {
         None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Tools"}],
-        1: [{"id": 3, "name": "Fruit"}],
+        1: [{"id": 3, "name": "Fruit"}, {"id": 4, "name": "Veg"}],
     }
 
 

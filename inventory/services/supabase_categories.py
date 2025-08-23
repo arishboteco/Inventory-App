@@ -23,13 +23,13 @@ _lock = threading.Lock()
 
 
 def _load_categories_from_supabase() -> Dict[Optional[int], List[dict]]:
-    """Fetch categories mapping from the Supabase ``category`` table.
+    """Fetch categories mapping from the Supabase ``category_pairs`` view.
 
-    Returns a mapping of parent category IDs to a list of child categories.
-    ``None`` is used for top level categories. Each category is represented as a
-    dict containing ``id`` and ``name`` keys.
-    If the Supabase client cannot be initialised or the request fails, an empty
-    mapping is returned.
+    Returns a mapping of parent category IDs to a list of child categories. Top
+    level categories are stored under the ``None`` key. Each entry in the
+    mapping is a dict containing ``id`` and ``name`` keys. If the Supabase
+    client cannot be initialised or the request fails, an empty mapping is
+    returned.
     """
 
     url = os.getenv("SUPABASE_URL")
@@ -39,20 +39,37 @@ def _load_categories_from_supabase() -> Dict[Optional[int], List[dict]]:
         return {}
     try:  # pragma: no cover - network interaction
         client: Client = create_client(url, key)
-        resp = client.table("category").select("id,name,parent_id").execute()
+        resp = (
+            client.table("category_pairs")
+            .select("category_id,category,sub_category_id,sub_category")
+            .execute()
+        )
     except SupabaseException:  # pragma: no cover - network interaction
         logger.exception("Failed to fetch categories from Supabase")
         return {}
 
     cats: Dict[Optional[int], List[dict]] = {}
+    top_seen: set[int] = set()
+    child_seen: Dict[int, set[int]] = {}
+
     for row in resp.data or []:
-        cid = row.get("id")
-        name = row.get("name")
-        parent = row.get("parent_id")
-        if cid is None or not name:
-            continue
-        entry = {"id": cid, "name": name}
-        cats.setdefault(parent, []).append(entry)
+        cat_id = row.get("category_id")
+        cat_name = row.get("category")
+        sub_id = row.get("sub_category_id")
+        sub_name = row.get("sub_category")
+
+        if cat_id is not None and cat_name:
+            if cat_id not in top_seen:
+                cats.setdefault(None, []).append({"id": cat_id, "name": cat_name})
+                top_seen.add(cat_id)
+
+            if sub_id is not None and sub_name:
+                seen = child_seen.setdefault(cat_id, set())
+                if sub_id not in seen:
+                    cats.setdefault(cat_id, []).append(
+                        {"id": sub_id, "name": sub_name}
+                    )
+                    seen.add(sub_id)
 
     for children in cats.values():
         children.sort(key=lambda c: c["name"])

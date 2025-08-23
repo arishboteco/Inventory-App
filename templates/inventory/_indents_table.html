@@ -12,7 +12,7 @@
     </thead>
       <tbody>
       {% for row in page_obj %}
-      <tr class="odd:bg-gray-50 hover:bg-gray-100">
+      <tr class="odd:bg-gray-50 hover:bg-gray-100 dark:odd:bg-gray-800 dark:hover:bg-gray-700">
         <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>
         <td class="px-4 py-2 text-right">{{ row.mrn }}</td>
         <td class="px-4 py-2">{{ row.requested_by }}</td>

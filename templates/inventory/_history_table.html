@@ -74,6 +74,6 @@
   </table>
 </div>
 {% url 'history_reports' as history_url %}
-<div class="mt-3">
+<div class="mt-4">
   {% include "components/pagination.html" with page_obj=page_obj base_url=history_url extra_query="" hx_target="#history_table" hx_include="#filters" hx_indicator="#htmx-spinner" %}
 </div>

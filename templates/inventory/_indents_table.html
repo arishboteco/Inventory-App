@@ -33,7 +33,7 @@
 </div>
   {% url 'indents_table' as table_url %}
   {% with extra_query='status='|add:status|urlencode|add:'&q='|add:q|urlencode %}
-  <div class="mt-3">
+  <div class="mt-4">
     {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#indents_table" %}
   </div>
   {% endwith %}

@@ -78,7 +78,7 @@
 {% endblock %}
 
 {% block footer %}
-<div class="flex items-center gap-3 mt-3 flex-wrap">
+<div class="flex items-center gap-4 mt-4 flex-wrap">
     {% url 'items_table' as table_url %}
     {% with extra_query='q='|add:q|urlencode|add:'&active='|add:active|urlencode|add:'&page_size='|add:page_size|add:'&sort='|add:sort|urlencode|add:'&direction='|add:direction|urlencode %}
       {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#items_table" hx_include="#filters" %}

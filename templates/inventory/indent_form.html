@@ -1,68 +1,57 @@
-{% extends "_base.html" %}
-{% load static %}
-{% block content %}
-<div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">New Indent</h1>
-  <form method="post" id="indent-form" class="space-y-4">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
-      {% for error in form.non_field_errors %}
+{% extends "components/form_layout.html" %}
+{% block heading %}New Indent{% endblock %}
+{% block form_attrs %}id="indent-form"{% endblock %}
+{% block fields %}
+  <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+  </div>
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}
+  <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+    {% for error in formset.non_form_errors %}
       <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-      {% for field in form %}
-        {% include "components/form_field.html" with field=field %}
-      {% endfor %}
-    </div>
-    {{ formset.management_form }}
-    {% if formset.non_form_errors %}
-    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
-      {% for error in formset.non_form_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <table id="items-table" class="table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qty</th>
-          <th>Notes</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item_form in formset %}
-        <tr class="form-row">
-          <td>{% include "components/form_field.html" with field=item_form.item %}</td>
-          <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
-          <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-          <td><button type="button" class="remove-row text-red-600 dark:text-red-400">Remove</button></td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    <datalist id="item-options"></datalist>
-    <div class="mt-2">
-      <button type="button" id="add-row" class="px-4 py-2 border dark:border-form-darkBorder rounded">Add Item</button>
-    </div>
-    <div class="mt-4">
-      <button type="submit" class="btn-primary">Submit</button>
-    </div>
-  </form>
-</div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      initFormset({
-        formsetPrefix: 'items',
-        addButtonId: 'add-row',
-        formContainer: '#items-table tbody',
-        formClass: 'form-row',
-        removeButtonClass: 'remove-row'
-      });
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <table id="items-table" class="table">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for item_form in formset %}
+      <tr class="form-row">
+        <td>{% include "components/form_field.html" with field=item_form.item %}</td>
+        <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
+        <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
+        <td><button type="button" class="remove-row text-red-600 dark:text-red-400">Remove</button></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <datalist id="item-options"></datalist>
+  <div class="mt-2">
+    <button type="button" id="add-row" class="btn-secondary">Add Item</button>
+  </div>
+{% endblock %}
+{% block submit_text %}Submit{% endblock %}
+{% block back_url %}{% url 'indents_list' %}{% endblock %}
+{% block extra %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initFormset({
+      formsetPrefix: 'items',
+      addButtonId: 'add-row',
+      formContainer: '#items-table tbody',
+      formClass: 'form-row',
+      removeButtonClass: 'remove-row'
     });
-  </script>
+  });
+</script>
 {% endblock %}

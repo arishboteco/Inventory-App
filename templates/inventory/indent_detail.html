@@ -1,12 +1,12 @@
 {% extends "_base.html" %}
 {% block title %}Indent Detail – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="text-h1 mb-4">Indent {{ indent.indent_id }}</h1>
+  <h1 class="text-2xl font-semibold mb-4">Indent {{ indent.indent_id }}</h1>
   <div class="mb-2">Status: <span class="px-2 py-1 rounded {{ badges[indent.status|upper] }}">{{ indent.status }}</span></div>
   <div class="mb-2">Requested By: {{ indent.requested_by }}</div>
   <div class="mb-2">Department: {{ indent.department }}</div>
   <div class="mb-4">
-    <a href="{% url 'indent_pdf' indent.indent_id %}" class="btn-outline px-4 py-2 rounded">Download PDF</a>
+    <a href="{% url 'indent_pdf' indent.indent_id %}" class="btn-outline">Download PDF</a>
   </div>
   <h2 class="text-xl mb-4 mt-8">Items</h2>
   <table class="table">
@@ -20,15 +20,15 @@
   <div class="mt-4 flex gap-2">
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-outline px-4 py-2 rounded">Mark Processing</button>
+      <button type="submit" class="btn-outline">Mark Processing</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-outline px-4 py-2 rounded">Mark Completed</button>
+      <button type="submit" class="btn-outline">Mark Completed</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-danger px-4 py-2 rounded">Cancel</button>
+      <button type="submit" class="btn-danger">Cancel</button>
     </form>
   </div>
 {% endblock %}

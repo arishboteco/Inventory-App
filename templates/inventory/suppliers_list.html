@@ -1,11 +1,11 @@
 {% extends "_base.html" %}
 {% block title %}Suppliers – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="text-h1 mb-4">Suppliers ({{ total_suppliers }})</h1>
+  <h1 class="text-2xl font-semibold mb-4">Suppliers ({{ total_suppliers }})</h1>
   <div class="mb-4 flex justify-end gap-2">
-    <a href="{% url 'supplier_create' %}" class="btn-primary px-4 py-2 rounded">New Supplier</a>
-    <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary px-4 py-2 rounded">Bulk Upload</a>
-    <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger px-4 py-2 rounded">Bulk Delete</a>
+    <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
+    <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
+    <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
   </div>
   {% url 'suppliers_table' as suppliers_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_table_url hx_target="#suppliers_table" filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}

@@ -1,10 +1,10 @@
 {% extends "_base.html" %}
 {% block title %}Items – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="text-h1 mb-4">Items</h1>
+  <h1 class="text-2xl font-semibold mb-4">Items</h1>
   <div class="mb-4 flex justify-end gap-2">
-    <a href="{% url 'item_create' %}" class="btn-primary px-4 py-2 rounded">New Item</a>
-    <a href="{% url 'items_bulk_upload' %}" class="btn-secondary px-4 py-2 rounded">Bulk Upload</a>
+    <a href="{% url 'item_create' %}" class="btn-primary">New Item</a>
+    <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
   </div>
   {% url 'items_table' as items_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search items..." hx_get=items_table_url hx_target="#items_table" hx_indicator="#htmx-spinner" filters=filters export_url=export_url sort=sort direction=direction %}

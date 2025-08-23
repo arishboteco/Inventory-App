@@ -8,7 +8,7 @@
         type="text"
         name="supplier"
         list="grn-suppliers"
-        class="border rounded px-2 py-1 w-full"
+        class="form-control w-full"
         value="{{ current_supplier }}"
       />
       <datalist id="grn-suppliers">
@@ -20,11 +20,11 @@
     </div>
     <div class="space-y-1">
       <label class="block text-sm">Start Date</label>
-      <input type="date" name="start_date" value="{{ start_date }}" class="border rounded px-2 py-1 w-full" />
+      <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
     </div>
     <div class="space-y-1">
       <label class="block text-sm">End Date</label>
-      <input type="date" name="end_date" value="{{ end_date }}" class="border rounded px-2 py-1 w-full" />
+      <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
     </div>
     <div class="space-y-1">
       <button type="submit" class="btn-primary w-full">Filter</button>

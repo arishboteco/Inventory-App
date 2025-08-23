@@ -2,7 +2,7 @@
 {% block title %}Stock Movements – Inventory App{% endblock %}
 {% load static %}
 {% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Stock Movements</h1>
+  <h1 class="text-h1 mb-4">Stock Movements</h1>
   <form method="get" id="section-form" class="mb-4">
     {% for key, label in sections.items %}
         <label class="mr-4 text-sm font-medium">
@@ -32,7 +32,7 @@
         {% endif %}
       {% endfor %}
       <div class="col-span-2">
-        <button type="submit" name="submit_receive" class="btn-primary">Record</button>
+        <button type="submit" name="submit_receive" class="btn-primary px-4 py-2 rounded">Record</button>
       </div>
     </form>
   {% elif active_section == 'adjust' %}
@@ -54,7 +54,7 @@
         {% endif %}
       {% endfor %}
       <div class="col-span-2">
-        <button type="submit" name="submit_adjust" class="btn-primary">Record</button>
+        <button type="submit" name="submit_adjust" class="btn-primary px-4 py-2 rounded">Record</button>
       </div>
     </form>
   {% elif active_section == 'waste' %}
@@ -76,7 +76,7 @@
         {% endif %}
       {% endfor %}
       <div class="col-span-2">
-        <button type="submit" name="submit_waste" class="btn-primary">Record</button>
+        <button type="submit" name="submit_waste" class="btn-primary px-4 py-2 rounded">Record</button>
       </div>
     </form>
   {% endif %}
@@ -97,7 +97,7 @@
       {% include "components/form_field.html" with field=field container_class="col-span-2" %}
     {% endfor %}
     <div class="col-span-2">
-      <button type="submit" name="bulk_upload" class="btn-primary">Upload</button>
+      <button type="submit" name="bulk_upload" class="btn-primary px-4 py-2 rounded">Upload</button>
     </div>
   </form>
   {% if bulk_success_count is not None %}

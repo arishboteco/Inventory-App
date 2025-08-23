@@ -1,16 +1,21 @@
-<div id="colour-customizer" class="fixed bottom-4 right-4 bg-white dark:bg-slate-800 p-4 rounded shadow space-y-2">
-  <label class="block text-sm font-medium">
-    Primary
-    <input type="color" id="picker-primary" value="#1a46c2" class="ml-2 border dark:border-form-darkBorder dark:bg-form-darkBg dark:text-form-darkText rounded">
-  </label>
-  <label class="block text-sm font-medium">
-    Secondary
-    <input type="color" id="picker-secondary" value="#036045" class="ml-2 border dark:border-form-darkBorder dark:bg-form-darkBg dark:text-form-darkText rounded">
-  </label>
-  <label class="block text-sm font-medium">
-    Accent
-    <input type="color" id="picker-accent" value="#ad5f04" class="ml-2 border dark:border-form-darkBorder dark:bg-form-darkBg dark:text-form-darkText rounded">
-  </label>
-  <p id="colour-feedback" class="text-xs text-red-600 dark:text-red-400 hidden"></p>
-  <button id="colour-reset" type="button" class="btn-secondary w-full mt-2">Reset to default</button>
+<div id="colour-customizer" class="fixed bottom-4 right-4">
+  <button id="customizer-toggle" type="button" class="btn-primary rounded-full p-2 shadow-lg">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L15.232 5.232z" /></svg>
+  </button>
+  <div id="customizer-panel" class="hidden absolute bottom-16 right-0 bg-white dark:bg-slate-800 p-4 rounded shadow space-y-2">
+    <label class="block text-sm font-medium">
+      Primary
+      <input type="color" id="picker-primary" value="#1a46c2" class="ml-2 border dark:border-form-darkBorder dark:bg-form-darkBg dark:text-form-darkText rounded">
+    </label>
+    <label class="block text-sm font-medium">
+      Secondary
+      <input type="color" id="picker-secondary" value="#036045" class="ml-2 border dark:border-form-darkBorder dark:bg-form-darkBg dark:text-form-darkText rounded">
+    </label>
+    <label class="block text-sm font-medium">
+      Accent
+      <input type="color" id="picker-accent" value="#ad5f04" class="ml-2 border dark:border-form-darkBorder dark:bg-form-darkBg dark:text-form-darkText rounded">
+    </label>
+    <p id="colour-feedback" class="text-xs text-red-600 dark:text-red-400 hidden"></p>
+    <button id="colour-reset" type="button" class="btn-secondary w-full mt-2 px-4 py-2 rounded">Reset to default</button>
+  </div>
 </div>

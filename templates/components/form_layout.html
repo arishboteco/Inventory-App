@@ -2,7 +2,7 @@
 {% block title %}Form – Inventory App{% endblock %}
 {% block content %}
 <div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">
+  <h1 class="text-h1 mb-4">
     {% block heading %}{% endblock %}
   </h1>
   {% if form %}
@@ -15,8 +15,8 @@
     {% endif %}
     {% block fields %}{% endblock %}
     <div class="flex gap-2" style="grid-column: 1 / -1;">
-      <button type="submit" class="btn-primary">{% block submit_text %}Save{% endblock %}</button>
-      <a href="{% block back_url %}{% endblock %}" class="btn-outline">{% block back_text %}Cancel{% endblock %}</a>
+      <button type="submit" class="btn-primary px-4 py-2 rounded">{% block submit_text %}Save{% endblock %}</button>
+      <a href="{% block back_url %}{% endblock %}" class="btn-outline px-4 py-2 rounded">{% block back_text %}Cancel{% endblock %}</a>
     </div>
   </form>
   {% block extra %}{% endblock %}

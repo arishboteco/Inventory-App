@@ -1,9 +1,9 @@
 {% extends "_base.html" %}
 {% block title %}Indents – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Indents ({{ total_indents }})</h1>
+  <h1 class="text-h1 mb-4">Indents ({{ total_indents }})</h1>
   <div class="mb-4 flex justify-end gap-2">
-    <a href="{% url 'indent_create' %}" class="btn-primary">New Indent</a>
+    <a href="{% url 'indent_create' %}" class="btn-primary px-4 py-2 rounded">New Indent</a>
   </div>
   {% url 'indents_table' as indents_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters %}

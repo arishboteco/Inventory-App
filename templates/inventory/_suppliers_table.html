@@ -36,7 +36,7 @@
             <input type="hidden" name="page_size" value="{{ page_size }}" />
             <input type="hidden" name="sort" value="{{ sort }}" />
             <input type="hidden" name="direction" value="{{ direction }}" />
-            <button type="submit" class="btn-outline">Toggle</button>
+            <button type="submit" class="btn-outline px-4 py-2 rounded">Toggle</button>
           </form>
         </td>
       </tr>
@@ -44,7 +44,7 @@
       <tr>
         <td colspan="7" class="px-4 py-2 text-center">
           0 suppliers yet.
-          <a href="{% url 'supplier_create' %}" class="btn-primary ml-2">New Supplier</a>
+          <a href="{% url 'supplier_create' %}" class="btn-primary ml-2 px-4 py-2 rounded">New Supplier</a>
         </td>
       </tr>
       {% endfor %}

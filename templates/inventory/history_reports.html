@@ -1,7 +1,7 @@
 {% extends "_base.html" %}
 {% block title %}History Reports – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="text-2xl font-semibold mb-4">History Reports</h1>
+  <h1 class="text-h1 mb-4">History Reports</h1>
     <form id="filters" method="get" class="grid gap-2 mb-4 grid-cols-7 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1"
           hx-get="{% url 'history_reports' %}"
           hx-target="#history_table"
@@ -49,8 +49,8 @@
       <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
       <input type="hidden" name="sort" value="{{ sort|default:'date' }}" />
       <input type="hidden" name="direction" value="{{ direction|default:'desc' }}" />
-      <button type="submit" class="btn-primary w-full">Filter</button>
-      <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="btn-outline w-full">Export CSV</a>
+      <button type="submit" class="btn-primary w-full px-4 py-2 rounded">Filter</button>
+      <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="btn-outline w-full px-4 py-2 rounded">Export CSV</a>
     </form>
     <div id="history_table">
       {% include "inventory/_history_table.html" %}

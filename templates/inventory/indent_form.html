@@ -30,14 +30,14 @@
         <td>{% include "components/form_field.html" with field=item_form.item %}</td>
         <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
         <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-        <td><button type="button" class="remove-row btn-danger">Remove</button></td>
+        <td><button type="button" class="remove-row btn-danger px-4 py-2 rounded">Remove</button></td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
   <datalist id="item-options"></datalist>
   <div>
-    <button type="button" id="add-row" class="btn-secondary mt-2">Add Item</button>
+    <button type="button" id="add-row" class="btn-secondary mt-2 px-4 py-2 rounded">Add Item</button>
   </div>
 {% endblock %}
 {% block submit_text %}Submit{% endblock %}

@@ -1,5 +1,5 @@
 <div class="max-md:overflow-x-auto">
-  <table class="w-full table-auto text-sm divide-y divide-gray-200">
+    <table class="table w-full table-auto text-sm">
     <thead class="bg-primary text-white">
       <tr>
         <th class="px-4 py-2 text-right">ID</th>
@@ -10,7 +10,7 @@
         <th class="px-4 py-2">Actions</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-200">
+      <tbody>
       {% for row in page_obj %}
       <tr class="odd:bg-gray-50 hover:bg-gray-100">
         <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>

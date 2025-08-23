@@ -89,5 +89,3 @@ def test_item_form_categories_and_save(monkeypatch):
     assert form.is_valid()
     item = form.save()
     assert item.category_id == 2
-
-

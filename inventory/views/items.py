@@ -14,6 +14,7 @@ from ..models import Item, StockTransaction, Category
 from ..forms.item_forms import ItemForm
 from ..forms.bulk_forms import BulkUploadForm
 from ..services import item_service, list_utils
+from ..services.supabase_categories import get_categories as get_supabase_categories
 
 logger = logging.getLogger(__name__)
 
@@ -69,18 +70,31 @@ class ItemsListView(TemplateView):
         page_size = (request.GET.get("page_size") or "25").strip()
         sort = (request.GET.get("sort") or "name").strip()
         direction = (request.GET.get("direction") or "asc").strip()
-        categories = (
-            Item.objects.exclude(category__isnull=True)
-            .order_by("category__name")
-            .values_list("category__name", flat=True)
-            .distinct()
+        categories_qs = (
+            Category.objects.filter(parent__isnull=True)
+            .order_by("name")
+            .values_list("name", flat=True)
         )
-        subcategories = (
-            Item.objects.exclude(sub_category__isnull=True)
-            .order_by("sub_category__name")
-            .values_list("sub_category__name", flat=True)
-            .distinct()
+        subcategories_qs = (
+            Category.objects.filter(parent__isnull=False)
+            .order_by("name")
+            .values_list("name", flat=True)
         )
+        categories = list(categories_qs)
+        subcategories = list(subcategories_qs)
+        if not categories and not subcategories:
+            try:
+                cats_map = get_supabase_categories()
+            except Exception:
+                cats_map = {}
+            if cats_map:
+                categories = [c["name"] for c in cats_map.get(None, [])]
+                subcategories = [
+                    c["name"]
+                    for pid, children in cats_map.items()
+                    if pid is not None
+                    for c in children
+                ]
         ctx.update(
             {
                 "q": q,

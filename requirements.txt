@@ -11,3 +11,5 @@ pydantic
 pytest
 pytest-django
 supabase
+flake8==7.3.0
+flake8-bugbear==24.12.12

@@ -34,6 +34,23 @@ Install dependencies using `pip`:
 pip install -r requirements.txt
 ```
 
+## Code Style and Linting
+
+This project uses [pre-commit](https://pre-commit.com/) with `flake8` to enforce
+style rules.
+
+Install the git hooks:
+
+```bash
+pre-commit install
+```
+
+Run lint checks for all files:
+
+```bash
+pre-commit run --all-files
+```
+
 ## Configuration
 
 Configuration is controlled via environment variables. Copy `.env.example` to `.env` and set values for your database and other settings:
@@ -155,4 +172,3 @@ The application exposes the following REST endpoints under `/api/`:
 - `/api/purchase-order-items/` – line items within a purchase order.
 - `/api/goods-received-notes/` – log received goods.
 - `/api/grn-items/` – items contained in a goods received note.
-

@@ -63,8 +63,6 @@ def get_all_items_with_stock(include_inactive: bool = False) -> List[Dict[str, A
 get_all_items_with_stock.clear = get_all_items_with_stock.cache_clear  # type: ignore[attr-defined]
 
 
-
-
 @lru_cache(maxsize=None)
 def get_distinct_departments_from_items() -> List[str]:
     """Return a sorted list of unique department names from active items."""
@@ -116,8 +114,6 @@ def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
             traceback.format_exc(),
         )
         return False, "A database error occurred while adding the item."
-
-
 
 
 def _validate_required(

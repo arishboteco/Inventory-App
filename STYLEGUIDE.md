@@ -18,6 +18,7 @@ Tokens are provided via CSS variables in [app.css](app.css) and surfaced to
 | `--color-secondary` / `secondary` | `var(--color-secondary)` | `var(--color-secondary)` | Secondary buttons and accents |
 | `--color-accent` / `accent` | `var(--color-accent)` | `var(--color-accent)` | Highlights and callouts |
 | `--color-danger` / `danger` | `var(--color-danger)` | `var(--color-danger)` | Destructive actions |
+| `--color-border` / `border` | `var(--color-border)` | `var(--color-border-dark)` | Borders and disabled text |
 
 ### Spacing
 

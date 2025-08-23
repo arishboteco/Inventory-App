@@ -4,13 +4,17 @@
   --color-primary: #0d3a99; /* Improved contrast */
   --color-primary-dark: #1d4ed8; /* Dark mode variant with better contrast */
   --color-secondary: #024427; /* Enhanced secondary color contrast */
+  --color-secondary-dark: #165e2d;
   --color-accent: #8c4a02; /* Optimized accent color for visibility */
+  --color-danger: #b91c1c;
+  --color-body: #ffffff;
+  --color-body-dark: #0f172a;
   --color-body-text: #111827;
-  --color-body-text-dark: #e5e5e5;
+  --color-body-text-dark: #f8fafc;
+  --color-border: #6b7280;
+  --color-border-dark: #64748b;
   --color-form-bg: #ffffff;
   --color-form-bg-dark: #1e293b;
-  --color-form-border: #6b7280;
-  --color-form-border-dark: #64748b;
 }
 
 /* Base link styles use an underline and the primary color */
@@ -32,15 +36,15 @@ a:focus {
 
 /* Background and text colors for better readability */
 body {
-  background-color: #ffffff;
-  color: #111827;
+  background-color: var(--color-body);
+  color: var(--color-body-text);
   font-family: 'Roboto', sans-serif;
   font-weight: 400;
 }
 
 .dark body {
-  background-color: #0e1a33; /* Dark mode background with improved contrast */
-  color: #e5e5e5; /* Text color for better visibility in dark mode */
+  background-color: var(--color-body-dark); /* Dark mode background */
+  color: var(--color-body-text-dark); /* Text color for dark mode */
 }
 
 /* Heading hierarchy */
@@ -86,7 +90,7 @@ h2 {
 }
 
 .dark .badge-error {
-  background-color: #b91c1c; /* Improved red for readability */
+  background-color: var(--color-danger); /* Improved red for readability */
   color: #ffffff; /* White text for visibility */
 }
 
@@ -122,7 +126,7 @@ h2 {
 }
 
 .btn-danger {
-  background-color: #b91c1c;
+  background-color: var(--color-danger);
   color: #ffffff;
 }
 
@@ -144,7 +148,7 @@ h2 {
 .btn-tertiary {
   background-color: var(--color-form-bg);
   color: var(--color-body-text);
-  border: 1px solid var(--color-form-border);
+  border: 1px solid var(--color-border);
   text-decoration: none;
   transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -156,7 +160,7 @@ h2 {
 .btn-tertiary:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px var(--color-form-border);
+  box-shadow: 0 0 0 2px var(--color-border);
 }
 
 .btn-tertiary:disabled {
@@ -167,7 +171,7 @@ h2 {
 .dark .btn-tertiary {
   background-color: var(--color-form-bg-dark);
   color: var(--color-body-text-dark);
-  border-color: var(--color-form-border-dark);
+  border-color: var(--color-border-dark);
 }
 
 .dark .btn-tertiary:hover {
@@ -175,13 +179,13 @@ h2 {
 }
 
 .dark .btn-tertiary:focus {
-  box-shadow: 0 0 0 2px var(--color-form-border-dark);
+  box-shadow: 0 0 0 2px var(--color-border-dark);
 }
 
 .btn-outline {
   background-color: transparent;
   color: var(--color-body-text);
-  border: 1px solid var(--color-form-border);
+  border: 1px solid var(--color-border);
   text-decoration: none;
   transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -193,7 +197,7 @@ h2 {
 .btn-outline:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
-  box-shadow: 0 0 0 2px var(--color-form-border);
+  box-shadow: 0 0 0 2px var(--color-border);
 }
 
 .btn-outline:disabled {
@@ -203,7 +207,7 @@ h2 {
 
 .dark .btn-outline {
   color: var(--color-body-text-dark);
-  border-color: var(--color-form-border-dark);
+  border-color: var(--color-border-dark);
 }
 
 .dark .btn-outline:hover {
@@ -211,7 +215,7 @@ h2 {
 }
 
 .dark .btn-outline:focus {
-  box-shadow: 0 0 0 2px var(--color-form-border-dark);
+  box-shadow: 0 0 0 2px var(--color-border-dark);
 }
 
 /* Navigation button styles */

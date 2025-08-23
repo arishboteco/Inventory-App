@@ -1,36 +1,35 @@
-<div class="max-md:overflow-x-auto">
-    <table class="table w-full table-auto text-sm">
-    <thead>
-      <tr>
-        <th class="px-4 py-2 text-right">ID</th>
-        <th class="px-4 py-2 text-right">MRN</th>
-        <th class="px-4 py-2">Requested By</th>
-        <th class="px-4 py-2">Department</th>
-        <th class="px-4 py-2">Status</th>
-        <th class="px-4 py-2">Actions</th>
-      </tr>
-    </thead>
-      <tbody>
-      {% for row in page_obj %}
-      <tr class="odd:bg-gray-50 hover:bg-gray-100 dark:odd:bg-gray-800 dark:hover:bg-gray-700">
-        <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>
-        <td class="px-4 py-2 text-right">{{ row.mrn }}</td>
-        <td class="px-4 py-2">{{ row.requested_by }}</td>
-        <td class="px-4 py-2">{{ row.department }}</td>
-        <td class="px-4 py-2"><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
-        <td class="px-4 py-2"><a href="{% url 'indent_detail' row.indent_id %}" class="text-primary">View</a></td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="6" class="px-4 py-2 text-center">
-          0 indents yet.
-          <a href="{% url 'indent_create' %}" class="btn-primary ml-2">New Indent</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% extends "components/table.html" %}
+
+{% block headers %}
+<th class="text-right">ID</th>
+<th class="text-right">MRN</th>
+<th>Requested By</th>
+<th>Department</th>
+<th>Status</th>
+<th>Actions</th>
+{% endblock %}
+
+{% block rows %}
+{% for row in page_obj %}
+<tr>
+  <td class="text-right">{{ row.indent_id }}</td>
+  <td class="text-right">{{ row.mrn }}</td>
+  <td>{{ row.requested_by }}</td>
+  <td>{{ row.department }}</td>
+  <td><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
+  <td><a href="{% url 'indent_detail' row.indent_id %}" class="text-primary">View</a></td>
+</tr>
+{% empty %}
+<tr>
+  <td colspan="6" class="text-center">
+    0 indents yet.
+    <a href="{% url 'indent_create' %}" class="btn-primary ml-2">New Indent</a>
+  </td>
+</tr>
+{% endfor %}
+{% endblock %}
+
+{% block footer %}
 <div class="flex items-center gap-3 mt-3">
   {% if page_obj.has_previous %}
     <a hx-get="{% url 'indents_table' %}?page={{ page_obj.previous_page_number }}&status={{ status|urlencode }}&q={{ q|urlencode }}" hx-target="#indents_table" class="px-3 py-1 border rounded">Prev</a>
@@ -40,3 +39,5 @@
     <a hx-get="{% url 'indents_table' %}?page={{ page_obj.next_page_number }}&status={{ status|urlencode }}&q={{ q|urlencode }}" hx-target="#indents_table" class="px-3 py-1 border rounded">Next</a>
   {% endif %}
 </div>
+{% endblock %}
+

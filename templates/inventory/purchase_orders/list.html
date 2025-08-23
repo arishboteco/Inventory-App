@@ -1,14 +1,14 @@
 {% extends "_base.html" %}
 {% block title %}Purchase Orders – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="mb-4">Purchase Orders</h1>
+  <h1 class="text-2xl font-semibold mb-4">Purchase Orders</h1>
   <div class="mb-4 flex justify-end gap-2">
     <a href="{% url 'purchase_order_create' %}" class="btn-primary">New PO</a>
     <a href="{% url 'grn_list' %}" class="btn-secondary">GRNs</a>
   </div>
   <form method="get" class="mb-4 grid gap-2 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
     <div class="space-y-1">
-      <label class="block text-sm">Status</label>
+      <label class="block text-sm font-medium">Status</label>
       <input
         type="text"
         name="status"
@@ -24,7 +24,7 @@
       </datalist>
     </div>
     <div class="space-y-1">
-      <label class="block text-sm">Supplier</label>
+      <label class="block text-sm font-medium">Supplier</label>
       <input
         type="text"
         name="supplier"
@@ -40,11 +40,11 @@
       </datalist>
     </div>
     <div class="space-y-1">
-      <label class="block text-sm">Start Date</label>
+      <label class="block text-sm font-medium">Start Date</label>
       <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
     </div>
     <div class="space-y-1">
-      <label class="block text-sm">End Date</label>
+      <label class="block text-sm font-medium">End Date</label>
       <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
     </div>
     <div class="space-y-1">

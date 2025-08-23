@@ -1,7 +1,7 @@
 {% extends "_base.html" %}
 {% block title %}Suppliers – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="mb-4">Suppliers ({{ total_suppliers }})</h1>
+  <h1 class="text-2xl font-semibold mb-4">Suppliers ({{ total_suppliers }})</h1>
   <div class="mb-4 flex justify-end gap-2">
     <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
     <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>

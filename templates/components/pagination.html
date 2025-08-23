@@ -3,7 +3,7 @@
     {% if page_obj.has_previous %}
       <a href="{{ base_url }}?page={{ page_obj.previous_page_number }}{% if extra_query %}&{{ extra_query }}{% endif %}"
          {% if hx_target %}hx-get="{{ base_url }}?page={{ page_obj.previous_page_number }}{% if extra_query %}&{{ extra_query }}{% endif %}" hx-target="{{ hx_target }}"{% if hx_include %} hx-include="{{ hx_include }}"{% endif %}{% if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif %}{% endif %}
-         class="btn-outline" aria-label="Previous page">Prev</a>
+         class="btn-outline px-4 py-2 rounded" aria-label="Previous page">Prev</a>
     {% endif %}
     {% for num in page_obj.paginator.page_range %}
       {% if num == page_obj.number %}
@@ -11,13 +11,13 @@
       {% else %}
         <a href="{{ base_url }}?page={{ num }}{% if extra_query %}&{{ extra_query }}{% endif %}"
            {% if hx_target %}hx-get="{{ base_url }}?page={{ num }}{% if extra_query %}&{{ extra_query }}{% endif %}" hx-target="{{ hx_target }}"{% if hx_include %} hx-include="{{ hx_include }}"{% endif %}{% if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif %}{% endif %}
-           class="btn-outline">{{ num }}</a>
+           class="btn-outline px-4 py-2 rounded">{{ num }}</a>
       {% endif %}
     {% endfor %}
     {% if page_obj.has_next %}
       <a href="{{ base_url }}?page={{ page_obj.next_page_number }}{% if extra_query %}&{{ extra_query }}{% endif %}"
          {% if hx_target %}hx-get="{{ base_url }}?page={{ page_obj.next_page_number }}{% if extra_query %}&{{ extra_query }}{% endif %}" hx-target="{{ hx_target }}"{% if hx_include %} hx-include="{{ hx_include }}"{% endif %}{% if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif %}{% endif %}
-         class="btn-outline" aria-label="Next page">Next</a>
+         class="btn-outline px-4 py-2 rounded" aria-label="Next page">Next</a>
     {% endif %}
     <span class="ml-2">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
   </div>

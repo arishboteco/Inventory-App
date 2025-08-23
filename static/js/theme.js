@@ -52,6 +52,15 @@
       });
     }
 
+    const customizerToggle = document.getElementById('customizer-toggle');
+    const customizerPanel = document.getElementById('customizer-panel');
+
+    if (customizerToggle && customizerPanel) {
+      customizerToggle.addEventListener('click', function() {
+        customizerPanel.classList.toggle('hidden');
+      });
+    }
+
     const feedback = document.getElementById('colour-feedback');
     const lastColors = {};
 

@@ -1,4 +1,4 @@
-<form id="filters" class="grid gap-4 mb-4 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1" method="get">
+<form id="filters" class="grid gap-4 mb-4 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end" method="get">
   <div class="flex flex-col">
     <label for="filter-q" class="text-sm font-medium">{{ search_label|default:'Search' }}</label>
     <input
@@ -39,8 +39,7 @@
     </div>
   {% endfor %}
   {% if export_url %}
-    <div class="flex flex-col">
-      <span class="text-sm font-medium">&nbsp;</span>
+    <div>
       <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-tertiary w-full">{{ export_label|default:'Export' }}</button>
     </div>
   {% endif %}
@@ -49,7 +48,7 @@
   {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
   <noscript>
     <div class="mt-2">
-      <button type="submit" class="btn-primary">Apply</button>
+      <button type="submit" class="btn-primary px-4 py-2 rounded">Apply</button>
     </div>
   </noscript>
 </form>

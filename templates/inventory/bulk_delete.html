@@ -2,7 +2,7 @@
 {% block title %}Bulk Delete – Inventory App{% endblock %}
 {% block content %}
 <div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">{{ title }}</h1>
+  <h1 class="text-h1 mb-4">{{ title }}</h1>
   <form method="post" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -14,8 +14,8 @@
       {% include "components/form_field.html" with field=field %}
     {% endfor %}
     <div class="flex gap-2">
-      <button type="submit" class="btn-danger">Delete</button>
-      <a href="{% url back_url %}" class="btn-outline">Back</a>
+      <button type="submit" class="btn-danger px-4 py-2 rounded">Delete</button>
+      <a href="{% url back_url %}" class="btn-outline px-4 py-2 rounded">Back</a>
     </div>
   </form>
   {% if deleted %}

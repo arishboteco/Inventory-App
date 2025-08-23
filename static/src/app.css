@@ -15,11 +15,12 @@
   .dark {
     --color-body: var(--color-body-dark);
     --color-body-text: var(--color-body-text-dark);
-    --color-primary: var(--color-primary-dark);
-    --color-primary-dark: #1D4ED8;
-    --color-secondary: var(--color-secondary-dark);
-    --color-secondary-dark: #024427;
-  }
+      --color-primary: var(--color-primary-dark);
+      --color-primary-dark: #1D4ED8;
+      --color-secondary: var(--color-secondary-dark);
+      --color-secondary-dark: #024427;
+      --color-border: var(--color-border-dark);
+    }
 
   /* Base link styles: underlined with primary color.
      Button classes (.btn-*) remove the underline. */

@@ -8,6 +8,8 @@
   --color-secondary-dark: #165E2D;
   --color-accent: #8C4A02;
   --color-danger: #B91C1C;
+  --color-border: #6b7280;
+  --color-border-dark: #64748b;
 
   /* Body and text colors */
   --color-body: #ffffff;

@@ -5,7 +5,7 @@
     <a href="{% url 'item_create' %}" class="btn-primary">Add Item</a>
     <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
   </div>
-  <form id="filters" class="mb-4" hx-indicator="#htmx-spinner">
+  <form id="filters" class="mb-4" hx-indicator="#htmx-spinner" method="get">
     <fieldset class="grid gap-4 grid-cols-5 max-md:grid-cols-2 max-sm:grid-cols-1">
       <legend class="sr-only">Filter Items</legend>
       <div class="flex flex-col gap-1">
@@ -86,9 +86,13 @@
         <button id="export-btn" type="submit" formaction="{% url 'items_export' %}" formmethod="get" class="btn-secondary w-full">Export</button>
       </div>
     </fieldset>
-    <input type="hidden" name="page_size" value="{{ page_size|default:25 }}">
     <input type="hidden" name="sort" value="{{ sort|default:'name' }}">
     <input type="hidden" name="direction" value="{{ direction|default:'asc' }}">
+    <noscript>
+      <div class="mt-2">
+        <button type="submit" class="btn-primary">Apply</button>
+      </div>
+    </noscript>
   </form>
   {{ categories_map|json_script:"categories-data" }}
   <script>
@@ -129,5 +133,6 @@
        hx-trigger="load"
        hx-include="#filters"
        hx-indicator="#htmx-spinner">
+    {{ items_table|safe }}
   </div>
 {% endblock %}

@@ -1,5 +1,5 @@
 {% load form_tags %}
-<div class="space-y-1">
+<div class="{% if container_class %}{{ container_class }} {% endif %}space-y-1">
   <label for="{{ field.id_for_label }}" class="block mb-1 text-sm font-medium">{{ field.label }}</label>
   {% if field.field.widget.attrs.class %}
     {{ field }}

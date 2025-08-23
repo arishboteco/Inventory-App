@@ -39,12 +39,25 @@ module.exports = {
         },
         table: {
           border: '#6b7280',
-          headerBg: '#1a46c2',
+          headerBg: 'var(--color-primary)',
           headerText: '#ffffff',
           hoverBg: '#e5e7eb',
           darkBorder: '#64748b',
           darkHoverBg: '#1e293b',
         },
+      },
+      spacing: {
+        '0.5': 'var(--space-0-5)',
+        '1': 'var(--space-1)',
+        '1.5': 'var(--space-1-5)',
+        '2': 'var(--space-2)',
+        '4': 'var(--space-4)',
+      },
+      fontSize: {
+        base: 'var(--font-size-base)',
+        h1: 'var(--font-size-h1)',
+        h2: 'var(--font-size-h2)',
+        badge: 'var(--font-size-badge)',
       },
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],

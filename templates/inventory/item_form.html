@@ -1,50 +1,35 @@
-{% extends "_base.html" %}
-{% block content %}
-<div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">
-    {% if is_edit %}Edit Item{% else %}Add Item{% endif %}
-  </h1>
-  {% if form %}
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
-    {% if not form.units_map %}
-    <p class="text-sm text-red-600">Could not load unit options. Please try again later.</p>
-    {% endif %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
-      <div id="name-field" class="space-y-1 relative">
-        <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }}</label>
-        {{ form.name }}
-        {% if form.name.help_text %}
-          <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
-        {% endif %}
-        {% if form.name.errors %}
-          <ul class="text-sm text-red-600 list-disc pl-5">
-            {% for error in form.name.errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-      </div>
-      {% include "components/form_field.html" with field=form.base_unit %}
-      {% include "components/form_field.html" with field=form.purchase_unit %}
-      {% for field in form %}
-        {% if field.name not in excluded_fields %}
-          {% include "components/form_field.html" with field=field %}
-        {% endif %}
-      {% endfor %}
+{% extends "components/form_layout.html" %}
+{% block heading %}{% if is_edit %}Edit Item{% else %}Add Item{% endif %}{% endblock %}
+{% block fields %}
+  {% if not form.units_map %}
+  <p class="text-sm text-red-600">Could not load unit options. Please try again later.</p>
+  {% endif %}
+  <div class="grid gap-4 grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
+    <div id="name-field" class="space-y-1 relative">
+      <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }}</label>
+      {{ form.name }}
+      {% if form.name.help_text %}
+        <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
+      {% endif %}
+      {% if form.name.errors %}
+        <ul class="text-sm text-red-600 list-disc pl-5">
+          {% for error in form.name.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
-    <div class="flex gap-2">
-      <button type="submit" class="btn-primary">Save</button>
-      <a href="{% url 'items_list' %}" class="btn-outline">Cancel</a>
-    </div>
-  </form>
+    {% include "components/form_field.html" with field=form.base_unit %}
+    {% include "components/form_field.html" with field=form.purchase_unit %}
+    {% for field in form %}
+      {% if field.name not in excluded_fields %}
+        {% include "components/form_field.html" with field=field %}
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endblock %}
+{% block back_url %}{% url 'items_list' %}{% endblock %}
+{% block extra %}
   {{ form.units_map|json_script:"units-data" }}
   {{ form.categories_map|json_script:"categories-data" }}
   <script>
@@ -104,8 +89,4 @@
       });
     });
   </script>
-  {% else %}
-  <p>Unable to load form.</p>
-  {% endif %}
-</div>
 {% endblock %}

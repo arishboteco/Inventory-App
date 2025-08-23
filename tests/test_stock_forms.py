@@ -7,6 +7,7 @@ from inventory.forms.stock_forms import (
     StockAdjustmentForm,
     StockWastageForm,
 )
+from inventory.models import Item
 
 
 @pytest.mark.django_db
@@ -37,3 +38,12 @@ def test_stock_movements_page_has_datalist(client):
     assert 'hx-target="#item-options"' in content
     assert 'hx-trigger="keyup changed delay:500ms"' in content
     assert 'list="item-options"' in content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("qty", [0, -1])
+def test_stock_receiving_form_requires_positive_quantity(qty):
+    item = Item.objects.create(name="Test", base_unit="kg", purchase_unit="kg")
+    form = StockReceivingForm(data={"item": item.pk, "quantity_change": qty})
+    assert not form.is_valid()
+    assert form.errors["quantity_change"] == ["Quantity must be positive"]

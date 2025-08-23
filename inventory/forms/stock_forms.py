@@ -31,6 +31,12 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
         self.fields["item"].widget.attrs.update(item_attrs)
         self.apply_styling()
 
+    def clean_quantity_change(self):
+        qty = self.cleaned_data.get("quantity_change")
+        if qty is None or qty <= 0:
+            raise forms.ValidationError("Quantity must be positive")
+        return qty
+
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
         obj.transaction_type = "RECEIVING"

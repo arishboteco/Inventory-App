@@ -1,7 +1,7 @@
 {% extends "_base.html" %}
 {% load static %}
 {% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Stock Movements</h1>
+  <h1 class="mb-4">Stock Movements</h1>
   <form method="get" id="section-form" class="mb-4">
     {% for key, label in sections.items %}
         <label class="mr-4">
@@ -13,7 +13,7 @@
     {% include "components/alert.html" %}
   {% endif %}
   {% if active_section == 'receive' %}
-    <h2 class="text-xl font-semibold mb-2">Goods Received</h2>
+    <h2 class="mb-2">Goods Received</h2>
     <form method="post" class="mb-4">
       {% csrf_token %}
       {% if receive_form.non_field_errors %}
@@ -29,7 +29,7 @@
       <button type="submit" name="submit_receive" class="btn-primary">Record</button>
     </form>
   {% elif active_section == 'adjust' %}
-    <h2 class="text-xl font-semibold mb-2">Stock Adjustment</h2>
+    <h2 class="mb-2">Stock Adjustment</h2>
     <form method="post" class="mb-4">
       {% csrf_token %}
       {% if adjust_form.non_field_errors %}
@@ -45,7 +45,7 @@
       <button type="submit" name="submit_adjust" class="btn-primary">Record</button>
     </form>
   {% elif active_section == 'waste' %}
-    <h2 class="text-xl font-semibold mb-2">Wastage/Spoilage</h2>
+    <h2 class="mb-2">Wastage/Spoilage</h2>
     <form method="post" class="mb-4">
       {% csrf_token %}
       {% if waste_form.non_field_errors %}
@@ -63,8 +63,8 @@
   {% endif %}
   <datalist id="item-options"></datalist>
   <hr class="my-4"/>
-  <h2 class="text-xl font-semibold mb-2">Bulk Upload Stock Transactions</h2>
-  <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary underline">Download sample CSV</a></p>
+  <h2 class="mb-2">Bulk Upload Stock Transactions</h2>
+  <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>
   <form method="post" enctype="multipart/form-data" class="mb-4">
     {% csrf_token %}
     {% if bulk_form.non_field_errors %}
@@ -90,7 +90,7 @@
     </ul>
   {% endif %}
   <hr class="my-4"/>
-  <h2 class="text-xl font-semibold mb-2">Recent Transactions</h2>
+  <h2 class="mb-2">Recent Transactions</h2>
   <div class="max-md:overflow-x-auto">
     <table class="table">
       <thead>

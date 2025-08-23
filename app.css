@@ -28,13 +28,45 @@ a:focus {
 body {
   background-color: #ffffff;
   color: #111827;
-  font-family: Roboto, sans-serif;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
 }
 
 .dark body {
   background-color: #0e1a33; /* Dark mode background with improved contrast */
   color: #e5e5e5; /* Text color for better visibility in dark mode */
 }
+
+/* Heading hierarchy */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+/* Text color utilities */
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+
+.dark .text-primary {
+  color: var(--color-primary-dark);
+}
+
+.dark .text-secondary {
+  color: var(--color-secondary);
+}
+
 
 /* Status badge classes */
 .dark .badge-success {

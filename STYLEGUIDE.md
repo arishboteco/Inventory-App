@@ -5,8 +5,10 @@ Follow this guide when building new templates or JavaScript‑driven components.
 
 ## Design Tokens
 
-Tokens are provided via CSS variables in [static/css/app.css](static/css/app.css) and surfaced to
-[Tailwind via `tailwind.config.js`](tailwind.config.js).
+The canonical tokens are defined in [static/src/tokens.css](static/src/tokens.css). The file is imported by
+[static/src/app.css](static/src/app.css) and the variables are referenced in
+[Tailwind via `tailwind.config.js`](tailwind.config.js). Updating `tokens.css` propagates color changes
+to both light and dark themes.
 
 ### Colors
 

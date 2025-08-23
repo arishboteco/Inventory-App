@@ -32,12 +32,12 @@ module.exports = {
     extend: {
       colors: {
         body: {
-          light: '#ffffff',
-          dark: '#0f172a',
+          light: 'var(--color-body)',
+          dark: 'var(--color-body-dark)',
         },
         bodyText: {
-          light: '#111827',
-          dark: '#f8fafc',
+          light: 'var(--color-body-text)',
+          dark: 'var(--color-body-text-dark)',
         },
         primary: 'var(--color-primary)',
         secondary: 'var(--color-secondary)',
@@ -45,21 +45,21 @@ module.exports = {
         danger: 'var(--color-danger)',
         border: 'var(--color-border)',
         form: {
-          bg: '#ffffff',
+          bg: 'var(--color-body)',
           border: 'var(--color-border)',
-          text: '#111827',
-          darkBg: '#1e293b',
+          text: 'var(--color-body-text)',
+          darkBg: 'var(--color-form-bg-dark)',
           darkBorder: 'var(--color-border-dark)',
-          darkText: '#f8fafc',
+          darkText: 'var(--color-body-text-dark)',
         },
-            table: {
-              border: 'var(--color-border)',
-              headerBg: 'var(--color-primary)',
-              headerText: '#ffffff',
-              hoverBg: '#e5e7eb',
-              darkBorder: 'var(--color-border-dark)',
-              darkHoverBg: '#475569',
-            },
+        table: {
+          border: 'var(--color-border)',
+          headerBg: 'var(--color-primary)',
+          headerText: 'var(--color-body)',
+          hoverBg: 'var(--color-table-hover-bg)',
+          darkBorder: 'var(--color-border-dark)',
+          darkHoverBg: 'var(--color-table-hover-bg-dark)',
+        },
       },
       spacing: {
         '0.5': 'var(--space-0-5)',

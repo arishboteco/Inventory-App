@@ -14,6 +14,8 @@ Inventory-App is a Django application for managing restaurant inventory with a P
 
 Refer to [STYLEGUIDE.md](STYLEGUIDE.md) for design tokens, reusable components and usage examples. When creating new templates or JavaScript-driven components, prefer Tailwind CSS utilities and the classes defined in `static/css/app.css` before adding custom styles.
 
+The color palette is centralized in `static/src/tokens.css` and consumed by `tailwind.config.js` via CSS variables. Update the tokens in that file to change colors across both light and dark themes.
+
 ## Responsive Breakpoints
 
 This project uses a desktop-first Tailwind CSS strategy. Base styles target larger screens, while `max-*` variants provide overrides for smaller viewports. Custom `max-sm`, `max-md`, `max-lg`, and `max-xl` screens are defined in `tailwind.config.js`. Use these utilities when building templates so mobile adjustments are explicit:

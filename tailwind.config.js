@@ -60,7 +60,7 @@ module.exports = {
           border: '#6b7280',
           text: '#111827',
           darkBg: '#1e293b',
-          darkBorder: '#64748b',
+          darkBorder: '#94a3b8',
           darkText: '#f8fafc',
         },
         table: {
@@ -68,7 +68,7 @@ module.exports = {
           headerBg: '#1a46c2',
           headerText: '#ffffff',
           hoverBg: '#e5e7eb',
-          darkBorder: '#64748b',
+          darkBorder: '#94a3b8',
           darkHoverBg: '#1e293b',
           darkHeaderBg: '#1a46c2',
           darkHeaderText: '#ffffff',

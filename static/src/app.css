@@ -150,6 +150,10 @@
 
   .dark .table th,
   .dark .table td { border: 1px solid theme('colors.table.darkBorder'); }
+  .dark .table thead {
+    background-color: theme('colors.table.darkHeaderBg');
+    color: theme('colors.table.darkHeaderText');
+  }
   .dark .table tbody tr:hover { background-color: theme('colors.table.darkHoverBg'); }
 }
 

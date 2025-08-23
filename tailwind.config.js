@@ -70,6 +70,8 @@ module.exports = {
           hoverBg: '#e5e7eb',
           darkBorder: '#64748b',
           darkHoverBg: '#1e293b',
+          darkHeaderBg: '#1a46c2',
+          darkHeaderText: '#ffffff',
         },
       },
       fontFamily: {

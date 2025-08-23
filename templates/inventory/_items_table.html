@@ -87,7 +87,7 @@
     {% endif %}
     {% for num in page_obj.paginator.page_range %}
       {% if num == page_obj.number %}
-        <span class="px-3 py-1 border rounded bg-gray-200">{{ num }}</span>
+        <span class="pagination-active">{{ num }}</span>
       {% else %}
         <a href="{% url 'items_list' %}?page={{ num }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
            hx-get="{% url 'items_table' %}?page={{ num }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
@@ -107,7 +107,7 @@
       id="page_size"
       name="page_size"
       list="page_size_options"
-      class="border rounded p-1"
+      class="pagination-input"
       value="{{ page_size }}"
       form="filters"
       hx-get="{% url 'items_table' %}"

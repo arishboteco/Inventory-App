@@ -5,7 +5,7 @@
   <form method="post" class="space-y-4" id="po-form">
     {% csrf_token %}
     {% if form.non_field_errors %}
-      <ul class="text-red-600 list-disc pl-5">
+      <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
         {% for error in form.non_field_errors %}
           <li>{{ error }}</li>
         {% endfor %}
@@ -20,16 +20,16 @@
     <div id="items-formset">
       {{ formset.management_form }}
       {% if formset.non_form_errors %}
-        <ul class="text-red-600 list-disc pl-5">
+        <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
           {% for error in formset.non_form_errors %}
             <li>{{ error }}</li>
           {% endfor %}
         </ul>
       {% endif %}
       {% for f in formset %}
-      <div class="border p-2 item-form">
+      <div class="border dark:border-form-darkBorder p-2 item-form">
         {% if f.non_field_errors %}
-          <ul class="text-red-600 list-disc pl-5">
+          <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
             {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
           </ul>
         {% endif %}
@@ -46,7 +46,7 @@
     </div>
   </form>
   <template id="item-empty-form">
-    <div class="border p-2 item-form">
+    <div class="border dark:border-form-darkBorder p-2 item-form">
       {% for field in formset.empty_form %}
         {% include "components/form_field.html" with field=field %}
       {% endfor %}

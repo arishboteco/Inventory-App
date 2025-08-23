@@ -176,6 +176,12 @@
   }
   .dark .table tbody tr { background-color: theme('colors.body.dark'); }
   .dark .table tbody tr:hover { background-color: theme('colors.table.darkHoverBg'); }
+
+  /* Pagination controls */
+  .pagination-active { @apply px-3 py-1 border rounded bg-gray-200; }
+  .pagination-input { @apply border rounded p-1; }
+  .dark .pagination-active { @apply border-form-darkBorder bg-gray-700; }
+  .dark .pagination-input { @apply border-form-darkBorder bg-form-darkBg text-form-darkText; }
 }
 
 @layer utilities {

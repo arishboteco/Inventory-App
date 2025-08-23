@@ -5,7 +5,7 @@
   <form method="post" id="recipe-form">
     {% csrf_token %}
     {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
+    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
       {% for error in form.non_field_errors %}
       <li>{{ error }}</li>
       {% endfor %}
@@ -18,7 +18,7 @@
     </div>
     {{ formset.management_form }}
     {% if formset.non_form_errors %}
-    <ul class="text-red-600 list-disc pl-5">
+    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
       {% for error in formset.non_form_errors %}
       <li>{{ error }}</li>
       {% endfor %}
@@ -44,14 +44,14 @@
           <td>{% include "components/form_field.html" with field=cform.unit %}</td>
           <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
           <td>
-            {{ cform.DELETE }}<button type="button" class="remove-row text-red-600">Remove</button>
+            {{ cform.DELETE }}<button type="button" class="remove-row text-red-600 dark:text-red-400">Remove</button>
           </td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
     <div class="mt-2">
-      <button type="button" id="add-row" class="px-4 py-2 border rounded">Add Component</button>
+      <button type="button" id="add-row" class="px-4 py-2 border dark:border-form-darkBorder rounded">Add Component</button>
     </div>
     <div class="mt-4">
       <button type="submit" class="btn-primary">Save</button>

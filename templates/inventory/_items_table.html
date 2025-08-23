@@ -84,7 +84,7 @@
       {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#items_table" hx_include="#filters" %}
     {% endwith %}
   <div class="ml-auto flex items-center gap-2">
-    <label for="page_size" class="text-sm">Per page:</label>
+      <label for="page_size" class="text-sm font-medium">Per page:</label>
     <input
       type="text"
       id="page_size"

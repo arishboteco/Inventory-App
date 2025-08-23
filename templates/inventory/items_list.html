@@ -1,7 +1,7 @@
 {% extends "_base.html" %}
 {% block title %}Items – Inventory App{% endblock %}
 {% block content %}
-  <h1 class="mb-4">Items</h1>
+  <h1 class="text-2xl font-semibold mb-4">Items</h1>
   <div class="mb-4 flex justify-end gap-2">
     <a href="{% url 'item_create' %}" class="btn-primary">New Item</a>
     <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>

@@ -6,7 +6,7 @@
   <form method="post" class="flex gap-2">
     {% csrf_token %}
     <button type="submit" class="btn-danger">Confirm</button>
-    <a href="{% url 'items_list' %}" class="px-4 py-2 border rounded">Cancel</a>
+    <a href="{% url 'items_list' %}" class="btn-outline">Cancel</a>
   </form>
 </div>
 {% endblock %}

@@ -83,7 +83,7 @@
     {% if page_obj.has_previous %}
       <a href="{% url 'items_list' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
          hx-get="{% url 'items_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-         hx-target="#items_table" class="px-3 py-1 border rounded">Prev</a>
+         hx-target="#items_table" class="btn-outline">Prev</a>
     {% endif %}
     {% for num in page_obj.paginator.page_range %}
       {% if num == page_obj.number %}
@@ -91,13 +91,13 @@
       {% else %}
         <a href="{% url 'items_list' %}?page={{ num }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
            hx-get="{% url 'items_table' %}?page={{ num }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-           hx-target="#items_table" class="px-3 py-1 border rounded">{{ num }}</a>
+           hx-target="#items_table" class="btn-outline">{{ num }}</a>
       {% endif %}
     {% endfor %}
     {% if page_obj.has_next %}
       <a href="{% url 'items_list' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
          hx-get="{% url 'items_table' %}?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
-         hx-target="#items_table" class="px-3 py-1 border rounded">Next</a>
+         hx-target="#items_table" class="btn-outline">Next</a>
     {% endif %}
   </div>
   <div class="ml-auto flex items-center gap-2">

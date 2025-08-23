@@ -65,6 +65,24 @@
   }
   .btn-danger:disabled { @apply opacity-50 cursor-not-allowed; }
 
+  .btn-outline {
+    @apply px-4 py-2 border rounded transition-colors;
+    background-color: transparent;
+    color: theme('colors.bodyText.light');
+    border-color: theme('colors.form.border');
+  }
+  .btn-outline:hover { @apply bg-gray-100; }
+  .btn-outline:focus {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: theme('colors.form.border');
+  }
+  .dark .btn-outline {
+    color: theme('colors.bodyText.dark');
+    border-color: theme('colors.form.darkBorder');
+  }
+  .dark .btn-outline:hover { @apply bg-gray-700; }
+  .dark .btn-outline:focus { --tw-ring-color: theme('colors.form.darkBorder'); }
+
   /* Form component styles */
   form label { @apply block mb-2; }
   form input:not([type='checkbox']):not([type='radio']),

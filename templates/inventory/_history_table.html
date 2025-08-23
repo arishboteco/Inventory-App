@@ -77,12 +77,12 @@
   {% if page_obj.has_previous %}
   <a hx-get="{% url 'history_reports' %}?page={{ page_obj.previous_page_number }}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
-     class="px-3 py-1 border rounded">Prev</a>
+     class="btn-outline">Prev</a>
   {% endif %}
   <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
   {% if page_obj.has_next %}
   <a hx-get="{% url 'history_reports' %}?page={{ page_obj.next_page_number }}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
-     class="px-3 py-1 border rounded">Next</a>
+     class="btn-outline">Next</a>
   {% endif %}
 </div>

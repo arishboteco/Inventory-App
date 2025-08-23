@@ -39,12 +39,12 @@
   </datalist>
   <datalist id="category-options">
     {% for c in form.category_options %}
-      <option value="{{ c }}"></option>
+      <option value="{{ c }}"{% if c == form.category.value %} selected{% endif %}></option>
     {% endfor %}
   </datalist>
   <datalist id="sub-category-options">
     {% for c in form.sub_category_options %}
-      <option value="{{ c }}"></option>
+      <option value="{{ c }}"{% if c == form.sub_category.value %} selected{% endif %}></option>
     {% endfor %}
   </datalist>
 {% endblock %}

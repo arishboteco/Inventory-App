@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from django import forms
+
 INPUT_CLASS = "w-full px-3 py-2 border rounded"
 CHECKBOX_CLASS = "h-4 w-4 text-blue-600"
 
@@ -9,10 +11,14 @@ class StyledFormMixin:
 
     def apply_styling(self) -> None:
         for field in self.fields.values():
-            if getattr(field.widget, "input_type", None) == "checkbox":
-                field.widget.attrs.update({"class": CHECKBOX_CLASS})
+            widget = field.widget
+            if getattr(widget, "input_type", None) == "checkbox":
+                widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
-                field.widget.attrs.update({"class": INPUT_CLASS})
+                classes = INPUT_CLASS
+                if isinstance(widget, (forms.Select, forms.SelectMultiple)):
+                    classes += " predictive"
+                widget.attrs.update({"class": classes})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

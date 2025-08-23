@@ -101,3 +101,15 @@ def test_items_list_view_shows_empty_categories(client):
     assert resp.status_code == 200
     assert resp.context["categories"] == []
     assert resp.context["subcategories"] == []
+
+
+def test_items_export_view_returns_csv(client):
+    _create_item()
+    url = reverse("items_export")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "text/csv"
+    content = resp.content.decode()
+    lines = content.splitlines()
+    assert lines[0].startswith("ID,Name,Base Unit")
+    assert "Widget" in content

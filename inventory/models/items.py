@@ -9,7 +9,7 @@ class Item(models.Model):
     name = models.CharField(max_length=255, blank=False, null=False)
     base_unit = models.CharField(max_length=50, blank=False, null=False)
     purchase_unit = models.CharField(max_length=50, blank=False, null=False)
-    category_id = models.IntegerField(blank=True, null=True)
+    category_id = models.IntegerField(blank=True, null=True, db_column="category")
     permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)

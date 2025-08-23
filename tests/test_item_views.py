@@ -53,6 +53,11 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     from inventory.forms import item_forms as forms_module
 
     monkeypatch.setattr(forms_module, "get_units", lambda: {"pcs": ["box"]})
+    monkeypatch.setattr(
+        forms_module,
+        "get_categories",
+        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
+    )
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
 
@@ -72,7 +77,8 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
         "name": "Gadget",
         "base_unit": "pcs",
         "purchase_unit": "box",
-        "category_id": "2",
+        "category": "Food",
+        "sub_category": "Fruit",
         "permitted_departments": "dept2",
         "reorder_point": "5",
         "current_stock": "0",

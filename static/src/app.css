@@ -248,14 +248,17 @@
   .table th,
   .table td {
     border: 1px solid theme('colors.table.border');
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-4) var(--space-6);
     text-align: left;
   }
   .table thead {
     background-color: var(--color-primary);
     color: theme('colors.table.headerText');
   }
-  .table tbody tr { background-color: theme('colors.form.bg', '#ffffff'); }
+  .table tbody tr {
+    background-color: theme('colors.form.bg', '#ffffff');
+    transition: background-color 0.15s ease-in-out;
+  }
   .table tbody tr:hover { background-color: theme('colors.table.hoverBg'); }
 
   .dark .table th,

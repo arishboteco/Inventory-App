@@ -1,10 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
-:root {
-  --color-primary: #1a46c2;
-  --color-secondary: #036045;
-  --color-accent: #ad5f04;
-}
+@import './tokens.css';
 
 @tailwind base;
 @tailwind components;
@@ -80,8 +75,8 @@
     border: 1px solid theme('colors.form.border');
     background-color: theme('colors.form.bg');
     color: theme('colors.form.text');
-    padding: 0.5rem;
-    border-radius: 0.25rem;
+    padding: var(--space-2);
+    border-radius: var(--space-1);
     width: 100%;
   }
   form input:not([type='checkbox']):not([type='radio']):focus,
@@ -97,7 +92,7 @@
     border: 1px solid theme('colors.form.border');
     background-color: theme('colors.form.bg');
     color: theme('colors.form.text');
-    border-radius: 0.25rem;
+    border-radius: var(--space-1);
   }
 
   .form-radio {
@@ -145,7 +140,7 @@
   .table th,
   .table td {
     border: 1px solid theme('colors.table.border');
-    padding: 0.5rem 1rem;
+    padding: var(--space-2) var(--space-4);
     text-align: left;
   }
   .table thead {
@@ -170,9 +165,12 @@
 }
 
 @media (max-width: 768px) {
-  h1 { font-size: 1.6rem; }
-  h2 { font-size: 1.3rem; }
+  h1 { font-size: var(--font-size-h1); }
+  h2 { font-size: var(--font-size-h2); }
   .badge-success,
   .badge-warning,
-  .badge-error { font-size: 0.8rem; padding: 2px 4px; }
+  .badge-error {
+    font-size: var(--font-size-badge);
+    padding: var(--space-0-5) var(--space-1);
+  }
 }

@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from ..models import Item, Category
 from ..services.supabase_units import get_units
+from ..services.supabase_categories import get_categories
 from .base import StyledFormMixin, INPUT_CLASS
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,28 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             units_map = {}
             logger.error("Failed to load units map", exc_info=True)
         self.units_map = units_map
+
+        try:
+            categories_map = get_categories()
+            logger.debug("Categories map loaded: %s", categories_map)
+        except Exception:
+            categories_map = {}
+            logger.error("Failed to load categories map", exc_info=True)
+        self.categories_map = categories_map
+        self.supabase_categories_failed = not categories_map
+        if categories_map:
+            for cat in categories_map.get(None, []):
+                Category.objects.update_or_create(
+                    id=cat["id"], defaults={"name": cat["name"], "parent_id": None}
+                )
+            for parent_id, children in categories_map.items():
+                if parent_id is None:
+                    continue
+                for child in children:
+                    Category.objects.update_or_create(
+                        id=child["id"],
+                        defaults={"name": child["name"], "parent_id": parent_id},
+                    )
 
         for field in ("name", "base_unit", "purchase_unit", "category"):
             self.fields[field].required = True

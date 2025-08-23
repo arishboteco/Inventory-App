@@ -14,6 +14,7 @@ from inventory.models import Category
 @pytest.mark.django_db
 def test_item_form_preserves_metadata(monkeypatch):
     monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     form = ItemForm()
     base_field = form.fields["base_unit"]
     purchase_field = form.fields["purchase_unit"]
@@ -28,6 +29,7 @@ def test_item_form_preserves_metadata(monkeypatch):
 @pytest.mark.django_db
 def test_purchase_unit_includes_base(monkeypatch):
     monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["kg", "g"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     form = ItemForm(data={"base_unit": "kg"})
     purchase_choices = [c[0] for c in form.fields["purchase_unit"].choices]
     assert "kg" in purchase_choices
@@ -39,6 +41,7 @@ def test_item_form_units_fallback(monkeypatch, caplog):
         raise Exception("boom")
 
     monkeypatch.setattr(forms_module, "get_units", fail)
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     with caplog.at_level("ERROR"):
         form = ItemForm()
     assert form.units_map == {}
@@ -55,6 +58,7 @@ def test_item_form_units_fallback(monkeypatch, caplog):
 @pytest.mark.django_db
 def test_item_form_categories_and_subcategories(monkeypatch):
     monkeypatch.setattr(supabase_units, "get_units", lambda: {"kg": ["g"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     Category.objects.create(id=1, name="Food")
     Category.objects.create(id=2, name="Tools")
     Category.objects.create(id=3, name="Fruit", parent_id=1)
@@ -98,6 +102,48 @@ def test_item_form_categories_and_subcategories(monkeypatch):
     item = form.save()
     assert item.category.name == "Food"
     assert item.sub_category.name == "Fruit"
+
+
+@pytest.mark.django_db
+def test_item_form_supabase_categories(monkeypatch):
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
+    categories_map = {
+        None: [{"id": 1, "name": "Food"}, {"id": 2, "name": "Tools"}],
+        1: [{"id": 3, "name": "Fruit"}],
+    }
+    monkeypatch.setattr(forms_module, "get_categories", lambda: categories_map)
+
+    assert Category.objects.count() == 0
+    form = ItemForm()
+    cat_choices = [
+        (("" if val is None else str(val)), label)
+        for val, label in form.fields["category"].choices
+    ]
+    assert ("1", "Food") in cat_choices
+    assert Category.objects.filter(id=1, name="Food").exists()
+    # Ensure subcategories are created
+    assert Category.objects.filter(id=3, name="Fruit", parent_id=1).exists()
+
+
+@pytest.mark.django_db
+def test_item_form_categories_warning(monkeypatch, caplog):
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
+
+    def fail():
+        raise Exception("boom")
+
+    monkeypatch.setattr(forms_module, "get_categories", fail)
+    with caplog.at_level("ERROR"):
+        form = ItemForm()
+    assert form.supabase_categories_failed
+    request = RequestFactory().get("/")
+    content = render_to_string(
+        "inventory/item_form.html",
+        {"form": form, "is_edit": False, "excluded_fields": []},
+        request=request,
+    )
+    assert "Could not load category options" in content
+    assert "Failed to load categories map" in caplog.text
 
 
 @pytest.mark.django_db

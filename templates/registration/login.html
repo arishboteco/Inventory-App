@@ -2,7 +2,7 @@
 {% block title %}Login – Inventory App{% endblock %}
 {% block content %}
 <div class="max-w-sm mx-auto space-y-4">
-  <h1 class="text-h1">Login</h1>
+  <h1 class="text-2xl font-semibold">Login</h1>
   <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -14,7 +14,7 @@
       {% include "components/form_field.html" with field=field container_class="col-span-2" %}
     {% endfor %}
     <div class="col-span-2">
-      <button type="submit" class="btn-primary px-4 py-2 rounded">Login</button>
+      <button type="submit" class="btn-primary">Login</button>
     </div>
   </form>
 </div>

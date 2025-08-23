@@ -28,7 +28,7 @@ module.exports = {
         primary: 'var(--color-primary)',
         secondary: 'var(--color-secondary)',
         accent: 'var(--color-accent)',
-        danger: '#b91c1c',
+        danger: 'var(--color-danger)',
         form: {
           bg: '#ffffff',
           border: '#6b7280',
@@ -49,7 +49,6 @@ module.exports = {
       spacing: {
         '0.5': 'var(--space-0-5)',
         '1': 'var(--space-1)',
-        '1.5': 'var(--space-1-5)',
         '2': 'var(--space-2)',
         '4': 'var(--space-4)',
       },

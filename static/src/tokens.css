@@ -1,15 +1,15 @@
 :root {
   /* Color tokens */
-  --color-primary: #1a46c2;
+  --color-primary: #0D3A99;
   /* Dark mode variant */
-  --color-primary-dark: #60a5fa;
-  --color-secondary: #036045;
-  --color-accent: #ad5f04;
+  --color-primary-dark: #93C5FD;
+  --color-secondary: #024427;
+  --color-accent: #8C4A02;
+  --color-danger: #B91C1C;
 
   /* Spacing tokens */
   --space-0-5: 0.125rem;
   --space-1: 0.25rem;
-  --space-1-5: 0.375rem;
   --space-2: 0.5rem;
   --space-4: 1rem;
 

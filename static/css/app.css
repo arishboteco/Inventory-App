@@ -21,6 +21,8 @@
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
   /* Font size tokens */
   --font-size-base: 1rem;
   --font-size-h1: 1.6rem;
@@ -28,7 +30,7 @@
   --font-size-badge: 0.8rem;
 }
 
-/* ! tailwindcss v3.4.1 | MIT License | https://tailwindcss.com */
+/* ! tailwindcss v3.4.4 | MIT License | https://tailwindcss.com */
 
 /*
 1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
@@ -239,6 +241,8 @@ textarea {
   /* 1 */
   line-height: inherit;
   /* 1 */
+  letter-spacing: inherit;
+  /* 1 */
   color: inherit;
   /* 1 */
   margin: 0;
@@ -262,9 +266,9 @@ select {
 */
 
 button,
-[type='button'],
-[type='reset'],
-[type='submit'] {
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
   -webkit-appearance: button;
   /* 1 */
   background-color: transparent;
@@ -548,6 +552,10 @@ a:focus {
   --tw-backdrop-opacity:  ;
   --tw-backdrop-saturate:  ;
   --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
 }
 
 ::backdrop{
@@ -598,14 +606,26 @@ a:focus {
   --tw-backdrop-opacity:  ;
   --tw-backdrop-saturate:  ;
   --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
 }
 
 .\!container{
   width: 100% !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+  padding-right: var(--space-8) !important;
+  padding-left: var(--space-8) !important;
 }
 
 .container{
   width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: var(--space-8);
+  padding-left: var(--space-8);
 }
 
 @media (min-width: 640px){
@@ -1180,7 +1200,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .h-6{
-  height: 1.5rem;
+  height: var(--space-6);
 }
 
 .max-h-screen{
@@ -1204,7 +1224,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .w-6{
-  width: 1.5rem;
+  width: var(--space-6);
 }
 
 .w-full{
@@ -1454,7 +1474,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .p-8{
-  padding: 2rem;
+  padding: var(--space-8);
 }
 
 .px-2{
@@ -1473,8 +1493,8 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .px-8{
-  padding-left: 2rem;
-  padding-right: 2rem;
+  padding-left: var(--space-8);
+  padding-right: var(--space-8);
 }
 
 .py-1{
@@ -1493,8 +1513,8 @@ form input:not([type='checkbox']):not([type='radio']):focus,
 }
 
 .py-6{
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
 }
 
 .pl-5{
@@ -1517,24 +1537,9 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   text-align: right;
 }
 
-.text-2xl{
-  font-size: 1.5rem;
-  line-height: 2rem;
-}
-
-.text-lg{
-  font-size: 1.125rem;
-  line-height: 1.75rem;
-}
-
 .text-sm{
   font-size: 0.875rem;
   line-height: 1.25rem;
-}
-
-.text-xl{
-  font-size: 1.25rem;
-  line-height: 1.75rem;
 }
 
 .text-xs{
@@ -1613,10 +1618,6 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   color: rgb(161 98 7 / var(--tw-text-opacity));
 }
 
-.underline{
-  text-decoration-line: underline;
-}
-
 .shadow{
   --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
@@ -1656,130 +1657,130 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:border-blue-700){
+.dark\:border-blue-700:is(.dark *){
   --tw-border-opacity: 1;
   border-color: rgb(29 78 216 / var(--tw-border-opacity));
 }
 
-:is(.dark .dark\:border-form-darkBorder){
+.dark\:border-form-darkBorder:is(.dark *){
   --tw-border-opacity: 1;
   border-color: rgb(100 116 139 / var(--tw-border-opacity));
 }
 
-:is(.dark .dark\:border-green-700){
+.dark\:border-green-700:is(.dark *){
   --tw-border-opacity: 1;
   border-color: rgb(21 128 61 / var(--tw-border-opacity));
 }
 
-:is(.dark .dark\:border-primary){
+.dark\:border-primary:is(.dark *){
   border-color: var(--color-primary);
 }
 
-:is(.dark .dark\:border-red-700){
+.dark\:border-red-700:is(.dark *){
   --tw-border-opacity: 1;
   border-color: rgb(185 28 28 / var(--tw-border-opacity));
 }
 
-:is(.dark .dark\:border-yellow-700){
+.dark\:border-yellow-700:is(.dark *){
   --tw-border-opacity: 1;
   border-color: rgb(161 98 7 / var(--tw-border-opacity));
 }
 
-:is(.dark .dark\:bg-blue-900){
+.dark\:bg-blue-900:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(30 58 138 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:bg-form-darkBg){
+.dark\:bg-form-darkBg:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(30 41 59 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:bg-green-900){
+.dark\:bg-green-900:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(20 83 45 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:bg-primary){
+.dark\:bg-primary:is(.dark *){
   background-color: var(--color-primary);
 }
 
-:is(.dark .dark\:bg-red-900){
+.dark\:bg-red-900:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(127 29 29 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:bg-slate-800){
+.dark\:bg-slate-800:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(30 41 59 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:bg-yellow-900){
+.dark\:bg-yellow-900:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(113 63 18 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:text-blue-100){
+.dark\:text-blue-100:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(219 234 254 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-blue-300){
+.dark\:text-blue-300:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(147 197 253 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-form-darkText){
+.dark\:text-form-darkText:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(248 250 252 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-gray-200){
+.dark\:text-gray-200:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(229 231 235 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-gray-400){
+.dark\:text-gray-400:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-gray-500){
+.dark\:text-gray-500:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(107 114 128 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-green-300){
+.dark\:text-green-300:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(134 239 172 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-green-400){
+.dark\:text-green-400:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(74 222 128 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-red-300){
+.dark\:text-red-300:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(252 165 165 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-red-400){
+.dark\:text-red-400:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(248 113 113 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-white){
+.dark\:text-white:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:text-yellow-300){
+.dark\:text-yellow-300:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(253 224 71 / var(--tw-text-opacity));
 }
 
-:is(.dark .dark\:hover\:text-white:hover){
+.dark\:hover\:text-white:hover:is(.dark *){
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
@@ -1841,8 +1842,8 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   }
 
   .max-md\:px-6{
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
   }
 }
 
@@ -1857,7 +1858,7 @@ form input:not([type='checkbox']):not([type='radio']):focus,
   background-color: rgb(229 231 235 / var(--tw-bg-opacity));
 }
 
-:is(.dark .dark\:\[\&\>tr\:hover\]\:bg-table-darkHoverBg>tr:hover){
+.dark\:\[\&\>tr\:hover\]\:bg-table-darkHoverBg>tr:hover:is(.dark *){
   --tw-bg-opacity: 1;
   background-color: rgb(30 41 59 / var(--tw-bg-opacity));
 }

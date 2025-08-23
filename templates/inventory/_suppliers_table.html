@@ -1,56 +1,55 @@
-<div class="max-md:overflow-x-auto">
-    <table class="table w-full table-auto text-sm">
-    <thead>
-      <tr>
-        <th class="px-4 py-2 text-right">ID</th>
-        <th class="px-4 py-2">Name</th>
-        <th class="px-4 py-2">Contact</th>
-        <th class="px-4 py-2">Email</th>
-        <th class="px-4 py-2 text-right">Phone</th>
-        <th class="px-4 py-2">Active</th>
-        <th class="px-4 py-2">Actions</th>
-      </tr>
-    </thead>
-      <tbody>
-      {% for row in page_obj %}
-      <tr class="odd:bg-gray-50 hover:bg-gray-100 dark:odd:bg-gray-800 dark:hover:bg-gray-700">
-        <td class="px-4 py-2 text-right">{{ row.supplier_id }}</td>
-        <td class="px-4 py-2">{{ row.name }}</td>
-        <td class="px-4 py-2">{{ row.contact_person }}</td>
-        <td class="px-4 py-2">{{ row.email }}</td>
-        <td class="px-4 py-2 text-right">{{ row.phone }}</td>
-        <td class="px-4 py-2">{{ row.is_active }}</td>
-        <td class="px-4 py-2">
-          <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary mr-2">Edit</a>
-          <form
-            hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
-            hx-target="#suppliers_table"
-            hx-confirm="Are you sure you want to toggle this supplier?"
-            method="post"
-            class="inline"
-          >
-            {% csrf_token %}
-            <input type="hidden" name="q" value="{{ q }}" />
-            <input type="hidden" name="page" value="{{ page_obj.number }}" />
-            <input type="hidden" name="active" value="{{ active }}" />
-            <input type="hidden" name="page_size" value="{{ page_size }}" />
-            <input type="hidden" name="sort" value="{{ sort }}" />
-            <input type="hidden" name="direction" value="{{ direction }}" />
-            <button type="submit" class="text-primary">Toggle</button>
-          </form>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="7" class="px-4 py-2 text-center">
-          0 suppliers yet.
-          <a href="{% url 'supplier_create' %}" class="btn-primary ml-2">Add Supplier</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% extends "components/table.html" %}
+
+{% block headers %}
+<th class="text-right">ID</th>
+<th>Name</th>
+<th>Contact</th>
+<th>Email</th>
+<th class="text-right">Phone</th>
+<th>Active</th>
+<th>Actions</th>
+{% endblock %}
+
+{% block rows %}
+{% for row in page_obj %}
+<tr>
+  <td class="text-right">{{ row.supplier_id }}</td>
+  <td>{{ row.name }}</td>
+  <td>{{ row.contact_person }}</td>
+  <td>{{ row.email }}</td>
+  <td class="text-right">{{ row.phone }}</td>
+  <td>{{ row.is_active }}</td>
+  <td>
+    <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary mr-2">Edit</a>
+    <form
+      hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
+      hx-target="#suppliers_table"
+      hx-confirm="Are you sure you want to toggle this supplier?"
+      method="post"
+      class="inline"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="q" value="{{ q }}" />
+      <input type="hidden" name="page" value="{{ page_obj.number }}" />
+      <input type="hidden" name="active" value="{{ active }}" />
+      <input type="hidden" name="page_size" value="{{ page_size }}" />
+      <input type="hidden" name="sort" value="{{ sort }}" />
+      <input type="hidden" name="direction" value="{{ direction }}" />
+      <button type="submit" class="text-primary">Toggle</button>
+    </form>
+  </td>
+</tr>
+{% empty %}
+<tr>
+  <td colspan="7" class="text-center">
+    0 suppliers yet.
+    <a href="{% url 'supplier_create' %}" class="btn-primary ml-2">Add Supplier</a>
+  </td>
+</tr>
+{% endfor %}
+{% endblock %}
+
+{% block footer %}
 <div class="flex items-center gap-3 mt-3">
   {% if page_obj.has_previous %}
     <a hx-get="{% url 'suppliers_table' %}?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort={{ sort|urlencode }}&direction={{ direction|urlencode }}"
@@ -62,4 +61,5 @@
        hx-target="#suppliers_table" class="px-3 py-1 border rounded">Next</a>
   {% endif %}
 </div>
+{% endblock %}
 

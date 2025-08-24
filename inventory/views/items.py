@@ -13,6 +13,8 @@ from django.template.loader import render_to_string
 from django.views import View
 from django.views.generic import TemplateView
 from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 
 from ..models import Item, StockTransaction
 from ..forms.item_forms import ItemForm
@@ -370,6 +372,30 @@ class ItemDeleteView(View):
             logger.exception("Error deleting item %s", pk)
             messages.error(request, "Unable to delete item")
         return redirect("items_list")
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class ItemToggleActiveView(View):
+    """Toggle an item's active flag and return updated table."""
+
+    def _toggle(self, request, pk: int):
+        item = get_object_or_404(Item, pk=pk)
+        if item.is_active:
+            item_service.deactivate_item(item.pk)
+        else:
+            item_service.reactivate_item(item.pk)
+        if request.method == "POST":
+            params = request.POST.copy()
+            params.pop("csrfmiddlewaretoken", None)
+            request.GET = params
+            request.method = "GET"
+        return ItemsTableView.as_view()(request)
+
+    def post(self, request, pk: int):
+        return self._toggle(request, pk)
+
+    def get(self, request, pk: int):
+        return self._toggle(request, pk)
 
 
 class ItemSearchView(TemplateView):

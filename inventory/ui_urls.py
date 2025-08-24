@@ -8,6 +8,7 @@ from .views.items import (
     ItemEditView,
     ItemDetailView,
     ItemDeleteView,
+    ItemToggleActiveView,
     ItemSearchView,
     ItemsBulkUploadView,
 )
@@ -56,6 +57,7 @@ urlpatterns = [
     path("items/create/", ItemCreateView.as_view(), name="item_create"),
     path("items/<int:pk>/edit/", ItemEditView.as_view(), name="item_edit"),
     path("items/<int:pk>/delete/", ItemDeleteView.as_view(), name="item_delete"),
+    path("items/<int:pk>/toggle/", ItemToggleActiveView.as_view(), name="item_toggle_active"),
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
     path("items/search/", ItemSearchView.as_view(), name="item_search"),
     path("items/bulk-upload/", ItemsBulkUploadView.as_view(), name="items_bulk_upload"),

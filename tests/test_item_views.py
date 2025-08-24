@@ -203,3 +203,16 @@ def test_items_export_view_returns_csv(client):
     lines = content.splitlines()
     assert lines[0].startswith("ID,Name,Base Unit")
     assert "Widget" in content
+
+
+def test_toggle_item_post(client):
+    item = _create_item()
+    url = reverse("item_toggle_active", args=[item.pk])
+    resp = client.post(url, {"page": "1"})
+    assert resp.status_code == 200
+    item.refresh_from_db()
+    assert item.is_active is False
+    resp = client.post(url, {"page": "1"})
+    assert resp.status_code == 200
+    item.refresh_from_db()
+    assert item.is_active is True

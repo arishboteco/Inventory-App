@@ -19,32 +19,38 @@
         <td class="px-4 py-2">{{ row.contact_person }}</td>
         <td class="px-4 py-2">{{ row.email }}</td>
         <td class="px-4 py-2 text-right">{{ row.phone }}</td>
-        <td class="px-4 py-2">{{ row.is_active }}</td>
+        <td class="px-4 py-2 text-center">
+          <form
+            hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
+            hx-target="#suppliers_table"
+            hx-confirm="Are you sure you want to toggle this supplier?"
+            method="post"
+            class="inline"
+          >
+            {% csrf_token %}
+            <input type="hidden" name="q" value="{{ q }}" />
+            <input type="hidden" name="page" value="{{ page_obj.number }}" />
+            <input type="hidden" name="active" value="{{ active }}" />
+            <input type="hidden" name="page_size" value="{{ page_size }}" />
+            <input type="hidden" name="sort" value="{{ sort }}" />
+            <input type="hidden" name="direction" value="{{ direction }}" />
+            <button type="submit" title="Toggle">
+              {% if row.is_active %}
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+              <span class="sr-only">Deactivate</span>
+              {% else %}
+              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+              <span class="sr-only">Activate</span>
+              {% endif %}
+            </button>
+          </form>
+        </td>
         <td class="px-4 py-2">
           <div class="flex gap-2">
             <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary" title="Edit">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 3.75h-6a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 3.75L20.25 9M7.5 9h3.75a.75.75 0 01.75.75V13.5"/></svg>
               <span class="sr-only">Edit</span>
             </a>
-            <form
-              hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
-              hx-target="#suppliers_table"
-              hx-confirm="Are you sure you want to toggle this supplier?"
-              method="post"
-              class="inline"
-            >
-              {% csrf_token %}
-              <input type="hidden" name="q" value="{{ q }}" />
-              <input type="hidden" name="page" value="{{ page_obj.number }}" />
-              <input type="hidden" name="active" value="{{ active }}" />
-              <input type="hidden" name="page_size" value="{{ page_size }}" />
-              <input type="hidden" name="sort" value="{{ sort }}" />
-              <input type="hidden" name="direction" value="{{ direction }}" />
-              <button type="submit" class="text-red-600" title="Toggle">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v1h3m-12 0h3v1a1 1 0 001 1h4a1 1 0 001-1V5h3M4 7h16"/></svg>
-                <span class="sr-only">Toggle</span>
-              </button>
-            </form>
           </div>
         </td>
       </tr>

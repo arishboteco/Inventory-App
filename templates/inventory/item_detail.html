@@ -2,8 +2,8 @@
 {% block title %}Item Detail – Inventory App{% endblock %}
 {% block content %}
   <h1 class="text-2xl font-semibold mb-4">{{ item.name }}</h1>
-  {% include "components/tabs.html" with tabs=tabs %}
+  {% include "components/detail_table.html" with rows=rows %}
   <div class="mt-4">
-    <a href="{% url 'items_list' %}" class="text-primary">Back to list</a>
+    <a href="{% url 'items_list' %}" class="btn-outline">Back</a>
   </div>
 {% endblock %}

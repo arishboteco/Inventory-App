@@ -5,6 +5,7 @@ from django.contrib import messages
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.html import format_html
 from django.db.models import Sum
 
 from ..forms.purchase_forms import (
@@ -143,11 +144,16 @@ def purchase_order_detail(request, pk: int):
         .all()
     )
     badge_class = PO_STATUS_BADGES.get(po.status, "")
-    return render(
-        request,
-        "inventory/purchase_orders/detail.html",
-        {"po": po, "items": items, "badge_class": badge_class},
-    )
+    rows = [
+        ("Supplier", po.supplier.name),
+        ("Order Date", po.order_date),
+        (
+            "Status",
+            format_html('<span class="px-2 py-1 rounded text-xs {}">{}</span>', badge_class, po.get_status_display()),
+        ),
+    ]
+    ctx = {"po": po, "items": items, "badge_class": badge_class, "rows": rows}
+    return render(request, "inventory/purchase_orders/detail.html", ctx)
 
 
 def purchase_order_receive(request, pk: int):

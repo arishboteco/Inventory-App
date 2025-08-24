@@ -296,19 +296,18 @@ class ItemDetailView(View):
             raise Http404("Item not found")
         if not details:
             raise Http404("Item not found")
-        tabs = [
-            {
-                "id": "details",
-                "title": "Details",
-                "template": "inventory/_item_details.html",
-            },
-            {
-                "id": "notes",
-                "title": "Notes",
-                "template": "inventory/_item_notes.html",
-            },
+
+        rows = [
+            ("ID", details["item_id"]),
+            ("Base Unit", details["base_unit"]),
+            ("Purchase Unit", details["purchase_unit"]),
+            ("Category ID", details["category_id"]),
+            ("Current Stock", details["current_stock"]),
+            ("Reorder Point", details["reorder_point"]),
+            ("Notes", details["notes"]),
+            ("Active", details["is_active"]),
         ]
-        ctx = {"item": details, "tabs": tabs}
+        ctx = {"item": details, "rows": rows}
         return render(request, self.template_name, ctx)
 
 

@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.html import format_html
 from django.views import View
 from django.views.generic import TemplateView
 from django.views.decorators.http import require_POST
@@ -140,11 +141,14 @@ class IndentCreateView(View):
 def indent_detail(request, pk: int):
     indent = get_object_or_404(Indent, pk=pk)
     items = indent.indentitem_set.select_related("item").all()
-    return render(
-        request,
-        "inventory/indent_detail.html",
-        {"indent": indent, "items": items, "badges": INDENT_STATUS_BADGES},
-    )
+    badge_class = INDENT_STATUS_BADGES.get(indent.status.upper(), "")
+    rows = [
+        ("Status", format_html('<span class="px-2 py-1 rounded {}">{}</span>', badge_class, indent.status)),
+        ("Requested By", indent.requested_by),
+        ("Department", indent.department),
+    ]
+    ctx = {"indent": indent, "items": items, "rows": rows}
+    return render(request, "inventory/indent_detail.html", ctx)
 
 
 @require_POST

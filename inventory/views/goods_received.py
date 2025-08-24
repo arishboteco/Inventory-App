@@ -3,6 +3,8 @@ import logging
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.utils.html import format_html
 from django.views.generic import TemplateView
 
 from fpdf import FPDF
@@ -72,7 +74,19 @@ class GRNDetailView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         grn = get_object_or_404(GoodsReceivedNote, pk=self.kwargs["pk"])
         items = grn.grnitem_set.select_related("po_item", "po_item__item")
-        ctx.update({"grn": grn, "items": items})
+        rows = [
+            (
+                "PO",
+                format_html(
+                    '<a class="text-primary" href="{}">{}</a>',
+                    reverse("purchase_order_detail", args=[grn.purchase_order_id]),
+                    grn.purchase_order_id,
+                ),
+            ),
+            ("Supplier", grn.supplier.name),
+            ("Date", grn.received_date),
+        ]
+        ctx.update({"grn": grn, "items": items, "rows": rows})
         return ctx
 
 

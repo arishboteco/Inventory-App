@@ -115,12 +115,19 @@ def test_add_items_bulk_inserts_rows():
 def test_add_items_bulk_validation_failure():
     items = [
         {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box", "category_id": 1},
-        {"name": "", "base_unit": "pcs", "purchase_unit": "box", "category_id": 1},
+        {"name": "Gadget", "base_unit": "pcs", "purchase_unit": "", "category_id": 1},
     ]
     inserted, errors = item_service.add_items_bulk(items)
     assert inserted == 0
     assert errors
     assert Item.objects.count() == 0
+
+
+def test_add_new_item_requires_purchase_unit():
+    details = {"name": "Widget", "base_unit": "pcs"}
+    success, message = item_service.add_new_item(details)
+    assert not success
+    assert "purchase_unit" in message
 
 
 def test_remove_items_bulk_marks_inactive():

@@ -91,7 +91,7 @@ get_distinct_departments_from_items.clear = (
 def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
     """Insert a single item into the database."""
 
-    valid, missing = _validate_required(details, ["name", "base_unit"])
+    valid, missing = _validate_required(details, ["name", "base_unit", "purchase_unit"])
     if not valid:
         return False, f"Missing or empty required fields: {', '.join(missing)}"
     params = _clean_create_params(details)
@@ -136,14 +136,10 @@ def _clean_create_params(details: Dict[str, Any]) -> Dict[str, Any]:
         else None
     )
 
-    purchase_unit_val = details.get("purchase_unit")
-    if isinstance(purchase_unit_val, str):
-        purchase_unit_val = purchase_unit_val.strip() or None
-
     return dict(
         name=details["name"].strip(),
         base_unit=details["base_unit"].strip(),
-        purchase_unit=purchase_unit_val,
+        purchase_unit=details["purchase_unit"].strip(),
         category_id=details.get("category_id"),
         permitted_departments=cleaned_permitted,
         reorder_point=details.get("reorder_point", Decimal("0")),
@@ -162,7 +158,7 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
     processed: List[Dict[str, Any]] = []
     errors: List[str] = []
     for idx, details in enumerate(items):
-        required = ["name", "base_unit"]
+        required = ["name", "base_unit", "purchase_unit"]
         if not all(details.get(k) and str(details.get(k)).strip() for k in required):
             missing = [
                 k
@@ -184,15 +180,11 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
             else None
         )
 
-        purchase_unit_val = details.get("purchase_unit")
-        if isinstance(purchase_unit_val, str):
-            purchase_unit_val = purchase_unit_val.strip() or None
-
         processed.append(
             dict(
                 name=details["name"].strip(),
                 base_unit=details["base_unit"].strip(),
-                purchase_unit=purchase_unit_val,
+                purchase_unit=details["purchase_unit"].strip(),
                 category_id=details.get("category_id"),
                 permitted_departments=cleaned_permitted,
                 reorder_point=details.get("reorder_point", Decimal("0")),

@@ -158,9 +158,15 @@ def stock_movements(request):
     params.pop("page", None)
     query_string = params.urlencode()
 
+    tabs = [
+        {"id": "receive", "title": sections["receive"], "template": "inventory/_receive_form.html"},
+        {"id": "adjust", "title": sections["adjust"], "template": "inventory/_adjust_form.html"},
+        {"id": "waste", "title": sections["waste"], "template": "inventory/_waste_form.html"},
+    ]
+    tabs.sort(key=lambda t: t["id"] != active)
+
     ctx = {
-        "sections": sections,
-        "active_section": active,
+        "tabs": tabs,
         "receive_form": receive_form,
         "adjust_form": adjust_form,
         "waste_form": waste_form,

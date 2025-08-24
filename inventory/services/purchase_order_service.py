@@ -47,10 +47,10 @@ def create_po(
         return False, f"Invalid reference: {exc}", None
     except IntegrityError as exc:
         logger.error("Integrity error creating PO: %s", exc)
-        return False, "Database error creating Purchase Order.", None
+        return False, f"Database error: {exc}", None
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error creating PO: %s", exc)
-        return False, "Database error creating Purchase Order.", None
+        return False, f"Database error: {exc}", None
 
 
 def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:

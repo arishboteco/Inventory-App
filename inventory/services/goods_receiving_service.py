@@ -61,19 +61,33 @@ def _process_items(
     po: Optional[PurchaseOrder],
 ) -> None:
     grn_number = generate_grn_number()
+    item_ids = {d["item_id"] for d in items_received_data}
+    po_item_ids = {d["po_item_id"] for d in items_received_data}
+    items = Item.objects.in_bulk(item_ids)
+    po_items = PurchaseOrderItem.objects.in_bulk(po_item_ids)
+
+    grn_items: List[GRNItem] = []
     for item_d in items_received_data:
-        item = Item.objects.get(pk=item_d["item_id"])
-        po_item = PurchaseOrderItem.objects.get(pk=item_d["po_item_id"])
+        item = items.get(item_d["item_id"])
+        if item is None:
+            raise Item.DoesNotExist(f"Item {item_d['item_id']} not found")
+        po_item = po_items.get(item_d["po_item_id"])
+        if po_item is None:
+            raise PurchaseOrderItem.DoesNotExist(
+                f"PurchaseOrderItem {item_d['po_item_id']} not found"
+            )
         qty = Decimal(str(item_d["quantity_received"]))
-        GRNItem.objects.create(
-            grn=grn,
-            po_item=po_item,
-            quantity_ordered_on_po=Decimal(
-                str(item_d.get("quantity_ordered_on_po", po_item.quantity_ordered))
-            ),
-            quantity_received=qty,
-            unit_price_at_receipt=Decimal(str(item_d["unit_price_at_receipt"])),
-            item_notes=item_d.get("item_notes"),
+        grn_items.append(
+            GRNItem(
+                grn=grn,
+                po_item=po_item,
+                quantity_ordered_on_po=Decimal(
+                    str(item_d.get("quantity_ordered_on_po", po_item.quantity_ordered))
+                ),
+                quantity_received=qty,
+                unit_price_at_receipt=Decimal(str(item_d["unit_price_at_receipt"])),
+                item_notes=item_d.get("item_notes"),
+            )
         )
         stock_service.record_stock_transaction(
             item_id=item.item_id,
@@ -83,6 +97,8 @@ def _process_items(
             related_po_id=po.po_id if po else None,
             notes=f"GRN {grn_number}",
         )
+
+    GRNItem.objects.bulk_create(grn_items)
     if po:
         _update_po_status(po)
 

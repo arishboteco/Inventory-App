@@ -1,7 +1,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from inventory.services import supabase_categories
+from inventory.services import supabase_categories, supabase_client
 
 
 class DummyResp:
@@ -58,8 +58,9 @@ class DummyClient:
 def test_load_categories_from_supabase(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "url")
     monkeypatch.setenv("SUPABASE_KEY", "key")
+    monkeypatch.setattr(supabase_client, "_client", None)
     monkeypatch.setattr(
-        supabase_categories, "create_client", lambda url, key: DummyClient()
+        supabase_client, "create_client", lambda url, key: DummyClient()
     )
     cats = supabase_categories._load_categories_from_supabase()
     assert cats == {
@@ -71,13 +72,14 @@ def test_load_categories_from_supabase(monkeypatch):
 def test_load_categories_supabase_exception(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "url")
     monkeypatch.setenv("SUPABASE_KEY", "key")
+    monkeypatch.setattr(supabase_client, "_client", None)
 
     class FailingClient(DummyClient):
         def table(self, name):
             raise supabase_categories.SupabaseException("fail")
 
     monkeypatch.setattr(
-        supabase_categories, "create_client", lambda u, k: FailingClient()
+        supabase_client, "create_client", lambda u, k: FailingClient()
     )
     cats = supabase_categories._load_categories_from_supabase()
     assert cats == {}

@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from inventory.services import supabase_units
+from inventory.services import supabase_client, supabase_units
 
 
 class DummyResp:
@@ -36,7 +36,8 @@ class DummyClient:
 def test_load_units_from_supabase(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "url")
     monkeypatch.setenv("SUPABASE_KEY", "key")
-    monkeypatch.setattr(supabase_units, "create_client", lambda url, key: DummyClient())
+    monkeypatch.setattr(supabase_client, "_client", None)
+    monkeypatch.setattr(supabase_client, "create_client", lambda url, key: DummyClient())
 
     units = supabase_units._load_units_from_supabase()
     assert units == {"kg": ["kg", "g", "lb"], "ltr": ["ltr", "ml"]}
@@ -45,12 +46,13 @@ def test_load_units_from_supabase(monkeypatch):
 def test_load_units_supabase_exception(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "url")
     monkeypatch.setenv("SUPABASE_KEY", "key")
+    monkeypatch.setattr(supabase_client, "_client", None)
 
     class FailingClient(DummyClient):
         def table(self, name):
             raise supabase_units.SupabaseException("fail")
 
-    monkeypatch.setattr(supabase_units, "create_client", lambda u, k: FailingClient())
+    monkeypatch.setattr(supabase_client, "create_client", lambda u, k: FailingClient())
     units = supabase_units._load_units_from_supabase()
     assert units == {}
 
@@ -58,11 +60,12 @@ def test_load_units_supabase_exception(monkeypatch):
 def test_load_units_configuration_error(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "url")
     monkeypatch.setenv("SUPABASE_KEY", "key")
+    monkeypatch.setattr(supabase_client, "_client", None)
 
     def bad_client(url, key):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(supabase_units, "create_client", bad_client)
+    monkeypatch.setattr(supabase_client, "create_client", bad_client)
     with pytest.raises(RuntimeError):
         supabase_units._load_units_from_supabase()
 

@@ -1,8 +1,16 @@
-{% extends "_base.html" %}
+{% extends "components/detail_layout.html" %}
 {% block title %}Purchase Order Detail – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Purchase Order {{ po.pk }}</h1>
+{% block heading %}Purchase Order {{ po.pk }}{% endblock %}
+{% block actions %}
+  <a href="{% url 'purchase_order_edit' po.pk %}" class="btn-primary">Edit</a>
+  <a href="{% url 'purchase_order_receive' po.pk %}" class="btn-primary">Receive Goods</a>
+  <a href="{% url 'grn_list' %}" class="btn-primary">View GRNs</a>
+  <a href="{% url 'purchase_orders_list' %}" class="btn-outline">Back</a>
+{% endblock %}
+{% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}
+{% endblock %}
+{% block extra_tables %}
   <h2 class="text-xl mb-4 mt-8">Items</h2>
   <table class="table mb-4">
     <thead><tr><th>Item</th><th>Ordered</th><th>Received</th></tr></thead>
@@ -16,12 +24,4 @@
     {% endfor %}
     </tbody>
   </table>
-  <div class="flex gap-2">
-    <a href="{% url 'purchase_order_edit' po.pk %}" class="btn-primary">Edit</a>
-    <a href="{% url 'purchase_order_receive' po.pk %}" class="btn-primary">Receive Goods</a>
-    <a href="{% url 'grn_list' %}" class="btn-primary">View GRNs</a>
-  </div>
-  <div class="mt-4">
-    <a href="{% url 'purchase_orders_list' %}" class="btn-outline">Back</a>
-  </div>
 {% endblock %}

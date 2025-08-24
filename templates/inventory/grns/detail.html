@@ -1,8 +1,13 @@
-{% extends "_base.html" %}
+{% extends "components/detail_layout.html" %}
 {% block title %}GRN Detail – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">GRN {{ grn.pk }}</h1>
+{% block heading %}GRN {{ grn.pk }}{% endblock %}
+{% block actions %}
+  <a href="{% url 'grn_list' %}" class="btn-outline">Back</a>
+{% endblock %}
+{% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}
+{% endblock %}
+{% block extra_tables %}
   <table class="table">
     <thead><tr><th>Item</th><th>Ordered</th><th>Received</th></tr></thead>
     <tbody>
@@ -15,7 +20,4 @@
     {% endfor %}
     </tbody>
   </table>
-  <div class="mt-4">
-    <a href="{% url 'grn_list' %}" class="btn-outline">Back</a>
-  </div>
 {% endblock %}

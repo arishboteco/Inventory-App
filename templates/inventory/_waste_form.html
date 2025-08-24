@@ -1,5 +1,5 @@
 <h2 class="text-h2 mb-4 mt-8">Wastage/Spoilage</h2>
-<form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
+<form method="post" class="grid gap-4 mb-4">
   {% csrf_token %}
   {% if waste_form.non_field_errors %}
   <ul class="text-red-600 list-disc pl-5">
@@ -9,13 +9,7 @@
   </ul>
   {% endif %}
   {% for field in waste_form %}
-    {% if field.name == 'notes' %}
-      {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-    {% else %}
-      {% include "components/form_field.html" with field=field %}
-    {% endif %}
+    {% include "components/form_field.html" with field=field %}
   {% endfor %}
-  <div class="col-span-2">
-    <button type="submit" name="submit_waste" class="btn-primary">Record</button>
-  </div>
+  <button type="submit" name="submit_waste" class="btn-primary">Record</button>
 </form>

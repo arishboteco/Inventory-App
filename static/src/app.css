@@ -142,6 +142,7 @@
   }
 
   /* Form component styles */
+  form { @apply grid gap-4; }
   form label { @apply block mb-2; }
   form input:not([type='checkbox']):not([type='radio']),
   form select,

@@ -48,7 +48,7 @@ module.exports = {
         table: {
           border: 'var(--color-border)',
           headerBg: 'var(--color-primary)',
-          headerText: 'var(--color-body)',
+          headerText: 'var(--color-nav-text)',
           hoverBg: 'var(--color-table-hover-bg)',
         },
       },

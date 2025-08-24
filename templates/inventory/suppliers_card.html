@@ -13,7 +13,7 @@
       <form
         hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
         hx-target="#suppliers_cards"
-        hx-confirm="Are you sure you want to delete this supplier?"
+        hx-confirm="Are you sure you want to toggle this supplier?"
         method="post"
         class="inline"
       >
@@ -25,8 +25,14 @@
         <input type="hidden" name="sort" value="{{ sort }}" />
         <input type="hidden" name="direction" value="{{ direction }}" />
         <input type="hidden" name="view" value="cards" />
-        <button type="submit" class="text-red-600">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v1h3m-12 0h3v1a1 1 0 001 1h4a1 1 0 001-1V5h3M4 7h16"/></svg>
+        <button type="submit" title="Toggle">
+          {% if row.is_active %}
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+          <span class="sr-only">Deactivate</span>
+          {% else %}
+          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          <span class="sr-only">Activate</span>
+          {% endif %}
         </button>
       </form>
     </div>

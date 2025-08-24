@@ -1,43 +1,44 @@
-<div class="max-md:overflow-x-auto">
-    <table class="table w-full table-auto text-sm">
-    <thead class="bg-primary text-white">
-      <tr>
-        <th class="px-4 py-2 text-right">ID</th>
-        <th class="px-4 py-2 text-right">MRN</th>
-        <th class="px-4 py-2">Requested By</th>
-        <th class="px-4 py-2">Department</th>
-        <th class="px-4 py-2">Status</th>
-        <th class="px-4 py-2">Actions</th>
-      </tr>
-    </thead>
-      <tbody>
-      {% for row in page_obj %}
-      <tr class="odd:bg-gray-50 hover:bg-gray-100 {% if row.is_overdue %}border border-danger{% endif %}">
-        <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>
-        <td class="px-4 py-2 text-right">{{ row.mrn }}</td>
-        <td class="px-4 py-2">{{ row.requested_by }}</td>
-        <td class="px-4 py-2">{{ row.department }}</td>
-        <td class="px-4 py-2"><span class="{{ badges[row.status|upper]|default:'badge-warning' }}">{{ row.status }}</span></td>
-        <td class="px-4 py-2">
-          {% url 'indent_detail' row.indent_id as view_url %}
-          {% url 'indent_update_status' row.indent_id 'APPROVED' as approve_url %}
-          {% include "components/action_menu.html" with view_url=view_url edit_url=view_url|add:'?edit=1' approve_url=approve_url %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="6" class="px-4 py-2 text-center">
-          0 indents yet.
-          <a href="{% url 'indent_create' %}" class="btn-primary ml-2">New Indent</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% extends "components/responsive_table.html" %}
+
+{% block headers %}
+  <th class="px-4 py-2 text-right">ID</th>
+  <th class="px-4 py-2 text-right">MRN</th>
+  <th class="px-4 py-2">Requested By</th>
+  <th class="px-4 py-2">Department</th>
+  <th class="px-4 py-2">Status</th>
+  <th class="px-4 py-2">Actions</th>
+{% endblock %}
+
+{% block rows %}
+  {% for row in page_obj %}
+  <tr class="odd:bg-gray-50 hover:bg-gray-100 {% if row.is_overdue %}border border-danger{% endif %}">
+    <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>
+    <td class="px-4 py-2 text-right">{{ row.mrn }}</td>
+    <td class="px-4 py-2">{{ row.requested_by }}</td>
+    <td class="px-4 py-2">{{ row.department }}</td>
+    <td class="px-4 py-2"><span class="{{ badges[row.status|upper]|default:'badge-warning' }}">{{ row.status }}</span></td>
+    <td class="px-4 py-2">
+      {% url 'indent_detail' row.indent_id as view_url %}
+      {% url 'indent_update_status' row.indent_id 'APPROVED' as approve_url %}
+      {% include "components/action_menu.html" with view_url=view_url edit_url=view_url|add:'?edit=1' approve_url=approve_url %}
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="6" class="px-4 py-2 text-center">
+      0 indents yet.
+      <a href="{% url 'indent_create' %}" class="btn-primary ml-2">New Indent</a>
+    </td>
+  </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block footer %}
   {% url 'indents_table' as table_url %}
   {% with extra_query='status='|add:status|urlencode|add:'&q='|add:q|urlencode %}
   <div class="mt-4">
     {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#indents_table" %}
   </div>
   {% endwith %}
+{% endblock %}
+

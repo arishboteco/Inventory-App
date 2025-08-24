@@ -1,0 +1,20 @@
+{% extends "components/responsive_table.html" %}
+
+{% block headers %}
+  <th>Item</th>
+  <th>Ordered</th>
+  <th>Received</th>
+  <th>Receive Now</th>
+{% endblock %}
+
+{% block rows %}
+  {% for item in items %}
+  <tr>
+    <td>{{ item.item.name }}</td>
+    <td>{{ item.quantity_ordered }}</td>
+    <td>{{ item.received_total }}</td>
+    <td><input type="number" step="any" name="item_{{ item.pk }}" class="form-control w-24" /></td>
+  </tr>
+  {% endfor %}
+{% endblock %}
+

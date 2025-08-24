@@ -12,6 +12,7 @@ from .api import (
     StockTransactionViewSet,
     SupplierViewSet,
 )
+from .ml import ml_dashboard
 
 __all__ = [
     "ItemViewSet",
@@ -26,4 +27,5 @@ __all__ = [
     "GoodsReceivedNoteViewSet",
     "GRNItemViewSet",
     "SaleTransactionViewSet",
+    "ml_dashboard",
 ]

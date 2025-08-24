@@ -1,0 +1,17 @@
+{% extends "components/table.html" %}
+
+{% block headers %}
+  <th class="px-4 py-2">Item</th>
+  <th class="px-4 py-2">Ordered</th>
+  <th class="px-4 py-2">Received</th>
+{% endblock %}
+
+{% block rows %}
+  {% for item in items %}
+    <tr class="odd:bg-gray-50 hover:bg-gray-100">
+      <td class="px-4 py-2">{{ item.item.name }}</td>
+      <td class="px-4 py-2">{{ item.quantity_ordered }}</td>
+      <td class="px-4 py-2">{{ item.received_total }}</td>
+    </tr>
+  {% endfor %}
+{% endblock %}

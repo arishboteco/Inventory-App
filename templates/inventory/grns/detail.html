@@ -8,16 +8,5 @@
   {% include "components/detail_table.html" with rows=rows %}
 {% endblock %}
 {% block extra_tables %}
-  <table class="table">
-    <thead><tr><th>Item</th><th>Ordered</th><th>Received</th></tr></thead>
-    <tbody>
-    {% for item in items %}
-      <tr>
-        <td>{{ item.po_item.item.name }}</td>
-        <td>{{ item.po_item.quantity_ordered }}</td>
-        <td>{{ item.quantity_received }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  {% include "inventory/grns/_items_table.html" with items=items %}
 {% endblock %}

@@ -371,6 +371,19 @@ def history_reports(request):
     chart_labels = [tx.transaction_date.strftime("%Y-%m-%d") for tx in chart_qs]
     chart_data = [float(tx.quantity_change) for tx in chart_qs]
 
+    tabs = [
+        {
+            "id": "history-table-tab",
+            "title": "Table",
+            "template": "inventory/_history_table.html",
+        },
+        {
+            "id": "history-chart-tab",
+            "title": "Chart",
+            "template": "inventory/_history_chart.html",
+        },
+    ]
+
     ctx = {
         "page_obj": page_obj,
         "transaction_types": transaction_types,
@@ -388,6 +401,7 @@ def history_reports(request):
         "filters": filters,
         "chart_labels": chart_labels,
         "chart_data": chart_data,
+        "tabs": tabs,
     }
     template = (
         "inventory/_history_tabs.html"

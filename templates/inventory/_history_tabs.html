@@ -1,7 +1,2 @@
-{% with tabs_list=[
-  {"id": "history-table-tab", "title": "Table", "template": "inventory/_history_table.html"},
-  {"id": "history-chart-tab", "title": "Chart", "template": "inventory/_history_chart.html"}
-] %}
-  {% include "components/tabs.html" with tabs=tabs_list %}
-{% endwith %}
+{% include "components/tabs.html" with tabs=tabs %}
 

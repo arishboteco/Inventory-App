@@ -12,7 +12,7 @@ if PROJECT_ROOT not in sys.path:
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings")
 django.setup()
 
-from inventory.models import Item
+from inventory.models import Item  # noqa: E402
 
 
 @pytest.fixture

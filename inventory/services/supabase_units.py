@@ -1,17 +1,13 @@
 import logging
-import threading
-import time
 from typing import Dict, List
 
 from .supabase_client import SupabaseException, get_supabase_client
+from .supabase_cache import get_cached
 
 
 logger = logging.getLogger(__name__)
 
 _CACHE_TTL = 300  # seconds
-_cache: Dict[str, List[str]] | None = None
-_cache_time: float | None = None
-_lock = threading.Lock()
 
 
 def _load_units_from_supabase() -> Dict[str, List[str]]:
@@ -50,19 +46,7 @@ def _load_units_from_supabase() -> Dict[str, List[str]]:
     }
 
 
-def get_units(force: bool = False) -> Dict[str, List[str]]:
-    """Return cached units mapping, refreshing from Supabase if expired."""
-    global _cache, _cache_time
-    with _lock:
-        now = time.time()
-        if (
-            not force
-            and _cache is not None
-            and _cache_time is not None
-            and now - _cache_time < _CACHE_TTL
-        ):
-            return _cache
-
-        _cache = _load_units_from_supabase()
-        _cache_time = now
-        return _cache
+get_units = get_cached(lambda: _load_units_from_supabase(), _CACHE_TTL)
+get_units.__doc__ = (
+    "Return cached units mapping, refreshing from Supabase if expired."
+)

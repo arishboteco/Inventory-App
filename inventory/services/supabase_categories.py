@@ -1,17 +1,13 @@
 import logging
-import threading
-import time
 from typing import Dict, List, Optional
 
 from .supabase_client import SupabaseException, get_supabase_client
+from .supabase_cache import get_cached
 
 
 logger = logging.getLogger(__name__)
 
 _CACHE_TTL = 300  # seconds
-_cache: Dict[Optional[str], List[dict]] | None = None
-_cache_time: float | None = None
-_lock = threading.Lock()
 
 
 def _load_categories_from_supabase() -> Dict[Optional[str], List[dict]]:
@@ -64,19 +60,7 @@ def _load_categories_from_supabase() -> Dict[Optional[str], List[dict]]:
     return cats
 
 
-def get_categories(force: bool = False) -> Dict[Optional[str], List[dict]]:
-    """Return cached categories mapping, refreshing from Supabase if expired."""
-    global _cache, _cache_time
-    with _lock:
-        now = time.time()
-        if (
-            not force
-            and _cache is not None
-            and _cache_time is not None
-            and now - _cache_time < _CACHE_TTL
-        ):
-            return _cache
-
-        _cache = _load_categories_from_supabase()
-        _cache_time = now
-        return _cache
+get_categories = get_cached(lambda: _load_categories_from_supabase(), _CACHE_TTL)
+get_categories.__doc__ = (
+    "Return cached categories mapping, refreshing from Supabase if expired."
+)

@@ -9,48 +9,48 @@
 {% url 'recipes_list' as recipes_url %}
 {% url 'logout' as logout_url %}
 {% url 'root' as login_url %}
-<button id="sidebar-toggle" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded" aria-label="Toggle navigation">
+<button id="sidebar-toggle" class="fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded" aria-label="Toggle navigation">
   <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
 </button>
-<aside id="sidebar" class="bg-primary text-white w-64 space-y-4 py-6 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 flex flex-col">
-  <div class="px-4 text-2xl font-bold">Inventory App</div>
+<aside id="sidebar" class="bg-primary text-gray-300 w-64 space-y-4 py-6 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 flex flex-col">
+  <div class="px-4 text-2xl font-bold text-white">Inventory App</div>
   <nav class="flex-1 overflow-y-auto px-2">
     <details class="mb-2">
-      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50">Overview</summary>
+      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50 hover:text-white">Overview</summary>
       <div class="pl-4 flex flex-col space-y-1">
-        <a href="{{ dashboard_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Dashboard</a>
-        <a href="{{ reports_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Reports</a>
+        <a href="{{ dashboard_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Dashboard</a>
+        <a href="{{ reports_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Reports</a>
       </div>
     </details>
     <details class="mb-2">
-      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50">Inventory</summary>
+      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50 hover:text-white">Inventory</summary>
       <div class="pl-4 flex flex-col space-y-1">
-        <a href="{{ items_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Items</a>
-        <a href="{{ movements_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Stock Movements</a>
+        <a href="{{ items_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Items</a>
+        <a href="{{ movements_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Stock Movements</a>
       </div>
     </details>
     <details class="mb-2">
-      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50">Procurement</summary>
+      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50 hover:text-white">Procurement</summary>
       <div class="pl-4 flex flex-col space-y-1">
-        <a href="{{ suppliers_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Suppliers</a>
-        <a href="{{ indents_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Indents</a>
-        <a href="{{ po_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Purchase Orders</a>
-        <a href="{{ grn_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">GRNs</a>
+        <a href="{{ suppliers_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Suppliers</a>
+        <a href="{{ indents_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Indents</a>
+        <a href="{{ po_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Purchase Orders</a>
+        <a href="{{ grn_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">GRNs</a>
       </div>
     </details>
     <details class="mb-2">
-      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50">Production</summary>
+      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50 hover:text-white">Production</summary>
       <div class="pl-4 flex flex-col space-y-1">
-        <a href="{{ recipes_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Recipes</a>
+        <a href="{{ recipes_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Recipes</a>
       </div>
     </details>
     <details>
-      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50">Account</summary>
+      <summary class="cursor-pointer px-2 py-2 rounded hover:bg-primary/50 hover:text-white">Account</summary>
       <div class="pl-4 flex flex-col space-y-1">
         {% if user.is_authenticated %}
-          <a href="{{ logout_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Logout</a>
+          <a href="{{ logout_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Logout</a>
         {% else %}
-          <a href="{{ login_url }}" class="block px-2 py-1 rounded hover:bg-primary/50">Login</a>
+          <a href="{{ login_url }}" class="block px-2 py-1 rounded hover:bg-primary/50 hover:text-white">Login</a>
         {% endif %}
       </div>
     </details>

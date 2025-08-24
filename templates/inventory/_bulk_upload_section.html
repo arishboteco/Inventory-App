@@ -1,0 +1,28 @@
+{% extends "components/collapsible.html" %}
+{% load static %}
+{% block title %}Bulk Upload{% endblock %}
+{% block content %}
+  <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>
+  <form method="post" action="" enctype="multipart/form-data" class="dropzone border-dashed border-2 p-4" id="bulk-upload-form">
+    {% csrf_token %}
+    <input type="hidden" name="bulk_upload" value="1" />
+    {% if bulk_form.non_field_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in bulk_form.non_field_errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="dz-message" data-dz-message><span>Drop CSV file here or click to upload.</span></div>
+  </form>
+  {% if bulk_success_count is not None %}
+    <p class="mt-2">{{ bulk_success_count }} transaction(s) recorded successfully.</p>
+  {% endif %}
+  {% if bulk_errors %}
+    <ul class="text-red-700 mt-2">
+      {% for e in bulk_errors %}
+        <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

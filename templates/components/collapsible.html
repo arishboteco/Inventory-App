@@ -1,0 +1,8 @@
+<details class="border rounded mb-4" {% block open %}{% endblock %}>
+  <summary class="cursor-pointer px-4 py-2 bg-gray-100">
+    <h2 class="text-h2 font-semibold">{% block title %}{% endblock %}</h2>
+  </summary>
+  <div class="p-4">
+    {% block content %}{% endblock %}
+  </div>
+</details>

@@ -1,0 +1,7 @@
+{% extends "components/collapsible.html" %}
+{% block open %}open{% endblock %}
+{% block title %}Manual Entry{% endblock %}
+{% block content %}
+  {% include "components/tabs.html" with tabs=tabs %}
+  <datalist id="item-options"></datalist>
+{% endblock %}

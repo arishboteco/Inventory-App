@@ -30,6 +30,7 @@ from .views.purchase_orders import (
 )
 from .views.recipes import RecipesListView, recipe_create, recipe_detail
 from .views.stock import history_reports, stock_movements
+from .views.visualizations import visualizations
 from .views.suppliers import (
     SupplierCreateView,
     SupplierEditView,
@@ -80,6 +81,7 @@ urlpatterns = [
     path("suppliers/search/", SupplierSearchView.as_view(), name="supplier_search"),
     path("stock-movements/", stock_movements, name="stock_movements"),
     path("history-reports/", history_reports, name="history_reports"),
+    path("visualizations/", visualizations, name="visualizations"),
     path("indents/", IndentsListView.as_view(), name="indents_list"),
     path("indents/table/", IndentsTableView.as_view(), name="indents_table"),
     path("indents/create/", IndentCreateView.as_view(), name="indent_create"),

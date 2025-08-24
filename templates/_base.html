@@ -16,24 +16,29 @@
     <script src="{% static 'js/tabs.js' %}"></script>
   </head>
   <body class="min-h-screen text-base">
-    {% include "components/nav.html" %}
-    <div id="toast-container" class="fixed top-4 right-4 space-y-2 z-50"></div>
-    <div
-      id="htmx-spinner"
-      role="status"
-      aria-live="polite"
-      class="hidden fixed inset-0 flex items-center justify-center bg-black/25"
-    >
-      <div
-        aria-hidden="true"
-        class="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"
-      ></div>
-    </div>
-    <div class="container p-8 max-md:p-4 max-sm:p-2 grid gap-4">
-      {% if messages %}
-        {% include "components/alert.html" %}
-      {% endif %}
-      {% block content %}{% endblock %}
+    <div class="flex min-h-screen">
+      {% include "components/nav.html" %}
+      <div class="flex-1 flex flex-col">
+        <div id="toast-container" class="fixed top-4 right-4 space-y-2 z-50"></div>
+        <div
+          id="htmx-spinner"
+          role="status"
+          aria-live="polite"
+          class="hidden fixed inset-0 flex items-center justify-center bg-black/25"
+        >
+          <div
+            aria-hidden="true"
+            class="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"
+          ></div>
+        </div>
+        <main class="main-content container grid gap-4 flex-1">
+          {% if messages %}
+            {% include "components/alert.html" %}
+          {% endif %}
+          {% block content %}{% endblock %}
+        </main>
+        {% include "components/footer.html" %}
+      </div>
     </div>
     {% include "components/colour_customizer.html" %}
     <script>

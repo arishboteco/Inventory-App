@@ -1,58 +1,50 @@
-{% extends "_base.html" %}
+{% extends "components/form_layout.html" %}
 {% block title %}New Indent – Inventory App{% endblock %}
-{% block content %}
-<div class="w-full max-w-4xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">New Indent</h1>
-  {% if form %}
-  <form method="post" id="indent-form" class="grid grid-cols-1 gap-4">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-      {% for field in form %}
-        {% include "components/form_field.html" with field=field %}
-      {% endfor %}
-    </div>
-    {{ formset.management_form }}
-    {% if formset.non_form_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in formset.non_form_errors %}
-        <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <table id="items-table" class="table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qty</th>
-          <th>Notes</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for item_form in formset %}
-        <tr class="form-row">
-          <td>{% include "components/form_field.html" with field=item_form.item %}</td>
-          <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
-          <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-          <td><button type="button" class="remove-row btn-danger">Remove</button></td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    <datalist id="item-options"></datalist>
-    <div>
-      <button type="button" id="add-row" class="btn-secondary mt-2">Add Item</button>
-    </div>
-    <div class="flex gap-2">
-      <button type="submit" class="btn-primary">Submit</button>
-      <a href="{% url 'indents_list' %}" class="btn-outline">Cancel</a>
-    </div>
-  </form>
+{% block heading %}New Indent{% endblock %}
+{% block form_attrs %}id="indent-form"{% endblock %}
+{% block fields %}
+  <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+  </div>
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}
+  <ul class="text-red-600 list-disc pl-5">
+    {% for error in formset.non_form_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <table id="items-table" class="table">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for item_form in formset %}
+      <tr class="form-row">
+        <td>{% include "components/form_field.html" with field=item_form.item %}</td>
+        <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
+        <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
+        <td><button type="button" class="remove-row btn-danger">Remove</button></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <datalist id="item-options"></datalist>
+  <div>
+    <button type="button" id="add-row" class="btn-secondary mt-2">Add Item</button>
+  </div>
+{% endblock %}
+{% block submit_text %}Submit{% endblock %}
+{% block back_url %}{% url 'indents_list' %}{% endblock %}
+{% block back_text %}Cancel{% endblock %}
+{% block extra %}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       initFormset({
@@ -64,9 +56,6 @@
       });
     });
   </script>
-  {% else %}
-    <p>Unable to load form.</p>
-  {% endif %}
-</div>
 {% endblock %}
+{% block no_form %}<p>Unable to load form.</p>{% endblock %}
 

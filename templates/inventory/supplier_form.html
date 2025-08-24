@@ -1,29 +1,15 @@
-{% extends "_base.html" %}
+{% extends "components/form_layout.html" %}
 {% block title %}{% if is_edit %}Edit Supplier{% else %}New Supplier{% endif %} – Inventory App{% endblock %}
-{% block content %}
-<div class="w-full max-w-4xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">{% if is_edit %}Edit Supplier{% else %}New Supplier{% endif %}</h1>
-  {% if form %}
-  <form method="post" class="grid grid-cols-1 gap-4">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-      {% for field in form %}
-        {% include "components/form_field.html" with field=field %}
-      {% endfor %}
-    </div>
-    <div class="flex gap-2">
-      <button type="submit" class="btn-primary">Save</button>
-      <a href="{% url 'suppliers_list' %}" class="btn-outline">Cancel</a>
-    </div>
-  </form>
-  {% else %}
-    <p>Unable to load form.</p>
-  {% endif %}
-</div>
+{% block heading %}{% if is_edit %}Edit Supplier{% else %}New Supplier{% endif %}{% endblock %}
+{% block fields %}
+  <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+  </div>
 {% endblock %}
+{% block submit_text %}Save{% endblock %}
+{% block back_url %}{% url 'suppliers_list' %}{% endblock %}
+{% block back_text %}Cancel{% endblock %}
+{% block no_form %}<p>Unable to load form.</p>{% endblock %}
 

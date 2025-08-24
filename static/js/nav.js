@@ -1,17 +1,26 @@
 document.addEventListener("DOMContentLoaded", function () {
   const toggle = document.getElementById("sidebar-toggle");
   const sidebar = document.getElementById("sidebar");
-  const collapsedClass = "-translate-x-full";
+  const collapsedClasses = ["-translate-x-full", "md:-translate-x-full"];
 
-  if (sidebar && localStorage.getItem("sidebar-collapsed") === "true") {
-    sidebar.classList.add(collapsedClass);
+  function setCollapsed(state) {
+    collapsedClasses.forEach(cls =>
+      sidebar.classList[state ? "add" : "remove"](cls)
+    );
+    localStorage.setItem("sidebar-collapsed", state.toString());
+  }
+
+  if (sidebar) {
+    const stored = localStorage.getItem("sidebar-collapsed");
+    const startCollapsed =
+      stored === null ? window.innerWidth < 768 : stored === "true";
+    setCollapsed(startCollapsed);
   }
 
   if (toggle && sidebar) {
     toggle.addEventListener("click", function () {
-      sidebar.classList.toggle(collapsedClass);
-      const isCollapsed = sidebar.classList.contains(collapsedClass);
-      localStorage.setItem("sidebar-collapsed", isCollapsed);
+      const isCollapsed = sidebar.classList.contains("-translate-x-full");
+      setCollapsed(!isCollapsed);
     });
   }
 });

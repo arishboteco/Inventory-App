@@ -1,58 +1,11 @@
-{% extends "_base.html" %}
+{% extends "components/list_layout.html" %}
 {% block title %}History Reports – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">History Reports</h1>
-    <form id="filters" method="get" class="grid gap-2 mb-4 grid-cols-7 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1"
-          hx-get="{% url 'history_reports' %}"
-          hx-target="#history_table"
-          hx-indicator="#htmx-spinner">
-      <input
-        type="text"
-        name="item"
-        list="history-items"
-        class="form-control w-full"
-        value="{{ item|default:'' }}"
-      />
-      <datalist id="history-items">
-        <option value="" label="All Items"></option>
-        {% for it in items %}
-        <option value="{{ it.item_id }}" label="{{ it.name }}"></option>
-        {% endfor %}
-      </datalist>
-      <input
-        type="text"
-        name="type"
-        list="history-types"
-        class="form-control w-full"
-        value="{{ type }}"
-      />
-      <datalist id="history-types">
-        <option value="" label="All Types"></option>
-        {% for t in transaction_types %}
-        <option value="{{ t }}"></option>
-        {% endfor %}
-      </datalist>
-      <input
-        type="text"
-        name="user"
-        list="history-users"
-        class="form-control w-full"
-        value="{{ user }}"
-      />
-      <datalist id="history-users">
-        <option value="" label="All Users"></option>
-        {% for u in users %}
-        <option value="{{ u }}"></option>
-        {% endfor %}
-      </datalist>
-      <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
-      <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
-      <input type="hidden" name="sort" value="{{ sort|default:'date' }}" />
-      <input type="hidden" name="direction" value="{{ direction|default:'desc' }}" />
-      <button type="submit" class="btn-primary w-full">Filter</button>
-      <a href="?{% if query_string %}{{ query_string }}&{% endif %}export=csv" class="btn-outline w-full">Export CSV</a>
-    </form>
-    <div id="history_table">
-      {% include "inventory/_history_table.html" %}
-    </div>
+{% block heading %}History Reports{% endblock %}
+{% block filter_bar %}
+  {% url 'history_reports' as history_url %}
+  {% include "components/filter_bar.html" with hx_get=history_url hx_target="#history_table" hx_indicator="#htmx-spinner" filters=filters export_url=history_url export_param_name="export" export_param_value="csv" sort=sort direction=direction q=item search_placeholder="Item ID" %}
 {% endblock %}
+{% block table_id %}history_table{% endblock %}
+{% block hx_get %}{% url 'history_reports' %}{% endblock %}
+{% block table_content %}{% include "inventory/_history_table.html" %}{% endblock %}
+

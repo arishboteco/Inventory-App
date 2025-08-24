@@ -86,8 +86,9 @@ def test_load_categories_supabase_exception(monkeypatch):
 
 
 def test_get_categories_thread_safe(monkeypatch):
-    monkeypatch.setattr(supabase_categories, "_cache", None)
-    monkeypatch.setattr(supabase_categories, "_cache_time", None)
+    state = supabase_categories.get_categories._state
+    state.value = None
+    state.time = None
 
     def slow_load():
         time.sleep(0.01)
@@ -100,4 +101,4 @@ def test_get_categories_thread_safe(monkeypatch):
     with ThreadPoolExecutor(max_workers=5) as ex:
         list(ex.map(lambda _: supabase_categories.get_categories(force=True), range(5)))
 
-    assert supabase_categories._cache == {None: [{"id": 1, "name": "Food"}]}
+    assert state.value == {None: [{"id": 1, "name": "Food"}]}

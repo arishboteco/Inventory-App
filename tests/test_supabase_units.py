@@ -71,8 +71,9 @@ def test_load_units_configuration_error(monkeypatch):
 
 
 def test_get_units_thread_safe(monkeypatch):
-    monkeypatch.setattr(supabase_units, "_cache", None)
-    monkeypatch.setattr(supabase_units, "_cache_time", None)
+    state = supabase_units.get_units._state
+    state.value = None
+    state.time = None
 
     def slow_load():
         time.sleep(0.01)
@@ -83,4 +84,4 @@ def test_get_units_thread_safe(monkeypatch):
     with ThreadPoolExecutor(max_workers=5) as ex:
         list(ex.map(lambda _: supabase_units.get_units(force=True), range(5)))
 
-    assert supabase_units._cache == {"kg": ["g"]}
+    assert state.value == {"kg": ["g"]}

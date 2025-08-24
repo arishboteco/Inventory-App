@@ -11,16 +11,16 @@
   <div id="items-formset">
     {{ formset.management_form }}
     {% if formset.non_form_errors %}
-      <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+      <ul class="text-red-600 list-disc pl-5">
         {% for error in formset.non_form_errors %}
           <li>{{ error }}</li>
         {% endfor %}
       </ul>
     {% endif %}
     {% for f in formset %}
-    <div class="border dark:border-form-darkBorder p-2 item-form">
+    <div class="border p-2 item-form">
       {% if f.non_field_errors %}
-        <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+        <ul class="text-red-600 list-disc pl-5">
           {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         </ul>
       {% endif %}
@@ -38,7 +38,7 @@
 {% block back_url %}{% url 'purchase_orders_list' %}{% endblock %}
 {% block extra %}
 <template id="item-empty-form">
-  <div class="border dark:border-form-darkBorder p-2 item-form">
+  <div class="border p-2 item-form">
     {% for field in formset.empty_form %}
       {% include "components/form_field.html" with field=field %}
     {% endfor %}

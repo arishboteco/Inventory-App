@@ -18,7 +18,7 @@
     <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
       {% csrf_token %}
       {% if receive_form.non_field_errors %}
-      <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+      <ul class="text-red-600 list-disc pl-5">
         {% for error in receive_form.non_field_errors %}
         <li>{{ error }}</li>
         {% endfor %}
@@ -40,7 +40,7 @@
     <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
       {% csrf_token %}
       {% if adjust_form.non_field_errors %}
-      <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+      <ul class="text-red-600 list-disc pl-5">
         {% for error in adjust_form.non_field_errors %}
         <li>{{ error }}</li>
         {% endfor %}
@@ -62,7 +62,7 @@
     <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
       {% csrf_token %}
       {% if waste_form.non_field_errors %}
-      <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+      <ul class="text-red-600 list-disc pl-5">
         {% for error in waste_form.non_field_errors %}
         <li>{{ error }}</li>
         {% endfor %}
@@ -87,7 +87,7 @@
   <form method="post" enctype="multipart/form-data" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
     {% csrf_token %}
     {% if bulk_form.non_field_errors %}
-    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+    <ul class="text-red-600 list-disc pl-5">
       {% for error in bulk_form.non_field_errors %}
       <li>{{ error }}</li>
       {% endfor %}
@@ -104,7 +104,7 @@
     <p>{{ bulk_success_count }} transaction(s) recorded successfully.</p>
   {% endif %}
   {% if bulk_errors %}
-    <ul class="text-red-700 dark:text-red-400">
+    <ul class="text-red-700">
       {% for e in bulk_errors %}
         <li>{{ e }}</li>
       {% endfor %}

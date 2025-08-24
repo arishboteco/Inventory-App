@@ -25,7 +25,7 @@ def migrate_existing_grn(apps, schema_editor):
                 purchase_order_id=poi.purchase_order_id,
                 supplier_id=poi.purchase_order.supplier_id,
                 received_date=now().date(),
-                notes="Migrated from PurchaseOrderItem", 
+                notes="Migrated from PurchaseOrderItem",
             )
             GRNItem.objects.create(
                 grn=grn,

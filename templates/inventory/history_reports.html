@@ -3,9 +3,63 @@
 {% block heading %}History Reports{% endblock %}
 {% block filter_bar %}
   {% url 'history_reports' as history_url %}
-  {% include "components/filter_bar.html" with hx_get=history_url hx_target="#history_table" hx_indicator="#htmx-spinner" filters=filters export_url=history_url export_param_name="export" export_param_value="csv" sort=sort direction=direction q=item search_placeholder="Item ID" %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <div class="flex flex-col gap-2 mb-4">
+    <input
+      id="date-range"
+      type="text"
+      class="form-control w-full md:w-64"
+      placeholder="Select Date Range"
+      value="{% if start_date and end_date %}{{ start_date }} to {{ end_date }}{% endif %}"
+    />
+    <div class="flex flex-col md:flex-row md:items-end gap-2">
+      <div class="flex-1">
+        {% include "components/filter_bar.html" with hx_get=history_url hx_target="#history_table" hx_indicator="#htmx-spinner" filters=filters sort=sort direction=direction q=item search_placeholder="Item ID" %}
+      </div>
+      <div class="flex gap-2">
+        <a
+          href="{{ history_url }}{% if query_string %}?{{ query_string }}&{% else %}?{% endif %}export=csv"
+          class="btn-tertiary"
+          >Download CSV</a
+        >
+        <a
+          href="{{ history_url }}{% if query_string %}?{{ query_string }}&{% else %}?{% endif %}export=pdf"
+          class="btn-tertiary"
+          >Download PDF</a
+        >
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('filters');
+      const historyUrl = '{{ history_url }}';
+      ['start_date', 'end_date'].forEach(name => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.setAttribute('hx-get', historyUrl);
+        input.setAttribute('hx-target', '#history_table');
+        input.setAttribute('hx-trigger', 'change');
+        input.setAttribute('hx-include', '#filters');
+        input.setAttribute('hx-indicator', '#htmx-spinner');
+        form.appendChild(input);
+      });
+      flatpickr('#date-range', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        onClose: function(selectedDates, dateStr) {
+          const [start, end] = dateStr.split(' to ');
+          form.querySelector('input[name="start_date"]').value = start || '';
+          form.querySelector('input[name="end_date"]').value = end || '';
+          form.querySelector('input[name="end_date"]').dispatchEvent(new Event('change'));
+        }
+      });
+    });
+  </script>
 {% endblock %}
 {% block table_id %}history_table{% endblock %}
 {% block hx_get %}{% url 'history_reports' %}{% endblock %}
-{% block table_content %}{% include "inventory/_history_table.html" %}{% endblock %}
+{% block table_content %}{% include "inventory/_history_tabs.html" %}{% endblock %}
 

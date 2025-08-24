@@ -245,6 +245,49 @@ def history_reports(request):
             )
         return response
 
+    if request.GET.get("export") == "pdf":
+        from fpdf import FPDF
+
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = "attachment; filename=history_report.pdf"
+
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Helvetica", size=10)
+
+        headers = [
+            "Transaction ID",
+            "Item",
+            "Quantity",
+            "Type",
+            "User",
+            "Date",
+            "Notes",
+        ]
+        col_widths = [25, 30, 20, 25, 20, 30, 40]
+        for head, width in zip(headers, col_widths):
+            pdf.cell(width, 8, head, border=1)
+        pdf.ln()
+
+        for row in qs:
+            pdf.cell(col_widths[0], 8, str(row.transaction_id), border=1)
+            pdf.cell(col_widths[1], 8, getattr(row.item, "name", ""), border=1)
+            pdf.cell(col_widths[2], 8, str(row.quantity_change), border=1)
+            pdf.cell(col_widths[3], 8, row.transaction_type, border=1)
+            pdf.cell(col_widths[4], 8, str(row.user_id), border=1)
+            pdf.cell(
+                col_widths[5],
+                8,
+                row.transaction_date.strftime("%Y-%m-%d"),
+                border=1,
+            )
+            pdf.cell(col_widths[6], 8, (row.notes or "")[:40], border=1)
+            pdf.ln()
+
+        pdf_bytes = pdf.output(dest="S").encode("latin1")
+        response.write(pdf_bytes)
+        return response
+
     paginator = Paginator(qs, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -278,17 +321,21 @@ def history_reports(request):
             "name": "type",
             "value": tx_type,
             "list_id": "history-types",
-            "options": [{"value": "", "label": "All Types"}] + [{"value": t} for t in transaction_types],
+            "options": [{"value": "", "label": "All Types"}]
+            + [{"value": t} for t in transaction_types],
         },
         {
             "name": "user",
             "value": user,
             "list_id": "history-users",
-            "options": [{"value": "", "label": "All Users"}] + [{"value": u} for u in users],
+            "options": [{"value": "", "label": "All Users"}]
+            + [{"value": u} for u in users],
         },
-        {"name": "start_date", "value": start_date, "list_id": "history-start-date", "options": []},
-        {"name": "end_date", "value": end_date, "list_id": "history-end-date", "options": []},
     ]
+
+    chart_qs = qs.order_by("transaction_date")
+    chart_labels = [tx.transaction_date.strftime("%Y-%m-%d") for tx in chart_qs]
+    chart_data = [float(tx.quantity_change) for tx in chart_qs]
 
     ctx = {
         "page_obj": page_obj,
@@ -305,9 +352,11 @@ def history_reports(request):
         "direction": direction,
         "total_quantity": total_quantity,
         "filters": filters,
+        "chart_labels": chart_labels,
+        "chart_data": chart_data,
     }
     template = (
-        "inventory/_history_table.html"
+        "inventory/_history_tabs.html"
         if request.headers.get("HX-Request")
         else "inventory/history_reports.html"
     )

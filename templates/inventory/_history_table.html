@@ -48,7 +48,7 @@
 
 {% block rows %}
   {% for row in page_obj %}
-  <tr class="odd:bg-gray-50 hover:bg-gray-100">
+  <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
     <td class="px-4 py-2 text-right">{{ row.transaction_id }}</td>
     <td class="px-4 py-2">{{ row.item.name }}</td>
     <td class="px-4 py-2">{{ row.transaction_type }}</td>

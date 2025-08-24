@@ -1,11 +1,18 @@
 from datetime import timedelta
+from decimal import Decimal
 from typing import List, Tuple
 
-from django.db.models import F, Sum
+from django.db.models import Avg, Count, F, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from inventory.models import Item, StockTransaction
+from inventory.models import (
+    GRNItem,
+    Indent,
+    Item,
+    PurchaseOrder,
+    StockTransaction,
+)
 
 
 def stock_value():
@@ -41,6 +48,55 @@ def low_stock_count():
     return Item.objects.filter(
         reorder_point__isnull=False, current_stock__lt=F("reorder_point")
     ).count()
+
+
+def low_stock_items(limit: int = 5) -> List[str]:
+    """Return names of items that are below their reorder point."""
+    qs = Item.objects.filter(
+        reorder_point__isnull=False, current_stock__lt=F("reorder_point")
+    ).order_by("name")
+    return list(qs.values_list("name", flat=True)[:limit])
+
+
+def high_price_purchases(threshold: Decimal) -> List[GRNItem]:
+    """Return recent GRN items priced above historical averages.
+
+    Args:
+        threshold: Percentage represented as a decimal (e.g., ``Decimal('0.1')``
+            for 10%). A GRN item's price must exceed ``avg_price * (1 + threshold)``
+            to be flagged.
+    """
+
+    cutoff = timezone.now() - timedelta(days=30)
+    flagged: List[GRNItem] = []
+    for grn_item in GRNItem.objects.filter(grn__received_date__gte=cutoff).select_related(
+        "po_item__item"
+    ):
+        avg_price = (
+            GRNItem.objects.filter(po_item__item=grn_item.po_item.item)
+            .exclude(pk=grn_item.pk)
+            .aggregate(avg=Avg("unit_price_at_receipt"))["avg"]
+        )
+        if avg_price and grn_item.unit_price_at_receipt > avg_price * (1 + threshold):
+            flagged.append(grn_item)
+    return flagged
+
+
+def pending_po_status_counts() -> dict:
+    """Return counts of purchase orders by pending status."""
+    qs = PurchaseOrder.objects.filter(status__in=["DRAFT", "ORDERED", "PARTIAL"])
+    counts = {row["status"]: row["total"] for row in qs.values("status").annotate(total=Count("po_id"))}
+    return {status: counts.get(status, 0) for status in ["DRAFT", "ORDERED", "PARTIAL"]}
+
+
+def pending_indent_counts() -> dict:
+    """Return counts of indents that are not completed or cancelled."""
+    qs = Indent.objects.filter(status__in=["PENDING", "SUBMITTED", "PROCESSING"])
+    counts = {row["status"]: row["total"] for row in qs.values("status").annotate(total=Count("indent_id"))}
+    return {
+        status: counts.get(status, 0)
+        for status in ["PENDING", "SUBMITTED", "PROCESSING"]
+    }
 
 
 def stock_trend_last_7_days() -> Tuple[List[str], List[float]]:

@@ -1,8 +1,18 @@
-import pytest
 from datetime import timedelta
+from decimal import Decimal
+
+import pytest
 from django.utils import timezone
 
-from inventory.models import StockTransaction
+from inventory.models import (
+    GRNItem,
+    GoodsReceivedNote,
+    Indent,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    StockTransaction,
+    Supplier,
+)
 from inventory.services import kpis
 
 
@@ -21,3 +31,36 @@ def test_kpi_calculations(item_factory):
     labels, values = kpis.stock_trend_last_7_days()
     assert labels and len(labels) == 7
     assert values[-1] == 3.0
+
+
+@pytest.mark.django_db
+def test_high_price_purchase_detection(item_factory):
+    item = item_factory(name="X")
+    supplier = Supplier.objects.create(name="Supp")
+    po = PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="ORDERED")
+    poi = PurchaseOrderItem.objects.create(purchase_order=po, item=item, quantity_ordered=1, unit_price=Decimal("100"))
+    grn = GoodsReceivedNote.objects.create(purchase_order=po, supplier=supplier, received_date=timezone.now().date())
+    GRNItem.objects.create(grn=grn, po_item=poi, quantity_ordered_on_po=1, quantity_received=1, unit_price_at_receipt=Decimal("100"))
+    grn2 = GoodsReceivedNote.objects.create(purchase_order=po, supplier=supplier, received_date=timezone.now().date())
+    high = GRNItem.objects.create(grn=grn2, po_item=poi, quantity_ordered_on_po=1, quantity_received=1, unit_price_at_receipt=Decimal("150"))
+
+    flagged = kpis.high_price_purchases(Decimal("0.2"))
+    assert list(flagged) == [high]
+
+
+@pytest.mark.django_db
+def test_pending_po_and_indent_counts():
+    supplier = Supplier.objects.create(name="S")
+    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="DRAFT")
+    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="ORDERED")
+    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="PARTIAL")
+    Indent.objects.create(mrn="1", status="PENDING")
+    Indent.objects.create(mrn="2", status="SUBMITTED")
+    Indent.objects.create(mrn="3", status="PROCESSING")
+    Indent.objects.create(mrn="4", status="COMPLETED")
+
+    po_counts = kpis.pending_po_status_counts()
+    indent_counts = kpis.pending_indent_counts()
+
+    assert po_counts == {"DRAFT": 1, "ORDERED": 1, "PARTIAL": 1}
+    assert indent_counts == {"PENDING": 1, "SUBMITTED": 1, "PROCESSING": 1}

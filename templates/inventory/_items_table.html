@@ -2,51 +2,69 @@
 
 {% block headers %}
 <th class="px-4 py-2 text-right">
-  <a href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=item_id&direction={% if sort == 'item_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-get="{% url 'items_table' %}?sort=item_id&direction={% if sort == 'item_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='item_id';document.querySelector('#filters input[name=direction]').value='{% if sort == 'item_id' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+  <a
+    class="text-white no-underline hover:underline"
+    href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=item_id&direction={% if sort == 'item_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-get="{% url 'items_table' %}?sort=item_id&direction={% if sort == 'item_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-target="#items_table" hx-include="#filters"
+    hx-on:click="document.querySelector('#filters input[name=sort]').value='item_id';document.querySelector('#filters input[name=direction]').value='{% if sort == 'item_id' and direction == 'asc' %}desc{% else %}asc{% endif %}'"
+  >
     ID{% if sort == 'item_id' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
-  </th>
-  <th class="px-4 py-2">
-  <a href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-get="{% url 'items_table' %}?sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='name';document.querySelector('#filters input[name=direction]').value='{% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
-    Name{% if sort == 'name' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
-    </a>
-  </th>
+</th>
 <th class="px-4 py-2">
-  <a href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=base_unit&direction={% if sort == 'base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-get="{% url 'items_table' %}?sort=base_unit&direction={% if sort == 'base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='base_unit';document.querySelector('#filters input[name=direction]').value='{% if sort == 'base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+  <a
+    class="text-white no-underline hover:underline"
+    href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-get="{% url 'items_table' %}?sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-target="#items_table" hx-include="#filters"
+    hx-on:click="document.querySelector('#filters input[name=sort]').value='name';document.querySelector('#filters input[name=direction]').value='{% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}'"
+  >
+    Name{% if sort == 'name' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
+  </a>
+</th>
+<th class="px-4 py-2">
+  <a
+    class="text-white no-underline hover:underline"
+    href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=base_unit&direction={% if sort == 'base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-get="{% url 'items_table' %}?sort=base_unit&direction={% if sort == 'base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-target="#items_table" hx-include="#filters"
+    hx-on:click="document.querySelector('#filters input[name=sort]').value='base_unit';document.querySelector('#filters input[name=direction]').value='{% if sort == 'base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}'"
+  >
     Base Unit{% if sort == 'base_unit' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
-    </a>
-  </th>
+  </a>
+</th>
 <th class="px-4 py-2 text-right">
-  <a href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-get="{% url 'items_table' %}?sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='current_stock';document.querySelector('#filters input[name=direction]').value='{% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+  <a
+    class="text-white no-underline hover:underline"
+    href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-get="{% url 'items_table' %}?sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-target="#items_table" hx-include="#filters"
+    hx-on:click="document.querySelector('#filters input[name=sort]').value='current_stock';document.querySelector('#filters input[name=direction]').value='{% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}'"
+  >
     Current Stock{% if sort == 'current_stock' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
-    </a>
-  </th>
+  </a>
+</th>
 <th class="px-4 py-2 text-right">
-  <a href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=reorder_point&direction={% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-get="{% url 'items_table' %}?sort=reorder_point&direction={% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='reorder_point';document.querySelector('#filters input[name=direction]').value='{% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+  <a
+    class="text-white no-underline hover:underline"
+    href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=reorder_point&direction={% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-get="{% url 'items_table' %}?sort=reorder_point&direction={% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-target="#items_table" hx-include="#filters"
+    hx-on:click="document.querySelector('#filters input[name=sort]').value='reorder_point';document.querySelector('#filters input[name=direction]').value='{% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}'"
+  >
     Reorder Point{% if sort == 'reorder_point' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
-    </a>
-  </th>
+  </a>
+</th>
 <th class="px-4 py-2">Stock Level</th>
 <th class="px-4 py-2">
-  <a href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-get="{% url 'items_table' %}?sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-     hx-target="#items_table" hx-include="#filters"
-     hx-on:click="document.querySelector('#filters input[name=sort]').value='is_active';document.querySelector('#filters input[name=direction]').value='{% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
+  <a
+    class="text-white no-underline hover:underline"
+    href="{% url 'items_list' %}?q={{ q|urlencode }}&active={{ active|urlencode }}&page_size={{ page_size }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-get="{% url 'items_table' %}?sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+    hx-target="#items_table" hx-include="#filters"
+    hx-on:click="document.querySelector('#filters input[name=sort]').value='is_active';document.querySelector('#filters input[name=direction]').value='{% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}'"
+  >
     Active{% if sort == 'is_active' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
 </th>

@@ -6,12 +6,14 @@
   <a href="{% url 'grn_list' %}" class="btn-secondary">GRNs</a>
 {% endblock %}
 {% block filter_bar %}
-  <form method="get" class="mb-4 grid gap-2 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
-    <div class="space-y-1">
-      <label class="block text-sm font-medium">Status</label>
-      <input
-        type="text"
-        name="status"
+  <details class="mb-4">
+    <summary class="cursor-pointer px-4 py-2 bg-gray-100 rounded">Filters</summary>
+    <form method="get" class="mt-2 grid gap-2 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium">Status</label>
+        <input
+          type="text"
+          name="status"
         list="po-statuses"
         class="form-control w-full"
         value="{{ current_status }}"
@@ -50,7 +52,8 @@
     <div class="space-y-1">
       <button type="submit" class="btn-primary w-full">Filter</button>
     </div>
-  </form>
+    </form>
+  </details>
 {% endblock %}
 {% block table_container %}
   {% include "inventory/purchase_orders/_table.html" %}

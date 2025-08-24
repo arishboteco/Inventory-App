@@ -94,3 +94,36 @@ def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:
         for i in items
     ]
     return header
+
+
+def get_orders_progress(po_ids: List[int]) -> Dict[int, Dict[str, Any]]:
+    """Return totals and progress percentage for the given purchase orders.
+
+    Args:
+        po_ids: list of purchase order primary keys.
+
+    Returns:
+        Mapping of purchase order id to a dict with ``ordered_total``,
+        ``received_total`` and ``percent`` keys.
+    """
+    if not po_ids:
+        return {}
+    rows = (
+        PurchaseOrderItem.objects.filter(purchase_order_id__in=po_ids)
+        .values("purchase_order_id")
+        .annotate(
+            ordered_total=Sum("quantity_ordered"),
+            received_total=Sum("grnitem__quantity_received"),
+        )
+    )
+    progress: Dict[int, Dict[str, Any]] = {}
+    for r in rows:
+        ordered = r["ordered_total"] or Decimal("0")
+        received = r["received_total"] or Decimal("0")
+        percent = int(received / ordered * 100) if ordered else 0
+        progress[r["purchase_order_id"]] = {
+            "ordered_total": ordered,
+            "received_total": received,
+            "percent": percent,
+        }
+    return progress

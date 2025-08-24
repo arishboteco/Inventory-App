@@ -1,15 +1,108 @@
 {% extends "_base.html" %}
 
 {% block content %}
-  <div class="flex items-center justify-center">
-    <div class="bg-white py-6 px-8 max-md:px-6 max-sm:px-4 rounded shadow text-center">
-      <p class="text-xl">Django is running</p>
-      <div class="mt-4 flex flex-wrap justify-center gap-2">
-        <a href="{% url 'dashboard' %}" class="px-4 py-2 bg-blue-600 text-white rounded">Dashboard</a>
-        <a href="{% url 'items_list' %}" class="px-4 py-2 bg-green-600 text-white rounded">Items</a>
-        <a href="{% url 'suppliers_list' %}" class="px-4 py-2 bg-purple-600 text-white rounded">Suppliers</a>
-        <a href="{% url 'login' %}" class="px-4 py-2 bg-gray-600 text-white rounded">Login</a>
+<div class="container mx-auto px-8 max-md:px-6 max-sm:px-4 py-8">
+  {% if user.is_authenticated %}
+    {% include "core/_kpi_cards.html" with stock_value=stock_value receipts=receipts issues=issues low_stock=low_stock %}
+    <div class="grid gap-4 mt-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="text-primary font-semibold mb-2">Overview</h2>
+        <ul class="space-y-1">
+          <li>
+            <a href="{% url 'dashboard' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'history_reports' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+              Reports
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="text-primary font-semibold mb-2">Inventory</h2>
+        <ul class="space-y-1">
+          <li>
+            <a href="{% url 'items_list' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg>
+              Items
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'stock_movements' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+              Stock Movements
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="text-primary font-semibold mb-2">Procurement</h2>
+        <ul class="space-y-1">
+          <li>
+            <a href="{% url 'suppliers_list' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg>
+              Suppliers
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'indents_list' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0a2.251 2.251 0 0 1 2.023-1.586h1.5c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg>
+              Indents
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'purchase_orders_list' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/></svg>
+              Purchase Orders
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'grn_list' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12"/></svg>
+              GRNs
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="text-primary font-semibold mb-2">Production</h2>
+        <ul class="space-y-1">
+          <li>
+            <a href="{% url 'recipes_list' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+              Recipes
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="bg-white rounded shadow p-4">
+        <h2 class="text-primary font-semibold mb-2">Account</h2>
+        <ul class="space-y-1">
+          <li>
+            <a href="{% url 'logout' %}" class="flex items-center text-primary hover:underline">
+              <svg aria-hidden="true" class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"/></svg>
+              Logout
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
-  </div>
+  {% else %}
+    <div class="flex items-center justify-center">
+      <div class="bg-white p-8 max-md:p-6 max-sm:p-4 rounded shadow w-full max-w-md">
+        <form method="post" class="grid gap-4">
+          {% csrf_token %}
+          {% for field in form %}
+            {% include "components/form_field.html" with field=field %}
+          {% endfor %}
+          <button type="submit" class="btn-primary w-full">Login</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

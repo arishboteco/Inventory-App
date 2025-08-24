@@ -33,21 +33,41 @@
   </form>
 {% endblock %}
 {% block table_container %}
-  <table class="table">
-    <thead><tr><th>ID</th><th>PO</th><th>Supplier</th><th>Date</th></tr></thead>
-    <tbody>
+  <ol class="relative border-l border-border">
     {% for grn in grns %}
-      <tr>
-        <td><a class="text-primary" href="{% url 'grn_detail' grn.pk %}">{{ grn.pk }}</a></td>
-        <td>{{ grn.purchase_order_id }}</td>
-        <td>{{ grn.supplier.name }}</td>
-        <td>{{ grn.received_date }}</td>
-      </tr>
+      <li class="mb-10 ml-6">
+        <div class="absolute w-3 h-3 bg-primary rounded-full -left-1.5 border border-white"></div>
+        <div class="p-4 border border-border rounded bg-body">
+          <div class="flex items-start justify-between">
+            <div>
+              <a class="text-primary font-semibold" href="{% url 'grn_detail' grn.pk %}">GRN {{ grn.pk }}</a>
+              <p class="text-sm">{{ grn.received_date }}</p>
+              <p class="text-sm">PO {{ grn.purchase_order_id }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="badge-success">Received</span>
+              <a href="{% url 'grn_export' grn.pk %}" class="text-bodyText" title="Attachments">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+          <div class="mt-2">
+            <a href="?supplier={{ grn.supplier.pk }}" class="badge-secondary">{{ grn.supplier.name }}</a>
+          </div>
+          <details class="mt-2">
+            <summary class="cursor-pointer text-sm text-primary">Line Items</summary>
+            <div class="mt-2">
+              {% include "inventory/grns/_items_table.html" with items=grn.grnitem_set.all %}
+            </div>
+          </details>
+        </div>
+      </li>
     {% empty %}
-      <tr><td colspan="4">No goods received notes.</td></tr>
+      <li class="ml-6"><p>No goods received notes.</p></li>
     {% endfor %}
-    </tbody>
-  </table>
+  </ol>
   <div class="mt-4">
     {% include "components/pagination.html" with page_obj=page_obj base_url="" extra_query=querystring %}
   </div>

@@ -62,7 +62,9 @@ def build_recipe_choice_label(recipe: Any) -> str:
     recipe = _to_dict(recipe)
     name = recipe.get("name", "")
     unit = recipe.get("default_yield_unit") or ""
-    tags = recipe.get("tags") or ""
+    tags = recipe.get("tags") or []
+    if isinstance(tags, list):
+        tags = ", ".join(str(t) for t in tags if str(t).strip())
     return f"{name} | {unit} | {tags}"
 
 

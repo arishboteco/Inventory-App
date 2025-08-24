@@ -17,7 +17,7 @@ def test_build_component_options_basic():
             "recipe_id": 10,
             "name": "Bread",
             "default_yield_unit": "loaf",
-            "tags": "baked",
+            "tags": ["baked"],
         }
     ]
     options, meta = build_component_options(items, recipes, placeholder="Choose")

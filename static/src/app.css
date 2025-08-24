@@ -12,10 +12,6 @@
     font-family: theme('fontFamily.sans');
   }
 
-  .dark {
-    --color-primary: var(--color-primary-dark);
-    --color-secondary: var(--color-secondary-dark);
-  }
 
   /* Base link styles: underlined with primary color.
      Button classes (.btn-*) remove the underline. */
@@ -41,9 +37,6 @@
   .badge-warning { @apply bg-amber-500 text-gray-900; }
   .badge-error { @apply bg-red-600 text-white; }
 
-  .dark .badge-success { @apply bg-green-800 text-white; }
-  .dark .badge-warning { @apply bg-amber-600 text-gray-900; }
-  .dark .badge-error { @apply bg-red-700 text-white; }
 
   /* Toast component styles */
   .toast { @apply absolute left-0 top-full mt-1 z-10; }
@@ -75,25 +68,18 @@
   }
   .btn-secondary:disabled { @apply opacity-50 cursor-not-allowed; }
 
-  .btn-tertiary {
-    @apply px-4 py-2 rounded border transition-colors no-underline;
-    background-color: theme('colors.form.bg', '#ffffff');
-    color: theme('colors.bodyText.light');
-    border-color: theme('colors.form.border');
-  }
+    .btn-tertiary {
+      @apply px-4 py-2 rounded border transition-colors no-underline;
+      background-color: theme('colors.form.bg', '#ffffff');
+      color: theme('colors.bodyText');
+      border-color: theme('colors.form.border');
+    }
   .btn-tertiary:hover { @apply bg-gray-100; }
   .btn-tertiary:focus {
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: theme('colors.form.border');
   }
-  .btn-tertiary:disabled { @apply opacity-50 cursor-not-allowed; }
-  .dark .btn-tertiary {
-    background-color: theme('colors.form.darkBg');
-    color: theme('colors.bodyText.dark');
-    border-color: theme('colors.form.darkBorder');
-  }
-  .dark .btn-tertiary:hover { @apply bg-gray-700; }
-  .dark .btn-tertiary:focus { --tw-ring-color: theme('colors.form.darkBorder'); }
+    .btn-tertiary:disabled { @apply opacity-50 cursor-not-allowed; }
 
   .btn-danger {
     background-color: theme('colors.danger');
@@ -108,65 +94,50 @@
   }
   .btn-danger:disabled { @apply opacity-50 cursor-not-allowed; }
 
-  .btn-outline {
-    @apply px-4 py-2 border rounded transition-colors no-underline;
-    background-color: transparent;
-    color: theme('colors.bodyText.light');
-    border-color: theme('colors.form.border');
-  }
+    .btn-outline {
+      @apply px-4 py-2 border rounded transition-colors no-underline;
+      background-color: transparent;
+      color: theme('colors.bodyText');
+      border-color: theme('colors.form.border');
+    }
   .btn-outline:hover { @apply bg-gray-100; }
   .btn-outline:focus {
     @apply outline-none ring-2 ring-offset-2;
     --tw-ring-color: theme('colors.form.border');
   }
-  .btn-outline:disabled { @apply opacity-50 cursor-not-allowed; }
-  .dark .btn-outline {
-    color: theme('colors.bodyText.dark');
-    border-color: theme('colors.form.darkBorder');
-  }
-  .dark .btn-outline:hover { @apply bg-gray-700; }
-  .dark .btn-outline:focus { --tw-ring-color: theme('colors.form.darkBorder'); }
+    .btn-outline:disabled { @apply opacity-50 cursor-not-allowed; }
 
   /* Navigation button styles */
   .nav-btn {
     @apply flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors outline-none text-white;
     background-color: transparent;
   }
-  .nav-btn:hover,
-  .nav-btn:focus {
-    background-color: var(--color-primary-dark);
-    color: #ffffff;
-  }
-  .nav-btn:focus {
-    @apply ring-2 ring-offset-2;
-    --tw-ring-color: var(--color-primary-dark);
-  }
-  .dark .nav-btn {
-    color: var(--color-primary-dark);
-  }
-  .dark .nav-btn:hover,
-  .dark .nav-btn:focus {
-    background-color: var(--color-primary);
-    color: #ffffff;
-  }
-  .dark .nav-btn:focus { --tw-ring-color: var(--color-primary); }
+    .nav-btn:hover,
+    .nav-btn:focus {
+      background-color: var(--color-primary-dark);
+      color: #ffffff;
+    }
+    .nav-btn:focus {
+      @apply ring-2 ring-offset-2;
+      --tw-ring-color: var(--color-primary-dark);
+    }
 
   /* Alert component styles */
   .alert {
     @apply px-8 max-md:px-6 max-sm:px-4 py-4 mb-4 border-l-4 rounded;
   }
-  .alert-success {
-    @apply bg-green-100 text-green-700 border-green-500 dark:bg-green-900 dark:text-green-300 dark:border-green-700;
-  }
-  .alert-warning {
-    @apply bg-yellow-100 text-yellow-700 border-yellow-500 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700;
-  }
-  .alert-error {
-    @apply bg-red-100 text-red-700 border-red-500 dark:bg-red-900 dark:text-red-300 dark:border-red-700;
-  }
-  .alert-info {
-    @apply bg-blue-100 text-blue-700 border-blue-500 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700;
-  }
+    .alert-success {
+      @apply bg-green-100 text-green-700 border-green-500;
+    }
+    .alert-warning {
+      @apply bg-yellow-100 text-yellow-700 border-yellow-500;
+    }
+    .alert-error {
+      @apply bg-red-100 text-red-700 border-red-500;
+    }
+    .alert-info {
+      @apply bg-blue-100 text-blue-700 border-blue-500;
+    }
 
   /* Form component styles */
   form label { @apply block mb-2; }
@@ -185,58 +156,26 @@
   form input:not([type='checkbox']):not([type='radio']):focus,
   form select:focus,
   form textarea:focus,
-  .form-control:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    @apply shadow-form-focus-light;
-  }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      @apply shadow-form-focus;
+    }
 
-  .form-checkbox {
-    border: 1px solid theme('colors.form.border');
-    background-color: theme('colors.form.bg', '#ffffff');
-    color: theme('colors.form.text');
-    border-radius: var(--space-1);
-  }
+    .form-checkbox {
+      border: 1px solid theme('colors.form.border');
+      background-color: theme('colors.form.bg', '#ffffff');
+      color: theme('colors.form.text');
+      border-radius: var(--space-1);
+    }
 
-  .form-radio {
-    border: 1px solid theme('colors.form.border');
-    background-color: theme('colors.form.bg', '#ffffff');
-    color: theme('colors.form.text');
-    border-radius: 9999px;
-    accent-color: var(--color-primary);
-  }
-
-  .dark form input:not([type='checkbox']):not([type='radio']),
-  .dark form select,
-  .dark form textarea,
-  .dark .form-control {
-    border: 1px solid theme('colors.form.darkBorder');
-    background-color: theme('colors.form.darkBg');
-    color: theme('colors.form.darkText');
-  }
-
-  .dark form input:not([type='checkbox']):not([type='radio']):focus,
-  .dark form select:focus,
-  .dark form textarea:focus,
-  .dark .form-control:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    @apply shadow-form-focus-dark;
-  }
-
-  .dark .form-checkbox {
-    border: 1px solid theme('colors.form.darkBorder');
-    background-color: theme('colors.form.darkBg');
-    color: theme('colors.form.darkText');
-  }
-
-  .dark .form-radio {
-    border: 1px solid theme('colors.form.darkBorder');
-    background-color: theme('colors.form.darkBg');
-    color: theme('colors.form.darkText');
-    border-radius: 9999px;
-    accent-color: var(--color-primary);
-  }
+    .form-radio {
+      border: 1px solid theme('colors.form.border');
+      background-color: theme('colors.form.bg', '#ffffff');
+      color: theme('colors.form.text');
+      border-radius: 9999px;
+      accent-color: var(--color-primary);
+    }
 
   /* Table component styles */
   .table {
@@ -258,31 +197,18 @@
     background-color: theme('colors.form.bg', '#ffffff');
     transition: background-color 0.15s ease-in-out;
   }
-  .table tbody tr:hover {
-    background-color: theme('colors.table.hoverBg');
-  }
-
-  .dark .table th,
-  .dark .table td { border: 1px solid theme('colors.table.darkBorder'); }
-  .dark .table thead {
-    background-color: var(--color-primary);
-    color: theme('colors.table.headerText');
-  }
-  .dark .table tbody tr { background-color: theme('colors.body.dark'); }
-  .dark .table tbody tr:hover {
-    background-color: theme('colors.table.darkHoverBg');
-  }
+    .table tbody tr:hover {
+      background-color: theme('colors.table.hoverBg');
+    }
 
   /* Pagination controls */
   .pagination-active { @apply px-3 py-1 border rounded bg-gray-200; }
   .pagination-input { @apply border rounded p-1; }
-  .pagination-active:focus,
-  .pagination-input:focus {
-    @apply outline-none ring-2 ring-offset-2;
-    --tw-ring-color: var(--color-primary);
-  }
-  .dark .pagination-active { @apply border-form-darkBorder bg-gray-700; }
-  .dark .pagination-input { @apply border-form-darkBorder bg-form-darkBg text-form-darkText; }
+    .pagination-active:focus,
+    .pagination-input:focus {
+      @apply outline-none ring-2 ring-offset-2;
+      --tw-ring-color: var(--color-primary);
+    }
 }
 
 @layer utilities {

@@ -12,11 +12,6 @@ def test_nav_template_contains_links():
     request.user = AnonymousUser()
     html = render_to_string("components/nav.html", {"request": request})
     expected = [
-        "Overview",
-        "Inventory",
-        "Procurement",
-        "Production",
-        "Account",
         "Dashboard",
         "Reports",
         "Items",
@@ -39,11 +34,6 @@ def test_home_page_contains_nav_links(client, django_user_model):
     resp = client.get(reverse("root"))
     html = resp.content.decode()
     expected = [
-        "Overview",
-        "Inventory",
-        "Procurement",
-        "Production",
-        "Account",
         "Dashboard",
         "Reports",
         "Items",

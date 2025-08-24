@@ -1,19 +1,4 @@
 (function() {
-  function applyTheme(theme) {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }
-
-  // Apply the user's preferred theme immediately to avoid flashes of incorrect styling
-  const stored = localStorage.getItem('theme');
-  if (stored) {
-    applyTheme(stored);
-  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    applyTheme('dark');
-  }
 
   function hexToRgb(hex) {
     const res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -38,20 +23,10 @@
 
   function passesContrast(color) {
     const lightBg = '#ffffff';
-    const darkBg = '#0f172a';
-    return contrast(color, lightBg) >= 4.5 && contrast(color, darkBg) >= 4.5;
+    return contrast(color, lightBg) >= 4.5;
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    const toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function() {
-        const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-        applyTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-      });
-    }
-
     const feedback = document.getElementById('colour-feedback');
     const lastColors = {};
 

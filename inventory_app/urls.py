@@ -33,6 +33,7 @@ urlpatterns = [
     path("dashboard/kpis/", dashboard_kpis, name="dashboard-kpis"),
     path("healthz", health_check, name="health-check"),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("", include("core.urls")),
     path("api/", include("inventory.urls")),  # DRF API
     path("", include("inventory.ui_urls")),  # HTML UI routes
 ]

@@ -19,11 +19,41 @@
   <a href="{% url 'grn_list' %}" class="btn-secondary px-4 py-2 rounded">Record Receipt</a>
 </div>
 
+<form id="dashboard-filters" class="flex flex-wrap gap-2 my-4 items-end">
+  <div>
+    <label for="item" class="block">Item</label>
+    <select id="item" name="item" class="border p-1">
+      <option value="">All</option>
+      {% for item in items %}
+        <option value="{{ item.pk }}">{{ item.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="supplier" class="block">Supplier</label>
+    <select id="supplier" name="supplier" class="border p-1">
+      <option value="">All</option>
+      {% for supplier in suppliers %}
+        <option value="{{ supplier.pk }}">{{ supplier.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="start" class="block">Start</label>
+    <input type="date" id="start" name="start" class="border p-1" />
+  </div>
+  <div>
+    <label for="end" class="block">End</label>
+    <input type="date" id="end" name="end" class="border p-1" />
+  </div>
+  <button type="button" id="apply-filters" class="btn-primary px-4 py-2 rounded">Apply</button>
+</form>
+
 <div>
   <canvas id="stock-trend-chart" class="w-full h-64"></canvas>
   <script>
     const ctx = document.getElementById('stock-trend-chart').getContext('2d');
-    new Chart(ctx, {
+    const chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: {{ trend_labels|safe }},
@@ -37,6 +67,18 @@
       },
       options: {responsive: true, maintainAspectRatio: false}
     });
+
+    async function fetchTrend() {
+      const form = document.getElementById('dashboard-filters');
+      const params = new URLSearchParams(new FormData(form));
+      const resp = await fetch('{% url "ajax-dashboard-data" %}?'+params.toString());
+      const data = await resp.json();
+      chart.data.labels = data.labels;
+      chart.data.datasets[0].data = data.values;
+      chart.update();
+    }
+
+    document.getElementById('apply-filters').addEventListener('click', fetchTrend);
   </script>
 </div>
 

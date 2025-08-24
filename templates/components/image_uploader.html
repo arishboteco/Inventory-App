@@ -1,0 +1,9 @@
+<form method="post" enctype="multipart/form-data" class="mb-4 flex flex-col gap-2">
+  {% csrf_token %}
+  <label for="id_thumbnail" class="font-semibold">Thumbnail</label>
+  {% if image_url %}
+    <img src="{{ image_url }}" alt="Current thumbnail" class="h-24 w-24 object-cover rounded" />
+  {% endif %}
+  <input type="file" name="thumbnail" id="id_thumbnail" accept="image/*" class="block" />
+  <button type="submit" class="btn-secondary">Upload</button>
+</form>

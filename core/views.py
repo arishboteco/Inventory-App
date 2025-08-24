@@ -3,9 +3,13 @@ from decimal import Decimal
 
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils.dateparse import parse_date
+from django.db.models import Sum
+from django.db.models.functions import TruncDate
 
+from inventory.models import Item, Supplier, StockTransaction, PurchaseOrder
 from inventory.services import counts, dashboard_service, kpis
 
 
@@ -60,3 +64,58 @@ def dashboard_kpis(request):
         "pending_indent_status": kpis.pending_indent_counts(),
     }
     return render(request, "core/_kpi_cards.html", data)
+
+
+def _stock_trend_data(item_id=None, supplier_id=None, start=None, end=None):
+    """Return stock transaction totals grouped by day."""
+    qs = StockTransaction.objects.all()
+    if item_id:
+        qs = qs.filter(item_id=item_id)
+    if supplier_id:
+        po_ids = PurchaseOrder.objects.filter(supplier_id=supplier_id).values_list(
+            "po_id", flat=True
+        )
+        qs = qs.filter(related_po_id__in=po_ids)
+    if start:
+        qs = qs.filter(transaction_date__date__gte=start)
+    if end:
+        qs = qs.filter(transaction_date__date__lte=end)
+
+    data = (
+        qs.annotate(day=TruncDate("transaction_date"))
+        .values("day")
+        .order_by("day")
+        .annotate(total=Sum("quantity_change"))
+    )
+    labels = [d["day"].strftime("%Y-%m-%d") for d in data]
+    values = [float(d["total"]) for d in data]
+    return labels, values
+
+
+def interactive_dashboard(request):
+    """Render dashboard with filter controls for asynchronous charts."""
+    item_id = request.GET.get("item")
+    supplier_id = request.GET.get("supplier")
+    start = parse_date(request.GET.get("start")) if request.GET.get("start") else None
+    end = parse_date(request.GET.get("end")) if request.GET.get("end") else None
+
+    labels, values = _stock_trend_data(item_id, supplier_id, start, end)
+    context = {
+        "low_stock": dashboard_service.get_low_stock_items(),
+        "trend_labels": json.dumps(labels),
+        "trend_values": json.dumps(values),
+        "items": Item.objects.filter(is_active=True),
+        "suppliers": Supplier.objects.filter(is_active=True),
+    }
+    return render(request, "core/dashboard.html", context)
+
+
+def ajax_dashboard_data(request):
+    """Return JSON data for dashboard charts based on filters."""
+    item_id = request.GET.get("item")
+    supplier_id = request.GET.get("supplier")
+    start = parse_date(request.GET.get("start")) if request.GET.get("start") else None
+    end = parse_date(request.GET.get("end")) if request.GET.get("end") else None
+
+    labels, values = _stock_trend_data(item_id, supplier_id, start, end)
+    return JsonResponse({"labels": labels, "values": values})

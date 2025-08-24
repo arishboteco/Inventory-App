@@ -5,7 +5,7 @@
 {% block fields %}
   <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
     {% for field in form %}
-      {% if field.name in ['description', 'plating_notes'] %}
+      {% if field.name == 'description' or field.name == 'plating_notes' %}
         {% include "components/form_field.html" with field=field container_class="col-span-2" %}
       {% else %}
         {% include "components/form_field.html" with field=field %}

@@ -5,7 +5,9 @@
 <div id="kpi-cards" hx-get="{% url 'dashboard-kpis' %}" hx-trigger="load"></div>
 
 <div class="flex gap-4">
-  <a href="{% url 'purchase_order_create' %}" class="btn-primary px-4 py-2 rounded">New PO</a>
+  {% if perms.inventory.add_purchaseorder %}
+    <a href="{% url 'purchase_order_create' %}" class="btn-primary px-4 py-2 rounded">New PO</a>
+  {% endif %}
   <a href="{% url 'grn_list' %}" class="btn-secondary px-4 py-2 rounded">Record Receipt</a>
 </div>
 

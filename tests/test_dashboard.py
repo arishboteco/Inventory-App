@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.contrib.auth.models import Permission
 from django.urls import reverse
 from django.utils import timezone
 
@@ -8,7 +9,11 @@ from inventory.models import Indent, PurchaseOrder, StockTransaction, Supplier
 
 
 @pytest.mark.django_db
-def test_dashboard_low_stock(client, item_factory):
+def test_dashboard_low_stock(client, item_factory, django_user_model):
+    user = django_user_model.objects.create_user(username="u", password="pw")
+    perm = Permission.objects.get(codename="add_purchaseorder")
+    user.user_permissions.add(perm)
+    client.force_login(user)
     item_factory(name="Foo", reorder_point=10, current_stock=5)
     resp = client.get(reverse("dashboard"))
     assert resp.status_code == 200

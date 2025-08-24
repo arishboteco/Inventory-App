@@ -15,7 +15,7 @@ from ..forms.stock_forms import (
     StockWastageForm,
     StockBulkUploadForm,
 )
-from ..models import StockTransaction, Item
+from ..models import StockTransaction
 from ..services import stock_service
 
 
@@ -174,7 +174,7 @@ def stock_movements(request):
 
 
 def history_reports(request):
-    item = (request.GET.get("item") or "").strip()
+    item = (request.GET.get("item") or request.GET.get("q") or "").strip()
     tx_type = (request.GET.get("type") or "").strip()
     user = (request.GET.get("user") or "").strip()
     start_date = (request.GET.get("start_date") or "").strip()
@@ -243,7 +243,6 @@ def history_reports(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    items = Item.objects.order_by("name")
     transaction_types = (
         StockTransaction.objects.values_list("transaction_type", flat=True)
         .order_by("transaction_type")
@@ -268,9 +267,25 @@ def history_reports(request):
     sort_params.pop("direction", None)
     sort_query = sort_params.urlencode()
 
+    filters = [
+        {
+            "name": "type",
+            "value": tx_type,
+            "list_id": "history-types",
+            "options": [{"value": "", "label": "All Types"}] + [{"value": t} for t in transaction_types],
+        },
+        {
+            "name": "user",
+            "value": user,
+            "list_id": "history-users",
+            "options": [{"value": "", "label": "All Users"}] + [{"value": u} for u in users],
+        },
+        {"name": "start_date", "value": start_date, "list_id": "history-start-date", "options": []},
+        {"name": "end_date", "value": end_date, "list_id": "history-end-date", "options": []},
+    ]
+
     ctx = {
         "page_obj": page_obj,
-        "items": items,
         "transaction_types": transaction_types,
         "users": users,
         "item": item,
@@ -283,6 +298,7 @@ def history_reports(request):
         "sort": sort,
         "direction": direction,
         "total_quantity": total_quantity,
+        "filters": filters,
     }
     template = (
         "inventory/_history_table.html"

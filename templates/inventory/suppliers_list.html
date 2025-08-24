@@ -1,22 +1,20 @@
-{% extends "_base.html" %}
+{% extends "components/list_layout.html" %}
 {% block title %}Suppliers – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Suppliers ({{ total_suppliers }})</h1>
-  <div class="mb-4 flex justify-end gap-2">
-    <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
-    <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
-    <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
-  </div>
+{% block heading %}Suppliers ({{ total_suppliers }}){% endblock %}
+{% block actions %}
+  <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
+  <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
+  <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
+{% endblock %}
+{% block filter_bar %}
   {% url 'suppliers_table' as suppliers_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_table_url hx_target="#suppliers_table" filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
-  <div id="suppliers_table"
-       hx-get="{% url 'suppliers_table' %}"
-       hx-trigger="load"
-       hx-include="#filters">
-    {% if total_suppliers == 0 %}
-      {% url 'supplier_create' as supplier_create_url %}
-      {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="New Supplier" cta_url=supplier_create_url %}
-    {% endif %}
-  </div>
 {% endblock %}
-
+{% block table_id %}suppliers_table{% endblock %}
+{% block hx_get %}{% url 'suppliers_table' %}{% endblock %}
+{% block table_content %}
+  {% if total_suppliers == 0 %}
+    {% url 'supplier_create' as supplier_create_url %}
+    {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="New Supplier" cta_url=supplier_create_url %}
+  {% endif %}
+{% endblock %}

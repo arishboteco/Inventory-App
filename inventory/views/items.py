@@ -296,6 +296,7 @@ class ItemDetailView(View):
             raise Http404("Item not found")
         if not details:
             raise Http404("Item not found")
+
         rows = [
             ("ID", details["item_id"]),
             ("Base Unit", details["base_unit"]),

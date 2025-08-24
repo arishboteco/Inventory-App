@@ -24,7 +24,11 @@ def test_record_and_remove_bulk_transactions(item_factory):
     item1 = item_factory(name="Item1", current_stock=10)
     item2 = item_factory(name="Item2", current_stock=10)
     txs = [
-        {"item_id": item1.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
+        {
+            "item_id": item1.item_id,
+            "quantity_change": 5,
+            "transaction_type": "RECEIVING",
+        },
         {"item_id": item2.item_id, "quantity_change": -3, "transaction_type": "ISSUE"},
     ]
     assert stock_service.record_stock_transactions_bulk(txs)

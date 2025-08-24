@@ -56,16 +56,20 @@ def get_all_suppliers(include_inactive: bool = False) -> List[Dict[str, Any]]:
 
 
 def get_supplier_details(supplier_id: int) -> Optional[Dict[str, Any]]:
-    return Supplier.objects.filter(pk=supplier_id).values(
-        "supplier_id",
-        "name",
-        "contact_person",
-        "phone",
-        "email",
-        "address",
-        "notes",
-        "is_active",
-    ).first()
+    return (
+        Supplier.objects.filter(pk=supplier_id)
+        .values(
+            "supplier_id",
+            "name",
+            "contact_person",
+            "phone",
+            "email",
+            "address",
+            "notes",
+            "is_active",
+        )
+        .first()
+    )
 
 
 def update_supplier(supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
@@ -92,7 +96,10 @@ def update_supplier(supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, st
         supplier.save()
         return True, f"Supplier ID {supplier_id} updated successfully."
     except IntegrityError:
-        return False, f"Update failed: Potential duplicate name '{updates.get('name')}'."
+        return (
+            False,
+            f"Update failed: Potential duplicate name '{updates.get('name')}'.",
+        )
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error updating supplier %s: %s", supplier_id, exc)
         return False, "A database error occurred while updating the supplier."

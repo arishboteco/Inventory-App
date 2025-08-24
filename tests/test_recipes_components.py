@@ -1,6 +1,7 @@
-from inventory.services.recipe_service import build_components_from_editor
-from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
 from pydantic import BaseModel
+
+from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
+from inventory.services.recipe_service import build_components_from_editor
 
 
 def test_build_components_autofill_and_validation():

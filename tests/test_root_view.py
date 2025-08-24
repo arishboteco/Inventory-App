@@ -5,7 +5,7 @@ import pytest
 def test_root_view_shows_login_form_for_anonymous_user(client):
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"name=\"username\"" in resp.content
+    assert b'name="username"' in resp.content
 
 
 @pytest.mark.django_db
@@ -16,7 +16,9 @@ def test_login_route_redirects_to_root(client):
 
 
 @pytest.mark.django_db
-def test_root_view_includes_kpis_for_authenticated_user(client, django_user_model, monkeypatch):
+def test_root_view_includes_kpis_for_authenticated_user(
+    client, django_user_model, monkeypatch
+):
     user = django_user_model.objects.create_user(username="u", password="p")
     client.force_login(user)
 
@@ -31,7 +33,7 @@ def test_root_view_includes_kpis_for_authenticated_user(client, django_user_mode
     assert resp.context["receipts"] == 2
     assert resp.context["issues"] == 3
     assert resp.context["low_stock"] == 4
-    assert b"name=\"username\"" not in resp.content
+    assert b'name="username"' not in resp.content
 
 
 @pytest.mark.django_db

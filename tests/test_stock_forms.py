@@ -3,8 +3,8 @@ from django import forms as django_forms
 from django.urls import reverse
 
 from inventory.forms.stock_forms import (
-    StockReceivingForm,
     StockAdjustmentForm,
+    StockReceivingForm,
     StockWastageForm,
 )
 from inventory.models import Item

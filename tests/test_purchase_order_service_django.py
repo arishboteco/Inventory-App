@@ -1,12 +1,13 @@
-import pytest
 from datetime import date
 
+import pytest
+
 from inventory.models import (
-    Supplier,
-    PurchaseOrder,
-    PurchaseOrderItem,
     GoodsReceivedNote,
     GRNItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Supplier,
 )
 from inventory.services import purchase_order_service
 
@@ -29,9 +30,7 @@ def test_create_po_and_get_po(item_factory):
 def test_get_orders_progress(item_factory):
     supplier = Supplier.objects.create(name="Vendor")
     item = item_factory(name="Widget")
-    po = PurchaseOrder.objects.create(
-        supplier=supplier, order_date=date.today()
-    )
+    po = PurchaseOrder.objects.create(supplier=supplier, order_date=date.today())
     poi = PurchaseOrderItem.objects.create(
         purchase_order=po,
         item=item,

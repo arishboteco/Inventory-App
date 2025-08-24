@@ -1,12 +1,9 @@
-import pytest
 from datetime import date
 
-from inventory.models import (
-    Supplier,
-    PurchaseOrder,
-    PurchaseOrderItem,
-)
-from inventory.services import purchase_order_service, goods_receiving_service
+import pytest
+
+from inventory.models import PurchaseOrder, PurchaseOrderItem, Supplier
+from inventory.services import goods_receiving_service, purchase_order_service
 
 
 @pytest.mark.django_db
@@ -18,7 +15,9 @@ def test_create_grn_updates_stock_and_po(item_factory):
         [{"item_id": item.item_id, "quantity_ordered": 10, "unit_price": 1.0}],
     )
     assert success, msg
-    po_item = PurchaseOrderItem.objects.get(purchase_order_id=po_id, item_id=item.item_id)
+    po_item = PurchaseOrderItem.objects.get(
+        purchase_order_id=po_id, item_id=item.item_id
+    )
     grn_data = {
         "po_id": po_id,
         "supplier_id": supplier.pk,

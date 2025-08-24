@@ -1,10 +1,15 @@
-from inventory.services.ui_service import autofill_component_meta
 from pydantic import BaseModel
+
+from inventory.services.ui_service import autofill_component_meta
 
 
 def test_autofill_component_meta_populates_unit_and_category():
     rows = [
-        {"component": "Flour (1) | kg | Baking | 10.00", "unit": None, "category": None},
+        {
+            "component": "Flour (1) | kg | Baking | 10.00",
+            "unit": None,
+            "category": None,
+        },
         {"component": "Unknown", "unit": None, "category": None},
     ]
     choice_map = {

@@ -1,18 +1,18 @@
 from rest_framework import serializers
 
 from .models import (
+    GoodsReceivedNote,
+    GRNItem,
     Indent,
     IndentItem,
     Item,
-    StockTransaction,
-    Supplier,
-    Recipe,
-    RecipeComponent,
     PurchaseOrder,
     PurchaseOrderItem,
-    GoodsReceivedNote,
-    GRNItem,
+    Recipe,
+    RecipeComponent,
     SaleTransaction,
+    StockTransaction,
+    Supplier,
 )
 
 
@@ -205,6 +205,7 @@ class RecipeComponentSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Represent a recipe and its component breakdown."""
+
     components = RecipeComponentSerializer(many=True, read_only=True)
 
     class Meta:

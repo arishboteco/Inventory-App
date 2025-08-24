@@ -6,13 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.db import IntegrityError, transaction
 
-from ..models import (
-    Item,
-    Recipe,
-    RecipeComponent,
-    SaleTransaction,
-    StockTransaction,
-)
+from ..models import Item, Recipe, RecipeComponent, SaleTransaction, StockTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -280,13 +274,17 @@ def _expand_requirements(
         "component_kind", "component_id", "quantity", "unit", "loss_pct"
     )
     for row in rows:
-        qty = multiplier * float(row["quantity"]) / (
-            1 - float(row.get("loss_pct") or 0) / 100.0
+        qty = (
+            multiplier
+            * float(row["quantity"])
+            / (1 - float(row.get("loss_pct") or 0) / 100.0)
         )
         if row["component_kind"] == "ITEM":
-            item = Item.objects.filter(pk=row["component_id"]).values(
-                "base_unit", "is_active"
-            ).first()
+            item = (
+                Item.objects.filter(pk=row["component_id"])
+                .values("base_unit", "is_active")
+                .first()
+            )
             if not item:
                 raise ValueError(f"Item {row['component_id']} not found")
             if not item["is_active"]:
@@ -295,9 +293,11 @@ def _expand_requirements(
                 raise ValueError("Unit mismatch for item component")
             totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
         elif row["component_kind"] == "RECIPE":
-            sub = Recipe.objects.filter(pk=row["component_id"]).values(
-                "default_yield_unit", "is_active"
-            ).first()
+            sub = (
+                Recipe.objects.filter(pk=row["component_id"])
+                .values("default_yield_unit", "is_active")
+                .first()
+            )
             if not sub:
                 raise ValueError(f"Recipe {row['component_id']} not found")
             if not sub["is_active"]:
@@ -337,7 +337,10 @@ def record_sale(
                 return False, "Recipe is inactive."
             totals = _resolve_item_requirements(recipe_id, float(quantity))
             SaleTransaction.objects.create(
-                recipe=recipe, quantity=quantity, user_id=user_id_clean, notes=notes_clean
+                recipe=recipe,
+                quantity=quantity,
+                user_id=user_id_clean,
+                notes=notes_clean,
             )
             for iid, qty in totals.items():
                 qty_dec = Decimal(str(qty))

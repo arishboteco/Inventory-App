@@ -5,7 +5,7 @@ Streamlit codebase. They avoid any Streamlit dependency so they can be
 used in tests and Django views."""
 
 from decimal import Decimal
-from typing import Callable, Dict, Iterable, List, Mapping, Optional, Tuple, Any
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Tuple
 
 __all__ = [
     "build_item_choice_label",

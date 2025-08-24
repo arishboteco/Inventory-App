@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
-
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
@@ -143,7 +142,14 @@ def grn_export(request, pk: int):
         name = getattr(line.po_item.item, "name", "")
         pdf.cell(100, 8, str(name), border=1)
         pdf.cell(30, 8, str(line.po_item.quantity_ordered), border=1)
-        pdf.cell(30, 8, str(line.quantity_received), border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(
+            30,
+            8,
+            str(line.quantity_received),
+            border=1,
+            new_x=XPos.LMARGIN,
+            new_y=YPos.NEXT,
+        )
     pdf_bytes = bytes(pdf.output())
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f"attachment; filename=grn_{grn.pk}.pdf"

@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import logging
 import traceback
+from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from decimal import Decimal, InvalidOperation
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.db.models.functions import Coalesce

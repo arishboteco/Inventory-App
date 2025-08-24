@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+
 from django.db import models
 
 
@@ -23,15 +24,15 @@ class CoerceFloatField(models.DecimalField):
 
 
 from .items import Item, StockTransaction  # noqa: E402
-from .suppliers import Supplier  # noqa: E402
 from .orders import (  # noqa: E402
+    GoodsReceivedNote,
+    GRNItem,
     Indent,
     IndentItem,
     PurchaseOrder,
     PurchaseOrderItem,
-    GoodsReceivedNote,
-    GRNItem,
 )
+from .suppliers import Supplier  # noqa: E402
 
 
 class Recipe(models.Model):

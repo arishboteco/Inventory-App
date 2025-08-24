@@ -1,19 +1,19 @@
 import csv
 import io
+from decimal import Decimal
 
 from django.contrib import messages
 from django.core.paginator import Paginator
-from decimal import Decimal
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from ..forms.stock_forms import (
-    StockReceivingForm,
     StockAdjustmentForm,
-    StockWastageForm,
     StockBulkUploadForm,
+    StockReceivingForm,
+    StockWastageForm,
 )
 from ..models import StockTransaction
 from ..services import stock_service
@@ -180,9 +180,21 @@ def stock_movements(request):
     query_string = params.urlencode()
 
     tabs = [
-        {"id": "receive", "title": sections["receive"], "template": "inventory/_receive_form.html"},
-        {"id": "adjust", "title": sections["adjust"], "template": "inventory/_adjust_form.html"},
-        {"id": "waste", "title": sections["waste"], "template": "inventory/_waste_form.html"},
+        {
+            "id": "receive",
+            "title": sections["receive"],
+            "template": "inventory/_receive_form.html",
+        },
+        {
+            "id": "adjust",
+            "title": sections["adjust"],
+            "template": "inventory/_adjust_form.html",
+        },
+        {
+            "id": "waste",
+            "title": sections["waste"],
+            "template": "inventory/_waste_form.html",
+        },
     ]
     tabs.sort(key=lambda t: t["id"] != active)
 

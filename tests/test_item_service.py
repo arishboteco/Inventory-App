@@ -1,14 +1,14 @@
 import pytest
+from django.db.utils import OperationalError
 
 from inventory.models import (
-    Item,
-    StockTransaction,
-    RecipeComponent,
-    Recipe,
     IndentItem,
+    Item,
     PurchaseOrderItem,
+    Recipe,
+    RecipeComponent,
+    StockTransaction,
 )
-from django.db.utils import OperationalError
 from inventory.services import item_service
 
 pytestmark = pytest.mark.django_db
@@ -114,7 +114,12 @@ def test_add_items_bulk_inserts_rows():
 
 def test_add_items_bulk_validation_failure():
     items = [
-        {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box", "category_id": 1},
+        {
+            "name": "Widget",
+            "base_unit": "pcs",
+            "purchase_unit": "box",
+            "category_id": 1,
+        },
         {"name": "Gadget", "base_unit": "pcs", "purchase_unit": "", "category_id": 1},
     ]
     inserted, errors = item_service.add_items_bulk(items)
@@ -175,7 +180,9 @@ def test_update_item_changes_fields():
         notes="n",
         is_active=True,
     )
-    success, _ = item_service.update_item(item.pk, {"name": "Widget2", "reorder_point": 5})
+    success, _ = item_service.update_item(
+        item.pk, {"name": "Widget2", "reorder_point": 5}
+    )
     assert success
     item.refresh_from_db()
     assert item.name == "Widget2"

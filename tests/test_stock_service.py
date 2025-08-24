@@ -1,17 +1,18 @@
-import pytest
-from decimal import Decimal
 from concurrent.futures import ThreadPoolExecutor
+from decimal import Decimal
+
+import pytest
+from django.db.utils import OperationalError
 
 from inventory.models import (
-    Item,
-    StockTransaction,
-    RecipeComponent,
-    Recipe,
     IndentItem,
+    Item,
     PurchaseOrderItem,
+    Recipe,
+    RecipeComponent,
+    StockTransaction,
 )
 from inventory.services import stock_service
-from django.db.utils import OperationalError
 
 
 @pytest.fixture(autouse=True)
@@ -50,8 +51,18 @@ def test_record_stock_transactions_bulk(item_factory):
     item1 = item_factory(name="Item1", current_stock=10)
     item2 = item_factory(name="Item2", current_stock=10)
     txs = [
-        {"item_id": item1.item_id, "quantity_change": 5, "transaction_type": "RECEIVING", "user_id": "u1"},
-        {"item_id": item2.item_id, "quantity_change": -3, "transaction_type": "ISSUE", "user_id": "u2"},
+        {
+            "item_id": item1.item_id,
+            "quantity_change": 5,
+            "transaction_type": "RECEIVING",
+            "user_id": "u1",
+        },
+        {
+            "item_id": item2.item_id,
+            "quantity_change": -3,
+            "transaction_type": "ISSUE",
+            "user_id": "u2",
+        },
     ]
     assert stock_service.record_stock_transactions_bulk(txs)
     item1.refresh_from_db()
@@ -65,7 +76,11 @@ def test_record_stock_transactions_bulk(item_factory):
 def test_remove_stock_transactions_bulk(item_factory):
     item = item_factory(name="Item", current_stock=20)
     txs = [
-        {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
+        {
+            "item_id": item.item_id,
+            "quantity_change": 5,
+            "transaction_type": "RECEIVING",
+        },
         {"item_id": item.item_id, "quantity_change": -2, "transaction_type": "ISSUE"},
     ]
     assert stock_service.record_stock_transactions_bulk(txs)
@@ -80,7 +95,11 @@ def test_remove_stock_transactions_bulk(item_factory):
 def test_record_stock_transactions_bulk_rollback_on_error(item_factory):
     item = item_factory(name="Item", current_stock=10)
     txs = [
-        {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
+        {
+            "item_id": item.item_id,
+            "quantity_change": 5,
+            "transaction_type": "RECEIVING",
+        },
         {"item_id": 9999, "quantity_change": 3, "transaction_type": "RECEIVING"},
     ]
     assert not stock_service.record_stock_transactions_bulk(txs)
@@ -93,7 +112,11 @@ def test_record_stock_transactions_bulk_rollback_on_error(item_factory):
 def test_remove_stock_transactions_bulk_rollback_on_error(item_factory):
     item = item_factory(name="Item", current_stock=10)
     txs = [
-        {"item_id": item.item_id, "quantity_change": 5, "transaction_type": "RECEIVING"},
+        {
+            "item_id": item.item_id,
+            "quantity_change": 5,
+            "transaction_type": "RECEIVING",
+        },
         {"item_id": item.item_id, "quantity_change": -2, "transaction_type": "ISSUE"},
     ]
     assert stock_service.record_stock_transactions_bulk(txs)

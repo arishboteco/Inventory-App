@@ -3,6 +3,7 @@ from django.db import models
 
 class Supplier(models.Model):
     """Stores vendor contact and activity information."""
+
     supplier_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True, null=False, blank=False)
     contact_person = models.CharField(max_length=255, blank=True, null=True)

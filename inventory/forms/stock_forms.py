@@ -3,7 +3,7 @@ from __future__ import annotations
 from django import forms
 
 from ..models import StockTransaction
-from .base import StyledFormMixin, INPUT_CLASS
+from .base import INPUT_CLASS, StyledFormMixin
 
 
 class StockReceivingForm(StyledFormMixin, forms.ModelForm):

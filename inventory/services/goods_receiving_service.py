@@ -1,17 +1,19 @@
 import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
+
 from django.db import transaction
 from django.db.models import Max
 
 from inventory.models import (
-    GRNItem,
     GoodsReceivedNote,
+    GRNItem,
     Item,
     PurchaseOrder,
     PurchaseOrderItem,
     Supplier,
 )
+
 from . import stock_service
 
 logger = logging.getLogger(__name__)

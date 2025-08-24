@@ -1,12 +1,7 @@
 from django import forms
 
-from ..models import (
-    PurchaseOrder,
-    PurchaseOrderItem,
-    GoodsReceivedNote,
-    GRNItem,
-)
-from .base import StyledFormMixin, INPUT_CLASS
+from ..models import GoodsReceivedNote, GRNItem, PurchaseOrder, PurchaseOrderItem
+from .base import INPUT_CLASS, StyledFormMixin
 
 
 class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):

@@ -93,9 +93,7 @@ def remove_stock_transactions_bulk(transaction_ids: List[int]) -> bool:
                     tx.quantity_change or Decimal("0")
                 )
                 item.save(update_fields=["current_stock"])
-            StockTransaction.objects.filter(
-                transaction_id__in=transaction_ids
-            ).delete()
+            StockTransaction.objects.filter(transaction_id__in=transaction_ids).delete()
         return True
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error removing stock transactions: %s", exc)

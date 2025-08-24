@@ -1,11 +1,11 @@
 import logging
 import os
+import threading
 import time
 from typing import Dict, List, Optional
-import threading
 
 try:
-    from supabase import Client, create_client, SupabaseException
+    from supabase import Client, SupabaseException, create_client
 except ModuleNotFoundError:  # pragma: no cover - supabase optional
     Client = None  # type: ignore
     create_client = None  # type: ignore

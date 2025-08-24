@@ -1,13 +1,14 @@
-import pytest
-from django.test import RequestFactory
-from django.http import HttpResponse, Http404
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.db import connection, DatabaseError
 from unittest.mock import patch
 
+import pytest
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.db import DatabaseError, connection
+from django.http import Http404, HttpResponse
+from django.test import RequestFactory
+
 from inventory.models import Indent
-from inventory.views.items import ItemEditView
 from inventory.views.indents import IndentCreateView
+from inventory.views.items import ItemEditView
 
 
 class SimpleUser:

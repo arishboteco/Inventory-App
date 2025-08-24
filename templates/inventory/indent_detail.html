@@ -9,7 +9,7 @@
   {% include "components/detail_table.html" with rows=rows %}
 {% endblock %}
 {% block extra_tables %}
-  <h2 class="text-xl mb-4 mt-8">Items</h2>
+  <h2 class="text-h2 mb-4 mt-8">Items</h2>
   {% include "inventory/_indent_items_table.html" with items=items %}
   <div class="mt-4 flex gap-2">
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">

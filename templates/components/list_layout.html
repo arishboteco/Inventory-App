@@ -1,0 +1,17 @@
+{% extends "_base.html" %}
+{% block title %}List – Inventory App{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold mb-4">{% block heading %}{% endblock %}</h1>
+  <div class="mb-4 flex justify-end gap-2">{% block actions %}{% endblock %}</div>
+  {% block filter_bar %}{% endblock %}
+  {% block extra %}{% endblock %}
+  {% block table_container %}
+  <div id="{% block table_id %}{% endblock %}"
+       hx-get="{% block hx_get %}{% endblock %}"
+       hx-trigger="load"
+       hx-include="#filters"
+       hx-indicator="#htmx-spinner">
+    {% block table_content %}{% endblock %}
+  </div>
+  {% endblock %}
+{% endblock %}

@@ -45,8 +45,18 @@ def purchase_orders_list(request):
         default_direction="desc",
     )
     page_obj, _ = list_utils.paginate(request, orders, default_page_size=20)
+    progress_map = purchase_order_service.get_orders_progress([o.pk for o in page_obj])
     for o in page_obj:
         o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+        prog = progress_map.get(o.pk)
+        if prog:
+            o.ordered_total = prog["ordered_total"]
+            o.received_total = prog["received_total"]
+            o.progress_percent = prog["percent"]
+        else:
+            o.ordered_total = Decimal("0")
+            o.received_total = Decimal("0")
+            o.progress_percent = 0
     statuses = PurchaseOrder._meta.get_field("status").choices
     suppliers = Supplier.objects.all()
     querystring = list_utils.build_querystring(request)

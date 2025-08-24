@@ -23,7 +23,7 @@
   }
   a:hover,
   a:focus {
-    color: #1E40AF;
+    color: var(--color-link-hover);
   }
 }
 
@@ -44,6 +44,14 @@
   .toast { @apply absolute left-0 top-full mt-1 z-10; }
 
   /* Button styles */
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-tertiary,
+  .btn-outline {
+    box-shadow: var(--shadow-btn);
+  }
+
   .btn-primary {
     background-color: var(--color-primary);
     @apply text-white px-4 py-2 rounded transition-colors no-underline;

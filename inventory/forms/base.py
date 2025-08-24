@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django import forms
 
-INPUT_CLASS = "w-full px-3 py-2 border dark:border-form-darkBorder rounded"
+INPUT_CLASS = "w-full px-3 py-2 border rounded"
 CHECKBOX_CLASS = "h-4 w-4 text-primary"
 
 

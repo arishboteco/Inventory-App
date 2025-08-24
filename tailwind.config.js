@@ -31,14 +31,8 @@ module.exports = {
     },
     extend: {
       colors: {
-        body: {
-          light: 'var(--color-body)',
-          dark: 'var(--color-body-dark)',
-        },
-        bodyText: {
-          light: 'var(--color-body-text)',
-          dark: 'var(--color-body-text-dark)',
-        },
+        body: 'var(--color-body)',
+        bodyText: 'var(--color-body-text)',
         primary: 'var(--color-primary)',
         secondary: 'var(--color-secondary)',
         accent: 'var(--color-accent)',
@@ -48,17 +42,12 @@ module.exports = {
           bg: 'var(--color-body)',
           border: 'var(--color-border)',
           text: 'var(--color-body-text)',
-          darkBg: 'var(--color-form-bg-dark)',
-          darkBorder: 'var(--color-border-dark)',
-          darkText: 'var(--color-body-text-dark)',
         },
         table: {
           border: 'var(--color-border)',
           headerBg: 'var(--color-primary)',
           headerText: 'var(--color-body)',
           hoverBg: 'var(--color-table-hover-bg)',
-          darkBorder: 'var(--color-border-dark)',
-          darkHoverBg: 'var(--color-table-hover-bg-dark)',
         },
       },
       spacing: {
@@ -79,11 +68,9 @@ module.exports = {
         sans: ['Roboto', 'sans-serif'],
       },
       boxShadow: {
-        'form-focus-light': '0 0 0 2px rgba(29, 78, 216, 0.4)',
-        'form-focus-dark': '0 0 0 2px rgba(29, 78, 216, 0.6)',
+        'form-focus': '0 0 0 2px rgba(29, 78, 216, 0.4)',
       },
     },
   },
-  darkMode: 'class',
   plugins: [],
 }

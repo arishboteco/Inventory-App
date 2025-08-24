@@ -14,6 +14,7 @@ from .views.items import (
 from .views.suppliers import (
     SuppliersListView,
     SuppliersTableView,
+    SuppliersCardView,
     SupplierCreateView,
     SupplierEditView,
     SupplierToggleActiveView,
@@ -61,6 +62,7 @@ urlpatterns = [
 
     path("suppliers/", SuppliersListView.as_view(), name="suppliers_list"),
     path("suppliers/table/", SuppliersTableView.as_view(), name="suppliers_table"),
+    path("suppliers/cards/", SuppliersCardView.as_view(), name="suppliers_cards"),
     path("suppliers/create/", SupplierCreateView.as_view(), name="supplier_create"),
     path("suppliers/<int:pk>/edit/", SupplierEditView.as_view(), name="supplier_edit"),
     path("suppliers/<int:pk>/toggle/", SupplierToggleActiveView.as_view(), name="supplier_toggle_active"),

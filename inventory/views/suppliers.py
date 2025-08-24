@@ -35,6 +35,7 @@ class SuppliersListView(TemplateView):
         page_size = (self.request.GET.get("page_size") or "25").strip()
         sort = (self.request.GET.get("sort") or "name").strip()
         direction = (self.request.GET.get("direction") or "asc").strip()
+        view = (self.request.GET.get("view") or "table").strip()
         total_suppliers = Supplier.objects.count()
         filters = [
             {
@@ -48,6 +49,8 @@ class SuppliersListView(TemplateView):
                 ],
             }
         ]
+        hx_view_name = "suppliers_cards" if view == "cards" else "suppliers_table"
+        container_id = "suppliers_cards" if view == "cards" else "suppliers_table"
         ctx.update(
             {
                 "q": q,
@@ -55,9 +58,12 @@ class SuppliersListView(TemplateView):
                 "page_size": page_size,
                 "sort": sort,
                 "direction": direction,
+                "view": view,
                 "total_suppliers": total_suppliers,
                 "filters": filters,
                 "export_url": reverse("suppliers_table"),
+                "hx_view_name": hx_view_name,
+                "container_id": container_id,
             }
         )
         return ctx
@@ -120,6 +126,42 @@ class SuppliersTableView(TemplateView):
 
             return list_utils.export_as_csv(qs, headers, row, "suppliers.csv")
         return super().get(request, *args, **kwargs)
+
+
+class SuppliersCardView(TemplateView):
+    """Render the paginated card grid of suppliers."""
+
+    template_name = "inventory/suppliers_card.html"
+
+    def _get_queryset(self):
+        qs = Supplier.objects.all()
+        filters = {"active": "is_active"}
+        allowed_sorts = {
+            "supplier_id",
+            "name",
+            "contact_person",
+            "email",
+            "phone",
+            "is_active",
+        }
+        qs, params = list_utils.apply_filters_sort(
+            self.request,
+            qs,
+            search_fields=["name", "contact_person", "email"],
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="name",
+        )
+        self._filter_params = params
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs = self._get_queryset()
+        page_obj, per_page = list_utils.paginate(self.request, qs)
+        ctx.update(self._filter_params)
+        ctx.update({"page_obj": page_obj, "page_size": per_page, "view": "cards"})
+        return ctx
 
 
 class SupplierCreateView(View):
@@ -189,7 +231,8 @@ class SupplierToggleActiveView(View):
             params.pop("csrfmiddlewaretoken", None)
             request.GET = params
             request.method = "GET"
-        view = SuppliersTableView.as_view()
+        view_name = request.GET.get("view")
+        view = SuppliersCardView.as_view() if view_name == "cards" else SuppliersTableView.as_view()
         return view(request)
 
     def post(self, request, pk: int):

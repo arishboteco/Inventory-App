@@ -5,16 +5,22 @@
   <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
   <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
   <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
+  <a href="{% url 'suppliers_table' %}?export=1" class="btn-secondary">Export CSV</a>
+  {% if view == 'cards' %}
+    <a href="{% url 'suppliers_list' %}" class="btn-secondary">Table View</a>
+  {% else %}
+    <a href="{% url 'suppliers_list' %}?view=cards" class="btn-secondary">Card View</a>
+  {% endif %}
 {% endblock %}
 {% block filter_bar %}
-  {% url 'suppliers_table' as suppliers_table_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_table_url hx_target="#suppliers_table" filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
+  {% url hx_view_name as suppliers_view_url %}
+  {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target='#'|add:container_id filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
 {% endblock %}
-{% block table_id %}suppliers_table{% endblock %}
-{% block hx_get %}{% url 'suppliers_table' %}{% endblock %}
+{% block table_id %}{{ container_id }}{% endblock %}
+{% block hx_get %}{% url hx_view_name %}{% endblock %}
 {% block table_content %}
   {% if total_suppliers == 0 %}
     {% url 'supplier_create' as supplier_create_url %}
-    {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="New Supplier" cta_url=supplier_create_url %}
+    {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="New Supplier" cta_url=supplier_create_url img='img/no_suppliers.svg' %}
   {% endif %}
 {% endblock %}

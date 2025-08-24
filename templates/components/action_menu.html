@@ -1,8 +1,17 @@
-<div class="flex gap-1">
-  <a href="{{ view_url }}" class="btn-tertiary text-xs">View</a>
-  <a href="{{ edit_url }}" class="btn-tertiary text-xs">Edit</a>
+<div class="flex gap-2">
+  <a href="{{ view_url }}" class="text-primary" title="View">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1 1 0 010-.644C3.423 7.51 7.373 4.5 12 4.5c4.628 0 8.578 3.01 9.964 7.178a1 1 0 010 .644C20.578 16.49 16.628 19.5 12 19.5c-4.628 0-8.578-3.01-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    <span class="sr-only">View</span>
+  </a>
+  <a href="{{ edit_url }}" class="text-primary" title="Edit">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 3.75h-6a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 3.75L20.25 9M7.5 9h3.75a.75.75 0 01.75.75V13.5"/></svg>
+    <span class="sr-only">Edit</span>
+  </a>
   <form action="{{ approve_url }}" method="post" class="inline">
     {% csrf_token %}
-    <button type="submit" class="btn-tertiary text-xs">Approve</button>
+    <button type="submit" class="text-primary" title="Approve">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.5 12.75l6 6 9-13.5"/></svg>
+      <span class="sr-only">Approve</span>
+    </button>
   </form>
 </div>

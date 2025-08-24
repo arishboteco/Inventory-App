@@ -16,8 +16,8 @@ across the application.
 
 | Token (CSS / Tailwind) | Light Mode | When to Use |
 |------------------------|------------|-------------|
-| `body` / `bg-body-light` | `#ffffff` | Page background |
-| `bodyText` / `text-bodyText-light` | `#111827` | Base text color |
+| `body` / `bg-body` | `#ffffff` | Page background |
+| `bodyText` / `text-bodyText` | `#111827` | Base text color |
 | `--color-primary` / `primary` | `var(--color-primary)` | Links and primary actions |
 | `--color-secondary` / `secondary` | `var(--color-secondary)` | Secondary buttons and accents |
 | `--color-accent` / `accent` | `var(--color-accent)` | Highlights and callouts |

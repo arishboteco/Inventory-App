@@ -3,6 +3,8 @@ from django.shortcuts import redirect, render
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 
+import json
+
 from inventory.services import dashboard_service, kpis, counts
 
 
@@ -34,7 +36,12 @@ def health_check(request):
 
 def dashboard(request):
     """Render dashboard shell; KPI cards are loaded asynchronously."""
-    context = {"low_stock": dashboard_service.get_low_stock_items()}
+    labels, values = kpis.stock_trend_last_7_days()
+    context = {
+        "low_stock": dashboard_service.get_low_stock_items(),
+        "trend_labels": json.dumps(labels),
+        "trend_values": json.dumps(values),
+    }
     return render(request, "core/dashboard.html", context)
 
 

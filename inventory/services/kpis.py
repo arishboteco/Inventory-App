@@ -1,6 +1,8 @@
 from datetime import timedelta
+from typing import List, Tuple
 
 from django.db.models import F, Sum
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from inventory.models import Item, StockTransaction
@@ -39,3 +41,28 @@ def low_stock_count():
     return Item.objects.filter(
         reorder_point__isnull=False, current_stock__lt=F("reorder_point")
     ).count()
+
+
+def stock_trend_last_7_days() -> Tuple[List[str], List[float]]:
+    """Return labels and net stock change for the past 7 days."""
+    today = timezone.now().date()
+    start = today - timedelta(days=6)
+    qs = (
+        StockTransaction.objects.filter(transaction_date__date__gte=start)
+        .annotate(day=TruncDate("transaction_date"))
+        .values("day")
+        .annotate(total=Sum("quantity_change"))
+    )
+    data = {}
+    for row in qs:
+        day = row["day"]
+        if hasattr(day, "date"):
+            day = day.date()
+        data[day] = float(row["total"])
+    labels: List[str] = []
+    values: List[float] = []
+    for i in range(7):
+        day = start + timedelta(days=i)
+        labels.append(day.strftime("%Y-%m-%d"))
+        values.append(data.get(day, 0.0))
+    return labels, values

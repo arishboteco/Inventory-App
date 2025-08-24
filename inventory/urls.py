@@ -18,6 +18,7 @@ from .views import (
     SupplierViewSet,
 )
 from .views.items import ItemsExportView
+from .views.what_if import what_if_reorder
 
 router = DefaultRouter()
 router.register(r"items", ItemViewSet)
@@ -35,4 +36,5 @@ router.register(r"sale-transactions", SaleTransactionViewSet)
 
 urlpatterns = router.urls + [
     path("items/export/", ItemsExportView.as_view(), name="items_export_api"),
+    path("what-if/reorder/", what_if_reorder, name="what_if_reorder"),
 ]

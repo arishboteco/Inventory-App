@@ -1,0 +1,44 @@
+{% extends "components/form_layout.html" %}
+{% block title %}What-if Reorder – Inventory App{% endblock %}
+{% block heading %}What-if Reorder{% endblock %}
+{% block fields %}
+  {% include "components/form_field.html" with field=form.items %}
+  {% include "components/form_field.html" with field=form.reorder_point %}
+{% endblock %}
+{% block submit_text %}Recalculate{% endblock %}
+{% block back_url %}{% url 'items_list' %}{% endblock %}
+{% block extra %}
+  {% if projections %}
+  <div class="mt-8 space-y-8">
+    {% for proj in projections %}
+      {% with data_id='data-'|add:proj.item.item_id|stringformat:"s" %}
+      <div>
+        <h2 class="text-h2 mb-2">{{ proj.item.name }}</h2>
+        <canvas id="chart-{{ proj.item.item_id }}" class="w-full h-64"></canvas>
+        {{ proj.history|json_script:data_id }}
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+  <script>
+  {% for proj in projections %}
+    const data{{ proj.item.item_id }} = JSON.parse(document.getElementById('data-{{ proj.item.item_id }}').textContent);
+    const ctx{{ proj.item.item_id }} = document.getElementById('chart-{{ proj.item.item_id }}').getContext('2d');
+    new Chart(ctx{{ proj.item.item_id }}, {
+      type: 'line',
+      data: {
+        labels: data{{ proj.item.item_id }}.map((_, idx) => idx + 1),
+        datasets: [{
+          label: 'Stock',
+          data: data{{ proj.item.item_id }},
+          borderColor: '#3b82f6',
+          fill: false,
+          tension: 0.1
+        }]
+      },
+      options: {responsive: true, maintainAspectRatio: false}
+    });
+  {% endfor %}
+  </script>
+  {% endif %}
+{% endblock %}

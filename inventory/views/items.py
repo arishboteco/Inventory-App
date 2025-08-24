@@ -5,6 +5,7 @@ import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
+from django.db.models import BooleanField, Case, F, Value, When
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -26,6 +27,13 @@ EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit"]
 def _filter_and_sort_items(request, qs=None):
     """Return items queryset filtered and sorted according to request params."""
     qs = qs or Item.objects.all()
+    qs = qs.annotate(
+        stock_ok=Case(
+            When(current_stock__gte=F("reorder_point"), then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        )
+    )
     filters = {
         "active": "is_active",
     }
@@ -90,7 +98,6 @@ class ItemsListView(TemplateView):
             {
                 "name": "active",
                 "value": params.get("active", ""),
-                "list_id": "item-active",
                 "id": "filter-active",
                 "options": [
                     {"value": "", "label": "All"},
@@ -101,14 +108,12 @@ class ItemsListView(TemplateView):
             {
                 "name": "category",
                 "value": category,
-                "list_id": "item-category",
                 "id": "filter-category",
                 "options": [{"value": "", "label": "All"}] + [{"value": c} for c in categories],
             },
             {
                 "name": "subcategory",
                 "value": subcategory,
-                "list_id": "item-subcategory",
                 "id": "filter-subcategory",
                 "options": [{"value": "", "label": "All"}] + [{"value": sc} for sc in subcategories],
             },

@@ -16,18 +16,18 @@
       const categories = JSON.parse(
         document.getElementById('categories-data').textContent
       );
-      const categoryInput = document.getElementById('filter-category');
-      const subInput = document.getElementById('filter-subcategory');
-      const subDatalist = document.getElementById('item-subcategory');
+      const categorySelect = document.getElementById('filter-category');
+      const subSelect = document.getElementById('filter-subcategory');
 
       function refreshSubcategories(selected) {
-        const cat = categoryInput.value;
+        const cat = categorySelect.value;
         const options = categories[cat] || [];
-        subDatalist.innerHTML = '<option value="" label="All"></option>';
+        subSelect.innerHTML = '<option value="">All</option>';
         options.forEach(function (opt) {
           const o = document.createElement('option');
           o.value = opt.name;
-          subDatalist.appendChild(o);
+          o.textContent = opt.name;
+          subSelect.appendChild(o);
         });
         if (
           selected &&
@@ -35,19 +35,26 @@
             return o.name === selected;
           })
         ) {
-          subInput.value = selected;
+          subSelect.value = selected;
         } else {
-          subInput.value = '';
+          subSelect.value = '';
         }
       }
 
-      const initialSub = subInput.value;
+      const initialSub = subSelect.value;
       refreshSubcategories(initialSub);
-      categoryInput.addEventListener('change', function () {
+      categorySelect.addEventListener('change', function () {
         refreshSubcategories();
       });
     });
   </script>
+  <a
+    href="{% url 'item_create' %}"
+    class="md:hidden fixed bottom-4 right-4 btn-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+    aria-label="Add Item"
+  >
+    +
+  </a>
 {% endblock %}
 {% block table_id %}items_table{% endblock %}
 {% block hx_get %}{% url 'items_table' %}{% endblock %}

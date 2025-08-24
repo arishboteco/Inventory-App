@@ -78,7 +78,7 @@ Create a user account and log in to access the dashboard:
 python manage.py createsuperuser
 ```
 
-Visit `http://localhost:8000/accounts/login/` to sign in. After a successful
+Visit `http://localhost:8000/` to sign in from the home page. After a successful
 login you will be redirected to the dashboard at `/dashboard/`.
 
 ## Docker Deployment

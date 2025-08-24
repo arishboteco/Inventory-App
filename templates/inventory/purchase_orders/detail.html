@@ -12,16 +12,5 @@
 {% endblock %}
 {% block extra_tables %}
   <h2 class="text-xl mb-4 mt-8">Items</h2>
-  <table class="table mb-4">
-    <thead><tr><th>Item</th><th>Ordered</th><th>Received</th></tr></thead>
-    <tbody>
-    {% for item in items %}
-      <tr>
-        <td>{{ item.item.name }}</td>
-        <td>{{ item.quantity_ordered }}</td>
-        <td>{{ item.received_total }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  {% include "inventory/purchase_orders/_items_table.html" with items=items %}
 {% endblock %}

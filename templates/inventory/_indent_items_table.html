@@ -1,0 +1,15 @@
+{% extends "components/table.html" %}
+
+{% block headers %}
+  <th class="px-4 py-2">Item</th>
+  <th class="px-4 py-2">Qty</th>
+{% endblock %}
+
+{% block rows %}
+  {% for row in items %}
+    <tr class="odd:bg-gray-50 hover:bg-gray-100">
+      <td class="px-4 py-2">{{ row.item.name }}</td>
+      <td class="px-4 py-2">{{ row.requested_qty }}</td>
+    </tr>
+  {% endfor %}
+{% endblock %}

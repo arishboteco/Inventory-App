@@ -1,15 +1,15 @@
 :root {
   /* Color tokens */
-  --color-primary: #0D3A99;
-  --color-secondary: #024427;
-  --color-accent: #8C4A02;
-  --color-danger: #B91C1C;
-  --color-border: #6b7280;
+  --color-primary: #2563EB;
+  --color-secondary: #16A34A;
+  --color-accent: #D97706;
+  --color-danger: #DC2626;
+  --color-border: #9CA3AF;
 
   /* Body and text colors */
-  --color-body: #ffffff;
+  --color-body: #FFFFFF;
   --color-body-text: #111827;
-  --color-table-hover-bg: #e5e7eb;
+  --color-table-hover-bg: #F3F4F6;
 
   /* Spacing tokens */
   --space-0-5: 0.125rem;

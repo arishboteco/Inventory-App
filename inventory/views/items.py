@@ -19,8 +19,7 @@ from django.views.generic import TemplateView
 from ..forms.bulk_forms import BulkUploadForm
 from ..forms.item_forms import ItemForm
 from ..models import Item, StockTransaction
-from ..services import item_service, list_utils, stock_service
-from ..services.supabase_categories import get_categories as get_supabase_categories
+from ..services import category_filters, item_service, list_utils, stock_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit"]
 
 
 def _filter_and_sort_items(request, qs=None):
-    """Return items queryset filtered and sorted according to request params."""
+    """Return items queryset and filter metadata from request params."""
     qs = qs or Item.objects.all()
     qs = qs.annotate(
         stock_ok=Case(
@@ -73,22 +72,7 @@ class ItemsListView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         request = self.request
 
-        # Resolve category related data for the filter form
-        category = (request.GET.get("category") or "").strip()
-        subcategory = (request.GET.get("subcategory") or "").strip()
-
-        categories_map: dict | None = None
-        try:
-            categories_map = get_supabase_categories()
-        except Exception:  # pragma: no cover - defensive
-            categories_map = {}
-            logger.exception("Failed to load categories")
-        categories = [c["name"] for c in categories_map.get(None, [])]
-        subcategories: list[str] = []
-        if category:
-            subcategories = [c["name"] for c in categories_map.get(category, [])]
-
-        # Build initial queryset and render the table fragment
+        category_ctx = category_filters.resolve_category_filters(request)
         qs, params = _filter_and_sort_items(request)
         page_obj, per_page = list_utils.paginate(request, qs)
         table_ctx = {**params, "page_obj": page_obj, "page_size": per_page}
@@ -97,42 +81,14 @@ class ItemsListView(TemplateView):
         )
 
         ctx.update(params)
-        filters = [
-            {
-                "name": "active",
-                "value": params.get("active", ""),
-                "id": "filter-active",
-                "options": [
-                    {"value": "", "label": "All"},
-                    {"value": "1", "label": "Active"},
-                    {"value": "0", "label": "Inactive"},
-                ],
-            },
-            {
-                "name": "category",
-                "value": category,
-                "id": "filter-category",
-                "options": [{"value": "", "label": "All"}]
-                + [{"value": c} for c in categories],
-            },
-            {
-                "name": "subcategory",
-                "value": subcategory,
-                "id": "filter-subcategory",
-                "options": [{"value": "", "label": "All"}]
-                + [{"value": sc} for sc in subcategories],
-            },
-        ]
+        ctx.update(category_ctx)
         ctx.update(
             {
-                "category": category,
-                "subcategory": subcategory,
-                "categories": categories,
-                "subcategories": subcategories,
-                "categories_map": categories_map,
                 "page_size": per_page,
                 "items_table": items_table,
-                "filters": filters,
+                "filters": category_filters.build_filters(
+                    category_ctx, params.get("active")
+                ),
                 "export_url": reverse("items_export"),
             }
         )

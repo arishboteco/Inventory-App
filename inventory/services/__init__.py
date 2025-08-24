@@ -5,6 +5,7 @@ from . import (
     dashboard_service,
     goods_receiving_service,
     item_service,
+    category_filters,
     kpis,
     list_utils,
     purchase_order_service,
@@ -21,6 +22,7 @@ from . import (
 __all__ = [
     "dashboard_service",
     "item_service",
+    "category_filters",
     "supplier_service",
     "stock_service",
     "purchase_order_service",

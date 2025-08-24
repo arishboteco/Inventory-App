@@ -1,17 +1,9 @@
 import logging
-import os
 import threading
 import time
 from typing import Dict, List
 
-try:
-    from supabase import Client, SupabaseException, create_client
-except ModuleNotFoundError:  # pragma: no cover - supabase optional
-    Client = None  # type: ignore
-    create_client = None  # type: ignore
-
-    class SupabaseException(Exception):
-        pass
+from .supabase_client import SupabaseException, get_supabase_client
 
 
 logger = logging.getLogger(__name__)
@@ -30,13 +22,11 @@ def _load_units_from_supabase() -> Dict[str, List[str]]:
     mapping is returned.
     """
 
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
-    if not url or not key or create_client is None:
+    client = get_supabase_client()
+    if client is None:
         logger.warning("Supabase is not configured; no units loaded")
         return {}
     try:  # pragma: no cover - network interaction
-        client: Client = create_client(url, key)
         resp = client.table("units").select("base_unit,purchase_unit").execute()
     except SupabaseException:  # pragma: no cover - network interaction
         logger.exception("Failed to fetch units from Supabase")

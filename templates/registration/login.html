@@ -1,21 +1,11 @@
-{% extends "_base.html" %}
+{% extends "components/form_layout.html" %}
 {% block title %}Login – Inventory App{% endblock %}
-{% block content %}
-<div class="max-w-sm mx-auto space-y-4">
-  <h1 class="text-2xl font-semibold">Login</h1>
-  <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-    {% for field in form %}
-      {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-    {% endfor %}
-    <div class="col-span-2">
-      <button type="submit" class="btn-primary">Login</button>
-    </div>
-  </form>
-</div>
+{% block heading %}Login{% endblock %}
+{% block fields %}
+  {% for field in form %}
+    {% include "components/form_field.html" with field=field container_class="col-span-2" %}
+  {% endfor %}
 {% endblock %}
+{% block submit_text %}Login{% endblock %}
+{% block back_url %}{% url 'root' %}{% endblock %}
+{% block back_text %}Cancel{% endblock %}

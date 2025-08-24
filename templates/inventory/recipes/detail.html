@@ -1,68 +1,59 @@
-{% extends "_base.html" %}
+{% extends "components/form_layout.html" %}
 {% block title %}Recipe Detail – Inventory App{% endblock %}
-{% block content %}
-<div class="w-full max-w-2xl max-md:max-w-xl max-sm:max-w-md mx-auto p-8 max-sm:p-4">
-  <h1 class="text-2xl font-semibold mb-4">{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}</h1>
-  <form method="post" id="recipe-form">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
-      {% for field in form %}
-        {% if field.name in ['description', 'plating_notes'] %}
-          {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-        {% else %}
-          {% include "components/form_field.html" with field=field %}
-        {% endif %}
-      {% endfor %}
-    </div>
-    {{ formset.management_form }}
-    {% if formset.non_form_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in formset.non_form_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    <table id="components-table" class="table w-full">
-      <thead>
-        <tr>
-          <th>Kind</th>
-          <th>ID</th>
-          <th>Qty</th>
-          <th>Unit</th>
-          <th>Loss %</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for cform in formset %}
-        <tr class="form-row">
-          <td>{% include "components/form_field.html" with field=cform.component_kind %}</td>
-          <td>{% include "components/form_field.html" with field=cform.component_id %}</td>
-          <td>{% include "components/form_field.html" with field=cform.quantity %}</td>
-          <td>{% include "components/form_field.html" with field=cform.unit %}</td>
-          <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
-          <td>
-            {{ cform.DELETE }}<button type="button" class="remove-row btn-danger">Remove</button>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    <div class="mt-2">
-      <button type="button" id="add-row" class="btn-secondary">Add Component</button>
-    </div>
-    <div class="mt-4">
-      <button type="submit" class="btn-primary">Save</button>
-    </div>
-  </form>
-</div>
+{% block heading %}{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}{% endblock %}
+{% block form_attrs %}id="recipe-form"{% endblock %}
+{% block fields %}
+  <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
+    {% for field in form %}
+      {% if field.name in ['description', 'plating_notes'] %}
+        {% include "components/form_field.html" with field=field container_class="col-span-2" %}
+      {% else %}
+        {% include "components/form_field.html" with field=field %}
+      {% endif %}
+    {% endfor %}
+  </div>
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}
+  <ul class="text-red-600 list-disc pl-5">
+    {% for error in formset.non_form_errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <table id="components-table" class="table w-full">
+    <thead>
+      <tr>
+        <th>Kind</th>
+        <th>ID</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Loss %</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for cform in formset %}
+      <tr class="form-row">
+        <td>{% include "components/form_field.html" with field=cform.component_kind %}</td>
+        <td>{% include "components/form_field.html" with field=cform.component_id %}</td>
+        <td>{% include "components/form_field.html" with field=cform.quantity %}</td>
+        <td>{% include "components/form_field.html" with field=cform.unit %}</td>
+        <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
+        <td>
+          {{ cform.DELETE }}<button type="button" class="remove-row btn-danger">Remove</button>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="mt-2">
+    <button type="button" id="add-row" class="btn-secondary">Add Component</button>
+  </div>
+{% endblock %}
+{% block submit_text %}Save{% endblock %}
+{% block back_url %}{% url 'recipes_list' %}{% endblock %}
+{% block back_text %}Cancel{% endblock %}
+{% block extra %}
 <script>
 (function() {
   const addBtn = document.getElementById('add-row');

@@ -1,24 +1,19 @@
 :root {
   /* Color tokens */
   --color-primary: #0D3A99;
-  /* Dark mode variant */
+  /* Darker shade for hover states */
   --color-primary-dark: #1D4ED8;
   --color-secondary: #024427;
-  /* Dark mode variant */
+  /* Darker shade for hover states */
   --color-secondary-dark: #165E2D;
   --color-accent: #8C4A02;
   --color-danger: #B91C1C;
   --color-border: #6b7280;
-  --color-border-dark: #64748b;
 
   /* Body and text colors */
   --color-body: #ffffff;
-  --color-body-dark: #0f172a;
   --color-body-text: #111827;
-  --color-body-text-dark: #f8fafc;
-  --color-form-bg-dark: #1e293b;
   --color-table-hover-bg: #e5e7eb;
-  --color-table-hover-bg-dark: #475569;
 
   /* Spacing tokens */
   --space-0-5: 0.125rem;

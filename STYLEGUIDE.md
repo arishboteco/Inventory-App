@@ -8,19 +8,19 @@ Follow this guide when building new templates or JavaScript‑driven components.
 The canonical tokens are defined in [static/src/tokens.css](static/src/tokens.css). The file is imported by
 [static/src/app.css](static/src/app.css) and the variables are referenced in
 [Tailwind via `tailwind.config.js`](tailwind.config.js). Updating `tokens.css` propagates color changes
-to both light and dark themes.
+across the application.
 
 ### Colors
 
-| Token (CSS / Tailwind) | Light Mode | Dark Mode | When to Use |
-|------------------------|------------|-----------|-------------|
-| `body` / `bg-body-light`, `bg-body-dark` | `#ffffff` | `#0f172a` | Page background |
-| `bodyText` / `text-bodyText-light`, `text-bodyText-dark` | `#111827` | `#f8fafc` | Base text color |
-| `--color-primary` / `primary` | `var(--color-primary)` | `var(--color-primary-dark)` | Links and primary actions |
-| `--color-secondary` / `secondary` | `var(--color-secondary)` | `var(--color-secondary)` | Secondary buttons and accents |
-| `--color-accent` / `accent` | `var(--color-accent)` | `var(--color-accent)` | Highlights and callouts |
-| `--color-danger` / `danger` | `var(--color-danger)` | `var(--color-danger)` | Destructive actions |
-| `--color-border` / `border` | `var(--color-border)` | `var(--color-border-dark)` | Borders and disabled text |
+| Token (CSS / Tailwind) | Value | When to Use |
+|------------------------|-------|-------------|
+| `body` / `bg-body` | `#ffffff` | Page background |
+| `bodyText` / `text-bodyText` | `#111827` | Base text color |
+| `--color-primary` / `primary` | `var(--color-primary)` | Links and primary actions |
+| `--color-secondary` / `secondary` | `var(--color-secondary)` | Secondary buttons and accents |
+| `--color-accent` / `accent` | `var(--color-accent)` | Highlights and callouts |
+| `--color-danger` / `danger` | `var(--color-danger)` | Destructive actions |
+| `--color-border` / `border` | `var(--color-border)` | Borders and disabled text |
 
 ### Spacing
 
@@ -105,11 +105,6 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 
 <!-- Hover & focus states -->
 <button class="btn-primary px-4 py-2 rounded hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Save</button>
-
-<!-- Dark mode -->
-<div class="dark p-4">
-  <button class="btn-primary px-4 py-2 rounded">Dark Mode</button>
-</div>
 ```
 
 ### Badges
@@ -123,24 +118,12 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 
 <!-- Hover & focus -->
 <span tabindex="0" class="badge-success hover:opacity-80 focus:outline-none focus:ring-2">Hover me</span>
-
-<!-- Dark mode -->
-<div class="dark p-4 space-x-2">
-  <span class="badge-success">Active</span>
-  <span class="badge-warning">Pending</span>
-  <span class="badge-error">Failed</span>
-</div>
 ```
 
 ### Navigation Button
 
 ```html
 <a href="#" class="nav-btn hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Dashboard</a>
-
-<!-- Dark mode -->
-<div class="dark p-4">
-  <a href="#" class="nav-btn hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary">Dark Nav</a>
-</div>
 ```
 
 ### Table
@@ -154,48 +137,30 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
     </tr>
   </thead>
   <tbody>
-    <tr class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10 dark:hover:bg-slate-800 dark:focus:bg-primary-dark/20" tabindex="0">
+    <tr class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10" tabindex="0">
       <td class="p-2">Pens</td>
       <td class="p-2">12</td>
     </tr>
   </tbody>
 </table>
-
-<!-- Dark mode -->
-<div class="dark p-4">
-  <table class="table w-full">
-    <thead>
-      <tr>
-        <th class="p-2">Name</th>
-        <th class="p-2">Qty</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10 dark:hover:bg-slate-800 dark:focus:bg-primary-dark/20" tabindex="0">
-        <td class="p-2">Pens</td>
-        <td class="p-2">12</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
 ```
 
 ### Form Controls
 
 ```html
 <form class="space-y-2">
-  <input class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark" type="text" placeholder="Name" />
-  <select class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark">
+  <input class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none" type="text" placeholder="Name" />
+  <select class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none">
     <option>Option A</option>
     <option>Option B</option>
   </select>
-  <textarea class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none dark:bg-form-bg-dark dark:border-form-border-dark" placeholder="Details"></textarea>
+  <textarea class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none" placeholder="Details"></textarea>
 </form>
 ```
 
 ## Accessibility
 
-- Color variables in `static/css/app.css` are tuned for high contrast in light and dark modes. Ensure text and UI elements meet WCAG AA contrast ratios.
+- Color variables in `static/css/app.css` are tuned for high contrast. Ensure text and UI elements meet WCAG AA contrast ratios.
 - Interactive components must include the 2px focus ring styles defined in `static/css/app.css` (e.g., button and form control focus states) to remain keyboard accessible.
 
 ## Guidelines

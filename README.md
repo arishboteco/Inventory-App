@@ -14,7 +14,7 @@ Inventory-App is a Django application for managing restaurant inventory with a P
 
 Refer to [STYLEGUIDE.md](STYLEGUIDE.md) for design tokens, reusable components and usage examples. When creating new templates or JavaScript-driven components, prefer Tailwind CSS utilities and the classes defined in `static/css/app.css` before adding custom styles.
 
-The color palette is centralized in `static/src/tokens.css` and consumed by `tailwind.config.js` via CSS variables. Update the tokens in that file to change colors across both light and dark themes.
+The color palette is centralized in `static/src/tokens.css` and consumed by `tailwind.config.js` via CSS variables. Update the tokens in that file to adjust the application's colors.
 
 ## Responsive Breakpoints
 

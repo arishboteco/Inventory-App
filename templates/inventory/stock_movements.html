@@ -1,77 +1,36 @@
 {% extends "_base.html" %}
-{% block title %}Stock Movements – Inventory App{% endblock %}
 {% load static %}
+{% block title %}Stock Movements – Inventory App{% endblock %}
 {% block content %}
   <h1 class="text-h1 font-semibold mb-4">Stock Movements</h1>
-  {% if messages %}
-    {% include "components/alert.html" %}
-  {% endif %}
-  {% include "components/tabs.html" with tabs=tabs %}
-  <datalist id="item-options"></datalist>
-  <hr class="my-4"/>
-  <h2 class="text-h2 mb-4 mt-8">Bulk Upload Stock Transactions</h2>
-  <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>
-  <form method="post" enctype="multipart/form-data" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
-    {% csrf_token %}
-    {% if bulk_form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in bulk_form.non_field_errors %}
-      <li>{{ error }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
-    {% for field in bulk_form %}
-      {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-    {% endfor %}
-    <div class="col-span-2">
-      <button type="submit" name="bulk_upload" class="btn-primary">Upload</button>
-    </div>
-  </form>
-  {% if bulk_success_count is not None %}
-    <p>{{ bulk_success_count }} transaction(s) recorded successfully.</p>
-  {% endif %}
-  {% if bulk_errors %}
-    <ul class="text-red-700">
-      {% for e in bulk_errors %}
-        <li>{{ e }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-  <hr class="my-4"/>
-  <h2 class="text-h2 mb-4 mt-8">Recent Transactions</h2>
-  <div class="max-md:overflow-x-auto">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Item</th>
-          <th>Type</th>
-          <th>Qty</th>
-          <th>User</th>
-          <th>Date</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for tx in page_obj %}
-        <tr>
-          <td>{{ tx.transaction_id }}</td>
-          <td>{{ tx.item.name }}</td>
-          <td>{{ tx.transaction_type }}</td>
-          <td>{{ tx.quantity_change }}</td>
-          <td>{{ tx.user_id }}</td>
-          <td>{{ tx.transaction_date }}</td>
-          <td>{{ tx.notes }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="p-2">No transactions found.</td>
-        </tr>
+  {% include "inventory/_manual_entry_section.html" %}
+  {% include "inventory/_bulk_upload_section.html" %}
+  {% include "inventory/_recent_transactions_section.html" %}
+  <button id="record-movement-btn" class="btn-primary rounded-full fixed bottom-6 right-6 z-40 px-4 py-2">Record Movement</button>
+  <div id="record-modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
+    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+      <button type="button" class="absolute top-2 right-2 text-bodyText hover:text-primary" data-close>
+        <span class="sr-only">Close</span>&times;
+      </button>
+      <form method="post" class="grid gap-4">
+        {% csrf_token %}
+        {% for field in quick_form %}
+          {% include "components/form_field.html" with field=field %}
         {% endfor %}
-      </tbody>
-    </table>
+        <button type="submit" name="submit_quick" class="btn-primary w-full">Save</button>
+      </form>
+    </div>
   </div>
-  <div class="mt-4">
-    {% include "components/pagination.html" with page_obj=page_obj base_url="" extra_query=query_string %}
-  </div>
+  <script>
+    (function () {
+      const modal = document.getElementById('record-modal');
+      const openBtn = document.getElementById('record-movement-btn');
+      const closeBtn = modal.querySelector('[data-close]');
+      function open() { modal.classList.remove('hidden'); }
+      function close() { modal.classList.add('hidden'); }
+      openBtn && openBtn.addEventListener('click', open);
+      closeBtn && closeBtn.addEventListener('click', close);
+      modal.addEventListener('click', function (e) { if (e.target === modal) { close(); } });
+    })();
+  </script>
 {% endblock %}

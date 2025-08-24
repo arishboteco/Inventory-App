@@ -32,6 +32,7 @@ def stock_movements(request):
     receive_form = StockReceivingForm(prefix="receive", item_suggest_url=item_url)
     adjust_form = StockAdjustmentForm(prefix="adjust", item_suggest_url=item_url)
     waste_form = StockWastageForm(prefix="waste", item_suggest_url=item_url)
+    quick_form = StockAdjustmentForm(prefix="quick", item_suggest_url=item_url)
     bulk_form = StockBulkUploadForm()
     bulk_success_count = None
     bulk_errors: list[str] | None = None
@@ -93,6 +94,24 @@ def stock_movements(request):
                     return redirect("stock_movements" + "?section=waste")
                 messages.error(request, "Failed to record transaction")
             active = "waste"
+        elif "submit_quick" in request.POST:
+            quick_form = StockAdjustmentForm(
+                request.POST, prefix="quick", item_suggest_url=item_url
+            )
+            if quick_form.is_valid():
+                cd = quick_form.cleaned_data
+                ok = stock_service.record_stock_transaction(
+                    item_id=cd["item"].pk,
+                    quantity_change=cd["quantity_change"],
+                    transaction_type="ADJUSTMENT",
+                    user_id=cd.get("user_id"),
+                    notes=cd.get("notes"),
+                )
+                if ok:
+                    messages.success(request, "Quick movement recorded")
+                    return redirect("stock_movements")
+                messages.error(request, "Failed to record transaction")
+            active = "receive"
         elif "bulk_upload" in request.POST:
             bulk_form = StockBulkUploadForm(request.POST, request.FILES)
             bulk_success_count = 0
@@ -153,6 +172,8 @@ def stock_movements(request):
     paginator = Paginator(qs, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    for tx in page_obj:
+        tx.direction = "in" if tx.quantity_change >= 0 else "out"
 
     params = request.GET.copy()
     params.pop("page", None)
@@ -170,6 +191,7 @@ def stock_movements(request):
         "receive_form": receive_form,
         "adjust_form": adjust_form,
         "waste_form": waste_form,
+        "quick_form": quick_form,
         "bulk_form": bulk_form,
         "bulk_success_count": bulk_success_count,
         "bulk_errors": bulk_errors,

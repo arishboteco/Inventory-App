@@ -1,0 +1,40 @@
+{% extends "_base.html" %}
+{% block title %}Visualizations – Inventory App{% endblock %}
+{% block content %}
+  <h1 class="text-h1 font-semibold mb-4">Visualizations</h1>
+  <form method="get" class="flex flex-col md:flex-row gap-2 mb-4">
+    <select name="metric" class="form-control">
+      <option value="sales" {% if metric == 'sales' %}selected{% endif %}>Sales</option>
+      <option value="stock" {% if metric == 'stock' %}selected{% endif %}>Stock</option>
+    </select>
+    <input type="date" name="start_date" value="{{ start_date }}" class="form-control" />
+    <input type="date" name="end_date" value="{{ end_date }}" class="form-control" />
+    <button type="submit" class="btn-primary">Apply</button>
+  </form>
+  <div id="heatmap" class="w-full h-64"></div>
+  <div id="scatter" class="w-full h-64 mt-4"></div>
+  {{ dates|json_script:"viz-dates" }}
+  {{ heatmap_z|json_script:"viz-heatmap" }}
+  {{ scatter_y|json_script:"viz-scatter-y" }}
+  <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  <script>
+    const dates = JSON.parse(document.getElementById('viz-dates').textContent);
+    const heatmapZ = JSON.parse(document.getElementById('viz-heatmap').textContent);
+    const scatterY = JSON.parse(document.getElementById('viz-scatter-y').textContent);
+
+    Plotly.newPlot('heatmap', [{
+      z: heatmapZ,
+      x: dates,
+      y: ['Sales','Stock'],
+      type: 'heatmap',
+      colorscale: 'Viridis'
+    }], {margin: {t: 30}});
+
+    Plotly.newPlot('scatter', [{
+      x: dates,
+      y: scatterY,
+      mode: 'markers',
+      name: '{{ metric|capfirst }}'
+    }], {margin: {t: 30}, xaxis: {title: 'Date'}, yaxis: {title: '{{ metric|capfirst }}'}});
+  </script>
+{% endblock %}

@@ -6,6 +6,7 @@ Inventory-App is a Django application for managing restaurant inventory with a P
 
 - Item and supplier management
 - Stock movement logging and history reports
+- Interactive visualizations for historical sales and stock data
 - Indent and purchase order tracking
 - Dashboard showing key metrics such as low-stock items
 - Bulk upload items and stock transactions from CSV files
@@ -150,6 +151,12 @@ page_obj, _ = list_utils.paginate(request, qs)
 
 `list_utils.export_as_csv` can turn any iterable into a downloadable CSV by
 supplying the header row and a function that builds each data row.
+
+## Visualizations
+
+The `/visualizations/` page provides interactive heatmaps and scatter plots of
+sales and stock movements. Use the metric dropdown and date pickers to filter
+the data range rendered by Plotly.
 
 ## API Endpoints
 

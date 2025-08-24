@@ -1,8 +1,6 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-import pytest
-
 from inventory.services import supabase_categories
 
 

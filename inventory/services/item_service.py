@@ -18,7 +18,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
-from inventory.models import Item, StockTransaction
+from inventory.models import Item
 
 logger = logging.getLogger(__name__)
 

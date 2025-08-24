@@ -22,9 +22,9 @@ class CoerceFloatField(models.DecimalField):
         return self.to_python(value)
 
 
-from .items import Item, StockTransaction
-from .suppliers import Supplier
-from .orders import (
+from .items import Item, StockTransaction  # noqa: E402
+from .suppliers import Supplier  # noqa: E402
+from .orders import (  # noqa: E402
     Indent,
     IndentItem,
     PurchaseOrder,

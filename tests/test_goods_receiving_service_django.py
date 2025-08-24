@@ -1,14 +1,10 @@
 import pytest
 from datetime import date
-from django.db import connection
 
 from inventory.models import (
     Supplier,
-    StockTransaction,
     PurchaseOrder,
     PurchaseOrderItem,
-    GoodsReceivedNote,
-    GRNItem,
 )
 from inventory.services import purchase_order_service, goods_receiving_service
 

@@ -3,11 +3,8 @@ from django import forms
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 
-from django.urls import reverse
-
 from inventory.forms.item_forms import ItemForm
 from inventory.forms import item_forms as forms_module
-from inventory.services import supabase_units
 
 
 @pytest.mark.django_db

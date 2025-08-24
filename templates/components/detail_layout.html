@@ -1,0 +1,8 @@
+{% extends "_base.html" %}
+{% block title %}Detail – Inventory App{% endblock %}
+{% block content %}
+  <h1 class="text-2xl font-semibold mb-4">{% block heading %}{% endblock %}</h1>
+  <div class="mb-4 flex justify-end gap-2">{% block actions %}{% endblock %}</div>
+  {% block detail_table %}{% endblock %}
+  {% block extra_tables %}{% endblock %}
+{% endblock %}

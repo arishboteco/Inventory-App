@@ -1,11 +1,14 @@
-{% extends "_base.html" %}
+{% extends "components/detail_layout.html" %}
 {% block title %}Indent Detail – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Indent {{ indent.indent_id }}</h1>
+{% block heading %}Indent {{ indent.indent_id }}{% endblock %}
+{% block actions %}
+  <a href="{% url 'indent_pdf' indent.indent_id %}" class="btn-outline">Download PDF</a>
+  <a href="{% url 'indents_list' %}" class="btn-outline">Back</a>
+{% endblock %}
+{% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}
-  <div class="mb-4">
-    <a href="{% url 'indent_pdf' indent.indent_id %}" class="btn-outline">Download PDF</a>
-  </div>
+{% endblock %}
+{% block extra_tables %}
   <h2 class="text-xl mb-4 mt-8">Items</h2>
   <table class="table">
     <thead><tr><th>Item</th><th>Qty</th></tr></thead>
@@ -28,8 +31,5 @@
       {% csrf_token %}
       <button type="submit" class="btn-danger">Cancel</button>
     </form>
-  </div>
-  <div class="mt-4">
-    <a href="{% url 'indents_list' %}" class="btn-outline">Back</a>
   </div>
 {% endblock %}

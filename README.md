@@ -31,6 +31,8 @@ Any `<select>` element with the `predictive` class is automatically enhanced wit
 
 ## Installation
 
+This project requires **Python 3.11 or newer**.
+
 Install dependencies using `pip`:
 
 ```bash

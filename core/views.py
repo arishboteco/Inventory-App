@@ -55,6 +55,7 @@ def dashboard_kpis(request):
     """HTMX endpoint returning KPI card values."""
     data = {
         "low_stock_items": kpis.low_stock_items(),
+        "stale_items": kpis.stale_items(),
         "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
         "pending_po_status": kpis.pending_po_status_counts(),
         "pending_indent_status": kpis.pending_indent_counts(),

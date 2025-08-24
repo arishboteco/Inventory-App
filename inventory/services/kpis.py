@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import List, Tuple
 
-from django.db.models import Avg, Count, F, Sum
+from django.db.models import Avg, Count, F, Max, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -122,3 +122,21 @@ def stock_trend_last_7_days() -> Tuple[List[str], List[float]]:
         labels.append(day.strftime("%Y-%m-%d"))
         values.append(data.get(day, 0.0))
     return labels, values
+
+
+def stale_items(days: int = 30, limit: int = 5) -> List[str]:
+    """Return items without recent stock activity.
+
+    Args:
+        days: Number of days to consider an item active. Transactions older
+            than this are ignored.
+        limit: Maximum number of item names to return.
+    """
+
+    cutoff = timezone.now() - timedelta(days=days)
+    qs = (
+        Item.objects.annotate(last=Max("stocktransaction__transaction_date"))
+        .filter(Q(last__lt=cutoff) | Q(last__isnull=True))
+        .order_by("name")
+    )
+    return list(qs.values_list("name", flat=True)[:limit])

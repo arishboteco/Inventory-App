@@ -9,7 +9,7 @@ produce filtered and sorted querysets, paginated results and CSV exports.
 from __future__ import annotations
 
 import csv
-from typing import Callable, Iterable, Mapping, Sequence, Tuple, Dict, Any
+from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
 
 from django.core.paginator import Paginator
 from django.db.models import Q, QuerySet
@@ -124,7 +124,9 @@ def export_as_csv(
     return response
 
 
-def build_querystring(request: HttpRequest, exclude: Sequence[str] | None = None) -> str:
+def build_querystring(
+    request: HttpRequest, exclude: Sequence[str] | None = None
+) -> str:
     """Return querystring for ``request.GET`` excluding certain keys."""
 
     params = request.GET.copy()

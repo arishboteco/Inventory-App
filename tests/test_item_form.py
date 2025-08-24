@@ -3,8 +3,8 @@ from django import forms
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 
-from inventory.forms.item_forms import ItemForm
 from inventory.forms import item_forms as forms_module
+from inventory.forms.item_forms import ItemForm
 
 
 @pytest.mark.django_db
@@ -65,7 +65,10 @@ def test_item_form_categories_and_save(monkeypatch):
     monkeypatch.setattr(
         forms_module,
         "get_categories",
-        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
+        lambda: {
+            None: [{"id": 1, "name": "Food"}],
+            "Food": [{"id": 2, "name": "Fruit"}],
+        },
     )
 
     form = ItemForm()

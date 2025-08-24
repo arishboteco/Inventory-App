@@ -1,6 +1,6 @@
 """Lightweight count helpers for dashboard navigation."""
 
-from inventory.models import Item, Supplier, PurchaseOrder
+from inventory.models import Item, PurchaseOrder, Supplier
 
 
 def item_count() -> int:
@@ -15,4 +15,6 @@ def supplier_count() -> int:
 
 def pending_po_count() -> int:
     """Return count of purchase orders not yet completed or cancelled."""
-    return PurchaseOrder.objects.filter(status__in=["DRAFT", "ORDERED", "PARTIAL"]).count()
+    return PurchaseOrder.objects.filter(
+        status__in=["DRAFT", "ORDERED", "PARTIAL"]
+    ).count()

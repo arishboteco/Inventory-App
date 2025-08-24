@@ -4,15 +4,15 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import DatabaseError, transaction
 from django.db.models import BooleanField, Case, Q, Value, When
-from django.utils import timezone
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.views import View
-from django.views.generic import TemplateView
-from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
+from django.views.generic import TemplateView
 
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..indent_pdf import generate_indent_pdf
@@ -60,7 +60,14 @@ class IndentsListView(TemplateView):
                 ],
             }
         ]
-        ctx.update({"status": status, "q": q, "total_indents": total_indents, "filters": filters})
+        ctx.update(
+            {
+                "status": status,
+                "q": q,
+                "total_indents": total_indents,
+                "filters": filters,
+            }
+        )
         return ctx
 
 
@@ -157,7 +164,14 @@ def indent_detail(request, pk: int):
     items = indent.indentitem_set.select_related("item").all()
     badge_class = INDENT_STATUS_BADGES.get(indent.status.upper(), "")
     rows = [
-        ("Status", format_html('<span class="px-2 py-1 rounded {}">{}</span>', badge_class, indent.status)),
+        (
+            "Status",
+            format_html(
+                '<span class="px-2 py-1 rounded {}">{}</span>',
+                badge_class,
+                indent.status,
+            ),
+        ),
         ("Requested By", indent.requested_by),
         ("Department", indent.department),
     ]

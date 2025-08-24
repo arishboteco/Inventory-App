@@ -10,15 +10,15 @@ from django.db.models import BooleanField, Case, F, Value, When
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.views import View
-from django.views.generic import TemplateView
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.csrf import csrf_protect
+from django.views.generic import TemplateView
 
-from ..models import Item, StockTransaction
-from ..forms.item_forms import ItemForm
 from ..forms.bulk_forms import BulkUploadForm
+from ..forms.item_forms import ItemForm
+from ..models import Item, StockTransaction
 from ..services import item_service, list_utils, stock_service
 from ..services.supabase_categories import get_categories as get_supabase_categories
 
@@ -112,13 +112,15 @@ class ItemsListView(TemplateView):
                 "name": "category",
                 "value": category,
                 "id": "filter-category",
-                "options": [{"value": "", "label": "All"}] + [{"value": c} for c in categories],
+                "options": [{"value": "", "label": "All"}]
+                + [{"value": c} for c in categories],
             },
             {
                 "name": "subcategory",
                 "value": subcategory,
                 "id": "filter-subcategory",
-                "options": [{"value": "", "label": "All"}] + [{"value": sc} for sc in subcategories],
+                "options": [{"value": "", "label": "All"}]
+                + [{"value": sc} for sc in subcategories],
             },
         ]
         ctx.update(
@@ -214,7 +216,9 @@ class ItemCreateView(View):
                     "inventory/_item_options.html", {"items": items}, request=request
                 )
                 toast_html = render_to_string(
-                    "components/toast.html", {"message": "Item created"}, request=request
+                    "components/toast.html",
+                    {"message": "Item created"},
+                    request=request,
                 )
                 response = HttpResponse(
                     options_html
@@ -315,10 +319,9 @@ class ItemDetailView(View):
             ("Notes", details["notes"]),
             ("Active", details["is_active"]),
         ]
-        recent_activity = (
-            StockTransaction.objects.filter(item_id=pk)
-            .order_by("-transaction_date")[:5]
-        )
+        recent_activity = StockTransaction.objects.filter(item_id=pk).order_by(
+            "-transaction_date"
+        )[:5]
         stock_history = stock_service.get_stock_history(pk)
         ctx = {
             "item": details,

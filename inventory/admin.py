@@ -1,8 +1,8 @@
 from django.contrib import admin
 
 from .models import (
-    GRNItem,
     GoodsReceivedNote,
+    GRNItem,
     Indent,
     IndentItem,
     Item,
@@ -14,7 +14,6 @@ from .models import (
     StockTransaction,
     Supplier,
 )
-
 
 for model in [
     Item,

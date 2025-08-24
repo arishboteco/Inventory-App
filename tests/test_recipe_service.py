@@ -1,19 +1,10 @@
 """Tests for the recipe_service module."""
 
 import pytest
-from django.db import connection, OperationalError
+from django.db import OperationalError, connection
 
-from inventory.models import (
-    Item,
-    Recipe,
-    RecipeComponent,
-    SaleTransaction,
-)
-from inventory.services.recipe_service import (
-    create_recipe,
-    update_recipe,
-    record_sale,
-)
+from inventory.models import Item, Recipe, RecipeComponent, SaleTransaction
+from inventory.services.recipe_service import create_recipe, record_sale, update_recipe
 
 pytestmark = pytest.mark.django_db
 
@@ -147,7 +138,9 @@ def test_record_sale_reduces_nested_stock():
     """record_sale should consume stock through nested components."""
     item_id = _create_item()
 
-    premix = Recipe.objects.create(name="PreMix", is_active=True, default_yield_unit="kg")
+    premix = Recipe.objects.create(
+        name="PreMix", is_active=True, default_yield_unit="kg"
+    )
     RecipeComponent.objects.create(
         parent_recipe=premix,
         component_kind="ITEM",
@@ -157,7 +150,9 @@ def test_record_sale_reduces_nested_stock():
         loss_pct=10,
     )
 
-    bread = Recipe.objects.create(name="BreadSale", is_active=True, default_yield_unit="kg")
+    bread = Recipe.objects.create(
+        name="BreadSale", is_active=True, default_yield_unit="kg"
+    )
     RecipeComponent.objects.create(
         parent_recipe=bread,
         component_kind="RECIPE",

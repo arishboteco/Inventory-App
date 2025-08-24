@@ -1,5 +1,6 @@
 import pytest
-from inventory.forms.indent_forms import IndentForm, IndentItemFormSet, IndentItemForm
+
+from inventory.forms.indent_forms import IndentForm, IndentItemForm, IndentItemFormSet
 
 
 @pytest.mark.django_db

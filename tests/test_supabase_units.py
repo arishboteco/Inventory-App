@@ -22,13 +22,15 @@ class DummyClient:
         return self
 
     def execute(self):
-        return DummyResp([
-            {"base_unit": "kg", "purchase_unit": "g"},
-            {"base_unit": "kg", "purchase_unit": "lb"},
-            {"base_unit": "ltr", "purchase_unit": "ml"},
-            {"base_unit": None, "purchase_unit": "x"},
-            {"base_unit": "kg", "purchase_unit": None},
-        ])
+        return DummyResp(
+            [
+                {"base_unit": "kg", "purchase_unit": "g"},
+                {"base_unit": "kg", "purchase_unit": "lb"},
+                {"base_unit": "ltr", "purchase_unit": "ml"},
+                {"base_unit": None, "purchase_unit": "x"},
+                {"base_unit": "kg", "purchase_unit": None},
+            ]
+        )
 
 
 def test_load_units_from_supabase(monkeypatch):

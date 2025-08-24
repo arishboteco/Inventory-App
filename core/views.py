@@ -1,11 +1,10 @@
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
+import json
+from decimal import Decimal
+
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
-
-import json
-
-from decimal import Decimal
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
 
 from inventory.services import counts, dashboard_service, kpis
 

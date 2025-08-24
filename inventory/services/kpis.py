@@ -6,13 +6,7 @@ from django.db.models import Avg, Count, F, Max, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from inventory.models import (
-    GRNItem,
-    Indent,
-    Item,
-    PurchaseOrder,
-    StockTransaction,
-)
+from inventory.models import GRNItem, Indent, Item, PurchaseOrder, StockTransaction
 
 
 def stock_value():
@@ -69,9 +63,9 @@ def high_price_purchases(threshold: Decimal) -> List[GRNItem]:
 
     cutoff = timezone.now() - timedelta(days=30)
     flagged: List[GRNItem] = []
-    for grn_item in GRNItem.objects.filter(grn__received_date__gte=cutoff).select_related(
-        "po_item__item"
-    ):
+    for grn_item in GRNItem.objects.filter(
+        grn__received_date__gte=cutoff
+    ).select_related("po_item__item"):
         avg_price = (
             GRNItem.objects.filter(po_item__item=grn_item.po_item.item)
             .exclude(pk=grn_item.pk)
@@ -85,14 +79,20 @@ def high_price_purchases(threshold: Decimal) -> List[GRNItem]:
 def pending_po_status_counts() -> dict:
     """Return counts of purchase orders by pending status."""
     qs = PurchaseOrder.objects.filter(status__in=["DRAFT", "ORDERED", "PARTIAL"])
-    counts = {row["status"]: row["total"] for row in qs.values("status").annotate(total=Count("po_id"))}
+    counts = {
+        row["status"]: row["total"]
+        for row in qs.values("status").annotate(total=Count("po_id"))
+    }
     return {status: counts.get(status, 0) for status in ["DRAFT", "ORDERED", "PARTIAL"]}
 
 
 def pending_indent_counts() -> dict:
     """Return counts of indents that are not completed or cancelled."""
     qs = Indent.objects.filter(status__in=["PENDING", "SUBMITTED", "PROCESSING"])
-    counts = {row["status"]: row["total"] for row in qs.values("status").annotate(total=Count("indent_id"))}
+    counts = {
+        row["status"]: row["total"]
+        for row in qs.values("status").annotate(total=Count("indent_id"))
+    }
     return {
         status: counts.get(status, 0)
         for status in ["PENDING", "SUBMITTED", "PROCESSING"]

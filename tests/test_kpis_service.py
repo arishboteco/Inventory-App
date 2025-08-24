@@ -5,8 +5,8 @@ import pytest
 from django.utils import timezone
 
 from inventory.models import (
-    GRNItem,
     GoodsReceivedNote,
+    GRNItem,
     Indent,
     PurchaseOrder,
     PurchaseOrderItem,
@@ -21,8 +21,18 @@ def test_kpi_calculations(item_factory):
     item1 = item_factory(name="A", reorder_point=20, current_stock=10)
     item2 = item_factory(name="B", reorder_point=1, current_stock=5)
     week_ago = timezone.now() - timedelta(days=2)
-    StockTransaction.objects.create(item=item1, quantity_change=5, transaction_type="RECEIVING", transaction_date=week_ago)
-    StockTransaction.objects.create(item=item2, quantity_change=-2, transaction_type="ISSUE", transaction_date=week_ago)
+    StockTransaction.objects.create(
+        item=item1,
+        quantity_change=5,
+        transaction_type="RECEIVING",
+        transaction_date=week_ago,
+    )
+    StockTransaction.objects.create(
+        item=item2,
+        quantity_change=-2,
+        transaction_type="ISSUE",
+        transaction_date=week_ago,
+    )
 
     assert kpis.stock_value() == 15
     assert kpis.receipts_last_7_days() == 5
@@ -37,12 +47,32 @@ def test_kpi_calculations(item_factory):
 def test_high_price_purchase_detection(item_factory):
     item = item_factory(name="X")
     supplier = Supplier.objects.create(name="Supp")
-    po = PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="ORDERED")
-    poi = PurchaseOrderItem.objects.create(purchase_order=po, item=item, quantity_ordered=1, unit_price=Decimal("100"))
-    grn = GoodsReceivedNote.objects.create(purchase_order=po, supplier=supplier, received_date=timezone.now().date())
-    GRNItem.objects.create(grn=grn, po_item=poi, quantity_ordered_on_po=1, quantity_received=1, unit_price_at_receipt=Decimal("100"))
-    grn2 = GoodsReceivedNote.objects.create(purchase_order=po, supplier=supplier, received_date=timezone.now().date())
-    high = GRNItem.objects.create(grn=grn2, po_item=poi, quantity_ordered_on_po=1, quantity_received=1, unit_price_at_receipt=Decimal("150"))
+    po = PurchaseOrder.objects.create(
+        supplier=supplier, order_date=timezone.now().date(), status="ORDERED"
+    )
+    poi = PurchaseOrderItem.objects.create(
+        purchase_order=po, item=item, quantity_ordered=1, unit_price=Decimal("100")
+    )
+    grn = GoodsReceivedNote.objects.create(
+        purchase_order=po, supplier=supplier, received_date=timezone.now().date()
+    )
+    GRNItem.objects.create(
+        grn=grn,
+        po_item=poi,
+        quantity_ordered_on_po=1,
+        quantity_received=1,
+        unit_price_at_receipt=Decimal("100"),
+    )
+    grn2 = GoodsReceivedNote.objects.create(
+        purchase_order=po, supplier=supplier, received_date=timezone.now().date()
+    )
+    high = GRNItem.objects.create(
+        grn=grn2,
+        po_item=poi,
+        quantity_ordered_on_po=1,
+        quantity_received=1,
+        unit_price_at_receipt=Decimal("150"),
+    )
 
     flagged = kpis.high_price_purchases(Decimal("0.2"))
     assert list(flagged) == [high]
@@ -51,9 +81,15 @@ def test_high_price_purchase_detection(item_factory):
 @pytest.mark.django_db
 def test_pending_po_and_indent_counts():
     supplier = Supplier.objects.create(name="S")
-    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="DRAFT")
-    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="ORDERED")
-    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="PARTIAL")
+    PurchaseOrder.objects.create(
+        supplier=supplier, order_date=timezone.now().date(), status="DRAFT"
+    )
+    PurchaseOrder.objects.create(
+        supplier=supplier, order_date=timezone.now().date(), status="ORDERED"
+    )
+    PurchaseOrder.objects.create(
+        supplier=supplier, order_date=timezone.now().date(), status="PARTIAL"
+    )
     Indent.objects.create(mrn="1", status="PENDING")
     Indent.objects.create(mrn="2", status="SUBMITTED")
     Indent.objects.create(mrn="3", status="PROCESSING")

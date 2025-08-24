@@ -5,15 +5,15 @@ import logging
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views import View
-from django.views.generic import TemplateView
 from django.utils.decorators import method_decorator
+from django.views import View
 from django.views.decorators.csrf import csrf_protect
+from django.views.generic import TemplateView
 
-from ..models import Supplier
+from ..forms.bulk_forms import BulkDeleteForm, BulkUploadForm
 from ..forms.supplier_forms import SupplierForm
-from ..forms.bulk_forms import BulkUploadForm, BulkDeleteForm
-from ..services import supplier_service, list_utils
+from ..models import Supplier
+from ..services import list_utils, supplier_service
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,9 @@ class SupplierEditView(View):
         supplier = get_object_or_404(Supplier, pk=pk)
         form = SupplierForm(request.POST, instance=supplier)
         if form.is_valid():
-            success, msg = supplier_service.update_supplier(supplier.pk, form.cleaned_data)
+            success, msg = supplier_service.update_supplier(
+                supplier.pk, form.cleaned_data
+            )
             if success:
                 return redirect("suppliers_list")
             messages.error(request, msg)
@@ -232,7 +234,11 @@ class SupplierToggleActiveView(View):
             request.GET = params
             request.method = "GET"
         view_name = request.GET.get("view")
-        view = SuppliersCardView.as_view() if view_name == "cards" else SuppliersTableView.as_view()
+        view = (
+            SuppliersCardView.as_view()
+            if view_name == "cards"
+            else SuppliersTableView.as_view()
+        )
         return view(request)
 
     def post(self, request, pk: int):

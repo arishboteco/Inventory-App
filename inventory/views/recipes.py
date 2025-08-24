@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views.generic import TemplateView
 
-from ..forms.recipe_forms import RecipeForm, RecipeComponentFormSet
+from ..forms.recipe_forms import RecipeComponentFormSet, RecipeForm
 from ..models import Recipe
 
 
@@ -20,7 +20,11 @@ class RecipesListView(TemplateView):
     def _get_recipes(self):
         """Return recipes annotated with component counts and optional images."""
         q = (self.request.GET.get("q") or "").strip()
-        qs = Recipe.objects.all().annotate(component_count=Count("components")).order_by("name")
+        qs = (
+            Recipe.objects.all()
+            .annotate(component_count=Count("components"))
+            .order_by("name")
+        )
         if q:
             qs = qs.filter(name__icontains=q)
 
@@ -46,7 +50,9 @@ class RecipesListView(TemplateView):
         if request.headers.get("HX-Request"):
             return render(request, self.grid_template, {"recipes": recipes})
 
-        grid_html = render_to_string(self.grid_template, {"recipes": recipes}, request=request)
+        grid_html = render_to_string(
+            self.grid_template, {"recipes": recipes}, request=request
+        )
         ctx = {"recipes_grid": grid_html, "q": q}
         return render(request, self.template_name, ctx)
 

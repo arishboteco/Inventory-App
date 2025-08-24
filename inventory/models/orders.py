@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.db import models
 from django.db.models import Sum
 
@@ -8,6 +9,7 @@ from .suppliers import Supplier
 
 class Indent(models.Model):
     """Represents a material requisition from a department."""
+
     indent_id = models.AutoField(primary_key=True)
     mrn = models.CharField(max_length=100, unique=True, null=False, blank=False)
     requested_by = models.CharField(max_length=255, blank=True, null=True)
@@ -30,6 +32,7 @@ class Indent(models.Model):
 
 class IndentItem(models.Model):
     """Links an item to an indent with requested and issued quantities."""
+
     indent_item_id = models.AutoField(primary_key=True)
     indent = models.ForeignKey(
         Indent, models.DO_NOTHING, db_column="indent_id", blank=True, null=True
@@ -55,10 +58,9 @@ class IndentItem(models.Model):
 
 class PurchaseOrder(models.Model):
     """Orders items from a supplier based on approved indents."""
+
     po_id = models.AutoField(primary_key=True)
-    supplier = models.ForeignKey(
-        Supplier, models.CASCADE, db_column="supplier_id"
-    )
+    supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     order_date = models.DateField()
     expected_delivery_date = models.DateField(blank=True, null=True)
     status = models.CharField(
@@ -83,10 +85,9 @@ class PurchaseOrder(models.Model):
 
 class PurchaseOrderItem(models.Model):
     """Line item detailing quantity and price for a purchase order."""
+
     po_item_id = models.AutoField(primary_key=True)
-    purchase_order = models.ForeignKey(
-        PurchaseOrder, models.CASCADE, db_column="po_id"
-    )
+    purchase_order = models.ForeignKey(PurchaseOrder, models.CASCADE, db_column="po_id")
     item = models.ForeignKey(Item, models.DO_NOTHING, db_column="item_id")
     quantity_ordered = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -96,10 +97,9 @@ class PurchaseOrderItem(models.Model):
         value = self.__dict__.get("_received_total")
         if value is not None:
             return value or Decimal("0")
-        total = (
-            self.grnitem_set.aggregate(total=Sum("quantity_received"))["total"]
-            or Decimal("0")
-        )
+        total = self.grnitem_set.aggregate(total=Sum("quantity_received"))[
+            "total"
+        ] or Decimal("0")
         return total
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
@@ -111,13 +111,10 @@ class PurchaseOrderItem(models.Model):
 
 class GoodsReceivedNote(models.Model):
     """Acknowledges receipt of goods for a purchase order."""
+
     grn_id = models.AutoField(primary_key=True)
-    purchase_order = models.ForeignKey(
-        PurchaseOrder, models.CASCADE, db_column="po_id"
-    )
-    supplier = models.ForeignKey(
-        Supplier, models.CASCADE, db_column="supplier_id"
-    )
+    purchase_order = models.ForeignKey(PurchaseOrder, models.CASCADE, db_column="po_id")
+    supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     received_date = models.DateField()
     notes = models.TextField(blank=True, null=True)
 
@@ -130,6 +127,7 @@ class GoodsReceivedNote(models.Model):
 
 class GRNItem(models.Model):
     """Tracks individual items received against a GRN and PO item."""
+
     grn_item_id = models.AutoField(primary_key=True)
     grn = models.ForeignKey(GoodsReceivedNote, models.CASCADE, db_column="grn_id")
     po_item = models.ForeignKey(

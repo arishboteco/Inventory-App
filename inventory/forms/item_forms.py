@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
+
 from django import forms
 
 from ..models import Item
-from ..services.supabase_units import get_units
 from ..services.supabase_categories import get_categories
-from .base import StyledFormMixin, INPUT_CLASS
+from ..services.supabase_units import get_units
+from .base import INPUT_CLASS, StyledFormMixin
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import os
 import sys
-import django
 
+import django
 import pytest
 
 from inventory.models import Item

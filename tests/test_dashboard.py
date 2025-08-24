@@ -1,5 +1,6 @@
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.urls import reverse
 from django.utils import timezone
 
@@ -32,7 +33,9 @@ def test_dashboard_kpis_endpoint(client, item_factory):
     old_tx.transaction_date = timezone.now() - timedelta(days=40)
     old_tx.save(update_fields=["transaction_date"])
     supplier = Supplier.objects.create(name="Supp")
-    PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date(), status="DRAFT")
+    PurchaseOrder.objects.create(
+        supplier=supplier, order_date=timezone.now().date(), status="DRAFT"
+    )
     Indent.objects.create(mrn="1", status="PENDING")
 
     resp = client.get(reverse("dashboard-kpis"))

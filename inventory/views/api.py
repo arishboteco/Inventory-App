@@ -1,32 +1,32 @@
 from rest_framework import permissions, viewsets
 
 from ..models import (
-    Item,
-    Supplier,
-    StockTransaction,
-    Indent,
-    IndentItem,
-    Recipe,
-    RecipeComponent,
-    PurchaseOrder,
-    PurchaseOrderItem,
     GoodsReceivedNote,
     GRNItem,
+    Indent,
+    IndentItem,
+    Item,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Recipe,
+    RecipeComponent,
     SaleTransaction,
+    StockTransaction,
+    Supplier,
 )
 from ..serializers import (
-    ItemSerializer,
-    SupplierSerializer,
-    StockTransactionSerializer,
-    IndentSerializer,
-    IndentItemSerializer,
-    RecipeSerializer,
-    RecipeComponentSerializer,
-    PurchaseOrderSerializer,
-    PurchaseOrderItemSerializer,
     GoodsReceivedNoteSerializer,
     GRNItemSerializer,
+    IndentItemSerializer,
+    IndentSerializer,
+    ItemSerializer,
+    PurchaseOrderItemSerializer,
+    PurchaseOrderSerializer,
+    RecipeComponentSerializer,
+    RecipeSerializer,
     SaleTransactionSerializer,
+    StockTransactionSerializer,
+    SupplierSerializer,
 )
 
 
@@ -115,7 +115,9 @@ class PurchaseOrderItemViewSet(viewsets.ModelViewSet):
 class GoodsReceivedNoteViewSet(viewsets.ModelViewSet):
     """API for managing goods received notes."""
 
-    queryset = GoodsReceivedNote.objects.all().select_related("purchase_order", "supplier")
+    queryset = GoodsReceivedNote.objects.all().select_related(
+        "purchase_order", "supplier"
+    )
     serializer_class = GoodsReceivedNoteSerializer
     permission_classes = [permissions.IsAuthenticated]
 

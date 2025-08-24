@@ -101,7 +101,10 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     monkeypatch.setattr(
         forms_module,
         "get_categories",
-        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
+        lambda: {
+            None: [{"id": 1, "name": "Food"}],
+            "Food": [{"id": 2, "name": "Fruit"}],
+        },
     )
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
@@ -182,7 +185,10 @@ def test_items_list_view_shows_empty_categories(client):
 def test_items_list_view_populates_categories(client, monkeypatch):
     monkeypatch.setattr(
         "inventory.views.items.get_supabase_categories",
-        lambda: {None: [{"id": 1, "name": "Food"}], "Food": [{"id": 2, "name": "Fruit"}]},
+        lambda: {
+            None: [{"id": 1, "name": "Food"}],
+            "Food": [{"id": 2, "name": "Fruit"}],
+        },
     )
     url = reverse("items_list") + "?category=Food&subcategory=Fruit"
     resp = client.get(url)

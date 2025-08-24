@@ -1,20 +1,16 @@
 import logging
+from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
-from decimal import Decimal
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
-from django.db.models import Sum
 
-from ..forms.purchase_forms import (
-    PurchaseOrderForm,
-    PurchaseOrderItemFormSet,
-    GRNForm,
-)
+from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import PurchaseOrder, Supplier
-from ..services import purchase_order_service, goods_receiving_service, list_utils
+from ..services import goods_receiving_service, list_utils, purchase_order_service
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +82,9 @@ def purchase_order_create(request):
             po_data = {
                 "supplier_id": form.cleaned_data["supplier"].pk,
                 "order_date": form.cleaned_data["order_date"],
-                "expected_delivery_date": form.cleaned_data.get("expected_delivery_date"),
+                "expected_delivery_date": form.cleaned_data.get(
+                    "expected_delivery_date"
+                ),
                 "status": form.cleaned_data.get("status"),
                 "notes": form.cleaned_data.get("notes"),
             }
@@ -159,7 +157,11 @@ def purchase_order_detail(request, pk: int):
         ("Order Date", po.order_date),
         (
             "Status",
-            format_html('<span class="px-2 py-1 rounded text-xs {}">{}</span>', badge_class, po.get_status_display()),
+            format_html(
+                '<span class="px-2 py-1 rounded text-xs {}">{}</span>',
+                badge_class,
+                po.get_status_display(),
+            ),
         ),
     ]
     ctx = {"po": po, "items": items, "badge_class": badge_class, "rows": rows}
@@ -214,7 +216,9 @@ def purchase_order_receive(request, pk: int):
                     "notes": form.cleaned_data.get("notes"),
                     "received_by_user_id": getattr(request.user, "username", "System"),
                 }
-                success, msg, _ = goods_receiving_service.create_grn(grn_data, items_data)
+                success, msg, _ = goods_receiving_service.create_grn(
+                    grn_data, items_data
+                )
                 if success:
                     return redirect("purchase_order_detail", pk=pk)
                 messages.error(request, msg)

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from django.db.utils import OperationalError
 
@@ -126,6 +128,27 @@ def test_add_items_bulk_validation_failure():
     assert inserted == 0
     assert errors
     assert Item.objects.count() == 0
+
+
+def test_add_items_bulk_applies_defaults():
+    items = [
+        {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box"},
+        {
+            "name": "Gadget",
+            "base_unit": "pcs",
+            "purchase_unit": "each",
+            "is_active": False,
+        },
+    ]
+    inserted, errors = item_service.add_items_bulk(items)
+    assert inserted == 2
+    assert errors == []
+    widget = Item.objects.get(name="Widget")
+    assert widget.reorder_point == Decimal("0")
+    assert widget.is_active is True
+    assert widget.notes is None
+    gadget = Item.objects.get(name="Gadget")
+    assert gadget.is_active is False
 
 
 def test_add_new_item_requires_purchase_unit():

@@ -136,13 +136,23 @@ def _clean_create_params(details: Dict[str, Any]) -> Dict[str, Any]:
         else None
     )
 
+    reorder_raw = details.get("reorder_point")
+    try:
+        reorder_clean = (
+            Decimal(str(reorder_raw))
+            if reorder_raw not in (None, "")
+            else Decimal("0")
+        )
+    except (InvalidOperation, TypeError):
+        reorder_clean = Decimal("0")
+
     return dict(
-        name=details["name"].strip(),
-        base_unit=details["base_unit"].strip(),
-        purchase_unit=details["purchase_unit"].strip(),
+        name=details.get("name", "").strip(),
+        base_unit=details.get("base_unit", "").strip(),
+        purchase_unit=details.get("purchase_unit", "").strip(),
         category_id=details.get("category_id"),
         permitted_departments=cleaned_permitted,
-        reorder_point=details.get("reorder_point", Decimal("0")),
+        reorder_point=reorder_clean,
         notes=cleaned_notes,
         is_active=details.get("is_active", True),
     )
@@ -159,39 +169,14 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
     errors: List[str] = []
     for idx, details in enumerate(items):
         required = ["name", "base_unit", "purchase_unit"]
-        if not all(details.get(k) and str(details.get(k)).strip() for k in required):
-            missing = [
-                k
-                for k in required
-                if not details.get(k) or not str(details.get(k)).strip()
-            ]
-            errors.append(f"Item {idx} missing required fields: {', '.join(missing)}")
+        valid, missing = _validate_required(details, required)
+        if not valid:
+            errors.append(
+                f"Item {idx} missing required fields: {', '.join(missing)}"
+            )
             continue
 
-        notes_val = details.get("notes")
-        cleaned_notes = notes_val.strip() if isinstance(notes_val, str) else None
-        if cleaned_notes == "":
-            cleaned_notes = None
-
-        permitted_val = details.get("permitted_departments")
-        cleaned_permitted = (
-            permitted_val.strip()
-            if isinstance(permitted_val, str) and permitted_val.strip()
-            else None
-        )
-
-        processed.append(
-            dict(
-                name=details["name"].strip(),
-                base_unit=details["base_unit"].strip(),
-                purchase_unit=details["purchase_unit"].strip(),
-                category_id=details.get("category_id"),
-                permitted_departments=cleaned_permitted,
-                reorder_point=details.get("reorder_point", Decimal("0")),
-                notes=cleaned_notes,
-                is_active=details.get("is_active", True),
-            )
-        )
+        processed.append(_clean_create_params(details))
 
     if errors:
         return 0, errors

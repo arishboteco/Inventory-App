@@ -1,15 +1,24 @@
-{% extends "components/form_layout.html" %}
-{% block heading %}{{ title }}{% endblock %}
-{% block form_attrs %}enctype="multipart/form-data"{% endblock %}
-{% block fields %}
-  {% for field in form %}
-    {% include "components/form_field.html" with field=field %}
-  {% endfor %}
-{% endblock %}
-{% block submit_text %}Upload{% endblock %}
-{% block back_url %}{% url back_url %}{% endblock %}
-{% block back_text %}Back{% endblock %}
-{% block extra %}
+{% extends "_base.html" %}
+{% block title %}{{ title }} – Inventory App{% endblock %}
+{% block content %}
+<div class="w-full max-w-4xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4">
+  <h1 class="text-2xl font-semibold mb-4">{{ title }}</h1>
+  {% if form %}
+  <form method="post" enctype="multipart/form-data" class="grid grid-cols-1 gap-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="text-red-600 list-disc pl-5">
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% for field in form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn-primary">Upload</button>
+      <a href="{% url back_url %}" class="btn-outline">Back</a>
+    </div>
+  </form>
   {% if inserted %}
   <p class="mt-4 text-green-700">Inserted {{ inserted }} record(s).</p>
   {% endif %}
@@ -23,4 +32,9 @@
     </ul>
   </div>
   {% endif %}
+  {% else %}
+    <p>Unable to load form.</p>
+  {% endif %}
+</div>
 {% endblock %}
+

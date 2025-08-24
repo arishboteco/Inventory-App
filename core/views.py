@@ -1,12 +1,28 @@
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.contrib.auth import login
+from django.contrib.auth.forms import AuthenticationForm
 
 from inventory.services import dashboard_service, kpis
 
 
 def root_view(request):
-    """Render the home page."""
-    return render(request, "core/home.html")
+    """Render the home page or login form depending on authentication."""
+    if request.user.is_authenticated:
+        data = {
+            "stock_value": kpis.stock_value(),
+            "receipts": kpis.receipts_last_7_days(),
+            "issues": kpis.issues_last_7_days(),
+            "low_stock": kpis.low_stock_count(),
+        }
+        return render(request, "core/home.html", data)
+
+    form = AuthenticationForm(request, data=request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        login(request, form.get_user())
+        return redirect("root")
+
+    return render(request, "core/home.html", {"form": form})
 
 
 def health_check(request):

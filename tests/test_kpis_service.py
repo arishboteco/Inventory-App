@@ -64,3 +64,29 @@ def test_pending_po_and_indent_counts():
 
     assert po_counts == {"DRAFT": 1, "ORDERED": 1, "PARTIAL": 1}
     assert indent_counts == {"PENDING": 1, "SUBMITTED": 1, "PROCESSING": 1}
+
+
+@pytest.mark.django_db
+def test_stale_items(item_factory):
+    fresh = item_factory(name="Fresh")
+    stale = item_factory(name="Old")
+    item_factory(name="Never")
+
+    now = timezone.now()
+    StockTransaction.objects.create(
+        item=fresh,
+        quantity_change=1,
+        transaction_type="RECEIVING",
+        transaction_date=now,
+    )
+    old_date = now - timedelta(days=40)
+    old_tx = StockTransaction.objects.create(
+        item=stale,
+        quantity_change=1,
+        transaction_type="RECEIVING",
+    )
+    old_tx.transaction_date = old_date
+    old_tx.save(update_fields=["transaction_date"])
+
+    result = kpis.stale_items(days=30)
+    assert result == ["Never", "Old"]

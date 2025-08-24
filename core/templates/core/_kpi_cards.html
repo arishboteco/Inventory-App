@@ -1,9 +1,22 @@
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
   <div class="p-6 rounded-xl text-white bg-gradient-to-r from-primary to-secondary">
     <h2 class="text-lg font-medium">Low-stock Items</h2>
     {% if low_stock_items %}
       <ul class="mt-2 text-sm space-y-1">
         {% for name in low_stock_items %}
+          <li>{{ name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="mt-2 text-sm">None</p>
+    {% endif %}
+  </div>
+
+  <div class="p-6 rounded-xl text-white bg-gradient-to-r from-primary to-secondary">
+    <h2 class="text-lg font-medium">Stale Items</h2>
+    {% if stale_items %}
+      <ul class="mt-2 text-sm space-y-1">
+        {% for name in stale_items %}
           <li>{{ name }}</li>
         {% endfor %}
       </ul>

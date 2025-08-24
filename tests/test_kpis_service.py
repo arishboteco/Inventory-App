@@ -18,3 +18,6 @@ def test_kpi_calculations(item_factory):
     assert kpis.receipts_last_7_days() == 5
     assert kpis.issues_last_7_days() == 2
     assert kpis.low_stock_count() == 1
+    labels, values = kpis.stock_trend_last_7_days()
+    assert labels and len(labels) == 7
+    assert values[-1] == 3.0

@@ -32,6 +32,50 @@ def test_item_detail_view(client):
     assert b"Current Stock" in resp.content
 
 
+def test_item_create_view_htmx_success(client, monkeypatch):
+    from inventory.forms import item_forms as forms_module
+
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"pcs": ["box"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
+    url = reverse("item_create")
+    data = {
+        "name": "Widget",
+        "base_unit": "pcs",
+        "purchase_unit": "box",
+        "permitted_departments": "dept",
+        "reorder_point": "1",
+        "current_stock": "0",
+        "notes": "n",
+        "is_active": "on",
+    }
+    resp = client.post(url, data, HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert "<option" in content
+    assert "toast" in content
+
+
+def test_item_create_view_htmx_failure(client, monkeypatch):
+    from inventory.forms import item_forms as forms_module
+
+    monkeypatch.setattr(forms_module, "get_units", lambda: {"pcs": ["box"]})
+    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
+    url = reverse("item_create")
+    data = {
+        "base_unit": "pcs",
+        "purchase_unit": "box",
+        "permitted_departments": "dept",
+        "reorder_point": "1",
+        "current_stock": "0",
+        "notes": "n",
+        "is_active": "on",
+    }
+    resp = client.post(url, data, HTTP_HX_REQUEST="true")
+    assert resp.status_code == 200
+    assert resp.headers.get("HX-Retarget") == "#item-form"
+    assert "Item name is required" in resp.content.decode()
+
+
 def test_item_delete_view_deletes_without_transactions(client):
     item = _create_item()
     url = reverse("item_delete", args=[item.pk])

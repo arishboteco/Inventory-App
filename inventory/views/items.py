@@ -5,7 +5,7 @@ import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views import View
@@ -200,9 +200,26 @@ class ItemCreateView(View):
         form = ItemForm(request.POST)
         if form.is_valid():
             form.save()
+            if request.headers.get("HX-Request"):
+                items = Item.objects.order_by("name")[:20]
+                options_html = render_to_string(
+                    "inventory/_item_options.html", {"items": items}, request=request
+                )
+                toast_html = render_to_string(
+                    "components/toast.html", {"message": "Item created"}, request=request
+                )
+                response = HttpResponse(
+                    options_html
+                    + f'<div id="toast-container" hx-swap-oob="beforeend">{toast_html}</div>'
+                )
+                return response
             messages.success(request, "Item created")
             return redirect("items_list")
         ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
+        if request.headers.get("HX-Request"):
+            response = render(request, self.template_name, ctx)
+            response["HX-Retarget"] = "#item-form"
+            return response
         return render(request, self.template_name, ctx)
 
 

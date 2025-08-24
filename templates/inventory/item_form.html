@@ -1,5 +1,10 @@
 {% extends "components/form_layout.html" %}
 {% block heading %}{% if is_edit %}Edit Item{% else %}New Item{% endif %}{% endblock %}
+{% block form_attrs %}
+  id="item-form"
+  hx-post="{% if is_edit %}{% url 'item_edit' item.pk %}{% else %}{% url 'item_create' %}{% endif %}"
+  hx-target="#item-options"
+{% endblock %}
 {% block fields %}
   {% if not form.units_map %}
   <p class="text-sm text-red-600 dark:text-red-400">Could not load unit options. Please try again later.</p>

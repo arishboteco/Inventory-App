@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import logging
 
 from django.contrib import messages
@@ -16,7 +17,7 @@ from django.urls import reverse
 from ..models import Item, StockTransaction
 from ..forms.item_forms import ItemForm
 from ..forms.bulk_forms import BulkUploadForm
-from ..services import item_service, list_utils
+from ..services import item_service, list_utils, stock_service
 from ..services.supabase_categories import get_categories as get_supabase_categories
 
 logger = logging.getLogger(__name__)
@@ -312,7 +313,17 @@ class ItemDetailView(View):
             ("Notes", details["notes"]),
             ("Active", details["is_active"]),
         ]
-        ctx = {"item": details, "rows": rows}
+        recent_activity = (
+            StockTransaction.objects.filter(item_id=pk)
+            .order_by("-transaction_date")[:5]
+        )
+        stock_history = stock_service.get_stock_history(pk)
+        ctx = {
+            "item": details,
+            "rows": rows,
+            "recent_activity": recent_activity,
+            "stock_history": json.dumps(stock_history),
+        }
         return render(request, self.template_name, ctx)
 
 

@@ -2,8 +2,58 @@
 {% block title %}Item Detail – Inventory App{% endblock %}
 {% block heading %}{{ item.name }}{% endblock %}
 {% block actions %}
-  <a href="{% url 'items_list' %}" class="btn-outline">Back</a>
+  <div x-data>
+    <a href="{% url 'items_list' %}" class="btn-outline">Back</a>
+    <a href="{% url 'item_edit' item.item_id %}" class="btn-primary">Edit</a>
+    <form x-ref="delForm" method="post" action="{% url 'item_delete' item.item_id %}" class="inline">
+      {% csrf_token %}
+      <button type="submit" class="btn-danger" @click.prevent="if(confirm('Delete this item?')) $refs.delForm.submit()">Delete</button>
+    </form>
+  </div>
 {% endblock %}
 {% block detail_table %}
-  {% include "components/detail_table.html" with rows=rows %}
+  <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+    <div>
+      {% include "components/image_uploader.html" %}
+      {% include "components/detail_table.html" with rows=rows %}
+    </div>
+    <div>
+      <h2 class="text-h2 mb-2">Recent Activity</h2>
+      <canvas id="stockSparkline" class="w-full h-24 mb-4"></canvas>
+      <ul class="space-y-1">
+        {% for tx in recent_activity %}
+        <li class="flex justify-between text-sm">
+          <span>{{ tx.transaction_date }}</span>
+          <span>{{ tx.quantity_change }}</span>
+        </li>
+        {% empty %}
+        <li>No recent activity.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const ctx = document.getElementById('stockSparkline');
+      const data = {{ stock_history|safe }};
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map((_, idx) => idx + 1),
+          datasets: [{
+            data: data,
+            borderColor: '#3b82f6',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { display: false } }
+        }
+      });
+    });
+  </script>
 {% endblock %}

@@ -100,3 +100,26 @@ def remove_stock_transactions_bulk(transaction_ids: List[int]) -> bool:
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error removing stock transactions: %s", exc)
         return False
+
+
+def get_stock_history(item_id: int, limit: int = 30) -> List[float]:
+    """Return running stock levels for the most recent transactions."""
+
+    txs = list(
+        StockTransaction.objects.filter(item_id=item_id)
+        .order_by("-transaction_date")
+        .values_list("quantity_change", flat=True)[:limit]
+    )[::-1]
+    item = (
+        Item.objects.filter(pk=item_id).values_list("current_stock", flat=True).first()
+    )
+    if item is None:
+        return []
+    current = item or Decimal("0")
+    start = current - sum((tx or Decimal("0")) for tx in txs)
+    history: List[float] = [float(start)]
+    total = start
+    for change in txs:
+        total += change or Decimal("0")
+        history.append(float(total))
+    return history

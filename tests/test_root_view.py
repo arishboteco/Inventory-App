@@ -9,6 +9,13 @@ def test_root_view_shows_login_form_for_anonymous_user(client):
 
 
 @pytest.mark.django_db
+def test_login_route_redirects_to_root(client):
+    resp = client.get("/login/")
+    assert resp.status_code == 302
+    assert resp.url == "/"
+
+
+@pytest.mark.django_db
 def test_root_view_includes_kpis_for_authenticated_user(client, django_user_model, monkeypatch):
     user = django_user_model.objects.create_user(username="u", password="p")
     client.force_login(user)

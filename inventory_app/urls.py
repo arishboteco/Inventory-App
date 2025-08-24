@@ -17,11 +17,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic.base import RedirectView
 from core.views import root_view, health_check, dashboard, dashboard_kpis
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("login/", root_view, name="login"),
+    path("login/", RedirectView.as_view(pattern_name="root", permanent=False), name="login"),
     path("", root_view, name="root"),
     path("dashboard/", dashboard, name="dashboard"),
     path("dashboard/kpis/", dashboard_kpis, name="dashboard-kpis"),

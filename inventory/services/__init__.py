@@ -12,6 +12,7 @@ from . import (
     list_utils,
     sale_service,
     kpis,
+    counts,
     supabase_units,
     supabase_categories,
 )
@@ -28,6 +29,7 @@ __all__ = [
     "list_utils",
     "sale_service",
     "kpis",
+    "counts",
     "supabase_units",
     "supabase_categories",
 ]

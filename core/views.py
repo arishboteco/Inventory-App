@@ -3,7 +3,7 @@ from django.shortcuts import redirect, render
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 
-from inventory.services import dashboard_service, kpis
+from inventory.services import dashboard_service, kpis, counts
 
 
 def root_view(request):
@@ -14,6 +14,9 @@ def root_view(request):
             "receipts": kpis.receipts_last_7_days(),
             "issues": kpis.issues_last_7_days(),
             "low_stock": kpis.low_stock_count(),
+            "item_count": counts.item_count(),
+            "supplier_count": counts.supplier_count(),
+            "pending_po_count": counts.pending_po_count(),
         }
         return render(request, "core/home.html", data)
 

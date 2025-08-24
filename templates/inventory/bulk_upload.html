@@ -11,12 +11,12 @@
 {% block back_text %}Back{% endblock %}
 {% block extra %}
   {% if inserted %}
-  <p class="mt-4 text-green-700 dark:text-green-400">Inserted {{ inserted }} record(s).</p>
+  <p class="mt-4 text-green-700">Inserted {{ inserted }} record(s).</p>
   {% endif %}
   {% if errors %}
   <div class="mt-4">
-    <p class="text-red-700 dark:text-red-400">Errors:</p>
-    <ul class="list-disc pl-5 dark:text-red-400">
+    <p class="text-red-700">Errors:</p>
+    <ul class="list-disc pl-5">
       {% for err in errors %}
       <li>{{ err }}</li>
       {% endfor %}

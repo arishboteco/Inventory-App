@@ -6,7 +6,7 @@
   <form method="post" enctype="multipart/form-data" class="space-y-4">
     {% csrf_token %}
     {% if form.non_field_errors %}
-    <ul class="text-red-600 dark:text-red-400 list-disc pl-5">
+    <ul class="text-red-600 list-disc pl-5">
       {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
     </ul>
     {% endif %}
@@ -19,12 +19,12 @@
     </div>
   </form>
   {% if deleted %}
-  <p class="mt-4 text-green-700 dark:text-green-400">Deleted {{ deleted }} supplier(s).</p>
+  <p class="mt-4 text-green-700">Deleted {{ deleted }} supplier(s).</p>
   {% endif %}
   {% if errors %}
   <div class="mt-4">
-    <p class="text-red-700 dark:text-red-400">Errors:</p>
-    <ul class="list-disc pl-5 dark:text-red-400">
+    <p class="text-red-700">Errors:</p>
+    <ul class="list-disc pl-5">
       {% for err in errors %}
       <li>{{ err }}</li>
       {% endfor %}

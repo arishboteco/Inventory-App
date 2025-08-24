@@ -10,7 +10,7 @@
       value="{{ q }}"
       hx-get="{{ hx_get }}"
       hx-target="{{ hx_target }}"
-      hx-trigger="keyup changed delay:300ms"
+      hx-trigger="keyup changed delay:{{ search_delay|default:'300ms' }}"
       hx-include="#filters"
       {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
     />

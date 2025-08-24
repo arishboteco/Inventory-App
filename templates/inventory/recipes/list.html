@@ -4,12 +4,10 @@
 {% block actions %}
   <a class="btn-primary" href="{% url 'recipe_create' %}">New Recipe</a>
 {% endblock %}
-{% block table_container %}
-<ul class="list-disc pl-5">
-  {% for r in recipes %}
-    <li><a class="text-primary" href="{% url 'recipe_detail' r.recipe_id %}">{{ r.name }}</a></li>
-  {% empty %}
-    <li>No recipes available.</li>
-  {% endfor %}
-</ul>
+{% block filter_bar %}
+  {% url 'recipes_list' as recipes_list_url %}
+  {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_list_url hx_target="#recipes_grid" q=q %}
 {% endblock %}
+{% block table_id %}recipes_grid{% endblock %}
+{% block hx_get %}{% url 'recipes_list' %}{% endblock %}
+{% block table_content %}{{ recipes_grid|safe }}{% endblock %}

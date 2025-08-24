@@ -1,5 +1,7 @@
 from django.contrib import messages
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.views.generic import TemplateView
 
 from ..forms.recipe_forms import RecipeForm, RecipeComponentFormSet
@@ -7,17 +9,46 @@ from ..models import Recipe
 
 
 class RecipesListView(TemplateView):
-    """Display all recipes ordered by name.
+    """Display all recipes with search and card grid.
 
     Template: inventory/recipes/list.html.
     """
 
     template_name = "inventory/recipes/list.html"
+    grid_template = "inventory/recipes/_recipes_cards.html"
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["recipes"] = Recipe.objects.all().order_by("name")
-        return ctx
+    def _get_recipes(self):
+        """Return recipes annotated with component counts and optional images."""
+        q = (self.request.GET.get("q") or "").strip()
+        qs = Recipe.objects.all().annotate(component_count=Count("components")).order_by("name")
+        if q:
+            qs = qs.filter(name__icontains=q)
+
+        recipes = []
+        for r in qs:
+            image = (
+                getattr(r, "image", None)
+                or getattr(r, "image_url", None)
+                or "https://via.placeholder.com/400x300?text=Recipe"
+            )
+            recipes.append(
+                {
+                    "recipe_id": r.recipe_id,
+                    "name": r.name,
+                    "image": image,
+                    "component_count": r.component_count,
+                }
+            )
+        return recipes, q
+
+    def get(self, request, *args, **kwargs):
+        recipes, q = self._get_recipes()
+        if request.headers.get("HX-Request"):
+            return render(request, self.grid_template, {"recipes": recipes})
+
+        grid_html = render_to_string(self.grid_template, {"recipes": recipes}, request=request)
+        ctx = {"recipes_grid": grid_html, "q": q}
+        return render(request, self.template_name, ctx)
 
 
 def recipe_create(request):

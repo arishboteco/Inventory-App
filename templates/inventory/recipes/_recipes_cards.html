@@ -1,0 +1,7 @@
+<div class="grid gap-4 grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+  {% for recipe in recipes %}
+    {% include "inventory/recipes/recipes_card.html" with recipe=recipe %}
+  {% empty %}
+    <p class="col-span-full">No recipes available.</p>
+  {% endfor %}
+</div>

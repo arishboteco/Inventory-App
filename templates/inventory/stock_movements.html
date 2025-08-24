@@ -3,83 +3,10 @@
 {% load static %}
 {% block content %}
   <h1 class="text-2xl font-semibold mb-4">Stock Movements</h1>
-  <form method="get" id="section-form" class="mb-4">
-    {% for key, label in sections.items %}
-        <label class="mr-4 text-sm font-medium">
-          <input type="radio" name="section" value="{{ key }}" class="form-radio" {% if key == active_section %}checked{% endif %} onchange="document.getElementById('section-form').submit();"> {{ label }}
-        </label>
-      {% endfor %}
-  </form>
   {% if messages %}
     {% include "components/alert.html" %}
   {% endif %}
-  {% if active_section == 'receive' %}
-    <h2 class="text-xl mb-4 mt-8">Goods Received</h2>
-    <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
-      {% csrf_token %}
-      {% if receive_form.non_field_errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in receive_form.non_field_errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-      {% for field in receive_form %}
-        {% if field.name == 'notes' %}
-          {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-        {% else %}
-          {% include "components/form_field.html" with field=field %}
-        {% endif %}
-      {% endfor %}
-      <div class="col-span-2">
-        <button type="submit" name="submit_receive" class="btn-primary">Record</button>
-      </div>
-    </form>
-  {% elif active_section == 'adjust' %}
-    <h2 class="text-xl mb-4 mt-8">Stock Adjustment</h2>
-    <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
-      {% csrf_token %}
-      {% if adjust_form.non_field_errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in adjust_form.non_field_errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-      {% for field in adjust_form %}
-        {% if field.name == 'notes' %}
-          {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-        {% else %}
-          {% include "components/form_field.html" with field=field %}
-        {% endif %}
-      {% endfor %}
-      <div class="col-span-2">
-        <button type="submit" name="submit_adjust" class="btn-primary">Record</button>
-      </div>
-    </form>
-  {% elif active_section == 'waste' %}
-    <h2 class="text-xl mb-4 mt-8">Wastage/Spoilage</h2>
-    <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
-      {% csrf_token %}
-      {% if waste_form.non_field_errors %}
-      <ul class="text-red-600 list-disc pl-5">
-        {% for error in waste_form.non_field_errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-      {% for field in waste_form %}
-        {% if field.name == 'notes' %}
-          {% include "components/form_field.html" with field=field container_class="col-span-2" %}
-        {% else %}
-          {% include "components/form_field.html" with field=field %}
-        {% endif %}
-      {% endfor %}
-      <div class="col-span-2">
-        <button type="submit" name="submit_waste" class="btn-primary">Record</button>
-      </div>
-    </form>
-  {% endif %}
+  {% include "components/tabs.html" with tabs=tabs %}
   <datalist id="item-options"></datalist>
   <hr class="my-4"/>
   <h2 class="text-xl mb-4 mt-8">Bulk Upload Stock Transactions</h2>

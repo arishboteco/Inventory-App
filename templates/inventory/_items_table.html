@@ -66,9 +66,20 @@
   </td>
   <td class="px-4 py-2">{{ row.is_active }}</td>
   <td class="px-4 py-2">
-    <a href="{% url 'item_detail' row.item_id %}" class="text-primary mr-2">View</a>
-    <a href="{% url 'item_edit' row.item_id %}" class="text-primary mr-2">Edit</a>
-    <a href="{% url 'item_delete' row.item_id %}" class="text-primary">Delete/Deactivate</a>
+    <div class="flex gap-2">
+      <a href="{% url 'item_detail' row.item_id %}" class="text-primary" title="View">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1 1 0 010-.644C3.423 7.51 7.373 4.5 12 4.5c4.628 0 8.578 3.01 9.964 7.178a1 1 0 010 .644C20.578 16.49 16.628 19.5 12 19.5c-4.628 0-8.578-3.01-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="sr-only">View</span>
+      </a>
+      <a href="{% url 'item_edit' row.item_id %}" class="text-primary" title="Edit">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 3.75h-6a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 3.75L20.25 9M7.5 9h3.75a.75.75 0 01.75.75V13.5"/></svg>
+        <span class="sr-only">Edit</span>
+      </a>
+      <a href="{% url 'item_delete' row.item_id %}" class="text-red-600" title="Delete">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4a1 1 0 011 1v1h3m-12 0h3v1a1 1 0 001 1h4a1 1 0 001-1V5h3M4 7h16"/></svg>
+        <span class="sr-only">Delete</span>
+      </a>
+    </div>
   </td>
 </tr>
 {% empty %}

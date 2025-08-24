@@ -1,7 +1,7 @@
-{% extends "_base.html" %}
+{% extends "components/list_layout.html" %}
 {% block title %}Goods Received Notes – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Goods Received Notes</h1>
+{% block heading %}Goods Received Notes{% endblock %}
+{% block filter_bar %}
   <form method="get" class="mb-4 grid gap-2 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
     <div class="space-y-1">
       <label class="block text-sm font-medium">Supplier</label>
@@ -31,6 +31,8 @@
       <button type="submit" class="btn-primary w-full">Filter</button>
     </div>
   </form>
+{% endblock %}
+{% block table_container %}
   <table class="table">
     <thead><tr><th>ID</th><th>PO</th><th>Supplier</th><th>Date</th></tr></thead>
     <tbody>

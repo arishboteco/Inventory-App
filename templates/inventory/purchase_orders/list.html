@@ -1,11 +1,11 @@
-{% extends "_base.html" %}
+{% extends "components/list_layout.html" %}
 {% block title %}Purchase Orders – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Purchase Orders</h1>
-  <div class="mb-4 flex justify-end gap-2">
-    <a href="{% url 'purchase_order_create' %}" class="btn-primary">New PO</a>
-    <a href="{% url 'grn_list' %}" class="btn-secondary">GRNs</a>
-  </div>
+{% block heading %}Purchase Orders{% endblock %}
+{% block actions %}
+  <a href="{% url 'purchase_order_create' %}" class="btn-primary">New PO</a>
+  <a href="{% url 'grn_list' %}" class="btn-secondary">GRNs</a>
+{% endblock %}
+{% block filter_bar %}
   <form method="get" class="mb-4 grid gap-2 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
     <div class="space-y-1">
       <label class="block text-sm font-medium">Status</label>
@@ -51,5 +51,7 @@
       <button type="submit" class="btn-primary w-full">Filter</button>
     </div>
   </form>
+{% endblock %}
+{% block table_container %}
   {% include "inventory/purchase_orders/_table.html" %}
 {% endblock %}

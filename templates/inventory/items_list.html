@@ -1,13 +1,15 @@
-{% extends "_base.html" %}
+{% extends "components/list_layout.html" %}
 {% block title %}Items – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Items</h1>
-  <div class="mb-4 flex justify-end gap-2">
-    <a href="{% url 'item_create' %}" class="btn-primary">New Item</a>
-    <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
-  </div>
+{% block heading %}Items{% endblock %}
+{% block actions %}
+  <a href="{% url 'item_create' %}" class="btn-primary">New Item</a>
+  <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
+{% endblock %}
+{% block filter_bar %}
   {% url 'items_table' as items_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search items..." hx_get=items_table_url hx_target="#items_table" hx_indicator="#htmx-spinner" filters=filters export_url=export_url sort=sort direction=direction %}
+{% endblock %}
+{% block extra %}
   {{ categories_map|json_script:"categories-data" }}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -46,11 +48,7 @@
       });
     });
   </script>
-  <div id="items_table"
-       hx-get="{% url 'items_table' %}"
-       hx-trigger="load"
-       hx-include="#filters"
-       hx-indicator="#htmx-spinner">
-    {{ items_table|safe }}
-  </div>
 {% endblock %}
+{% block table_id %}items_table{% endblock %}
+{% block hx_get %}{% url 'items_table' %}{% endblock %}
+{% block table_content %}{{ items_table|safe }}{% endblock %}

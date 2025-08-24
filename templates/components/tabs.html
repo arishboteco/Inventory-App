@@ -1,0 +1,24 @@
+<div data-tabs class="grid gap-4">
+  <div role="tablist" class="flex border-b">
+    {% for tab in tabs %}
+      <button
+        type="button"
+        role="tab"
+        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+        data-tab-target="{{ tab.id }}"
+        class="px-4 py-2 -mb-px border-b-2 border-transparent text-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        {{ tab.title }}
+      </button>
+    {% endfor %}
+  </div>
+  {% for tab in tabs %}
+    <div
+      id="{{ tab.id }}"
+      role="tabpanel"
+      class="{% if not forloop.first %}hidden{% endif %}"
+    >
+      {% include tab.template %}
+    </div>
+  {% endfor %}
+</div>

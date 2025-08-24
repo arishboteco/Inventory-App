@@ -15,9 +15,11 @@ def test_dashboard_low_stock(client, item_factory, django_user_model):
     user.user_permissions.add(perm)
     client.force_login(user)
     item_factory(name="Foo", reorder_point=10, current_stock=5)
+    item_factory(name="Inactive", reorder_point=10, current_stock=5, is_active=False)
     resp = client.get(reverse("dashboard"))
     assert resp.status_code == 200
     assert b"Foo" in resp.content
+    assert b"Inactive" not in resp.content
 
 
 @pytest.mark.django_db

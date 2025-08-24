@@ -17,6 +17,13 @@ from inventory.services import kpis
 
 
 @pytest.mark.django_db
+def test_low_stock_items_excludes_inactive(item_factory):
+    item_factory(name="Active", reorder_point=10, current_stock=5)
+    item_factory(name="Inactive", reorder_point=10, current_stock=5, is_active=False)
+    assert kpis.low_stock_items() == ["Active"]
+
+
+@pytest.mark.django_db
 def test_kpi_calculations(item_factory):
     item1 = item_factory(name="A", reorder_point=20, current_stock=10)
     item2 = item_factory(name="B", reorder_point=1, current_stock=5)

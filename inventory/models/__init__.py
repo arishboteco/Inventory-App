@@ -44,7 +44,7 @@ class Recipe(models.Model):
     default_yield_qty = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     default_yield_unit = models.CharField(max_length=50, blank=True, null=True)
     plating_notes = models.TextField(blank=True, null=True)
-    tags = models.CharField(max_length=255, blank=True, null=True)
+    tags = models.JSONField(default=list, blank=True, null=True)
     version = models.IntegerField(blank=True, null=True)
     effective_from = models.DateField(auto_now_add=True)
     effective_to = models.DateField(auto_now=True)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import json
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -24,6 +25,26 @@ def _strip_or_none(val: Any) -> Optional[str]:
         val = val.strip()
         return val or None
     return None
+
+
+def _parse_tags(tags: Any) -> List[str]:
+    """Normalize ``tags`` into a list of strings."""
+    if not tags:
+        return []
+    if isinstance(tags, list):
+        return [str(t).strip() for t in tags if str(t).strip()]
+    if isinstance(tags, str):
+        tags = tags.strip()
+        if not tags:
+            return []
+        try:
+            parsed = json.loads(tags)
+            if isinstance(parsed, list):
+                return [str(t).strip() for t in parsed if str(t).strip()]
+            return [str(parsed).strip()]
+        except json.JSONDecodeError:
+            return [t.strip() for t in tags.split(",") if t.strip()]
+    return [str(tags).strip()]
 
 
 def _component_unit(kind: str, cid: int, unit: Optional[str]) -> Optional[str]:
@@ -172,7 +193,7 @@ def create_recipe(
                 "default_yield_qty": data.get("default_yield_qty"),
                 "default_yield_unit": data.get("default_yield_unit"),
                 "plating_notes": data.get("plating_notes"),
-                "tags": data.get("tags"),
+                "tags": _parse_tags(data.get("tags")),
             }
             recipe = Recipe.objects.create(**fields)
             for comp in components:
@@ -209,7 +230,10 @@ def update_recipe(
         with transaction.atomic():
             recipe = Recipe.objects.get(pk=recipe_id)
             for k, v in data.items():
-                setattr(recipe, k, v)
+                if k == "tags":
+                    setattr(recipe, k, _parse_tags(v))
+                else:
+                    setattr(recipe, k, v)
             recipe.save()
             RecipeComponent.objects.filter(parent_recipe=recipe).delete()
             for comp in components:

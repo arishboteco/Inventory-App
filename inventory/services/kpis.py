@@ -47,8 +47,13 @@ def low_stock_count():
 def low_stock_items(limit: int = 5) -> List[str]:
     """Return names of items that are below their reorder point."""
     qs = Item.objects.filter(
-        reorder_point__isnull=False, current_stock__lt=F("reorder_point")
-    ).order_by("name")
+        reorder_point__isnull=False,
+        current_stock__lt=F("reorder_point"),
+        is_active=True,
+    )
+    if hasattr(Item, "is_placeholder"):
+        qs = qs.filter(is_placeholder=False)
+    qs = qs.order_by("name")
     return list(qs.values_list("name", flat=True)[:limit])
 
 

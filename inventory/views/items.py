@@ -296,7 +296,20 @@ class ItemDetailView(View):
             raise Http404("Item not found")
         if not details:
             raise Http404("Item not found")
-        return render(request, self.template_name, {"item": details})
+        tabs = [
+            {
+                "id": "details",
+                "title": "Details",
+                "template": "inventory/_item_details.html",
+            },
+            {
+                "id": "notes",
+                "title": "Notes",
+                "template": "inventory/_item_notes.html",
+            },
+        ]
+        ctx = {"item": details, "tabs": tabs}
+        return render(request, self.template_name, ctx)
 
 
 class ItemDeleteView(View):

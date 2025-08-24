@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 from django.db.models import Sum
-from django.db.models.functions import TruncDate
+from django.db.models.functions import Abs, TruncDate
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 
 from ..models import Item, StockTransaction
@@ -44,15 +44,10 @@ def train_models(periods: int = 7) -> Dict[int, List[float]]:
 
 def abc_classification() -> Dict[int, str]:
     """Classify items into A/B/C categories based on usage quantity."""
-    totals = []
-    for item in Item.objects.all():
-        total = (
-            StockTransaction.objects.filter(item=item).aggregate(
-                total=Sum("quantity_change")
-            )["total"]
-            or 0
-        )
-        totals.append((item, abs(float(total))))
+    items = Item.objects.annotate(
+        total=Abs(Sum("stocktransaction__quantity_change"))
+    )
+    totals = [(item, float(item.total or 0)) for item in items]
     totals.sort(key=lambda x: x[1], reverse=True)
     overall = sum(v for _, v in totals)
     cumulative = 0.0

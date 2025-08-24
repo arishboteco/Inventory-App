@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+
+{% block content %}
+<h1 class="text-h1 mb-4">ML Dashboard</h1>
+<table class="table w-full">
+  <thead>
+    <tr>
+      <th class="p-2 text-left">Item</th>
+      <th class="p-2 text-left">ABC</th>
+      <th class="p-2 text-left">Forecast (next day)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in results %}
+    <tr>
+      <td class="p-2">{{ row.item.name }}</td>
+      <td class="p-2">{{ row.classification }}</td>
+      <td class="p-2">{{ row.forecast|floatformat:2 }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3" class="p-2">No data available.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

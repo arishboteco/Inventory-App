@@ -29,6 +29,7 @@ from .views.purchase_orders import (
     purchase_orders_list,
 )
 from .views.recipes import RecipesListView, recipe_create, recipe_detail
+from .views.ml import ml_dashboard
 from .views.stock import history_reports, stock_movements
 from .views.visualizations import visualizations
 from .views.suppliers import (
@@ -114,5 +115,6 @@ urlpatterns = [
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
     path("recipes/create/", recipe_create, name="recipe_create"),
+    path("ml-dashboard/", ml_dashboard, name="ml_dashboard"),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
 ]

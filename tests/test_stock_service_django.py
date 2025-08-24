@@ -1,5 +1,4 @@
 import pytest
-from django.db import connection
 
 from inventory.models import StockTransaction
 from inventory.services import stock_service

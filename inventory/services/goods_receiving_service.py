@@ -1,5 +1,4 @@
 import logging
-from datetime import date
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 from django.db import transaction

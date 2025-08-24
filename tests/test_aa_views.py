@@ -5,7 +5,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.db import connection, DatabaseError
 from unittest.mock import patch
 
-from inventory.models import Item, Indent, IndentItem
+from inventory.models import Indent
 from inventory.views.items import ItemEditView
 from inventory.views.indents import IndentCreateView
 

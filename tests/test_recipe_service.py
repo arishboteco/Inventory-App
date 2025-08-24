@@ -7,7 +7,6 @@ from inventory.models import (
     Item,
     Recipe,
     RecipeComponent,
-    StockTransaction,
     SaleTransaction,
 )
 from inventory.services.recipe_service import (

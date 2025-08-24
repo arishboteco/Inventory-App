@@ -1,6 +1,3 @@
-import django
-from django.conf import settings
-
 import pytest
 from inventory.forms.indent_forms import IndentForm, IndentItemFormSet, IndentItemForm
 

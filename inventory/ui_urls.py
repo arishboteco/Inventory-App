@@ -43,8 +43,11 @@ from .views.suppliers import (
     SuppliersTableView,
     SupplierToggleActiveView,
 )
+from .views.explore import explore, explore_export
 
 urlpatterns = [
+    path("explore/", explore, name="explore"),
+    path("explore/export/", explore_export, name="explore_export"),
     path("items/", ItemsListView.as_view(), name="items_list"),
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
     path("items/export/", ItemsExportView.as_view(), name="items_export"),

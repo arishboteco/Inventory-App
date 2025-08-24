@@ -5,7 +5,9 @@ from django.contrib.auth.forms import AuthenticationForm
 
 import json
 
-from inventory.services import dashboard_service, kpis, counts
+from decimal import Decimal
+
+from inventory.services import counts, dashboard_service, kpis
 
 
 def root_view(request):
@@ -16,6 +18,10 @@ def root_view(request):
             "receipts": kpis.receipts_last_7_days(),
             "issues": kpis.issues_last_7_days(),
             "low_stock": kpis.low_stock_count(),
+            "low_stock_items": kpis.low_stock_items(),
+            "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
+            "pending_po_status": kpis.pending_po_status_counts(),
+            "pending_indent_status": kpis.pending_indent_counts(),
             "item_count": counts.item_count(),
             "supplier_count": counts.supplier_count(),
             "pending_po_count": counts.pending_po_count(),
@@ -48,9 +54,9 @@ def dashboard(request):
 def dashboard_kpis(request):
     """HTMX endpoint returning KPI card values."""
     data = {
-        "stock_value": kpis.stock_value(),
-        "receipts": kpis.receipts_last_7_days(),
-        "issues": kpis.issues_last_7_days(),
-        "low_stock": kpis.low_stock_count(),
+        "low_stock_items": kpis.low_stock_items(),
+        "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
+        "pending_po_status": kpis.pending_po_status_counts(),
+        "pending_indent_status": kpis.pending_indent_counts(),
     }
     return render(request, "core/_kpi_cards.html", data)

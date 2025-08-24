@@ -38,6 +38,8 @@ module.exports = {
         accent: 'var(--color-accent)',
         danger: 'var(--color-danger)',
         border: 'var(--color-border)',
+        gradientStart: 'var(--color-gradient-start)',
+        gradientEnd: 'var(--color-gradient-end)',
         form: {
           bg: 'var(--color-body)',
           border: 'var(--color-border)',

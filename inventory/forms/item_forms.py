@@ -144,6 +144,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                 c["name"] for c in categories_map.get(selected_category, [])
             ]
 
+        if not self.instance.pk:
+            self.fields["is_active"].initial = True
+
         # Reapply styling for any widgets replaced above
         self.apply_styling()
 

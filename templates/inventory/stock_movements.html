@@ -2,14 +2,14 @@
 {% block title %}Stock Movements – Inventory App{% endblock %}
 {% load static %}
 {% block content %}
-  <h1 class="text-2xl font-semibold mb-4">Stock Movements</h1>
+  <h1 class="text-h1 font-semibold mb-4">Stock Movements</h1>
   {% if messages %}
     {% include "components/alert.html" %}
   {% endif %}
   {% include "components/tabs.html" with tabs=tabs %}
   <datalist id="item-options"></datalist>
   <hr class="my-4"/>
-  <h2 class="text-xl mb-4 mt-8">Bulk Upload Stock Transactions</h2>
+  <h2 class="text-h2 mb-4 mt-8">Bulk Upload Stock Transactions</h2>
   <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>
   <form method="post" enctype="multipart/form-data" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
     {% csrf_token %}
@@ -38,7 +38,7 @@
     </ul>
   {% endif %}
   <hr class="my-4"/>
-  <h2 class="text-xl mb-4 mt-8">Recent Transactions</h2>
+  <h2 class="text-h2 mb-4 mt-8">Recent Transactions</h2>
   <div class="max-md:overflow-x-auto">
     <table class="table">
       <thead>

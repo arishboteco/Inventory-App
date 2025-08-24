@@ -6,7 +6,7 @@
 {% endblock %}
 {% block filter_bar %}
   {% url 'indents_table' as indents_table_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters %}
+  {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters search_delay="500ms" %}
 {% endblock %}
 {% block table_id %}indents_table{% endblock %}
 {% block hx_get %}{% url 'indents_table' %}{% endblock %}

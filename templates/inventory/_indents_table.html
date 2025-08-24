@@ -12,13 +12,17 @@
     </thead>
       <tbody>
       {% for row in page_obj %}
-      <tr class="odd:bg-gray-50 hover:bg-gray-100">
+      <tr class="odd:bg-gray-50 hover:bg-gray-100 {% if row.is_overdue %}border border-danger{% endif %}">
         <td class="px-4 py-2 text-right">{{ row.indent_id }}</td>
         <td class="px-4 py-2 text-right">{{ row.mrn }}</td>
         <td class="px-4 py-2">{{ row.requested_by }}</td>
         <td class="px-4 py-2">{{ row.department }}</td>
-        <td class="px-4 py-2"><span class="px-2 py-1 rounded {{ badges[row.status|upper] }}">{{ row.status }}</span></td>
-        <td class="px-4 py-2"><a href="{% url 'indent_detail' row.indent_id %}" class="text-primary">View</a></td>
+        <td class="px-4 py-2"><span class="{{ badges[row.status|upper]|default:'badge-warning' }}">{{ row.status }}</span></td>
+        <td class="px-4 py-2">
+          {% url 'indent_detail' row.indent_id as view_url %}
+          {% url 'indent_update_status' row.indent_id 'APPROVED' as approve_url %}
+          {% include "components/action_menu.html" with view_url=view_url edit_url=view_url|add:'?edit=1' approve_url=approve_url %}
+        </td>
       </tr>
       {% empty %}
       <tr>

@@ -3,7 +3,8 @@ import logging
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import DatabaseError, transaction
-from django.db.models import Q
+from django.db.models import BooleanField, Case, Q, Value, When
+from django.utils import timezone
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -20,10 +21,12 @@ from ..models import Indent
 logger = logging.getLogger(__name__)
 
 INDENT_STATUS_BADGES = {
-    "SUBMITTED": "bg-gray-200 text-gray-800",
-    "PROCESSING": "bg-blue-200 text-blue-800",
-    "COMPLETED": "bg-green-200 text-green-800",
-    "CANCELLED": "bg-red-200 text-red-800",
+    "PENDING": "badge-warning",
+    "APPROVED": "badge-success",
+    "SUBMITTED": "badge-warning",
+    "PROCESSING": "badge-warning",
+    "COMPLETED": "badge-success",
+    "CANCELLED": "badge-error",
 }
 
 
@@ -85,7 +88,18 @@ class IndentsTableView(TemplateView):
                 | Q(requested_by__icontains=q)
                 | Q(department__icontains=q)
             )
-        qs = qs.order_by("-indent_id")
+        today = timezone.now().date()
+        qs = qs.annotate(
+            is_overdue=Case(
+                When(
+                    Q(date_required__lt=today)
+                    & ~Q(status__in=["COMPLETED", "APPROVED"]),
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        ).order_by("-indent_id")
         paginator = Paginator(qs, 25)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)

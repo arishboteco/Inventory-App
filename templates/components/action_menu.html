@@ -1,0 +1,8 @@
+<div class="flex gap-1">
+  <a href="{{ view_url }}" class="btn-tertiary text-xs">View</a>
+  <a href="{{ edit_url }}" class="btn-tertiary text-xs">Edit</a>
+  <form action="{{ approve_url }}" method="post" class="inline">
+    {% csrf_token %}
+    <button type="submit" class="btn-tertiary text-xs">Approve</button>
+  </form>
+</div>

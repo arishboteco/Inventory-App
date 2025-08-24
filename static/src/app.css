@@ -18,9 +18,12 @@
     color: var(--color-primary);
     text-decoration: underline;
   }
+  a:visited {
+    color: #4C1D95;
+  }
   a:hover,
   a:focus {
-    color: #1D4ED8;
+    color: #1E40AF;
   }
 }
 

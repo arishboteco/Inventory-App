@@ -55,6 +55,7 @@ def purchase_orders_list(request):
         "statuses": statuses,
         "suppliers": suppliers,
         "querystring": querystring,
+        "sortable": True,
     }
     ctx.update(params)
     ctx["current_status"] = params.get("status")

@@ -210,6 +210,8 @@ class ItemCreateView(View):
         form = ItemForm(request.POST)
         if form.is_valid():
             form.save()
+            item_service.get_all_items_with_stock.clear()
+            item_service.get_distinct_departments_from_items.clear()
             if request.headers.get("HX-Request"):
                 items = Item.objects.order_by("name")[:20]
                 options_html = render_to_string(

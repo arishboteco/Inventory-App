@@ -1,0 +1,26 @@
+<canvas id="history-chart" class="w-full h-64"></canvas>
+{{ chart_labels|json_script:"history-chart-labels" }}
+{{ chart_data|json_script:"history-chart-data" }}
+<script>
+  const labels = JSON.parse(document.getElementById('history-chart-labels').textContent);
+  const data = JSON.parse(document.getElementById('history-chart-data').textContent);
+  const ctx = document.getElementById('history-chart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Stock Change',
+        data: data,
+        borderColor: '#3b82f6',
+        fill: false,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+</script>
+

@@ -16,26 +16,7 @@
     {% endfor %}
   </ul>
   {% endif %}
-  <table id="items-table" class="table">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Qty</th>
-        <th>Notes</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for item_form in formset %}
-      <tr class="form-row">
-        <td>{% include "components/form_field.html" with field=item_form.item %}</td>
-        <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
-        <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-        <td><button type="button" class="remove-row btn-danger">Remove</button></td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  {% include "inventory/_indent_items_form_table.html" with formset=formset table_id="items-table" %}
   <datalist id="item-options"></datalist>
   <div>
     <button type="button" id="add-row" class="btn-secondary mt-2">Add Item</button>

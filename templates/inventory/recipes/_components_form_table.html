@@ -1,0 +1,26 @@
+{% extends "components/responsive_table.html" %}
+
+{% block headers %}
+  <th>Kind</th>
+  <th>ID</th>
+  <th>Qty</th>
+  <th>Unit</th>
+  <th>Loss %</th>
+  <th></th>
+{% endblock %}
+
+{% block rows %}
+  {% for cform in formset %}
+  <tr class="form-row">
+    <td>{% include "components/form_field.html" with field=cform.component_kind %}</td>
+    <td>{% include "components/form_field.html" with field=cform.component_id %}</td>
+    <td>{% include "components/form_field.html" with field=cform.quantity %}</td>
+    <td>{% include "components/form_field.html" with field=cform.unit %}</td>
+    <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
+    <td>
+      {{ cform.DELETE }}<button type="button" class="remove-row btn-danger">Remove</button>
+    </td>
+  </tr>
+  {% endfor %}
+{% endblock %}
+

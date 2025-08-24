@@ -1,74 +1,74 @@
-<div class="max-md:overflow-x-auto">
-    <table class="table w-full table-auto text-sm">
-    <thead class="bg-primary text-white">
-      <tr>
-        <th class="px-4 py-2 text-right">ID</th>
-        <th class="px-4 py-2">Name</th>
-        <th class="px-4 py-2">Contact</th>
-        <th class="px-4 py-2">Email</th>
-        <th class="px-4 py-2 text-right">Phone</th>
-        <th class="px-4 py-2">Active</th>
-        <th class="px-4 py-2">Actions</th>
-      </tr>
-    </thead>
-      <tbody>
-      {% for row in page_obj %}
-      <tr class="odd:bg-gray-50 hover:bg-gray-100">
-        <td class="px-4 py-2 text-right">{{ row.supplier_id }}</td>
-        <td class="px-4 py-2">{{ row.name }}</td>
-        <td class="px-4 py-2">{{ row.contact_person }}</td>
-        <td class="px-4 py-2">{{ row.email }}</td>
-        <td class="px-4 py-2 text-right">{{ row.phone }}</td>
-        <td class="px-4 py-2 text-center">
-          <form
-            hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
-            hx-target="#suppliers_table"
-            hx-confirm="Are you sure you want to toggle this supplier?"
-            method="post"
-            class="inline"
-          >
-            {% csrf_token %}
-            <input type="hidden" name="q" value="{{ q }}" />
-            <input type="hidden" name="page" value="{{ page_obj.number }}" />
-            <input type="hidden" name="active" value="{{ active }}" />
-            <input type="hidden" name="page_size" value="{{ page_size }}" />
-            <input type="hidden" name="sort" value="{{ sort }}" />
-            <input type="hidden" name="direction" value="{{ direction }}" />
-            <button type="submit" title="Toggle">
-              {% if row.is_active %}
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
-              <span class="sr-only">Deactivate</span>
-              {% else %}
-              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
-              <span class="sr-only">Activate</span>
-              {% endif %}
-            </button>
-          </form>
-        </td>
-        <td class="px-4 py-2">
-          <div class="flex gap-2">
-            <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary" title="Edit">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 3.75h-6a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 3.75L20.25 9M7.5 9h3.75a.75.75 0 01.75.75V13.5"/></svg>
-              <span class="sr-only">Edit</span>
-            </a>
-          </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="7" class="px-4 py-2 text-center">
-          0 suppliers yet.
-          <a href="{% url 'supplier_create' %}" class="btn-primary ml-2">New Supplier</a>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+{% extends "components/responsive_table.html" %}
+
+{% block headers %}
+  <th class="px-4 py-2 text-right">ID</th>
+  <th class="px-4 py-2">Name</th>
+  <th class="px-4 py-2">Contact</th>
+  <th class="px-4 py-2">Email</th>
+  <th class="px-4 py-2 text-right">Phone</th>
+  <th class="px-4 py-2">Active</th>
+  <th class="px-4 py-2">Actions</th>
+{% endblock %}
+
+{% block rows %}
+  {% for row in page_obj %}
+  <tr class="odd:bg-gray-50 hover:bg-gray-100">
+    <td class="px-4 py-2 text-right">{{ row.supplier_id }}</td>
+    <td class="px-4 py-2">{{ row.name }}</td>
+    <td class="px-4 py-2">{{ row.contact_person }}</td>
+    <td class="px-4 py-2">{{ row.email }}</td>
+    <td class="px-4 py-2 text-right">{{ row.phone }}</td>
+    <td class="px-4 py-2 text-center">
+      <form
+        hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
+        hx-target="#suppliers_table"
+        hx-confirm="Are you sure you want to toggle this supplier?"
+        method="post"
+        class="inline"
+      >
+        {% csrf_token %}
+        <input type="hidden" name="q" value="{{ q }}" />
+        <input type="hidden" name="page" value="{{ page_obj.number }}" />
+        <input type="hidden" name="active" value="{{ active }}" />
+        <input type="hidden" name="page_size" value="{{ page_size }}" />
+        <input type="hidden" name="sort" value="{{ sort }}" />
+        <input type="hidden" name="direction" value="{{ direction }}" />
+        <button type="submit" title="Toggle">
+          {% if row.is_active %}
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+          <span class="sr-only">Deactivate</span>
+          {% else %}
+          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          <span class="sr-only">Activate</span>
+          {% endif %}
+        </button>
+      </form>
+    </td>
+    <td class="px-4 py-2">
+      <div class="flex gap-2">
+        <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary" title="Edit">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 3.75h-6a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 3.75L20.25 9M7.5 9h3.75a.75.75 0 01.75.75V13.5"/></svg>
+          <span class="sr-only">Edit</span>
+        </a>
+      </div>
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="7" class="px-4 py-2 text-center">
+      0 suppliers yet.
+      <a href="{% url 'supplier_create' %}" class="btn-primary ml-2">New Supplier</a>
+    </td>
+  </tr>
+  {% endfor %}
+{% endblock %}
+
+{% block footer %}
   {% url 'suppliers_table' as table_url %}
   {% with extra_query='q='|add:q|urlencode|add:'&active='|add:active|urlencode|add:'&page_size='|add:page_size|add:'&sort='|add:sort|urlencode|add:'&direction='|add:direction|urlencode %}
   <div class="mt-4">
     {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#suppliers_table" %}
   </div>
   {% endwith %}
+{% endblock %}
 

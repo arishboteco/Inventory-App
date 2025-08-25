@@ -1,7 +1,10 @@
 from datetime import timedelta
 
 import pytest
+from django.core.cache import cache
+from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
 from inventory.models import Item, StockTransaction
 from inventory.services import ml
@@ -36,3 +39,23 @@ def test_abc_classification(db):
     assert classes[item_a.pk] == "A"
     assert classes[item_b.pk] == "B"
     assert classes[item_c.pk] == "C"
+
+
+@pytest.mark.django_db
+def test_ml_dashboard_uses_cache(client):
+    cache.clear()
+    with patch("inventory.views.ml.ml.train_models", return_value={}) as mock_train, patch(
+        "inventory.views.ml.ml.abc_classification", return_value={}
+    ) as mock_abc:
+        client.get(reverse("ml_dashboard"))
+        assert mock_train.call_count == 1
+        assert mock_abc.call_count == 1
+
+        client.get(reverse("ml_dashboard"))
+        assert mock_train.call_count == 1
+        assert mock_abc.call_count == 1
+
+        cache.clear()
+        client.get(reverse("ml_dashboard"))
+        assert mock_train.call_count == 2
+        assert mock_abc.call_count == 2

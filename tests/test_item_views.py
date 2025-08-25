@@ -174,7 +174,9 @@ def test_item_edit_view_preselects_category_and_subcategory(client, monkeypatch)
     assert selected == "Fruit"
 
 
-def test_items_list_view_shows_empty_categories(client):
+def test_items_list_view_shows_empty_categories(client, monkeypatch):
+    monkeypatch.setattr("inventory.forms.item_forms.get_units", lambda: {})
+    monkeypatch.setattr("inventory.forms.item_forms.get_categories", lambda: {})
     url = reverse("items_list")
     resp = client.get(url)
     assert resp.status_code == 200
@@ -183,6 +185,8 @@ def test_items_list_view_shows_empty_categories(client):
 
 
 def test_items_list_view_populates_categories(client, monkeypatch):
+    monkeypatch.setattr("inventory.forms.item_forms.get_units", lambda: {})
+    monkeypatch.setattr("inventory.forms.item_forms.get_categories", lambda: {})
     monkeypatch.setattr(
         "inventory.services.category_filters.get_supabase_categories",
         lambda: {

@@ -80,6 +80,8 @@ class ItemsListView(TemplateView):
             "inventory/_items_table.html", table_ctx, request=request
         )
 
+        form = ItemForm()
+
         ctx.update(params)
         ctx.update(category_ctx)
         ctx.update(
@@ -90,6 +92,8 @@ class ItemsListView(TemplateView):
                     category_ctx, params.get("active")
                 ),
                 "export_url": reverse("items_export"),
+                "form": form,
+                "excluded_fields": EXCLUDED_FIELDS,
             }
         )
         return ctx

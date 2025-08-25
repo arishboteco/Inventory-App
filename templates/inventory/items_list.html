@@ -2,20 +2,127 @@
 {% block title %}Items – Inventory App{% endblock %}
 {% block heading %}Items{% endblock %}
 {% block actions %}
-  <a href="{% url 'item_create' %}" class="btn-primary">New Item</a>
   <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
 {% endblock %}
 {% block filter_bar %}
+  <form id="item-form" action="{% url 'item_create' %}" method="post" class="mb-6 grid grid-cols-1 gap-4">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <ul class="text-red-600 list-disc pl-5">
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% if not form.units_map %}
+      <p class="text-sm text-red-600">Could not load unit options. Please try again later.</p>
+    {% endif %}
+    <h2 class="text-h2 font-semibold">Enter New Item Details</h2>
+    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+      <div id="name-field" class="space-y-1 relative col-span-2">
+        <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% if form.name.help_text %}
+          <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
+        {% endif %}
+        {% if form.name.errors %}
+          <ul class="text-sm text-red-600 list-disc pl-5">
+            {% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+      {% include "components/form_field.html" with field=form.base_unit %}
+      {% include "components/form_field.html" with field=form.purchase_unit %}
+      {% for field in form %}
+        {% if field.name not in excluded_fields %}
+          {% include "components/form_field.html" with field=field %}
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn-primary">Save</button>
+    </div>
+    <datalist id="base-unit-options">
+      {% for u in form.base_units %}
+        <option value="{{ u }}"></option>
+      {% endfor %}
+    </datalist>
+    <datalist id="purchase-unit-options">
+      {% for u in form.purchase_units %}
+        <option value="{{ u }}"></option>
+      {% endfor %}
+    </datalist>
+    <datalist id="category-options">
+      {% for c in form.category_options %}
+        <option value="{{ c }}"{% if c == form.category.value %} selected{% endif %}></option>
+      {% endfor %}
+    </datalist>
+    <datalist id="sub-category-options">
+      {% for c in form.sub_category_options %}
+        <option value="{{ c }}"{% if c == form.sub_category.value %} selected{% endif %}></option>
+      {% endfor %}
+    </datalist>
+  </form>
   {% url 'items_table' as items_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search items..." hx_get=items_table_url hx_target="#items_table" hx_indicator="#htmx-spinner" filters=filters export_url=export_url sort=sort direction=direction %}
 {% endblock %}
 {% block extra %}
-  {{ categories_map|json_script:"categories-data" }}
+  {{ form.units_map|json_script:"units-data" }}
+  {{ form.categories_map|json_script:"categories-data" }}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const categories = JSON.parse(
-        document.getElementById('categories-data').textContent
-      );
+      const units = JSON.parse(document.getElementById('units-data').textContent);
+      const categories = JSON.parse(document.getElementById('categories-data').textContent);
+      const baseInput = document.getElementById('id_base_unit');
+      const purchaseInput = document.getElementById('id_purchase_unit');
+      const categoryInput = document.getElementById('id_category');
+      const subInput = document.getElementById('id_sub_category');
+      const purchaseList = document.getElementById('purchase-unit-options');
+      const subList = document.getElementById('sub-category-options');
+
+      function refreshUnits(selected) {
+        const base = baseInput.value;
+        const options = units[base] || [];
+        purchaseList.innerHTML = '';
+        options.forEach(function (opt) {
+          const o = document.createElement('option');
+          o.value = opt;
+          purchaseList.appendChild(o);
+        });
+        if (selected && options.includes(selected)) {
+          purchaseInput.value = selected;
+        }
+      }
+
+      function refreshCategories(selected) {
+        const cat = categoryInput.value;
+        const options = categories[cat] || [];
+        subList.innerHTML = '';
+        options.forEach(function (opt) {
+          const o = document.createElement('option');
+          o.value = opt.name;
+          subList.appendChild(o);
+        });
+        if (
+          selected &&
+          options.some(function (o) {
+            return o.name === selected;
+          })
+        ) {
+          subInput.value = selected;
+        }
+      }
+
+      const initialPurchase = purchaseInput.value;
+      refreshUnits(initialPurchase);
+      baseInput.addEventListener('change', function () {
+        refreshUnits();
+      });
+
+      const initialSub = subInput.value;
+      refreshCategories(initialSub);
+      categoryInput.addEventListener('change', function () {
+        refreshCategories();
+      });
+
       const categorySelect = document.getElementById('filter-category');
       const subSelect = document.getElementById('filter-subcategory');
 
@@ -41,20 +148,13 @@
         }
       }
 
-      const initialSub = subSelect.value;
-      refreshSubcategories(initialSub);
+      const initialSubFilter = subSelect.value;
+      refreshSubcategories(initialSubFilter);
       categorySelect.addEventListener('change', function () {
         refreshSubcategories();
       });
     });
   </script>
-  <a
-    href="{% url 'item_create' %}"
-    class="md:hidden fixed bottom-4 right-4 btn-primary rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
-    aria-label="Add Item"
-  >
-    +
-  </a>
 {% endblock %}
 {% block table_id %}items_table{% endblock %}
 {% block hx_get %}{% url 'items_table' %}{% endblock %}

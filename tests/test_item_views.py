@@ -184,7 +184,7 @@ def test_items_list_view_shows_empty_categories(client):
 
 def test_items_list_view_populates_categories(client, monkeypatch):
     monkeypatch.setattr(
-        "inventory.views.items.get_supabase_categories",
+        "inventory.services.category_filters.get_supabase_categories",
         lambda: {
             None: [{"id": 1, "name": "Food"}],
             "Food": [{"id": 2, "name": "Fruit"}],

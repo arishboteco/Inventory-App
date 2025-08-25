@@ -29,3 +29,19 @@ def item_factory():
         return Item.objects.create(**defaults)
 
     return create_item
+
+
+@pytest.fixture(autouse=True)
+def logged_in_client(client, db):
+    """Log in the default admin user for tests that require authentication."""
+
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    user, _ = User.objects.get_or_create(username="admin")
+    if not user.has_usable_password():
+        user.set_password("admin")
+        user.save()
+    client.force_login(user)
+    yield
+    client.logout()

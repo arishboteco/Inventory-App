@@ -3,6 +3,7 @@ import pytest
 
 @pytest.mark.django_db
 def test_root_view_shows_login_form_for_anonymous_user(client):
+    client.logout()
     resp = client.get("/")
     assert resp.status_code == 200
     assert b'name="username"' in resp.content
@@ -10,6 +11,7 @@ def test_root_view_shows_login_form_for_anonymous_user(client):
 
 @pytest.mark.django_db
 def test_login_route_redirects_to_root(client):
+    client.logout()
     resp = client.get("/login/")
     assert resp.status_code == 302
     assert resp.url == "/"

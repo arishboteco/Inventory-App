@@ -16,7 +16,8 @@ def record_stock_transaction(
     quantity_change: Decimal,
     transaction_type: str,
     user_id: Optional[str] = "System",
-    related_mrn: Optional[str] = None,
+    user_int: Optional[int] = None,
+    related_indent_id: Optional[int] = None,
     related_po_id: Optional[int] = None,
     notes: Optional[str] = None,
 ) -> bool:
@@ -35,7 +36,8 @@ def record_stock_transaction(
                     quantity_change=quantity_change,
                     transaction_type=transaction_type,
                     user_id=user_id,
-                    related_mrn=related_mrn,
+                    user_int=user_int,
+                    related_indent_id=related_indent_id,
                     related_po_id=related_po_id,
                     notes=notes,
                 )
@@ -67,7 +69,8 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
                     quantity_change=quantity_change,
                     transaction_type=tx["transaction_type"],
                     user_id=tx.get("user_id"),
-                    related_mrn=tx.get("related_mrn"),
+                    user_int=tx.get("user_int"),
+                    related_indent_id=tx.get("related_indent_id"),
                     related_po_id=tx.get("related_po_id"),
                     notes=tx.get("notes"),
                 )

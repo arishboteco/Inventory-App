@@ -26,6 +26,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
 
     steps:
       - uses: actions/checkout@v3
@@ -45,3 +46,19 @@ jobs:
 
       - name: Detect unwanted migrations
         run: python manage.py makemigrations --check --dry-run
+
+      - name: Install pg_dump
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump live Supabase schema
+        run: |
+          pg_dump --schema-only --no-owner --no-privileges \
+            "$SUPABASE_DB_URL" \
+            > /tmp/live_schema.sql
+
+      - name: Compare with repo schema.sql
+        run: |
+          if ! diff -u db/schema.sql /tmp/live_schema.sql; then
+            echo "❌ schema.sql is out of date with Supabase. Run pg_dump and commit."
+            exit 1
+          fi

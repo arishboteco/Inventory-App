@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
-from . import CoerceFloatField
+from .fields import CoerceFloatField
 
 
 class Item(models.Model):
@@ -27,6 +27,7 @@ class Item(models.Model):
         return self.name or f"Item {self.pk}"
 
     class Meta:
+        managed = False
         db_table = "items"
 
 
@@ -64,4 +65,5 @@ class StockTransaction(models.Model):
         return f"Transaction {self.pk} for {self.item}"
 
     class Meta:
+        managed = False
         db_table = "stock_transactions"

@@ -86,8 +86,14 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import os
+
+DATABASE_URL = os.environ.get("DATABASE_URL")  # prefer Codespaces secrets
 DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    "default": env.db(
+        "DATABASE_URL",
+        default=DATABASE_URL or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+    )
 }
 
 # Only apply options if a database engine is specified

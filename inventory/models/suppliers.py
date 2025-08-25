@@ -18,4 +18,5 @@ class Supplier(models.Model):
         return self.name or f"Supplier {self.pk}"
 
     class Meta:
+        managed = False
         db_table = "suppliers"

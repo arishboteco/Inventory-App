@@ -5,7 +5,7 @@ from django.db.models import Sum
 
 from .items import Item
 from .suppliers import Supplier
-
+from .fields import CoerceFloatField
 
 class Indent(models.Model):
     """Represents a material requisition from a department."""
@@ -27,6 +27,7 @@ class Indent(models.Model):
         return self.mrn or f"Indent {self.pk}"
 
     class Meta:
+        managed = False
         db_table = "indents"
 
 
@@ -53,6 +54,7 @@ class IndentItem(models.Model):
         return f"{self.indent} - {self.item}"
 
     class Meta:
+        managed = False
         db_table = "indent_items"
 
 
@@ -80,6 +82,7 @@ class PurchaseOrder(models.Model):
         return f"PO {self.pk} to {self.supplier}"
 
     class Meta:
+        managed = False
         db_table = "purchase_orders"
 
 
@@ -106,6 +109,7 @@ class PurchaseOrderItem(models.Model):
         return f"{self.purchase_order} - {self.item}"
 
     class Meta:
+        managed = False
         db_table = "purchase_order_items"
 
 
@@ -122,6 +126,7 @@ class GoodsReceivedNote(models.Model):
         return f"GRN {self.pk} for PO {self.purchase_order_id}"
 
     class Meta:
+        managed = False
         db_table = "goods_received_notes"
 
 
@@ -142,4 +147,5 @@ class GRNItem(models.Model):
         return f"{self.grn} item {self.po_item}"
 
     class Meta:
+        managed = False
         db_table = "grn_items"

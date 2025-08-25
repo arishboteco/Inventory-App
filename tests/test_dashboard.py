@@ -1,10 +1,8 @@
-
 import pytest
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 
-from inventory.models import Indent, Supplier
-
+from inventory.models import Indent, StockTransaction, Supplier
 
 @pytest.mark.django_db
 def test_dashboard_low_stock(client, item_factory, django_user_model):
@@ -22,8 +20,14 @@ def test_dashboard_low_stock(client, item_factory, django_user_model):
 
 @pytest.mark.django_db
 def test_dashboard_kpis_endpoint(client, item_factory):
-    """Ensure KPI cards display the expected counts."""
-    item_factory(name="Foo", reorder_point=10, current_stock=5)
+    fresh = item_factory(name="Foo", reorder_point=10, current_stock=5)
+    StockTransaction.objects.create(
+        item=fresh,
+        quantity_change=1,
+        transaction_type="RECEIVING",
+        transaction_date=timezone.now(),
+    )
+
     Supplier.objects.create(name="Supp")
     Indent.objects.create(mrn="1", status="PENDING")
 

@@ -8,6 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_date
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
+from django.conf import settings
 
 from inventory.models import Item, Supplier, StockTransaction, PurchaseOrder
 from inventory.services import counts, dashboard_service, kpis
@@ -32,11 +33,13 @@ def root_view(request):
         return render(request, "core/home.html", data)
 
     form = AuthenticationForm(request, data=request.POST or None)
+    next_url = request.POST.get("next") or request.GET.get("next", "")
     if request.method == "POST" and form.is_valid():
         login(request, form.get_user())
-        return redirect("root")
+        redirect_to = next_url or settings.LOGIN_REDIRECT_URL
+        return redirect(redirect_to)
 
-    return render(request, "core/home.html", {"form": form})
+    return render(request, "core/home.html", {"form": form, "next": next_url})
 
 
 def health_check(request):

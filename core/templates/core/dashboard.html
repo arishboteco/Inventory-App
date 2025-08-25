@@ -1,15 +1,16 @@
 {% extends "_base.html" %}
 {% block content %}
-<h1 class="text-h1">Dashboard</h1>
+<h1 class="text-h1 mb-4">Dashboard</h1>
 
 <div
   id="kpi-cards"
+  class="mb-6"
   hx-get="{% url 'dashboard-kpis' %}"
   hx-trigger="load"
   hx-target="#kpi-cards"
   hx-swap="outerHTML"
 >
-  Loading KPI metrics…
+  Loading KPIs…
 </div>
 
 <div class="flex gap-4">

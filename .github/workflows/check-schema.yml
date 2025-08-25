@@ -26,7 +26,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
 
     steps:
       - uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
       - name: Dump live Supabase schema
         run: |
           pg_dump --schema-only --no-owner --no-privileges \
-            "$SUPABASE_DB_URL" \
+            "$SUPABASE_URL" \
             > /tmp/live_schema.sql
 
       - name: Compare with repo schema.sql

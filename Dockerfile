@@ -19,5 +19,5 @@ COPY . .
 # Expose the port Gunicorn will listen on
 EXPOSE 8000
 
-# Default command to run the Gunicorn application server
-CMD ["gunicorn", "inventory_app.wsgi:application", "--bind", "0.0.0.0:8000"]
+# Run migrations to initialize the auth_user table and other schema objects required for authentication
+CMD ["sh", "-c", "python manage.py migrate && exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000"]

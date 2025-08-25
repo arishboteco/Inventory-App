@@ -5,7 +5,7 @@ from django.db.models import Sum
 
 from .items import Item
 from .suppliers import Supplier
-from .fields import CoerceFloatField
+
 
 class Indent(models.Model):
     """Represents a material requisition from a department."""

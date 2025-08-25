@@ -38,7 +38,7 @@ class StockTransaction(models.Model):
     item = models.ForeignKey(
         Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
     )
-    quantity_change = models.DecimalField(
+    quantity_change = CoerceFloatField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
     transaction_type = models.CharField(max_length=50, blank=True, null=True)

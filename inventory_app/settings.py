@@ -169,3 +169,8 @@ LOGIN_EXEMPT_URLS = [
     r"^healthz$",
     r"^static/",
 ]
+
+# Disable migrations for inventory app — Supabase schema is the source of truth
+MIGRATION_MODULES = {
+    "inventory": None,
+}

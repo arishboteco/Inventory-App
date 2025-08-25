@@ -128,8 +128,7 @@
 {% empty %}
 <tr>
   <td colspan="8" class="px-4 py-2">
-    {% url 'item_create' as item_create_url %}
-    {% include "components/empty_state.html" with title="No Items" message="No items found." cta_label="New Item" cta_url=item_create_url %}
+    {% include "components/empty_state.html" with title="No Items" message="No items found." cta_label="New Item" cta_url="#item-form" %}
   </td>
 </tr>
 {% endfor %}

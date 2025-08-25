@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 import environ
@@ -85,8 +86,6 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL")  # prefer Codespaces secrets
 DATABASES = {

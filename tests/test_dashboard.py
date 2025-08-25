@@ -3,6 +3,8 @@ from django.contrib.auth.models import Permission
 from django.urls import reverse
 
 from inventory.models import Indent, StockTransaction, Supplier
+from django.utils import timezone
+
 
 @pytest.mark.django_db
 def test_dashboard_low_stock(client, item_factory, django_user_model):

@@ -1,28 +1,8 @@
 from decimal import Decimal
 
 from django.db import models
-from .items import Item, StockTransaction
-from .orders import GoodsReceivedNote, GRNItem, Indent, IndentItem, PurchaseOrder, PurchaseOrderItem
-from .suppliers import Supplier
+
 from .fields import CoerceFloatField
-
-
-def __init__(self, *args, **kwargs):
-        kwargs.setdefault("max_digits", 10)
-        kwargs.setdefault("decimal_places", 2)
-        super().__init__(*args, **kwargs)
-
-def to_python(self, value):
-        from decimal import InvalidOperation
-        if value in self.empty_values:
-            return Decimal("0")
-        try:
-            return Decimal(value)
-        except (TypeError, ValueError, InvalidOperation):
-            return Decimal("0")
-
-def from_db_value(self, value, expression, connection):
-        return self.to_python(value)
 
 
 class Recipe(models.Model):

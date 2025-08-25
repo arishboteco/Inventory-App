@@ -84,6 +84,17 @@ python manage.py createsuperuser
 Visit `http://localhost:8000/` to sign in from the home page. After a successful
 login you will be redirected to the dashboard at `/dashboard/`.
 
+## Testing
+
+Install the development dependencies and run the database migrations before
+executing the test suite:
+
+```bash
+pip install -r requirements-dev.txt
+python manage.py migrate
+pytest
+```
+
 ## Docker Deployment
 
 The project includes a production-ready deployment using Docker and

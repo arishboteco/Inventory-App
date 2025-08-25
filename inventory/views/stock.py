@@ -143,7 +143,16 @@ def stock_movements(request):
                                     "transaction_type", "ADJUSTMENT"
                                 ).strip(),
                                 "user_id": row.get("user_id", "System").strip(),
-                                "related_mrn": row.get("related_mrn"),
+                                "user_int": (
+                                    int(row.get("user_int"))
+                                    if row.get("user_int")
+                                    else None
+                                ),
+                                "related_indent_id": (
+                                    int(row.get("related_indent_id"))
+                                    if row.get("related_indent_id")
+                                    else None
+                                ),
                                 "related_po_id": (
                                     int(row.get("related_po_id"))
                                     if row.get("related_po_id")
@@ -154,7 +163,7 @@ def stock_movements(request):
                         )
                     except (ValueError, TypeError):
                         bulk_errors.append(
-                            f"Row {idx+2}: Invalid number format for item_id or quantity_change"
+                            f"Row {idx+2}: Invalid number format for item_id or quantity_change",
                         )
 
                 if not bulk_errors and txs_to_create:

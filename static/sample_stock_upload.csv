@@ -1,2 +1,2 @@
-item_id,quantity_change,transaction_type,user_id,related_mrn,related_po_id,notes
+item_id,quantity_change,transaction_type,user_id,user_int,related_indent_id,related_po_id,notes
 1,5,ADJUSTMENT,System,,,"Example note"

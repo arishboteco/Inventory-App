@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 
 from . import CoerceFloatField
@@ -9,10 +10,12 @@ class Item(models.Model):
     """An inventory item and its stock tracking details."""
 
     item_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255, blank=False, null=False)
+    name = models.CharField(max_length=255, unique=True, blank=False, null=False)
     base_unit = models.CharField(max_length=50, blank=False, null=False)
     purchase_unit = models.CharField(max_length=50, blank=False, null=False)
-    category_id = models.IntegerField(blank=True, null=True, db_column="category")
+    category_id = models.BigIntegerField(
+        blank=True, null=True, db_column="category_id_ref"
+    )
     permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
@@ -39,7 +42,20 @@ class StockTransaction(models.Model):
     )
     transaction_type = models.CharField(max_length=50, blank=True, null=True)
     user_id = models.CharField(max_length=50, blank=True, null=True)
-    related_mrn = models.CharField(max_length=100, blank=True, null=True)
+    user_int = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        models.DO_NOTHING,
+        db_column="user_id_int",
+        blank=True,
+        null=True,
+    )
+    related_indent = models.ForeignKey(
+        "inventory.Indent",
+        models.DO_NOTHING,
+        db_column="related_indent_id",
+        blank=True,
+        null=True,
+    )
     related_po_id = models.IntegerField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     transaction_date = models.DateTimeField(auto_now_add=True)

@@ -11,7 +11,7 @@ class Supplier(models.Model):
     email = models.CharField(max_length=254, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=False, null=False)
+    is_active = models.BooleanField(default=True, null=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation

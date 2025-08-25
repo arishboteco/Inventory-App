@@ -132,6 +132,14 @@
     --tw-ring-color: #1D4ED8;
   }
 
+  /* Sidebar navigation links */
+  .nav-link {
+    @apply flex items-center gap-2 px-3 py-2 rounded-md text-bodyText transition-colors hover:bg-gray-100 hover:text-primary;
+  }
+  .nav-link-active {
+    @apply bg-gray-100 text-primary font-medium;
+  }
+
   /* Alert component styles */
   .alert {
     @apply px-8 max-md:px-6 max-sm:px-4 py-4 mb-4 border-l-4 rounded;

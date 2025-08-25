@@ -23,6 +23,25 @@ def test_forecast_returns_expected_values(db):
     assert forecast == pytest.approx([10, 10], rel=0.1)
 
 
+def test_forecast_fallback_on_error(db, monkeypatch, caplog):
+    item = create_item("item1")
+    now = timezone.now()
+    for i in range(2):
+        tx = StockTransaction.objects.create(item=item, quantity_change=10)
+        tx.transaction_date = now - timedelta(days=2 - i)
+        tx.save(update_fields=["transaction_date"])
+
+    def bad_fit(self, *args, **kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(ml.SimpleExpSmoothing, "fit", bad_fit)
+    with caplog.at_level("ERROR"):
+        forecast = ml.forecast_item_demand(item, periods=3)
+
+    assert forecast == [0.0, 0.0, 0.0]
+    assert "Failed to forecast demand" in caplog.text
+
+
 def test_abc_classification(db):
     item_a = create_item("A")
     item_b = create_item("B")

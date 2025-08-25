@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from typing import Dict, List
+import logging
+
 from django.db.models import Sum
 from django.db.models.functions import Abs, TruncDate
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 
 from ..models import Item, StockTransaction
+
+logger = logging.getLogger(__name__)
 
 
 def forecast_item_demand(item: Item, periods: int = 7) -> List[float]:
@@ -29,8 +33,12 @@ def forecast_item_demand(item: Item, periods: int = 7) -> List[float]:
     series = [float(row["total"]) for row in qs]
     if len(series) < 2:
         return [0.0 for _ in range(periods)]
-    model = SimpleExpSmoothing(series).fit()
-    forecast = model.forecast(periods)
+    try:
+        model = SimpleExpSmoothing(series).fit()
+        forecast = model.forecast(periods)
+    except ValueError:
+        logger.exception("Failed to forecast demand for item %s", item.pk)
+        return [0.0 for _ in range(periods)]
     return [float(v) for v in forecast]
 
 

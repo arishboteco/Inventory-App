@@ -8,10 +8,13 @@ service modules.
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
+
+logger = logging.getLogger(__name__)
 
 
 T = TypeVar("T")
@@ -48,7 +51,13 @@ def get_cached(fetch_func: Callable[[], T], ttl: int) -> Callable[[bool], T]:
             ):
                 return state.value
 
-            state.value = fetch_func()
+            try:
+                state.value = fetch_func()
+            except Exception:
+                if state.value is not None:
+                    logger.exception("Failed to refresh cached value")
+                    return state.value
+                raise
             state.time = now
             return state.value
 

@@ -1,3 +1,4 @@
+import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -102,3 +103,26 @@ def test_get_categories_thread_safe(monkeypatch):
         list(ex.map(lambda _: supabase_categories.get_categories(force=True), range(5)))
 
     assert state.value == {None: [{"id": 1, "name": "Food"}]}
+
+
+def test_get_categories_uses_cache_on_error(monkeypatch, caplog):
+    state = supabase_categories.get_categories._state
+    state.value = {None: [{"id": 1, "name": "Food"}]}
+    state.time = 1.0
+
+    def failing_load():
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(
+        supabase_categories, "_load_categories_from_supabase", failing_load
+    )
+
+    with caplog.at_level(logging.ERROR):
+        result = supabase_categories.get_categories(force=True)
+
+    assert result == {None: [{"id": 1, "name": "Food"}]}
+    assert state.time == 1.0
+    assert "Failed to refresh cached value" in caplog.text
+
+    state.value = None
+    state.time = None

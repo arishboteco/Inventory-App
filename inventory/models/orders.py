@@ -28,7 +28,6 @@ class Indent(models.Model):
 
     class Meta:
         db_table = "indents"
-        managed = False
 
 
 class IndentItem(models.Model):

@@ -52,6 +52,10 @@ jobs:
 
       - name: Dump live Supabase schema
         run: |
+          # Print safe connection info (mask password)
+          echo "Connecting to Supabase at: $(echo $SUPABASE_URL | sed -E 's://([^:]+):[^@]+@:\1:****@:')"
+          
+          # Dump schema only (no data, no ownership info)
           pg_dump --schema-only --no-owner --no-privileges \
             "$SUPABASE_URL" \
             > /tmp/live_schema.sql
@@ -59,6 +63,6 @@ jobs:
       - name: Compare with repo schema.sql
         run: |
           if ! diff -u db/schema.sql /tmp/live_schema.sql; then
-            echo "❌ schema.sql is out of date with Supabase. Run pg_dump and commit."
+            echo "❌ schema.sql is out of date with Supabase. Run pg_dump locally and commit."
             exit 1
           fi

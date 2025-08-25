@@ -1,5 +1,5 @@
 # Dockerfile for Django application using Gunicorn
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Disable Python buffering and writing pyc files
 ENV PYTHONDONTWRITEBYTECODE=1 \

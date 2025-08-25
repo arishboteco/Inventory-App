@@ -10,6 +10,7 @@ from django.utils import timezone
 
 
 
+
 @pytest.mark.django_db
 def test_dashboard_low_stock(client, item_factory, django_user_model):
     user = django_user_model.objects.create_user(username="u", password="pw")

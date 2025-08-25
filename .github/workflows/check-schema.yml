@@ -48,21 +48,29 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Install pg_dump
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client-15
 
       - name: Dump live Supabase schema
         run: |
-          # Print safe connection info (mask password)
-          echo "Connecting to Supabase at: $(echo $SUPABASE_URL | sed -E 's://([^:]+):[^@]+@:\1:****@:')"
-          
-          # Dump schema only (no data, no ownership info)
-          pg_dump --schema-only --no-owner --no-privileges \
-            "$SUPABASE_URL" \
+          echo "🔎 Dumping live Supabase schema..."
+          pg_dump --schema-only --no-owner --no-privileges "$SUPABASE_URL" \
+            | grep -v '^\\restrict' \
+            | grep -v '^\\unrestrict' \
+            | grep -v '^-- Dumped by pg_dump' \
             > /tmp/live_schema.sql
+
+      - name: Normalize repo schema
+        run: |
+          grep -v '^\\restrict' db/schema.sql \
+            | grep -v '^\\unrestrict' \
+            | grep -v '^-- Dumped by pg_dump' \
+            > /tmp/repo_schema.sql
 
       - name: Compare with repo schema.sql
         run: |
-          if ! diff -u db/schema.sql /tmp/live_schema.sql; then
+          if ! diff -u /tmp/repo_schema.sql /tmp/live_schema.sql; then
             echo "❌ schema.sql is out of date with Supabase. Run pg_dump locally and commit."
             exit 1
+          else
+            echo "✅ schema.sql matches Supabase."
           fi

@@ -12,22 +12,22 @@
 <button id="sidebar-toggle" class="fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded" aria-label="Toggle navigation">
   <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
 </button>
-<aside id="sidebar" class="bg-primary text-white w-64 space-y-4 py-6 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 flex flex-col">
-  <div class="px-4 text-2xl font-bold text-white">Inventory App</div>
-  <nav class="flex-1 overflow-y-auto px-2 flex flex-col space-y-1">
-    <a href="{{ dashboard_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'dashboard' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">🏠</span>Dashboard</a>
-    <a href="{{ reports_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'history_reports' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">📊</span>Reports</a>
-    <a href="{{ items_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'items_list' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">📦</span>Items</a>
-    <a href="{{ movements_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'stock_movements' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">🔄</span>Stock Movements</a>
-    <a href="{{ suppliers_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'suppliers_list' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">🚚</span>Suppliers</a>
-    <a href="{{ indents_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'indents_list' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">📝</span>Indents</a>
-    <a href="{{ po_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'purchase_orders_list' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">🛒</span>Purchase Orders</a>
-    <a href="{{ grn_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'grn_list' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">📥</span>GRNs</a>
-    <a href="{{ recipes_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'recipes_list' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">🍳</span>Recipes</a>
+<aside id="sidebar" class="bg-gray-50 text-bodyText w-64 space-y-4 py-6 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 flex flex-col shadow-lg">
+  <div class="px-4 text-2xl font-bold text-primary">Inventory App</div>
+  <nav class="flex-1 overflow-y-auto px-2 flex flex-col gap-1">
+    <a href="{{ dashboard_url }}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}nav-link-active{% endif %}"><span class="text-lg">🏠</span>Dashboard</a>
+    <a href="{{ reports_url }}" class="nav-link {% if request.resolver_match.url_name == 'history_reports' %}nav-link-active{% endif %}"><span class="text-lg">📊</span>Reports</a>
+    <a href="{{ items_url }}" class="nav-link {% if request.resolver_match.url_name == 'items_list' %}nav-link-active{% endif %}"><span class="text-lg">📦</span>Items</a>
+    <a href="{{ movements_url }}" class="nav-link {% if request.resolver_match.url_name == 'stock_movements' %}nav-link-active{% endif %}"><span class="text-lg">🔄</span>Stock Movements</a>
+    <a href="{{ suppliers_url }}" class="nav-link {% if request.resolver_match.url_name == 'suppliers_list' %}nav-link-active{% endif %}"><span class="text-lg">🚚</span>Suppliers</a>
+    <a href="{{ indents_url }}" class="nav-link {% if request.resolver_match.url_name == 'indents_list' %}nav-link-active{% endif %}"><span class="text-lg">📝</span>Indents</a>
+    <a href="{{ po_url }}" class="nav-link {% if request.resolver_match.url_name == 'purchase_orders_list' %}nav-link-active{% endif %}"><span class="text-lg">🛒</span>Purchase Orders</a>
+    <a href="{{ grn_url }}" class="nav-link {% if request.resolver_match.url_name == 'grn_list' %}nav-link-active{% endif %}"><span class="text-lg">📥</span>GRNs</a>
+    <a href="{{ recipes_url }}" class="nav-link {% if request.resolver_match.url_name == 'recipes_list' %}nav-link-active{% endif %}"><span class="text-lg">🍳</span>Recipes</a>
     {% if user.is_authenticated %}
-    <a href="{{ logout_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'logout' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">👤</span>Logout</a>
+    <a href="{{ logout_url }}" class="nav-link {% if request.resolver_match.url_name == 'logout' %}nav-link-active{% endif %}"><span class="text-lg">👤</span>Logout</a>
     {% else %}
-    <a href="{{ login_url }}" class="flex items-center px-2 py-2 rounded text-white hover:bg-primary/50 hover:text-white {% if request.resolver_match.url_name == 'root' %}bg-primary/50 text-white font-medium{% endif %}"><span class="mr-2">👤</span>Login</a>
+    <a href="{{ login_url }}" class="nav-link {% if request.resolver_match.url_name == 'root' %}nav-link-active{% endif %}"><span class="text-lg">👤</span>Login</a>
     {% endif %}
   </nav>
 </aside>

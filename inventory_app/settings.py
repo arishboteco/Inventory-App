@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 import environ
 
@@ -32,7 +33,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-secret-key")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Enabled temporarily for debugging
-DEBUG = True
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost"])
 
@@ -85,8 +86,6 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL")  # prefer Codespaces secrets
 DATABASES = {

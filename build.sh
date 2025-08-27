@@ -24,4 +24,8 @@ python manage.py collectstatic --noinput
 echo "🗄️ Running database migrations..."
 python manage.py migrate
 
+# Ensure superuser exists for admin access
+echo "👤 Ensuring superuser exists..."
+python manage.py ensure_superuser
+
 echo "✅ Build completed successfully!"

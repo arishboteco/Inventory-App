@@ -10,8 +10,30 @@ import logging
 import dj_database_url
 from .settings import *
 
+# Override middleware to add error logging for production debugging
+MIDDLEWARE = [
+    'core.error_logging_middleware.DetailedErrorLoggingMiddleware',  # Add error logging first
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.LoginRequiredMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
 # SECURITY WARNING: DEBUG must be False in production!
-DEBUG = False
+# Temporarily enabling for debugging login issues
+DEBUG = True  # TEMPORARILY ENABLED FOR DEBUGGING
+
+# Enable debug toolbar for debugging
+if DEBUG:
+    INTERNAL_IPS = [
+        '127.0.0.1',
+        'localhost',
+    ]
 
 # Production allowed hosts - MUST be configured properly
 ALLOWED_HOSTS = [
@@ -108,57 +130,56 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 # Additional security headers
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Logging configuration for production
+# Logging Configuration - Enhanced for Debugging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+        'detailed': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
             'style': '{',
         },
         'simple': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'django.request': {
-            'handlers': ['console'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'django.security': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-            'propagate': False,
-        },
-        'inventory': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'core': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
+            'formatter': 'detailed',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.contrib.auth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.db': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'inventory': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
 

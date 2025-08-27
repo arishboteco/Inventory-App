@@ -29,5 +29,9 @@ python manage.py migrate
 echo "👤 Creating default superuser..."
 python manage.py create_default_superuser
 
+# Reset admin password to known value
+echo "🔑 Resetting admin password..."
+python manage.py reset_admin_password
+
 echo "✅ Build completed successfully!"
 echo "🔧 IMPORTANT: This deployment uses sync workers to fix threading issues"

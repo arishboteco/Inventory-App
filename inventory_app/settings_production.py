@@ -28,27 +28,18 @@ if 'DJANGO_ALLOWED_HOSTS' in os.environ:
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
     raise ValueError("ALLOWED_HOSTS must be configured for production deployment")
 
-# Database configuration for production
-# Requires DATABASE_URL environment variable
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is required for production")
-
+# Database configuration with connection pooling and thread safety
 DATABASES = {
-    'default': dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=int(os.environ.get('DATABASE_CONN_MAX_AGE', 600)),
-        conn_health_checks=True,
-        ssl_require=True,  # Force SSL in production
-    )
+    'default': dj_database_url.parse(env('DATABASE_URL'), conn_max_age=env.int('DATABASE_CONN_MAX_AGE', 600))
 }
 
-# Update database configuration for production optimization
-DATABASES['default'].update({
-    'OPTIONS': {
-        'sslmode': 'require',  # Require SSL connection
-    }
-})
+# Ensure thread-safe database connections
+DATABASES['default']['OPTIONS'] = {
+    'sslmode': 'require',
+}
+
+# Connection health checks for production
+DATABASES['default']['CONN_HEALTH_CHECKS'] = True
 
 # Cache configuration - Redis required for production
 REDIS_URL = os.environ.get('REDIS_URL')

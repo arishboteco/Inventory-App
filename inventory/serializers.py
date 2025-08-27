@@ -18,22 +18,33 @@ from .models import (
 
 class ItemSerializer(serializers.ModelSerializer):
     """Expose basic item details and stock levels."""
+    
+    departments = serializers.SerializerMethodField()
+    department_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
         fields = [
             "item_id",
             "name",
-            "base_unit",
-            "purchase_unit",
+            "unit_id",
             "category_id",
-            "permitted_departments",
             "reorder_point",
             "current_stock",
             "notes",
             "is_active",
             "updated_at",
+            "departments",
+            "department_names",
         ]
+    
+    def get_departments(self, obj):
+        """Return department IDs and names."""
+        return list(obj.departments.values('department_id', 'name'))
+    
+    def get_department_names(self, obj):
+        """Return comma-separated department names."""
+        return obj.department_names
 
 
 class SupplierSerializer(serializers.ModelSerializer):

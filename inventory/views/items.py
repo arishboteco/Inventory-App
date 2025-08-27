@@ -133,17 +133,18 @@ class ItemsExportView(View):
         headers = [
             "ID",
             "Name",
-            "Base Unit",
+            "Unit",
             "Current Stock",
             "Reorder Point",
             "Active",
         ]
 
         def row(item: Item):
+            from inventory.services.item_service import get_unit_display_name
             return [
                 item.item_id,
                 item.name,
-                item.base_unit,
+                get_unit_display_name(item.unit_id),
                 item.current_stock,
                 item.reorder_point,
                 item.is_active,
@@ -273,8 +274,8 @@ class ItemDetailView(View):
 
         rows = [
             ("ID", details["item_id"]),
-            ("Base Unit", details["base_unit"]),
-            ("Purchase Unit", details["purchase_unit"]),
+            ("Unit", details["unit"]),
+            ("Unit ID", details["unit_id"]),
             ("Category ID", details["category_id"]),
             ("Current Stock", details["current_stock"]),
             ("Reorder Point", details["reorder_point"]),

@@ -43,7 +43,7 @@ def test_stock_movements_page_has_datalist(client):
 @pytest.mark.django_db
 @pytest.mark.parametrize("qty", [0, -1])
 def test_stock_receiving_form_requires_positive_quantity(qty):
-    item = Item.objects.create(name="Test", base_unit="kg", purchase_unit="kg")
+    item = Item.objects.create(name="Test", unit_id=55)
     form = StockReceivingForm(data={"item": item.pk, "quantity_change": qty})
     assert not form.is_valid()
     assert form.errors["quantity_change"] == ["Quantity must be positive"]

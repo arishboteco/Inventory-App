@@ -47,6 +47,4 @@ def _load_units_from_supabase() -> Dict[str, List[str]]:
 
 
 get_units = get_cached(lambda: _load_units_from_supabase(), _CACHE_TTL)
-get_units.__doc__ = (
-    "Return cached units mapping, refreshing from Supabase if expired."
-)
+get_units.__doc__ = "Return cached units mapping, refreshing from Supabase if expired."

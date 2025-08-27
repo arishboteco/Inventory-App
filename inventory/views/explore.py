@@ -39,13 +39,14 @@ def explore(request):
 def explore_export(request):
     """Export the filtered items as CSV."""
     qs, _ = _filter_items(request)
-    headers = ["ID", "Name", "Base Unit", "Current Stock", "Active"]
+    headers = ["ID", "Name", "Unit", "Current Stock", "Active"]
 
     def row(item: Item):
+        from inventory.services.item_service import get_unit_display_name
         return [
             item.item_id,
             item.name,
-            item.base_unit,
+            get_unit_display_name(item.unit_id),
             item.current_stock,
             item.is_active,
         ]

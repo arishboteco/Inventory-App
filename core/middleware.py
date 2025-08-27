@@ -9,9 +9,12 @@ class LoginRequiredMiddleware:
 
     def __init__(self, get_response):
         self.get_response = get_response
-        self.exempt_urls = [re.compile(expr) for expr in getattr(settings, "LOGIN_EXEMPT_URLS", [])]
+        self.exempt_urls = [
+            re.compile(expr) for expr in getattr(settings, "LOGIN_EXEMPT_URLS", [])
+        ]
 
     def __call__(self, request):
+        print(f"Processing URL: {request.path_info}")  # Debug statement
         if not request.user.is_authenticated:
             path = request.path_info.lstrip("/")
             for pattern in self.exempt_urls:

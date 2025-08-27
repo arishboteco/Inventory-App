@@ -1,6 +1,7 @@
 from decimal import Decimal, InvalidOperation
 from django.db import models
 
+
 class CoerceFloatField(models.DecimalField):
     """DecimalField that coerces invalid values to Decimal('0')."""
 

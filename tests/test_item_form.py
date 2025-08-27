@@ -9,83 +9,67 @@ from inventory.forms.item_forms import ItemForm
 
 @pytest.mark.django_db
 def test_item_form_preserves_metadata(monkeypatch):
-    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
-    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
     form = ItemForm()
-    base_field = form.fields["base_unit"]
-    purchase_field = form.fields["purchase_unit"]
-    assert base_field.label == "Base unit"
-    assert base_field.max_length == 50
-    assert isinstance(base_field.widget, forms.TextInput)
-    assert base_field.widget.attrs.get("list") == "base-unit-options"
-    assert purchase_field.label == "Purchase unit"
-    assert purchase_field.max_length == 50
-    assert isinstance(purchase_field.widget, forms.TextInput)
-    assert purchase_field.widget.attrs.get("list") == "purchase-unit-options"
+    name_field = form.fields["name"]
+    unit_field = form.fields["unit_id"]
+    assert name_field.label == "Name"
+    assert name_field.required == True
+    assert isinstance(name_field.widget, forms.TextInput)
+    assert isinstance(unit_field, forms.IntegerField)
+
 
 
 @pytest.mark.django_db
-def test_purchase_unit_includes_base(monkeypatch):
-    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["kg", "g"]})
-    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
-    form = ItemForm(data={"base_unit": "kg"})
-    request = RequestFactory().get("/")
-    content = render_to_string(
-        "inventory/item_form.html",
-        {"form": form, "is_edit": False, "excluded_fields": []},
-        request=request,
-    )
-    assert '<datalist id="purchase-unit-options">' in content
-    assert '<option value="kg"></option>' in content
-
-
-@pytest.mark.django_db
-def test_item_form_units_fallback(monkeypatch, caplog):
-    def fail():
-        raise Exception("boom")
-
-    monkeypatch.setattr(forms_module, "get_units", fail)
-    monkeypatch.setattr(forms_module, "get_categories", lambda: {})
-    with caplog.at_level("ERROR"):
-        form = ItemForm()
-    assert form.units_map == {}
-    request = RequestFactory().get("/")
-    content = render_to_string(
-        "inventory/item_form.html",
-        {"form": form, "is_edit": False, "excluded_fields": []},
-        request=request,
-    )
-    assert "Could not load unit options" in content
-    assert "Failed to load units map" in caplog.text
-
-
-@pytest.mark.django_db
-def test_item_form_categories_and_save(monkeypatch):
-    monkeypatch.setattr(forms_module, "get_units", lambda: {"kg": ["g"]})
-    monkeypatch.setattr(
-        forms_module,
-        "get_categories",
-        lambda: {
-            None: [{"id": 1, "name": "Food"}],
-            "Food": [{"id": 2, "name": "Fruit"}],
-        },
-    )
-
-    form = ItemForm()
-    assert "Food" in form.category_options
-
-    form = ItemForm(data={"category": "Food"})
-    assert "Fruit" in form.sub_category_options
-
-    data = {
-        "name": "Apple",
-        "base_unit": "kg",
-        "purchase_unit": "g",
-        "category": "Food",
-        "sub_category": "Fruit",
+def test_item_form_validation():
+    # Test valid form data
+    form = ItemForm(data={
+        "name": "Test Item",
+        "unit_id": 55,
+        "reorder_point": 10,
+        "current_stock": 0,
+        "notes": "Test notes",
         "is_active": True,
-    }
-    form = ItemForm(data=data)
+    })
+    assert form.is_valid()
+    
+    # Test invalid form data (missing required name)
+    form = ItemForm(data={
+        "unit_id": 55,
+        "reorder_point": 10,
+    })
+    assert not form.is_valid()
+    assert "name" in form.errors
+
+
+@pytest.mark.django_db  
+def test_item_form_save():
+    form = ItemForm(data={
+        "name": "Test Item",
+        "unit_id": 55,
+        "reorder_point": 10,
+        "current_stock": 5,
+        "notes": "Test notes",
+        "is_active": True,
+    })
     assert form.is_valid()
     item = form.save()
-    assert item.category_id == 2
+    assert item.name == "Test Item"
+    assert item.unit_id == 55
+    assert item.reorder_point == 10
+    assert item.current_stock == 5
+    assert item.notes == "Test notes"
+    assert item.is_active == True
+
+
+@pytest.mark.django_db
+def test_item_form_render():
+    form = ItemForm()
+    request = RequestFactory().get("/")
+    content = render_to_string(
+        "inventory/item_form.html",
+        {"form": form, "is_edit": False, "excluded_fields": []},
+        request=request,
+    )
+    # Check that the form renders without errors
+    assert "name" in content.lower()
+    assert "unit_id" in content.lower() or "unit" in content.lower()

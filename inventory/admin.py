@@ -1,11 +1,13 @@
 from django.contrib import admin
 
 from .models import (
+    Department,
     GoodsReceivedNote,
     GRNItem,
     Indent,
     IndentItem,
     Item,
+    ItemDepartment,
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
@@ -28,5 +30,7 @@ for model in [
     PurchaseOrderItem,
     GoodsReceivedNote,
     GRNItem,
+    Department,
+    ItemDepartment,
 ]:
     admin.site.register(model)

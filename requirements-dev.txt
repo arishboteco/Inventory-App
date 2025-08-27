@@ -1,4 +1,15 @@
 -r requirements.txt
-flake8==7.3.0
+
+# Linters & formatters
+black==25.1.0
+ruff==0.12.10
+isort==6.0.1
+
+# Testing
 pytest==8.4.1
 pytest-django==4.11.1
+pytest-cov==6.2.1
+freezegun==1.5.1
+
+# Hooks
+pre-commit==4.3.0

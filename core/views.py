@@ -15,6 +15,7 @@ from inventory.services import counts, dashboard_service, kpis
 
 def root_view(request):
     """Render the home page or login form depending on authentication."""
+    print(f"User authenticated: {request.user.is_authenticated}")  # Debug statement
     if request.user.is_authenticated:
         data = {
             "stock_value": kpis.stock_value(),
@@ -32,9 +33,17 @@ def root_view(request):
         return render(request, "core/home.html", data)
 
     form = AuthenticationForm(request, data=request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        login(request, form.get_user())
-        return redirect("root")
+    if request.method == "POST":
+        print(f"POST data: {request.POST}")  # Debug statement
+        print(f"Form is valid: {form.is_valid()}")  # Debug statement
+        if not form.is_valid():
+            print(f"Form errors: {form.errors}")  # Debug statement
+        if form.is_valid():
+            user = form.get_user()
+            print(f"Logging in user: {user.username}")  # Debug statement
+            login(request, user)
+            print(f"User authenticated after login: {request.user.is_authenticated}")  # Debug statement
+            return redirect("root")
 
     return render(request, "core/home.html", {"form": form})
 

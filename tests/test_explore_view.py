@@ -10,9 +10,8 @@ pytestmark = pytest.mark.django_db
 def _create_item(name="Widget", active=True):
     return Item.objects.create(
         name=name,
-        base_unit="pcs",
-        purchase_unit="box",
-        permitted_departments="dept",
+        unit_id=55,
+        
         reorder_point=1,
         notes="n",
         is_active=active,
@@ -38,5 +37,5 @@ def test_explore_export_csv(client):
     assert resp["Content-Type"] == "text/csv"
     assert "attachment; filename=items.csv" in resp["Content-Disposition"]
     rows = list(csv.reader(resp.content.decode().splitlines()))
-    assert rows[0] == ["ID", "Name", "Base Unit", "Current Stock", "Active"]
+    assert rows[0] == ["ID", "Name", "Unit", "Current Stock", "Active"]
     assert rows[1][1] == "Apple"

@@ -10,7 +10,9 @@ def test_ajax_dashboard_data_filters(client, item_factory):
     item = item_factory(name="Filtered")
     other = item_factory(name="Other")
     supplier = Supplier.objects.create(name="Supp", is_active=True)
-    po = PurchaseOrder.objects.create(supplier=supplier, order_date=timezone.now().date())
+    po = PurchaseOrder.objects.create(
+        supplier=supplier, order_date=timezone.now().date()
+    )
     StockTransaction.objects.create(
         item=item,
         quantity_change=5,

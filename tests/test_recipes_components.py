@@ -27,8 +27,7 @@ def test_build_components_autofill_and_validation():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "base_unit": "kg",
-            "purchase_unit": "bag",
+            "unit_id": 19,
             "category": "Baking",
             "name": "Flour",
         },
@@ -42,7 +41,7 @@ def test_build_components_autofill_and_validation():
     }
     comps, errs = build_components_from_editor(rows, choice_map)
     assert not errs
-    assert comps[0]["unit"] == "kg" and comps[0]["component_id"] == 1
+    assert comps[0]["unit"] == "KG" and comps[0]["component_id"] == 1
     assert comps[1]["unit"] == "kg" and comps[1]["component_id"] == 2
 
 
@@ -61,8 +60,8 @@ def test_build_components_detects_unit_mismatch():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "base_unit": "kg",
-            "purchase_unit": "bag",
+            "unit_id": 19,
+            
             "category": "Baking",
             "name": "Flour",
         }
@@ -72,12 +71,12 @@ def test_build_components_detects_unit_mismatch():
     assert not comps
 
 
-def test_build_components_allows_purchase_unit():
+def test_build_components_rejects_wrong_unit():
     rows = [
         {
             "component": "Flour (1) | kg | Baking | 10.00",
             "quantity": 3,
-            "unit": "bag",  # purchase unit
+            "unit": "bag",  # wrong unit
             "loss_pct": 0,
             "sort_order": 1,
             "notes": None,
@@ -87,15 +86,15 @@ def test_build_components_allows_purchase_unit():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "base_unit": "kg",
-            "purchase_unit": "bag",
+            "unit_id": 19,
+            
             "category": "Baking",
             "name": "Flour",
         }
     }
     comps, errs = build_components_from_editor(rows, choice_map)
-    assert not errs
-    assert comps and comps[0]["unit"] == "bag"
+    assert errs  # Should have error about unit mismatch
+    assert "Unit mismatch" in errs[0]
 
 
 def test_build_components_skips_placeholder():
@@ -132,13 +131,13 @@ def test_build_components_from_editor_accepts_models():
         "Flour (1) | kg | Baking | 10.00": {
             "kind": "ITEM",
             "id": 1,
-            "base_unit": "kg",
-            "purchase_unit": "bag",
+            "unit_id": 19,
+            
             "category": "Baking",
             "name": "Flour",
         }
     }
     comps, errs = build_components_from_editor(rows, choice_map)
     assert not errs
-    assert comps[0]["unit"] == "kg"
+    assert comps[0]["unit"] == "KG"
     assert comps[0]["component_id"] == 1

@@ -25,20 +25,20 @@ class Recipe(models.Model):
         return self.name or f"Recipe {self.pk}"
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "recipes"
 
 
 class RecipeComponent(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True, db_column="recipe_item_id")
     parent_recipe = models.ForeignKey(
         Recipe,
         models.DO_NOTHING,
-        db_column="parent_recipe_id",
+        db_column="recipe_id",
         related_name="components",
     )
     component_kind = models.CharField(max_length=50, blank=True, null=True)
-    component_id = models.IntegerField(blank=True, null=True)
+    component_id = models.IntegerField(blank=True, null=True, db_column="item_id")
     quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     unit = models.CharField(max_length=50, blank=True, null=True)
     loss_pct = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
@@ -51,8 +51,8 @@ class RecipeComponent(models.Model):
         return f"{self.parent_recipe} component #{self.pk}"
 
     class Meta:
-        managed = False
-        db_table = "recipe_components"
+        managed = True
+        db_table = "recipe_items"
         unique_together = ("parent_recipe", "component_kind", "component_id")
 
 
@@ -70,5 +70,5 @@ class SaleTransaction(models.Model):
         return f"Sale {self.pk} of {self.recipe}"
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "sales_transactions"

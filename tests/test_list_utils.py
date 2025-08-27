@@ -7,23 +7,22 @@ from inventory.services import list_utils
 
 @pytest.mark.django_db
 def test_apply_filters_sort(item_factory):
-    item_factory(name="Apple", permitted_departments="Fruit")
-    item_factory(name="Banana", permitted_departments="Fruit")
-    item_factory(name="Carrot", permitted_departments="Veg")
+    # Create test items
+    item_factory(name="Apple")
+    item_factory(name="Banana")
+    
     request = RequestFactory().get(
         "/items",
-        {"q": "a", "department": "Fruit", "sort": "name", "direction": "desc"},
+        {"q": "a", "sort": "name", "direction": "desc"},
     )
     qs, params = list_utils.apply_filters_sort(
         request,
         Item.objects.all(),
         search_fields=["name"],
-        filter_fields={"department": "permitted_departments"},
         allowed_sorts={"name"},
         default_sort="name",
     )
     assert list(qs.values_list("name", flat=True)) == ["Banana", "Apple"]
-    assert params["department"] == "Fruit"
     assert params["sort"] == "name"
     assert params["direction"] == "desc"
 
@@ -42,7 +41,7 @@ def test_paginate(item_factory):
 
 @pytest.mark.django_db
 def test_export_as_csv(item_factory):
-    item_factory(name="Apple", permitted_departments="Fruit")
+    item_factory(name="Apple")
     qs = Item.objects.all()
     response = list_utils.export_as_csv(qs, ["Name"], lambda i: [i.name], "items.csv")
     content = response.content.decode().strip().splitlines()
@@ -52,7 +51,6 @@ def test_export_as_csv(item_factory):
 
 @pytest.mark.django_db
 def test_apply_filters_sort_invalid(item_factory):
-    item_factory(name="Apple", permitted_departments="Fruit")
     request = RequestFactory().get("/items", {"sort": "bogus", "direction": "sideways"})
     qs, params = list_utils.apply_filters_sort(
         request,

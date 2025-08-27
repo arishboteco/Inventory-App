@@ -34,13 +34,11 @@ def create_tables(django_db_blocker):
                 pass
 
 
-def _create_item(name="Flour", base_unit="kg", purchase_unit="bag", stock=20):
+def _create_item(name="Flour", unit_id=19, stock=20):
     item = Item.objects.create(
         name=name,
-        base_unit=base_unit,
-        purchase_unit=purchase_unit,
+        unit_id=unit_id,
         category_id=1,
-        permitted_departments="dept",
         reorder_point=0,
         current_stock=stock,
         notes="n",
@@ -57,14 +55,14 @@ def test_create_and_update_components():
     data = {
         "name": "Bread",
         "is_active": True,
-        "default_yield_unit": "kg",
+        "default_yield_unit": "KG",
     }
     components = [
         {
             "component_kind": "ITEM",
             "component_id": item_id,
             "quantity": 2,
-            "unit": "kg",
+            "unit": "KG",
             "loss_pct": 5,
         }
     ]
@@ -73,7 +71,7 @@ def test_create_and_update_components():
     assert ok and rid
 
     row = RecipeComponent.objects.get(parent_recipe_id=rid)
-    assert row.unit == "kg" and row.loss_pct == 5
+    assert row.unit == "KG" and row.loss_pct == 5
 
     components[0]["quantity"] = 3
     components[0]["loss_pct"] = 10
@@ -92,14 +90,14 @@ def test_nested_recipes_and_cycle_prevention():
     dough_data = {
         "name": "Dough",
         "is_active": True,
-        "default_yield_unit": "kg",
+        "default_yield_unit": "KG",
     }
     dough_components = [
         {
             "component_kind": "ITEM",
             "component_id": item_id,
             "quantity": 1,
-            "unit": "kg",
+            "unit": "KG",
         }
     ]
     ok, _, dough_id = create_recipe(dough_data, dough_components)
@@ -108,14 +106,14 @@ def test_nested_recipes_and_cycle_prevention():
     bread_data = {
         "name": "BreadCycle",
         "is_active": True,
-        "default_yield_unit": "kg",
+        "default_yield_unit": "KG",
     }
     bread_components = [
         {
             "component_kind": "RECIPE",
             "component_id": dough_id,
             "quantity": 1,
-            "unit": "kg",
+            "unit": "KG",
         }
     ]
     ok, _, bread_id = create_recipe(bread_data, bread_components)
@@ -126,7 +124,7 @@ def test_nested_recipes_and_cycle_prevention():
             "component_kind": "RECIPE",
             "component_id": bread_id,
             "quantity": 1,
-            "unit": "kg",
+            "unit": "KG",
         }
     )
     ok, _ = update_recipe(dough_id, dough_data, dough_components)
@@ -139,26 +137,26 @@ def test_record_sale_reduces_nested_stock():
     item_id = _create_item()
 
     premix = Recipe.objects.create(
-        name="PreMix", is_active=True, default_yield_unit="kg"
+        name="PreMix", is_active=True, default_yield_unit="KG"
     )
     RecipeComponent.objects.create(
         parent_recipe=premix,
         component_kind="ITEM",
         component_id=item_id,
         quantity=1,
-        unit="kg",
+        unit="KG",
         loss_pct=10,
     )
 
     bread = Recipe.objects.create(
-        name="BreadSale", is_active=True, default_yield_unit="kg"
+        name="BreadSale", is_active=True, default_yield_unit="KG"
     )
     RecipeComponent.objects.create(
         parent_recipe=bread,
         component_kind="RECIPE",
         component_id=premix.recipe_id,
         quantity=1,
-        unit="kg",
+        unit="KG",
         loss_pct=20,
     )
 
@@ -189,7 +187,7 @@ def test_recipe_metadata_fields():
             "component_kind": "ITEM",
             "component_id": item_id,
             "quantity": 1,
-            "unit": "kg",
+            "unit": "KG",
         }
     ]
 

@@ -37,15 +37,16 @@ def clear_tables(db):
 def test_add_new_item_inserts_row():
     details = {
         "name": "Widget",
-        "base_unit": "pcs",
-        "purchase_unit": "box",
+        "unit_id": 55,
+        
         "category_id": 1,
-        "permitted_departments": "dept",
         "reorder_point": 1,
         "notes": "n",
         "is_active": True,
     }
-    success, _ = item_service.add_new_item(details)
+    success, error = item_service.add_new_item(details)
+    if not success:
+        print(f"Error: {error}")
     assert success
     assert Item.objects.filter(name="Widget").exists()
 
@@ -53,10 +54,10 @@ def test_add_new_item_inserts_row():
 def test_get_all_items_with_stock_includes_unit():
     item = Item.objects.create(
         name="Widget",
-        base_unit="pcs",
-        purchase_unit="box",
+        unit_id=55,
+        
         category_id=1,
-        permitted_departments="dept",
+        
         reorder_point=1,
         notes="n",
         is_active=True,
@@ -64,24 +65,24 @@ def test_get_all_items_with_stock_includes_unit():
     StockTransaction.objects.create(item=item, quantity_change=5)
     items = item_service.get_all_items_with_stock(include_inactive=True)
     widget = next(i for i in items if i["name"] == "Widget")
-    assert widget["unit"] == "pcs"
+    assert widget["unit"] == "PC"
     assert widget["current_stock"] == 5
 
 
 def test_get_item_details_includes_unit():
     item = Item.objects.create(
         name="Widget",
-        base_unit="pcs",
-        purchase_unit="box",
+        unit_id=55,
+        
         category_id=1,
-        permitted_departments="dept",
+        
         reorder_point=1,
         notes="n",
         is_active=True,
     )
     StockTransaction.objects.create(item=item, quantity_change=5)
     details = item_service.get_item_details(item.pk)
-    assert details["unit"] == "pcs"
+    assert details["unit"] == "PC"
     assert details["current_stock"] == 5
 
 
@@ -89,20 +90,18 @@ def test_add_items_bulk_inserts_rows():
     items = [
         {
             "name": "Widget",
-            "base_unit": "pcs",
-            "purchase_unit": "box",
+            "unit_id": 55,
+            
             "category_id": 1,
-            "permitted_departments": "dept",
             "reorder_point": 1,
             "notes": "n",
             "is_active": True,
         },
         {
             "name": "Gadget",
-            "base_unit": "pcs",
-            "purchase_unit": "each",
+            "unit_id": 55,
+            
             "category_id": 1,
-            "permitted_departments": "dept2",
             "reorder_point": 2,
             "notes": "n",
             "is_active": True,
@@ -118,11 +117,10 @@ def test_add_items_bulk_validation_failure():
     items = [
         {
             "name": "Widget",
-            "base_unit": "pcs",
-            "purchase_unit": "box",
+            # Missing required unit_id
             "category_id": 1,
         },
-        {"name": "Gadget", "base_unit": "pcs", "purchase_unit": "", "category_id": 1},
+        {"name": "Gadget"},  # Missing required unit_id
     ]
     inserted, errors = item_service.add_items_bulk(items)
     assert inserted == 0
@@ -132,11 +130,11 @@ def test_add_items_bulk_validation_failure():
 
 def test_add_items_bulk_applies_defaults():
     items = [
-        {"name": "Widget", "base_unit": "pcs", "purchase_unit": "box"},
+        {"name": "Widget", "unit_id": 55},
         {
             "name": "Gadget",
-            "base_unit": "pcs",
-            "purchase_unit": "each",
+            "unit_id": 55,
+            
             "is_active": False,
         },
     ]
@@ -151,30 +149,30 @@ def test_add_items_bulk_applies_defaults():
     assert gadget.is_active is False
 
 
-def test_add_new_item_requires_purchase_unit():
-    details = {"name": "Widget", "base_unit": "pcs"}
+def test_add_new_item_requires_unit_id():
+    details = {"name": "Widget"}  # Missing required unit_id
     success, message = item_service.add_new_item(details)
     assert not success
-    assert "purchase_unit" in message
+    assert "unit_id" in message
 
 
 def test_remove_items_bulk_marks_inactive():
     widget = Item.objects.create(
         name="Widget",
-        base_unit="pcs",
-        purchase_unit="box",
+        unit_id=55,
+        
         category_id=1,
-        permitted_departments="dept",
+        
         reorder_point=1,
         notes="n",
         is_active=True,
     )
     gadget = Item.objects.create(
         name="Gadget",
-        base_unit="pcs",
-        purchase_unit="each",
+        unit_id=55,
+        
         category_id=1,
-        permitted_departments="dept2",
+        
         reorder_point=2,
         notes="n",
         is_active=True,
@@ -195,10 +193,10 @@ def test_remove_items_bulk_requires_ids():
 def test_update_item_changes_fields():
     item = Item.objects.create(
         name="Widget",
-        base_unit="pcs",
-        purchase_unit="box",
+        unit_id=55,
+        
         category_id=1,
-        permitted_departments="dept",
+        
         reorder_point=1,
         notes="n",
         is_active=True,
@@ -222,10 +220,10 @@ def test_update_item_invalid_id():
 def test_deactivate_and_reactivate_item():
     item = Item.objects.create(
         name="Widget",
-        base_unit="pcs",
-        purchase_unit="box",
+        unit_id=55,
+        
         category_id=1,
-        permitted_departments="dept",
+        
         reorder_point=1,
         notes="n",
         is_active=True,

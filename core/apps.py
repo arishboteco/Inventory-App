@@ -23,6 +23,4 @@ class CoreConfig(AppConfig):
     def ready(self):  # pragma: no cover - executed via Django startup
         """Connect signal handlers when the app is ready."""
 
-        post_migrate.connect(
-            _create_admin_user, dispatch_uid="core.create_admin_user"
-        )
+        post_migrate.connect(_create_admin_user, dispatch_uid="core.create_admin_user")

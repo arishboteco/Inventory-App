@@ -35,7 +35,12 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-secret-key")
 # Enabled temporarily for debugging
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "curly-space-sniffle-pjxw7ww6r76frgp-8000.app.github.dev"])
+
+# Dynamically add Codespaces URL to ALLOWED_HOSTS
+CODESPACE_URL = os.getenv("CODESPACE_NAME")
+if CODESPACE_URL:
+    ALLOWED_HOSTS.append(f"{CODESPACE_URL}-8000.app.github.dev")
 
 
 # Application definition
@@ -90,8 +95,7 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 DATABASE_URL = os.environ.get("DATABASE_URL")  # prefer Codespaces secrets
 DATABASES = {
     "default": env.db(
-        "DATABASE_URL",
-        default=DATABASE_URL or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+        "DATABASE_URL", default=DATABASE_URL or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
     )
 }
 
@@ -140,10 +144,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Media files (Uploaded content)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -162,20 +171,22 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 25,
 }
 
-LOGIN_URL = "/"
-LOGIN_REDIRECT_URL = "/dashboard/"
-LOGOUT_REDIRECT_URL = "/"
+# Login URL
+LOGIN_URL = '/login/'
 
+# Expanded URLs exempt from login requirement
 LOGIN_EXEMPT_URLS = [
-    r"^$",
-    r"^login/$",
-    r"^accounts/login/$",
-    r"^accounts/logout/$",
-    r"^healthz$",
-    r"^static/",
+    r'^$',
+    r'^login/$',
+    r'^accounts/login/$',
+    r'^accounts/logout/$',
+    r'^healthz$',
+    r'^static/.*$',
+    r'^api/.*$',  # Exempt API endpoints
+    r'^media/.*$',  # Exempt media files
 ]
 
-# Disable migrations for inventory app — Supabase schema is the source of truth
-MIGRATION_MODULES = {
-    "inventory": None,
-}
+# Migrations enabled for inventory app — Django is now the source of truth
+# MIGRATION_MODULES = {
+#     "inventory": None,
+# }

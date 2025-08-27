@@ -79,9 +79,7 @@ def test_load_categories_supabase_exception(monkeypatch):
         def table(self, name):
             raise supabase_categories.SupabaseException("fail")
 
-    monkeypatch.setattr(
-        supabase_client, "create_client", lambda u, k: FailingClient()
-    )
+    monkeypatch.setattr(supabase_client, "create_client", lambda u, k: FailingClient())
     cats = supabase_categories._load_categories_from_supabase()
     assert cats == {}
 

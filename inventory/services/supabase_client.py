@@ -11,6 +11,7 @@ except ModuleNotFoundError:  # pragma: no cover - supabase optional
     class SupabaseException(Exception):
         pass
 
+
 logger = logging.getLogger(__name__)
 
 _client: Client | None = None

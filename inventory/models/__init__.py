@@ -1,7 +1,15 @@
 from .items import Item, StockTransaction
-from .orders import GoodsReceivedNote, GRNItem, Indent, IndentItem, PurchaseOrder, PurchaseOrderItem
+from .orders import (
+    GoodsReceivedNote,
+    GRNItem,
+    Indent,
+    IndentItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+)
 from .suppliers import Supplier
 from .recipes import Recipe, RecipeComponent, SaleTransaction
+from .departments import Department, ItemDepartment
 from .fields import CoerceFloatField
 
 __all__ = [
@@ -18,4 +26,6 @@ __all__ = [
     "Recipe",
     "RecipeComponent",
     "SaleTransaction",
+    "Department",
+    "ItemDepartment",
 ]

@@ -11,23 +11,34 @@ class Item(models.Model):
 
     item_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True, blank=False, null=False)
-    base_unit = models.CharField(max_length=50, blank=False, null=False)
-    purchase_unit = models.CharField(max_length=50, blank=False, null=False)
+    unit_id = models.IntegerField(blank=False, null=False)
     category_id = models.BigIntegerField(
         blank=True, null=True, db_column="category_id_ref"
     )
-    permitted_departments = models.CharField(max_length=255, blank=True, null=True)
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes about this item")
     is_active = models.BooleanField(default=True, null=False)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Many-to-many relationship with departments
+    departments = models.ManyToManyField(
+        'Department',
+        through='ItemDepartment',
+        related_name='items',
+        blank=True
+    )
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return self.name or f"Item {self.pk}"
+    
+    @property
+    def department_names(self):
+        """Return a comma-separated string of department names."""
+        return ", ".join(self.departments.values_list('name', flat=True))
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "items"
 
 
@@ -65,5 +76,5 @@ class StockTransaction(models.Model):
         return f"Transaction {self.pk} for {self.item}"
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "stock_transactions"

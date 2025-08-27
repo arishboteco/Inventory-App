@@ -6,7 +6,21 @@
     <h1 class="text-h1 font-bold">Welcome to Inventory App</h1>
     <p class="mt-2">Manage stock effortlessly</p>
     {% if not user.is_authenticated %}
-      <button id="open-login" class="btn-secondary mt-4">Sign In</button>
+      <div class="mt-4">
+        <form method="post" class="bg-white p-6 rounded shadow-lg max-w-md mx-auto">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-4">
+              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div class="text-red-500 text-sm mt-1">{{ field.errors }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="btn-primary w-full">Login</button>
+        </form>
+      </div>
     {% endif %}
   </div>
 
@@ -56,7 +70,4 @@
     </div>
   {% endif %}
 </div>
-{% if not user.is_authenticated %}
-  {% include "components/login_modal.html" with form=form %}
-{% endif %}
 {% endblock %}

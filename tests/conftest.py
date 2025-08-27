@@ -1,40 +1,113 @@
 import os
 import sys
-
 import django
 import pytest
+from django.db import connection
+from django.utils import timezone
 
 # Ensure project root is on sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings")
+# Use our test settings module
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings_test")
 django.setup()
 
-from inventory.models import Item  # noqa: E402
+from inventory.models import Item, Supplier, StockTransaction  # noqa: E402
 
+
+@pytest.fixture(scope="session", autouse=True)
+def create_test_schema(django_db_setup, django_db_blocker):
+    """
+    Load a minimal schema into the test DB so unmanaged Supabase models work.
+    Runs once per test session AFTER the Django test DB is ready.
+    """
+    schema_path = os.path.join(PROJECT_ROOT, "tests", "test_schema.sql")
+    with django_db_blocker.unblock():
+        with open(schema_path, "r") as f:
+            sql = f.read()
+        # Use executescript on SQLite; otherwise split on semicolons.
+        with connection.cursor() as cursor:
+            if connection.vendor == "sqlite":
+                # Access the native sqlite3 connection to use executescript
+                connection.connection.executescript(sql)
+            else:
+                for stmt in sql.split(";"):
+                    if stmt.strip():
+                        cursor.execute(stmt)
+
+
+# ---------- FACTORIES ----------
 
 @pytest.fixture
-def item_factory():
+def item_factory(db):
+    """
+    Factory to create Item objects.
+    Usage: item = item_factory(name="Sugar", reorder_point=10, current_stock=5)
+    """
     def create_item(**kwargs):
         defaults = {
             "name": "Item",
-            "base_unit": "kg",
-            "purchase_unit": "g",
+            "unit_id": 1,  # Updated to use unit_id instead of base_unit/purchase_unit
             "category_id": 1,
+            "reorder_point": 0,
+            "current_stock": 0,
             "is_active": True,
         }
         defaults.update(kwargs)
         return Item.objects.create(**defaults)
-
     return create_item
 
 
+@pytest.fixture
+def supplier_factory(db):
+    """
+    Factory to create Supplier objects.
+    Usage: supplier = supplier_factory(name="Vendor X")
+    """
+    def create_supplier(**kwargs):
+        defaults = {
+            "name": "Vendor",
+            "is_active": True,
+        }
+        defaults.update(kwargs)
+        return Supplier.objects.create(**defaults)
+    return create_supplier
+
+
+@pytest.fixture
+def stock_txn_factory(db):
+    """
+    Factory to create StockTransaction rows.
+    Usage:
+      stock_txn_factory(item=item, quantity_change=5, transaction_type="RECEIVING")
+      OR stock_txn_factory(item_id=item.item_id, ...)
+    """
+    def create_txn(**kwargs):
+        assert "item" in kwargs or "item_id" in kwargs, "Provide item or item_id"
+        defaults = {
+            "quantity_change": 1,
+            "transaction_type": "RECEIVING",
+            "transaction_date": timezone.now(),
+            "notes": "",
+        }
+        defaults.update(kwargs)
+        if "item" in defaults and "item_id" not in defaults:
+            defaults["item_id"] = defaults["item"].item_id
+        defaults.pop("item", None)
+        return StockTransaction.objects.create(**defaults)
+    return create_txn
+
+
+# ---------- AUTO-LOGIN ----------
 @pytest.fixture(autouse=True)
 def logged_in_client(client, db):
-    """Log in the default admin user for tests that require authentication."""
+    """
+    Log in the default admin user for tests requiring auth.
 
+    We don't call client.logout() during teardown (we use cache-based sessions in tests).
+    """
     from django.contrib.auth import get_user_model
 
     User = get_user_model()
@@ -44,4 +117,4 @@ def logged_in_client(client, db):
         user.save()
     client.force_login(user)
     yield
-    client.logout()
+    # No client.logout()

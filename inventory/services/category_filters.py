@@ -31,7 +31,9 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     }
 
 
-def build_filters(category_ctx: Dict[str, Any], active_value: str | None = None) -> List[dict]:
+def build_filters(
+    category_ctx: Dict[str, Any], active_value: str | None = None
+) -> List[dict]:
     """Return filter definitions combining category data and active status."""
     category = category_ctx["category"]
     subcategory = category_ctx["subcategory"]
@@ -53,12 +55,14 @@ def build_filters(category_ctx: Dict[str, Any], active_value: str | None = None)
             "name": "category",
             "value": category,
             "id": "filter-category",
-            "options": [{"value": "", "label": "All"}] + [{"value": c} for c in categories],
+            "options": [{"value": "", "label": "All"}]
+            + [{"value": c} for c in categories],
         },
         {
             "name": "subcategory",
             "value": subcategory,
             "id": "filter-subcategory",
-            "options": [{"value": "", "label": "All"}] + [{"value": sc} for sc in subcategories],
+            "options": [{"value": "", "label": "All"}]
+            + [{"value": sc} for sc in subcategories],
         },
     ]

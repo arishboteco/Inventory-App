@@ -50,16 +50,17 @@ def _parse_tags(tags: Any) -> List[str]:
 def _component_unit(kind: str, cid: int, unit: Optional[str]) -> Optional[str]:
     """Validate and resolve a component's unit.
 
-    For ``ITEM`` components the unit must match the item's ``base_unit``.
+    For ``ITEM`` components the unit must match the item's unit.
     For ``RECIPE`` components the unit must match the child recipe's
     ``default_yield_unit``.
     """
 
     if kind == "ITEM":
-        item = Item.objects.filter(pk=cid).values("base_unit").first()
+        from .item_service import get_unit_display_name
+        item = Item.objects.filter(pk=cid).values("unit_id").first()
         if not item:
             raise ValueError(f"Item {cid} not found")
-        base = item["base_unit"]
+        base = get_unit_display_name(item["unit_id"])
         if unit is None:
             return base
         if unit != base:
@@ -138,20 +139,27 @@ def build_components_from_editor(
         if qty is None or float(qty) <= 0:
             errors.append(f"Quantity must be greater than 0 for {label}.")
             continue
-        unit = row.get("unit") or meta.get("base_unit") or meta.get("unit")
+        unit = row.get("unit")
         if meta["kind"] == "ITEM":
-            base_unit = meta.get("base_unit")
-            purchase_unit = meta.get("purchase_unit")
-            allowed = {u for u in [base_unit, purchase_unit] if u}
-            if unit not in allowed:
-                if purchase_unit:
-                    errors.append(
-                        f"Unit mismatch for {meta.get('name')}. Use {base_unit} or {purchase_unit}."
-                    )
-                else:
-                    errors.append(
-                        f"Unit mismatch for {meta.get('name')}. Use {base_unit}."
-                    )
+            from .item_service import get_unit_display_name
+            # For items, use the item's unit
+            allowed_unit = get_unit_display_name(meta.get("unit_id"))
+            if unit is None:
+                unit = allowed_unit  # Autofill
+            elif unit != allowed_unit:
+                errors.append(
+                    f"Unit mismatch for {meta.get('name')}. Use {allowed_unit}."
+                )
+                continue
+        elif meta["kind"] == "RECIPE":
+            # For recipes, use the default yield unit
+            recipe_unit = meta.get("unit")
+            if unit is None:
+                unit = recipe_unit  # Autofill
+            elif unit != recipe_unit:
+                errors.append(
+                    f"Unit mismatch for {meta.get('name')}. Use {recipe_unit}."
+                )
                 continue
         components.append(
             {
@@ -206,6 +214,7 @@ def create_recipe(
                     recipe.recipe_id, comp["component_id"]
                 ):
                     raise ValueError("Adding this component creates a cycle")
+                    
                 RecipeComponent.objects.create(
                     parent_recipe=recipe,
                     component_kind=comp["component_kind"],
@@ -246,6 +255,7 @@ def update_recipe(
                     recipe_id, comp["component_id"]
                 ):
                     raise ValueError("Adding this component creates a cycle")
+                    
                 RecipeComponent.objects.create(
                     parent_recipe=recipe,
                     component_kind=comp["component_kind"],
@@ -304,16 +314,18 @@ def _expand_requirements(
             / (1 - float(row.get("loss_pct") or 0) / 100.0)
         )
         if row["component_kind"] == "ITEM":
+            from .item_service import get_unit_display_name
             item = (
                 Item.objects.filter(pk=row["component_id"])
-                .values("base_unit", "is_active")
+                .values("unit_id", "is_active")
                 .first()
             )
             if not item:
                 raise ValueError(f"Item {row['component_id']} not found")
             if not item["is_active"]:
                 raise ValueError("Inactive item component encountered")
-            if item["base_unit"] != row["unit"]:
+            item_unit = get_unit_display_name(item["unit_id"])
+            if item_unit != row["unit"]:
                 raise ValueError("Unit mismatch for item component")
             totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
         elif row["component_kind"] == "RECIPE":

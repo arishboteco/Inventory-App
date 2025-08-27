@@ -139,4 +139,3 @@ class Migration(migrations.Migration):
         # Only create indexes for tables that exist - skip optional tables for now
         # We'll create a follow-up migration for additional tables once they're confirmed to exist
     ]
-    ]

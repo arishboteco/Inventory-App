@@ -1,8 +1,10 @@
+# Render.com deployment configuration for Django Inventory App
+# Updated: 2025-08-27 - Fixed threading issues with sync workers
 services:
   - type: web
     name: inventory-app
     env: python
-    buildCommand: "pip install -r requirements.txt && npm install && npm run build-css && python manage.py collectstatic --noinput && python manage.py migrate"
+    buildCommand: "pip install -r requirements.txt && npm install && npm run build-css && python manage.py collectstatic --noinput && python manage.py migrate && python manage.py ensure_superuser"
     startCommand: "gunicorn --bind 0.0.0.0:$PORT --workers 4 --worker-class sync --max-requests 1000 --max-requests-jitter 50 --preload --access-logfile - --error-logfile - inventory_app.wsgi:application"
     envVars:
       - key: DJANGO_SETTINGS_MODULE

@@ -14,7 +14,7 @@ services:
       npm run build-css
       python manage.py collectstatic --noinput
       python manage.py migrate
-      python manage.py ensure_superuser
+      python manage.py create_default_superuser
     startCommand: >-
       gunicorn 
       --bind 0.0.0.0:$PORT 

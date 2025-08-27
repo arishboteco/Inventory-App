@@ -82,11 +82,11 @@ if REDIS_URL:
         }
     }
 else:
-    # Fallback to database cache
+    # Fallback to locmem cache instead of database cache
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-            'LOCATION': 'cache_table',
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'inventory-cache',
         }
     }
 

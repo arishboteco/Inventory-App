@@ -25,6 +25,10 @@ python manage.py collectstatic --noinput
 echo "🗄️ Running database migrations..."
 python manage.py migrate
 
+# Setup cache table for database caching
+echo "💾 Setting up cache table..."
+python manage.py setup_cache
+
 # Ensure superuser exists for admin access
 echo "👤 Creating default superuser..."
 python manage.py create_default_superuser

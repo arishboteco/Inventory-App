@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: inventory-app
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT --workers 4 --worker-class gevent --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --preload --access-logfile - --error-logfile - inventory_app.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: inventory_app.settings_production
+      - key: DEBUG
+        value: False
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: True
+      - key: DJANGO_SECURE_HSTS_SECONDS
+        value: 31536000
+      - key: DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS
+        value: True
+      - key: DJANGO_SECURE_HSTS_PRELOAD
+        value: True
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: inventory-db
+          property: connectionString
+    healthCheckPath: /
+
+databases:
+  - name: inventory-db
+    databaseName: inventory_app
+    user: inventory_user

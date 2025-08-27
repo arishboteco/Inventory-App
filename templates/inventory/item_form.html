@@ -6,27 +6,77 @@
   {% if not form.units_map %}
   <p class="text-sm text-red-600">Could not load unit options. Please try again later.</p>
   {% endif %}
-  <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-    <div id="name-field" class="space-y-1 relative col-span-2">
-      <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }}</label>
-      {{ form.name }}
-      {% if form.name.help_text %}
-        <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
-      {% endif %}
-      {% if form.name.errors %}
-        <ul class="text-sm text-red-600 list-disc pl-5">
-          {% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
-      {% endif %}
+  
+  <div class="grid gap-6">
+    <!-- Basic Information Section -->
+    <div class="bg-gray-50 p-4 rounded-lg">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Basic Information</h3>
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+        <div id="name-field" class="space-y-1 relative col-span-2">
+          <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }} *</label>
+          {{ form.name }}
+          {% if form.name.help_text %}
+            <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
+          {% endif %}
+          {% if form.name.errors %}
+            <ul class="text-sm text-red-600 list-disc pl-5">
+              {% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+        {% include "components/form_field.html" with field=form.category %}
+        {% include "components/form_field.html" with field=form.sub_category %}
+      </div>
     </div>
-    {% include "components/form_field.html" with field=form.base_unit %}
-    {% include "components/form_field.html" with field=form.purchase_unit %}
-    {% for field in form %}
-      {% if field.name not in excluded_fields %}
-        {% include "components/form_field.html" with field=field %}
-      {% endif %}
-    {% endfor %}
+
+    <!-- Unit Information Section -->
+    <div class="bg-blue-50 p-4 rounded-lg">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Unit Information</h3>
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+        {% include "components/form_field.html" with field=form.base_unit %}
+        {% include "components/form_field.html" with field=form.purchase_unit %}
+      </div>
+      <p class="text-sm text-gray-600 mt-2">
+        <strong>Base Unit:</strong> The standard unit for inventory tracking<br>
+        <strong>Purchase Unit:</strong> The unit used when ordering from suppliers
+      </p>
+    </div>
+
+    <!-- Department Assignment Section -->
+    <div class="bg-green-50 p-4 rounded-lg">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Department Assignment</h3>
+      {% include "components/form_field.html" with field=form.departments %}
+    </div>
+
+    <!-- Purchase Information Section -->
+    <div class="bg-yellow-50 p-4 rounded-lg">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Purchase Information</h3>
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+        {% include "components/form_field.html" with field=form.preferred_supplier %}
+        {% include "components/form_field.html" with field=form.initial_purchase_price %}
+        {% include "components/form_field.html" with field=form.minimum_order_qty %}
+        {% include "components/form_field.html" with field=form.lead_time_days %}
+      </div>
+    </div>
+
+    <!-- Inventory Control Section -->
+    <div class="bg-purple-50 p-4 rounded-lg">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">Inventory Control</h3>
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+        {% include "components/form_field.html" with field=form.reorder_point %}
+        {% include "components/form_field.html" with field=form.current_stock %}
+        <div class="col-span-2">
+          {% include "components/form_field.html" with field=form.notes %}
+        </div>
+        {% include "components/form_field.html" with field=form.is_active %}
+      </div>
+    </div>
   </div>
+
+  <!-- Hidden compatibility field -->
+  {{ form.unit_id }}
+
+  <!-- Dropdown options -->
   <datalist id="base-unit-options">
     {% for u in form.base_units %}
       <option value="{{ u }}"></option>
@@ -106,6 +156,17 @@
       refreshCategories(initialSub);
       categoryInput.addEventListener('change', function () {
         refreshCategories();
+      });
+
+      // Add form validation
+      const form = document.getElementById('item-form');
+      form.addEventListener('submit', function(e) {
+        const name = document.getElementById('id_name').value;
+        if (!name.trim()) {
+          e.preventDefault();
+          alert('Item name is required');
+          return false;
+        }
       });
     });
   </script>

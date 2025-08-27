@@ -15,6 +15,35 @@ class Item(models.Model):
     category_id = models.BigIntegerField(
         blank=True, null=True, db_column="category_id_ref"
     )
+    
+    # Business fields for complete item management
+    base_unit = models.CharField(max_length=50, blank=True, null=True, help_text="Base unit of measurement (kg, ltr, pc)")
+    purchase_unit = models.CharField(max_length=50, blank=True, null=True, help_text="Purchase unit (g, ml, each)")
+    category = models.CharField(max_length=100, blank=True, null=True, help_text="Item category")
+    sub_category = models.CharField(max_length=100, blank=True, null=True, help_text="Item subcategory")
+    
+    # Purchase and supplier information
+    initial_purchase_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        help_text="Initial purchase price per unit"
+    )
+    last_purchase_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        help_text="Most recent purchase price per unit"
+    )
+    preferred_supplier = models.ForeignKey(
+        'Supplier', on_delete=models.SET_NULL, blank=True, null=True,
+        related_name='preferred_items', help_text="Default supplier for this item"
+    )
+    minimum_order_qty = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True,
+        help_text="Minimum order quantity"
+    )
+    lead_time_days = models.IntegerField(
+        blank=True, null=True, help_text="Standard lead time in days"
+    )
+    
+    # Original fields
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     notes = models.TextField(blank=True, null=True, help_text="Additional notes about this item")

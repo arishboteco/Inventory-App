@@ -23,7 +23,7 @@ from ..services import category_filters, item_service, list_utils, stock_service
 
 logger = logging.getLogger(__name__)
 
-EXCLUDED_FIELDS = ["name", "unit_id"]  # Fixed: Removed non-existent fields
+EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category", "sub_category"]  # Updated list
 
 
 def _filter_and_sort_items(request, qs=None):

@@ -10,6 +10,25 @@ class Supplier(models.Model):
     phone = models.CharField(max_length=20, blank=True, null=True)
     email = models.CharField(max_length=254, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    
+    # Enhanced business fields
+    tax_id = models.CharField(
+        max_length=50, blank=True, null=True,
+        help_text="Tax identification number"
+    )
+    payment_terms = models.CharField(
+        max_length=100, blank=True, null=True,
+        help_text="Standard payment terms (e.g., Net 30)"
+    )
+    credit_limit = models.DecimalField(
+        max_digits=12, decimal_places=2, blank=True, null=True,
+        help_text="Credit limit amount"
+    )
+    supplier_rating = models.IntegerField(
+        blank=True, null=True,
+        help_text="Supplier rating (1-5 stars)"
+    )
+    
     notes = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True, null=False)
     updated_at = models.DateTimeField(auto_now=True)

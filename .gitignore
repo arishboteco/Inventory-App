@@ -1,5 +1,9 @@
 # Environment-based configuration
 .env
+.env.*
+.env.render*
+*env.txt
+*ENV*.txt
 
 # Python virtual environment
 venv/

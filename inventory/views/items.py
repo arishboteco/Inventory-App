@@ -23,12 +23,13 @@ from ..services import category_filters, item_service, list_utils, stock_service
 
 logger = logging.getLogger(__name__)
 
-EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit"]
+EXCLUDED_FIELDS = ["name", "unit_id"]  # Fixed: Removed non-existent fields
 
 
 def _filter_and_sort_items(request, qs=None):
     """Return items queryset and filter metadata from request params."""
-    qs = qs or Item.objects.select_related('category', 'sub_category', 'base_unit').all()
+    # Fixed: Remove select_related for non-ForeignKey fields (unit_id, category_id are integers)
+    qs = qs or Item.objects.all()
     qs = qs.annotate(
         stock_ok=Case(
             When(current_stock__gte=F("reorder_point"), then=Value(True)),
@@ -42,7 +43,7 @@ def _filter_and_sort_items(request, qs=None):
     allowed_sorts = {
         "item_id",
         "name",
-        "base_unit",
+        "unit_id",  # Fixed: Changed from "base_unit" to "unit_id"
         "current_stock",
         "reorder_point",
         "is_active",

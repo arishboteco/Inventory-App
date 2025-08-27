@@ -10,9 +10,8 @@ import logging
 import dj_database_url
 from .settings import *
 
-# Override middleware to add error logging for production debugging
+# Override middleware for production (remove debugging middleware)
 MIDDLEWARE = [
-    'core.error_logging_middleware.DetailedErrorLoggingMiddleware',  # Add error logging first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -25,15 +24,8 @@ MIDDLEWARE = [
 ]
 
 # SECURITY WARNING: DEBUG must be False in production!
-# Temporarily enabling for debugging login issues
-DEBUG = True  # TEMPORARILY ENABLED FOR DEBUGGING
-
-# Enable debug toolbar for debugging
-if DEBUG:
-    INTERNAL_IPS = [
-        '127.0.0.1',
-        'localhost',
-    ]
+# Debug temporarily enabled for issue resolution - NOW DISABLE IT
+DEBUG = False  # ✅ DISABLED FOR PRODUCTION SECURITY
 
 # Production allowed hosts - MUST be configured properly
 ALLOWED_HOSTS = [

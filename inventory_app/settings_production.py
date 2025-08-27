@@ -37,11 +37,18 @@ if not DATABASE_URL:
 DATABASES = {
     'default': dj_database_url.parse(
         DATABASE_URL,
-        conn_max_age=600,
+        conn_max_age=int(os.environ.get('DATABASE_CONN_MAX_AGE', 600)),
         conn_health_checks=True,
         ssl_require=True,  # Force SSL in production
     )
 }
+
+# Update database configuration for production optimization
+DATABASES['default'].update({
+    'OPTIONS': {
+        'sslmode': 'require',  # Require SSL connection
+    }
+})
 
 # Cache configuration - Redis required for production
 REDIS_URL = os.environ.get('REDIS_URL')
@@ -199,15 +206,6 @@ INVENTORY_SETTINGS = {
     'ENABLE_AUDIT_LOGGING': True,
     'REQUIRE_SSL': True,
 }
-
-# Database connection pooling for production
-DATABASES['default'].update({
-    'CONN_MAX_AGE': 600,
-    'OPTIONS': {
-        'MAX_CONNS': 20,
-        'MIN_CONNS': 5,
-    }
-})
 
 # Monitoring and error reporting - Sentry
 if 'SENTRY_DSN' in os.environ:

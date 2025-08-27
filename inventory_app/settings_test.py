@@ -11,17 +11,31 @@ DATABASES = {
     }
 }
 
-# Fast hashing
-PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+# Force immediate password hashing in tests (faster)
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher",
+]
 
-# Avoid DB-backed sessions in tests
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+# Disable migrations to speed up test database creation
+class DisableMigrations:
+    def __contains__(self, item):
+        return True
 
-ALLOWED_HOSTS = ["*", "localhost", "127.0.0.1", "testserver"]
+    def __getitem__(self, item):
+        return None
 
+
+MIGRATION_MODULES = DisableMigrations()
+
+# Simpler cache for tests
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+}
+
+# Disable logging during tests
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": "ERROR"},
+    "handlers": {"null": {"class": "logging.NullHandler"}},
+    "root": {"handlers": ["null"]},
 }

@@ -1,0 +1,67 @@
+version: '3.9'
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile.staging
+    command: >
+      sh -c "python manage.py migrate --settings=inventory_app.settings_staging && \
+             python manage.py collectstatic --noinput --settings=inventory_app.settings_staging && \
+             gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --env DJANGO_SETTINGS_MODULE=inventory_app.settings_staging"
+    volumes:
+      - static_volume:/app/staticfiles
+    environment:
+      - DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
+    env_file:
+      - .env.staging
+    depends_on:
+      - db
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles
+    depends_on:
+      - web
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - staging_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: staging_inventory
+      POSTGRES_USER: staging_user
+      POSTGRES_PASSWORD: staging_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U staging_user -d staging_inventory"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - staging_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  staging_postgres_data:
+  staging_redis_data:
+  static_volume:

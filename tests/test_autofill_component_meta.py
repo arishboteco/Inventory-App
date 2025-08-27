@@ -13,7 +13,7 @@ def test_autofill_component_meta_populates_unit_and_category():
         {"component": "Unknown", "unit": None, "category": None},
     ]
     choice_map = {
-        "Flour (1) | kg | Baking | 10.00": {"base_unit": "kg", "category": "Baking"}
+        "Flour (1) | kg | Baking | 10.00": {"unit_display": "kg", "category": "Baking"}
     }
     result = autofill_component_meta(rows, choice_map)
     assert result[0]["unit"] == "kg"
@@ -33,7 +33,7 @@ def test_autofill_component_meta_accepts_models():
         RowModel(component="Unknown"),
     ]
     choice_map = {
-        "Flour (1) | kg | Baking | 10.00": {"base_unit": "kg", "category": "Baking"}
+        "Flour (1) | kg | Baking | 10.00": {"unit_display": "kg", "category": "Baking"}
     }
     result = autofill_component_meta(rows, choice_map)
     assert result[0]["unit"] == "kg"

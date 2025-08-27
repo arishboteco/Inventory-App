@@ -1,21 +1,12 @@
-from django.db.models import F, Case, When, Value, CharField
+from django.db.models import F
 
 from inventory.models import Item
 
 
 def get_low_stock_items():
     """Return items whose current stock is below their reorder point."""
-    # Create unit display name annotation for test environment compatibility
-    unit_annotation = Case(
-        When(unit_id=1, then=Value("kg")),
-        When(unit_id=19, then=Value("KG")),
-        When(unit_id=55, then=Value("PC")),
-        default=F("unit_id"),
-        output_field=CharField()
-    )
-    
     qs = (
-        Item.objects.annotate(uom=unit_annotation, unit=F("unit_id"))
+        Item.objects
         .only("name", "unit_id", "current_stock", "reorder_point")
         .filter(
             reorder_point__isnull=False,
@@ -25,4 +16,12 @@ def get_low_stock_items():
     )
     if hasattr(Item, "is_placeholder"):
         qs = qs.filter(is_placeholder=False)
-    return qs.order_by("name")
+    
+    # Add unit display names in Python instead of database annotation
+    items = list(qs.order_by("name"))
+    for item in items:
+        from .item_service import get_unit_display_name
+        item.uom = get_unit_display_name(item.unit_id)
+        item.unit = item.unit_id
+    
+    return items

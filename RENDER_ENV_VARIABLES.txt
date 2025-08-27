@@ -1,0 +1,36 @@
+# 🚨 RENDER ENVIRONMENT VARIABLES - COPY TO RENDER DASHBOARD
+
+# === CRITICAL SETTINGS ===
+DJANGO_SETTINGS_MODULE=inventory_app.settings_production
+DEBUG=False
+
+# === REPLACE WITH YOUR ACTUAL RENDER URL ===
+DJANGO_ALLOWED_HOSTS=your-app-name.onrender.com
+
+# === GENERATE A NEW SECRET KEY (50+ characters) ===
+# Use this generator: https://djecrety.ir/
+DJANGO_SECRET_KEY=your-generated-secret-key-here-must-be-50-plus-characters
+
+# === SECURITY SETTINGS ===
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+DJANGO_SECURE_HSTS_PRELOAD=True
+
+# === DATABASE ===
+# DATABASE_URL is automatically provided by Render PostgreSQL
+# If using external DB, set: DATABASE_URL=postgresql://user:pass@host:port/db
+
+# === OPTIONAL: EMAIL CONFIGURATION ===
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_HOST_USER=your-email@gmail.com
+# EMAIL_HOST_PASSWORD=your-app-password
+# EMAIL_USE_TLS=True
+
+# === OPTIONAL: ERROR MONITORING ===
+# SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+
+# === STATIC FILES (handled automatically) ===
+# STATIC_URL=/static/
+# STATIC_ROOT=staticfiles

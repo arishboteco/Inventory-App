@@ -9,14 +9,12 @@ echo "🚀 Starting Render deployment build..."
 echo "📦 Installing Python dependencies..."
 pip install -r requirements.txt
 
-# Install Node.js dependencies and build CSS (if you have package.json)
-if [ -f "package.json" ]; then
-    echo "📦 Installing Node.js dependencies..."
-    npm install
-    
-    echo "🎨 Building Tailwind CSS..."
-    npx tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify
-fi
+# Install Node.js dependencies and build CSS
+echo "📦 Installing Node.js dependencies..."
+npm install
+
+echo "🎨 Building Tailwind CSS..."
+npm run build-css
 
 # Collect static files
 echo "📂 Collecting static files..."

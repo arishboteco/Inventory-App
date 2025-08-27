@@ -8,6 +8,7 @@ from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_date
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
+from django.core.cache import cache
 
 from inventory.models import Item, Supplier, StockTransaction, PurchaseOrder
 from inventory.services import counts, dashboard_service, kpis
@@ -17,19 +18,26 @@ def root_view(request):
     """Render the home page or login form depending on authentication."""
     print(f"User authenticated: {request.user.is_authenticated}")  # Debug statement
     if request.user.is_authenticated:
-        data = {
-            "stock_value": kpis.stock_value(),
-            "receipts": kpis.receipts_last_7_days(),
-            "issues": kpis.issues_last_7_days(),
-            "low_stock": kpis.low_stock_count(),
-            "low_stock_items": kpis.low_stock_items(),
-            "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
-            "pending_po_status": kpis.pending_po_status_counts(),
-            "pending_indent_status": kpis.pending_indent_counts(),
-            "item_count": counts.item_count(),
-            "supplier_count": counts.supplier_count(),
-            "pending_po_count": counts.pending_po_count(),
-        }
+        # Cache dashboard data for 5 minutes
+        cache_key = "dashboard_data"
+        data = cache.get(cache_key)
+        
+        if data is None:
+            data = {
+                "stock_value": kpis.stock_value(),
+                "receipts": kpis.receipts_last_7_days(),
+                "issues": kpis.issues_last_7_days(),
+                "low_stock": kpis.low_stock_count(),
+                "low_stock_items": kpis.low_stock_items(),
+                "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
+                "pending_po_status": kpis.pending_po_status_counts(),
+                "pending_indent_status": kpis.pending_indent_counts(),
+                "item_count": counts.item_count(),
+                "supplier_count": counts.supplier_count(),
+                "pending_po_count": counts.pending_po_count(),
+            }
+            cache.set(cache_key, data, 300)  # Cache for 5 minutes
+        
         return render(request, "core/home.html", data)
 
     form = AuthenticationForm(request, data=request.POST or None)

@@ -28,7 +28,7 @@ EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit"]
 
 def _filter_and_sort_items(request, qs=None):
     """Return items queryset and filter metadata from request params."""
-    qs = qs or Item.objects.all()
+    qs = qs or Item.objects.select_related('category', 'sub_category', 'base_unit').all()
     qs = qs.annotate(
         stock_ok=Case(
             When(current_stock__gte=F("reorder_point"), then=Value(True)),

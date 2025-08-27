@@ -1,0 +1,60 @@
+# Production Dockerfile - Optimized for security and performance
+FROM python:3.13-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=inventory_app.settings_production \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    curl \
+    wget \
+    gcc \
+    libc6-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create app directory
+WORKDIR /app
+
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Create directories with proper permissions
+RUN mkdir -p /app/staticfiles /app/media /var/log/django \
+    && chown -R appuser:appuser /app /var/log/django
+
+# Install Python dependencies
+COPY requirements.txt requirements-prod.txt* ./
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && if [ -f requirements-prod.txt ]; then pip install -r requirements-prod.txt; fi
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+# Install additional production packages
+RUN pip install \
+    gunicorn[gevent]==23.0.0 \
+    psycopg[binary]==3.2.9 \
+    redis==5.0.1 \
+    sentry-sdk[django]==1.32.0 \
+    django-health-check==3.17.0
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/healthz || exit 1
+
+# Production command
+CMD ["sh", "-c", "python manage.py migrate --settings=inventory_app.settings_production && python manage.py collectstatic --noinput --settings=inventory_app.settings_production && exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --workers 4 --worker-class gevent --worker-connections 1000 --max-requests 1000 --max-requests-jitter 100 --timeout 30 --keep-alive 2"]

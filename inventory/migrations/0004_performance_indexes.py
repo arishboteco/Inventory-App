@@ -20,81 +20,81 @@ class Migration(migrations.Migration):
             reverse_sql="-- Extension will remain"
         ),
         
-        # Item table optimizations
+        # Item table optimizations (db_table: "items")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_items_name_trgm ON inventory_item USING gin (name gin_trgm_ops);",
+            "CREATE INDEX IF NOT EXISTS idx_items_name_trgm ON items USING gin (name gin_trgm_ops);",
             reverse_sql="DROP INDEX IF EXISTS idx_items_name_trgm;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_items_active_stock ON inventory_item (is_active, current_stock) WHERE is_active = true;",
+            "CREATE INDEX IF NOT EXISTS idx_items_active_stock ON items (is_active, current_stock) WHERE is_active = true;",
             reverse_sql="DROP INDEX IF EXISTS idx_items_active_stock;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_items_reorder_check ON inventory_item (current_stock, reorder_point) WHERE is_active = true;",
+            "CREATE INDEX IF NOT EXISTS idx_items_reorder_check ON items (current_stock, reorder_point) WHERE is_active = true;",
             reverse_sql="DROP INDEX IF EXISTS idx_items_reorder_check;"
         ),
         
-        # Stock transaction optimizations (most frequently queried)
+        # Stock transaction optimizations (db_table: "stock_transactions")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_stock_tx_item_date ON inventory_stocktransaction (item_id, transaction_date DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_stock_tx_item_date ON stock_transactions (item_id, transaction_date DESC);",
             reverse_sql="DROP INDEX IF EXISTS idx_stock_tx_item_date;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_stock_tx_type_date ON inventory_stocktransaction (transaction_type, transaction_date DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_stock_tx_type_date ON stock_transactions (transaction_type, transaction_date DESC);",
             reverse_sql="DROP INDEX IF EXISTS idx_stock_tx_type_date;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_stock_tx_user_date ON inventory_stocktransaction (user_id, transaction_date DESC) WHERE user_id IS NOT NULL;",
+            "CREATE INDEX IF NOT EXISTS idx_stock_tx_user_date ON stock_transactions (user_id, transaction_date DESC) WHERE user_id IS NOT NULL;",
             reverse_sql="DROP INDEX IF EXISTS idx_stock_tx_user_date;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_stock_tx_date_range ON inventory_stocktransaction (transaction_date DESC, transaction_type, item_id);",
+            "CREATE INDEX IF NOT EXISTS idx_stock_tx_date_range ON stock_transactions (transaction_date DESC, transaction_type, item_id);",
             reverse_sql="DROP INDEX IF EXISTS idx_stock_tx_date_range;"
         ),
         
-        # Supplier optimizations
+        # Supplier optimizations (db_table: "suppliers")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_suppliers_name_trgm ON inventory_supplier USING gin (name gin_trgm_ops);",
+            "CREATE INDEX IF NOT EXISTS idx_suppliers_name_trgm ON suppliers USING gin (name gin_trgm_ops);",
             reverse_sql="DROP INDEX IF EXISTS idx_suppliers_name_trgm;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_suppliers_active_name ON inventory_supplier (is_active, name) WHERE is_active = true;",
+            "CREATE INDEX IF NOT EXISTS idx_suppliers_active_name ON suppliers (is_active, name) WHERE is_active = true;",
             reverse_sql="DROP INDEX IF EXISTS idx_suppliers_active_name;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_suppliers_contact_search ON inventory_supplier (contact_person, email) WHERE is_active = true;",
+            "CREATE INDEX IF NOT EXISTS idx_suppliers_contact_search ON suppliers (contact_person, email) WHERE is_active = true;",
             reverse_sql="DROP INDEX IF EXISTS idx_suppliers_contact_search;"
         ),
         
-        # Sale transaction optimizations
+        # Sale transaction optimizations (db_table: "sales_transactions")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_sales_date_item ON inventory_saletransaction (sale_date DESC, item_id);",
+            "CREATE INDEX IF NOT EXISTS idx_sales_date_item ON sales_transactions (sale_date DESC, item_id);",
             reverse_sql="DROP INDEX IF EXISTS idx_sales_date_item;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_sales_date_only ON inventory_saletransaction (date(sale_date) DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_sales_date_only ON sales_transactions (date(sale_date) DESC);",
             reverse_sql="DROP INDEX IF EXISTS idx_sales_date_only;"
         ),
         
-        # Purchase order optimizations  
+        # Purchase order optimizations (db_table: "purchase_orders")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_po_status_date ON inventory_purchaseorder (status, order_date DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_po_status_date ON purchase_orders (status, order_date DESC);",
             reverse_sql="DROP INDEX IF EXISTS idx_po_status_date;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_po_supplier_date ON inventory_purchaseorder (supplier_id, order_date DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_po_supplier_date ON purchase_orders (supplier_id, order_date DESC);",
             reverse_sql="DROP INDEX IF EXISTS idx_po_supplier_date;"
         ),
         
-        # GRN optimizations
+        # GRN optimizations (db_table: "goods_received_notes")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_grn_date_po ON inventory_goodsreceivednote (received_date DESC, purchase_order_id);",
+            "CREATE INDEX IF NOT EXISTS idx_grn_date_po ON goods_received_notes (received_date DESC, purchase_order_id);",
             reverse_sql="DROP INDEX IF EXISTS idx_grn_date_po;"
         ),
         
-        # Indent optimizations
+        # Indent optimizations (db_table: "indents")
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_indent_status_date ON inventory_indent (status, indent_date DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_indent_status_date ON indents (status, indent_date DESC);",
             reverse_sql="DROP INDEX IF EXISTS idx_indent_status_date;"
         ),
     ]

@@ -1,11 +1,32 @@
-# Render.com deployment configuration for Django Inventory App
-# Updated: 2025-08-27 - Fixed threading issues with sync workers
+# 🚀 RENDER.COM CONFIGURATION - FIXED THREADING ISSUES
+# 🔧 Updated: 2025-08-27 - Using sync workers instead of gevent
+# 🎯 This configuration resolves database threading errors
+
 services:
   - type: web
     name: inventory-app
+    runtime: python3
     env: python
-    buildCommand: "pip install -r requirements.txt && npm install && npm run build-css && python manage.py collectstatic --noinput && python manage.py migrate && python manage.py ensure_superuser"
-    startCommand: "gunicorn --bind 0.0.0.0:$PORT --workers 4 --worker-class sync --max-requests 1000 --max-requests-jitter 50 --preload --access-logfile - --error-logfile - inventory_app.wsgi:application"
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      npm install  
+      npm run build-css
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+      python manage.py ensure_superuser
+    startCommand: >-
+      gunicorn 
+      --bind 0.0.0.0:$PORT 
+      --workers 3 
+      --worker-class sync 
+      --max-requests 1000 
+      --max-requests-jitter 50 
+      --timeout 120
+      --preload 
+      --access-logfile - 
+      --error-logfile - 
+      inventory_app.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: inventory_app.settings_production

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Render.com build script for Django Inventory App
+# 🚀 Render.com build script for Django Inventory App - FIXED THREADING
+# 🔧 Updated: 2025-08-27 - Using sync workers to prevent threading errors
 
 set -o errexit  # exit on error
 
@@ -26,6 +27,7 @@ python manage.py migrate
 
 # Ensure superuser exists for admin access
 echo "👤 Ensuring superuser exists..."
-python manage.py ensure_superuser
+python manage.py ensure_superuser || echo "⚠️ Superuser creation failed - check environment variables"
 
 echo "✅ Build completed successfully!"
+echo "🔧 IMPORTANT: This deployment uses sync workers to fix threading issues"

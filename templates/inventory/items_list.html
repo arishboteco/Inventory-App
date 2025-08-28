@@ -58,16 +58,7 @@
 <div class="card mb-6">
   <div class="card-body">
     {% url 'items_table' as items_table_url %}
-    {% include "components/filter_bar.html" with 
-        q=request.GET.q 
-        filters=filters 
-        hx_get=items_table_url 
-        hx_target='#items-list' 
-        hx_indicator='#items-loading' 
-        search_placeholder='e.g., Tomato, Rice' 
-        export_url=export_url 
-        layout=request.GET.layout|default:'cards' 
-    %}
+    {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'cards' %}
   </div>
   </div>
 

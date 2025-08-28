@@ -609,32 +609,7 @@ class ItemsBulkUpdateView(View):
             logger.exception("Bulk update failed: %s", e)
             return JsonResponse({"ok": False, "message": "Server error"}, status=500)
 
-    def post(self, request):
-        inserted = 0
-        errors: list[str] = []
-        form = BulkUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = form.cleaned_data["file"]
-            data = io.StringIO(file.read().decode("utf-8"))
-            reader = csv.DictReader(data)
-            for row in reader:
-                form_row = ItemForm(row)
-                if form_row.is_valid():
-                    form_row.save()
-                    inserted += 1
-                else:
-                    errors.append(str(form_row.errors))
-        if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
-            ok = inserted > 0 and not errors
-            return JsonResponse({"ok": ok, "inserted": inserted, "errors": errors})
-        ctx = {
-            "form": form,
-            "inserted": inserted,
-            "errors": errors,
-            "title": "Bulk Upload Items",
-            "back_url": "items_list",
-        }
-        return render(request, self.template_name, ctx)
+    # (removed accidental duplicate bulk upload post implementation)
 
 
 def get_purchase_units(request):

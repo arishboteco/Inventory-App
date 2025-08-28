@@ -255,15 +255,8 @@ window.fillItemData = async function(itemId) {
         const warning = document.querySelector('#similar-names-warning');
         if (warning) warning.remove();
         
-        // Show success message
-        const nameField = document.querySelector('input[name="name"]');
-        if (nameField) {
-            const success = document.createElement('div');
-            success.className = 'mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700';
-            success.textContent = 'Template data applied! Update the name and other fields as needed.';
-            nameField.parentNode.appendChild(success);
-            setTimeout(() => success.remove(), 3000);
-        }
+        // Show success message using unified notification system
+        window.notifications.showToast('Template data applied! Update the name and other fields as needed.', 'success');
         
     } catch (error) {
         console.error('Error loading item template:', error);

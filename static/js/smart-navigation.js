@@ -47,10 +47,10 @@ class SmartItemManager {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
             
-            this.showToast('Item data exported successfully!', 'success');
+            window.notifications.showToast('Item data exported successfully!', 'success');
         } catch (error) {
             console.error('Export failed:', error);
-            this.showToast('Export failed. Please try again.', 'error');
+            window.notifications.showToast('Export failed. Please try again.', 'error');
         }
     }
 
@@ -79,7 +79,7 @@ class SmartItemManager {
         const canvas = document.getElementById('qr-code-canvas');
         canvas.innerHTML = `<div class="w-32 h-32 bg-gray-200 flex items-center justify-center">QR Code<br>for Item ${itemId}</div>`;
         
-        this.showToast('QR Code generated!', 'success');
+        window.notifications.showToast('QR Code generated!', 'success');
     }
 
     initializeSmartNavigation() {
@@ -103,7 +103,7 @@ class SmartItemManager {
         forms.forEach(form => {
             form.addEventListener('htmx:afterRequest', (e) => {
                 if (e.detail.successful) {
-                    this.showToast('Action completed successfully!', 'success');
+                    window.notifications.showToast('Action completed successfully!', 'success');
                     
                     // Smart redirect logic
                     if (e.detail.xhr.responseURL) {
@@ -145,36 +145,6 @@ class SmartItemManager {
                 }
             }
         });
-    }
-
-    showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        const colors = {
-            success: 'bg-green-500',
-            error: 'bg-red-500',
-            warning: 'bg-yellow-500',
-            info: 'bg-blue-500'
-        };
-        
-        toast.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300`;
-        toast.textContent = message;
-        
-        document.body.appendChild(toast);
-        
-        // Animate in
-        setTimeout(() => {
-            toast.style.transform = 'translateX(0)';
-        }, 100);
-        
-        // Animate out and remove
-        setTimeout(() => {
-            toast.style.transform = 'translateX(full)';
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
-        }, 3000);
     }
 }
 

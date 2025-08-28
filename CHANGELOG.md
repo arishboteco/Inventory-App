@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Legacy speed templates no longer referenced by views:
+  - `templates/inventory/item_form_speed.html`
+  - `templates/inventory/item_detail_speed.html`
+  - `templates/inventory/items_list_speed.html`
+  - `templates/inventory/items_list_speed_clean.html`
+  - `templates/inventory/items_list_speed_test.html`
+  - `templates/inventory/_items_table_speed.html`
+  
+  These were consolidated into the canonical templates (e.g. `item_form.html`, `item_detail.html`, `items_list.html`).
+
 
 ### Fixed
 - Fix critical items page 500 error - template inheritance and data structure issues

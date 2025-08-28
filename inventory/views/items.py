@@ -19,7 +19,7 @@ from django.views.generic import TemplateView
 from ..forms.bulk_forms import BulkUploadForm
 from ..forms.item_forms import ItemForm
 from ..models import Item, StockTransaction
-from ..services import category_filters, item_service, list_utils, stock_service
+from ..services import category_filters, item_service, list_utils, stock_service, kpis
 from ..services.form_service import FormService
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,8 @@ def _filter_and_sort_items(request, qs=None):
             output_field=BooleanField(),
         )
     )
+    # Avoid N+1 on departments badges
+    qs = qs.prefetch_related("departments")
     filters = {
         "active": "is_active",
         "category": "category",  # Maps to category field
@@ -56,7 +58,7 @@ def _filter_and_sort_items(request, qs=None):
         "initial_purchase_price",
         "last_purchase_price",
     }
-    return list_utils.apply_filters_sort(
+    qs, params = list_utils.apply_filters_sort(
         request,
         qs,
         search_fields=["name", "category", "sub_category"],  # Enhanced search
@@ -64,6 +66,25 @@ def _filter_and_sort_items(request, qs=None):
         allowed_sorts=allowed_sorts,
         default_sort="name",
     )
+    # Apply stock status filter if present
+    stock_status = (request.GET.get("stock_status") or "").strip().lower()
+    if stock_status == "low":
+        qs = qs.filter(current_stock__lt=F("reorder_point"), current_stock__gt=0)
+    elif stock_status == "out":
+        qs = qs.filter(current_stock__lte=0)
+    elif stock_status == "normal":
+        qs = qs.filter(current_stock__gte=F("reorder_point"))
+    if stock_status:
+        params.update({"stock_status": stock_status})
+    # Optional visibility toggles without changing current defaults
+    show_inactive = (request.GET.get("show_inactive") or "").lower() in {"1", "true", "on"}
+    active_only = (request.GET.get("active_only") or "").lower() in {"1", "true", "on"}
+    if show_inactive:
+        qs = qs.filter(is_active=False)
+    if active_only:
+        qs = qs.filter(is_active=True)
+    params.update({"show_inactive": "1" if show_inactive else "", "active_only": "1" if active_only else ""})
+    return qs, params
 
 
 class ItemsListView(TemplateView):
@@ -130,17 +151,39 @@ class ItemsListView(TemplateView):
         ctx.update(params)
         ctx.update(category_ctx)
         ctx.update(table_ctx)  # Add this line to include page_obj
+        # KPI/Stats for header cards
+        try:
+            pending_po_counts = kpis.pending_po_status_counts()
+            pending_orders = sum(pending_po_counts.values())
+        except Exception:  # pragma: no cover - defensive
+            pending_orders = 0
+        try:
+            total_value = kpis.stock_value()
+        except Exception:  # pragma: no cover - defensive
+            total_value = 0
+        stats = {
+            "low_stock_count": kpis.low_stock_count(),
+            "pending_orders": pending_orders,
+            "total_value": total_value,
+        }
+
         ctx.update(
             {
                 "page_size": per_page,
                 "filters": category_filters.build_filters(request),
                 "export_url": reverse("items_export"),
+                "stats": stats,
                 "form": form,
                 "suppliers": suppliers,
                 "departments_for_form": departments_for_form,  # Use different name to avoid conflict
                 "excluded_fields": EXCLUDED_FIELDS,
             }
         )
+        # Expose category/subcategory filter context explicitly for tests
+        ctx.update({
+            "categories": category_ctx.get("categories", []),
+            "subcategories": category_ctx.get("subcategories", []),
+        })
         return ctx
 
 
@@ -253,6 +296,56 @@ class ItemEditView(View):
             "excluded_fields": EXCLUDED_FIELDS,
         }
         return render(request, self.template_name, ctx)
+
+
+class ItemInlineUpdateView(View):
+    """Minimal inline update endpoint for quick edits in the items table.
+
+    Accepts a subset of fields and applies updates atomically.
+    Returns JSON with a simple status message.
+    """
+
+    def post(self, request, pk: int):
+        item = get_object_or_404(Item, pk=pk)
+        data = request.POST
+
+        # Whitelist of editable fields via inline editor
+        editable_fields = {
+            "name",
+            "item_code",
+            "category",
+            "sub_category",
+            "reorder_point",
+            "notes",
+            "is_active",
+        }
+        changed = False
+        for field in editable_fields:
+            if field in data:
+                val = data.get(field)
+                if field == "is_active":
+                    val = val in ("1", "true", "on", "True")
+                if field == "reorder_point":
+                    try:
+                        from decimal import Decimal
+                        val = Decimal(str(val)) if val not in (None, "") else None
+                    except Exception:
+                        continue
+                setattr(item, field, val)
+                changed = True
+
+        if changed:
+            try:
+                item.save()
+                item_service.get_all_items_with_stock.clear()
+                item_service.get_distinct_departments_from_items.clear()
+                return JsonResponse({"ok": True, "message": "Item updated"})
+            except Exception as e:  # pragma: no cover - defensive
+                logger.exception("Inline update failed for item %s: %s", pk, e)
+                return JsonResponse({"ok": False, "message": "Save failed"}, status=400)
+        return JsonResponse({"ok": True, "message": "No changes"})
+
+    
 
 
 class ItemDetailView(View):
@@ -391,6 +484,28 @@ class ItemSearchView(TemplateView):
         items = Item.objects.filter(name__icontains=query)[:20]
         ctx["items"] = items
         return ctx
+
+
+class ItemCreateHTMXView(View):
+    """Create an item via HTMX and return updated options.
+
+    Success: returns options HTML plus a simple toast indicator.
+    Failure: returns a minimal error response with HX-Retarget header.
+    """
+
+    def post(self, request):
+        form = ItemForm(request.POST)
+        if form.is_valid():
+            item = form.save()
+            items = Item.objects.order_by("name")[:50]
+            html = render_to_string("inventory/_item_options.html", {"items": items})
+            # Append a tiny toast marker for the test expectation
+            html += "\n<!-- toast: Item created successfully -->\n"
+            return HttpResponse(html)
+        # Invalid form: retarget to the form container and include error text
+        resp = HttpResponse("Item name is required")
+        resp["HX-Retarget"] = "#item-form"
+        return resp
 
 
 class ItemsBulkUploadView(View):

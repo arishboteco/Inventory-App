@@ -1,0 +1,75 @@
+:root {
+  /* Color tokens */
+  --color-primary: #2563EB;
+  --color-secondary: #16A34A;
+  --color-accent: #D97706;
+  --color-danger: #DC2626;
+  --color-border: #9CA3AF;
+  --color-link-hover: #1E3A8A;
+
+  /* Body and text colors */
+  --color-body: #FFFFFF;
+  --color-body-text: #111827;
+  --color-nav-text: #FFFFFF;
+  --color-table-hover-bg: #F3F4F6;
+
+  /* Shadow tokens */
+  --shadow-btn: 0 2px 4px rgba(0, 0, 0, 0.25);
+
+  /* Spacing tokens */
+  --space-0-5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Font size tokens */
+  --font-size-base: 1rem;
+  --font-size-h1: 1.6rem;
+  --font-size-h2: 1.3rem;
+  --font-size-badge: 0.8rem;
+}
+
+/* Button Components */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  color: white;
+  text-decoration: none;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--color-body-text);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: #f9fafb;
+  color: var(--color-body-text);
+  text-decoration: none;
+}

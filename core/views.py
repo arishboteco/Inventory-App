@@ -2,6 +2,7 @@ import json
 from decimal import Decimal
 
 from django.contrib.auth import login
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -18,10 +19,11 @@ def root_view(request):
     """Render the home page or login form depending on authentication."""
     print(f"User authenticated: {request.user.is_authenticated}")  # Debug statement
     if request.user.is_authenticated:
-        # Cache dashboard data for 5 minutes
-        cache_key = "dashboard_data"
-        data = cache.get(cache_key)
-        
+        # Optionally bypass cache during tests
+        bypass_cache = getattr(settings, "DISABLE_DASHBOARD_CACHE", False)
+        cache_key = "dashboard_data_v2"
+        data = None if bypass_cache else cache.get(cache_key)
+
         if data is None:
             data = {
                 "stock_value": kpis.stock_value(),
@@ -36,8 +38,9 @@ def root_view(request):
                 "supplier_count": counts.supplier_count(),
                 "pending_po_count": counts.pending_po_count(),
             }
-            cache.set(cache_key, data, 300)  # Cache for 5 minutes
-        
+            if not bypass_cache:
+                cache.set(cache_key, data, 300)  # Cache for 5 minutes
+
         return render(request, "core/home.html", data)
 
     form = AuthenticationForm(request, data=request.POST or None)

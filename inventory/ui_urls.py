@@ -12,6 +12,8 @@ from .views.indents import (
 from .views.items import (
     ItemDeleteView,
     ItemDetailView,
+    ItemInlineUpdateView,
+    ItemCreateHTMXView,
     ItemEditView,
     ItemsBulkUploadView,
     ItemSearchView,
@@ -52,6 +54,10 @@ urlpatterns = [
     path("items/", ItemsListView.as_view(), name="items_list"),
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
     path("items/export/", ItemsExportView.as_view(), name="items_export"),
+    path("items/create/", ItemCreateHTMXView.as_view(), name="item_create"),
+    path("items/<int:pk>/inline-update/", ItemInlineUpdateView.as_view(), name="item_inline_update"),
+    # Backward-compat name used in templates/tests
+    path("items/upload/", ItemsBulkUploadView.as_view(), name="upload_csv"),
 
     path("items/<int:pk>/edit/", ItemEditView.as_view(), name="item_edit"),
     path("items/<int:pk>/delete/", ItemDeleteView.as_view(), name="item_delete"),

@@ -1,60 +1,214 @@
-{% extends "components/list_layout.html" %}
-{% block title %}Purchase Orders – Inventory App{% endblock %}
-{% block heading %}Purchase Orders{% endblock %}
-{% block actions %}
-  <a href="{% url 'purchase_order_create' %}" class="btn-primary">New PO</a>
-  <a href="{% url 'grn_list' %}" class="btn-secondary">GRNs</a>
-{% endblock %}
-{% block filter_bar %}
-  <details class="mb-4">
-    <summary class="cursor-pointer px-4 py-2 bg-gray-100 rounded">Filters</summary>
-    <form method="get" class="mt-2 grid gap-2 grid-cols-5 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
-      <div class="space-y-1">
-        <label class="block text-sm font-medium">Status</label>
-        <input
-          type="text"
-          name="status"
-        list="po-statuses"
-        class="form-control w-full"
-        value="{{ current_status }}"
-      />
-      <datalist id="po-statuses">
-        <option value="" label="All"></option>
-        {% for value, label in statuses %}
-        <option value="{{ value }}" label="{{ label }}"></option>
-        {% endfor %}
-      </datalist>
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}Purchase Orders - Inventory Pro{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="page-title">Purchase Orders</h1>
+      <p class="page-subtitle">Manage your purchase orders and supplier relationships</p>
     </div>
-    <div class="space-y-1">
-      <label class="block text-sm font-medium">Supplier</label>
-      <input
-        type="text"
-        name="supplier"
-        list="po-suppliers"
-        class="form-control w-full"
-        value="{{ current_supplier }}"
-      />
-      <datalist id="po-suppliers">
-        <option value="" label="All"></option>
-        {% for s in suppliers %}
-        <option value="{{ s.pk }}" label="{{ s.name }}"></option>
-        {% endfor %}
-      </datalist>
+    <div class="flex items-center space-x-3">
+      <a href="{% url 'purchase_order_create' %}" class="btn-primary">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        New Purchase Order
+      </a>
+      <a href="{% url 'grn_list' %}" class="btn-secondary">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        GRNs
+      </a>
     </div>
-    <div class="space-y-1">
-      <label class="block text-sm font-medium">Start Date</label>
-      <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
+  </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+  <div class="card">
+    <div class="card-compact">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Total Orders</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ page_obj.paginator.count|default:"0" }}</p>
+        </div>
+      </div>
     </div>
-    <div class="space-y-1">
-      <label class="block text-sm font-medium">End Date</label>
-      <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
+  </div>
+
+  <div class="card">
+    <div class="card-compact">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Pending Orders</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ pending_count|default:"0" }}</p>
+        </div>
+      </div>
     </div>
-    <div class="space-y-1">
-      <button type="submit" class="btn-primary w-full">Filter</button>
+  </div>
+
+  <div class="card">
+    <div class="card-compact">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Completed Orders</p>
+          <p class="text-2xl font-semibold text-gray-900">{{ completed_count|default:"0" }}</p>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-compact">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-gray-500">Total Value</p>
+          <p class="text-2xl font-semibold text-gray-900">${{ total_value|floatformat:0|default:"0" }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-6">
+  <div class="card-body">
+    <form method="get" class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div>
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select predictive">
+          <option value="">All Statuses</option>
+          {% for value, label in statuses %}
+            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Supplier</label>
+        <select name="supplier" class="form-select predictive">
+          <option value="">All Suppliers</option>
+          {% for supplier in suppliers %}
+            <option value="{{ supplier.pk }}" {% if current_supplier == supplier.pk|stringformat:"s" %}selected{% endif %}>
+              {{ supplier.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Start Date</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="form-input">
+      </div>
+      <div>
+        <label class="form-label">End Date</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="form-input">
+      </div>
+      <div class="flex items-end space-x-2">
+        <button type="submit" class="btn-primary flex-1">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"/>
+          </svg>
+          Filter
+        </button>
+        <a href="{% url 'purchase_orders_list' %}" class="btn-secondary">Clear</a>
+      </div>
     </form>
-  </details>
-{% endblock %}
-{% block table_container %}
-  {% include "inventory/purchase_orders/_table.html" %}
+  </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">Purchase Orders</h2>
+      <div class="flex items-center space-x-2">
+        <button onclick="toggleBulkActions()" class="btn-sm btn-secondary">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          Bulk Actions
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="overflow-x-auto">
+    {% include "inventory/purchase_orders/_table.html" %}
+  </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="mt-6 flex items-center justify-between">
+  <div class="text-sm text-gray-700">
+    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} orders
+  </div>
+  <div class="flex items-center space-x-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
+         class="btn-secondary btn-sm">
+        Previous
+      </a>
+    {% endif %}
+    
+    <span class="text-sm text-gray-700">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
+         class="btn-secondary btn-sm">
+        Next
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Bulk actions functionality
+    window.toggleBulkActions = function() {
+        const bulkBar = document.getElementById('bulk-actions');
+        if (bulkBar) {
+            bulkBar.classList.toggle('hidden');
+        }
+    };
+});
+</script>
+
 {% endblock %}

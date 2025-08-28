@@ -295,9 +295,3 @@ required_env_vars = [
 missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
 if missing_vars:
     raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
-
-print("🚀 Production settings loaded successfully!")
-print(f"🔒 Security: SSL enabled, HSTS configured")
-print(f"📊 Monitoring: {'Sentry enabled' if 'SENTRY_DSN' in os.environ else 'Sentry not configured'}")
-print(f"💾 Cache: {'Redis enabled' if REDIS_URL else 'Database cache fallback'}")
-print(f"📧 Email: {'SMTP configured' if EMAIL_HOST_USER else 'Email not configured'}")

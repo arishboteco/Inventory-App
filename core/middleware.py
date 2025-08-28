@@ -1,4 +1,5 @@
 import re
+import logging
 
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
@@ -14,7 +15,8 @@ class LoginRequiredMiddleware:
         ]
 
     def __call__(self, request):
-        print(f"Processing URL: {request.path_info}")  # Debug statement
+        logger = logging.getLogger(__name__)
+        logger.debug("Processing URL: %s", request.path_info)
         if not request.user.is_authenticated:
             path = request.path_info.lstrip("/")
             for pattern in self.exempt_urls:

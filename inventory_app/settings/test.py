@@ -26,3 +26,24 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": "ERROR"},
 }
+
+# Disable inventory migrations in tests to avoid Postgres-specific SQL on SQLite
+MIGRATION_MODULES = {
+    "inventory": None,
+}
+
+# Make selected routes login-exempt to simplify test flows
+LOGIN_EXEMPT_URLS = [
+    r"^$",
+    r"^login/$",
+    r"^accounts/login/$",
+    r"^accounts/logout/$",
+    r"^healthz$",
+    r"^static/.*$",
+    r"^api/.*$",
+    r"^media/.*$",
+    r"^ml-dashboard/$",
+]
+
+# Hint app code to skip caching in views under tests
+DISABLE_DASHBOARD_CACHE = True

@@ -1,3 +1,4 @@
+{% load icon_tags %}
 {% url 'dashboard' as dashboard_url %}
 {% url 'history_reports' as reports_url %}
 {% url 'items_list' as items_url %}
@@ -15,19 +16,19 @@
 <aside id="sidebar" class="bg-gray-50 text-bodyText w-64 space-y-4 py-6 px-2 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 flex flex-col shadow-lg">
   <div class="px-4 text-2xl font-bold text-primary">Inventory App</div>
   <nav class="flex-1 overflow-y-auto px-2 flex flex-col gap-1">
-    <a href="{{ dashboard_url }}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}nav-link-active{% endif %}"><span class="text-lg">🏠</span>Dashboard</a>
-    <a href="{{ reports_url }}" class="nav-link {% if request.resolver_match.url_name == 'history_reports' %}nav-link-active{% endif %}"><span class="text-lg">📊</span>Reports</a>
-    <a href="{{ items_url }}" class="nav-link {% if request.resolver_match.url_name == 'items_list' %}nav-link-active{% endif %}"><span class="text-lg">📦</span>Items</a>
-    <a href="{{ movements_url }}" class="nav-link {% if request.resolver_match.url_name == 'stock_movements' %}nav-link-active{% endif %}"><span class="text-lg">🔄</span>Stock Movements</a>
-    <a href="{{ suppliers_url }}" class="nav-link {% if request.resolver_match.url_name == 'suppliers_list' %}nav-link-active{% endif %}"><span class="text-lg">🚚</span>Suppliers</a>
-    <a href="{{ indents_url }}" class="nav-link {% if request.resolver_match.url_name == 'indents_list' %}nav-link-active{% endif %}"><span class="text-lg">📝</span>Indents</a>
-    <a href="{{ po_url }}" class="nav-link {% if request.resolver_match.url_name == 'purchase_orders_list' %}nav-link-active{% endif %}"><span class="text-lg">🛒</span>Purchase Orders</a>
-    <a href="{{ grn_url }}" class="nav-link {% if request.resolver_match.url_name == 'grn_list' %}nav-link-active{% endif %}"><span class="text-lg">📥</span>GRNs</a>
-    <a href="{{ recipes_url }}" class="nav-link {% if request.resolver_match.url_name == 'recipes_list' %}nav-link-active{% endif %}"><span class="text-lg">🍳</span>Recipes</a>
+    <a href="{{ dashboard_url }}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}nav-link-active{% endif %}">{% icon_inline "dashboard" %}Dashboard</a>
+    <a href="{{ reports_url }}" class="nav-link {% if request.resolver_match.url_name == 'history_reports' %}nav-link-active{% endif %}">{% icon_inline "reports" %}Reports</a>
+    <a href="{{ items_url }}" class="nav-link {% if request.resolver_match.url_name == 'items_list' %}nav-link-active{% endif %}">{% icon_inline "items" %}Items</a>
+    <a href="{{ movements_url }}" class="nav-link {% if request.resolver_match.url_name == 'stock_movements' %}nav-link-active{% endif %}">{% icon_inline "movements" %}Stock Movements</a>
+    <a href="{{ suppliers_url }}" class="nav-link {% if request.resolver_match.url_name == 'suppliers_list' %}nav-link-active{% endif %}">{% icon_inline "suppliers" %}Suppliers</a>
+    <a href="{{ indents_url }}" class="nav-link {% if request.resolver_match.url_name == 'indents_list' %}nav-link-active{% endif %}">{% icon_inline "indents" %}Indents</a>
+    <a href="{{ po_url }}" class="nav-link {% if request.resolver_match.url_name == 'purchase_orders_list' %}nav-link-active{% endif %}">{% icon_inline "purchase-orders" %}Purchase Orders</a>
+    <a href="{{ grn_url }}" class="nav-link {% if request.resolver_match.url_name == 'grn_list' %}nav-link-active{% endif %}">{% icon_inline "grn" %}GRNs</a>
+    <a href="{{ recipes_url }}" class="nav-link {% if request.resolver_match.url_name == 'recipes_list' %}nav-link-active{% endif %}">{% icon_inline "recipes" %}Recipes</a>
     {% if user.is_authenticated %}
-    <a href="{{ logout_url }}" class="nav-link {% if request.resolver_match.url_name == 'logout' %}nav-link-active{% endif %}"><span class="text-lg">👤</span>Logout</a>
+    <a href="{{ logout_url }}" class="nav-link {% if request.resolver_match.url_name == 'logout' %}nav-link-active{% endif %}">{% icon_inline "logout" %}Logout</a>
     {% else %}
-    <a href="{{ login_url }}" class="nav-link {% if request.resolver_match.url_name == 'root' %}nav-link-active{% endif %}"><span class="text-lg">👤</span>Login</a>
+    <a href="{{ login_url }}" class="nav-link {% if request.resolver_match.url_name == 'root' %}nav-link-active{% endif %}">{% icon_inline "user" %}Login</a>
     {% endif %}
   </nav>
 </aside>

@@ -157,6 +157,10 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         """Validate business rules and field relationships."""
         cleaned_data = super().clean()
         
+        # Normalize blank category_id to None for DB compatibility
+        if cleaned_data.get('category_id') in ('', None):
+            cleaned_data['category_id'] = None
+        
         base_unit = cleaned_data.get('base_unit')
         purchase_unit = cleaned_data.get('purchase_unit')
         category = cleaned_data.get('category')

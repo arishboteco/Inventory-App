@@ -7,32 +7,60 @@ logger = logging.getLogger(__name__)
 
 
 def resolve_category_filters(request) -> Dict[str, Any]:
-    """Return selected category values and available options from actual database."""
+    """Return selected category values and available options.
+
+    Priority: Supabase categories (mockable in tests). Fallback to DB.
+    Output format expected by views/tests: lists of strings for
+    'categories' and 'subcategories'.
+    """
     from ..models import Item, Department
-    
+
     category = (request.GET.get("category") or "").strip()
     subcategory = (request.GET.get("subcategory") or "").strip()
     base_unit = (request.GET.get("base_unit") or "").strip()
     department = (request.GET.get("department") or "").strip()
 
-    # Get actual categories from database
-    categories_flat = list(Item.objects.exclude(category__isnull=True).exclude(category="").values_list('category', flat=True).distinct().order_by('category'))
-    categories = [(c, c) for c in categories_flat]
-    
-    # Get subcategories based on selected category
-    subcategories_qs = Item.objects.exclude(sub_category__isnull=True).exclude(sub_category="")
-    if category:
-        subcategories_qs = subcategories_qs.filter(category=category)
-    subcategories_flat = list(subcategories_qs.values_list('sub_category', flat=True).distinct().order_by('sub_category'))
-    subcategories = [(c, c) for c in subcategories_flat]
-    
-    # Get base units from database
-    base_units_flat = list(Item.objects.exclude(base_unit__isnull=True).exclude(base_unit="").values_list('base_unit', flat=True).distinct().order_by('base_unit'))
-    base_units = [(u, u) for u in base_units_flat]
-    
-    # Get departments
-    departments_flat = list(Department.objects.all().values_list('name', flat=True).order_by('name'))
-    departments = [(d, d) for d in departments_flat]
+    # First try Supabase-provided categories (used by tests via monkeypatch)
+    categories_map = {}
+    try:
+        categories_map = get_supabase_categories() or {}
+    except Exception:  # pragma: no cover - defensive
+        logger.debug("Supabase categories unavailable; falling back to DB")
+
+    if categories_map:
+        categories = [c["name"] for c in categories_map.get(None, [])]
+        subcategories = [c["name"] for c in categories_map.get(category, [])]
+    else:
+        # DB fallback
+        categories = list(
+            Item.objects.exclude(category__isnull=True)
+            .exclude(category="")
+            .values_list("category", flat=True)
+            .distinct()
+            .order_by("category")
+        )
+        sub_qs = Item.objects.exclude(sub_category__isnull=True).exclude(
+            sub_category=""
+        )
+        if category:
+            sub_qs = sub_qs.filter(category=category)
+        subcategories = list(
+            sub_qs.values_list("sub_category", flat=True)
+            .distinct()
+            .order_by("sub_category")
+        )
+
+    # Base units and departments from DB
+    base_units = list(
+        Item.objects.exclude(base_unit__isnull=True)
+        .exclude(base_unit="")
+        .values_list("base_unit", flat=True)
+        .distinct()
+        .order_by("base_unit")
+    )
+    departments = list(
+        Department.objects.all().values_list("name", flat=True).order_by("name")
+    )
 
     return {
         "category": category,
@@ -41,9 +69,9 @@ def resolve_category_filters(request) -> Dict[str, Any]:
         "department": department,
         "categories": categories,
         "subcategories": subcategories,
-        "base_units": base_units,
-        "units": base_units,  # Template expects 'units'
-        "departments": departments,
+        "base_units": [(u, u) for u in base_units],
+        "units": [(u, u) for u in base_units],  # Template expects 'units'
+        "departments": [(d, d) for d in departments],
     }
 
 
@@ -52,10 +80,23 @@ def build_filters(request) -> List[Dict[str, Any]]:
     resolved = resolve_category_filters(request)
     
     category_options = [{"value": "", "label": "All Categories"}]
-    category_options.extend([{"value": c[0], "label": c[1]} for c in resolved["categories"]])
+    # Categories may be strings or tuples; normalize
+    for c in resolved["categories"]:
+        if isinstance(c, (list, tuple)) and len(c) >= 1:
+            val = c[0]
+            lbl = c[1] if len(c) > 1 else c[0]
+        else:
+            val = lbl = c
+        category_options.append({"value": val, "label": lbl})
     
     subcategory_options = [{"value": "", "label": "All Subcategories"}]
-    subcategory_options.extend([{"value": c[0], "label": c[1]} for c in resolved["subcategories"]])
+    for c in resolved["subcategories"]:
+        if isinstance(c, (list, tuple)) and len(c) >= 1:
+            val = c[0]
+            lbl = c[1] if len(c) > 1 else c[0]
+        else:
+            val = lbl = c
+        subcategory_options.append({"value": val, "label": lbl})
     
     base_unit_options = [{"value": "", "label": "All Units"}]
     base_unit_options.extend([{"value": u[0], "label": u[1]} for u in resolved["base_units"]])

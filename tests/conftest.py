@@ -10,8 +10,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Use our test settings module
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings_test")
+# Use our test settings module (module path: inventory_app/settings/test.py)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings.test")
 django.setup()
 
 from inventory.models import Item, Supplier, StockTransaction  # noqa: E402

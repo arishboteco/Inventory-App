@@ -1,0 +1,67 @@
+<div class="card drawer-panel" style="max-width: 480px;">
+  <div class="card-header flex items-center justify-between">
+    <h3 class="text-lg font-semibold">Add New Item</h3>
+    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+  </div>
+  <div class="card-body">
+    <form method="post" data-modal-form action="{% url 'items_list' %}">
+      {% csrf_token %}
+      <input type="hidden" name="partial" value="1"/>
+      <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
+        <div>
+          <label class="form-label">Name</label>
+          {{ form.name }}
+        </div>
+        <div>
+          <label class="form-label">Unit</label>
+          {{ form.unit_id }}
+        </div>
+        <div>
+          <label class="form-label">Category</label>
+          {{ form.category_id }}
+        </div>
+        <div>
+          <label class="form-label">Current Stock</label>
+          {{ form.current_stock }}
+        </div>
+        <div>
+          <label class="form-label">Reorder Point</label>
+          {{ form.reorder_point }}
+        </div>
+        <div>
+          <label class="form-label">Initial Purchase Price</label>
+          {{ form.initial_purchase_price }}
+        </div>
+        <div>
+          <label class="form-label">Min Order Qty</label>
+          {{ form.minimum_order_qty }}
+        </div>
+        <div>
+          <label class="form-label">Lead Time (days)</label>
+          {{ form.lead_time_days }}
+        </div>
+        <div style="grid-column: span 2;">
+          <label class="form-label">Departments</label>
+          <div class="p-2 border rounded">
+            {{ form.departments }}
+          </div>
+        </div>
+        <div style="grid-column: span 2;">
+          <label class="form-label">Notes</label>
+          {{ form.notes }}
+        </div>
+        <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:center; gap:.5rem;">
+          <label class="inline-flex items-center gap-2 text-gray-700">
+            {{ form.is_active }}
+            <span>Active</span>
+          </label>
+          <div>
+            <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="btn-primary">Create</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+

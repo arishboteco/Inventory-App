@@ -19,6 +19,7 @@ from django.views.generic import TemplateView
 from ..forms.bulk_forms import BulkUploadForm
 from ..forms.item_forms import ItemForm
 from ..models import Item, StockTransaction
+from ..models.departments import Department
 from ..services import category_filters, item_service, list_utils, stock_service, kpis
 from ..services.form_service import FormService
 
@@ -106,6 +107,9 @@ class ItemsListView(TemplateView):
             try:
                 # Save the new item
                 item = form.save()
+                # Partial submissions (from modal/drawer)
+                if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                    return JsonResponse({"ok": True, "message": "Item created", "id": item.item_id})
                 messages.success(request, f'Item "{item.name}" created successfully!')
                 
                 # Redirect to the same page to avoid duplicate submissions
@@ -113,17 +117,24 @@ class ItemsListView(TemplateView):
                 
             except (DatabaseError, IntegrityError) as e:
                 logger.error(f"Database error creating item: {e}")
+                if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                    return JsonResponse({"ok": False, "message": str(e)}, status=400)
                 messages.error(request, f"Error creating item: {str(e)}")
                 
             except Exception as e:
                 logger.error(f"Unexpected error creating item: {e}")
+                if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                    return JsonResponse({"ok": False, "message": str(e)}, status=400)
                 messages.error(request, f"Unexpected error: {str(e)}")
                 
         else:
             # Form has validation errors
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+            if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                return JsonResponse({"ok": False, "message": form.errors.as_json()}, status=400)
+            else:
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
         
         # If we get here, there were errors - redisplay the form
         return self.get(request, *args, **kwargs)
@@ -524,6 +535,23 @@ class ItemCreateHTMXView(View):
         return resp
 
 
+class ItemCreatePartialView(View):
+    """Serve a compact create-item form for modal/drawer; save returns JSON."""
+
+    template_name = "inventory/_item_create_partial.html"
+
+    def get(self, request):
+        form = ItemForm()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request):
+        form = ItemForm(request.POST)
+        if form.is_valid():
+            item = form.save()
+            return JsonResponse({"ok": True, "id": item.item_id, "message": "Item created"})
+        return JsonResponse({"ok": False, "message": form.errors.as_json()}, status=400)
+
+
 class ItemsBulkUploadView(View):
     """Bulk create items from an uploaded CSV file.
 
@@ -543,6 +571,41 @@ class ItemsBulkUploadView(View):
             "back_url": "items_list",
         }
         return render(request, self.template_name, ctx)
+
+
+class ItemsBulkUpdateView(View):
+    """Perform bulk actions on items: deactivate, assign_dept."""
+
+    def post(self, request):
+        try:
+            data = request.POST
+            action = (data.get('action') or '').lower()
+            ids = data.getlist('ids[]') or data.getlist('ids')
+            ids = [int(x) for x in ids]
+            if not ids:
+                return JsonResponse({"ok": False, "message": "No items selected"}, status=400)
+
+            if action == 'deactivate':
+                updated = Item.objects.filter(pk__in=ids).update(is_active=False)
+                return JsonResponse({"ok": True, "updated": updated})
+
+            if action == 'assign_dept':
+                dept_id = data.get('dept_id')
+                if not dept_id:
+                    return JsonResponse({"ok": False, "message": "dept_id required"}, status=400)
+                try:
+                    dept = Department.objects.get(pk=int(dept_id))
+                except Department.DoesNotExist:
+                    return JsonResponse({"ok": False, "message": "Department not found"}, status=404)
+                items = Item.objects.filter(pk__in=ids)
+                for it in items:
+                    it.departments.add(dept)
+                return JsonResponse({"ok": True, "updated": items.count()})
+
+            return JsonResponse({"ok": False, "message": "Unknown action"}, status=400)
+        except Exception as e:
+            logger.exception("Bulk update failed: %s", e)
+            return JsonResponse({"ok": False, "message": "Server error"}, status=500)
 
     def post(self, request):
         inserted = 0

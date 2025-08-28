@@ -6,6 +6,13 @@
     content.innerHTML = html;
     root.classList.remove('hidden');
   }
+  function openDrawer(html, side = 'right') {
+    const root = document.getElementById('modal-root');
+    const content = document.getElementById('modal-content');
+    if (!root || !content) return;
+    content.innerHTML = `<div class="drawer ${side}">${html}</div>`;
+    root.classList.remove('hidden');
+  }
   function closeModal() {
     const root = document.getElementById('modal-root');
     const content = document.getElementById('modal-content');
@@ -15,7 +22,7 @@
   }
 
   // public API
-  window.modal = { open: openModal, close: closeModal };
+  window.modal = { open: openModal, openDrawer, close: closeModal };
 
   // delegation for close events
   document.addEventListener('click', function (e) {

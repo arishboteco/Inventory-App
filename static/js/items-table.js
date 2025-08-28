@@ -142,6 +142,30 @@
       case 'select-item':
         updateBulkBar();
         break;
+      case 'confirm-bulk': {
+        e.preventDefault();
+        const actionType = target.getAttribute('data-action-type');
+        const ids = Array.from(document.querySelectorAll("input[name='selected_items']:checked")).map(el => el.value);
+        if (ids.length === 0) return;
+        const fd = new FormData();
+        fd.append('action', actionType);
+        ids.forEach(id => fd.append('ids[]', id));
+        if (actionType === 'assign_dept') {
+          const sel = document.getElementById('bulk-dept-select');
+          if (sel && sel.value) fd.append('dept_id', sel.value);
+        }
+        fetch('/items/bulk/', { method: 'POST', headers: { 'X-CSRFToken': getCsrfToken() }, body: fd })
+          .then(r => r.json().catch(() => ({})))
+          .then(data => {
+            if (data && data.ok) {
+              if (window.notifications) window.notifications.showToast('Bulk action complete', 'success');
+              window.location.reload();
+            } else {
+              if (window.notifications) window.notifications.showToast((data && data.message) || 'Bulk action failed', 'error');
+            }
+          })
+          .catch(() => { if (window.notifications) window.notifications.showToast('Network error', 'error'); });
+        break; }
       default:
         break;
     }
@@ -183,6 +207,28 @@
     document.querySelectorAll(`[data-col='${col}']`).forEach(el => {
       if (on) el.classList.remove('hidden'); else el.classList.add('hidden');
     });
+    const hidden = JSON.parse(localStorage.getItem('items_table_hidden') || '[]');
+    const idx = hidden.indexOf(col);
+    if (!on && idx === -1) hidden.push(col);
+    if (on && idx !== -1) hidden.splice(idx, 1);
+    localStorage.setItem('items_table_hidden', JSON.stringify(hidden));
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const hidden = JSON.parse(localStorage.getItem('items_table_hidden') || '[]');
+    if (hidden.length) {
+      hidden.forEach(col => {
+        document.querySelectorAll(`[data-col='${col}']`).forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll(`[data-col-toggle][value='${col}']`).forEach(cb => cb.checked = false);
+      });
+    }
+  });
+
+  function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    if (m) return decodeURIComponent(m[1]);
+    const inp = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return inp ? inp.value : '';
   });
 
   // Keyboard accessibility for toggle button
@@ -229,9 +275,15 @@
       current.searchParams.forEach((v, k) => url.searchParams.append(k, v));
       window.location.assign(url.toString());
     } else if (action === 'deactivate') {
-      if (window.notifications) window.notifications.showToast('Deactivate action queued', 'info');
+      const html = `
+        <div class=\"card\" style=\"max-width:420px\">\n          <div class=\"card-header\"><strong>Deactivate ${ids.length} item(s)?</strong></div>\n          <div class=\"card-body\">\n            <p class=\"mb-3\">Items will be marked Inactive. You can reactivate later.</p>\n            <div class=\"flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"btn-secondary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"btn-primary\" data-action=\"confirm-bulk\" data-action-type=\"deactivate\">Confirm</button>\n            </div>\n          </div>\n        </div>`;
+      if (window.modal) window.modal.open(html);
     } else if (action === 'assign') {
-      if (window.notifications) window.notifications.showToast('Assign to department not yet implemented', 'info');
+      const tpl = document.getElementById('dept-select-template');
+      const selectHtml = tpl ? tpl.outerHTML.replace('id=\"dept-select-template\"', 'id=\"bulk-dept-select\"') : '<input id=\"bulk-dept-select\" placeholder=\"Dept ID\">';
+      const html = `
+        <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"form-label\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"btn-secondary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"btn-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
+      if (window.modal) window.modal.open(html);
     }
   });
 })();

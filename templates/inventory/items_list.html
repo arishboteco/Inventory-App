@@ -14,94 +14,19 @@
   <hr class="mt-6" />
 </div>
 
-<!-- Primary Actions (Accordions) -->
-<div class="space-y-3 mb-10">
-  <details class="card">
-    <summary class="card-header cursor-pointer flex items-center gap-2">
-      <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      <span class="font-medium">Add New Inventory Item</span>
-    </summary>
-    <div class="card-body">
-      <form method="post" action="{% url 'items_list' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4" id="quick-create-form">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <div>
-          <label class="form-label">Item Name</label>
-          {{ form.name }}
-        </div>
-        <div>
-          <label class="form-label">Unit</label>
-          {{ form.unit_id }}
-        </div>
-        <div>
-          <label class="form-label">Category</label>
-          {{ form.category_id }}
-        </div>
-        <div>
-          <label class="form-label">Current Stock</label>
-          {{ form.current_stock }}
-        </div>
-        <div>
-          <label class="form-label">Reorder Point</label>
-          {{ form.reorder_point }}
-        </div>
-        <div>
-          <label class="form-label">Initial Purchase Price</label>
-          {{ form.initial_purchase_price }}
-        </div>
-        <div>
-          <label class="form-label">Minimum Order Qty</label>
-          {{ form.minimum_order_qty }}
-        </div>
-        <div>
-          <label class="form-label">Lead Time (days)</label>
-          {{ form.lead_time_days }}
-        </div>
-        <div>
-          <label class="form-label">Preferred Supplier</label>
-          {{ form.preferred_supplier }}
-        </div>
-        <div class="md:col-span-3">
-          <label class="form-label">Departments</label>
-          <div class="p-2 border rounded">
-            {{ form.departments }}
-          </div>
-        </div>
-        <div class="md:col-span-3">
-          <label class="form-label">Notes</label>
-          {{ form.notes }}
-        </div>
-        <div class="md:col-span-3 flex items-center justify-between gap-4">
-          <label class="inline-flex items-center gap-2 text-gray-700">
-            {{ form.is_active }}
-            <span>Item is active</span>
-          </label>
-          <button type="submit" class="btn-primary">Create Item</button>
-          <a href="{% url 'items_list' %}" class="btn-secondary">Reset</a>
-        </div>
-      </form>
-    </div>
-  </details>
-
-  <details class="card">
-    <summary class="card-header cursor-pointer flex items-center gap-2">
-      <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-      <span class="font-medium">Bulk Upload Items</span>
-    </summary>
-    <div class="card-body">
-      <form id="csv-upload-form" method="post" enctype="multipart/form-data" action="{% url 'upload_csv' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {% csrf_token %}
-        <div class="md:col-span-2">
-          <label class="form-label">Select CSV File</label>
-          <input type="file" name="file" accept=".csv" required class="form-input">
-        </div>
-        <div class="flex items-end gap-2">
-          <button type="submit" class="btn-primary">Upload</button>
-          <button type="reset" class="btn-secondary">Clear</button>
-        </div>
-      </form>
-    </div>
-  </details>
+<!-- Actions Bar: Add + Bulk Upload -->
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center" style="gap:.5rem">
+    <button type="button" class="btn-primary" id="open-add-item">Add Item</button>
+    <a href="{% url 'upload_csv' %}" class="btn-secondary">Bulk Upload</a>
+  </div>
+  <div id="dept-options" class="hidden">
+    <select id="dept-select-template">
+      {% for d in departments_for_form %}
+      <option value="{{ d.id }}">{{ d.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
 </div>
 
 <!-- Compact KPIs -->
@@ -247,9 +172,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const value = btn.getAttribute('data-value');
         const url = new URL(window.location.href);
         url.searchParams.set('layout', value);
+        localStorage.setItem('items_layout', value);
         window.location.assign(url.toString());
       });
     });
+    // Restore saved layout
+    const savedLayout = localStorage.getItem('items_layout');
+    if (savedLayout) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('layout') !== savedLayout) {
+        url.searchParams.set('layout', savedLayout);
+        window.location.replace(url.toString());
+      }
+    }
+
+    // Open Add Item drawer
+    const addBtn = document.getElementById('open-add-item');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        fetch('{% url "item_create_partial" %}')
+          .then(r => r.text())
+          .then(html => window.modal && window.modal.openDrawer(html, 'right'));
+      });
+    }
 });
 </script>
 

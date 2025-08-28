@@ -455,9 +455,9 @@
   @keyframes shimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
 
   /* Bulk actions bar */
-  .bulk-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 0.5rem; z-index: 40; }
+.bulk-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 0.5rem; z-index: 40; }
 
-  /* Minimal utility fallbacks for widths/heights commonly used in templates */
+/* Minimal utility fallbacks for widths/heights commonly used in templates */
   .w-3 { width: 0.75rem; }
   .h-3 { height: 0.75rem; }
   .w-4 { width: 1rem; }
@@ -476,3 +476,7 @@
 
 /* Fallback for 'hidden' class when utility build is absent */
 .hidden { display: none !important; }
+
+/* Drawer styles for modal */
+.drawer { width: 420px; max-width: 90vw; height: 100%; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -2px 0 8px rgba(0,0,0,0.08); position: relative; }
+.drawer.right { margin-left: auto; }

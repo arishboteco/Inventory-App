@@ -1,19 +1,18 @@
-<!-- Speed & Efficiency - Information Dense Table Rows -->
 {% for item in items %}
-<tr data-item-id="{{ item.item_id }}" class="speed-item-row">
-    <!-- Item Details - Rich Information -->
-    <td>
-        <div class="speed-item-name">
-            <a href="{% url 'item_detail' item.item_id %}" class="text-decoration-none" style="color: var(--speed-primary);">
+<tr class="hover:bg-gray-50 transition-colors" data-item-id="{{ item.item_id }}">
+    <!-- Item Details - Comprehensive at a glance -->
+    <td class="px-6 py-4">
+        <div class="font-semibold text-gray-900 mb-1">
+            <a href="{% url 'item_detail' item.item_id %}" class="text-primary hover:text-blue-700 text-decoration-none">
                 {{ item.name }}
             </a>
         </div>
-        <div class="speed-item-meta">
+        <div class="flex flex-wrap gap-3 text-xs text-gray-500">
             {% if item.brand %}
-                <span><strong>Brand:</strong> {{ item.brand }}</span>
+                <span><span class="font-medium">Brand:</span> {{ item.brand }}</span>
             {% endif %}
             {% if item.item_code %}
-                <span><strong>Code:</strong> {{ item.item_code }}</span>
+                <span><span class="font-medium">Code:</span> {{ item.item_code }}</span>
             {% endif %}
             {% if item.description %}
                 <span title="{{ item.description }}">{{ item.description|truncatechars:50 }}</span>
@@ -22,102 +21,107 @@
     </td>
 
     <!-- Category Information -->
-    <td>
-        <div class="speed-category-pill">{{ item.category|default:"No Category" }}</div>
+    <td class="px-6 py-4">
+        <div class="category-badge">{{ item.category|default:"No Category" }}</div>
         {% if item.sub_category %}
-            <div style="font-size: 0.75rem; color: var(--speed-text-muted); margin-top: 0.25rem;">
+            <div class="text-xs text-gray-500 mt-1">
                 {{ item.sub_category }}
             </div>
         {% endif %}
     </td>
 
-    <!-- Units Information -->
-    <td>
-        <div class="speed-unit-info">
-            <div>
-                <div style="font-weight: 600;">{{ item.base_unit|default:"—" }}</div>
-                {% if item.purchase_unit and item.purchase_unit != item.base_unit %}
-                    <div style="font-size: 0.75rem; color: var(--speed-text-muted);">
-                        Purchase: {{ item.purchase_unit }}
-                    </div>
-                {% endif %}
-            </div>
+    <!-- Unit Information -->
+    <td class="px-6 py-4">
+        <div class="text-sm">
+            <div class="font-semibold">{{ item.base_unit|default:"—" }}</div>
+            {% if item.purchase_unit and item.purchase_unit != item.base_unit %}
+                <div class="text-xs text-gray-500 mt-1">
+                    Purchase: {{ item.purchase_unit }}
+                </div>
+            {% endif %}
         </div>
     </td>
 
-    <!-- Stock Status -->
-    <td>
-        <div class="speed-stock-status">
+    <!-- Stock Status - Visual Priority -->
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-2 mb-1">
             {% if item.current_stock is not None %}
                 {% if item.current_stock > 0 %}
-                    <span class="speed-status-indicator speed-status-good"></span>
-                    <span style="font-weight: 600;">{{ item.current_stock|floatformat:0 }}</span>
+                    <span class="stock-indicator stock-good"></span>
+                    <span class="text-green-600 font-semibold text-sm">{{ item.current_stock|floatformat:0 }} in stock</span>
                 {% elif item.current_stock == 0 %}
-                    <span class="speed-status-indicator speed-status-out"></span>
-                    <span style="color: var(--speed-danger); font-weight: 600;">Out of Stock</span>
+                    <span class="stock-indicator stock-out"></span>
+                    <span class="text-red-600 font-semibold text-sm">Out of Stock</span>
                 {% else %}
-                    <span class="speed-status-indicator speed-status-low"></span>
-                    <span style="color: var(--speed-warning); font-weight: 600;">Low Stock</span>
+                    <span class="stock-indicator stock-low"></span>
+                    <span class="text-yellow-600 font-semibold text-sm">Low Stock</span>
                 {% endif %}
             {% else %}
-                <span class="speed-status-indicator" style="background: var(--speed-secondary);"></span>
-                <span style="color: var(--speed-text-muted);">No Data</span>
+                <span class="stock-indicator bg-gray-400"></span>
+                <span class="text-gray-500 text-sm">No Data</span>
             {% endif %}
         </div>
         {% if item.reorder_level %}
-            <div style="font-size: 0.75rem; color: var(--speed-text-muted);">
+            <div class="text-xs text-gray-500">
                 Reorder at: {{ item.reorder_level|floatformat:0 }}
             </div>
         {% endif %}
     </td>
 
     <!-- Departments -->
-    <td>
+    <td class="px-6 py-4">
         {% if item.department_names %}
             {% for dept in item.department_names|slice:":2" %}
-                <div style="font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 0.125rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem; display: inline-block;">
-                    {{ dept }}
-                </div>
+                <span class="department-pill">{{ dept }}</span>
             {% endfor %}
             {% if item.department_names|length > 2 %}
-                <div style="font-size: 0.75rem; color: var(--speed-text-muted);">
+                <div class="text-xs text-gray-500 mt-1">
                     +{{ item.department_names|length|add:"-2" }} more
                 </div>
             {% endif %}
         {% else %}
-            <span style="color: var(--speed-text-muted); font-size: 0.875rem;">—</span>
+            <span class="text-gray-400 text-xs">No departments</span>
         {% endif %}
     </td>
 
     <!-- Quick Actions -->
-    <td class="speed-actions-cell">
-        <a href="{% url 'item_detail' item.item_id %}" 
-           class="speed-action-btn speed-action-view"
-           title="View Details">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-        </a>
-        <a href="{% url 'item_edit' item.item_id %}" 
-           class="speed-action-btn speed-action-edit"
-           title="Edit Item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-        </a>
+    <td class="px-6 py-4">
+        <div class="flex items-center gap-1">
+            <a href="{% url 'item_detail' item.item_id %}" 
+               class="action-btn action-view"
+               title="View Details">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                View
+            </a>
+            <a href="{% url 'item_edit' item.item_id %}" 
+               class="action-btn action-edit"
+               title="Edit Item">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit
+            </a>
+        </div>
     </td>
 </tr>
 {% empty %}
 <tr>
-    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--speed-text-muted);">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 1rem; opacity: 0.5;">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="M21 21l-4.35-4.35"></path>
-        </svg>
-        <div style="font-size: 1.125rem; margin-bottom: 0.5rem;">No items found</div>
-        <div style="font-size: 0.875rem;">Try adjusting your search or filters</div>
+    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+        <div class="flex flex-col items-center gap-4">
+            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-4.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <div>
+                <div class="text-lg font-medium mb-1">No items found</div>
+                <div class="text-sm">Try adjusting your search or filters</div>
+            </div>
+            <a href="{% url 'item_create' %}" class="btn-primary mt-2">
+                Create your first item
+            </a>
+        </div>
     </td>
 </tr>
 {% endfor %}

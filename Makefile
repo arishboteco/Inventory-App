@@ -1,6 +1,6 @@
 # Makefile for Inventory-App (Python 3.13)
 
-.PHONY: install fmt lint test coverage precommit
+.PHONY: install fmt lint test coverage precommit changelog-add changelog-release changelog-show
 
 # Install dev dependencies
 install:
@@ -26,3 +26,15 @@ coverage:
 # Run pre-commit on all files
 precommit:
 	pre-commit run --all-files
+
+# Changelog management
+changelog-add:
+	@echo "Usage: make changelog-add DESC='your change description' TYPE=feat"
+	@python tools/changelog.py add "$(DESC)" --type "$(TYPE)"
+
+changelog-release:
+	@echo "Usage: make changelog-release VERSION=2.2.0"
+	@python tools/changelog.py release "$(VERSION)"
+
+changelog-show:
+	@python tools/changelog.py unreleased

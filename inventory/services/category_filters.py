@@ -16,19 +16,23 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     department = (request.GET.get("department") or "").strip()
 
     # Get actual categories from database
-    categories = list(Item.objects.exclude(category__isnull=True).exclude(category="").values_list('category', flat=True).distinct().order_by('category'))
+    categories_flat = list(Item.objects.exclude(category__isnull=True).exclude(category="").values_list('category', flat=True).distinct().order_by('category'))
+    categories = [(c, c) for c in categories_flat]
     
     # Get subcategories based on selected category
     subcategories_qs = Item.objects.exclude(sub_category__isnull=True).exclude(sub_category="")
     if category:
         subcategories_qs = subcategories_qs.filter(category=category)
-    subcategories = list(subcategories_qs.values_list('sub_category', flat=True).distinct().order_by('sub_category'))
+    subcategories_flat = list(subcategories_qs.values_list('sub_category', flat=True).distinct().order_by('sub_category'))
+    subcategories = [(c, c) for c in subcategories_flat]
     
     # Get base units from database
-    base_units = list(Item.objects.exclude(base_unit__isnull=True).exclude(base_unit="").values_list('base_unit', flat=True).distinct().order_by('base_unit'))
+    base_units_flat = list(Item.objects.exclude(base_unit__isnull=True).exclude(base_unit="").values_list('base_unit', flat=True).distinct().order_by('base_unit'))
+    base_units = [(u, u) for u in base_units_flat]
     
     # Get departments
-    departments = list(Department.objects.all().values_list('name', flat=True).order_by('name'))
+    departments_flat = list(Department.objects.all().values_list('name', flat=True).order_by('name'))
+    departments = [(d, d) for d in departments_flat]
 
     return {
         "category": category,
@@ -38,6 +42,7 @@ def resolve_category_filters(request) -> Dict[str, Any]:
         "categories": categories,
         "subcategories": subcategories,
         "base_units": base_units,
+        "units": base_units,  # Template expects 'units'
         "departments": departments,
     }
 
@@ -47,16 +52,16 @@ def build_filters(request) -> List[Dict[str, Any]]:
     resolved = resolve_category_filters(request)
     
     category_options = [{"value": "", "label": "All Categories"}]
-    category_options.extend([{"value": c, "label": c} for c in resolved["categories"]])
+    category_options.extend([{"value": c[0], "label": c[1]} for c in resolved["categories"]])
     
     subcategory_options = [{"value": "", "label": "All Subcategories"}]
-    subcategory_options.extend([{"value": c, "label": c} for c in resolved["subcategories"]])
+    subcategory_options.extend([{"value": c[0], "label": c[1]} for c in resolved["subcategories"]])
     
     base_unit_options = [{"value": "", "label": "All Units"}]
-    base_unit_options.extend([{"value": u, "label": u} for u in resolved["base_units"]])
+    base_unit_options.extend([{"value": u[0], "label": u[1]} for u in resolved["base_units"]])
     
     department_options = [{"value": "", "label": "All Departments"}]
-    department_options.extend([{"value": d, "label": d} for d in resolved["departments"]])
+    department_options.extend([{"value": d[0], "label": d[1]} for d in resolved["departments"]])
     
     return [
         {

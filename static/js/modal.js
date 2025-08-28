@@ -33,7 +33,8 @@
     const csrf = form.querySelector('input[name="csrfmiddlewaretoken"])?.value;
     const fd = new FormData(form);
     fd.set('partial', '1');
-    fetch(window.location.pathname.replace(/\/$/, '') + '/', { method: 'POST', headers: csrf ? { 'X-CSRFToken': csrf } : {}, body: fd })
+    const url = form.getAttribute('action') || window.location.href;
+    fetch(url, { method: 'POST', headers: csrf ? { 'X-CSRFToken': csrf } : {}, body: fd })
       .then(r => r.json().catch(() => ({})))
       .then(data => {
         if (data && data.ok) {
@@ -49,4 +50,3 @@
       });
   });
 })();
-

@@ -19,6 +19,7 @@
     <script src="{% static 'js/table-sort.js' %}?v={{ STATIC_VERSION }}"></script>
     <script src="{% static 'js/tabs.js' %}?v={{ STATIC_VERSION }}"></script>
     <script src="{% static 'js/modal.js' %}?v={{ STATIC_VERSION }}"></script>
+    {% block extra_css %}{% endblock %}
   </head>
   <body class="min-h-screen bg-gray-50">
     <!-- Top Navigation -->
@@ -77,5 +78,6 @@
         body.removeAttribute('aria-busy');
       });
     </script>
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

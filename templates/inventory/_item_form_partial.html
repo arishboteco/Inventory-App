@@ -4,7 +4,7 @@
     <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
   </div>
   <div class="card-body">
-    <form method="post" data-modal-form>
+    <form method="post" data-modal-form action="{% url 'item_edit' item.item_id %}?partial=1">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
       <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
@@ -44,4 +44,3 @@
     </form>
   </div>
 </div>
-

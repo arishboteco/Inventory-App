@@ -218,7 +218,7 @@
 </div>
 {% endif %}
 
-<script src="{% static 'js/items-table.js' %}"></script>
+<script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Enhanced search functionality

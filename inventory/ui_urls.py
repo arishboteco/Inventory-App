@@ -20,6 +20,8 @@ from .views.items import (
     ItemsListView,
     ItemsTableView,
     ItemToggleActiveView,
+    get_purchase_units,
+    get_subcategories,
 )
 from .views.purchase_orders import (
     purchase_order_create,
@@ -60,7 +62,10 @@ urlpatterns = [
         name="item_toggle_active",
     ),
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
+    path("items/<int:pk>/duplicate/", ItemCreateView.as_view(), name="item_duplicate"),
     path("items/search/", ItemSearchView.as_view(), name="item_search"),
+    path("items/purchase-units/", get_purchase_units, name="get_purchase_units"),
+    path("items/subcategories/", get_subcategories, name="get_subcategories"),
     path("items/bulk-upload/", ItemsBulkUploadView.as_view(), name="items_bulk_upload"),
     path("suppliers/", SuppliersListView.as_view(), name="suppliers_list"),
     path("suppliers/table/", SuppliersTableView.as_view(), name="suppliers_table"),

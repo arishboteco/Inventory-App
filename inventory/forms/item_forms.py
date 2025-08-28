@@ -1,9 +1,8 @@
 from django import forms
 from ..models import Item, Department, Supplier
 from ..services.form_service import (
-    get_unit_choices, get_units_map, get_category_choices, 
-    get_categories_map, get_department_choices, get_supplier_choices,
-    get_purchase_unit_choices
+    FormService, get_category_choices, get_subcategory_choices,
+    get_categories_map, get_department_choices, get_supplier_choices
 )
 
 INPUT_CLASS = "form-input"
@@ -22,53 +21,30 @@ class StyledFormMixin:
 class ItemForm(StyledFormMixin, forms.ModelForm):
     """Enhanced item form with complete business field support."""
     
-    # Unit fields with dropdown support
-    base_unit = forms.CharField(
-        max_length=50,
-        required=False,
-        help_text="Base unit of measurement (kg, ltr, pc, etc.)",
-        widget=forms.TextInput(attrs={
-            'class': INPUT_CLASS,
-            'list': 'base-unit-options',
-            'placeholder': 'Select or type base unit'
-        })
-    )
-    
-    purchase_unit = forms.CharField(
-        max_length=50,
-        required=False,
-        help_text="Unit used for purchasing (g, ml, each, etc.)",
-        widget=forms.TextInput(attrs={
-            'class': INPUT_CLASS,
-            'list': 'purchase-unit-options',
-            'placeholder': 'Select or type purchase unit'
-        })
-    )
-    
-    # Category fields with dropdown support
-    category = forms.CharField(
-        max_length=100,
+    # Category fields with proper dropdown support
+    category = forms.ChoiceField(
+        choices=[],  # Will be populated in __init__
         required=False,
         help_text="Item category for classification",
-        widget=forms.TextInput(attrs={
-            'class': INPUT_CLASS,
-            'list': 'category-options',
-            'placeholder': 'Select or type category'
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'data-field': 'category',
+            'placeholder': 'Select category'
         })
     )
     
-    sub_category = forms.CharField(
-        max_length=100,
+    sub_category = forms.ChoiceField(
+        choices=[],  # Will be populated in __init__
         required=False,
         help_text="Item subcategory for detailed classification",
-        widget=forms.TextInput(attrs={
-            'class': INPUT_CLASS,
-            'list': 'sub-category-options',
-            'placeholder': 'Select or type subcategory'
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+            'data-field': 'sub_category',
+            'placeholder': 'Select subcategory'
         })
     )
     
-    # Department assignment
+    # Department assignment with checkbox selection
     departments = forms.ModelMultipleChoiceField(
         queryset=Department.objects.all(),
         required=False,
@@ -152,6 +128,35 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
+        # Populate category dropdown choices
+        category_choices = [('', 'Select Category')] + get_category_choices()
+        self.fields['category'].choices = category_choices
+        
+        # Populate subcategory dropdown choices
+        subcategory_choices = [('', 'Select Subcategory')] + get_subcategory_choices()
+        self.fields['sub_category'].choices = subcategory_choices
+        
+        # Replace base_unit and purchase_unit fields with dropdown widgets
+        self.fields['base_unit'] = forms.ChoiceField(
+            choices=[('', 'Select Base Unit')] + FormService.get_base_unit_choices(),
+            required=True,
+            widget=forms.Select(attrs={
+                'class': 'form-control',
+                'data-field': 'base_unit'
+            }),
+            help_text="Primary unit for inventory tracking"
+        )
+        
+        self.fields['purchase_unit'] = forms.ChoiceField(
+            choices=[('', 'Select Purchase Unit')] + FormService.get_purchase_unit_choices(),
+            required=False,
+            widget=forms.Select(attrs={
+                'class': 'form-control',
+                'data-field': 'purchase_unit'
+            }),
+            help_text="Unit used when purchasing this item"
+        )
+        
         # Make name field required
         if "name" in self.fields:
             self.fields["name"].required = True
@@ -160,14 +165,11 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         if not self.instance.pk and "unit_id" in self.fields:
             self.fields["unit_id"].initial = 55  # Default PC unit
         
-        # Add data for JavaScript dropdowns
-        self.base_units = [choice[0] for choice in get_unit_choices()]
-        self.purchase_units = []  # Will be populated by JavaScript based on base_unit
+        # Add data for JavaScript dropdowns (for categories)
         self.category_options = [choice[0] for choice in get_category_choices()]
         self.sub_category_options = []  # Will be populated by JavaScript based on category
         
         # Add mapping data for JavaScript
-        self.units_map = get_units_map()
         self.categories_map = get_categories_map()
         
         # Apply styling to all fields
@@ -182,14 +184,6 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         category = cleaned_data.get('category')
         sub_category = cleaned_data.get('sub_category')
         
-        # Validate unit relationship
-        if base_unit and purchase_unit:
-            valid_purchase_units = [choice[0] for choice in get_purchase_unit_choices(base_unit)]
-            if purchase_unit not in valid_purchase_units:
-                raise forms.ValidationError(
-                    f"Purchase unit '{purchase_unit}' is not valid for base unit '{base_unit}'"
-                )
-        
         # Validate category-subcategory relationship
         if sub_category and not category:
             raise forms.ValidationError("Category is required when subcategory is specified")
@@ -198,13 +192,21 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         if base_unit and not cleaned_data.get('unit_id'):
             # Map base units to unit_ids (you may need to adjust these mappings)
             unit_mapping = {
-                'kg': 19,
-                'ltr': 1, 
-                'pc': 55,
-                'box': 55,
-                'pack': 55,
+                'Kilograms': 19,
+                'Liters': 1, 
+                'Pieces': 55,
+                'Boxes': 55,
+                'Cases': 55,
+                'Cartons': 55,
+                'Grams': 19,
+                'Milliliters': 1,
+                'Units': 55,
+                'Each': 55,
+                'Packages': 55,
+                'Bottles': 55,
+                'Cans': 55,
             }
-            cleaned_data['unit_id'] = unit_mapping.get(base_unit, 55)
+            cleaned_data['unit_id'] = unit_mapping.get(base_unit, 55)  # Default to PC
         
         return cleaned_data
 
@@ -215,11 +217,13 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         # Update unit_id based on base_unit if needed
         if self.cleaned_data.get('base_unit') and not instance.unit_id:
             unit_mapping = {
-                'kg': 19,
-                'ltr': 1,
-                'pc': 55,
-                'box': 55, 
-                'pack': 55,
+                'Kilograms': 19,
+                'Liters': 1,
+                'Pieces': 55,
+                'Boxes': 55, 
+                'Packages': 55,
+                'Units': 55,
+                'Each': 55,
             }
             instance.unit_id = unit_mapping.get(self.cleaned_data['base_unit'], 55)
         

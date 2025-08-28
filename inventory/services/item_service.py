@@ -345,8 +345,16 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
             "item_id",
             "name",
             "unit_id",
-            "category_id",
+            "category_id", 
+            "category",
+            "sub_category",
+            "base_unit",
+            "purchase_unit",
+            "initial_purchase_price",
+            "minimum_order_qty",
+            "lead_time_days",
             "reorder_point",
+            "current_stock",
             "notes",
             "is_active",
             "_stock",
@@ -356,5 +364,15 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
     if row:
         row["unit"] = get_unit_display_name(row["unit_id"])
         row["current_stock"] = row.pop("_stock")
+        
+        # Add department information
+        try:
+            item = Item.objects.get(pk=item_id)
+            row["departments"] = list(item.departments.values_list('name', flat=True))
+            row["department_names"] = ", ".join(row["departments"]) if row["departments"] else "None"
+        except Item.DoesNotExist:
+            row["departments"] = []
+            row["department_names"] = "None"
+            
         return row
     return None

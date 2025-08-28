@@ -1,13 +1,52 @@
 {% extends "components/detail_layout.html" %}
-{% block title %}Item Detail – Inventory App{% endblock %}
-{% block heading %}{{ item.name }}{% endblock %}
+{% load static %}
+{% block title %}{{ item.name }} – Item Detail – Inventory App{% endblock %}
+{% block heading %}
+<div class="flex items-center justify-between">
+  <div class="flex items-center space-x-4">
+    <h1 class="text-2xl font-bold">{{ item.name }}</h1>
+    <span class="px-3 py-1 text-sm rounded-full {% if item.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+      {% if item.is_active %}Active{% else %}Inactive{% endif %}
+    </span>
+    {% if item.current_stock <= item.reorder_point %}
+      <span class="px-3 py-1 text-sm bg-yellow-100 text-yellow-800 rounded-full">⚠️ Low Stock</span>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
 {% block actions %}
-  <div x-data>
-    <a href="{% url 'items_list' %}" class="btn-outline">Back</a>
-    <a href="{% url 'item_edit' item.item_id %}" class="btn-primary">Edit</a>
+  <div class="flex items-center space-x-2">
+    <!-- Quick Actions -->
+    <div class="dropdown relative">
+      <button class="btn-secondary dropdown-toggle" type="button" data-dropdown="quickActions">
+        ⚡ Quick Actions
+        <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <div id="quickActions" class="dropdown-menu absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10 hidden">
+        <a href="{% url 'item_duplicate' item.item_id %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          📋 Duplicate Item
+        </a>
+        <a href="{% url 'stock_transaction_create' %}?item={{ item.item_id }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          📦 Add Stock
+        </a>
+        <a href="#" data-action="export" data-item-id="{{ item.item_id }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          📊 Export Data
+        </a>
+        <a href="#" data-action="qr-code" data-item-name="{{ item.name }}" data-item-id="{{ item.item_id }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          📱 Generate QR Code
+        </a>
+      </div>
+    </div>
+    
+    <a href="{% url 'items_list' %}" class="btn-outline">← Back to List</a>
+    <a href="{% url 'item_edit' item.item_id %}" class="btn-primary">✏️ Edit</a>
     <form x-ref="delForm" method="post" action="{% url 'item_delete' item.item_id %}" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-danger" @click.prevent="if(confirm('Delete this item?')) $refs.delForm.submit()">Delete</button>
+      <button type="submit" class="btn-danger" @click.prevent="if(confirm('Delete this item? This action cannot be undone.')) $refs.delForm.submit()">
+        🗑️ Delete
+      </button>
     </form>
   </div>
 {% endblock %}
@@ -35,25 +74,28 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const ctx = document.getElementById('stockSparkline');
-      const data = {{ stock_history|safe }};
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: data.map((_, idx) => idx + 1),
-          datasets: [{
-            data: data,
-            borderColor: '#3b82f6',
-            fill: false,
-            tension: 0.4,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: { x: { display: false }, y: { display: false } }
-        }
-      });
+      if (ctx) {
+        const data = {{ stock_history|safe }};
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.map((_, idx) => idx + 1),
+            datasets: [{
+              data: data,
+              borderColor: '#3b82f6',
+              fill: false,
+              tension: 0.4,
+              pointRadius: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: { x: { display: false }, y: { display: false } }
+          }
+        });
+      }
     });
   </script>
+  <script src="{% static 'js/smart-navigation.js' %}"></script>
 {% endblock %}

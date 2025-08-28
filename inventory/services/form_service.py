@@ -14,22 +14,54 @@ logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=None)
-def get_unit_choices() -> List[Tuple[str, str]]:
-    """Get available base units for dropdown selection."""
-    try:
-        units = get_units()
-        base_units = list(units.keys())
-        return [(unit, unit) for unit in sorted(base_units)]
-    except Exception as e:
-        logger.warning(f"Could not load units: {e}")
-        # Fallback units for development/testing
-        return [
-            ('kg', 'Kilograms'),
-            ('ltr', 'Liters'),
-            ('pc', 'Pieces'),
-            ('box', 'Boxes'),
-            ('pack', 'Packs'),
-        ]
+class FormService:
+    """Service for populating form dropdown options"""
+    
+    @staticmethod
+    def get_base_unit_choices():
+        """Get base unit choices from database"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT DISTINCT base_unit FROM units 
+                    WHERE base_unit IS NOT NULL 
+                    ORDER BY base_unit
+                """)
+                units = cursor.fetchall()
+                return [(unit[0], unit[0]) for unit in units if unit[0]]
+        except OperationalError as e:
+            logger.warning(f"Could not load base units from database: {e}")
+            return [('GM', 'GM'), ('ML', 'ML'), ('MT', 'MT'), ('PC', 'PC')]
+
+    @staticmethod
+    def get_purchase_unit_choices(base_unit=None):
+        """Get purchase unit choices, optionally filtered by base_unit"""
+        try:
+            with connection.cursor() as cursor:
+                if base_unit:
+                    # Get purchase units for a specific base unit
+                    cursor.execute("""
+                        SELECT DISTINCT purchase_unit FROM units 
+                        WHERE base_unit = %s AND purchase_unit IS NOT NULL 
+                        ORDER BY purchase_unit
+                    """, [base_unit])
+                else:
+                    # Get all purchase units
+                    cursor.execute("""
+                        SELECT DISTINCT purchase_unit FROM units 
+                        WHERE purchase_unit IS NOT NULL 
+                        ORDER BY purchase_unit
+                    """)
+                units = cursor.fetchall()
+                return [(unit[0], unit[0]) for unit in units if unit[0]]
+        except OperationalError as e:
+            logger.warning(f"Could not load purchase units from database: {e}")
+            return [('GM', 'GM'), ('ML', 'ML'), ('MT', 'MT'), ('PC', 'PC')]
+    
+    @staticmethod
+    def get_unit_choices():
+        """Legacy method for backward compatibility"""
+        return FormService.get_base_unit_choices()
 
 
 @lru_cache(maxsize=None) 
@@ -128,8 +160,8 @@ def get_subcategory_choices(category: Optional[str] = None) -> List[Tuple[str, s
 def get_department_choices() -> List[Tuple[int, str]]:
     """Get available departments for selection."""
     try:
-        departments = Department.objects.filter(permitted_departments__isnull=False).values_list(
-            'department_id', 'permitted_departments'
+        departments = Department.objects.filter(name__isnull=False).values_list(
+            'department_id', 'name'
         )
         return [(dept[0], dept[1]) for dept in departments if dept[1]]
     except Exception as e:
@@ -164,8 +196,12 @@ def get_purchase_unit_choices(base_unit: Optional[str] = None) -> List[Tuple[str
 # Clear cache functions
 def clear_form_caches():
     """Clear all cached form data."""
-    get_unit_choices.cache_clear()
-    get_units_map.cache_clear()
-    get_category_choices.cache_clear()
-    get_categories_map.cache_clear()
-    get_subcategory_choices.cache_clear()
+    # Note: get_unit_choices is not cached as it returns static data
+    try:
+        get_units_map.cache_clear()
+        get_category_choices.cache_clear()
+        get_categories_map.cache_clear()
+        get_subcategory_choices.cache_clear()
+    except AttributeError:
+        # Cache methods may not exist if not decorated
+        pass

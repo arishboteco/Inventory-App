@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.db.models import BooleanField, Case, F, Value, When
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -20,15 +20,15 @@ from ..forms.bulk_forms import BulkUploadForm
 from ..forms.item_forms import ItemForm
 from ..models import Item, StockTransaction
 from ..services import category_filters, item_service, list_utils, stock_service
+from ..services.form_service import FormService
 
 logger = logging.getLogger(__name__)
 
-EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category", "sub_category"]  # Updated list
+EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category", "sub_category", "departments"]  # Exclude fields that are handled explicitly
 
 
 def _filter_and_sort_items(request, qs=None):
     """Return items queryset and filter metadata from request params."""
-    # Fixed: Remove select_related for non-ForeignKey fields (unit_id, category_id are integers)
     qs = qs or Item.objects.all()
     qs = qs.annotate(
         stock_ok=Case(
@@ -39,19 +39,27 @@ def _filter_and_sort_items(request, qs=None):
     )
     filters = {
         "active": "is_active",
+        "category": "category",  # Maps to category field
+        "subcategory": "sub_category",  # Maps to sub_category field
+        "base_unit": "base_unit",  # Add base unit filtering
+        "department": "departments__name",  # Add department filtering via many-to-many
     }
     allowed_sorts = {
         "item_id",
         "name",
-        "unit_id",  # Fixed: Changed from "base_unit" to "unit_id"
+        "base_unit",  # Use base_unit for sorting
+        "category",
+        "sub_category", 
         "current_stock",
         "reorder_point",
         "is_active",
+        "initial_purchase_price",
+        "last_purchase_price",
     }
     return list_utils.apply_filters_sort(
         request,
         qs,
-        search_fields=["name"],
+        search_fields=["name", "category", "sub_category"],  # Enhanced search
         filter_fields=filters,
         allowed_sorts=allowed_sorts,
         default_sort="name",
@@ -64,10 +72,10 @@ class ItemsListView(TemplateView):
     GET params:
         q, category, subcategory, active, page_size, sort, direction
         control filtering, pagination and ordering.
-    Template: inventory/items_list.html.
+    Template: inventory/items_list_speed.html.
     """
 
-    template_name = "inventory/items_list.html"
+    template_name = "inventory/items_list_speed.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -77,9 +85,6 @@ class ItemsListView(TemplateView):
         qs, params = _filter_and_sort_items(request)
         page_obj, per_page = list_utils.paginate(request, qs)
         table_ctx = {**params, "page_obj": page_obj, "page_size": per_page}
-        items_table = render_to_string(
-            "inventory/_items_table.html", table_ctx, request=request
-        )
 
         form = ItemForm()
 
@@ -88,10 +93,7 @@ class ItemsListView(TemplateView):
         ctx.update(
             {
                 "page_size": per_page,
-                "items_table": items_table,
-                "filters": category_filters.build_filters(
-                    category_ctx, params.get("active")
-                ),
+                "filters": category_filters.build_filters(request),
                 "export_url": reverse("items_export"),
                 "form": form,
                 "excluded_fields": EXCLUDED_FIELDS,
@@ -107,7 +109,7 @@ class ItemsTableView(TemplateView):
     Template: inventory/_items_table.html.
     """
 
-    template_name = "inventory/_items_table.html"
+    template_name = "inventory/_items_table_speed.html"
 
     def _get_queryset(self):
         qs, params = _filter_and_sort_items(self.request)
@@ -158,10 +160,10 @@ class ItemCreateView(View):
     """Create a new item using ItemForm.
 
     GET renders an empty form; POST saves the item.
-    Template: inventory/item_form.html.
+    Template: inventory/item_form_speed.html.
     """
 
-    template_name = "inventory/item_form.html"
+    template_name = "inventory/item_form_speed.html"
 
     def get(self, request):
         form = ItemForm()
@@ -170,10 +172,25 @@ class ItemCreateView(View):
 
     def post(self, request):
         form = ItemForm(request.POST)
+        
+        # Check if this is an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         if form.is_valid():
-            form.save()
+            item = form.save()
             item_service.get_all_items_with_stock.clear()
             item_service.get_distinct_departments_from_items.clear()
+            
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Item created successfully!',
+                    'item': {
+                        'id': item.pk,
+                        'name': item.name
+                    }
+                })
+            
             if request.headers.get("HX-Request"):
                 items = Item.objects.order_by("name")[:20]
                 options_html = render_to_string(
@@ -191,6 +208,18 @@ class ItemCreateView(View):
                 return response
             messages.success(request, "Item created")
             return redirect("items_list")
+        
+        # Form has errors
+        if is_ajax:
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = [str(error) for error in error_list]
+            return JsonResponse({
+                'success': False,
+                'message': 'Please correct the errors below.',
+                'errors': errors
+            })
+        
         ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
         if request.headers.get("HX-Request"):
             response = render(request, self.template_name, ctx)
@@ -202,10 +231,10 @@ class ItemCreateView(View):
 class ItemEditView(View):
     """Edit an existing item.
 
-    Template: inventory/item_form.html.
+    Template: inventory/item_form_speed.html.
     """
 
-    template_name = "inventory/item_form.html"
+    template_name = "inventory/item_form_speed.html"
 
     def get_object(self, pk: int):
         try:
@@ -259,10 +288,10 @@ class ItemEditView(View):
 class ItemDetailView(View):
     """Display detailed information and stock for an item.
 
-    Template: inventory/item_detail.html.
+    Template: inventory/item_detail_speed.html.
     """
 
-    template_name = "inventory/item_detail.html"
+    template_name = "inventory/item_detail_speed.html"
 
     def get(self, request, pk: int):
         try:
@@ -275,13 +304,19 @@ class ItemDetailView(View):
 
         rows = [
             ("ID", details["item_id"]),
-            ("Unit", details["unit"]),
-            ("Unit ID", details["unit_id"]),
-            ("Category ID", details["category_id"]),
+            ("Name", details["name"]),
+            ("Category", details.get("category", "Not set")),
+            ("Sub Category", details.get("sub_category", "Not set")),
+            ("Base Unit", details.get("base_unit", "Not set")),
+            ("Purchase Unit", details.get("purchase_unit", "Not set")),
+            ("Departments", details.get("department_names", "None")),
             ("Current Stock", details["current_stock"]),
             ("Reorder Point", details["reorder_point"]),
-            ("Notes", details["notes"]),
-            ("Active", details["is_active"]),
+            ("Initial Purchase Price", details.get("initial_purchase_price", "Not set")),
+            ("Minimum Order Qty", details.get("minimum_order_qty", "Not set")),
+            ("Lead Time (Days)", details.get("lead_time_days", "Not set")),
+            ("Notes", details.get("notes", "None")),
+            ("Active", "Yes" if details["is_active"] else "No"),
         ]
         recent_activity = StockTransaction.objects.filter(item_id=pk).order_by(
             "-transaction_date"
@@ -431,3 +466,54 @@ class ItemsBulkUploadView(View):
             "back_url": "items_list",
         }
         return render(request, self.template_name, ctx)
+
+
+def get_purchase_units(request):
+    """AJAX endpoint to get purchase units for a given base unit"""
+    base_unit = request.GET.get('base_unit', '')
+    if base_unit:
+        purchase_units = FormService.get_purchase_unit_choices(base_unit)
+    else:
+        purchase_units = FormService.get_purchase_unit_choices()
+    
+    return JsonResponse({
+        'purchase_units': purchase_units
+    })
+
+
+def get_subcategories(request):
+    """AJAX endpoint to get subcategories for a given category"""
+    from ..services.form_service import get_subcategory_choices
+    
+    category = request.GET.get('category', '')
+    if category:
+        subcategories = get_subcategory_choices(category)
+    else:
+        subcategories = get_subcategory_choices()
+    
+    return JsonResponse({
+        'subcategories': subcategories
+    })
+
+
+def check_similar_names(request):
+    """AJAX endpoint to check for similar item names"""
+    from django.db.models import Q
+    from ..models import Item
+    
+    name = request.GET.get('name', '').strip()
+    if not name or len(name) < 3:  # Only check for names with 3+ characters
+        return JsonResponse({
+            'similar_items': [],
+            'has_similar': False
+        })
+    
+    # Check for similar names (case-insensitive partial matches)
+    similar_items = Item.objects.filter(
+        Q(name__icontains=name) | Q(name__istartswith=name)
+    ).exclude(name__iexact=name).values('id', 'name')[:5]  # Limit to 5 results
+    
+    return JsonResponse({
+        'similar_items': list(similar_items),
+        'has_similar': len(similar_items) > 0
+    })

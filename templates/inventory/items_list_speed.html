@@ -1,0 +1,516 @@
+<!-- Speed & Efficiency First - Item Management Hub -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Items - Inventory Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<style>
+/* Speed & Efficiency First Design System */
+:root {
+    --speed-primary: #2563eb;
+    --speed-secondary: #64748b;
+    --speed-success: #10b981;
+    --speed-warning: #f59e0b;
+    --speed-danger: #ef4444;
+    --speed-bg: #f8fafc;
+    --speed-surface: #ffffff;
+    --speed-border: #e2e8f0;
+    --speed-text: #1e293b;
+    --speed-text-muted: #64748b;
+    --speed-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --speed-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.speed-container {
+    min-height: 100vh;
+    background: var(--speed-bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Command Bar - Desktop First */
+.speed-command-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--speed-surface);
+    border-bottom: 1px solid var(--speed-border);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--speed-shadow);
+}
+
+.speed-search {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+}
+
+.speed-search input {
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border: 1px solid var(--speed-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+}
+
+.speed-search input:focus {
+    outline: none;
+    border-color: var(--speed-primary);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.speed-search-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--speed-text-muted);
+}
+
+.speed-filters {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.speed-filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--speed-border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background: var(--speed-surface);
+    min-width: 120px;
+}
+
+.speed-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.speed-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speed-btn-primary {
+    background: var(--speed-primary);
+    color: white;
+}
+
+.speed-btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.speed-btn-secondary {
+    background: var(--speed-surface);
+    color: var(--speed-text);
+    border: 1px solid var(--speed-border);
+}
+
+.speed-btn-secondary:hover {
+    background: var(--speed-bg);
+}
+
+/* Information Dense Table */
+.speed-table-container {
+    background: var(--speed-surface);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: var(--speed-shadow);
+    margin: 1rem 1.5rem;
+}
+
+.speed-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.speed-table th {
+    background: var(--speed-bg);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--speed-text);
+    border-bottom: 1px solid var(--speed-border);
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+}
+
+.speed-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--speed-border);
+    font-size: 0.875rem;
+    vertical-align: top;
+}
+
+.speed-table tbody tr:hover {
+    background: var(--speed-bg);
+}
+
+/* Information at a Glance - Item Row */
+.speed-item-name {
+    font-weight: 600;
+    color: var(--speed-text);
+    margin-bottom: 0.25rem;
+}
+
+.speed-item-meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--speed-text-muted);
+}
+
+.speed-category-pill {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.speed-unit-info {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.speed-stock-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speed-status-indicator {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+}
+
+.speed-status-good { background: var(--speed-success); }
+.speed-status-low { background: var(--speed-warning); }
+.speed-status-out { background: var(--speed-danger); }
+
+.speed-actions-cell {
+    white-space: nowrap;
+}
+
+.speed-action-btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    text-decoration: none;
+    margin-right: 0.25rem;
+    transition: all 0.15s ease;
+}
+
+.speed-action-view {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.speed-action-edit {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.speed-action-view:hover { background: #e2e8f0; }
+.speed-action-edit:hover { background: #fde68a; }
+
+/* Progressive Complexity - Keyboard Shortcuts */
+.speed-shortcuts {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    background: var(--speed-surface);
+    border: 1px solid var(--speed-border);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--speed-text-muted);
+    opacity: 0.8;
+    transition: opacity 0.15s ease;
+}
+
+.speed-shortcuts:hover {
+    opacity: 1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .speed-command-bar {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .speed-search {
+        max-width: none;
+    }
+    
+    .speed-filters {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .speed-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .speed-table-container {
+        margin: 1rem 0.5rem;
+        overflow-x: auto;
+    }
+    
+    .speed-shortcuts {
+        display: none;
+    }
+}
+
+/* Loading States */
+.speed-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.speed-skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="speed-container">
+    <!-- Command Bar - Always Visible -->
+    <div class="speed-command-bar">
+        <!-- Universal Search -->
+        <div class="speed-search">
+            <input 
+                type="text" 
+                placeholder="Search items... (Ctrl+K)"
+                hx-get="{% url 'items_table' %}"
+                hx-trigger="input changed delay:300ms"
+                hx-target="#items-table-body"
+                hx-indicator="#loading-indicator"
+                name="q"
+                value="{{ request.GET.q }}"
+                id="speed-search"
+                autocomplete="off"
+            >
+            <svg class="speed-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.35-4.35"></path>
+            </svg>
+        </div>
+
+        <!-- Smart Filters -->
+        <div class="speed-filters">
+            <select 
+                class="speed-filter-select"
+                name="category"
+                hx-get="{% url 'items_table' %}"
+                hx-trigger="change"
+                hx-target="#items-table-body"
+                hx-include="#speed-search, [name='subcategory'], [name='base_unit'], [name='department']"
+            >
+                <option value="">All Categories</option>
+                {% for category_value, category_label in categories %}
+                    <option value="{{ category_value }}" {% if request.GET.category == category_value %}selected{% endif %}>
+                        {{ category_label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select 
+                class="speed-filter-select"
+                name="subcategory"
+                hx-get="{% url 'items_table' %}"
+                hx-trigger="change"
+                hx-target="#items-table-body"
+                hx-include="#speed-search, [name='category'], [name='base_unit'], [name='department']"
+            >
+                <option value="">All Subcategories</option>
+                {% for subcategory_value, subcategory_label in subcategories %}
+                    <option value="{{ subcategory_value }}" {% if request.GET.subcategory == subcategory_value %}selected{% endif %}>
+                        {{ subcategory_label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select 
+                class="speed-filter-select"
+                name="base_unit"
+                hx-get="{% url 'items_table' %}"
+                hx-trigger="change"
+                hx-target="#items-table-body"
+                hx-include="#speed-search, [name='category'], [name='subcategory'], [name='department']"
+            >
+                <option value="">All Units</option>
+                {% for unit_value, unit_label in units %}
+                    <option value="{{ unit_value }}" {% if request.GET.base_unit == unit_value %}selected{% endif %}>
+                        {{ unit_label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select 
+                class="speed-filter-select"
+                name="department"
+                hx-get="{% url 'items_table' %}"
+                hx-trigger="change"
+                hx-target="#items-table-body"
+                hx-include="#speed-search, [name='category'], [name='subcategory'], [name='base_unit']"
+            >
+                <option value="">All Departments</option>
+                {% for dept_value, dept_label in departments %}
+                    <option value="{{ dept_value }}" {% if request.GET.department == dept_value %}selected{% endif %}>
+                        {{ dept_label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="speed-actions">
+            <button class="speed-btn speed-btn-secondary" onclick="exportItems()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export
+            </button>
+            <a href="{% url 'item_create' %}" class="speed-btn speed-btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Add Item
+            </a>
+        </div>
+    </div>
+
+    <!-- Information Dense Table -->
+    <div class="speed-table-container">
+        <table class="speed-table">
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Item Details</th>
+                    <th style="width: 15%;">Category</th>
+                    <th style="width: 15%;">Units</th>
+                    <th style="width: 15%;">Stock Status</th>
+                    <th style="width: 15%;">Departments</th>
+                    <th style="width: 10%;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="items-table-body" hx-get="{% url 'items_table' %}" hx-trigger="load">
+                <!-- Dynamic content loaded here -->
+                <tr>
+                    <td colspan="6">
+                        <div class="speed-skeleton" style="height: 50px; border-radius: 0.25rem;"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Keyboard Shortcuts -->
+    <div class="speed-shortcuts">
+        <div><kbd>Ctrl+K</kbd> Search</div>
+        <div><kbd>Ctrl+N</kbd> New Item</div>
+        <div><kbd>Ctrl+E</kbd> Export</div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-indicator" class="htmx-indicator" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 1rem; border-radius: 0.5rem; box-shadow: var(--speed-shadow-lg);">
+        <div class="speed-skeleton" style="width: 100px; height: 20px;"></div>
+    </div>
+</div>
+
+<script>
+// Speed & Efficiency JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            switch(e.key) {
+                case 'k':
+                    e.preventDefault();
+                    document.getElementById('speed-search').focus();
+                    break;
+                case 'n':
+                    e.preventDefault();
+                    window.location.href = "{% url 'item_create' %}";
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportItems();
+                    break;
+            }
+        }
+    });
+
+    // Auto-save search state
+    const searchInput = document.getElementById('speed-search');
+    searchInput.addEventListener('input', function() {
+        localStorage.setItem('items-search', this.value);
+    });
+
+    // Restore search state
+    const savedSearch = localStorage.getItem('items-search');
+    if (savedSearch) {
+        searchInput.value = savedSearch;
+    }
+});
+
+function exportItems() {
+    const params = new URLSearchParams();
+    const formData = new FormData();
+    
+    // Collect all filter values
+    document.querySelectorAll('.speed-filter-select, #speed-search').forEach(input => {
+        if (input.value) {
+            params.append(input.name, input.value);
+        }
+    });
+    
+    window.open(`{% url 'items_export' %}?${params.toString()}`, '_blank');
+}
+
+// HTMX Loading States
+document.addEventListener('htmx:beforeRequest', function(e) {
+    e.target.closest('table')?.classList.add('speed-loading');
+});
+
+document.addEventListener('htmx:afterRequest', function(e) {
+    e.target.closest('table')?.classList.remove('speed-loading');
+});
+</script>
+{% endblock %}

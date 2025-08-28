@@ -1,0 +1,123 @@
+<!-- Speed & Efficiency - Information Dense Table Rows -->
+{% for item in items %}
+<tr data-item-id="{{ item.item_id }}" class="speed-item-row">
+    <!-- Item Details - Rich Information -->
+    <td>
+        <div class="speed-item-name">
+            <a href="{% url 'item_detail' item.item_id %}" class="text-decoration-none" style="color: var(--speed-primary);">
+                {{ item.name }}
+            </a>
+        </div>
+        <div class="speed-item-meta">
+            {% if item.brand %}
+                <span><strong>Brand:</strong> {{ item.brand }}</span>
+            {% endif %}
+            {% if item.item_code %}
+                <span><strong>Code:</strong> {{ item.item_code }}</span>
+            {% endif %}
+            {% if item.description %}
+                <span title="{{ item.description }}">{{ item.description|truncatechars:50 }}</span>
+            {% endif %}
+        </div>
+    </td>
+
+    <!-- Category Information -->
+    <td>
+        <div class="speed-category-pill">{{ item.category|default:"No Category" }}</div>
+        {% if item.sub_category %}
+            <div style="font-size: 0.75rem; color: var(--speed-text-muted); margin-top: 0.25rem;">
+                {{ item.sub_category }}
+            </div>
+        {% endif %}
+    </td>
+
+    <!-- Units Information -->
+    <td>
+        <div class="speed-unit-info">
+            <div>
+                <div style="font-weight: 600;">{{ item.base_unit|default:"—" }}</div>
+                {% if item.purchase_unit and item.purchase_unit != item.base_unit %}
+                    <div style="font-size: 0.75rem; color: var(--speed-text-muted);">
+                        Purchase: {{ item.purchase_unit }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+
+    <!-- Stock Status -->
+    <td>
+        <div class="speed-stock-status">
+            {% if item.current_stock is not None %}
+                {% if item.current_stock > 0 %}
+                    <span class="speed-status-indicator speed-status-good"></span>
+                    <span style="font-weight: 600;">{{ item.current_stock|floatformat:0 }}</span>
+                {% elif item.current_stock == 0 %}
+                    <span class="speed-status-indicator speed-status-out"></span>
+                    <span style="color: var(--speed-danger); font-weight: 600;">Out of Stock</span>
+                {% else %}
+                    <span class="speed-status-indicator speed-status-low"></span>
+                    <span style="color: var(--speed-warning); font-weight: 600;">Low Stock</span>
+                {% endif %}
+            {% else %}
+                <span class="speed-status-indicator" style="background: var(--speed-secondary);"></span>
+                <span style="color: var(--speed-text-muted);">No Data</span>
+            {% endif %}
+        </div>
+        {% if item.reorder_level %}
+            <div style="font-size: 0.75rem; color: var(--speed-text-muted);">
+                Reorder at: {{ item.reorder_level|floatformat:0 }}
+            </div>
+        {% endif %}
+    </td>
+
+    <!-- Departments -->
+    <td>
+        {% if item.department_names %}
+            {% for dept in item.department_names|slice:":2" %}
+                <div style="font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 0.125rem 0.5rem; border-radius: 0.25rem; margin-bottom: 0.25rem; display: inline-block;">
+                    {{ dept }}
+                </div>
+            {% endfor %}
+            {% if item.department_names|length > 2 %}
+                <div style="font-size: 0.75rem; color: var(--speed-text-muted);">
+                    +{{ item.department_names|length|add:"-2" }} more
+                </div>
+            {% endif %}
+        {% else %}
+            <span style="color: var(--speed-text-muted); font-size: 0.875rem;">—</span>
+        {% endif %}
+    </td>
+
+    <!-- Quick Actions -->
+    <td class="speed-actions-cell">
+        <a href="{% url 'item_detail' item.item_id %}" 
+           class="speed-action-btn speed-action-view"
+           title="View Details">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </a>
+        <a href="{% url 'item_edit' item.item_id %}" 
+           class="speed-action-btn speed-action-edit"
+           title="Edit Item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr>
+    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--speed-text-muted);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 1rem; opacity: 0.5;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="M21 21l-4.35-4.35"></path>
+        </svg>
+        <div style="font-size: 1.125rem; margin-bottom: 0.5rem;">No items found</div>
+        <div style="font-size: 0.875rem;">Try adjusting your search or filters</div>
+    </td>
+</tr>
+{% endfor %}

@@ -1,0 +1,661 @@
+<!-- Speed & Efficiency - Progressive Enhancement Form -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if item %}Edit {{ item.name }}{% else %}Add New Item{% endif %} - Inventory{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<style>
+/* Progressive Enhancement Form Design */
+.speed-form-container {
+    min-height: 100vh;
+    background: var(--speed-bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.speed-form-header {
+    background: var(--speed-surface);
+    border-bottom: 1px solid var(--speed-border);
+    padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: var(--speed-shadow);
+}
+
+.speed-form-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+/* Progressive Sections */
+.speed-section {
+    background: var(--speed-surface);
+    border-radius: 0.75rem;
+    box-shadow: var(--speed-shadow);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.speed-section-header {
+    padding: 1rem 1.5rem;
+    background: var(--speed-bg);
+    border-bottom: 1px solid var(--speed-border);
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    cursor: pointer;
+    user-select: none;
+}
+
+.speed-section-title {
+    font-weight: 600;
+    color: var(--speed-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speed-section-toggle {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+}
+
+.speed-section-content {
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.speed-section.collapsed .speed-section-content {
+    display: none;
+}
+
+.speed-section.collapsed .speed-section-toggle {
+    transform: rotate(-90deg);
+}
+
+/* Smart Form Fields */
+.speed-field-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.speed-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.speed-field-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--speed-text);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.speed-field-required {
+    color: var(--speed-danger);
+}
+
+.speed-field-input {
+    padding: 0.75rem;
+    border: 1px solid var(--speed-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.15s ease;
+    background: var(--speed-surface);
+}
+
+.speed-field-input:focus {
+    outline: none;
+    border-color: var(--speed-primary);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+}
+
+.speed-field-help {
+    font-size: 0.75rem;
+    color: var(--speed-text-muted);
+}
+
+.speed-field-error {
+    font-size: 0.75rem;
+    color: var(--speed-danger);
+    background: #fef2f2;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    border-left: 3px solid var(--speed-danger);
+}
+
+/* Smart Suggestions */
+.speed-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--speed-surface);
+    border: 1px solid var(--speed-border);
+    border-top: none;
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow: var(--speed-shadow-lg);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.speed-suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--speed-border);
+    transition: background 0.15s ease;
+}
+
+.speed-suggestion-item:hover,
+.speed-suggestion-item.highlighted {
+    background: var(--speed-bg);
+}
+
+.speed-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* Progress Indicator */
+.speed-progress {
+    background: var(--speed-surface);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    position: sticky;
+    top: 120px;
+}
+
+.speed-progress-header {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--speed-text);
+}
+
+.speed-progress-bar {
+    background: var(--speed-border);
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.speed-progress-fill {
+    background: var(--speed-primary);
+    height: 100%;
+    border-radius: 0.25rem;
+    transition: width 0.3s ease;
+}
+
+.speed-progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.speed-progress-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--speed-text-muted);
+}
+
+.speed-progress-step.completed {
+    color: var(--speed-success);
+}
+
+.speed-progress-step.active {
+    color: var(--speed-primary);
+    font-weight: 500;
+}
+
+.speed-step-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.speed-step-icon.completed {
+    background: var(--speed-success);
+    border-color: var(--speed-success);
+    color: white;
+}
+
+/* Form Actions */
+.speed-form-actions {
+    background: var(--speed-surface);
+    border-top: 1px solid var(--speed-border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+}
+
+.speed-actions-left {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.speed-actions-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .speed-form-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .speed-progress {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .speed-field-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .speed-form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .speed-actions-left,
+    .speed-actions-right {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="speed-form-container">
+    <!-- Header -->
+    <div class="speed-form-header">
+        <div class="speed-breadcrumb">
+            <a href="{% url 'items_list' %}">Items</a>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9,18 15,12 9,6"></polyline>
+            </svg>
+            <span>{% if item %}Edit {{ item.name }}{% else %}Add New Item{% endif %}</span>
+        </div>
+        <h1 class="speed-title">{% if item %}Edit Item{% else %}Add New Item{% endif %}</h1>
+    </div>
+
+    <form method="post" id="speed-form" class="speed-form-content">
+        {% csrf_token %}
+        
+        <!-- Main Form Content -->
+        <div class="speed-main-content">
+            <!-- Essential Information -->
+            <div class="speed-section" data-section="essential">
+                <div class="speed-section-header" onclick="toggleSection(this)">
+                    <div class="speed-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 6 9 17l-5-5"></path>
+                        </svg>
+                        Essential Information
+                    </div>
+                    <svg class="speed-section-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="speed-section-content">
+                    <div class="speed-field-group">
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.name.id_for_label }}">
+                                Item Name <span class="speed-field-required">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="speed-field-error">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                            <div class="speed-field-help">Enter a clear, descriptive name</div>
+                        </div>
+
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.item_code.id_for_label }}">
+                                Item Code
+                            </label>
+                            {{ form.item_code }}
+                            {% if form.item_code.errors %}
+                                <div class="speed-field-error">{{ form.item_code.errors.0 }}</div>
+                            {% endif %}
+                            <div class="speed-field-help">Unique identifier (auto-generated if empty)</div>
+                        </div>
+                    </div>
+
+                    <div class="speed-field-group">
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.category.id_for_label }}">
+                                Category <span class="speed-field-required">*</span>
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="speed-field-error">{{ form.category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.sub_category.id_for_label }}">
+                                Subcategory
+                            </label>
+                            {{ form.sub_category }}
+                            {% if form.sub_category.errors %}
+                                <div class="speed-field-error">{{ form.sub_category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="speed-field">
+                        <label class="speed-field-label" for="{{ form.description.id_for_label }}">
+                            Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="speed-field-error">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                        <div class="speed-field-help">Detailed description for identification</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Units & Measurements -->
+            <div class="speed-section" data-section="units">
+                <div class="speed-section-header" onclick="toggleSection(this)">
+                    <div class="speed-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="6" width="20" height="8" rx="1"></rect>
+                            <path d="M17 14v7"></path>
+                            <path d="M7 14v7"></path>
+                            <path d="M17 3v3"></path>
+                            <path d="M7 3v3"></path>
+                            <path d="M10 14h4"></path>
+                        </svg>
+                        Units & Measurements
+                    </div>
+                    <svg class="speed-section-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="speed-section-content">
+                    <div class="speed-field-group">
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.base_unit.id_for_label }}">
+                                Base Unit <span class="speed-field-required">*</span>
+                            </label>
+                            {{ form.base_unit }}
+                            {% if form.base_unit.errors %}
+                                <div class="speed-field-error">{{ form.base_unit.errors.0 }}</div>
+                            {% endif %}
+                            <div class="speed-field-help">Standard unit for inventory tracking</div>
+                        </div>
+
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.purchase_unit.id_for_label }}">
+                                Purchase Unit
+                            </label>
+                            {{ form.purchase_unit }}
+                            {% if form.purchase_unit.errors %}
+                                <div class="speed-field-error">{{ form.purchase_unit.errors.0 }}</div>
+                            {% endif %}
+                            <div class="speed-field-help">Unit used when purchasing from suppliers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Details -->
+            <div class="speed-section collapsed" data-section="additional">
+                <div class="speed-section-header" onclick="toggleSection(this)">
+                    <div class="speed-section-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                        Additional Details
+                    </div>
+                    <svg class="speed-section-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="speed-section-content">
+                    <div class="speed-field-group">
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.brand.id_for_label }}">
+                                Brand
+                            </label>
+                            {{ form.brand }}
+                            {% if form.brand.errors %}
+                                <div class="speed-field-error">{{ form.brand.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="speed-field">
+                            <label class="speed-field-label" for="{{ form.reorder_level.id_for_label }}">
+                                Reorder Level
+                            </label>
+                            {{ form.reorder_level }}
+                            {% if form.reorder_level.errors %}
+                                <div class="speed-field-error">{{ form.reorder_level.errors.0 }}</div>
+                            {% endif %}
+                            <div class="speed-field-help">Minimum stock level before reordering</div>
+                        </div>
+                    </div>
+
+                    <div class="speed-field">
+                        <label class="speed-field-label" for="{{ form.departments.id_for_label }}">
+                            Departments
+                        </label>
+                        {{ form.departments }}
+                        {% if form.departments.errors %}
+                            <div class="speed-field-error">{{ form.departments.errors.0 }}</div>
+                        {% endif %}
+                        <div class="speed-field-help">Select departments that use this item</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="speed-sidebar">
+            <!-- Progress Indicator -->
+            <div class="speed-progress">
+                <div class="speed-progress-header">Completion Progress</div>
+                <div class="speed-progress-bar">
+                    <div class="speed-progress-fill" id="progress-fill" style="width: 25%;"></div>
+                </div>
+                <div class="speed-progress-steps">
+                    <div class="speed-progress-step active" data-step="essential">
+                        <div class="speed-step-icon">1</div>
+                        <span>Essential Information</span>
+                    </div>
+                    <div class="speed-progress-step" data-step="units">
+                        <div class="speed-step-icon">2</div>
+                        <span>Units & Measurements</span>
+                    </div>
+                    <div class="speed-progress-step" data-step="additional">
+                        <div class="speed-step-icon">3</div>
+                        <span>Additional Details</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Tips -->
+            <div class="speed-card">
+                <div class="speed-card-header">Quick Tips</div>
+                <div class="speed-card-content" style="font-size: 0.875rem; line-height: 1.5; color: var(--speed-text-muted);">
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="margin-bottom: 0.5rem;">💡 Use clear, descriptive names</li>
+                        <li style="margin-bottom: 0.5rem;">🏷️ Categories help with organization</li>
+                        <li style="margin-bottom: 0.5rem;">📏 Base unit is for inventory tracking</li>
+                        <li style="margin-bottom: 0.5rem;">🛒 Purchase unit is for ordering</li>
+                        <li>📊 Set reorder levels to avoid stockouts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Form Actions -->
+    <div class="speed-form-actions">
+        <div class="speed-actions-left">
+            <a href="{% if item %}{% url 'item_detail' item.item_id %}{% else %}{% url 'items_list' %}{% endif %}" 
+               class="speed-btn speed-btn-secondary">Cancel</a>
+        </div>
+        
+        <div class="speed-actions-right">
+            <button type="button" class="speed-btn speed-btn-secondary" onclick="saveDraft()">Save Draft</button>
+            <button type="submit" form="speed-form" class="speed-btn speed-btn-primary">
+                {% if item %}Update Item{% else %}Create Item{% endif %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/smart-forms.js' %}"></script>
+<script>
+// Progressive Enhancement JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSmartForm();
+    updateProgress();
+    
+    // Form field monitoring
+    document.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('input', updateProgress);
+        field.addEventListener('change', updateProgress);
+    });
+    
+    // Auto-save functionality
+    let saveTimeout;
+    document.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveDraft, 2000);
+        });
+    });
+});
+
+function toggleSection(header) {
+    const section = header.closest('.speed-section');
+    section.classList.toggle('collapsed');
+    updateProgress();
+}
+
+function updateProgress() {
+    const sections = document.querySelectorAll('.speed-section');
+    const totalSections = sections.length;
+    let completedSections = 0;
+    
+    sections.forEach(section => {
+        const sectionName = section.dataset.section;
+        const requiredFields = section.querySelectorAll('input[required], select[required]');
+        const allFilled = Array.from(requiredFields).every(field => field.value.trim() !== '');
+        
+        const stepElement = document.querySelector(`[data-step="${sectionName}"]`);
+        const stepIcon = stepElement.querySelector('.speed-step-icon');
+        
+        if (allFilled) {
+            stepElement.classList.add('completed');
+            stepElement.classList.remove('active');
+            stepIcon.innerHTML = '✓';
+            stepIcon.classList.add('completed');
+            completedSections++;
+        } else {
+            stepElement.classList.remove('completed');
+            if (!section.classList.contains('collapsed')) {
+                stepElement.classList.add('active');
+            }
+            stepIcon.innerHTML = stepElement.dataset.step === 'essential' ? '1' : 
+                                 stepElement.dataset.step === 'units' ? '2' : '3';
+            stepIcon.classList.remove('completed');
+        }
+    });
+    
+    const progress = (completedSections / totalSections) * 100;
+    document.getElementById('progress-fill').style.width = `${progress}%`;
+}
+
+function saveDraft() {
+    // Implement auto-save functionality
+    const formData = new FormData(document.getElementById('speed-form'));
+    
+    // Show save indicator
+    const saveButton = document.querySelector('[onclick="saveDraft()"]');
+    const originalText = saveButton.textContent;
+    saveButton.textContent = 'Saving...';
+    saveButton.disabled = true;
+    
+    // Simulate save (replace with actual AJAX call)
+    setTimeout(() => {
+        saveButton.textContent = 'Saved';
+        setTimeout(() => {
+            saveButton.textContent = originalText;
+            saveButton.disabled = false;
+        }, 1000);
+    }, 500);
+}
+
+function initializeSmartForm() {
+    // Initialize category-subcategory dependencies
+    const categoryField = document.querySelector('[name="category"]');
+    const subcategoryField = document.querySelector('[name="sub_category"]');
+    
+    if (categoryField && subcategoryField) {
+        categoryField.addEventListener('change', function() {
+            updateSubcategories(this.value, subcategoryField);
+        });
+    }
+    
+    // Initialize unit dependencies
+    const baseUnitField = document.querySelector('[name="base_unit"]');
+    const purchaseUnitField = document.querySelector('[name="purchase_unit"]');
+    
+    if (baseUnitField && purchaseUnitField) {
+        baseUnitField.addEventListener('change', function() {
+            updatePurchaseUnits(this.value, purchaseUnitField);
+        });
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 's':
+                e.preventDefault();
+                document.getElementById('speed-form').submit();
+                break;
+            case 'd':
+                e.preventDefault();
+                saveDraft();
+                break;
+        }
+    }
+});
+</script>
+{% endblock %}

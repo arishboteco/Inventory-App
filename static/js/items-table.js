@@ -53,14 +53,30 @@
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
     const formData = new FormData(form);
-    // TODO: wire to backend via fetch POST to inline update endpoint
-    // For now, optimistic UX
-    setTimeout(() => {
-      cancelInlineEdit(row);
-      if (window.notifications && window.notifications.showToast) {
-        window.notifications.showToast('Item updated successfully!', 'success');
-      }
-    }, 300);
+    const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+    fetch(`/items/${itemId}/inline-update/`, {
+      method: 'POST',
+      headers: csrf ? { 'X-CSRFToken': csrf } : {},
+      body: formData,
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((data) => {
+        if (data && data.ok) {
+          cancelInlineEdit(row);
+          if (window.notifications && window.notifications.showToast) {
+            window.notifications.showToast(data.message || 'Item updated', 'success');
+          }
+        } else {
+          if (window.notifications && window.notifications.showToast) {
+            window.notifications.showToast((data && data.message) || 'Save failed', 'error');
+          }
+        }
+      })
+      .catch(() => {
+        if (window.notifications && window.notifications.showToast) {
+          window.notifications.showToast('Network error while saving', 'error');
+        }
+      });
   }
 
   function deleteItem(row) {

@@ -130,6 +130,15 @@
         e.preventDefault();
         deleteItem(row);
         break;
+      case 'open-edit':
+        e.preventDefault();
+        const href = target.getAttribute('data-href');
+        if (!href) return;
+        fetch(href, { headers: { 'X-Requested-With': 'fetch' }})
+          .then(r => r.text())
+          .then(html => { if (window.modal) window.modal.open(html); })
+          .catch(() => { if (window.notifications) window.notifications.showToast('Failed to open editor', 'error'); });
+        break;
       case 'select-item':
         updateBulkBar();
         break;

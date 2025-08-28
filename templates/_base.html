@@ -18,6 +18,7 @@
     <script src="{% static 'js/formset.js' %}"></script>
     <script src="{% static 'js/table-sort.js' %}"></script>
     <script src="{% static 'js/tabs.js' %}"></script>
+    <script src="{% static 'js/modal.js' %}"></script>
   </head>
   <body class="min-h-screen bg-gray-50">
     <!-- Top Navigation -->
@@ -48,6 +49,14 @@
         {% endif %}
         {% block content %}{% endblock %}
       </main>
+
+      <!-- Modal Root -->
+      <div id="modal-root" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-modal-overlay" data-modal-close aria-label="Close modal"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+          <div id="modal-content" class="max-w-3xl w-full"></div>
+        </div>
+      </div>
       
       <!-- Footer -->
       {% include "components/footer.html" %}

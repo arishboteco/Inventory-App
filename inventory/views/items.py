@@ -276,6 +276,9 @@ class ItemEditView(View):
             "item": item,
             "excluded_fields": EXCLUDED_FIELDS,
         }
+        # If partial requested, return compact modal-friendly form
+        if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
+            return render(request, "inventory/_item_form_partial.html", ctx)
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk: int):
@@ -291,9 +294,14 @@ class ItemEditView(View):
                 form.save()
                 item_service.get_all_items_with_stock.clear()
                 item_service.get_distinct_departments_from_items.clear()
+                # Partial requests expect JSON ok
+                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
+                    return JsonResponse({"ok": True, "message": "Item updated"})
                 messages.success(request, "Item updated")
                 return redirect("items_list")
             except (ValidationError, DatabaseError):
+                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
+                    return JsonResponse({"ok": False, "message": "Unable to save item"}, status=400)
                 messages.error(request, "Unable to save item")
         ctx = {
             "form": form,
@@ -301,6 +309,8 @@ class ItemEditView(View):
             "item": item,
             "excluded_fields": EXCLUDED_FIELDS,
         }
+        if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
+            return render(request, "inventory/_item_form_partial.html", ctx, status=400)
         return render(request, self.template_name, ctx)
 
 

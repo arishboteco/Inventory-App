@@ -1,0 +1,47 @@
+<div class="card" style="max-width: 860px;">
+  <div class="card-header flex items-center justify-between">
+    <h3 class="text-lg font-semibold">Edit Item — {{ item.name }}</h3>
+    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+  </div>
+  <div class="card-body">
+    <form method="post" data-modal-form>
+      {% csrf_token %}
+      <input type="hidden" name="partial" value="1"/>
+      <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
+        <div>
+          <label class="form-label">Name</label>
+          {{ form.name }}
+        </div>
+        <div>
+          <label class="form-label">Item Code</label>
+          {{ form.item_code }}
+        </div>
+        <div>
+          <label class="form-label">Category</label>
+          {{ form.category }}
+        </div>
+        <div>
+          <label class="form-label">Sub Category</label>
+          {{ form.sub_category }}
+        </div>
+        <div>
+          <label class="form-label">Reorder Point</label>
+          {{ form.reorder_point }}
+        </div>
+        <div>
+          <label class="form-label">Active</label>
+          {{ form.is_active }}
+        </div>
+        <div style="grid-column: span 2;">
+          <label class="form-label">Notes</label>
+          {{ form.notes }}
+        </div>
+      </div>
+      <div class="mt-3 flex items-center justify-end" style="gap:.5rem">
+        <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+

@@ -99,7 +99,7 @@
         deleteItem(row);
         break;
       case 'select-item':
-        // no-op for now; hook bulk actions toolbar later
+        updateBulkBar();
         break;
       default:
         break;
@@ -128,4 +128,41 @@
 
   // Expose minimal API for debugging
   window.itemsTable = { toggleDetails, enableInlineEdit, cancelInlineEdit };
+  
+  // Bulk actions bar helpers
+  function countSelections() {
+    return document.querySelectorAll("input[name='selected_items']:checked").length;
+  }
+  function updateBulkBar() {
+    const count = countSelections();
+    const bar = document.getElementById('bulk-actions');
+    const label = document.getElementById('bulk-count');
+    if (!bar || !label) return;
+    label.textContent = `${count} selected`;
+    if (count > 0) bar.classList.remove('hidden'); else bar.classList.add('hidden');
+  }
+
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.name === 'selected_items') updateBulkBar();
+  });
+
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-bulk-action]');
+    if (!btn) return;
+    const action = btn.getAttribute('data-bulk-action');
+    const ids = Array.from(document.querySelectorAll("input[name='selected_items']:checked")).map(el => el.value);
+    if (ids.length === 0) return;
+    if (action === 'export') {
+      // naive CSV export trigger: navigate to export URL with current query
+      const url = new URL(window.location.origin + '/items/export/');
+      // Retain existing filters
+      const current = new URL(window.location.href);
+      current.searchParams.forEach((v, k) => url.searchParams.append(k, v));
+      window.location.assign(url.toString());
+    } else if (action === 'deactivate') {
+      if (window.notifications) window.notifications.showToast('Deactivate action queued', 'info');
+    } else if (action === 'assign') {
+      if (window.notifications) window.notifications.showToast('Assign to department not yet implemented', 'info');
+    }
+  });
 })();

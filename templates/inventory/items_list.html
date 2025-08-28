@@ -137,9 +137,11 @@
         q=request.GET.q 
         filters=filters 
         hx_get=items_table_url 
-        hx_target='.card .overflow-x-auto' 
+        hx_target='#items-list' 
+        hx_indicator='#items-loading' 
         search_placeholder='e.g., Tomato, Rice' 
         export_url=export_url 
+        layout=request.GET.layout|default:'cards' 
     %}
   </div>
   </div>
@@ -150,6 +152,11 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-gray-900">Inventory Items</h2>
       <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-500">Layout:</span>
+        <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+          <button type="button" class="px-2 py-1 text-sm" data-layout-btn data-value="cards">Cards</button>
+          <button type="button" class="px-2 py-1 text-sm bg-gray-50 border-l border-gray-200" data-layout-btn data-value="table">Table</button>
+        </div>
         <span class="text-sm text-gray-500">Density:</span>
         <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
           <button type="button" class="px-2 py-1 text-sm" data-density-btn data-value="comfortable">Comfortable</button>
@@ -159,9 +166,28 @@
     </div>
   </div>
   
-  <div class="overflow-x-auto">
-    {% include "inventory/_items_table.html" %}
+  <div class="overflow-x-auto" id="items-list">
+    {% with layout=request.GET.layout|default:'cards' %}
+      {% if layout == 'table' %}
+        {% include "inventory/_items_table_grid.html" %}
+      {% else %}
+        {% include "inventory/_items_table.html" %}
+      {% endif %}
+    {% endwith %}
   </div>
+  <div id="items-loading" class="hidden p-4">
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+  </div>
+</div>
+
+<!-- Sticky bulk actions bar -->
+<div id="bulk-actions" class="bulk-bar hidden" role="region" aria-label="Bulk actions">
+  <span id="bulk-count" class="mr-2">0 selected</span>
+  <button type="button" class="btn-secondary btn-sm" data-bulk-action="export">Export</button>
+  <button type="button" class="btn-secondary btn-sm" data-bulk-action="deactivate">Deactivate</button>
+  <button type="button" class="btn-secondary btn-sm" data-bulk-action="assign">Assign Dept</button>
 </div>
 
 <!-- Pagination -->
@@ -212,6 +238,16 @@ document.addEventListener('DOMContentLoaded', function() {
       btn.addEventListener('click', () => {
         const value = btn.getAttribute('data-value');
         container.setAttribute('data-density', value);
+      });
+    });
+
+    // Layout toggle
+    document.querySelectorAll('[data-layout-btn]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const value = btn.getAttribute('data-value');
+        const url = new URL(window.location.href);
+        url.searchParams.set('layout', value);
+        window.location.assign(url.toString());
       });
     });
 });

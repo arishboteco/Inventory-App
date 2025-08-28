@@ -558,6 +558,11 @@
     width: 1rem;
     text-align: center;
   }
+  /* Skeleton rows */
+  .skeleton-row { height: 44px; border-radius: 0.5rem; background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%); background-size: 400% 100%; margin-bottom: 0.5rem; animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
+  /* Bulk actions bar */
+  .bulk-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 0.5rem; z-index: 40; }
   /* Minimal utility fallbacks for widths/heights commonly used in templates */
   .w-3 { width: 0.75rem; }
   .h-3 { height: 0.75rem; }

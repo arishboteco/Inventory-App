@@ -209,6 +209,12 @@ class ItemsTableView(TemplateView):
         ctx.update({"page_obj": page_obj, "page_size": per_page})
         return ctx
 
+    def get_template_names(self):
+        layout = (self.request.GET.get("layout") or "").lower()
+        if layout == "table":
+            return ["inventory/_items_table_grid.html"]
+        return [self.template_name]
+
 
 class ItemsExportView(View):
     """Export the filtered item list as CSV.

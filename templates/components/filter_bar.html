@@ -42,6 +42,7 @@
       <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-tertiary w-full">{{ export_label|default:'Export' }}</button>
     </div>
   {% endif %}
+  {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
   {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
   {% if sort %}<input type="hidden" name="sort" value="{{ sort|default:'name' }}">{% endif %}
   {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}

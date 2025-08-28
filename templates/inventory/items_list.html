@@ -1,369 +1,797 @@
-{% extends "components/list_layout.html" %}
-{% block title %}Items – Inventory App{% endblock %}
-{% block heading %}Items{% endblock %}
-{% block actions %}
-  <a href="{% url 'items_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
-{% endblock %}
-{% block filter_bar %}
-  <!-- Collapsible Add Item Form -->
-  <div class="mb-6">
-    <button 
-      id="toggle-add-form" 
-      class="btn-primary flex items-center gap-2 mb-4" 
-      onclick="toggleAddItemForm()"
-      type="button"
-    >
-      <span id="form-toggle-icon">+</span>
-      <span id="form-toggle-text">Add New Item</span>
-    </button>
-    
-    <div id="add-item-form" class="hidden">
-      <form id="item-form" method="post" class="grid grid-cols-1 gap-4 p-4 border rounded-lg bg-gray-50" onsubmit="return submitItemForm(event)">
-        {% csrf_token %}
-        <div id="form-messages" class="hidden"></div>
-        {% if form.non_field_errors %}
-          <ul class="text-red-600 list-disc pl-5">
-            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-          </ul>
-        {% endif %}
-        <h3 class="text-lg font-semibold text-gray-800">Enter New Item Details</h3>
+{% extends '_base.html' %}
+{% load static %}
+
+{% block title %}Item Master Management - Inventory App{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-7xl mx-auto">
         
-        <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-          <!-- Name Field with Validation -->
-          <div id="name-field" class="space-y-1 relative col-span-2">
-            <label for="{{ form.name.id_for_label }}" class="block mb-1 font-medium">{{ form.name.label }} *</label>
-            {{ form.name }}
-            <div id="name-validation-feedback" class="text-sm mt-1 hidden"></div>
-            {% if form.name.help_text %}
-              <p class="text-sm text-gray-500">{{ form.name.help_text }}</p>
-            {% endif %}
-            {% if form.name.errors %}
-              <ul class="text-sm text-red-600 list-disc pl-5">
-                {% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}
-              </ul>
-            {% endif %}
-          </div>
-          
-          <!-- Unit Fields -->
-          {% include "components/form_field.html" with field=form.base_unit %}
-          {% include "components/form_field.html" with field=form.purchase_unit %}
-          
-          <!-- Category Fields -->  
-          {% include "components/form_field.html" with field=form.category %}
-          {% include "components/form_field.html" with field=form.sub_category %}
-          
-          <!-- Department Selection -->
-          {% if form.departments %}
-            <div class="form-group col-span-2">
-              <label for="{{ form.departments.id_for_label }}" class="form-label">
-                {{ form.departments.label }}
-                {% if form.departments.help_text %}
-                  <span class="text-sm text-gray-500">({{ form.departments.help_text }})</span>
-                {% endif %}
-              </label>
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mt-2">
-                {% for choice in form.departments %}
-                  <label class="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50">
-                    {{ choice.tag }}
-                    <span class="text-sm">{{ choice.choice_label }}</span>
-                  </label>
-                {% endfor %}
-              </div>
-              {% if form.departments.errors %}
-                <div class="text-sm text-red-600 mt-1">
-                  {% for error in form.departments.errors %}{{ error }}{% endfor %}
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex items-center mb-4">
+                <div class="w-8 h-8 bg-orange-500 rounded mr-3 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
                 </div>
-              {% endif %}
+                <h1 class="text-3xl font-bold text-gray-900">Item Master Management</h1>
             </div>
-          {% endif %}
-          
-          <!-- Other Form Fields -->
-          {% for field in form %}
-            {% if field.name not in excluded_fields %}
-              {% include "components/form_field.html" with field=field %}
+            <p class="text-gray-600">Manage your inventory items, add new items, edit existing ones, and view stock levels</p>
+        </div>
+
+        <!-- Messages Section -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} bg-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-200 text-{% if message.tags == 'success' %}green{% elif message.tags == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-md mb-4" role="alert">
+                        <div class="flex">
+                            <div class="py-1">
+                                {% if message.tags == 'success' %}
+                                    <svg class="fill-current h-6 w-6 text-green-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/>
+                                    </svg>
+                                {% elif message.tags == 'error' %}
+                                    <svg class="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm1.41-1.41A8 8 0 1 0 15.66 4.34 8 8 0 0 0 4.34 15.66zm9.9-8.49L11.41 10l2.83 2.83-1.41 1.41L10 11.41l-2.83 2.83-1.41-1.41L8.59 10 5.76 7.17l1.41-1.41L10 8.59l2.83-2.83 1.41 1.41z"/>
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <p class="font-bold">{{ message.tags|title }}!</p>
+                                <p class="text-sm">{{ message }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Add New Inventory Item Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <button onclick="toggleAddForm()" class="flex items-center w-full text-left focus:outline-none group">
+                    <svg id="add-form-icon" class="w-5 h-5 text-gray-400 mr-2 transform transition-transform group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span class="text-lg font-medium text-gray-900">Add New Inventory Item</span>
+                </button>
+            </div>
+            
+                        <div id="add-item-form" class="hidden px-6 py-6">
+                <form method="POST" action="{% url 'items_list' %}" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Hidden fields required by the form -->
+                    <input type="hidden" name="unit_id" value="55">
+                    
+                    <!-- Basic Information Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <h4 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>
+                        </div>
+                        
+                        <div>
+                            <label for="id_name" class="block text-sm font-medium text-gray-700 mb-1">
+                                Item Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="name" 
+                                   id="id_name"
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                   placeholder="Enter item name">
+                        </div>
+
+                        <div>
+                            <label for="id_category_id" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <select name="category_id" 
+                                    id="id_category_id"
+                                    data-field="category_id"
+                                    class="predictive w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                {% for value, label in form.category_id.field.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="id_unit_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Unit <span class="text-red-500">*</span>
+                            </label>
+                            <select name="unit_id" 
+                                    id="id_unit_id"
+                                    data-field="unit_id"
+                                    required
+                                    class="predictive w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                {% for value, label in form.unit_id.field.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="id_initial_purchase_price" class="block text-sm font-medium text-gray-700 mb-1">Initial Purchase Price</label>
+                            <input type="number" 
+                                   name="initial_purchase_price" 
+                                   id="id_initial_purchase_price"
+                                   step="0.01"
+                                   min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <!-- Stock Information Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-3">
+                            <h4 class="text-lg font-medium text-gray-900 mb-4">Stock Information</h4>
+                        </div>
+                        
+                        <div>
+                            <label for="id_current_stock" class="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
+                            <input type="number" 
+                                   name="current_stock" 
+                                   id="id_current_stock"
+                                   step="0.01"
+                                   min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                   placeholder="0.00">
+                        </div>
+
+                        <div>
+                            <label for="id_reorder_point" class="block text-sm font-medium text-gray-700 mb-1">Reorder Point</label>
+                            <input type="number" 
+                                   name="reorder_point" 
+                                   id="id_reorder_point"
+                                   step="0.01"
+                                   min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                   placeholder="10.00">
+                        </div>
+
+                        <div>
+                            <label for="id_minimum_order_qty" class="block text-sm font-medium text-gray-700 mb-1">Minimum Order Quantity</label>
+                            <input type="number" 
+                                   name="minimum_order_qty" 
+                                   id="id_minimum_order_qty"
+                                   step="0.01"
+                                   min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                   placeholder="1.00">
+                        </div>
+                    </div>
+
+                    <!-- Supplier Information Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <h4 class="text-lg font-medium text-gray-900 mb-4">Supplier Information</h4>
+                        </div>
+                        
+                        <div>
+                            <label for="id_preferred_supplier" class="block text-sm font-medium text-gray-700 mb-1">Preferred Supplier</label>
+                            <select name="preferred_supplier" 
+                                    id="id_preferred_supplier"
+                                    class="predictive w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="">Select Supplier</option>
+                                {% for supplier in suppliers %}
+                                    <option value="{{ supplier.supplier_id }}">{{ supplier.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="id_lead_time_days" class="block text-sm font-medium text-gray-700 mb-1">Lead Time (Days)</label>
+                            <input type="number" 
+                                   name="lead_time_days" 
+                                   id="id_lead_time_days"
+                                   min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                   placeholder="7">
+                        </div>
+                    </div>
+
+                    <!-- Department Assignment Section -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Department Assignment</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {% for department in departments_for_form %}
+                                <label class="flex items-center space-x-2 p-2 border border-gray-200 rounded-md hover:bg-gray-50">
+                                    <input type="checkbox" 
+                                           name="departments" 
+                                           value="{{ department.department_id }}"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm text-gray-700">{{ department.name }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Additional Information Section -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="id_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                                <textarea name="notes" 
+                                          id="id_notes"
+                                          rows="3"
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                          placeholder="Additional notes about this item"></textarea>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       name="is_active" 
+                                       id="id_is_active"
+                                       checked
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="id_is_active" class="ml-2 text-sm text-gray-700">Active Item</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <button type="button" 
+                                onclick="toggleAddForm()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            Add Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bulk Upload Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <button onclick="toggleBulkUpload()" class="flex items-center w-full text-left focus:outline-none group">
+                    <svg id="bulk-upload-icon" class="w-5 h-5 text-gray-400 mr-2 transform transition-transform group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                    </svg>
+                    <span class="text-lg font-medium text-gray-900">Bulk Upload Items</span>
+                </button>
+            </div>
+            
+            <div id="bulk-upload-form" class="hidden px-6 py-6">
+                <div class="text-sm text-gray-600 mb-4">
+                    Upload a CSV file with columns: item_name, purchase_unit, category, sub_category, departments, reorder_point and description.
+                </div>
+                
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="mt-4">
+                        <label for="csv-upload" class="cursor-pointer">
+                            <span class="mt-2 block text-sm font-medium text-gray-900">Drag and drop file here</span>
+                            <input id="csv-upload" name="csv-upload" type="file" accept=".csv" class="sr-only">
+                        </label>
+                        <p class="mt-1 text-sm text-gray-500">or click to browse (CSV files only)</p>
+                    </div>
+                    <button type="button" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Browse Files
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View & Manage Existing Items Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <h2 class="text-lg font-medium text-gray-900">View & Manage Existing Items</h2>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="text-sm text-gray-500 hover:text-gray-700 flex items-center" onclick="toggleShowInactive()">
+                            <input type="checkbox" id="show-inactive" class="mr-1"> Show Inactive
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters Bar -->
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <!-- Bulk Actions Bar (Hidden by default) -->
+                <div id="bulk-actions-bar" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm font-medium text-blue-900">
+                                <span id="selected-count-header">0</span> items selected
+                            </span>
+                            <button onclick="selectAllItems()" class="text-sm text-blue-600 hover:text-blue-800">
+                                Select all
+                            </button>
+                            <button onclick="clearAllSelections()" class="text-sm text-blue-600 hover:text-blue-800">
+                                Clear selection
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="bulkEdit()" class="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                                Bulk Edit
+                            </button>
+                            <button onclick="bulkExport()" class="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+                                Export Selected
+                            </button>
+                            <button onclick="bulkDelete()" class="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
+                                Delete Selected
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="GET" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        <!-- Search -->
+                        <div class="md:col-span-2">
+                            <input type="text" 
+                                   name="q" 
+                                   value="{{ request.GET.q }}"
+                                   placeholder="🔍 Search by item name..."
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div>
+                            <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.0 }}" {% if request.GET.category == category.0 %}selected{% endif %}>
+                                        {{ category.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Department Filter -->
+                        <div>
+                            <select name="department" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                    <option value="{{ dept.0 }}" {% if request.GET.department == dept.0 %}selected{% endif %}>
+                                        {{ dept.1 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <select name="active" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="">All Status</option>
+                                <option value="1" {% if request.GET.active == "1" %}selected{% endif %}>Active</option>
+                                <option value="0" {% if request.GET.active == "0" %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-2">
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                Filter
+                            </button>
+                            <a href="{% url 'items_list' %}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm">
+                                Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Enhanced Items Table with Expandable Rows -->
+            <div class="overflow-hidden">
+                {% include 'inventory/_items_table.html' %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} items
+                    </div>
+                    <div class="flex space-x-1">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+                               class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Previous</a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="px-3 py-2 text-sm bg-blue-600 text-white rounded-md">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+                                   class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" 
+                               class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
             {% endif %}
-          {% endfor %}
         </div>
-        
-        <div class="flex gap-2">
-          <button type="submit" id="submit-btn" class="btn-primary">
-            <span id="submit-text">Create Item</span>
-            <span id="submit-spinner" class="hidden ml-2">
-              <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </span>
-          </button>
-          <button type="button" onclick="clearForm()" class="btn-secondary">Clear</button>
-          <button type="button" onclick="toggleAddItemForm()" class="btn-secondary">Cancel</button>
-        </div>
-      </form>
     </div>
-  </div>
-  
-  <!-- Filter Bar -->
-  {% url 'items_table' as items_table_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search items..." hx_get=items_table_url hx_target="#items_table" hx_indicator="#htmx-spinner" filters=filters export_url=export_url sort=sort direction=direction %}
-{% endblock %}
+</div>
 
-{% block extra %}
-  <script>
-    // Toggle function for add item form
-    function toggleAddItemForm() {
-      const form = document.getElementById('add-item-form');
-      const icon = document.getElementById('form-toggle-icon');
-      const text = document.getElementById('form-toggle-text');
-      
-      if (form.classList.contains('hidden')) {
+<script>
+// Global state for selected items
+let selectedItems = new Set();
+
+// Toggle collapsible sections
+function toggleAddForm() {
+    const form = document.getElementById('add-item-form');
+    const icon = document.getElementById('add-form-icon');
+    
+    if (form.classList.contains('hidden')) {
         form.classList.remove('hidden');
-        icon.textContent = '−';
-        text.textContent = 'Hide Add Item Form';
-      } else {
+        icon.style.transform = 'rotate(45deg)';
+    } else {
         form.classList.add('hidden');
-        icon.textContent = '+';
-        text.textContent = 'Add New Item';
-      }
+        icon.style.transform = 'rotate(0deg)';
     }
+}
 
-    // Clear form function
-    function clearForm() {
-      const form = document.getElementById('item-form');
-      form.reset();
-      document.getElementById('form-messages').classList.add('hidden');
-      document.getElementById('name-validation-feedback').classList.add('hidden');
-      
-      // Reset dynamic dropdowns to default state
-      const purchaseSelect = document.getElementById('id_purchase_unit');
-      const subSelect = document.getElementById('id_sub_category');
-      
-      if (purchaseSelect) {
-        purchaseSelect.innerHTML = '<option value="">Select purchase unit</option>';
-      }
-      if (subSelect) {
-        subSelect.innerHTML = '<option value="">Select subcategory</option>';
-      }
+function toggleBulkUpload() {
+    const form = document.getElementById('bulk-upload-form');
+    const icon = document.getElementById('bulk-upload-icon');
+    
+    if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        form.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
     }
+}
 
-    // Show loading state
-    function setFormLoading(loading) {
-      const submitBtn = document.getElementById('submit-btn');
-      const submitText = document.getElementById('submit-text');
-      const submitSpinner = document.getElementById('submit-spinner');
-      
-      if (loading) {
-        submitBtn.disabled = true;
-        submitText.textContent = 'Creating...';
-        submitSpinner.classList.remove('hidden');
-      } else {
-        submitBtn.disabled = false;
-        submitText.textContent = 'Create Item';
-        submitSpinner.classList.add('hidden');
-      }
+function toggleShowInactive() {
+    const checkbox = document.getElementById('show-inactive');
+    console.log('Show inactive:', checkbox.checked);
+    // Implement filtering logic here
+}
+
+// Enhanced item selection management
+function toggleItemSelection(itemId, checkbox) {
+    if (checkbox.checked) {
+        selectedItems.add(itemId);
+    } else {
+        selectedItems.delete(itemId);
     }
+    updateBulkActionsDisplay();
+}
 
-    // Show form messages
-    function showMessage(message, type = 'success') {
-      const messageDiv = document.getElementById('form-messages');
-      const bgClass = type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200';
-      
-      messageDiv.innerHTML = `
-        <div class="p-3 border rounded-md ${bgClass}">
-          <div class="flex items-center gap-2">
-            <span>${type === 'success' ? '✅' : '❌'}</span>
+function selectAllItems() {
+    const itemCheckboxes = document.querySelectorAll('input[name="selected_items"]');
+    selectedItems.clear();
+    
+    itemCheckboxes.forEach(cb => {
+        cb.checked = true;
+        selectedItems.add(cb.value);
+    });
+    updateBulkActionsDisplay();
+}
+
+function clearAllSelections() {
+    const itemCheckboxes = document.querySelectorAll('input[name="selected_items"]');
+    selectedItems.clear();
+    
+    itemCheckboxes.forEach(cb => {
+        cb.checked = false;
+    });
+    updateBulkActionsDisplay();
+}
+
+function updateBulkActionsDisplay() {
+    const bulkActionsBar = document.getElementById('bulk-actions-bar');
+    const selectedCountHeader = document.getElementById('selected-count-header');
+    const selectedCount = document.getElementById('selected-count');
+    const bulkActions = document.getElementById('bulk-actions');
+    
+    if (selectedItems.size > 0) {
+        if (bulkActionsBar) {
+            bulkActionsBar.classList.remove('hidden');
+            selectedCountHeader.textContent = selectedItems.size;
+        }
+        if (bulkActions) {
+            bulkActions.classList.remove('hidden');
+            selectedCount.textContent = selectedItems.size;
+        }
+    } else {
+        if (bulkActionsBar) {
+            bulkActionsBar.classList.add('hidden');
+        }
+        if (bulkActions) {
+            bulkActions.classList.add('hidden');
+        }
+    }
+}
+
+// Bulk operations
+function bulkEdit() {
+    if (selectedItems.size === 0) {
+        showNotification('Please select at least one item to edit.', 'warning');
+        return;
+    }
+    
+    // Create a modal or redirect to bulk edit page
+    console.log('Bulk editing items:', Array.from(selectedItems));
+    showNotification(`Bulk edit initiated for ${selectedItems.size} items`, 'info');
+}
+
+function bulkExport() {
+    if (selectedItems.size === 0) {
+        showNotification('Please select at least one item to export.', 'warning');
+        return;
+    }
+    
+    // Create export request
+    const itemIds = Array.from(selectedItems).join(',');
+    const exportUrl = `/inventory/export/?items=${itemIds}`;
+    
+    // Create a hidden link and trigger download
+    const link = document.createElement('a');
+    link.href = exportUrl;
+    link.download = `inventory_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification(`Exported ${selectedItems.size} items`, 'success');
+}
+
+function bulkDelete() {
+    if (selectedItems.size === 0) {
+        showNotification('Please select at least one item to delete.', 'warning');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ${selectedItems.size} selected item(s)? This action cannot be undone.`)) {
+        return;
+    }
+    
+    // Send bulk delete request
+    const itemIds = Array.from(selectedItems);
+    console.log('Bulk deleting items:', itemIds);
+    
+    // Here you would typically send an AJAX request
+    fetch('/inventory/bulk-delete/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({
+            item_ids: itemIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove deleted items from DOM
+            itemIds.forEach(itemId => {
+                const itemRow = document.querySelector(`[data-item-id="${itemId}"]`);
+                if (itemRow) {
+                    itemRow.remove();
+                }
+            });
+            
+            selectedItems.clear();
+            updateBulkActionsDisplay();
+            showNotification(`Successfully deleted ${itemIds.length} items`, 'success');
+        } else {
+            showNotification('Error deleting items: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while deleting items', 'error');
+    });
+}
+
+// Utility functions
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value || 
+           document.querySelector('meta[name="csrf-token"]').content;
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 transition-all duration-300 transform translate-x-full ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+    }`;
+    
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <span class="mr-2">
+                ${type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}
+            </span>
             <span>${message}</span>
-          </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                ✕
+            </button>
         </div>
-      `;
-      messageDiv.classList.remove('hidden');
-      
-      if (type === 'success') {
-        setTimeout(() => {
-          messageDiv.classList.add('hidden');
-        }, 3000);
-      }
-    }
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
+}
 
-    // Check for similar item names
-    function checkSimilarNames(itemName) {
-      if (!itemName || itemName.length < 3) return;
-      
-      fetch(`/items/check-similar/?name=${encodeURIComponent(itemName)}`)
-        .then(response => response.json())
+// Dynamic filtering functions for the add item form
+function updateSubcategories(categoryValue) {
+    console.log('updateSubcategories called with:', categoryValue);
+    
+    const subCategorySelect = document.getElementById('id_sub_category');
+    if (!subCategorySelect) {
+        console.error('Sub category select not found');
+        return;
+    }
+    
+    // Clear current options
+    subCategorySelect.innerHTML = '<option value="">Loading...</option>';
+    
+    if (!categoryValue) {
+        subCategorySelect.innerHTML = '<option value="">Select Sub Category</option>';
+        return;
+    }
+    
+    // Fetch subcategories for the selected category
+    const url = `/inventory/subcategories/?category=${encodeURIComponent(categoryValue)}`;
+    console.log('Fetching subcategories from URL:', url);
+    
+    fetch(url)
+        .then(response => {
+            console.log('Subcategories response status:', response.status);
+            return response.json();
+        })
         .then(data => {
-          const feedbackDiv = document.getElementById('name-validation-feedback');
-          
-          if (data.has_similar) {
-            const items = data.similar_items.map(item => item.name).join(', ');
-            feedbackDiv.innerHTML = `
-              <div class="text-amber-600">
-                ⚠️ Similar items found: ${items}
-              </div>
-            `;
-            feedbackDiv.classList.remove('hidden');
-          } else {
-            feedbackDiv.classList.add('hidden');
-          }
+            console.log('Subcategories data received:', data);
+            // Clear and populate options
+            subCategorySelect.innerHTML = '<option value="">Select Sub Category</option>';
+            
+            data.subcategories.forEach(subcategory => {
+                const option = document.createElement('option');
+                option.value = subcategory[0];
+                option.textContent = subcategory[1];
+                subCategorySelect.appendChild(option);
+            });
+            console.log('Subcategory options updated successfully');
         })
         .catch(error => {
-          console.error('Error checking similar names:', error);
+            console.error('Error loading subcategories:', error);
+            subCategorySelect.innerHTML = '<option value="">Error loading subcategories</option>';
         });
-    }
+}
 
-    // Submit form function
-    function submitItemForm(event) {
-      event.preventDefault();
-      setFormLoading(true);
-      
-      const form = document.getElementById('item-form');
-      const formData = new FormData(form);
-      
-      fetch('/items/create/', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        setFormLoading(false);
-        
-        if (data.success) {
-          showMessage(data.message, 'success');
-          clearForm();
-          // Refresh the items table if using HTMX
-          if (window.htmx) {
-            htmx.trigger('#items_table', 'htmx:trigger');
-          }
-        } else {
-          if (data.errors) {
-            let errorMessage = 'Please fix the following errors:<ul class="list-disc pl-5">';
-            Object.entries(data.errors).forEach(([field, errors]) => {
-              errors.forEach(error => {
-                errorMessage += `<li>${field}: ${error}</li>`;
-              });
-            });
-            errorMessage += '</ul>';
-            showMessage(errorMessage, 'error');
-          } else {
-            showMessage('❌ Failed to create item. Please try again.', 'error');
-          }
-        }
-      })
-      .catch(error => {
-        setFormLoading(false);
-        console.error('Error:', error);
-        showMessage('❌ An error occurred. Please try again.', 'error');
-      });
-      
-      return false;
-    }
-
-    // Initialize form on page load
-    document.addEventListener('DOMContentLoaded', function () {
-      console.log('Initializing form...');
-      
-      // Get form elements
-      const baseInput = document.getElementById('id_base_unit');
-      const purchaseInput = document.getElementById('id_purchase_unit');
-      const categoryInput = document.getElementById('id_category');
-      const subInput = document.getElementById('id_sub_category');
-      
-      if (!baseInput || !purchaseInput || !categoryInput || !subInput) {
-        console.error('Form elements not found');
+function updatePurchaseUnits(baseUnit) {
+    console.log('updatePurchaseUnits called with:', baseUnit);
+    
+    const purchaseUnitSelect = document.getElementById('id_purchase_unit');
+    if (!purchaseUnitSelect) {
+        console.error('Purchase unit select not found');
         return;
-      }
-      
-      // Set up base unit -> purchase unit dependency
-      baseInput.addEventListener('change', function () {
-        const baseUnit = this.value;
-        console.log('Base unit changed to:', baseUnit);
-        
-        if (!baseUnit) {
-          purchaseInput.innerHTML = '<option value="">Select purchase unit</option>';
-          return;
-        }
-        
-        // Fetch purchase units for this base unit
-        fetch(`/items/purchase-units/?base_unit=${encodeURIComponent(baseUnit)}`)
-          .then(response => response.json())
-          .then(data => {
-            const currentValue = purchaseInput.value; // Preserve current selection
-            purchaseInput.innerHTML = '<option value="">Select purchase unit</option>';
+    }
+    
+    // Clear current options
+    purchaseUnitSelect.innerHTML = '<option value="">Loading...</option>';
+    
+    if (!baseUnit) {
+        purchaseUnitSelect.innerHTML = '<option value="">Select Purchase Unit</option>';
+        return;
+    }
+    
+    // Fetch purchase units for the selected base unit
+    const url = `/inventory/purchase-units/?base_unit=${encodeURIComponent(baseUnit)}`;
+    console.log('Fetching purchase units from URL:', url);
+    
+    fetch(url)
+        .then(response => {
+            console.log('Purchase units response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Purchase units data received:', data);
+            // Clear and populate options
+            purchaseUnitSelect.innerHTML = '<option value="">Select Purchase Unit</option>';
             
             data.purchase_units.forEach(unit => {
-              const option = document.createElement('option');
-              option.value = unit[0];
-              option.textContent = unit[1];
-              if (unit[0] === currentValue) {
-                option.selected = true;
-              }
-              purchaseInput.appendChild(option);
+                const option = document.createElement('option');
+                option.value = unit[0];
+                option.textContent = unit[1];
+                purchaseUnitSelect.appendChild(option);
             });
-          })
-          .catch(error => {
+            console.log('Purchase unit options updated successfully');
+        })
+        .catch(error => {
             console.error('Error loading purchase units:', error);
-            purchaseInput.innerHTML = '<option value="">Error loading units</option>';
-          });
-      });
-      
-      // Set up category -> subcategory dependency  
-      categoryInput.addEventListener('change', function () {
-        const category = this.value;
-        console.log('Category changed to:', category);
-        
-        if (!category) {
-          subInput.innerHTML = '<option value="">Select subcategory</option>';
-          return;
-        }
-        
-        // Fetch subcategories for this category
-        fetch(`/items/subcategories/?category=${encodeURIComponent(category)}`)
-          .then(response => response.json())
-          .then(data => {
-            const currentValue = subInput.value; // Preserve current selection
-            subInput.innerHTML = '<option value="">Select subcategory</option>';
-            
-            data.subcategories.forEach(subcat => {
-              const option = document.createElement('option');
-              option.value = subcat[0];
-              option.textContent = subcat[1];
-              if (subcat[0] === currentValue) {
-                option.selected = true;
-              }
-              subInput.appendChild(option);
-            });
-          })
-          .catch(error => {
-            console.error('Error loading subcategories:', error);
-            subInput.innerHTML = '<option value="">Error loading subcategories</option>';
-          });
-      });
-
-      // Add name validation listener
-      const nameInput = document.getElementById('id_name');
-      if (nameInput) {
-        let nameTimeout;
-        nameInput.addEventListener('input', function() {
-          clearTimeout(nameTimeout);
-          nameTimeout = setTimeout(() => {
-            checkSimilarNames(this.value);
-          }, 500); // Debounce for 500ms
+            purchaseUnitSelect.innerHTML = '<option value="">Error loading units</option>';
         });
-      }
-      
-      // Initialize with current values if form has data
-      if (baseInput.value) {
-        baseInput.dispatchEvent(new Event('change'));
-      }
-      if (categoryInput.value) {
-        categoryInput.dispatchEvent(new Event('change'));
-      }
-    });
-  </script>
-{% endblock %}
+}
 
-{% block table_id %}items_table{% endblock %}
-{% block hx_get %}{% url 'items_table' %}{% endblock %}
-{% block table_content %}{{ items_table|safe }}{% endblock %}
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up event listeners for existing checkboxes
+    const itemCheckboxes = document.querySelectorAll('input[name="selected_items"]');
+    itemCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            toggleItemSelection(this.value, this);
+        });
+    });
+    
+    // Set up CSV upload drag and drop
+    const csvUpload = document.getElementById('csv-upload');
+    if (csvUpload) {
+        const dropZone = csvUpload.closest('.border-dashed');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        dropZone.addEventListener('drop', handleDrop, false);
+    }
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight(e) {
+        dropZone.classList.add('border-blue-400', 'bg-blue-50');
+    }
+    
+    function unhighlight(e) {
+        dropZone.classList.remove('border-blue-400', 'bg-blue-50');
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            csvUpload.files = files;
+            console.log('File dropped:', files[0].name);
+            showNotification(`File "${files[0].name}" ready for upload`, 'success');
+        }
+    }
+});
+</script>
+
+{% endblock %}

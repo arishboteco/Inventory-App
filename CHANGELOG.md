@@ -12,15 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix critical items page 500 error - template inheritance and data structure issues
 - Correct template extends paths in speed templates (base.html → _base.html)
 - Fix category filter data structure - convert to tuples for template unpacking
+- Fix template syntax error causing 500 error on items page
+- Fix template syntax errors - removed duplicate endblock and empty tag issues
+- Fix: Remove item_create URL references - all item creation now uses inline form on items list page
+- MAJOR FIX: Implement proper units table architecture with UnitsService - fixed failing tests and established correct unit conversion logic with base_unit/purchase_unit/conversion_factor
+- CLEANUP: Remove undefined item_duplicate URL references from templates - fixed template errors causing view failures
 ### Added
 - `.github/copilot-instructions.md` - Comprehensive AI agent guidance document
 - Changelog maintenance utility script (tools/changelog.py)
 - Makefile targets for changelog management
 - Major items page UI/UX redesign with Tailwind integration and professional design system
+- Interface Redesign: Complete items page redesign matching Streamlit legacy app with expandable sections, inline editing, and bulk operations
+- BREAKING CHANGE: Complete removal of ItemCreateView and item_create URL - all item creation now uses inline form on items list page for consistent UX
+- MAJOR CLEANUP: Repository refactoring - removed duplicate templates, organized documentation into docs/ structure, cleaned backup files for maintainable codebase
+- PRE-PRODUCTION TESTING COMPLETE: Comprehensive testing completed - inline form functional, clean codebase, ready for production deployment
 
 ### Changed
 - Updated development workflow documentation
 - Development workflow documentation and changelog automation
+- CLEANUP: Remove '_speed' naming convention - renamed item_detail_speed.html to item_detail.html and item_form_speed.html to item_form.html for consistent naming
 
 ## [2.1.0] - 2025-08-28
 

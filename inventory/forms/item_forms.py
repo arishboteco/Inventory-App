@@ -21,26 +21,15 @@ class StyledFormMixin:
 class ItemForm(StyledFormMixin, forms.ModelForm):
     """Enhanced item form with complete business field support."""
     
-    # Category fields with proper dropdown support
-    category = forms.ChoiceField(
+    # Category field using category_id foreign key
+    category_id = forms.ChoiceField(
         choices=[],  # Will be populated in __init__
         required=False,
         help_text="Item category for classification",
         widget=forms.Select(attrs={
-            'class': 'form-control',
-            'data-field': 'category',
+            'class': 'form-control predictive',
+            'data-field': 'category_id',
             'placeholder': 'Select category'
-        })
-    )
-    
-    sub_category = forms.ChoiceField(
-        choices=[],  # Will be populated in __init__
-        required=False,
-        help_text="Item subcategory for detailed classification",
-        widget=forms.Select(attrs={
-            'class': 'form-control',
-            'data-field': 'sub_category',
-            'placeholder': 'Select subcategory'
         })
     )
     
@@ -64,16 +53,13 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         model = Item
         fields = [
             "name",
-            "base_unit",
-            "purchase_unit", 
-            "category",
-            "sub_category",
+            "unit_id",
+            "category_id",
             "departments",
             "initial_purchase_price",
             "preferred_supplier",
             "minimum_order_qty",
             "lead_time_days",
-            "unit_id",
             "reorder_point",
             "current_stock",
             "notes",
@@ -101,7 +87,10 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                 'min': '0',
                 'placeholder': '7'
             }),
-            'unit_id': forms.HiddenInput(),  # Keep for compatibility but hide
+            'unit_id': forms.Select(attrs={
+                'class': 'form-control predictive',
+                'data-field': 'unit_id'
+            }),
             'reorder_point': forms.NumberInput(attrs={
                 'class': INPUT_CLASS,
                 'step': '0.01',
@@ -128,33 +117,22 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Populate category dropdown choices
-        category_choices = [('', 'Select Category')] + get_category_choices()
-        self.fields['category'].choices = category_choices
+        # Populate category dropdown choices using proper service
+        from ..services.categories_service import CategoriesService
+        category_choices = [('', 'Select Category')] + CategoriesService.get_category_choices_for_forms()
+        self.fields['category_id'].choices = category_choices
         
-        # Populate subcategory dropdown choices
-        subcategory_choices = [('', 'Select Subcategory')] + get_subcategory_choices()
-        self.fields['sub_category'].choices = subcategory_choices
-        
-        # Replace base_unit and purchase_unit fields with dropdown widgets
-        self.fields['base_unit'] = forms.ChoiceField(
-            choices=[('', 'Select Base Unit')] + FormService.get_base_unit_choices(),
+        # Use unit_id field instead of separate base_unit/purchase_unit fields
+        from ..services.units_service import UnitsService
+        unit_choices = [('', 'Select Unit')] + UnitsService.get_unit_choices_for_forms()
+        self.fields['unit_id'] = forms.ChoiceField(
+            choices=unit_choices,
             required=True,
             widget=forms.Select(attrs={
-                'class': 'form-control',
-                'data-field': 'base_unit'
+                'class': 'form-control predictive',
+                'data-field': 'unit_id'
             }),
-            help_text="Primary unit for inventory tracking"
-        )
-        
-        self.fields['purchase_unit'] = forms.ChoiceField(
-            choices=[('', 'Select Purchase Unit')] + FormService.get_purchase_unit_choices(),
-            required=False,
-            widget=forms.Select(attrs={
-                'class': 'form-control',
-                'data-field': 'purchase_unit'
-            }),
-            help_text="Unit used when purchasing this item"
+            help_text="Select the unit for this item (handles both kitchen and procurement units)"
         )
         
         # Make name field required

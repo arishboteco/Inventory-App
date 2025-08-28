@@ -16,8 +16,7 @@ class StyledFormMixin:
                 widget.attrs.update({"class": CHECKBOX_CLASS})
             else:
                 classes = INPUT_CLASS
-                if isinstance(widget, (forms.Select, forms.SelectMultiple)):
-                    classes += " predictive"
+                # Standard dropdown styling - no predictive class for cleaner appearance
                 widget.attrs.update({"class": classes})
 
     def __init__(self, *args, **kwargs):

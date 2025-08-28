@@ -49,7 +49,7 @@ def item_factory(db):
     def create_item(**kwargs):
         defaults = {
             "name": "Item",
-            "unit_id": 1,  # Updated to use unit_id instead of base_unit/purchase_unit
+            "unit_id": 19,  # Use unit_id=19 which maps to "KG" for consistent test expectations
             "category_id": 1,
             "reorder_point": 0,
             "current_stock": 0,

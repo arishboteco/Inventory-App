@@ -72,10 +72,40 @@ class ItemsListView(TemplateView):
     GET params:
         q, category, subcategory, active, page_size, sort, direction
         control filtering, pagination and ordering.
-    Template: inventory/items_list_speed.html.
+    Template: inventory/items_list.html.
     """
 
-    template_name = "inventory/items_list_speed.html"
+    template_name = "inventory/items_list.html"
+
+    def post(self, request, *args, **kwargs):
+        """Handle inline item creation via POST request."""
+        form = ItemForm(request.POST)
+        
+        if form.is_valid():
+            try:
+                # Save the new item
+                item = form.save()
+                messages.success(request, f'Item "{item.name}" created successfully!')
+                
+                # Redirect to the same page to avoid duplicate submissions
+                return redirect('items_list')
+                
+            except (DatabaseError, IntegrityError) as e:
+                logger.error(f"Database error creating item: {e}")
+                messages.error(request, f"Error creating item: {str(e)}")
+                
+            except Exception as e:
+                logger.error(f"Unexpected error creating item: {e}")
+                messages.error(request, f"Unexpected error: {str(e)}")
+                
+        else:
+            # Form has validation errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+        
+        # If we get here, there were errors - redisplay the form
+        return self.get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -86,16 +116,28 @@ class ItemsListView(TemplateView):
         page_obj, per_page = list_utils.paginate(request, qs)
         table_ctx = {**params, "page_obj": page_obj, "page_size": per_page}
 
-        form = ItemForm()
+        # If this is a POST request, use the submitted form data
+        if request.method == 'POST':
+            form = ItemForm(request.POST)
+        else:
+            form = ItemForm()
+        
+        # Add additional context for the form
+        from ..models import Supplier, Department
+        suppliers = Supplier.objects.filter(is_active=True).order_by('name')
+        departments_for_form = Department.objects.all().order_by('name')
 
         ctx.update(params)
         ctx.update(category_ctx)
+        ctx.update(table_ctx)  # Add this line to include page_obj
         ctx.update(
             {
                 "page_size": per_page,
                 "filters": category_filters.build_filters(request),
                 "export_url": reverse("items_export"),
                 "form": form,
+                "suppliers": suppliers,
+                "departments_for_form": departments_for_form,  # Use different name to avoid conflict
                 "excluded_fields": EXCLUDED_FIELDS,
             }
         )
@@ -109,7 +151,7 @@ class ItemsTableView(TemplateView):
     Template: inventory/_items_table.html.
     """
 
-    template_name = "inventory/_items_table_speed.html"
+    template_name = "inventory/_items_table.html"
 
     def _get_queryset(self):
         qs, params = _filter_and_sort_items(self.request)
@@ -156,85 +198,13 @@ class ItemsExportView(View):
         return list_utils.export_as_csv(qs, headers, row, "items.csv")
 
 
-class ItemCreateView(View):
-    """Create a new item using ItemForm.
-
-    GET renders an empty form; POST saves the item.
-    Template: inventory/item_form_speed.html.
-    """
-
-    template_name = "inventory/item_form_speed.html"
-
-    def get(self, request):
-        form = ItemForm()
-        ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
-        return render(request, self.template_name, ctx)
-
-    def post(self, request):
-        form = ItemForm(request.POST)
-        
-        # Check if this is an AJAX request
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        
-        if form.is_valid():
-            item = form.save()
-            item_service.get_all_items_with_stock.clear()
-            item_service.get_distinct_departments_from_items.clear()
-            
-            if is_ajax:
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Item created successfully!',
-                    'item': {
-                        'id': item.pk,
-                        'name': item.name
-                    }
-                })
-            
-            if request.headers.get("HX-Request"):
-                items = Item.objects.order_by("name")[:20]
-                options_html = render_to_string(
-                    "inventory/_item_options.html", {"items": items}, request=request
-                )
-                toast_html = render_to_string(
-                    "components/toast.html",
-                    {"message": "Item created"},
-                    request=request,
-                )
-                response = HttpResponse(
-                    options_html
-                    + f'<div id="toast-container" hx-swap-oob="beforeend">{toast_html}</div>'
-                )
-                return response
-            messages.success(request, "Item created")
-            return redirect("items_list")
-        
-        # Form has errors
-        if is_ajax:
-            errors = {}
-            for field, error_list in form.errors.items():
-                errors[field] = [str(error) for error in error_list]
-            return JsonResponse({
-                'success': False,
-                'message': 'Please correct the errors below.',
-                'errors': errors
-            })
-        
-        ctx = {"form": form, "is_edit": False, "excluded_fields": EXCLUDED_FIELDS}
-        if request.headers.get("HX-Request"):
-            response = render(request, self.template_name, ctx)
-            response["HX-Retarget"] = "#item-form"
-            return response
-        return render(request, self.template_name, ctx)
-
-
 class ItemEditView(View):
     """Edit an existing item.
 
-    Template: inventory/item_form_speed.html.
+    Template: inventory/item_form.html.
     """
 
-    template_name = "inventory/item_form_speed.html"
+    template_name = "inventory/item_form.html"
 
     def get_object(self, pk: int):
         try:
@@ -286,12 +256,12 @@ class ItemEditView(View):
 
 
 class ItemDetailView(View):
-    """Display detailed information and stock for an item.
+    """Display item details with stock history.
 
-    Template: inventory/item_detail_speed.html.
+    Template: inventory/item_detail.html.
     """
 
-    template_name = "inventory/item_detail_speed.html"
+    template_name = "inventory/item_detail.html"
 
     def get(self, request, pk: int):
         try:

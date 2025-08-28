@@ -195,6 +195,26 @@
     accent-color: var(--color-primary);
   }
 
+  /* Improved datalist styling for predictive dropdowns */
+  input[list]::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
+  
+  input[list] {
+    position: relative;
+  }
+  
+  input[list]::after {
+    content: '▼';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 12px;
+    color: #6b7280;
+  }
+
   /* Table component styles */
   .table {
     width: 100%;

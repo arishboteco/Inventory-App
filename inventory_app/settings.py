@@ -35,7 +35,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-secret-key")
 # Enabled temporarily for debugging
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "curly-space-sniffle-pjxw7ww6r76frgp-8000.app.github.dev"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "testserver", "127.0.0.1", "curly-space-sniffle-pjxw7ww6r76frgp-8000.app.github.dev"])
 
 # Dynamically add Codespaces URL to ALLOWED_HOSTS
 CODESPACE_URL = os.getenv("CODESPACE_NAME")

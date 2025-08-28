@@ -82,41 +82,31 @@ def get_units_map() -> Dict[str, List[str]]:
 
 @lru_cache(maxsize=None)
 def get_category_choices() -> List[Tuple[str, str]]:
-    """Get available categories for dropdown selection."""
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT DISTINCT category FROM category ORDER BY category")
-            categories = cursor.fetchall()
-            return [(cat[0], cat[0]) for cat in categories if cat[0]]
-    except OperationalError as e:
-        logger.warning(f"Could not load categories: {e}")
-        # Fallback categories for development/testing
-        return [
-            ('Food & Beverage', 'Food & Beverage'),
-            ('Raw Materials', 'Raw Materials'),
-            ('Packaging', 'Packaging'),
-            ('Cleaning Supplies', 'Cleaning Supplies'),
-            ('Office Supplies', 'Office Supplies'),
-        ]
+    """Get available categories for dropdown selection.
+    
+    This function maintains backward compatibility but delegates to CategoriesService.
+    For new code, use CategoriesService.get_unique_categories() directly.
+    """
+    from .categories_service import CategoriesService
+    categories = CategoriesService.get_unique_categories()
+    return [(cat, cat) for cat in categories]
 
 
 @lru_cache(maxsize=None)
 def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
-    """Get category-subcategory mapping for JavaScript consumption."""
+    """Get category-subcategory mapping for JavaScript consumption.
+    
+    This function maintains backward compatibility but delegates to CategoriesService.
+    For new code, use CategoriesService.get_category_choices_grouped() directly.
+    """
+    from .categories_service import CategoriesService
     try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT category, sub_category FROM category ORDER BY category, sub_category")
-            rows = cursor.fetchall()
-            
-        categories_map = {}
-        for category, sub_category in rows:
-            if category and sub_category:
-                if category not in categories_map:
-                    categories_map[category] = []
-                categories_map[category].append({'name': sub_category})
-        
-        return categories_map
-    except OperationalError as e:
+        grouped = CategoriesService.get_category_choices_grouped()
+        return {
+            category: [{'name': subcat[1]} for subcat in subcategories]
+            for category, subcategories in grouped.items()
+        }
+    except Exception as e:
         logger.warning(f"Could not load categories map: {e}")
         # Fallback for development/testing
         return {
@@ -140,19 +130,21 @@ def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
 
 @lru_cache(maxsize=None)
 def get_subcategory_choices(category: Optional[str] = None) -> List[Tuple[str, str]]:
-    """Get available subcategories for a given category."""
+    """Get available subcategories for a given category.
+    
+    This function maintains backward compatibility but delegates to CategoriesService.
+    For new code, use CategoriesService.get_categories_by_category() directly.
+    """
+    from .categories_service import CategoriesService
     try:
-        with connection.cursor() as cursor:
-            if category:
-                cursor.execute(
-                    "SELECT DISTINCT sub_category FROM category WHERE category = %s ORDER BY sub_category",
-                    [category]
-                )
-            else:
-                cursor.execute("SELECT DISTINCT sub_category FROM category ORDER BY sub_category")
-            subcategories = cursor.fetchall()
-            return [(subcat[0], subcat[0]) for subcat in subcategories if subcat[0]]
-    except OperationalError as e:
+        if category:
+            subcategories = CategoriesService.get_categories_by_category(category)
+            return [(subcat['sub_category'], subcat['sub_category']) for subcat in subcategories]
+        else:
+            all_categories = CategoriesService.get_all_categories()
+            unique_subcategories = sorted(list(set(cat['sub_category'] for cat in all_categories)))
+            return [(subcat, subcat) for subcat in unique_subcategories]
+    except Exception as e:
         logger.warning(f"Could not load subcategories: {e}")
         return []
 

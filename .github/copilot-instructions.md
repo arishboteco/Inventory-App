@@ -108,7 +108,7 @@ Uses `django-environ` for environment variables.
 ### Performance Patterns
 - Use `only()` and `select_related()` in querysets
 - Service layer caching with `@lru_cache`
-- Speed-optimized templates in `*_speed.html` variants
+- Optimized templates for fast rendering
 
 ### Error Handling
 Custom middleware in `core/middleware.py` for login enforcement and error logging.

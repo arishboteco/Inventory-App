@@ -17,7 +17,7 @@ from .views import (
     StockTransactionViewSet,
     SupplierViewSet,
 )
-from .views.items import ItemsExportView, get_purchase_units, check_similar_names
+from .views.items import ItemsExportView, get_purchase_units, get_subcategories, check_similar_names
 from .views.what_if import what_if_reorder
 
 router = DefaultRouter()
@@ -36,7 +36,8 @@ router.register(r"sale-transactions", SaleTransactionViewSet)
 
 urlpatterns = router.urls + [
     path("items/export/", ItemsExportView.as_view(), name="items_export_api"),
-    path("items/purchase-units/", get_purchase_units, name="get_purchase_units"),
+    path("purchase-units/", get_purchase_units, name="get_purchase_units"),
+    path("subcategories/", get_subcategories, name="get_subcategories"),
     path("items/check-similar/", check_similar_names, name="check_similar_names"),
     path("what-if/reorder/", what_if_reorder, name="what_if_reorder"),
 ]

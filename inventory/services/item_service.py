@@ -24,32 +24,43 @@ logger = logging.getLogger(__name__)
 
 
 def get_unit_display_name(unit_id: int) -> str:
-    """Get the display name for a unit ID from the database."""
-    from django.db import connection
-    from django.db.utils import OperationalError
+    """Get the purchase_unit display name for a unit ID from the database.
     
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT purchase_unit FROM units WHERE unit_id = %s", 
-                [unit_id]
-            )
-            row = cursor.fetchone()
-            if row:
-                return row[0]
-    except OperationalError:
-        # Handle case where units table doesn't exist (e.g., in tests)
-        pass
+    This function maintains backward compatibility but delegates to UnitsService.
+    For new code, use UnitsService.get_purchase_unit_display() directly.
+    """
+    from .units_service import UnitsService
+    return UnitsService.get_purchase_unit_display(unit_id)
+
+
+def get_unit_info(unit_id: int) -> dict:
+    """Get complete unit information including conversion factor.
     
-    # Fallback for test environment or when unit not found
-    if unit_id == 55:
-        return "PC"
-    elif unit_id == 1:
-        return "2 KG"
-    elif unit_id == 19:
-        return "KG"
-    else:
-        return "unknown"
+    This function maintains backward compatibility but delegates to UnitsService.
+    For new code, use UnitsService.get_unit_info() directly.
+    """
+    from .units_service import UnitsService
+    return UnitsService.get_unit_info(unit_id)
+
+
+def convert_to_base_unit(quantity: float, unit_id: int) -> float:
+    """Convert a quantity from purchase_unit to base_unit using conversion_factor.
+    
+    This function maintains backward compatibility but delegates to UnitsService.
+    For new code, use UnitsService.convert_purchase_to_base() directly.
+    """
+    from .units_service import UnitsService
+    return UnitsService.convert_purchase_to_base(quantity, unit_id)
+
+
+def convert_from_base_unit(base_quantity: float, unit_id: int) -> float:
+    """Convert a quantity from base_unit to purchase_unit.
+    
+    This function maintains backward compatibility but delegates to UnitsService.
+    For new code, use UnitsService.convert_base_to_purchase() directly.
+    """
+    from .units_service import UnitsService
+    return UnitsService.convert_base_to_purchase(base_quantity, unit_id)
 
 
 # ---------------------------------------------------------------------------

@@ -24,10 +24,24 @@
   // public API
   window.modal = { open: openModal, openDrawer, close: closeModal };
 
-  // delegation for close events
+  // delegation for close and open events
   document.addEventListener('click', function (e) {
     if (e.target.closest('[data-modal-close]')) {
       closeModal();
+      return;
+    }
+    const opener = e.target.closest('[data-modal-url]');
+    if (opener) {
+      e.preventDefault();
+      const url = opener.getAttribute('data-modal-url');
+      const type = opener.getAttribute('data-modal-type') || 'modal';
+      fetch(url)
+        .then(r => r.text())
+        .then(html => {
+          if (type === 'drawer') openDrawer(html, 'right');
+          else openModal(html);
+        })
+        .catch(() => { if (window.notifications) window.notifications.showToast('Failed to load content', 'error'); });
     }
   });
 

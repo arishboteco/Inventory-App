@@ -570,6 +570,8 @@ class ItemsBulkUploadView(View):
             "title": "Bulk Upload Items",
             "back_url": "items_list",
         }
+        if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
+            return render(request, "inventory/_bulk_upload_partial.html", ctx)
         return render(request, self.template_name, ctx)
 
 
@@ -622,6 +624,9 @@ class ItemsBulkUpdateView(View):
                     inserted += 1
                 else:
                     errors.append(str(form_row.errors))
+        if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
+            ok = inserted > 0 and not errors
+            return JsonResponse({"ok": ok, "inserted": inserted, "errors": errors})
         ctx = {
             "form": form,
             "inserted": inserted,

@@ -17,8 +17,8 @@
 <!-- Actions Bar: Add + Bulk Upload -->
 <div class="flex items-center justify-between mb-6">
   <div class="flex items-center" style="gap:.5rem">
-    <button type="button" class="btn-primary" id="open-add-item">Add Item</button>
-    <a href="{% url 'upload_csv' %}" class="btn-secondary">Bulk Upload</a>
+    <button type="button" class="btn-primary" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer">Add Item</button>
+    <button type="button" class="btn-secondary" data-modal-url="{% url 'upload_csv' %}?partial=1" data-modal-type="drawer">Bulk Upload</button>
   </div>
   <div id="dept-options" class="hidden">
     <select id="dept-select-template">
@@ -186,15 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    // Open Add Item drawer
-    const addBtn = document.getElementById('open-add-item');
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        fetch('{% url "item_create_partial" %}')
-          .then(r => r.text())
-          .then(html => window.modal && window.modal.openDrawer(html, 'right'));
-      });
-    }
+    // Drawer opening handled by modal.js via [data-modal-url]
 });
 </script>
 

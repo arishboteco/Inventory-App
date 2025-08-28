@@ -558,6 +558,8 @@
     width: 1rem;
     text-align: center;
   }
+  /* Ensure 'hidden' works without Tailwind */
+  .hidden { display: none !important; }
   /* Skeleton rows */
   .skeleton-row { height: 44px; border-radius: 0.5rem; background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%); background-size: 400% 100%; margin-bottom: 0.5rem; animation: shimmer 1.2s infinite; }
   @keyframes shimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }

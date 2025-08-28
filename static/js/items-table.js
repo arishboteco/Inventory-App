@@ -106,9 +106,25 @@
         e.preventDefault();
         enableInlineEdit(row);
         break;
+      case 'table-quick-edit':
+        e.preventDefault();
+        // For table rows, show adjacent edit row
+        const itemId = row.dataset.itemId;
+        const editRow = document.getElementById(`edit-${itemId}`);
+        if (editRow) {
+          editRow.classList.toggle('hidden');
+        }
+        break;
       case 'cancel-edit':
         e.preventDefault();
-        cancelInlineEdit(row);
+        // Hide card edit or table edit
+        const itemId2 = row.dataset.itemId;
+        const editRow2 = document.getElementById(`edit-${itemId2}`);
+        if (editRow2 && !editRow2.classList.contains('hidden')) {
+          editRow2.classList.add('hidden');
+        } else {
+          cancelInlineEdit(row);
+        }
         break;
       case 'delete':
         e.preventDefault();
@@ -128,8 +144,36 @@
     if (!(form instanceof HTMLFormElement)) return;
     if (form.getAttribute('data-action') !== 'save-inline') return;
     e.preventDefault();
-    const row = findRow(form);
+    // find row for cards; for table edit row, previousElementSibling is the item row
+    let row = findRow(form);
+    if (!row) {
+      const editRow = form.closest('tr');
+      if (editRow && editRow.previousElementSibling?.dataset?.itemId) {
+        row = editRow.previousElementSibling;
+      }
+    }
     saveInlineEdit(row, form);
+  });
+
+  // Select-all support
+  document.addEventListener('change', function (e) {
+    const selAll = e.target?.closest('[data-select-all]');
+    if (!selAll) return;
+    const table = document.getElementById('grid-table');
+    if (!table) return;
+    table.querySelectorAll("input[name='selected_items']").forEach(cb => { cb.checked = e.target.checked; });
+    updateBulkBar();
+  });
+
+  // Column visibility toggles
+  document.addEventListener('change', function (e) {
+    const ctl = e.target?.closest('[data-col-toggle]');
+    if (!ctl) return;
+    const col = ctl.value;
+    const on = ctl.checked;
+    document.querySelectorAll(`[data-col='${col}']`).forEach(el => {
+      if (on) el.classList.remove('hidden'); else el.classList.add('hidden');
+    });
   });
 
   // Keyboard accessibility for toggle button

@@ -104,83 +104,32 @@
   </details>
 </div>
 
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-            </svg>
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Total Items</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ page_obj.paginator.count|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
+<!-- Compact KPIs -->
+<div class="kpi-grid mb-6">
+  <div class="kpi">
+    <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+    <span class="value">{{ page_obj.paginator.count|default:"0" }}</span>
+    <span class="label">Items</span>
   </div>
-
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Low Stock</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ stats.low_stock_count|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
+  <div class="kpi">
+    <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+    <span class="value">{{ stats.low_stock_count|default:"0" }}</span>
+    <span class="label">Low Stock</span>
   </div>
-
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Pending Orders</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ stats.pending_orders|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
+  <div class="kpi">
+    <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+    <span class="value">{{ stats.pending_orders|default:"0" }}</span>
+    <span class="label">Pending</span>
   </div>
-
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Stock Value</p>
-          <p class="text-2xl font-semibold text-gray-900">${{ stats.total_value|floatformat:0|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
+  <div class="kpi">
+    <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+    <span class="value">${{ stats.total_value|floatformat:0|default:"0" }}</span>
+    <span class="label">Stock Value</span>
   </div>
 </div>
 
 <!-- View & Manage Existing Items -->
-<h2 class="text-2xl font-semibold text-gray-900 flex items-center gap-2 mb-3"><span class="text-xl" aria-hidden="true">🔍</span> View & Manage Existing Items</h2>
+<h2 class="text-xl font-semibold text-gray-900 mb-3">Items</h2>
 <div class="card mb-6">
   <div class="card-body">
     {% url 'items_table' as items_table_url %}
@@ -196,11 +145,17 @@
   </div>
 
 <!-- Items Table -->
-<div class="card">
+<div id="items-container" class="card" data-density="comfortable">
   <div class="card-header">
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-gray-900">Inventory Items</h2>
-      <div class="flex items-center space-x-2"></div>
+      <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-500">Density:</span>
+        <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+          <button type="button" class="px-2 py-1 text-sm" data-density-btn data-value="comfortable">Comfortable</button>
+          <button type="button" class="px-2 py-1 text-sm bg-gray-50 border-l border-gray-200" data-density-btn data-value="compact">Compact</button>
+        </div>
+      </div>
     </div>
   </div>
   
@@ -251,7 +206,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // No bulk actions toolbar rendered at the moment
+    // Density toggle
+    const container = document.getElementById('items-container');
+    document.querySelectorAll('[data-density-btn]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const value = btn.getAttribute('data-value');
+        container.setAttribute('data-density', value);
+      });
+    });
 });
 </script>
 

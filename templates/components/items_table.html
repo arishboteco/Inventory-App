@@ -1,0 +1,6 @@
+{% comment %}Unified items list component supporting grid and table layouts{% endcomment %}
+{% if layout == 'table' %}
+  {% include "inventory/_items_table_grid.html" %}
+{% else %}
+  {% include "inventory/_items_table.html" %}
+{% endif %}

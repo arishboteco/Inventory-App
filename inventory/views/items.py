@@ -244,10 +244,10 @@ class ItemsTableView(TemplateView):
     """Render the paginated table of items.
 
     Accepts the same GET filters as ItemsListView plus a page number.
-    Template: inventory/_items_table.html.
+    Template: components/items_table.html.
     """
 
-    template_name = "inventory/_items_table.html"
+    template_name = "components/items_table.html"
 
     def _get_queryset(self):
         qs, params = _filter_and_sort_items(self.request)
@@ -259,14 +259,9 @@ class ItemsTableView(TemplateView):
         qs = self._get_queryset()
         page_obj, per_page = list_utils.paginate(self.request, qs)
         ctx.update(self._filter_params)
-        ctx.update({"page_obj": page_obj, "page_size": per_page})
+        layout = (self.request.GET.get("layout") or "table").lower()
+        ctx.update({"page_obj": page_obj, "page_size": per_page, "layout": layout})
         return ctx
-
-    def get_template_names(self):
-        layout = (self.request.GET.get("layout") or "").lower()
-        if layout == "table":
-            return ["inventory/_items_table_grid.html"]
-        return [self.template_name]
 
 
 class ItemsExportView(View):

@@ -179,7 +179,7 @@
 <div id="items-container" class="card">
   <div class="table-scroll">
     <div class="overflow-x-auto" id="items-list">
-      {% include "inventory/_items_table_grid.html" %}
+      {% include "components/items_table.html" with layout=request.GET.layout|default:'table' %}
     </div>
   </div>
   <div id="items-loading" class="hidden p-4">

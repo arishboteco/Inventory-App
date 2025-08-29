@@ -13,11 +13,14 @@ from django.core.cache import cache
 
 from inventory.models import Item, Supplier, StockTransaction, PurchaseOrder
 from inventory.services import counts, dashboard_service, kpis
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def root_view(request):
     """Render the home page or login form depending on authentication."""
-    print(f"User authenticated: {request.user.is_authenticated}")  # Debug statement
+    logger.debug("User authenticated: %s", request.user.is_authenticated)
     if request.user.is_authenticated:
         # Optionally bypass cache during tests
         bypass_cache = getattr(settings, "DISABLE_DASHBOARD_CACHE", False)
@@ -45,15 +48,15 @@ def root_view(request):
 
     form = AuthenticationForm(request, data=request.POST or None)
     if request.method == "POST":
-        print(f"POST data: {request.POST}")  # Debug statement
-        print(f"Form is valid: {form.is_valid()}")  # Debug statement
+        logger.debug("POST data: %s", request.POST)
+        logger.debug("Form is valid: %s", form.is_valid())
         if not form.is_valid():
-            print(f"Form errors: {form.errors}")  # Debug statement
+            logger.debug("Form errors: %s", form.errors)
         if form.is_valid():
             user = form.get_user()
-            print(f"Logging in user: {user.username}")  # Debug statement
+            logger.info("Logging in user: %s", user.username)
             login(request, user)
-            print(f"User authenticated after login: {request.user.is_authenticated}")  # Debug statement
+            logger.debug("User authenticated after login: %s", request.user.is_authenticated)
             return redirect("root")
 
     return render(request, "core/home.html", {"form": form})

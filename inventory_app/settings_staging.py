@@ -6,6 +6,7 @@ Used for pre-production testing and validation.
 """
 
 import os
+import logging
 import dj_database_url
 from .settings import *
 
@@ -174,7 +175,5 @@ if 'SENTRY_DSN' in os.environ:
         integrations=[DjangoIntegration(), sentry_logging],
         traces_sample_rate=0.1,
         send_default_pii=False,
-        environment='staging'
+        environment='staging',
     )
-
-print("🚀 Staging settings loaded successfully!")

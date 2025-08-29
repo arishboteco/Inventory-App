@@ -4,18 +4,7 @@ from ..services.form_service import (
     FormService, get_category_choices, get_subcategory_choices,
     get_categories_map, get_department_choices, get_supplier_choices
 )
-
-INPUT_CLASS = "form-input"
-
-
-class StyledFormMixin:
-    """Mixin to add consistent styling to forms."""
-    
-    def apply_styling(self):
-        """Apply consistent styling to all form fields."""
-        for field_name, field in self.fields.items():
-            if hasattr(field.widget, 'attrs'):
-                field.widget.attrs.update({'class': INPUT_CLASS})
+from .base import StyledFormMixin, INPUT_CLASS
 
 
 class ItemForm(StyledFormMixin, forms.ModelForm):

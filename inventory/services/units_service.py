@@ -184,22 +184,5 @@ class UnitsService:
         return unit_info['base_unit'] != 'unknown'
 
 
-# Convenience functions for backward compatibility
-def get_unit_display_name(unit_id: int) -> str:
-    """Legacy function - use UnitsService.get_purchase_unit_display() instead."""
-    return UnitsService.get_purchase_unit_display(unit_id)
-
-
-def get_unit_info(unit_id: int) -> dict:
-    """Legacy function - use UnitsService.get_unit_info() instead."""
-    return UnitsService.get_unit_info(unit_id)
-
-
-def convert_to_base_unit(quantity: float, unit_id: int) -> float:
-    """Legacy function - use UnitsService.convert_purchase_to_base() instead.""" 
-    return UnitsService.convert_purchase_to_base(quantity, unit_id)
-
-
-def convert_from_base_unit(base_quantity: float, unit_id: int) -> float:
-    """Legacy function - use UnitsService.convert_base_to_purchase() instead."""
-    return UnitsService.convert_base_to_purchase(base_quantity, unit_id)
+# Note: legacy convenience functions have been removed.
+# Use UnitsService methods directly or item_service.get_unit_display_name.

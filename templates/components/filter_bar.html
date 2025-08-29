@@ -39,7 +39,7 @@
   {% if export_url %}
     <div class="flex flex-col">
       <span class="text-sm font-medium">&nbsp;</span>
-      <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-tertiary w-full">{{ export_label|default:'Export' }}</button>
+      <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-gray-100 border border-border rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary w-full">{{ export_label|default:'Export' }}</button>
     </div>
   {% endif %}
   {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
@@ -48,7 +48,7 @@
   {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
   <noscript>
     <div class="mt-2">
-      <button type="submit" class="btn-primary">Apply</button>
+      <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Apply</button>
     </div>
   </noscript>
 </form>

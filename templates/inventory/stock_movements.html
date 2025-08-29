@@ -6,7 +6,7 @@
   {% include "inventory/_manual_entry_section.html" %}
   {% include "inventory/_bulk_upload_section.html" %}
   {% include "inventory/_recent_transactions_section.html" %}
-  <button id="record-movement-btn" class="btn-primary rounded-full fixed bottom-6 right-6 z-40 px-4 py-2">Record Movement</button>
+  <button id="record-movement-btn" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed rounded-full fixed bottom-6 right-6 z-40 px-4 py-2">Record Movement</button>
   <div id="record-modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
     <div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
       <button type="button" class="absolute top-2 right-2 text-bodyText hover:text-primary" data-close>
@@ -17,7 +17,7 @@
         {% for field in quick_form %}
           {% include "components/form_field.html" with field=field %}
         {% endfor %}
-        <button type="submit" name="submit_quick" class="btn-primary w-full">Save</button>
+        <button type="submit" name="submit_quick" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed w-full">Save</button>
       </form>
     </div>
   </div>

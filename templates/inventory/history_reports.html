@@ -20,12 +20,12 @@
       <div class="flex gap-2">
         <a
           href="{{ history_url }}{% if query_string %}?{{ query_string }}&{% else %}?{% endif %}export=csv"
-          class="btn-tertiary"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-gray-100 border border-border rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
           >Download CSV</a
         >
         <a
           href="{{ history_url }}{% if query_string %}?{{ query_string }}&{% else %}?{% endif %}export=pdf"
-          class="btn-tertiary"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-gray-100 border border-border rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary"
           >Download PDF</a
         >
       </div>

@@ -2,14 +2,14 @@
 {% block title %}Suppliers – Inventory App{% endblock %}
 {% block heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 {% block actions %}
-  <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
-  <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
-  <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
-  <a href="{% url 'suppliers_table' %}?export=1" class="btn-secondary">Export CSV</a>
+  <a href="{% url 'supplier_create' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">New Supplier</a>
+  <a href="{% url 'suppliers_bulk_upload' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Bulk Upload</a>
+  <a href="{% url 'suppliers_bulk_delete' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-danger border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-danger disabled:opacity-50 disabled:cursor-not-allowed">Bulk Delete</a>
+  <a href="{% url 'suppliers_table' %}?export=1" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Export CSV</a>
   {% if view == 'cards' %}
-    <a href="{% url 'suppliers_list' %}" class="btn-secondary">Table View</a>
+    <a href="{% url 'suppliers_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Table View</a>
   {% else %}
-    <a href="{% url 'suppliers_list' %}?view=cards" class="btn-secondary">Card View</a>
+    <a href="{% url 'suppliers_list' %}?view=cards" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Card View</a>
   {% endif %}
 {% endblock %}
 {% block filter_bar %}

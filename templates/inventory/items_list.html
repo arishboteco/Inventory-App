@@ -110,8 +110,8 @@
           <!-- Actions below Advanced -->
           <div style="grid-column: span 12;">
             <div class="form-actions">
-              <button type="reset" class="btn-secondary btn-sm">Clear</button>
-              <button type="submit" class="btn-primary btn-sm">Create</button>
+              <button type="reset" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs">Clear</button>
+              <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs">Create</button>
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@
     <div class="p-5">
       {% include "inventory/_bulk_upload_partial.html" with form=bulk_form only %}
       <div class="mt-3">
-        <a href="{% static 'sample_stock_upload.csv' %}" download class="btn-outline">Download sample CSV</a>
+        <a href="{% static 'sample_stock_upload.csv' %}" download class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary">Download sample CSV</a>
       </div>
     </div>
   </details>
@@ -199,13 +199,13 @@
   <div class="flex items-center gap-2">
     {% if page_obj.has_previous %}
       <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.stock_status %}&stock_status={{ request.GET.stock_status }}{% endif %}{% if request.GET.show_inactive %}&show_inactive=1{% endif %}"
-         class="btn-secondary btn-sm">
+         class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs">
         Previous
       </a>
     {% endif %}
     {% if page_obj.has_next %}
       <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.stock_status %}&stock_status={{ request.GET.stock_status }}{% endif %}{% if request.GET.show_inactive %}&show_inactive=1{% endif %}"
-         class="btn-secondary btn-sm">
+         class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs">
         Next
       </a>
     {% endif %}

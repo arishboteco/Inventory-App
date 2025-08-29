@@ -1,7 +1,7 @@
 <div class="card drawer-panel" style="max-width: 520px;">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">Bulk Upload Items</h3>
-    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+    <button type="button" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs" data-modal-close>Close</button>
   </div>
   <div class="card-body">
     <form method="post" enctype="multipart/form-data" data-modal-form action="{% url 'upload_csv' %}?partial=1">
@@ -12,8 +12,8 @@
         {{ form.file }}
       </div>
       <div class="flex items-center justify-end" style="gap:.5rem">
-        <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
-        <button type="submit" class="btn-primary">Upload</button>
+        <button type="button" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed" data-modal-close>Cancel</button>
+        <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Upload</button>
       </div>
     </form>
     <p class="text-sm text-gray-600 mt-3">CSV must include headers compatible with the item form fields.</p>

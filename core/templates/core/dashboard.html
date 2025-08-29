@@ -11,14 +11,14 @@
     </div>
     <div class="flex items-center space-x-3">
       {% if perms.inventory.add_purchaseorder %}
-        <a href="{% url 'purchase_order_create' %}" class="btn-primary">
+        <a href="{% url 'purchase_order_create' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
           New Purchase Order
         </a>
       {% endif %}
-      <a href="{% url 'grn_list' %}" class="btn-secondary">
+      <a href="{% url 'grn_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
@@ -136,7 +136,7 @@
           <label for="end" class="form-label">End Date</label>
           <input type="date" id="end" name="end" class="form-input" />
         </div>
-        <button type="button" id="apply-filters" class="btn-primary w-full">
+        <button type="button" id="apply-filters" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed w-full">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"/>
           </svg>
@@ -164,7 +164,7 @@
   <div class="card-header">
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-gray-900">Low Stock Items</h2>
-      <a href="{% url 'items_list' %}?stock_status=low" class="btn-sm btn-primary">
+      <a href="{% url 'items_list' %}?stock_status=low" class="px-2.5 py-1.5 text-xs inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
         View All
       </a>
     </div>

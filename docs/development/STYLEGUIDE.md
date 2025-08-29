@@ -73,11 +73,9 @@ Use these variants to target smaller viewports:
 
 ## Components
 
-Use the classes in `static/css/app.css` to ensure a consistent look:
+Use Tailwind utilities and the classes in `static/css/app.css` to ensure a consistent look:
 
-- **Buttons**: `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-outline`, `.btn-tertiary`
-  - `.btn-outline` – neutral bordered buttons for navigation links or cancel/back actions.
-  - `.btn-tertiary` – subtle buttons that blend with form backgrounds for utility actions like export or download.
+- **Buttons**: compose Tailwind classes such as `inline-flex items-center px-3 py-2 text-sm font-medium` with color utilities (`bg-primary text-white` for primary actions or `bg-white border border-border text-bodyText` for secondary actions).
 - **Status badges**: `.badge-success`, `.badge-warning`, `.badge-error`
 - **Navigation buttons**: `.nav-btn`
 - **Tables**: `.table`
@@ -100,13 +98,13 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 
 ```html
 <div class="flex gap-2">
-  <button class="btn-primary px-4 py-2 rounded">Primary</button>
-  <button class="btn-secondary px-4 py-2 rounded">Secondary</button>
-  <button class="btn-danger px-4 py-2 rounded">Danger</button>
+  <button class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md">Primary</button>
+  <button class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-secondary rounded-md">Secondary</button>
+  <button class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-danger rounded-md">Danger</button>
 </div>
 
 <!-- Hover & focus states -->
-<button class="btn-primary px-4 py-2 rounded hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Save</button>
+<button class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary">Save</button>
 ```
 
 ### Badges

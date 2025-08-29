@@ -67,8 +67,8 @@ class SmartItemManager {
                 <div id="qr-code-canvas" class="flex justify-center mb-4"></div>
                 <p class="text-sm text-gray-600 text-center">Scan to view item details</p>
                 <div class="mt-4 flex space-x-2">
-                    <button onclick="this.closest('.fixed').remove()" class="flex-1 btn-secondary">Close</button>
-                    <button onclick="window.print()" class="flex-1 btn-primary">Print</button>
+                    <button onclick="this.closest('.fixed').remove()" class="flex-1 inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Close</button>
+                    <button onclick="window.print()" class="flex-1 inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Print</button>
                 </div>
             </div>
         `;

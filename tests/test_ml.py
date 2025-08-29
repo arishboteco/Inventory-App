@@ -1,10 +1,10 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
-from unittest.mock import patch
 
 from inventory.models import Item, StockTransaction
 from inventory.services import ml
@@ -70,13 +70,13 @@ def test_ml_dashboard_uses_cache(client):
         user.set_password("admin")
         user.save()
     client.force_login(user)
-    
+
     # Clear all caches explicitly
     cache.clear()
     from django.core.cache import caches
     for cache_name in caches:
         caches[cache_name].clear()
-    
+
     with (
         patch("inventory.services.ml.train_models", return_value={}) as mock_train,
         patch("inventory.services.ml.abc_classification", return_value={}) as mock_abc,

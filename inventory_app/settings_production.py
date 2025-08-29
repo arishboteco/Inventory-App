@@ -5,9 +5,11 @@ This module contains production-ready settings with security hardening,
 performance optimization, and monitoring configuration.
 """
 
-import os
 import logging
+import os
+
 import dj_database_url
+
 from .settings import *
 
 # Override middleware for production (optimized for performance)
@@ -208,12 +210,12 @@ if 'SENTRY_DSN' in os.environ:
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
     from sentry_sdk.integrations.redis import RedisIntegration
-    
+
     sentry_logging = LoggingIntegration(
         level=logging.INFO,
         event_level=logging.ERROR
     )
-    
+
     sentry_sdk.init(
         dsn=os.environ.get('SENTRY_DSN'),
         integrations=[

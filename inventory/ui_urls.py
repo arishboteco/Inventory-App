@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .views.explore import explore, explore_export
 from .views.goods_received import GRNDetailView, GRNListView, grn_export
 from .views.indents import (
     IndentCreateView,
@@ -10,22 +11,23 @@ from .views.indents import (
     indent_update_status,
 )
 from .views.items import (
-    ItemDeleteView,
-    ItemDetailView,
-    ItemInlineUpdateView,
     ItemCreateHTMXView,
     ItemCreatePartialView,
+    ItemDeleteView,
+    ItemDetailView,
     ItemEditView,
+    ItemInlineUpdateView,
+    ItemsBulkUpdateView,
     ItemsBulkUploadView,
     ItemSearchView,
     ItemsExportView,
     ItemsListView,
     ItemsTableView,
-    ItemsBulkUpdateView,
     ItemToggleActiveView,
     get_purchase_units,
     get_subcategories,
 )
+from .views.ml import ml_dashboard
 from .views.purchase_orders import (
     purchase_order_create,
     purchase_order_detail,
@@ -34,9 +36,7 @@ from .views.purchase_orders import (
     purchase_orders_list,
 )
 from .views.recipes import RecipesListView, recipe_create, recipe_detail
-from .views.ml import ml_dashboard
 from .views.stock import history_reports, stock_movements
-from .views.visualizations import visualizations
 from .views.suppliers import (
     SupplierCreateView,
     SupplierEditView,
@@ -48,7 +48,7 @@ from .views.suppliers import (
     SuppliersTableView,
     SupplierToggleActiveView,
 )
-from .views.explore import explore, explore_export
+from .views.visualizations import visualizations
 
 urlpatterns = [
     path("explore/", explore, name="explore"),
@@ -57,8 +57,16 @@ urlpatterns = [
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
     path("items/export/", ItemsExportView.as_view(), name="items_export"),
     path("items/create/", ItemCreateHTMXView.as_view(), name="item_create"),
-    path("items/create/partial/", ItemCreatePartialView.as_view(), name="item_create_partial"),
-    path("items/<int:pk>/inline-update/", ItemInlineUpdateView.as_view(), name="item_inline_update"),
+    path(
+        "items/create/partial/",
+        ItemCreatePartialView.as_view(),
+        name="item_create_partial",
+    ),
+    path(
+        "items/<int:pk>/inline-update/",
+        ItemInlineUpdateView.as_view(),
+        name="item_inline_update",
+    ),
     path("items/bulk/", ItemsBulkUpdateView.as_view(), name="items_bulk_update"),
     # Backward-compat name used in templates/tests
     path("items/upload/", ItemsBulkUploadView.as_view(), name="upload_csv"),

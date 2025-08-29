@@ -13,7 +13,7 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     Output format expected by views/tests: lists of strings for
     'categories' and 'subcategories'.
     """
-    from ..models import Item, Department
+    from ..models import Department, Item
 
     category = (request.GET.get("category") or "").strip()
     subcategory = (request.GET.get("subcategory") or "").strip()
@@ -78,7 +78,7 @@ def resolve_category_filters(request) -> Dict[str, Any]:
 def build_filters(request) -> List[Dict[str, Any]]:
     """Build filter UI elements based on request parameters."""
     resolved = resolve_category_filters(request)
-    
+
     category_options = [{"value": "", "label": "All Categories"}]
     # Categories may be strings or tuples; normalize
     for c in resolved["categories"]:
@@ -88,7 +88,7 @@ def build_filters(request) -> List[Dict[str, Any]]:
         else:
             val = lbl = c
         category_options.append({"value": val, "label": lbl})
-    
+
     subcategory_options = [{"value": "", "label": "All Subcategories"}]
     for c in resolved["subcategories"]:
         if isinstance(c, (list, tuple)) and len(c) >= 1:
@@ -97,13 +97,17 @@ def build_filters(request) -> List[Dict[str, Any]]:
         else:
             val = lbl = c
         subcategory_options.append({"value": val, "label": lbl})
-    
+
     base_unit_options = [{"value": "", "label": "All Units"}]
-    base_unit_options.extend([{"value": u[0], "label": u[1]} for u in resolved["base_units"]])
-    
+    base_unit_options.extend(
+        [{"value": u[0], "label": u[1]} for u in resolved["base_units"]]
+    )
+
     department_options = [{"value": "", "label": "All Departments"}]
-    department_options.extend([{"value": d[0], "label": d[1]} for d in resolved["departments"]])
-    
+    department_options.extend(
+        [{"value": d[0], "label": d[1]} for d in resolved["departments"]]
+    )
+
     return [
         {
             "name": "category",
@@ -113,7 +117,7 @@ def build_filters(request) -> List[Dict[str, Any]]:
         },
         {
             "name": "subcategory",
-            "label": "Subcategory", 
+            "label": "Subcategory",
             "value": resolved["subcategory"],
             "options": subcategory_options
         },

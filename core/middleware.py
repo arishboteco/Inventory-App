@@ -1,5 +1,5 @@
-import re
 import logging
+import re
 
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login

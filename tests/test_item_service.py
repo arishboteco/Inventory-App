@@ -38,7 +38,7 @@ def test_add_new_item_inserts_row():
     details = {
         "name": "Widget",
         "unit_id": 55,
-        
+
         "category_id": 1,
         "reorder_point": 1,
         "notes": "n",
@@ -55,9 +55,9 @@ def test_get_all_items_with_stock_includes_unit():
     item = Item.objects.create(
         name="Widget",
         unit_id=55,
-        
+
         category_id=1,
-        
+
         reorder_point=1,
         notes="n",
         is_active=True,
@@ -73,9 +73,9 @@ def test_get_item_details_includes_unit():
     item = Item.objects.create(
         name="Widget",
         unit_id=55,
-        
+
         category_id=1,
-        
+
         reorder_point=1,
         notes="n",
         is_active=True,
@@ -91,7 +91,7 @@ def test_add_items_bulk_inserts_rows():
         {
             "name": "Widget",
             "unit_id": 55,
-            
+
             "category_id": 1,
             "reorder_point": 1,
             "notes": "n",
@@ -100,7 +100,7 @@ def test_add_items_bulk_inserts_rows():
         {
             "name": "Gadget",
             "unit_id": 55,
-            
+
             "category_id": 1,
             "reorder_point": 2,
             "notes": "n",
@@ -134,7 +134,7 @@ def test_add_items_bulk_applies_defaults():
         {
             "name": "Gadget",
             "unit_id": 55,
-            
+
             "is_active": False,
         },
     ]
@@ -160,9 +160,9 @@ def test_remove_items_bulk_marks_inactive():
     widget = Item.objects.create(
         name="Widget",
         unit_id=55,
-        
+
         category_id=1,
-        
+
         reorder_point=1,
         notes="n",
         is_active=True,
@@ -170,9 +170,9 @@ def test_remove_items_bulk_marks_inactive():
     gadget = Item.objects.create(
         name="Gadget",
         unit_id=55,
-        
+
         category_id=1,
-        
+
         reorder_point=2,
         notes="n",
         is_active=True,
@@ -194,9 +194,9 @@ def test_update_item_changes_fields():
     item = Item.objects.create(
         name="Widget",
         unit_id=55,
-        
+
         category_id=1,
-        
+
         reorder_point=1,
         notes="n",
         is_active=True,
@@ -221,9 +221,9 @@ def test_deactivate_and_reactivate_item():
     item = Item.objects.create(
         name="Widget",
         unit_id=55,
-        
+
         category_id=1,
-        
+
         reorder_point=1,
         notes="n",
         is_active=True,

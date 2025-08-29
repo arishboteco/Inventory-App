@@ -1,4 +1,5 @@
 import csv
+
 import pytest
 from django.urls import reverse
 
@@ -11,7 +12,7 @@ def _create_item(name="Widget", active=True):
     return Item.objects.create(
         name=name,
         unit_id=55,
-        
+
         reorder_point=1,
         notes="n",
         is_active=active,

@@ -104,7 +104,7 @@ class PurchaseOrderItem(models.Model):
             "total"
         ] or Decimal("0")
         return total
-    
+
     @property
     def line_total(self) -> Decimal:
         """Calculate line total (quantity × unit price)."""
@@ -112,12 +112,12 @@ class PurchaseOrderItem(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.purchase_order} - {self.item}"
-    
+
     def save(self, *args, **kwargs):
         """Override save to update item purchase price history."""
         is_new = self.pk is None
         super().save(*args, **kwargs)
-        
+
         # Update item's last purchase price when PO item is created/updated
         if self.item and self.unit_price:
             # Only update if this is a new record or price changed
@@ -129,7 +129,7 @@ class PurchaseOrderItem(models.Model):
                 old_item = PurchaseOrderItem.objects.get(pk=self.pk)
                 if old_item.unit_price != self.unit_price:
                     update_price = True
-            
+
             if update_price:
                 # Update item's price history
                 Item.objects.filter(pk=self.item.pk).update(

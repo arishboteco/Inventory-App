@@ -1,19 +1,19 @@
 """Service layer for the inventory app."""
 
 from . import (
+    category_filters,
     counts,
     dashboard_service,
     goods_receiving_service,
     item_service,
-    category_filters,
     kpis,
     list_utils,
     purchase_order_service,
     recipe_service,
     sale_service,
     stock_service,
-    supabase_client,
     supabase_categories,
+    supabase_client,
     supabase_units,
     supplier_service,
     ui_service,

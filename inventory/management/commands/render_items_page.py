@@ -1,7 +1,8 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
 from django.test import RequestFactory
 from django.urls import reverse
+
 from inventory.views.items import ItemsListView
 
 
@@ -12,7 +13,12 @@ class Command(BaseCommand):
         User = get_user_model()
         user = User.objects.filter(is_superuser=True).first()
         if not user:
-            user = User.objects.create_user(username="devviewer", password="devviewer", is_staff=True, is_superuser=True)
+            user = User.objects.create_user(
+                username="devviewer",
+                password="devviewer",
+                is_staff=True,
+                is_superuser=True,
+            )
 
         rf = RequestFactory()
 

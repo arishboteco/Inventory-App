@@ -17,7 +17,17 @@ repos:
         args: ["--profile", "black"]
         language_version: python3.13
   - repo: https://github.com/pre-commit/mirrors-prettier
+    # Note: upstream tags can differ; prefer a stable semver or latest.
+    # If this tag fails to resolve in CI, run `pre-commit autoupdate`.
     rev: v3.2.5
     hooks:
       - id: prettier
         files: "\\.(js|jsx|ts|tsx|css|scss|md|json|yml|yaml)$"
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: detect-private-key

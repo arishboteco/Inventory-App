@@ -13,6 +13,9 @@ class Command(BaseCommand):
         classifications = ml.abc_classification()
         self.stdout.write(
             self.style.SUCCESS(
-                f"Trained {len(forecasts)} models and classified {len(classifications)} items."
+                (
+                    f"Trained {len(forecasts)} models and classified "
+                    f"{len(classifications)} items."
+                )
             )
         )

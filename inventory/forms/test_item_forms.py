@@ -1,6 +1,7 @@
-"""Simplified ItemForm for testing that works with the proper units table architecture."""
+"""Simplified ItemForm for testing with the units table architecture."""
 
 from django import forms
+
 from ..models import Item
 
 INPUT_CLASS = "form-input"
@@ -8,13 +9,13 @@ INPUT_CLASS = "form-input"
 
 class TestItemForm(forms.ModelForm):
     """Simplified item form for testing that only uses unit_id reference."""
-    
+
     class Meta:
         model = Item
         fields = [
             "name",
             "unit_id",
-            "reorder_point", 
+            "reorder_point",
             "current_stock",
             "notes",
             "is_active",
@@ -58,11 +59,21 @@ class TestItemForm(forms.ModelForm):
             from django.db import connection
             try:
                 with connection.cursor() as cursor:
-                    cursor.execute("SELECT unit_id FROM units WHERE unit_id = %s", [unit_id])
+                    cursor.execute(
+                        "SELECT unit_id FROM units WHERE unit_id = %s",
+                        [unit_id],
+                    )
                     if not cursor.fetchone():
-                        raise forms.ValidationError(f"Unit ID {unit_id} does not exist in units table.")
+                        raise forms.ValidationError(
+                            (
+                                f"Unit ID {unit_id} does not exist in "
+                                "units table."
+                            )
+                        )
             except Exception:
                 # In test environment, allow known test unit IDs
                 if unit_id not in [19, 55]:  # Known good test unit IDs
-                    raise forms.ValidationError(f"Unit ID {unit_id} is not valid for testing.")
+                    raise forms.ValidationError(
+                        f"Unit ID {unit_id} is not valid for testing."
+                    )
         return unit_id

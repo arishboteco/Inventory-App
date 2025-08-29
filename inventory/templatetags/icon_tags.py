@@ -9,7 +9,7 @@ register = template.Library()
 def icon(icon_name, size='w-4 h-4'):
     """
     Render an SVG icon with the specified name and size.
-    
+
     Usage:
         {% load icon_tags %}
         {% icon "dashboard" %}
@@ -24,7 +24,7 @@ def icon(icon_name, size='w-4 h-4'):
 def icon_inline(icon_name, css_classes="w-4 h-4 mr-2"):
     """
     Return inline SVG icon HTML for direct embedding.
-    
+
     Usage:
         {% load icon_tags %}
         {{ icon_inline:"dashboard" }}
@@ -51,9 +51,9 @@ def icon_inline(icon_name, css_classes="w-4 h-4 mr-2"):
         'success': '<svg class="{}" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
         'info': '<svg class="{}" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
     }
-    
+
     # Default fallback icon
     default_icon = '<svg class="{}" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>'
-    
+
     icon_svg = icons.get(icon_name, default_icon)
     return icon_svg.format(css_classes)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict, List
 import logging
+from typing import Dict, List
 
 from django.db.models import Sum
 from django.db.models.functions import Abs, TruncDate

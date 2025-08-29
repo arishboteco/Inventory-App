@@ -1,14 +1,14 @@
 """Form population services for dropdowns and selections."""
 
 import logging
-from typing import Dict, List, Tuple, Any, Optional
 from functools import lru_cache
+from typing import Dict, List, Optional, Tuple
 
 from django.db import connection
 from django.db.utils import OperationalError
 
-from .supabase_units import get_units
 from ..models import Department, Supplier
+from .supabase_units import get_units
 
 logger = logging.getLogger(__name__)
 
@@ -16,17 +16,19 @@ logger = logging.getLogger(__name__)
 @lru_cache(maxsize=None)
 class FormService:
     """Service for populating form dropdown options"""
-    
+
     @staticmethod
     def get_base_unit_choices():
         """Get base unit choices from database"""
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT DISTINCT base_unit FROM units 
-                    WHERE base_unit IS NOT NULL 
+                cursor.execute(
+                    """
+                    SELECT DISTINCT base_unit FROM units
+                    WHERE base_unit IS NOT NULL
                     ORDER BY base_unit
-                """)
+                    """
+                )
                 units = cursor.fetchall()
                 return [(unit[0], unit[0]) for unit in units if unit[0]]
         except OperationalError as e:
@@ -40,31 +42,36 @@ class FormService:
             with connection.cursor() as cursor:
                 if base_unit:
                     # Get purchase units for a specific base unit
-                    cursor.execute("""
-                        SELECT DISTINCT purchase_unit FROM units 
-                        WHERE base_unit = %s AND purchase_unit IS NOT NULL 
+                    cursor.execute(
+                        """
+                        SELECT DISTINCT purchase_unit FROM units
+                        WHERE base_unit = %s AND purchase_unit IS NOT NULL
                         ORDER BY purchase_unit
-                    """, [base_unit])
+                        """,
+                        [base_unit],
+                    )
                 else:
                     # Get all purchase units
-                    cursor.execute("""
-                        SELECT DISTINCT purchase_unit FROM units 
-                        WHERE purchase_unit IS NOT NULL 
+                    cursor.execute(
+                        """
+                        SELECT DISTINCT purchase_unit FROM units
+                        WHERE purchase_unit IS NOT NULL
                         ORDER BY purchase_unit
-                    """)
+                        """
+                    )
                 units = cursor.fetchall()
                 return [(unit[0], unit[0]) for unit in units if unit[0]]
         except OperationalError as e:
             logger.warning(f"Could not load purchase units from database: {e}")
             return [('GM', 'GM'), ('ML', 'ML'), ('MT', 'MT'), ('PC', 'PC')]
-    
+
     @staticmethod
     def get_unit_choices():
         """Legacy method for backward compatibility"""
         return FormService.get_base_unit_choices()
 
 
-@lru_cache(maxsize=None) 
+@lru_cache(maxsize=None)
 def get_units_map() -> Dict[str, List[str]]:
     """Get units mapping for JavaScript consumption."""
     try:
@@ -83,7 +90,7 @@ def get_units_map() -> Dict[str, List[str]]:
 @lru_cache(maxsize=None)
 def get_category_choices() -> List[Tuple[str, str]]:
     """Get available categories for dropdown selection.
-    
+
     This function maintains backward compatibility but delegates to CategoriesService.
     For new code, use CategoriesService.get_unique_categories() directly.
     """
@@ -95,7 +102,7 @@ def get_category_choices() -> List[Tuple[str, str]]:
 @lru_cache(maxsize=None)
 def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
     """Get category-subcategory mapping for JavaScript consumption.
-    
+
     This function maintains backward compatibility but delegates to CategoriesService.
     For new code, use CategoriesService.get_category_choices_grouped() directly.
     """
@@ -111,18 +118,18 @@ def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
         # Fallback for development/testing
         return {
             'Food & Beverage': [
-                {'name': 'Dairy'}, 
-                {'name': 'Meat'}, 
+                {'name': 'Dairy'},
+                {'name': 'Meat'},
                 {'name': 'Vegetables'}
             ],
             'Raw Materials': [
-                {'name': 'Flour'}, 
-                {'name': 'Sugar'}, 
+                {'name': 'Flour'},
+                {'name': 'Sugar'},
                 {'name': 'Oil'}
             ],
             'Packaging': [
-                {'name': 'Containers'}, 
-                {'name': 'Labels'}, 
+                {'name': 'Containers'},
+                {'name': 'Labels'},
                 {'name': 'Bags'}
             ],
         }
@@ -131,7 +138,7 @@ def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
 @lru_cache(maxsize=None)
 def get_subcategory_choices(category: Optional[str] = None) -> List[Tuple[str, str]]:
     """Get available subcategories for a given category.
-    
+
     This function maintains backward compatibility but delegates to CategoriesService.
     For new code, use CategoriesService.get_categories_by_category() directly.
     """
@@ -139,10 +146,15 @@ def get_subcategory_choices(category: Optional[str] = None) -> List[Tuple[str, s
     try:
         if category:
             subcategories = CategoriesService.get_categories_by_category(category)
-            return [(subcat['sub_category'], subcat['sub_category']) for subcat in subcategories]
+            return [
+                (subcat['sub_category'], subcat['sub_category'])
+                for subcat in subcategories
+            ]
         else:
             all_categories = CategoriesService.get_all_categories()
-            unique_subcategories = sorted(list(set(cat['sub_category'] for cat in all_categories)))
+            unique_subcategories = sorted(
+                list(set(cat['sub_category'] for cat in all_categories))
+            )
             return [(subcat, subcat) for subcat in unique_subcategories]
     except Exception as e:
         logger.warning(f"Could not load subcategories: {e}")
@@ -164,7 +176,9 @@ def get_department_choices() -> List[Tuple[int, str]]:
 def get_supplier_choices() -> List[Tuple[int, str]]:
     """Get available suppliers for selection."""
     try:
-        suppliers = Supplier.objects.filter(is_active=True).values_list('supplier_id', 'name')
+        suppliers = Supplier.objects.filter(is_active=True).values_list(
+            'supplier_id', 'name'
+        )
         return [(supplier[0], supplier[1]) for supplier in suppliers]
     except Exception as e:
         logger.warning(f"Could not load suppliers: {e}")
@@ -175,7 +189,7 @@ def get_purchase_unit_choices(base_unit: Optional[str] = None) -> List[Tuple[str
     """Get available purchase units for a given base unit."""
     if not base_unit:
         return []
-    
+
     try:
         units_map = get_units_map()
         purchase_units = units_map.get(base_unit, [base_unit])

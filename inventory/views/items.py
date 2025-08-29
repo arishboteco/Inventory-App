@@ -1,12 +1,11 @@
-import csv
-import io
 import json
 import logging
+from decimal import Decimal
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
-from django.db.models import BooleanField, Case, F, Value, When
+from django.db.models import BooleanField, Case, F, Q, Value, When
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -16,16 +15,25 @@ from django.views import View
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView
 
+from inventory.services.item_service import get_unit_display_name
+
 from ..forms.bulk_forms import BulkUploadForm
 from ..forms.item_forms import ItemForm
-from ..models import Item, StockTransaction
+from ..models import Item, StockTransaction, Supplier
 from ..models.departments import Department
-from ..services import category_filters, item_service, list_utils, stock_service, kpis
-from ..services.form_service import FormService
+from ..services import category_filters, item_service, kpis, list_utils, stock_service
+from ..services.form_service import FormService, get_subcategory_choices
 
 logger = logging.getLogger(__name__)
 
-EXCLUDED_FIELDS = ["name", "base_unit", "purchase_unit", "category", "sub_category", "departments"]  # Exclude fields that are handled explicitly
+EXCLUDED_FIELDS = [
+    "name",
+    "base_unit",
+    "purchase_unit",
+    "category",
+    "sub_category",
+    "departments",
+]  # Exclude fields that are handled explicitly
 
 
 def _filter_and_sort_items(request, qs=None):
@@ -52,7 +60,7 @@ def _filter_and_sort_items(request, qs=None):
         "name",
         "base_unit",  # Use base_unit for sorting
         "category",
-        "sub_category", 
+        "sub_category",
         "current_stock",
         "reorder_point",
         "is_active",
@@ -78,13 +86,26 @@ def _filter_and_sort_items(request, qs=None):
     if stock_status:
         params.update({"stock_status": stock_status})
     # Optional visibility toggles without changing current defaults
-    show_inactive = (request.GET.get("show_inactive") or "").lower() in {"1", "true", "on"}
-    active_only = (request.GET.get("active_only") or "").lower() in {"1", "true", "on"}
+    show_inactive = (request.GET.get("show_inactive") or "").lower() in {
+        "1",
+        "true",
+        "on",
+    }
+    active_only = (request.GET.get("active_only") or "").lower() in {
+        "1",
+        "true",
+        "on",
+    }
     if show_inactive:
         qs = qs.filter(is_active=False)
     if active_only:
         qs = qs.filter(is_active=True)
-    params.update({"show_inactive": "1" if show_inactive else "", "active_only": "1" if active_only else ""})
+    params.update(
+        {
+            "show_inactive": "1" if show_inactive else "",
+            "active_only": "1" if active_only else "",
+        }
+    )
     return qs, params
 
 
@@ -102,40 +123,44 @@ class ItemsListView(TemplateView):
     def post(self, request, *args, **kwargs):
         """Handle inline item creation via POST request."""
         form = ItemForm(request.POST)
-        
+
         if form.is_valid():
             try:
                 # Save the new item
                 item = form.save()
                 # Partial submissions (from modal/drawer)
                 if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
-                    return JsonResponse({"ok": True, "message": "Item created", "id": item.item_id})
+                    return JsonResponse(
+                        {"ok": True, "message": "Item created", "id": item.item_id}
+                    )
                 messages.success(request, f'Item "{item.name}" created successfully!')
-                
+
                 # Redirect to the same page to avoid duplicate submissions
                 return redirect('items_list')
-                
+
             except (DatabaseError, IntegrityError) as e:
                 logger.error(f"Database error creating item: {e}")
                 if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
                     return JsonResponse({"ok": False, "message": str(e)}, status=400)
                 messages.error(request, f"Error creating item: {str(e)}")
-                
+
             except Exception as e:
                 logger.error(f"Unexpected error creating item: {e}")
                 if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
                     return JsonResponse({"ok": False, "message": str(e)}, status=400)
                 messages.error(request, f"Unexpected error: {str(e)}")
-                
+
         else:
             # Form has validation errors
             if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
-                return JsonResponse({"ok": False, "message": form.errors.as_json()}, status=400)
+                return JsonResponse(
+                    {"ok": False, "message": form.errors.as_json()}, status=400
+                )
             else:
                 for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, f"{field}: {error}")
-        
+
         # If we get here, there were errors - redisplay the form
         return self.get(request, *args, **kwargs)
 
@@ -153,9 +178,8 @@ class ItemsListView(TemplateView):
             form = ItemForm(request.POST)
         else:
             form = ItemForm()
-        
+
         # Add additional context for the form
-        from ..models import Supplier, Department
         suppliers = Supplier.objects.filter(is_active=True).order_by('name')
         departments_for_form = Department.objects.all().order_by('name')
 
@@ -186,7 +210,8 @@ class ItemsListView(TemplateView):
                 "stats": stats,
                 "form": form,
                 "suppliers": suppliers,
-                "departments_for_form": departments_for_form,  # Use different name to avoid conflict
+                # Use different name to avoid conflict
+                "departments_for_form": departments_for_form,
                 "excluded_fields": EXCLUDED_FIELDS,
             }
         )
@@ -245,7 +270,6 @@ class ItemsExportView(View):
         ]
 
         def row(item: Item):
-            from inventory.services.item_service import get_unit_display_name
             return [
                 item.item_id,
                 item.name,
@@ -312,7 +336,9 @@ class ItemEditView(View):
                 return redirect("items_list")
             except (ValidationError, DatabaseError):
                 if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
-                    return JsonResponse({"ok": False, "message": "Unable to save item"}, status=400)
+                    return JsonResponse(
+                        {"ok": False, "message": "Unable to save item"}, status=400
+                    )
                 messages.error(request, "Unable to save item")
         ctx = {
             "form": form,
@@ -354,7 +380,6 @@ class ItemInlineUpdateView(View):
                     val = val in ("1", "true", "on", "True")
                 if field == "reorder_point":
                     try:
-                        from decimal import Decimal
                         val = Decimal(str(val)) if val not in (None, "") else None
                     except Exception:
                         continue
@@ -372,7 +397,7 @@ class ItemInlineUpdateView(View):
                 return JsonResponse({"ok": False, "message": "Save failed"}, status=400)
         return JsonResponse({"ok": True, "message": "No changes"})
 
-    
+
 
 
 class ItemDetailView(View):
@@ -402,7 +427,10 @@ class ItemDetailView(View):
             ("Departments", details.get("department_names", "None")),
             ("Current Stock", details["current_stock"]),
             ("Reorder Point", details["reorder_point"]),
-            ("Initial Purchase Price", details.get("initial_purchase_price", "Not set")),
+            (
+                "Initial Purchase Price",
+                details.get("initial_purchase_price", "Not set"),
+            ),
             ("Minimum Order Qty", details.get("minimum_order_qty", "Not set")),
             ("Lead Time (Days)", details.get("lead_time_days", "Not set")),
             ("Notes", details.get("notes", "None")),
@@ -523,7 +551,7 @@ class ItemCreateHTMXView(View):
     def post(self, request):
         form = ItemForm(request.POST)
         if form.is_valid():
-            item = form.save()
+            form.save()
             items = Item.objects.order_by("name")[:50]
             html = render_to_string("inventory/_item_options.html", {"items": items})
             # Append a tiny toast marker for the test expectation
@@ -548,7 +576,9 @@ class ItemCreatePartialView(View):
         form = ItemForm(request.POST)
         if form.is_valid():
             item = form.save()
-            return JsonResponse({"ok": True, "id": item.item_id, "message": "Item created"})
+            return JsonResponse(
+                {"ok": True, "id": item.item_id, "message": "Item created"}
+            )
         return JsonResponse({"ok": False, "message": form.errors.as_json()}, status=400)
 
 
@@ -585,7 +615,9 @@ class ItemsBulkUpdateView(View):
             ids = data.getlist('ids[]') or data.getlist('ids')
             ids = [int(x) for x in ids]
             if not ids:
-                return JsonResponse({"ok": False, "message": "No items selected"}, status=400)
+                return JsonResponse(
+                    {"ok": False, "message": "No items selected"}, status=400
+                )
 
             if action == 'deactivate':
                 updated = Item.objects.filter(pk__in=ids).update(is_active=False)
@@ -594,11 +626,15 @@ class ItemsBulkUpdateView(View):
             if action == 'assign_dept':
                 dept_id = data.get('dept_id')
                 if not dept_id:
-                    return JsonResponse({"ok": False, "message": "dept_id required"}, status=400)
+                    return JsonResponse(
+                        {"ok": False, "message": "dept_id required"}, status=400
+                    )
                 try:
                     dept = Department.objects.get(pk=int(dept_id))
                 except Department.DoesNotExist:
-                    return JsonResponse({"ok": False, "message": "Department not found"}, status=404)
+                    return JsonResponse(
+                        {"ok": False, "message": "Department not found"}, status=404
+                    )
                 items = Item.objects.filter(pk__in=ids)
                 for it in items:
                     it.departments.add(dept)
@@ -619,7 +655,7 @@ def get_purchase_units(request):
         purchase_units = FormService.get_purchase_unit_choices(base_unit)
     else:
         purchase_units = FormService.get_purchase_unit_choices()
-    
+
     return JsonResponse({
         'purchase_units': purchase_units
     })
@@ -627,14 +663,12 @@ def get_purchase_units(request):
 
 def get_subcategories(request):
     """AJAX endpoint to get subcategories for a given category"""
-    from ..services.form_service import get_subcategory_choices
-    
     category = request.GET.get('category', '')
     if category:
         subcategories = get_subcategory_choices(category)
     else:
         subcategories = get_subcategory_choices()
-    
+
     return JsonResponse({
         'subcategories': subcategories
     })
@@ -642,21 +676,18 @@ def get_subcategories(request):
 
 def check_similar_names(request):
     """AJAX endpoint to check for similar item names"""
-    from django.db.models import Q
-    from ..models import Item
-    
     name = request.GET.get('name', '').strip()
     if not name or len(name) < 3:  # Only check for names with 3+ characters
         return JsonResponse({
             'similar_items': [],
             'has_similar': False
         })
-    
+
     # Check for similar names (case-insensitive partial matches)
     similar_items = Item.objects.filter(
         Q(name__icontains=name) | Q(name__istartswith=name)
     ).exclude(name__iexact=name).values('id', 'name')[:5]  # Limit to 5 results
-    
+
     return JsonResponse({
         'similar_items': list(similar_items),
         'has_similar': len(similar_items) > 0

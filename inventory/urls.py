@@ -17,7 +17,12 @@ from .views import (
     StockTransactionViewSet,
     SupplierViewSet,
 )
-from .views.items import ItemsExportView, get_purchase_units, get_subcategories, check_similar_names
+from .views.items import (
+    ItemsExportView,
+    check_similar_names,
+    get_purchase_units,
+    get_subcategories,
+)
 from .views.what_if import what_if_reorder
 
 router = DefaultRouter()

@@ -1,19 +1,19 @@
 import json
+import logging
 from decimal import Decimal
 
-from django.contrib.auth import login
 from django.conf import settings
+from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.cache import cache
+from django.db.models import Sum
+from django.db.models.functions import TruncDate
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_date
-from django.db.models import Sum
-from django.db.models.functions import TruncDate
-from django.core.cache import cache
 
-from inventory.models import Item, Supplier, StockTransaction, PurchaseOrder
+from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
 from inventory.services import counts, dashboard_service, kpis
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,10 @@ def root_view(request):
             user = form.get_user()
             logger.info("Logging in user: %s", user.username)
             login(request, user)
-            logger.debug("User authenticated after login: %s", request.user.is_authenticated)
+            logger.debug(
+                "User authenticated after login: %s",
+                request.user.is_authenticated,
+            )
             return redirect("root")
 
     return render(request, "core/home.html", {"form": form})

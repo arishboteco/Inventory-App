@@ -5,9 +5,11 @@ This module extends the base settings for staging environment deployment.
 Used for pre-production testing and validation.
 """
 
-import os
 import logging
+import os
+
 import dj_database_url
+
 from .settings import *
 
 # SECURITY WARNING: don't run with debug turned on in staging!
@@ -164,12 +166,12 @@ if 'SENTRY_DSN' in os.environ:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.logging import LoggingIntegration
-    
+
     sentry_logging = LoggingIntegration(
         level=logging.INFO,        # Capture info and above as breadcrumbs
         event_level=logging.ERROR  # Send errors as events
     )
-    
+
     sentry_sdk.init(
         dsn=os.environ.get('SENTRY_DSN'),
         integrations=[DjangoIntegration(), sentry_logging],

@@ -1,7 +1,5 @@
 import logging
 import traceback
-from django.http import JsonResponse
-from django.shortcuts import render
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +25,13 @@ class DetailedErrorLoggingMiddleware:
         logger.error(f'Request Method: {request.method}')
         logger.error(f'Request User: {getattr(request, "user", "Anonymous")}')
         logger.error(f'Request META: {dict(request.META)}')
-        
+
         if request.method == 'POST':
             logger.error(f'POST Data: {dict(request.POST)}')
-        
+
         logger.error('🔍 FULL TRACEBACK:')
         logger.error(traceback.format_exc())
         logger.error('🚨 END ERROR REPORT 🚨')
-        
+
         # Don't return a response - let Django handle it normally
         return None

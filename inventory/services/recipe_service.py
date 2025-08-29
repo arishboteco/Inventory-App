@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-import logging
 import json
+import logging
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.db import IntegrityError, transaction
 
+from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
+
 from ..models import Item, Recipe, RecipeComponent, SaleTransaction, StockTransaction
+from .item_service import get_unit_display_name
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +59,6 @@ def _component_unit(kind: str, cid: int, unit: Optional[str]) -> Optional[str]:
     """
 
     if kind == "ITEM":
-        from .item_service import get_unit_display_name
         item = Item.objects.filter(pk=cid).values("unit_id").first()
         if not item:
             raise ValueError(f"Item {cid} not found")
@@ -123,8 +125,6 @@ def build_components_from_editor(
     dictionaries, Pydantic models or similar objects.
     """
 
-    from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
-
     components: List[Dict[str, Any]] = []
     errors: List[str] = []
     for idx, row in enumerate(rows):
@@ -141,7 +141,6 @@ def build_components_from_editor(
             continue
         unit = row.get("unit")
         if meta["kind"] == "ITEM":
-            from .item_service import get_unit_display_name
             # For items, use the item's unit
             allowed_unit = get_unit_display_name(meta.get("unit_id"))
             if unit is None:
@@ -214,7 +213,7 @@ def create_recipe(
                     recipe.recipe_id, comp["component_id"]
                 ):
                     raise ValueError("Adding this component creates a cycle")
-                    
+
                 RecipeComponent.objects.create(
                     parent_recipe=recipe,
                     component_kind=comp["component_kind"],
@@ -255,7 +254,7 @@ def update_recipe(
                     recipe_id, comp["component_id"]
                 ):
                     raise ValueError("Adding this component creates a cycle")
-                    
+
                 RecipeComponent.objects.create(
                     parent_recipe=recipe,
                     component_kind=comp["component_kind"],
@@ -314,7 +313,6 @@ def _expand_requirements(
             / (1 - float(row.get("loss_pct") or 0) / 100.0)
         )
         if row["component_kind"] == "ITEM":
-            from .item_service import get_unit_display_name
             item = (
                 Item.objects.filter(pk=row["component_id"])
                 .values("unit_id", "is_active")

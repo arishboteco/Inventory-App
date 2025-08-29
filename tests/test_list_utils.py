@@ -10,7 +10,7 @@ def test_apply_filters_sort(item_factory):
     # Create test items
     item_factory(name="Apple")
     item_factory(name="Banana")
-    
+
     request = RequestFactory().get(
         "/items",
         {"q": "a", "sort": "name", "direction": "desc"},

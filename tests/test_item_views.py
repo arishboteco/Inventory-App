@@ -31,7 +31,6 @@ def test_item_detail_view(client):
 
 
 def test_item_create_view_htmx_success(client, monkeypatch):
-    from inventory.forms import item_forms as forms_module
 
     url = reverse("item_create")
     data = {
@@ -50,7 +49,6 @@ def test_item_create_view_htmx_success(client, monkeypatch):
 
 
 def test_item_create_view_htmx_failure(client, monkeypatch):
-    from inventory.forms import item_forms as forms_module
 
     url = reverse("item_create")
     data = {
@@ -86,7 +84,6 @@ def test_item_delete_view_deactivates_with_transactions(client):
 
 
 def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
-    from inventory.forms import item_forms as forms_module
 
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
@@ -121,14 +118,13 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
 
 
 def test_item_edit_view_preselects_category_and_subcategory(client, monkeypatch):
-    from inventory.forms import item_forms as forms_module
 
     item = _create_item(category_id=2)
     url = reverse("item_edit", args=[item.pk])
     resp = client.get(url)
     assert resp.status_code == 200
     content = resp.content.decode()
-    
+
     # Check that the page loads successfully
     assert "Widget" in content
 

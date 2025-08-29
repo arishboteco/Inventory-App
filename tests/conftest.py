@@ -1,5 +1,6 @@
 import os
 import sys
+
 import django
 import pytest
 from django.db import connection
@@ -14,7 +15,7 @@ if PROJECT_ROOT not in sys.path:
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings.test")
 django.setup()
 
-from inventory.models import Item, Supplier, StockTransaction  # noqa: E402
+from inventory.models import Item, StockTransaction, Supplier  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)

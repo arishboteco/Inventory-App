@@ -12,7 +12,7 @@ import logging
 import traceback
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from django.db import IntegrityError, transaction
 from django.db.models import Sum
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def get_unit_display_name(unit_id: int) -> str:
     """Get the purchase_unit display name for a unit ID from the database.
-    
+
     This function maintains backward compatibility but delegates to UnitsService.
     For new code, use UnitsService.get_purchase_unit_display() directly.
     """
@@ -35,7 +35,7 @@ def get_unit_display_name(unit_id: int) -> str:
 
 def get_unit_info(unit_id: int) -> dict:
     """Get complete unit information including conversion factor.
-    
+
     This function maintains backward compatibility but delegates to UnitsService.
     For new code, use UnitsService.get_unit_info() directly.
     """
@@ -45,7 +45,7 @@ def get_unit_info(unit_id: int) -> dict:
 
 def convert_to_base_unit(quantity: float, unit_id: int) -> float:
     """Convert a quantity from purchase_unit to base_unit using conversion_factor.
-    
+
     This function maintains backward compatibility but delegates to UnitsService.
     For new code, use UnitsService.convert_purchase_to_base() directly.
     """
@@ -55,7 +55,7 @@ def convert_to_base_unit(quantity: float, unit_id: int) -> float:
 
 def convert_from_base_unit(base_quantity: float, unit_id: int) -> float:
     """Convert a quantity from base_unit to purchase_unit.
-    
+
     This function maintains backward compatibility but delegates to UnitsService.
     For new code, use UnitsService.convert_base_to_purchase() directly.
     """
@@ -105,7 +105,7 @@ get_all_items_with_stock.clear = get_all_items_with_stock.cache_clear  # type: i
 def get_distinct_departments_from_items() -> List[str]:
     """Return a sorted list of unique department names from active items."""
     from inventory.models import Department
-    
+
     # Get departments that have active items associated with them
     departments = (
         Department.objects
@@ -121,7 +121,7 @@ def get_distinct_departments_from_items() -> List[str]:
 def get_all_departments() -> List[Dict[str, Any]]:
     """Return all departments as a list of dictionaries."""
     from inventory.models import Department
-    
+
     return list(
         Department.objects
         .all()
@@ -254,7 +254,10 @@ def remove_items_bulk(item_ids: List[int]) -> Tuple[int, List[str]]:
         return affected, []
     except Exception as e:  # pragma: no cover - defensive logging
         logger.error(
-            "ERROR [item_service.remove_items_bulk]: Database error removing items: %s\n%s",
+            (
+                "ERROR [item_service.remove_items_bulk]: "
+                "Database error removing items: %s\n%s"
+            ),
             e,
             traceback.format_exc(),
         )
@@ -356,7 +359,7 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
             "item_id",
             "name",
             "unit_id",
-            "category_id", 
+            "category_id",
             "category",
             "sub_category",
             "base_unit",
@@ -375,15 +378,17 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
     if row:
         row["unit"] = get_unit_display_name(row["unit_id"])
         row["current_stock"] = row.pop("_stock")
-        
+
         # Add department information
         try:
             item = Item.objects.get(pk=item_id)
             row["departments"] = list(item.departments.values_list('name', flat=True))
-            row["department_names"] = ", ".join(row["departments"]) if row["departments"] else "None"
+            row["department_names"] = (
+                ", ".join(row["departments"]) if row["departments"] else "None"
+            )
         except Item.DoesNotExist:
             row["departments"] = []
             row["department_names"] = "None"
-            
+
         return row
     return None

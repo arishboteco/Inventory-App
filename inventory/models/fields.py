@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+
 from django.db import models
 
 

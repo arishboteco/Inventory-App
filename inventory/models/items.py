@@ -15,13 +15,33 @@ class Item(models.Model):
     category_id = models.BigIntegerField(
         blank=True, null=True, db_column="category_id_ref"
     )
-    
+
     # Business fields for complete item management
-    base_unit = models.CharField(max_length=50, blank=True, null=True, help_text="Base unit of measurement (kg, ltr, pc)")
-    purchase_unit = models.CharField(max_length=50, blank=True, null=True, help_text="Purchase unit (g, ml, each)")
-    category = models.CharField(max_length=100, blank=True, null=True, help_text="Item category")
-    sub_category = models.CharField(max_length=100, blank=True, null=True, help_text="Item subcategory")
-    
+    base_unit = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Base unit of measurement (kg, ltr, pc)",
+    )
+    purchase_unit = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Purchase unit (g, ml, each)",
+    )
+    category = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Item category",
+    )
+    sub_category = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Item subcategory",
+    )
+
     # Purchase and supplier information
     initial_purchase_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True,
@@ -42,14 +62,18 @@ class Item(models.Model):
     lead_time_days = models.IntegerField(
         blank=True, null=True, help_text="Standard lead time in days"
     )
-    
+
     # Original fields
     reorder_point = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     current_stock = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
-    notes = models.TextField(blank=True, null=True, help_text="Additional notes about this item")
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Additional notes about this item",
+    )
     is_active = models.BooleanField(default=True, null=False)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # Many-to-many relationship with departments
     departments = models.ManyToManyField(
         'Department',
@@ -60,7 +84,7 @@ class Item(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return self.name or f"Item {self.pk}"
-    
+
     @property
     def department_names(self):
         """Return a comma-separated string of department names."""

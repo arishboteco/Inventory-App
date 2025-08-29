@@ -3,7 +3,6 @@ from django import forms
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 
-from inventory.forms import item_forms as forms_module
 from inventory.forms.test_item_forms import TestItemForm  # Use simplified test form
 
 
@@ -31,7 +30,7 @@ def test_item_form_validation():
         "is_active": True,
     })
     assert form.is_valid(), f"Form errors: {form.errors}"
-    
+
     # Test invalid form data (missing required name)
     form = TestItemForm(data={
         "unit_id": 19,
@@ -41,7 +40,7 @@ def test_item_form_validation():
     assert "name" in form.errors
 
 
-@pytest.mark.django_db  
+@pytest.mark.django_db
 def test_item_form_save():
     form = TestItemForm(data={
         "name": "Test Item",

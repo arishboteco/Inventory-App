@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Sum
 
 from inventory.models import (
     GoodsReceivedNote,
@@ -104,8 +104,6 @@ def _process_items(
 
 
 def _update_po_status(po: PurchaseOrder) -> None:
-    from django.db.models import Sum
-
     fully_received = all(
         i.received_total >= i.quantity_ordered
         for i in po.purchaseorderitem_set.annotate(

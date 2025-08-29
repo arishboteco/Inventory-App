@@ -143,7 +143,8 @@ def autofill_component_meta(
     for row in result:
         meta = choice_map.get(row.get("component"))
         if meta:
-            row["unit"] = meta.get("unit_display") or meta.get("base_unit")  # Support both new and legacy
+            # Support both new and legacy keys for unit display
+            row["unit"] = meta.get("unit_display") or meta.get("base_unit")
             row["category"] = meta.get("category")
         else:
             row["unit"] = None

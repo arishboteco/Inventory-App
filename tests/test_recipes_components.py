@@ -61,7 +61,7 @@ def test_build_components_detects_unit_mismatch():
             "kind": "ITEM",
             "id": 1,
             "unit_id": 19,
-            
+
             "category": "Baking",
             "name": "Flour",
         }
@@ -87,7 +87,7 @@ def test_build_components_rejects_wrong_unit():
             "kind": "ITEM",
             "id": 1,
             "unit_id": 19,
-            
+
             "category": "Baking",
             "name": "Flour",
         }
@@ -132,7 +132,7 @@ def test_build_components_from_editor_accepts_models():
             "kind": "ITEM",
             "id": 1,
             "unit_id": 19,
-            
+
             "category": "Baking",
             "name": "Flour",
         }

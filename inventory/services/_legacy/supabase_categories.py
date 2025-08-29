@@ -1,8 +1,7 @@
 import logging
 from typing import Dict, List, Optional
 
-from ._legacy.supabase_categories import *  # noqa: F401,F403
-from .supabase_cache import get_cached
+from ..supabase_cache import get_cached
 from .supabase_client import SupabaseException, get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -11,14 +10,7 @@ _CACHE_TTL = 300  # seconds
 
 
 def _load_categories_from_supabase() -> Dict[Optional[str], List[dict]]:
-    """Fetch categories mapping from the Supabase ``category`` table.
-
-    Returns a mapping of category names to lists of subcategories. Top level
-    categories are stored under the ``None`` key. Each entry in the mapping is a
-    dict containing ``id`` and ``name`` keys. If the Supabase client cannot be
-    initialised or the request fails, an empty mapping is returned.
-    """
-
+    """Fetch categories mapping from the Supabase ``category`` table."""
     client = get_supabase_client()
     if client is None:
         logger.warning("Supabase is not configured; no categories loaded")

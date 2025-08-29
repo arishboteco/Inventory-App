@@ -163,7 +163,10 @@ def stock_movements(request):
                         )
                     except (ValueError, TypeError):
                         bulk_errors.append(
-                            f"Row {idx+2}: Invalid number format for item_id or quantity_change",
+                            (
+                                f"Row {idx+2}: Invalid number format for item_id or "
+                                "quantity_change"
+                            ),
                         )
 
                 if not bulk_errors and txs_to_create:

@@ -1,8 +1,7 @@
 import logging
 from typing import Dict, List
 
-from ._legacy.supabase_units import *  # noqa: F401,F403
-from .supabase_cache import get_cached
+from ..supabase_cache import get_cached
 from .supabase_client import SupabaseException, get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -11,13 +10,7 @@ _CACHE_TTL = 300  # seconds
 
 
 def _load_units_from_supabase() -> Dict[str, List[str]]:
-    """Fetch units mapping from the Supabase ``units`` table.
-
-    Returns a mapping of base units to a list of compatible purchase units. If
-    the Supabase client cannot be initialised or the request fails, an empty
-    mapping is returned.
-    """
-
+    """Fetch units mapping from the Supabase ``units`` table."""
     client = get_supabase_client()
     if client is None:
         logger.warning("Supabase is not configured; no units loaded")
@@ -38,8 +31,7 @@ def _load_units_from_supabase() -> Dict[str, List[str]]:
         if purchase:
             options.add(purchase)
 
-    # Always allow the base unit itself as a purchase unit
-    # and return sorted lists of unique options
+    # Always allow the base unit itself as a purchase unit and return sorted lists
     return {
         base: [base] + sorted(opt for opt in options if opt != base)
         for base, options in units.items()

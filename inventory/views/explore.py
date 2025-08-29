@@ -3,6 +3,8 @@ from __future__ import annotations
 from django.shortcuts import render
 from django.urls import reverse
 
+from inventory.services.item_service import get_unit_display_name
+
 from ..models import items as models_items
 from ..services import list_utils
 
@@ -42,7 +44,6 @@ def explore_export(request):
     headers = ["ID", "Name", "Unit", "Current Stock", "Active"]
 
     def row(item: Item):
-        from inventory.services.item_service import get_unit_display_name
         return [
             item.item_id,
             item.name,

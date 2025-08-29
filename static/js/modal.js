@@ -1,73 +1,115 @@
 (function () {
-  function openModal(html) {
-    const root = document.getElementById('modal-root');
-    const content = document.getElementById('modal-content');
-    if (!root || !content) return;
-    content.innerHTML = html;
-    root.classList.remove('hidden');
+  let lastFocused = null;
+  function trapFocus(container) {
+    const focusable = container.querySelectorAll(
+      'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
+    );
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    function handler(e) {
+      if (e.key !== "Tab") return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    container.addEventListener("keydown", handler);
+    first.focus();
   }
-  function openDrawer(html, side = 'right') {
-    const root = document.getElementById('modal-root');
-    const content = document.getElementById('modal-content');
+  function openModal(html) {
+    const root = document.getElementById("modal-root");
+    const content = document.getElementById("modal-content");
     if (!root || !content) return;
+    lastFocused = document.activeElement;
+    content.innerHTML = html;
+    root.classList.remove("hidden");
+    trapFocus(content);
+  }
+  function openDrawer(html, side = "right") {
+    const root = document.getElementById("modal-root");
+    const content = document.getElementById("modal-content");
+    if (!root || !content) return;
+    lastFocused = document.activeElement;
     content.innerHTML = `<div class="drawer ${side}">${html}</div>`;
-    root.classList.remove('hidden');
+    root.classList.remove("hidden");
+    trapFocus(content);
   }
   function closeModal() {
-    const root = document.getElementById('modal-root');
-    const content = document.getElementById('modal-content');
+    const root = document.getElementById("modal-root");
+    const content = document.getElementById("modal-content");
     if (!root || !content) return;
-    root.classList.add('hidden');
-    content.innerHTML = '';
+    root.classList.add("hidden");
+    content.innerHTML = "";
+    if (lastFocused && typeof lastFocused.focus === "function") {
+      lastFocused.focus();
+      lastFocused = null;
+    }
   }
 
   // public API
   window.modal = { open: openModal, openDrawer, close: closeModal };
 
   // delegation for close and open events
-  document.addEventListener('click', function (e) {
-    if (e.target.closest('[data-modal-close]')) {
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-modal-close]")) {
       closeModal();
       return;
     }
-    const opener = e.target.closest('[data-modal-url]');
+    const opener = e.target.closest("[data-modal-url]");
     if (opener) {
       e.preventDefault();
-      const url = opener.getAttribute('data-modal-url');
-      const type = opener.getAttribute('data-modal-type') || 'modal';
+      const url = opener.getAttribute("data-modal-url");
+      const type = opener.getAttribute("data-modal-type") || "modal";
       fetch(url)
-        .then(r => r.text())
-        .then(html => {
-          if (type === 'drawer') openDrawer(html, 'right');
+        .then((r) => r.text())
+        .then((html) => {
+          if (type === "drawer") openDrawer(html, "right");
           else openModal(html);
         })
-        .catch(() => { if (window.notifications) window.notifications.showToast('Failed to load content', 'error'); });
+        .catch(() => {
+          if (window.notifications)
+            window.notifications.showToast("Failed to load content", "error");
+        });
     }
   });
 
   // Intercept modal form submits for partial saves
-  document.addEventListener('submit', function (e) {
+  document.addEventListener("submit", function (e) {
     const form = e.target;
     if (!(form instanceof HTMLFormElement)) return;
-    if (!form.hasAttribute('data-modal-form')) return;
+    if (!form.hasAttribute("data-modal-form")) return;
     e.preventDefault();
-    const csrf = form.querySelector('input[name="csrfmiddlewaretoken"])?.value;
+    const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
     const fd = new FormData(form);
-    fd.set('partial', '1');
-    const url = form.getAttribute('action') || window.location.href;
-    fetch(url, { method: 'POST', headers: csrf ? { 'X-CSRFToken': csrf } : {}, body: fd })
-      .then(r => r.json().catch(() => ({})))
-      .then(data => {
+    fd.set("partial", "1");
+    const url = form.getAttribute("action") || window.location.href;
+    fetch(url, {
+      method: "POST",
+      headers: csrf ? { "X-CSRFToken": csrf } : {},
+      body: fd,
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((data) => {
         if (data && data.ok) {
-          if (window.notifications) window.notifications.showToast(data.message || 'Saved', 'success');
+          if (window.notifications)
+            window.notifications.showToast(data.message || "Saved", "success");
           closeModal();
           window.location.reload();
         } else {
-          if (window.notifications) window.notifications.showToast((data && data.message) || 'Save failed', 'error');
+          if (window.notifications)
+            window.notifications.showToast(
+              (data && data.message) || "Save failed",
+              "error",
+            );
         }
       })
       .catch(() => {
-        if (window.notifications) window.notifications.showToast('Network error', 'error');
+        if (window.notifications)
+          window.notifications.showToast("Network error", "error");
       });
   });
 })();

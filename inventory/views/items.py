@@ -22,7 +22,9 @@ from ..forms.item_forms import ItemForm
 from ..models import Item, StockTransaction, Supplier
 from ..models.departments import Department
 from ..services import category_filters, item_service, kpis, list_utils, stock_service
+from ..services.categories_service import CategoriesService
 from ..services.form_service import FormService, get_subcategory_choices
+from ..services.units_service import UnitsService
 
 logger = logging.getLogger(__name__)
 
@@ -129,30 +131,30 @@ class ItemsListView(TemplateView):
                 # Save the new item
                 item = form.save()
                 # Partial submissions (from modal/drawer)
-                if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                     return JsonResponse(
                         {"ok": True, "message": "Item created", "id": item.item_id}
                     )
                 messages.success(request, f'Item "{item.name}" created successfully!')
 
                 # Redirect to the same page to avoid duplicate submissions
-                return redirect('items_list')
+                return redirect("items_list")
 
             except (DatabaseError, IntegrityError) as e:
                 logger.error(f"Database error creating item: {e}")
-                if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                     return JsonResponse({"ok": False, "message": str(e)}, status=400)
                 messages.error(request, f"Error creating item: {str(e)}")
 
             except Exception as e:
                 logger.error(f"Unexpected error creating item: {e}")
-                if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                     return JsonResponse({"ok": False, "message": str(e)}, status=400)
                 messages.error(request, f"Unexpected error: {str(e)}")
 
         else:
             # Form has validation errors
-            if (request.POST.get('partial') or '').lower() in {'1','true','yes'}:
+            if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                 return JsonResponse(
                     {"ok": False, "message": form.errors.as_json()}, status=400
                 )
@@ -173,19 +175,25 @@ class ItemsListView(TemplateView):
         page_obj, per_page = list_utils.paginate(request, qs)
         table_ctx = {**params, "page_obj": page_obj, "page_size": per_page}
 
-        # If this is a POST request, use the submitted form data
-        if request.method == 'POST':
+        # Use posted data for form when re-rendering after errors
+        if request.method == "POST":
             form = ItemForm(request.POST)
         else:
             form = ItemForm()
 
+        # Bulk upload form for collapsible section
+        bulk_form = BulkUploadForm()
+
         # Add additional context for the form
-        suppliers = Supplier.objects.filter(is_active=True).order_by('name')
-        departments_for_form = Department.objects.all().order_by('name')
+        suppliers = Supplier.objects.filter(is_active=True).order_by("name")
+        departments_for_form = Department.objects.all().order_by("name")
+        # Inline select templates data
+        inline_units = UnitsService.get_unit_choices_for_forms()
+        inline_categories = CategoriesService.get_category_choices_for_forms()
 
         ctx.update(params)
         ctx.update(category_ctx)
-        ctx.update(table_ctx)  # Add this line to include page_obj
+        ctx.update(table_ctx)  # include page_obj
         # KPI/Stats for header cards
         try:
             pending_po_counts = kpis.pending_po_status_counts()
@@ -202,24 +210,33 @@ class ItemsListView(TemplateView):
             "total_value": total_value,
         }
 
+        # Build filters and remove the Unit filter for this page
+        filters_list = category_filters.build_filters(request)
+        filters_list = [f for f in filters_list if f.get("name") != "base_unit"]
+
         ctx.update(
             {
                 "page_size": per_page,
-                "filters": category_filters.build_filters(request),
+                "filters": filters_list,
                 "export_url": reverse("items_export"),
                 "stats": stats,
                 "form": form,
+                "bulk_form": bulk_form,
                 "suppliers": suppliers,
                 # Use different name to avoid conflict
                 "departments_for_form": departments_for_form,
                 "excluded_fields": EXCLUDED_FIELDS,
+                "inline_units": inline_units,
+                "inline_categories": inline_categories,
             }
         )
         # Expose category/subcategory filter context explicitly for tests
-        ctx.update({
-            "categories": category_ctx.get("categories", []),
-            "subcategories": category_ctx.get("subcategories", []),
-        })
+        ctx.update(
+            {
+                "categories": category_ctx.get("categories", []),
+                "subcategories": category_ctx.get("subcategories", []),
+            }
+        )
         return ctx
 
 
@@ -368,6 +385,8 @@ class ItemInlineUpdateView(View):
             "item_code",
             "category",
             "sub_category",
+            "base_unit",
+            "current_stock",
             "reorder_point",
             "notes",
             "is_active",
@@ -383,7 +402,44 @@ class ItemInlineUpdateView(View):
                         val = Decimal(str(val)) if val not in (None, "") else None
                     except Exception:
                         continue
+                if field == "current_stock":
+                    try:
+                        val = Decimal(str(val)) if val not in (None, "") else None
+                    except Exception:
+                        continue
                 setattr(item, field, val)
+                changed = True
+
+        # Handle foreign key/lookup fields mirroring the add-item form
+        if "unit_id" in data:
+            try:
+                uid = int(data.get("unit_id")) if data.get("unit_id") else None
+            except (TypeError, ValueError):
+                uid = None
+            if uid:
+                item.unit_id = uid
+                try:
+                    uinfo = UnitsService.get_unit_info(uid)
+                    item.base_unit = uinfo.get("base_unit")
+                    item.purchase_unit = uinfo.get("purchase_unit")
+                except Exception:  # pragma: no cover - defensive
+                    pass
+                changed = True
+
+        if "category_id" in data:
+            try:
+                cid = int(data.get("category_id")) if data.get("category_id") else None
+            except (TypeError, ValueError):
+                cid = None
+            if cid:
+                item.category_id = cid
+                try:
+                    info = CategoriesService.get_category_info(cid)
+                    if info:
+                        item.category = info.get("category")
+                        item.sub_category = info.get("sub_category")
+                except Exception:  # pragma: no cover - defensive
+                    pass
                 changed = True
 
         if changed:
@@ -396,8 +452,6 @@ class ItemInlineUpdateView(View):
                 logger.exception("Inline update failed for item %s: %s", pk, e)
                 return JsonResponse({"ok": False, "message": "Save failed"}, status=400)
         return JsonResponse({"ok": True, "message": "No changes"})
-
-
 
 
 class ItemDetailView(View):
@@ -446,6 +500,9 @@ class ItemDetailView(View):
             "recent_activity": recent_activity,
             "stock_history": json.dumps(stock_history),
         }
+        # If modal partial requested, return compact detail fragment
+        if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
+            return render(request, "inventory/_item_detail_partial.html", ctx)
         return render(request, self.template_name, ctx)
 
 
@@ -611,20 +668,20 @@ class ItemsBulkUpdateView(View):
     def post(self, request):
         try:
             data = request.POST
-            action = (data.get('action') or '').lower()
-            ids = data.getlist('ids[]') or data.getlist('ids')
+            action = (data.get("action") or "").lower()
+            ids = data.getlist("ids[]") or data.getlist("ids")
             ids = [int(x) for x in ids]
             if not ids:
                 return JsonResponse(
                     {"ok": False, "message": "No items selected"}, status=400
                 )
 
-            if action == 'deactivate':
+            if action == "deactivate":
                 updated = Item.objects.filter(pk__in=ids).update(is_active=False)
                 return JsonResponse({"ok": True, "updated": updated})
 
-            if action == 'assign_dept':
-                dept_id = data.get('dept_id')
+            if action == "assign_dept":
+                dept_id = data.get("dept_id")
                 if not dept_id:
                     return JsonResponse(
                         {"ok": False, "message": "dept_id required"}, status=400
@@ -650,45 +707,39 @@ class ItemsBulkUpdateView(View):
 
 def get_purchase_units(request):
     """AJAX endpoint to get purchase units for a given base unit"""
-    base_unit = request.GET.get('base_unit', '')
+    base_unit = request.GET.get("base_unit", "")
     if base_unit:
         purchase_units = FormService.get_purchase_unit_choices(base_unit)
     else:
         purchase_units = FormService.get_purchase_unit_choices()
 
-    return JsonResponse({
-        'purchase_units': purchase_units
-    })
+    return JsonResponse({"purchase_units": purchase_units})
 
 
 def get_subcategories(request):
     """AJAX endpoint to get subcategories for a given category"""
-    category = request.GET.get('category', '')
+    category = request.GET.get("category", "")
     if category:
         subcategories = get_subcategory_choices(category)
     else:
         subcategories = get_subcategory_choices()
 
-    return JsonResponse({
-        'subcategories': subcategories
-    })
+    return JsonResponse({"subcategories": subcategories})
 
 
 def check_similar_names(request):
     """AJAX endpoint to check for similar item names"""
-    name = request.GET.get('name', '').strip()
+    name = request.GET.get("name", "").strip()
     if not name or len(name) < 3:  # Only check for names with 3+ characters
-        return JsonResponse({
-            'similar_items': [],
-            'has_similar': False
-        })
+        return JsonResponse({"similar_items": [], "has_similar": False})
 
     # Check for similar names (case-insensitive partial matches)
-    similar_items = Item.objects.filter(
-        Q(name__icontains=name) | Q(name__istartswith=name)
-    ).exclude(name__iexact=name).values('id', 'name')[:5]  # Limit to 5 results
+    similar_items = (
+        Item.objects.filter(Q(name__icontains=name) | Q(name__istartswith=name))
+        .exclude(name__iexact=name)
+        .values("id", "name")[:5]
+    )  # Limit to 5 results
 
-    return JsonResponse({
-        'similar_items': list(similar_items),
-        'has_similar': len(similar_items) > 0
-    })
+    return JsonResponse(
+        {"similar_items": list(similar_items), "has_similar": len(similar_items) > 0}
+    )

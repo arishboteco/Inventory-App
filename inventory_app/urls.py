@@ -16,6 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.templatetags.static import static
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
@@ -23,6 +24,14 @@ from core.views import dashboard, dashboard_kpis, health_check, root_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Favicon for browsers that hit /favicon.ico directly
+    path(
+        "favicon.ico",
+        RedirectView.as_view(
+            url=static("img/favicon.svg"),
+            permanent=True,
+        ),
+    ),
     path(
         "login/",
         RedirectView.as_view(pattern_name="root", permanent=False),

@@ -18,11 +18,13 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         choices=[],  # Will be populated in __init__
         required=False,
         help_text="Item category for classification",
-        widget=forms.Select(attrs={
-            'class': 'form-control predictive',
-            'data-field': 'category_id',
-            'placeholder': 'Select category'
-        })
+        widget=forms.Select(
+            attrs={
+                "class": INPUT_CLASS,
+                "data-field": "category_id",
+                "placeholder": "Select category",
+            }
+        ),
     )
 
     # Department assignment with checkbox selection
@@ -30,7 +32,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         queryset=Department.objects.all(),
         required=False,
         help_text="Departments that can use this item",
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'department-checkbox'})
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "department-checkbox"}),
     )
 
     # Purchase and supplier information
@@ -38,7 +40,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         queryset=Supplier.objects.filter(is_active=True),
         required=False,
         help_text="Default supplier for this item",
-        widget=forms.Select(attrs={'class': INPUT_CLASS})
+        widget=forms.Select(attrs={"class": INPUT_CLASS}),
     )
 
     class Meta:
@@ -58,49 +60,55 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             "is_active",
         ]
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': INPUT_CLASS,
-                'placeholder': 'Enter item name'
-            }),
-            'initial_purchase_price': forms.NumberInput(attrs={
-                'class': INPUT_CLASS,
-                'step': '0.01',
-                'min': '0',
-                'placeholder': '0.00'
-            }),
-            'minimum_order_qty': forms.NumberInput(attrs={
-                'class': INPUT_CLASS,
-                'step': '0.01',
-                'min': '0',
-                'placeholder': '1.00'
-            }),
-            'lead_time_days': forms.NumberInput(attrs={
-                'class': INPUT_CLASS,
-                'min': '0',
-                'placeholder': '7'
-            }),
-            'unit_id': forms.Select(attrs={
-                'class': 'form-control predictive',
-                'data-field': 'unit_id'
-            }),
-            'reorder_point': forms.NumberInput(attrs={
-                'class': INPUT_CLASS,
-                'step': '0.01',
-                'min': '0',
-                'placeholder': '10.00'
-            }),
-            'current_stock': forms.NumberInput(attrs={
-                'class': INPUT_CLASS,
-                'step': '0.01',
-                'min': '0',
-                'placeholder': '0.00'
-            }),
-            'notes': forms.Textarea(attrs={
-                'class': INPUT_CLASS,
-                'rows': 3,
-                'placeholder': 'Additional notes about this item'
-            }),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'})
+            "name": forms.TextInput(
+                attrs={"class": INPUT_CLASS, "placeholder": "Enter item name"}
+            ),
+            "initial_purchase_price": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "0.00",
+                }
+            ),
+            "minimum_order_qty": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "1.00",
+                }
+            ),
+            "lead_time_days": forms.NumberInput(
+                attrs={"class": INPUT_CLASS, "min": "0", "placeholder": "7"}
+            ),
+            "unit_id": forms.Select(
+                attrs={"class": INPUT_CLASS, "data-field": "unit_id"}
+            ),
+            "reorder_point": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "10.00",
+                }
+            ),
+            "current_stock": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "0.00",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "rows": 3,
+                    "placeholder": "Additional notes about this item",
+                }
+            ),
+            "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
         }
         error_messages = {
             "name": {"required": "Item name is required."},
@@ -110,20 +118,17 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Populate category dropdown choices using proper service
-        category_choices = [('', 'Select Category')] + (
+        category_choices = [("", "Select Category")] + (
             CategoriesService.get_category_choices_for_forms()
         )
-        self.fields['category_id'].choices = category_choices
+        self.fields["category_id"].choices = category_choices
 
         # Use unit_id field instead of separate base_unit/purchase_unit fields
-        unit_choices = [('', 'Select Unit')] + UnitsService.get_unit_choices_for_forms()
-        self.fields['unit_id'] = forms.ChoiceField(
+        unit_choices = [("", "Select Unit")] + UnitsService.get_unit_choices_for_forms()
+        self.fields["unit_id"] = forms.ChoiceField(
             choices=unit_choices,
             required=True,
-            widget=forms.Select(attrs={
-                'class': 'form-control predictive',
-                'data-field': 'unit_id'
-            }),
+            widget=forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit_id"}),
             help_text=(
                 "Select the unit for this item (handles both kitchen and "
                 "procurement units)"
@@ -139,9 +144,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             self.fields["unit_id"].initial = 55  # Default PC unit
 
         # Add data for JavaScript dropdowns (for categories)
-        self.category_options = [
-            choice[0] for choice in get_category_choices()
-        ]
+        self.category_options = [choice[0] for choice in get_category_choices()]
         # Will be populated by JavaScript based on category
         self.sub_category_options = []
 
@@ -156,14 +159,14 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         cleaned_data = super().clean()
 
         # Normalize blank category_id to None for DB compatibility
-        if cleaned_data.get('category_id') in ('', None):
-            cleaned_data['category_id'] = None
+        if cleaned_data.get("category_id") in ("", None):
+            cleaned_data["category_id"] = None
 
-        base_unit = cleaned_data.get('base_unit')
+        base_unit = cleaned_data.get("base_unit")
         # purchase_unit kept for legacy compatibility; not used here
-        _ = cleaned_data.get('purchase_unit')
-        category = cleaned_data.get('category')
-        sub_category = cleaned_data.get('sub_category')
+        _ = cleaned_data.get("purchase_unit")
+        category = cleaned_data.get("category")
+        sub_category = cleaned_data.get("sub_category")
 
         # Validate category-subcategory relationship
         if sub_category and not category:
@@ -172,24 +175,24 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             )
 
         # Set unit_id based on base_unit for compatibility
-        if base_unit and not cleaned_data.get('unit_id'):
+        if base_unit and not cleaned_data.get("unit_id"):
             # Map base units to unit_ids (you may need to adjust these mappings)
             unit_mapping = {
-                'Kilograms': 19,
-                'Liters': 1,
-                'Pieces': 55,
-                'Boxes': 55,
-                'Cases': 55,
-                'Cartons': 55,
-                'Grams': 19,
-                'Milliliters': 1,
-                'Units': 55,
-                'Each': 55,
-                'Packages': 55,
-                'Bottles': 55,
-                'Cans': 55,
+                "Kilograms": 19,
+                "Liters": 1,
+                "Pieces": 55,
+                "Boxes": 55,
+                "Cases": 55,
+                "Cartons": 55,
+                "Grams": 19,
+                "Milliliters": 1,
+                "Units": 55,
+                "Each": 55,
+                "Packages": 55,
+                "Bottles": 55,
+                "Cans": 55,
             }
-            cleaned_data['unit_id'] = unit_mapping.get(base_unit, 55)  # Default to PC
+            cleaned_data["unit_id"] = unit_mapping.get(base_unit, 55)  # Default to PC
 
         return cleaned_data
 
@@ -198,17 +201,17 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         instance = super().save(commit=False)
 
         # Update unit_id based on base_unit if needed
-        if self.cleaned_data.get('base_unit') and not instance.unit_id:
+        if self.cleaned_data.get("base_unit") and not instance.unit_id:
             unit_mapping = {
-                'Kilograms': 19,
-                'Liters': 1,
-                'Pieces': 55,
-                'Boxes': 55,
-                'Packages': 55,
-                'Units': 55,
-                'Each': 55,
+                "Kilograms": 19,
+                "Liters": 1,
+                "Pieces": 55,
+                "Boxes": 55,
+                "Packages": 55,
+                "Units": 55,
+                "Each": 55,
             }
-            instance.unit_id = unit_mapping.get(self.cleaned_data['base_unit'], 55)
+            instance.unit_id = unit_mapping.get(self.cleaned_data["base_unit"], 55)
 
         if commit:
             instance.save()

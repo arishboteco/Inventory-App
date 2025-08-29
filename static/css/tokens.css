@@ -1,33 +1,36 @@
 :root {
   /* Color tokens */
-  --color-primary: #2563EB;
-  --color-secondary: #16A34A;
-  --color-accent: #D97706;
-  --color-danger: #DC2626;
-  --color-border: #9CA3AF;
-  --color-link-hover: #1E3A8A;
+  --color-primary: #1e4ed8; /* slightly deeper blue for better contrast */
+  --color-secondary: #16a34a;
+  --color-accent: #f59e0b;
+  --color-danger: #dc2626;
+  --color-border: #e5e7eb;
+  --color-link-hover: #1e40af;
 
   /* Body and text colors */
-  --color-body: #FFFFFF;
-  --color-body-text: #111827;
-  --color-nav-text: #FFFFFF;
-  --color-table-hover-bg: #F3F4F6;
+  --color-body: #ffffff;
+  --color-body-alt: #f8fafc; /* section subtle background */
+  --color-field-bg: #ffffff;
+  --color-body-text: #0f172a; /* slate-900 */
+  --color-nav-text: #ffffff;
+  --color-table-hover-bg: #f3f4f6;
 
   /* Shadow tokens */
-  --shadow-btn: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.08);
 
   /* Spacing tokens */
   --space-0-5: 0.125rem;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
+  --space-3: 0.75rem;
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
 
   /* Font size tokens */
   --font-size-base: 1rem;
-  --font-size-h1: 1.6rem;
-  --font-size-h2: 1.3rem;
+  --font-size-h1: 1.5rem;
+  --font-size-h2: 1.25rem;
   --font-size-badge: 0.8rem;
 }
 

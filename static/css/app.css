@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-@import './tokens.css';
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+@import "./tokens.css";
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,7 @@
   body {
     background-color: var(--color-body);
     color: var(--color-body-text);
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
   }
 
   a {
@@ -17,7 +17,7 @@
     text-decoration: underline;
   }
   a:visited {
-    color: #4C1D95;
+    color: #4c1d95;
   }
   a:hover,
   a:focus {
@@ -27,23 +27,107 @@
 
 @layer components {
   /* Compact KPI grid */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
-  @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 640px) { .kpi-grid { grid-template-columns: 1fr; } }
-  .kpi { display: flex; align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; }
-  .kpi .icon { width: 14px; height: 14px; margin-right: 0.4rem; color: #6b7280; opacity: 0.8; }
-  .kpi .value { font-weight: 600; color: #111827; font-size: 1rem; }
-  .kpi .label { margin-left: 0.35rem; font-size: 0.7rem; color: #6b7280; }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  @media (max-width: 1024px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .kpi {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .kpi .icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 0.4rem;
+    color: #6b7280;
+    opacity: 0.8;
+  }
+  .kpi .value {
+    font-weight: 600;
+    color: #111827;
+    font-size: 1rem;
+  }
+  .kpi .label {
+    margin-left: 0.35rem;
+    font-size: 0.7rem;
+    color: #6b7280;
+  }
 
   /* Items list density controls */
-  #items-container[data-density='compact'] .main-row { padding-top: 0.5rem; padding-bottom: 0.5rem; padding-left: 1rem; padding-right: 1rem; }
-  #items-container[data-density='compact'] .item-row h3 { font-size: 0.975rem; }
-  #items-container[data-density='compact'] .meta-sku, 
-  #items-container[data-density='compact'] .meta-unit { display: none; }
-  #items-container[data-density='compact'] .badge { padding: 0.05rem 0.5rem; font-size: 0.7rem; }
-  #items-container[data-density='compact'] .expand-icon svg { width: 16px; height: 16px; }
+  #items-container[data-density="compact"] .main-row {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  #items-container[data-density="compact"] .item-row h3 {
+    font-size: 0.975rem;
+  }
+  #items-container[data-density="compact"] .meta-sku,
+  #items-container[data-density="compact"] .meta-unit {
+    display: none;
+  }
+  #items-container[data-density="compact"] .badge {
+    padding: 0.05rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  #items-container[data-density="compact"] .expand-icon svg {
+    width: 16px;
+    height: 16px;
+  }
   /* Modern Corporate Design System - Pure CSS */
-  
+  /* Filters layout spacing fallback (when Tailwind build isn't active) */
+  #filters {
+    grid-gap: 0.75rem;
+  }
+  #filters .flex.flex-col {
+    gap: 0.25rem;
+  }
+  /* New: single-line filters bar */
+  .filters-inline {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+  .filters-inline > div {
+    min-width: 200px;
+  }
+  .filters-inline .btn-tertiary,
+  .filters-inline button {
+    white-space: nowrap;
+  }
+
+  /* Add Item form spacing */
+  details > div > form {
+    gap: 1rem !important;
+  }
+  details summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  details .card-body,
+  details .p-4 {
+    padding: 1rem;
+  }
+
   /* Navigation Components */
   .nav-item {
     padding: 0.5rem 1rem;
@@ -179,10 +263,64 @@
   .form-input {
     display: block;
     width: 100%;
-    padding: 0.5rem 0.75rem;
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
+  }
+
+  /* Utility stubs and custom styles can live here. Tailwind builds most classes. */
+  /* Compact form and table helpers */
+  .auto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+  .form-compact .form-label {
+    font-size: 0.85rem;
+    color: #374151;
+  }
+  .table-scroll {
+    max-height: 70vh;
+    overflow: auto;
+  }
+  .table-sticky thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #fff;
+  }
+  /* dept-grid defaults (overridden later with final polish section) */
+  .dept-grid {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+  .dept-grid ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 0.75rem;
+  }
+  .dept-grid li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .dept-grid li label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+  .btn-icon {
+    padding: 0.25rem;
+    border-radius: 0.375rem;
   }
   .form-input:focus {
     outline: none;
@@ -370,12 +508,12 @@
     display: block;
     margin-bottom: 0.5rem;
   }
-  
-  form input:not([type='checkbox']):not([type='radio']),
+
+  form input:not([type="checkbox"]):not([type="radio"]),
   form select,
   form textarea,
   .form-control {
-    font-family: 'Roboto', sans-serif;
+    font-family: "Roboto", sans-serif;
     border: 1px solid var(--color-border);
     background-color: var(--color-body);
     color: var(--color-body-text);
@@ -383,8 +521,8 @@
     border-radius: 0.25rem;
     width: 100%;
   }
-  
-  form input:not([type='checkbox']):not([type='radio']):focus,
+
+  form input:not([type="checkbox"]):not([type="radio"]):focus,
   form select:focus,
   form textarea:focus,
   .form-control:focus {
@@ -437,10 +575,10 @@
   }
 
   /* Custom utilities not provided by Tailwind */
-  .bg-modal-overlay { 
-    background-color: rgba(0, 0, 0, 0.5); 
+  .bg-modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
   }
-  
+
   /* Navigation icon sizing fix */
   .nav-icon {
     font-size: 0.875rem !important; /* 14px instead of 18px */
@@ -451,32 +589,283 @@
   }
 
   /* Skeleton rows for loading states */
-  .skeleton-row { height: 44px; border-radius: 0.5rem; background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%); background-size: 400% 100%; margin-bottom: 0.5rem; animation: shimmer 1.2s infinite; }
-  @keyframes shimmer { 0% { background-position: 100% 0 } 100% { background-position: -100% 0 } }
+  .skeleton-row {
+    height: 44px;
+    border-radius: 0.5rem;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 37%, #f3f4f6 63%);
+    background-size: 400% 100%;
+    margin-bottom: 0.5rem;
+    animation: shimmer 1.2s infinite;
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
+  }
 
   /* Bulk actions bar */
-.bulk-bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #ffffff; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 0.5rem; z-index: 40; }
+  .bulk-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 40;
+  }
 
-/* Minimal utility fallbacks for widths/heights commonly used in templates */
-  .w-3 { width: 0.75rem; }
-  .h-3 { height: 0.75rem; }
-  .w-4 { width: 1rem; }
-  .h-4 { height: 1rem; }
-  .w-5 { width: 1.25rem; }
-  .h-5 { height: 1.25rem; }
-  .p-1 { padding: 0.25rem; }
-  .p-2 { padding: 0.5rem; }
-  .rounded-lg { border-radius: 0.5rem; }
-  .hover\:bg-blue-50:hover { background-color: #EFF6FF; }
-  .text-gray-400 { color: #9CA3AF; }
-  .hover\:text-blue-600:hover { color: #2563eb; }
-  .hover\:text-green-600:hover { color: #16a34a; }
-.hover\:text-red-600:hover { color: #dc2626; }
+  /* Minimal utility fallbacks for widths/heights commonly used in templates */
+  .w-3 {
+    width: 0.75rem;
+  }
+  .h-3 {
+    height: 0.75rem;
+  }
+  .w-4 {
+    width: 1rem;
+  }
+  .h-4 {
+    height: 1rem;
+  }
+  .w-5 {
+    width: 1.25rem;
+  }
+  .h-5 {
+    height: 1.25rem;
+  }
+  .p-1 {
+    padding: 0.25rem;
+  }
+  .p-2 {
+    padding: 0.5rem;
+  }
+  .rounded-lg {
+    border-radius: 0.5rem;
+  }
+  .hover\:bg-blue-50:hover {
+    background-color: #eff6ff;
+  }
+  .text-gray-400 {
+    color: #9ca3af;
+  }
+  .hover\:text-blue-600:hover {
+    color: #2563eb;
+  }
+  .hover\:text-green-600:hover {
+    color: #16a34a;
+  }
+  .hover\:text-red-600:hover {
+    color: #dc2626;
+  }
 }
 
 /* Fallback for 'hidden' class when utility build is absent */
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 /* Drawer styles for modal */
-.drawer { width: 420px; max-width: 90vw; height: 100%; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -2px 0 8px rgba(0,0,0,0.08); position: relative; }
-.drawer.right { margin-left: auto; }
+.drawer {
+  width: 420px;
+  max-width: 90vw;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+.drawer.right {
+  margin-left: auto;
+}
+
+/* Line clamp utility (2 lines) */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Grid gap fallback for card layout containers */
+.grid {
+  display: grid;
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1280px) {
+  .xl\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1536px) {
+  .\32 xl\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.gap-4 {
+  gap: 1rem;
+}
+
+/* --- UI polish overrides (spacing + palette) --- */
+/* KPI gap */
+.kpi-grid {
+  gap: var(--space-3);
+}
+
+/* Collapsible form spacing */
+details > div > form {
+  gap: var(--space-4) !important;
+}
+details summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+details .card-body,
+details .p-4 {
+  padding: var(--space-4);
+}
+details > summary {
+  background-color: #f1f5f9;
+  border-bottom: 1px solid var(--color-border);
+}
+details[open] > summary {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+details > div {
+  background-color: var(--color-body);
+}
+
+/* Form label and control tweaks */
+.form-label {
+  color: #334155;
+  margin-bottom: 0.375rem;
+}
+form input:not([type="checkbox"]):not([type="radio"]),
+form select,
+form textarea,
+.form-control {
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-field-bg);
+}
+
+/* Table scroll background */
+.table-scroll {
+  background: var(--color-body);
+}
+
+/* KPI emoji icon sizing */
+.emoji-icon {
+  font-size: 1rem;
+  margin-right: 0.4rem;
+}
+
+/* Modern section panels */
+.section-panel {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+.section-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-body-text);
+  margin-bottom: 0.75rem;
+}
+
+/* Form layout breathing room */
+.form-compact .grid {
+  gap: 1rem;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+/* Chips multiselect modern look */
+.chips-search {
+  margin-bottom: 0.5rem;
+}
+.chips-search input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.chips button {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+}
+.chips button:hover {
+  background: #e2e8f0;
+}
+
+/* Departments list: 2-column layout, no box, no overflow */
+.dept-grid {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+  max-height: none;
+}
+.dept-grid ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 0.75rem;
+  row-gap: 0.25rem;
+}
+@media (max-width: 768px) {
+  .dept-grid ul {
+    grid-template-columns: 1fr;
+  }
+}
+.dept-grid li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.dept-grid li label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: unset;
+}

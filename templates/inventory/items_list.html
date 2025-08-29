@@ -1,95 +1,186 @@
-{% extends "_base.html" %}
+{% extends "components/create_manage_page.html" %}
 {% load static %}
 
-{% block title %}Item Master Management{% endblock %}
+{% block page_title %}Item Master Management{% endblock %}
 
-{% block content %}
-<!-- Header -->
-<div class="mb-8">
-  <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-    <span class="text-2xl" aria-hidden="true">📦</span>
-    Item Master Management
-  </h1>
-  <p class="text-gray-600 mt-2">Manage your inventory items: add new items, edit existing ones, and view stock levels.</p>
-  <hr class="mt-6" />
-</div>
+{% block heading_icon %}<span class="text-2xl" aria-hidden="true">📦</span>{% endblock %}
+{% block heading %}Item Master Management{% endblock %}
+{% block description %}<p class="text-gray-600 mt-2">Manage your inventory items: add new items, edit existing ones, and view stock levels.</p>{% endblock %}
 
-<!-- Actions Bar: Add + Bulk Upload -->
-<div class="flex items-center justify-between mb-6">
-  <div class="flex items-center" style="gap:.5rem">
-    <button type="button" class="btn-primary" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer">Add Item</button>
-    <button type="button" class="btn-secondary" data-modal-url="{% url 'upload_csv' %}?partial=1" data-modal-type="drawer">Bulk Upload</button>
-  </div>
+{% block primary_actions %}{% endblock %}
+
+{% block secondary_actions %}
   <div id="dept-options" class="hidden">
     <select id="dept-select-template">
       {% for d in departments_for_form %}
       <option value="{{ d.id }}">{{ d.name }}</option>
       {% endfor %}
     </select>
+    <select id="unit-select-template">
+      {% for val,label in inline_units %}
+      <option value="{{ val }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select id="category-id-select-template">
+      {% for val,label in inline_categories %}
+      <option value="{{ val }}">{{ label }}</option>
+      {% endfor %}
+    </select>
   </div>
-</div>
+{% endblock %}
 
-<!-- Compact KPIs -->
+{% block extra_top %}
+  <!-- Add Item collapsible -->
+  <details class="border rounded mb-4 bg-white">
+    <summary class="cursor-pointer px-4 py-2 bg-gray-100">
+      <h2 class="text-base font-semibold text-gray-900">Add Item</h2>
+    </summary>
+    <div class="p-4">
+      <form method="post" action="{% url 'items_list' %}">
+        {% csrf_token %}
+        <input type="hidden" name="partial" value="0"/>
+
+        <div class="grid" style="grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem;">
+          <!-- Essentials -->
+          <div class="section-panel" style="grid-column: span 12;" id="essentials-panel">
+            <h3 class="section-header">Essentials</h3>
+            <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items:start;">
+            <div class="space-y-1">
+              <label class="form-label">Name</label>
+              {{ form.name }}
+            </div>
+            <div class="space-y-1">
+              <label class="form-label">Unit</label>
+              {{ form.unit_id }}
+            </div>
+            <div class="space-y-1">
+              <label class="form-label">Category</label>
+              {{ form.category_id }}
+            </div>
+            <div class="space-y-1">
+              <label class="form-label">Current Stock</label>
+              {{ form.current_stock }}
+            </div>
+            <div class="space-y-1">
+              <label class="form-label">Reorder Point</label>
+              {{ form.reorder_point }}
+            </div>
+            <div class="space-y-1">
+              <label class="form-label">Status</label>
+              <label class="inline-flex items-center gap-2 text-gray-700" style="height:38px;align-items:center;">
+                {{ form.is_active }}
+                <span>Active</span>
+              </label>
+            </div>
+            </div>
+          </div>
+
+          <!-- Advanced -->
+          <div class="section-panel" style="grid-column: span 12;" id="advanced-panel">
+            <h3 class="section-header">Advanced</h3>
+            <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items:start;">
+              <div class="space-y-1">
+                <label class="form-label">Preferred Supplier</label>
+                {{ form.preferred_supplier }}
+              </div>
+              <div class="space-y-1">
+                <label class="form-label">Initial Purchase Price</label>
+                {{ form.initial_purchase_price }}
+              </div>
+              <div class="space-y-1">
+                <label class="form-label">Min Order Qty</label>
+                {{ form.minimum_order_qty }}
+              </div>
+              <div class="space-y-1">
+                <label class="form-label">Lead Time (days)</label>
+                {{ form.lead_time_days }}
+              </div>
+              <div class="col-span-3 space-y-1">
+                <label class="form-label">Departments</label>
+                <div class="dept-grid">
+                  {{ form.departments }}
+                </div>
+              </div>
+              <div class="col-span-3 space-y-1">
+                <label class="form-label">Notes</label>
+                {{ form.notes }}
+              </div>
+            </div>
+          </div>
+          <!-- Actions below Advanced -->
+          <div style="grid-column: span 12;">
+            <div class="form-actions">
+              <button type="reset" class="btn-secondary btn-sm">Clear</button>
+              <button type="submit" class="btn-primary btn-sm">Create</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </details>
+
+  <!-- Bulk Upload collapsible -->
+  <details class="border rounded mb-6 bg-white">
+    <summary class="cursor-pointer px-5 py-3 bg-gray-100">
+      <h2 class="text-base font-semibold text-gray-900">Bulk Upload</h2>
+    </summary>
+    <div class="p-5">
+      {% include "inventory/_bulk_upload_partial.html" with form=bulk_form only %}
+      <div class="mt-3">
+        <a href="{% static 'sample_stock_upload.csv' %}" download class="btn-outline">Download sample CSV</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- Title should come before filters -->
+  <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
+
+  <!-- Place filters directly above the table -->
+  <div class="card mb-4">
+    <div class="card-body">
+  <div class="text-sm text-gray-600 mb-2">Filter and explore</div>
+      {% url 'items_table' as items_table_url %}
+  {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
+    </div>
+  </div>
+
+  <!-- Screen-reader live region for list updates -->
+  <div id="items-aria-live" class="sr-only" aria-live="polite"></div>
+{% endblock %}
+
+{% block kpis %}
 <div class="kpi-grid mb-6">
   <div class="kpi">
-    <svg class="icon" width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+    <span class="emoji-icon" aria-hidden="true">📦</span>
     <span class="value">{{ page_obj.paginator.count|default:"0" }}</span>
     <span class="label">Items</span>
   </div>
   <div class="kpi">
-    <svg class="icon" width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+    <span class="emoji-icon" aria-hidden="true">⚠️</span>
     <span class="value">{{ stats.low_stock_count|default:"0" }}</span>
     <span class="label">Low Stock</span>
   </div>
   <div class="kpi">
-    <svg class="icon" width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+    <span class="emoji-icon" aria-hidden="true">⏳</span>
     <span class="value">{{ stats.pending_orders|default:"0" }}</span>
     <span class="label">Pending</span>
   </div>
   <div class="kpi">
-    <svg class="icon" width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+    <span class="emoji-icon" aria-hidden="true">💰</span>
     <span class="value">${{ stats.total_value|floatformat:0|default:"0" }}</span>
     <span class="label">Stock Value</span>
   </div>
 </div>
+{% endblock %}
 
-<!-- View & Manage Existing Items -->
-<h2 class="text-xl font-semibold text-gray-900 mb-3">Items</h2>
-<div class="card mb-6">
-  <div class="card-body">
-    {% url 'items_table' as items_table_url %}
-    {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'cards' %}
-  </div>
-  </div>
+{% block filters %}{% endblock %}
 
-<!-- Items Table -->
-<div id="items-container" class="card" data-density="comfortable">
-  <div class="card-header">
-    <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-gray-900">Inventory Items</h2>
-      <div class="flex items-center space-x-2">
-        <span class="text-sm text-gray-500">Layout:</span>
-        <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
-          <button type="button" class="px-2 py-1 text-sm" data-layout-btn data-value="cards">Cards</button>
-          <button type="button" class="px-2 py-1 text-sm bg-gray-50 border-l border-gray-200" data-layout-btn data-value="table">Table</button>
-        </div>
-        <span class="text-sm text-gray-500">Density:</span>
-        <div class="inline-flex rounded-lg border border-gray-200 overflow-hidden">
-          <button type="button" class="px-2 py-1 text-sm" data-density-btn data-value="comfortable">Comfortable</button>
-          <button type="button" class="px-2 py-1 text-sm bg-gray-50 border-l border-gray-200" data-density-btn data-value="compact">Compact</button>
-        </div>
-      </div>
+{% block data_container %}
+<div id="items-container" class="card">
+  <div class="table-scroll">
+    <div class="overflow-x-auto" id="items-list">
+      {% include "inventory/_items_table_grid.html" %}
     </div>
-  </div>
-  
-  <div class="overflow-x-auto" id="items-list">
-    {% with layout=request.GET.layout|default:'cards' %}
-      {% if layout == 'table' %}
-        {% include "inventory/_items_table_grid.html" %}
-      {% else %}
-        {% include "inventory/_items_table.html" %}
-      {% endif %}
-    {% endwith %}
   </div>
   <div id="items-loading" class="hidden p-4">
     <div class="skeleton-row"></div>
@@ -97,35 +188,23 @@
     <div class="skeleton-row"></div>
   </div>
 </div>
+{% endblock %}
 
-<!-- Sticky bulk actions bar -->
-<div id="bulk-actions" class="bulk-bar hidden" role="region" aria-label="Bulk actions">
-  <span id="bulk-count" class="mr-2">0 selected</span>
-  <button type="button" class="btn-secondary btn-sm" data-bulk-action="export">Export</button>
-  <button type="button" class="btn-secondary btn-sm" data-bulk-action="deactivate">Deactivate</button>
-  <button type="button" class="btn-secondary btn-sm" data-bulk-action="assign">Assign Dept</button>
-</div>
-
-<!-- Pagination -->
-{% if page_obj.has_other_pages %}
-<div class="mt-6 flex items-center justify-between">
-  <div class="text-sm text-gray-700">
-    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} items
+{% block pagination %}
+{% if page_obj %}
+<div class="flex items-center justify-between mt-4">
+  <div class="text-sm text-gray-600">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
   </div>
-  <div class="flex items-center space-x-2">
+  <div class="flex items-center gap-2">
     {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.stock_status %}&stock_status={{ request.GET.stock_status }}{% endif %}{% if request.GET.show_inactive %}&show_inactive=1{% endif %}" 
+      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.stock_status %}&stock_status={{ request.GET.stock_status }}{% endif %}{% if request.GET.show_inactive %}&show_inactive=1{% endif %}"
          class="btn-secondary btn-sm">
         Previous
       </a>
     {% endif %}
-    
-    <span class="text-sm text-gray-700">
-      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-    </span>
-    
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.stock_status %}&stock_status={{ request.GET.stock_status }}{% endif %}{% if request.GET.show_inactive %}&show_inactive=1{% endif %}" 
+      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.stock_status %}&stock_status={{ request.GET.stock_status }}{% endif %}{% if request.GET.show_inactive %}&show_inactive=1{% endif %}"
          class="btn-secondary btn-sm">
         Next
       </a>
@@ -133,52 +212,101 @@
   </div>
 </div>
 {% endif %}
+{% endblock %}
 
-<script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}"></script>
+{% block page_scripts %}
+<style>
+.table-scroll[data-shadow="true"] .table-sticky thead th { box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+</style>
+<script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}" defer></script>
+<script src="{% static 'js/multiselect-chips.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Enhanced search functionality
-    const searchInput = document.querySelector('input[name="q"]');
-    if (searchInput) {
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.form.submit();
-            }
-        });
-    }
-    
-    // Density toggle
-    const container = document.getElementById('items-container');
-    document.querySelectorAll('[data-density-btn]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const value = btn.getAttribute('data-value');
-        container.setAttribute('data-density', value);
-      });
+  const searchInput = document.querySelector('input[name="q"]');
+  if (searchInput) {
+    searchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); this.form.submit(); }
     });
-
-    // Layout toggle
-    document.querySelectorAll('[data-layout-btn]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const value = btn.getAttribute('data-value');
-        const url = new URL(window.location.href);
-        url.searchParams.set('layout', value);
-        localStorage.setItem('items_layout', value);
-        window.location.assign(url.toString());
-      });
+  }
+  const container = document.getElementById('items-container');
+  document.querySelectorAll('[data-density-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const value = btn.getAttribute('data-value');
+      container.setAttribute('data-density', value);
     });
-    // Restore saved layout
-    const savedLayout = localStorage.getItem('items_layout');
-    if (savedLayout) {
+  });
+  document.querySelectorAll('[data-layout-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const value = btn.getAttribute('data-value');
       const url = new URL(window.location.href);
-      if (url.searchParams.get('layout') !== savedLayout) {
-        url.searchParams.set('layout', savedLayout);
-        window.location.replace(url.toString());
-      }
+      url.searchParams.set('layout', value);
+      localStorage.setItem('items_layout', value);
+      window.location.assign(url.toString());
+    });
+  });
+  const savedLayout = localStorage.getItem('items_layout');
+  if (savedLayout) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('layout') !== savedLayout) {
+      url.searchParams.set('layout', savedLayout);
+      window.location.replace(url.toString());
     }
+  }
+  // Announce updates
+  const live = document.getElementById('items-aria-live');
+  function announce(text){ if(live){ live.textContent = text; } }
+  const listEl = document.getElementById('items-list');
+  const mo = new MutationObserver(()=>{
+    const count = document.querySelectorAll('.item-row').length;
+    announce(`List updated. ${count} items displayed.`);
+  });
+  if (listEl) mo.observe(listEl, { childList: true, subtree: true });
 
-    // Drawer opening handled by modal.js via [data-modal-url]
+  // Persist Advanced details open/close state
+  const adv = document.getElementById('add-item-advanced');
+  if (adv) {
+    const key = 'add_item_adv_open';
+    const saved = localStorage.getItem(key);
+    if (saved === '1') adv.setAttribute('open', '');
+    adv.addEventListener('toggle', () => {
+      localStorage.setItem(key, adv.open ? '1' : '0');
+    });
+  }
+
+  // Sticky header shadow on scroll
+  document.querySelectorAll('.table-scroll').forEach(scroller => {
+    function onScroll(){
+      scroller.toggleAttribute('data-shadow', scroller.scrollTop > 0);
+    }
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  });
+
+  // Dynamic subcategory filter: update options when category changes
+  const filtersForm = document.getElementById('filters');
+  if (filtersForm) {
+    const catSel = filtersForm.querySelector('select[name="category"]');
+    const subSel = filtersForm.querySelector('select[name="subcategory"]');
+    if (catSel && subSel) {
+      catSel.addEventListener('change', async () => {
+        const cat = catSel.value;
+        subSel.innerHTML = '<option value="">All Subcategories</option>';
+        if (!cat) { subSel.dispatchEvent(new Event('change', { bubbles: true })); return; }
+        try {
+          const res = await fetch(`/items/subcategories/?category=${encodeURIComponent(cat)}`);
+          const data = await res.json();
+          if (data && Array.isArray(data.subcategories)) {
+            data.subcategories.forEach(s => {
+              const opt = document.createElement('option');
+              opt.value = s; opt.textContent = s; subSel.appendChild(opt);
+            });
+          }
+        } catch (_) { /* noop */ }
+        // trigger table refresh via HTMX
+        subSel.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+  }
 });
 </script>
-
 {% endblock %}

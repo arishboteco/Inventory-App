@@ -41,3 +41,8 @@ changelog-release:
 
 changelog-show:
 	@python tools/changelog.py unreleased
+
+.PHONY: up
+# Ensure the dev server is running on port 8000
+up:
+	bash scripts/ensure-port-8000.sh 8000

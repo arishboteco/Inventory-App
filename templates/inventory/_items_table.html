@@ -1,9 +1,9 @@
 <!-- Enhanced Items Table with Modern Card-Style Rows -->
-<div class="space-y-4">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
     {% for item in page_obj.object_list %}
-    <div class="item-row bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden" data-item-id="{{ item.item_id }}">
+    <div class="item-row bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden h-full" data-item-id="{{ item.item_id }}">
         <!-- Main Row -->
-        <div class="main-row px-6 py-5 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 cursor-pointer" data-action="toggle-details" role="button" tabindex="0" aria-label="Toggle details">
+    <div class="main-row px-5 py-5 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 cursor-pointer" data-action="toggle-details" role="button" tabindex="0" aria-label="Toggle details">
             <div class="flex items-center justify-between">
                 <!-- Left side - Item info -->
                 <div class="flex items-center space-x-4 flex-1">
@@ -17,25 +17,25 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                     </button>
-                    
+
                     <!-- Selection Checkbox -->
                     <div class="relative">
-                        <input type="checkbox" name="selected_items" value="{{ item.item_id }}" 
+                        <input type="checkbox" name="selected_items" value="{{ item.item_id }}"
                                class="h-5 w-5 rounded-lg border-2 border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 transition-all duration-200 hover:border-blue-400"
                                aria-label="Select {{ item.name }}"
                                data-action="select-item">
                     </div>
-                    
+
                     <!-- Item Details -->
                     <div class="flex-1">
                         <div class="flex items-center space-x-4">
                             <div class="min-w-0 flex-1">
-                                <div class="flex items-center space-x-3">
+                                <div class="flex items-center gap-3">
                                     <!-- Item Status Indicator -->
                                     <div class="w-3 h-3 rounded-full {{ item.is_active|yesno:'bg-green-400,bg-red-400' }} flex-shrink-0 shadow-sm"></div>
-                                    <h3 id="item-title-{{ item.item_id }}" class="text-lg font-semibold text-gray-900 truncate">{{ item.name }}</h3>
+                                    <h3 id="item-title-{{ item.item_id }}" class="text-base font-semibold text-gray-900 line-clamp-2">{{ item.name }}</h3>
                                 </div>
-                                <div class="flex items-center space-x-4 text-sm text-gray-500 mt-2">
+                                        <div class="flex items-center flex-wrap gap-3 text-xs text-gray-600 mt-1">
                                     {% if item.category %}
                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -65,9 +65,9 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Right side - Status and Quick Info -->
-                <div class="flex items-center space-x-6">
+                <div class="flex items-center gap-5">
                     <!-- Stock Status -->
                     <div class="text-right">
                         <div class="text-lg font-bold text-gray-900">
@@ -100,7 +100,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <!-- Status Badge -->
                     <div class="text-center">
                         {% if item.is_active %}
@@ -119,16 +119,16 @@
                             </span>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Quick Actions -->
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center gap-2">
                         <button type="button" data-action="quick-edit"
                                 class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200" title="Quick Edit">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
                         </button>
-                        <a href="{% url 'item_detail' item.item_id %}" 
+                        <a href="{% url 'item_detail' item.item_id %}"
                            data-ignore-toggle
                            class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200" title="View Details">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,31 +146,7 @@
                 </div>
             </div>
         </div>
-                            {% if item.current_stock is not None %}
-                                {{ item.current_stock }}
-                            {% else %}
-                                <span class="text-gray-400">--</span>
-                            {% endif %}
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            {% if item.current_stock is not None %}
-                                {% if item.current_stock > 0 %}
-                                    <span class="inline-flex items-center text-green-600">
-                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-1"></span>
-                                        In Stock
-                                    </span>
-                                {% else %}
-                                    <span class="inline-flex items-center text-red-600">
-                                        <span class="w-2 h-2 bg-red-400 rounded-full mr-1"></span>
-                                        Out of Stock
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-gray-400">No data</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
+
                     <!-- Department -->
                     <div class="text-right min-w-0">
                         {% if item.departments.all %}
@@ -183,7 +159,7 @@
                             <span class="text-gray-400 text-sm">No department</span>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Status -->
                     <div>
                         {% if item.is_active %}
@@ -192,7 +168,7 @@
                             <span class="badge badge-error">Inactive</span>
                         {% endif %}
                     </div>
-                    
+
                     <!-- Quick Actions -->
                     <div class="flex items-center space-x-2">
                         <button type="button"
@@ -204,7 +180,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
                         </button>
-                        <a href="{% url 'item_detail' item.item_id %}" 
+                        <a href="{% url 'item_detail' item.item_id %}"
                            class="text-gray-400 hover:text-green-600 transition-colors" title="View Details">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -224,7 +200,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Expanded Details Panel -->
         <div id="details-{{ item.item_id }}" class="hidden bg-gray-50 border-t border-gray-200" role="region" aria-labelledby="item-title-{{ item.item_id }}">
             <div class="px-16 py-6">
@@ -251,12 +227,12 @@
                             </button>
                         </div>
                     </div>
-                    
+
                     <!-- Form Content -->
                     <div class="p-6">
                         <form data-action="save-inline" class="space-y-8">
                             {% csrf_token %}
-                            
+
                             <!-- Basic Information Section -->
                             <div class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                                 <div class="flex items-center mb-4">
@@ -277,7 +253,7 @@
                                                 Item Name
                                             </span>
                                         </label>
-                                        <input type="text" name="name" value="{{ item.name }}" 
+                                        <input type="text" name="name" value="{{ item.name }}"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-medium transition-all duration-200 hover:border-gray-400">
                                     </div>
                                     <div>
@@ -289,7 +265,7 @@
                                                 Item Code
                                             </span>
                                         </label>
-                                        <input type="text" name="item_code" value="{{ item.item_code|default:'' }}" 
+                                        <input type="text" name="item_code" value="{{ item.item_code|default:'' }}"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="SKU/Code">
                                     </div>
@@ -309,13 +285,13 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                                        <input type="text" name="category" value="{{ item.category|default:'' }}" 
+                                        <input type="text" name="category" value="{{ item.category|default:'' }}"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="Enter category">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Sub Category</label>
-                                        <input type="text" name="sub_category" value="{{ item.sub_category|default:'' }}" 
+                                        <input type="text" name="sub_category" value="{{ item.sub_category|default:'' }}"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="Enter sub category">
                                     </div>
@@ -335,25 +311,25 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Base Unit</label>
-                                        <input type="text" name="base_unit" value="{{ item.base_unit|default:'' }}" 
+                                        <input type="text" name="base_unit" value="{{ item.base_unit|default:'' }}"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="e.g., kg, liter">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Unit</label>
-                                        <input type="text" name="purchase_unit" value="{{ item.purchase_unit|default:'' }}" 
+                                        <input type="text" name="purchase_unit" value="{{ item.purchase_unit|default:'' }}"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="e.g., 2 kg pack">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Current Stock</label>
-                                        <input type="number" name="current_stock" value="{{ item.current_stock|default:'' }}" step="0.01" 
+                                        <input type="number" name="current_stock" value="{{ item.current_stock|default:'' }}" step="0.01"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="0.00">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Reorder Point</label>
-                                        <input type="number" name="reorder_point" value="{{ item.reorder_point|default:'' }}" step="0.01" 
+                                        <input type="number" name="reorder_point" value="{{ item.reorder_point|default:'' }}" step="0.01"
                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400"
                                                placeholder="10.00">
                                     </div>
@@ -373,12 +349,12 @@
                                 <div class="space-y-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                                        <textarea name="notes" rows="3" 
+                                        <textarea name="notes" rows="3"
                                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all duration-200 hover:border-gray-400 resize-none"
                                                   placeholder="Additional notes about this item...">{{ item.notes|default:'' }}</textarea>
                                     </div>
                                     <div class="flex items-center">
-                                        <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %} 
+                                        <input type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %}
                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                                         <label class="ml-2 block text-sm text-gray-900 font-medium">Item is active</label>
                                     </div>
@@ -387,7 +363,7 @@
 
                             <!-- Action Buttons -->
                             <div class="flex justify-end space-x-4 pt-4">
-                                <button type="button" data-action="cancel-edit" 
+                                <button type="button" data-action="cancel-edit"
                                         class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-200">
                                     <span class="flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -396,7 +372,7 @@
                                         Cancel
                                     </span>
                                 </button>
-                                <button type="submit" 
+                                <button type="submit"
                                         class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl">
                                     <span class="flex items-center">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -409,7 +385,7 @@
                         </form>
                     </div>
                 </div>
-                
+
                 <!-- Detailed Information -->
                 <div id="details-view-{{ item.item_id }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -435,7 +411,7 @@
                                 </div>
                             </dl>
                         </div>
-                        
+
                         <!-- Stock Information -->
                         <div class="bg-white p-4 rounded-lg border border-gray-200">
                             <h5 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Stock Information</h5>
@@ -458,7 +434,7 @@
                                 </div>
                             </dl>
                         </div>
-                        
+
                         <!-- Additional Details -->
                         <div class="bg-white p-4 rounded-lg border border-gray-200">
                             <h5 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Additional Details</h5>
@@ -488,7 +464,7 @@
                             </dl>
                         </div>
                     </div>
-                    
+
                     <!-- Description -->
                     {% if item.description %}
                     <div class="mt-6 bg-white p-4 rounded-lg border border-gray-200">
@@ -496,7 +472,7 @@
                         <p class="text-sm text-gray-900">{{ item.description }}</p>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Action Buttons -->
                     <div class="mt-6 flex justify-end space-x-3">
                         <button type="button" data-action="open-edit" data-href="{% url 'item_edit' item.item_id %}?partial=1" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">

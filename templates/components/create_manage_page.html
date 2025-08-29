@@ -1,0 +1,58 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% comment %}
+Reusable layout for create/manage pages:
+- Heading + optional description
+- Primary actions (e.g., Add, Bulk Upload)
+- KPI strip
+- Filter bar
+- Data container (cards/table/anything)
+- Optional bulk actions bar and pagination
+
+Pages should override the blocks as needed.
+{% endcomment %}
+
+{% block title %}{% block page_title %}Manage{% endblock %}{% endblock %}
+
+{% block content %}
+  <!-- Page header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+      {% block heading_icon %}{% endblock %}
+      {% block heading %}Manage{% endblock %}
+    </h1>
+    {% block description %}{% endblock %}
+    <hr class="mt-6" />
+  </div>
+
+  <!-- Actions (left: primary), (right: contextual) -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      {% block primary_actions %}{% endblock %}
+    </div>
+    <div class="flex items-center gap-2">
+      {% block secondary_actions %}{% endblock %}
+    </div>
+  </div>
+
+  <!-- KPI grid -->
+  {% block kpis %}{% endblock %}
+
+  <!-- Filters / search -->
+  {% block filters %}{% endblock %}
+
+  <!-- Optional extra banner/notice -->
+  {% block extra_top %}{% endblock %}
+
+  <!-- Data container -->
+  {% block data_container %}{% endblock %}
+
+  <!-- Bulk actions region (sticky bar or inline) -->
+  {% block bulk_actions %}{% endblock %}
+
+  <!-- Pagination region -->
+  {% block pagination %}{% endblock %}
+
+  {% block page_scripts %}{% endblock %}
+{% endblock %}

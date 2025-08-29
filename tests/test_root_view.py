@@ -59,6 +59,6 @@ def test_root_view_includes_nav_counts_for_authenticated_user(
     assert resp.context["item_count"] == 5
     assert resp.context["supplier_count"] == 7
     assert resp.context["pending_po_count"] == 2
-    assert b"Items (5)" in resp.content
+    assert b"Inventory (5)" in resp.content
     assert b"Suppliers (7)" in resp.content
     assert b"Purchase Orders (2)" in resp.content

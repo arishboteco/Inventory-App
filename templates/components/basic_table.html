@@ -1,0 +1,11 @@
+{% comment %}Basic table component with block areas for headers and rows{% endcomment %}
+<table class="table w-full">
+  <thead>
+    <tr>
+      {% block headers %}{% endblock %}
+    </tr>
+  </thead>
+  <tbody>
+    {% block rows %}{% endblock %}
+  </tbody>
+</table>

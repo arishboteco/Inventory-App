@@ -3,17 +3,26 @@
 {% block heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 
 {% block primary_actions %}
-  <a href="{% url 'supplier_create' %}" class="btn-primary">New Supplier</a>
-  <a href="{% url 'suppliers_bulk_upload' %}" class="btn-secondary">Bulk Upload</a>
+  {% url 'supplier_create' as supplier_create_url %}
+  {% include "components/button.html" with href=supplier_create_url variant='primary' label='New Supplier' %}
+  {% url 'suppliers_bulk_upload' as suppliers_bulk_upload_url %}
+  {% include "components/button.html" with href=suppliers_bulk_upload_url variant='secondary' label='Bulk Upload' %}
 {% endblock %}
 
 {% block secondary_actions %}
-  <a href="{% url 'suppliers_bulk_delete' %}" class="btn-danger">Bulk Delete</a>
-  <a href="{% url 'suppliers_table' %}?export=1" class="btn-secondary">Export CSV</a>
+  {% url 'suppliers_bulk_delete' as suppliers_bulk_delete_url %}
+  {% include "components/button.html" with href=suppliers_bulk_delete_url variant='danger' label='Bulk Delete' %}
+  {% url 'suppliers_table' as suppliers_table_url %}
+  {% with export_url=suppliers_table_url|add:'?export=1' %}
+    {% include "components/button.html" with href=export_url variant='secondary' label='Export CSV' %}
+  {% endwith %}
+  {% url 'suppliers_list' as suppliers_list_url %}
   {% if view == 'cards' %}
-    <a href="{% url 'suppliers_list' %}" class="btn-secondary">Table View</a>
+    {% include "components/button.html" with href=suppliers_list_url variant='secondary' label='Table View' %}
   {% else %}
-    <a href="{% url 'suppliers_list' %}?view=cards" class="btn-secondary">Card View</a>
+    {% with card_view_url=suppliers_list_url|add:'?view=cards' %}
+      {% include "components/button.html" with href=card_view_url variant='secondary' label='Card View' %}
+    {% endwith %}
   {% endif %}
 {% endblock %}
 

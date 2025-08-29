@@ -9,8 +9,15 @@ import logging
 import os
 
 import dj_database_url
+import environ
 
-from .settings import *
+from .settings import *  # noqa: F401,F403
+
+# Ensure `env` is available even when imported settings omit it
+try:  # pragma: no cover - defensive fallback
+    env  # type: ignore[name-defined]
+except NameError:  # pragma: no cover
+    env = environ.Env()
 
 # Override middleware for production (optimized for performance)
 MIDDLEWARE = [

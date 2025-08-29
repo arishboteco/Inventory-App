@@ -1,13 +1,22 @@
-{% extends "components/list_layout.html" %}
-{% block title %}Recipes – Inventory App{% endblock %}
+{% extends "components/create_manage_page.html" %}
+{% block page_title %}Recipes – Inventory App{% endblock %}
 {% block heading %}Recipes{% endblock %}
-{% block actions %}
+
+{% block primary_actions %}
   <a class="btn-primary" href="{% url 'recipe_create' %}">New Recipe</a>
 {% endblock %}
-{% block filter_bar %}
+
+{% block filters %}
   {% url 'recipes_list' as recipes_list_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_list_url hx_target="#recipes_grid" q=q %}
 {% endblock %}
-{% block table_id %}recipes_grid{% endblock %}
-{% block hx_get %}{% url 'recipes_list' %}{% endblock %}
-{% block table_content %}{{ recipes_grid|safe }}{% endblock %}
+
+{% block data_container %}
+  <div id="recipes_grid"
+       hx-get="{% url 'recipes_list' %}"
+       hx-trigger="load"
+       hx-include="#filters"
+       hx-indicator="#htmx-spinner">
+    {{ recipes_grid|safe }}
+  </div>
+{% endblock %}

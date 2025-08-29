@@ -1,7 +1,8 @@
-{% extends "components/list_layout.html" %}
-{% block title %}History Reports – Inventory App{% endblock %}
+{% extends "components/create_manage_page.html" %}
+{% block page_title %}History Reports – Inventory App{% endblock %}
 {% block heading %}History Reports{% endblock %}
-{% block filter_bar %}
+
+{% block filters %}
   {% url 'history_reports' as history_url %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -59,7 +60,14 @@
     });
   </script>
 {% endblock %}
-{% block table_id %}history_table{% endblock %}
-{% block hx_get %}{% url 'history_reports' %}{% endblock %}
-{% block table_content %}{% include "inventory/_history_tabs.html" %}{% endblock %}
+
+{% block data_container %}
+  <div id="history_table"
+       hx-get="{% url 'history_reports' %}"
+       hx-trigger="load"
+       hx-include="#filters"
+       hx-indicator="#htmx-spinner">
+    {% include "inventory/_history_tabs.html" %}
+  </div>
+{% endblock %}
 

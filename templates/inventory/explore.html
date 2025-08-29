@@ -1,6 +1,9 @@
-{% extends "_base.html" %}
-{% block content %}
-<h1>Explore Items</h1>
+{% extends "components/create_manage_page.html" %}
+
+{% block page_title %}Explore Items – Inventory App{% endblock %}
+{% block heading %}Explore Items{% endblock %}
+
+{% block filters %}
 <form method="get">
   <input type="text" name="q" value="{{ q }}" placeholder="Search" />
   <select name="active">
@@ -11,6 +14,9 @@
   <button type="submit">Filter</button>
 </form>
 <a href="{{ export_url }}?{{ querystring }}">Export CSV</a>
+{% endblock %}
+
+{% block data_container %}
 <ul>
 {% for item in page_obj.object_list %}
   <li>{{ item.name }}</li>
@@ -18,6 +24,9 @@
   <li>No results</li>
 {% endfor %}
 </ul>
+{% endblock %}
+
+{% block pagination %}
 <div class="pagination">
   {% if page_obj.has_previous %}
     <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">Prev</a>

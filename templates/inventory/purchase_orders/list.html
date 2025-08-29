@@ -1,34 +1,30 @@
-{% extends "_base.html" %}
+{% extends "components/create_manage_page.html" %}
 {% load static %}
 
-{% block title %}Purchase Orders - Inventory Pro{% endblock %}
+{% block page_title %}Purchase Orders - Inventory Pro{% endblock %}
 
-{% block content %}
-<!-- Page Header -->
-<div class="page-header">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="page-title">Purchase Orders</h1>
-      <p class="page-subtitle">Manage your purchase orders and supplier relationships</p>
-    </div>
-    <div class="flex items-center space-x-3">
-      <a href="{% url 'purchase_order_create' %}" class="btn-primary">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-        </svg>
-        New Purchase Order
-      </a>
-      <a href="{% url 'grn_list' %}" class="btn-secondary">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-        GRNs
-      </a>
-    </div>
-  </div>
-</div>
+{% block heading %}Purchase Orders{% endblock %}
+{% block description %}<p class="page-subtitle">Manage your purchase orders and supplier relationships</p>{% endblock %}
 
-<!-- Stats Cards -->
+{% block primary_actions %}
+  <a href="{% url 'purchase_order_create' %}" class="btn-primary">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+    </svg>
+    New Purchase Order
+  </a>
+{% endblock %}
+
+{% block secondary_actions %}
+  <a href="{% url 'grn_list' %}" class="btn-secondary">
+    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+    </svg>
+    GRNs
+  </a>
+{% endblock %}
+
+{% block kpis %}
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
   <div class="card">
     <div class="card-compact">
@@ -102,8 +98,9 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
-<!-- Search and Filters -->
+{% block filters %}
 <div class="card mb-6">
   <div class="card-body">
     <form method="get" class="grid grid-cols-1 lg:grid-cols-5 gap-4">
@@ -149,8 +146,9 @@
     </form>
   </div>
 </div>
+{% endblock %}
 
-<!-- Purchase Orders Table -->
+{% block data_container %}
 <div class="card">
   <div class="card-header">
     <div class="flex items-center justify-between">
@@ -165,13 +163,14 @@
       </div>
     </div>
   </div>
-  
+
   <div class="overflow-x-auto">
     {% include "inventory/purchase_orders/_table.html" %}
   </div>
 </div>
+{% endblock %}
 
-<!-- Pagination -->
+{% block pagination %}
 {% if page_obj.has_other_pages %}
 <div class="mt-6 flex items-center justify-between">
   <div class="text-sm text-gray-700">
@@ -179,26 +178,26 @@
   </div>
   <div class="flex items-center space-x-2">
     {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
-         class="btn-secondary btn-sm">
+      <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary btn-sm">
         Previous
       </a>
     {% endif %}
-    
+
     <span class="text-sm text-gray-700">
       Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
     </span>
-    
+
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
-         class="btn-secondary btn-sm">
+      <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary btn-sm">
         Next
       </a>
     {% endif %}
   </div>
 </div>
 {% endif %}
+{% endblock %}
 
+{% block page_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Bulk actions functionality
@@ -210,5 +209,5 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
-
 {% endblock %}
+

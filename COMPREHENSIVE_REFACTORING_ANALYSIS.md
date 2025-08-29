@@ -9,6 +9,7 @@ Your repository contains several areas that can benefit from cleanup and refacto
 ## 🗑️ **1. DUPLICATE FILES TO REMOVE**
 
 ### **A. Duplicate Settings Files**
+
 ```
 ❌ REDUNDANT:
 - /inventory_app/settings_test.py (42 lines)
@@ -20,10 +21,11 @@ SAVINGS: 42 lines, cleaner project structure
 ```
 
 ### **B. Template Duplicates**
+
 ```
 ❌ REDUNDANT TEMPLATES:
 - templates/inventory/items_list_old.html
-- templates/inventory/items_list_new.html  
+- templates/inventory/items_list_new.html
 - templates/inventory/purchase_orders/list_old.html
 - templates/inventory/purchase_orders/list_new.html
 
@@ -37,14 +39,14 @@ RISK: Low (appear to be backup/development versions)
 ## 🔄 **2. CODE DUPLICATION ISSUES**
 
 ### **A. Message/Toast Display Functions**
+
 ```javascript
 ❌ DUPLICATE IMPLEMENTATIONS:
 
-1. /static/js/smart-navigation.js:150 - showToast()
-2. /templates/inventory/items_list_backup.html:161 - showMessage() 
-3. /templates/inventory/_items_table.html:606 - notification display
-4. /templates/components/toast.html - Toast component
-5. /static/js/smart-forms.js:249 - Success message display
+1. /templates/inventory/items_list_backup.html:161 - showMessage()
+2. /templates/inventory/_items_table.html:606 - notification display
+3. /templates/components/toast.html - Toast component
+4. /static/js/smart-forms.js:249 - Success message display
 
 ISSUE: 5 different ways to show user notifications
 ACTION: Consolidate into single notification system
@@ -52,6 +54,7 @@ SAVINGS: ~100+ lines, consistent UX
 ```
 
 ### **B. Similar Name Checking Duplication**
+
 ```javascript
 ❌ DUPLICATE IMPLEMENTATIONS:
 
@@ -66,13 +69,13 @@ SAVINGS: ~50 lines, easier maintenance
 ```
 
 ### **C. Dropdown/Navigation Logic**
+
 ```javascript
 ❌ DUPLICATE IMPLEMENTATIONS:
 
-1. /static/js/smart-navigation.js:122 - initializeDropdowns()
-2. /static/js/predictive-dropdown.js:29 - upgradeSelect()
-3. /static/js/nav.js:1 - Sidebar navigation
-4. Multiple keyboard navigation handlers
+1. /static/js/predictive-dropdown.js:29 - upgradeSelect()
+2. /static/js/nav.js:1 - Sidebar navigation
+3. Multiple keyboard navigation handlers
 
 ISSUE: Overlapping dropdown/navigation functionality
 ACTION: Consolidate into unified navigation system
@@ -83,6 +86,7 @@ ACTION: Consolidate into unified navigation system
 ## 🏗️ **3. ARCHITECTURAL REDUNDANCY**
 
 ### **A. Supabase vs Django Services**
+
 ```python
 ❌ POTENTIAL REDUNDANCY:
 
@@ -105,6 +109,7 @@ SAVINGS: ~118 lines, reduced complexity, better performance
 ```
 
 ### **B. CSS Duplication**
+
 ```css
 ❌ DUPLICATE STYLES:
 
@@ -121,12 +126,13 @@ ACTION: Use build process, keep only source version
 ## 🧪 **4. TEST REDUNDANCY**
 
 ### **A. Schema Reference Inconsistencies**
+
 ```python
 ❌ MIXED SCHEMA REFERENCES:
 
 OLD FIELD REFERENCES (should be updated or removed):
 - tests/test_autofill_component_meta.py: "base_unit" references
-- tests/test_ui_choices.py: base_unit/purchase_unit references  
+- tests/test_ui_choices.py: base_unit/purchase_unit references
 - tests/test_item_views.py: base_unit/purchase_unit references
 - tests/test_supabase_units.py: base_unit/purchase_unit references
 
@@ -145,11 +151,12 @@ RECOMMENDATION: Update to new schema for consistency
 ## 📊 **5. PERFORMANCE DOCUMENTATION REDUNDANCY**
 
 ### **A. Multiple Performance Guides**
+
 ```
 ❌ DUPLICATE DOCUMENTATION:
 
 1. /PERFORMANCE_OPTIMIZATION_GUIDE.md
-2. /docs/development/PERFORMANCE_OPTIMIZATION_GUIDE.md  
+2. /docs/development/PERFORMANCE_OPTIMIZATION_GUIDE.md
 3. /PERFORMANCE_SUCCESS_SUMMARY.md
 4. /FREE_PERFORMANCE_BENEFITS.md
 
@@ -163,14 +170,16 @@ LOCATION: Keep in /docs/development/
 ## 🎯 **REFACTORING PRIORITY MATRIX**
 
 ### **🔥 HIGH PRIORITY (Do First)**
+
 ```
 1. Remove duplicate settings files ⏱️ 5 mins
-2. Consolidate notification/toast system ⏱️ 2 hours  
+2. Consolidate notification/toast system ⏱️ 2 hours
 3. Remove old template variants ⏱️ 15 mins
 4. Clean up documentation duplicates ⏱️ 30 mins
 ```
 
 ### **⚡ MEDIUM PRIORITY**
+
 ```
 1. Decide on Supabase vs Django services ⏱️ 1 hour planning
 2. Consolidate similar name checking ⏱️ 1 hour
@@ -178,6 +187,7 @@ LOCATION: Keep in /docs/development/
 ```
 
 ### **🔧 LOW PRIORITY (Nice to Have)**
+
 ```
 1. Unify dropdown/navigation systems ⏱️ 4 hours
 2. CSS build process optimization ⏱️ 2 hours
@@ -189,17 +199,20 @@ LOCATION: Keep in /docs/development/
 ## 📈 **ESTIMATED IMPACT**
 
 ### **Code Reduction**
+
 - **Lines of Code**: ~300-500 lines removed
 - **Files**: ~8-10 files removed/consolidated
 - **Complexity**: 30-40% reduction in duplicate logic
 
 ### **Maintenance Benefits**
+
 - **Single Source of Truth**: Eliminate conflicting implementations
 - **Easier Updates**: Modify one place instead of multiple
 - **Reduced Bugs**: Fewer places for inconsistencies to creep in
 - **Better Performance**: Remove redundant code paths
 
 ### **Developer Experience**
+
 - **Clearer Structure**: Easier to find relevant code
 - **Faster Onboarding**: Less confusing duplicate code
 - **Consistent Patterns**: Unified approach across codebase
@@ -209,18 +222,21 @@ LOCATION: Keep in /docs/development/
 ## 🚀 **RECOMMENDED REFACTORING SEQUENCE**
 
 ### **Phase 1: Quick Wins (1-2 hours)**
+
 1. Remove duplicate settings file
-2. Remove old template variants  
+2. Remove old template variants
 3. Consolidate performance documentation
 4. Clean up obvious redundancies
 
 ### **Phase 2: Core Systems (4-6 hours)**
+
 1. Unified notification system
 2. Supabase service decision
 3. Similar name checking consolidation
 4. Test schema updates
 
 ### **Phase 3: Architecture (8-10 hours)**
+
 1. Navigation system unification
 2. CSS build optimization
 3. JavaScript module organization
@@ -231,15 +247,18 @@ LOCATION: Keep in /docs/development/
 ## ⚠️ **RISKS & MITIGATION**
 
 ### **Low Risk**
+
 - Documentation cleanup
 - Old template removal
 - Settings file removal
 
 ### **Medium Risk**
+
 - JavaScript consolidation (test thoroughly)
 - Service architecture changes (gradual migration)
 
 ### **High Risk**
+
 - None identified (all changes are additive or clearly redundant)
 
 ---
@@ -248,7 +267,7 @@ LOCATION: Keep in /docs/development/
 
 1. **Review this analysis** and confirm priorities
 2. **Start with Phase 1** quick wins
-3. **Test thoroughly** after each phase  
+3. **Test thoroughly** after each phase
 4. **Document decisions** made during refactoring
 5. **Update team** on new unified patterns
 

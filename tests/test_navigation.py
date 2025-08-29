@@ -13,10 +13,9 @@ def test_top_nav_template_contains_links(django_user_model):
     html = render_to_string("components/top_nav.html", request=request)
     expected = [
         "Dashboard",
-        "Items",
+        "Inventory",
         "Orders",
-        "Indents",
-        "Receiving",
+        "Suppliers",
         "Reports",
     ]
     for text in expected:
@@ -31,10 +30,9 @@ def test_home_page_contains_nav_links(client, django_user_model):
     html = resp.content.decode()
     expected = [
         "Dashboard",
-        "Items",
+        "Inventory",
         "Orders",
-        "Indents",
-        "Receiving",
+        "Suppliers",
         "Reports",
     ]
     for text in expected:

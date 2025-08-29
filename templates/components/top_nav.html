@@ -20,31 +20,26 @@
           {% url 'dashboard' as dashboard_url %}
           {% url 'items_list' as items_url %}
           {% url 'purchase_orders_list' as po_url %}
-          {% url 'indents_list' as indents_url %}
-          {% url 'grn_list' as grn_url %}
+          {% url 'suppliers_list' as suppliers_url %}
           {% url 'history_reports' as reports_url %}
           
           <a href="{{ dashboard_url }}" 
              class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}nav-item-active{% endif %}">
             Dashboard
           </a>
-          <a href="{{ items_url }}" 
+          <a href="{{ items_url }}"
              class="nav-item {% if request.resolver_match.url_name == 'items_list' %}nav-item-active{% endif %}">
-            Items
+            Inventory
           </a>
-          <a href="{{ po_url }}" 
+          <a href="{{ po_url }}"
              class="nav-item {% if request.resolver_match.url_name == 'purchase_orders_list' %}nav-item-active{% endif %}">
             Orders
           </a>
-          <a href="{{ indents_url }}" 
-             class="nav-item {% if request.resolver_match.url_name == 'indents_list' %}nav-item-active{% endif %}">
-            Indents
+          <a href="{{ suppliers_url }}"
+             class="nav-item {% if request.resolver_match.url_name == 'suppliers_list' %}nav-item-active{% endif %}">
+            Suppliers
           </a>
-          <a href="{{ grn_url }}" 
-             class="nav-item {% if request.resolver_match.url_name == 'grn_list' %}nav-item-active{% endif %}">
-            Receiving
-          </a>
-          <a href="{{ reports_url }}" 
+          <a href="{{ reports_url }}"
              class="nav-item {% if request.resolver_match.url_name == 'history_reports' %}nav-item-active{% endif %}">
             Reports
           </a>

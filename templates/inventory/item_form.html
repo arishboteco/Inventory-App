@@ -266,7 +266,7 @@
     .speed-form-content {
         grid-template-columns: 1fr;
     }
-    
+
     .speed-progress {
         position: static;
         order: -1;
@@ -277,12 +277,12 @@
     .speed-field-group {
         grid-template-columns: 1fr;
     }
-    
+
     .speed-form-actions {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .speed-actions-left,
     .speed-actions-right {
         width: 100%;
@@ -308,7 +308,7 @@
 
     <form method="post" id="speed-form" class="speed-form-content">
         {% csrf_token %}
-        
+
         <!-- Main Form Content -->
         <div class="speed-main-content">
             <!-- Essential Information -->
@@ -524,10 +524,10 @@
     <!-- Form Actions -->
     <div class="speed-form-actions">
         <div class="speed-actions-left">
-            <a href="{% if item %}{% url 'item_detail' item.item_id %}{% else %}{% url 'items_list' %}{% endif %}" 
+            <a href="{% if item %}{% url 'item_detail' item.item_id %}{% else %}{% url 'items_list' %}{% endif %}"
                class="speed-btn speed-btn-secondary">Cancel</a>
         </div>
-        
+
         <div class="speed-actions-right">
             <button type="button" class="speed-btn speed-btn-secondary" onclick="saveDraft()">Save Draft</button>
             <button type="submit" form="speed-form" class="speed-btn speed-btn-primary">
@@ -537,19 +537,20 @@
     </div>
 </div>
 
+<!-- smart-forms.js enables dynamic validation and progress tracking -->
 <script src="{% static 'js/smart-forms.js' %}"></script>
 <script>
 // Progressive Enhancement JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     initializeSmartForm();
     updateProgress();
-    
+
     // Form field monitoring
     document.querySelectorAll('input, select, textarea').forEach(field => {
         field.addEventListener('input', updateProgress);
         field.addEventListener('change', updateProgress);
     });
-    
+
     // Auto-save functionality
     let saveTimeout;
     document.querySelectorAll('input, select, textarea').forEach(field => {
@@ -570,15 +571,15 @@ function updateProgress() {
     const sections = document.querySelectorAll('.speed-section');
     const totalSections = sections.length;
     let completedSections = 0;
-    
+
     sections.forEach(section => {
         const sectionName = section.dataset.section;
         const requiredFields = section.querySelectorAll('input[required], select[required]');
         const allFilled = Array.from(requiredFields).every(field => field.value.trim() !== '');
-        
+
         const stepElement = document.querySelector(`[data-step="${sectionName}"]`);
         const stepIcon = stepElement.querySelector('.speed-step-icon');
-        
+
         if (allFilled) {
             stepElement.classList.add('completed');
             stepElement.classList.remove('active');
@@ -590,12 +591,12 @@ function updateProgress() {
             if (!section.classList.contains('collapsed')) {
                 stepElement.classList.add('active');
             }
-            stepIcon.innerHTML = stepElement.dataset.step === 'essential' ? '1' : 
+            stepIcon.innerHTML = stepElement.dataset.step === 'essential' ? '1' :
                                  stepElement.dataset.step === 'units' ? '2' : '3';
             stepIcon.classList.remove('completed');
         }
     });
-    
+
     const progress = (completedSections / totalSections) * 100;
     document.getElementById('progress-fill').style.width = `${progress}%`;
 }
@@ -603,13 +604,13 @@ function updateProgress() {
 function saveDraft() {
     // Implement auto-save functionality
     const formData = new FormData(document.getElementById('speed-form'));
-    
+
     // Show save indicator
     const saveButton = document.querySelector('[onclick="saveDraft()"]');
     const originalText = saveButton.textContent;
     saveButton.textContent = 'Saving...';
     saveButton.disabled = true;
-    
+
     // Simulate save (replace with actual AJAX call)
     setTimeout(() => {
         saveButton.textContent = 'Saved';
@@ -624,17 +625,17 @@ function initializeSmartForm() {
     // Initialize category-subcategory dependencies
     const categoryField = document.querySelector('[name="category"]');
     const subcategoryField = document.querySelector('[name="sub_category"]');
-    
+
     if (categoryField && subcategoryField) {
         categoryField.addEventListener('change', function() {
             updateSubcategories(this.value, subcategoryField);
         });
     }
-    
+
     // Initialize unit dependencies
     const baseUnitField = document.querySelector('[name="base_unit"]');
     const purchaseUnitField = document.querySelector('[name="purchase_unit"]');
-    
+
     if (baseUnitField && purchaseUnitField) {
         baseUnitField.addEventListener('change', function() {
             updatePurchaseUnits(this.value, purchaseUnitField);

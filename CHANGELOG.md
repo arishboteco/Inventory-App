@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Removed
+
 - Legacy speed templates no longer referenced by views:
   - `templates/inventory/item_form_speed.html`
   - `templates/inventory/item_detail_speed.html`
@@ -15,20 +16,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `templates/inventory/items_list_speed_clean.html`
   - `templates/inventory/items_list_speed_test.html`
   - `templates/inventory/_items_table_speed.html`
-  
+
   These were consolidated into the canonical templates (e.g. `item_form.html`, `item_detail.html`, `items_list.html`).
 
+- `static/js/smart-navigation.js` - removed unused navigation enhancements
 
 ### Fixed
+
 - Fix critical items page 500 error - template inheritance and data structure issues
-- Correct template extends paths in speed templates (base.html → _base.html)
+- Correct template extends paths in speed templates (base.html → \_base.html)
 - Fix category filter data structure - convert to tuples for template unpacking
 - Fix template syntax error causing 500 error on items page
 - Fix template syntax errors - removed duplicate endblock and empty tag issues
 - Fix: Remove item_create URL references - all item creation now uses inline form on items list page
 - MAJOR FIX: Implement proper units table architecture with UnitsService - fixed failing tests and established correct unit conversion logic with base_unit/purchase_unit/conversion_factor
 - CLEANUP: Remove undefined item_duplicate URL references from templates - fixed template errors causing view failures
+
 ### Added
+
 - `.github/copilot-instructions.md` - Comprehensive AI agent guidance document
 - Changelog maintenance utility script (tools/changelog.py)
 - Makefile targets for changelog management
@@ -39,23 +44,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PRE-PRODUCTION TESTING COMPLETE: Comprehensive testing completed - inline form functional, clean codebase, ready for production deployment
 
 ### Changed
+
 - Updated development workflow documentation
 - Development workflow documentation and changelog automation
-- CLEANUP: Remove '_speed' naming convention - renamed item_detail_speed.html to item_detail.html and item_form_speed.html to item_form.html for consistent naming
+- CLEANUP: Remove '\_speed' naming convention - renamed item_detail_speed.html to item_detail.html and item_form_speed.html to item_form.html for consistent naming
 
 ## [2.1.0] - 2025-08-28
 
 ### Added
+
 - Comprehensive `.github/copilot-instructions.md` for AI coding agents
 - Development best practices documentation
 - Change log establishment
 
 ### Commits
+
 - `144d55b` - feat: Complete unit dropdown enhancement and performance optimizations
 
 ## [2.0.0] - 2025-08-27 - Major Django Migration Completion
 
 ### Added
+
 - **Unit Dropdown Enhancement**
   - 28 predefined unit choices in `FormService.get_unit_choices()`
   - Dynamic unit selection with AJAX endpoints (`get_purchase_units`)
@@ -74,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `DEPLOYMENT_FINAL_STATUS.md` - Production deployment status
 
 ### Changed
+
 - **Schema Migration Completed**
   - Migrated from Supabase-managed (`managed = False`) to Django-managed models
   - Fixed model-to-database column mismatches across all entities
@@ -92,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Performance improvements for item operations
 
 ### Fixed
+
 - **Critical Production Issues**
   - Threading errors: switched from `gevent` to `sync` workers in Gunicorn
   - Python 3.13 logging compatibility with simplified configuration
@@ -104,18 +115,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `.gitignore` patterns for sensitive files
 
 ### Performance
+
 - Speed-optimized item templates for faster rendering
 - Efficient database queries with proper field selection
 - Service layer caching with `@lru_cache` decorators
 - JavaScript enhancements for dynamic form behavior
 
 ### Test Coverage
+
 - **99.1% test coverage** (112/113 tests passing)
 - Comprehensive test suite with pytest and Django test database reuse
 - Fixed recipe service tests, item service tests, and form validation tests
 - 1 remaining ML caching authentication test (non-critical)
 
 ### Commits
+
 - `300dc87` - ✅ CRITICAL BUSINESS LOGIC FIXES - Complete Implementation
 - `2001c62` - 🔧 FIX: Items page - Remove invalid select_related
 - `ccd95a8` - 🔧 SYNTAX FIX: Remove extra bracket in migration file
@@ -129,6 +143,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.5.0] - 2025-08-26 - Schema Alignment & Core Fixes
 
 ### Fixed
+
 - **Database Schema Alignment**
   - Items model: Removed non-existent `permitted_departments` field
   - GRN Items: Fixed `item_notes` → `notes` column mapping with `db_column="notes"`
@@ -145,6 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Custom middleware for login enforcement with exemptions
 
 ### Added
+
 - **Core Page Functionality**
   - Dashboard, Items, Recipes, Indents all returning HTTP 200
   - Server stability with no 500 errors on main navigation
@@ -152,6 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - Initial Django Migration
 
 ### Added
+
 - **Django 5.2.5 Framework**
   - PostgreSQL/Supabase backend integration
   - Environment configuration with `django-environ`
@@ -176,23 +193,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Development Standards
 
 ### Commit Message Format
+
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `perf:`, `test:`, `refactor:`
 - Include emoji prefixes for visual scanning: ✅ 🔧 🚀 ⚡ 🔒 🛡️
 - Reference test coverage changes when applicable
 
 ### Testing Requirements
+
 - Maintain >99% test coverage
 - Use `pytest` with `--reuse-db` for development
 - Run `make test` before commits
 - Update test documentation for new features
 
 ### Code Quality
+
 - Python 3.13 target with Black formatting (88 char line length)
 - Ruff linting with auto-fix (`make lint`)
 - Pre-commit hooks for automated quality checks
 - Service layer for all business logic (never in views)
 
 ### Documentation Updates
+
 - Update this CHANGELOG for all significant changes
 - Maintain feature-specific documentation (e.g., `*_ENHANCEMENT.md`)
 - Update `.github/copilot-instructions.md` for architectural changes

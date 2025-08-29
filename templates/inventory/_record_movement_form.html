@@ -1,0 +1,7 @@
+<form method="post" class="grid gap-4">
+  {% csrf_token %}
+  {% for field in quick_form %}
+    {% include "components/form_field.html" with field=field %}
+  {% endfor %}
+  {% include "components/button.html" with type='submit' variant='primary' label='Save' extra_classes='w-full' %}
+</form>

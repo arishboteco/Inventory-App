@@ -6,31 +6,6 @@
   {% include "inventory/_manual_entry_section.html" %}
   {% include "inventory/_bulk_upload_section.html" %}
   {% include "inventory/_recent_transactions_section.html" %}
-  <button id="record-movement-btn" class="btn-primary rounded-full fixed bottom-6 right-6 z-40 px-4 py-2">Record Movement</button>
-  <div id="record-modal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
-    <div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
-      <button type="button" class="absolute top-2 right-2 text-bodyText hover:text-primary" data-close>
-        <span class="sr-only">Close</span>&times;
-      </button>
-      <form method="post" class="grid gap-4">
-        {% csrf_token %}
-        {% for field in quick_form %}
-          {% include "components/form_field.html" with field=field %}
-        {% endfor %}
-        <button type="submit" name="submit_quick" class="btn-primary w-full">Save</button>
-      </form>
-    </div>
-  </div>
-  <script>
-    (function () {
-      const modal = document.getElementById('record-modal');
-      const openBtn = document.getElementById('record-movement-btn');
-      const closeBtn = modal.querySelector('[data-close]');
-      function open() { modal.classList.remove('hidden'); }
-      function close() { modal.classList.add('hidden'); }
-      openBtn && openBtn.addEventListener('click', open);
-      closeBtn && closeBtn.addEventListener('click', close);
-      modal.addEventListener('click', function (e) { if (e.target === modal) { close(); } });
-    })();
-  </script>
+  {% include "components/button.html" with id="record-movement-btn" label="Record Movement" variant="primary" type="button" extra_classes="rounded-full fixed bottom-6 right-6 z-40 px-4 py-2" %}
+  {% include "components/modal.html" with id="record-modal" open_id="record-movement-btn" content_template="inventory/_record_movement_form.html" %}
 {% endblock %}

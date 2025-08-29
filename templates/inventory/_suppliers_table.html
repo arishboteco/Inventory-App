@@ -57,7 +57,8 @@
   <tr>
     <td colspan="7" class="px-4 py-2 text-center">
       0 suppliers yet.
-      <a href="{% url 'supplier_create' %}" class="btn-primary ml-2">New Supplier</a>
+      {% url 'supplier_create' as supplier_create_url %}
+      {% include "components/button.html" with href=supplier_create_url variant='primary' label='New Supplier' extra_classes='ml-2' %}
     </td>
   </tr>
   {% endfor %}

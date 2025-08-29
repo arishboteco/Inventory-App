@@ -1,0 +1,25 @@
+{% comment %}
+Generic modal component. Include with:
+{% include "components/modal.html" with id="my-modal" open_id="open-btn" content_template="path/to/template.html" %}
+The `content_template` is rendered inside the modal container.
+{% endcomment %}
+<div id="{{ id }}" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
+  <div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+    <button type="button" class="absolute top-2 right-2 text-bodyText hover:text-primary" data-close>
+      <span class="sr-only">Close</span>&times;
+    </button>
+    {% include content_template %}
+  </div>
+</div>
+<script>
+  (function () {
+    const modal = document.getElementById('{{ id }}');
+    const openBtn = document.getElementById('{{ open_id }}');
+    const closeBtn = modal.querySelector('[data-close]');
+    function open() { modal.classList.remove('hidden'); }
+    function close() { modal.classList.add('hidden'); }
+    openBtn && openBtn.addEventListener('click', open);
+    closeBtn && closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', function (e) { if (e.target === modal) { close(); } });
+  })();
+</script>

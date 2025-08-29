@@ -16,6 +16,6 @@
     {% endif %}
   {% endfor %}
   <div class="col-span-2">
-    <button type="submit" name="submit_receive" class="btn-primary">Record</button>
+    {% include "components/button.html" with type="submit" name="submit_receive" variant="primary" label="Record" %}
   </div>
 </form>

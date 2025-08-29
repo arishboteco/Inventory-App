@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import List, Tuple
 
-from django.db.models import Avg, Count, F, Max, Q, Sum
+from django.db.models import Avg, Count, F, Max, Q, Sum, OuterRef, Subquery
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -67,18 +67,23 @@ def high_price_purchases(threshold: Decimal) -> List[GRNItem]:
     """
 
     cutoff = timezone.now() - timedelta(days=30)
-    flagged: List[GRNItem] = []
-    for grn_item in GRNItem.objects.filter(
-        grn__received_date__gte=cutoff
-    ).select_related("po_item__item"):
-        avg_price = (
-            GRNItem.objects.filter(po_item__item=grn_item.po_item.item)
-            .exclude(pk=grn_item.pk)
-            .aggregate(avg=Avg("unit_price_at_receipt"))["avg"]
+    avg_price = (
+        GRNItem.objects.filter(po_item__item_id=OuterRef("po_item__item_id"))
+        .exclude(pk=OuterRef("pk"))
+        .values("po_item__item_id")
+        .annotate(avg=Avg("unit_price_at_receipt"))
+        .values("avg")[:1]
+    )
+    qs = (
+        GRNItem.objects.filter(grn__received_date__gte=cutoff)
+        .select_related("po_item__item")
+        .annotate(avg_price=Subquery(avg_price))
+        .filter(
+            avg_price__isnull=False,
+            unit_price_at_receipt__gt=F("avg_price") * (1 + threshold),
         )
-        if avg_price and grn_item.unit_price_at_receipt > avg_price * (1 + threshold):
-            flagged.append(grn_item)
-    return flagged
+    )
+    return list(qs)
 
 
 def pending_po_status_counts() -> dict:

@@ -8,8 +8,9 @@
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
       <div class="mb-3">
-        <label class="form-label">Select CSV File</label>
+        <label for="{{ form.file.id_for_label }}" class="form-label">Select CSV File</label>
         {{ form.file }}
+        {% include "forms/feedback.html" %}
       </div>
       <div class="flex items-center justify-end" style="gap:.5rem">
         <button type="button" class="btn-secondary" data-modal-close>Cancel</button>

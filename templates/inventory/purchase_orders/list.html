@@ -12,13 +12,13 @@
       <p class="page-subtitle">Manage your purchase orders and supplier relationships</p>
     </div>
     <div class="flex items-center space-x-3">
-      <a href="{% url 'purchase_order_create' %}" class="btn-primary">
+      <a href="{% url 'purchase_order_create' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
         </svg>
         New Purchase Order
       </a>
-      <a href="{% url 'grn_list' %}" class="btn-secondary">
+      <a href="{% url 'grn_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
@@ -138,13 +138,13 @@
         <input type="date" name="end_date" value="{{ end_date }}" class="form-input">
       </div>
       <div class="flex items-end space-x-2">
-        <button type="submit" class="btn-primary flex-1">
+        <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed flex-1">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"/>
           </svg>
           Filter
         </button>
-        <a href="{% url 'purchase_orders_list' %}" class="btn-secondary">Clear</a>
+        <a href="{% url 'purchase_orders_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">Clear</a>
       </div>
     </form>
   </div>
@@ -156,7 +156,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-gray-900">Purchase Orders</h2>
       <div class="flex items-center space-x-2">
-        <button onclick="toggleBulkActions()" class="btn-sm btn-secondary">
+        <button onclick="toggleBulkActions()" class="px-2.5 py-1.5 text-xs inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
           </svg>
@@ -180,7 +180,7 @@
   <div class="flex items-center space-x-2">
     {% if page_obj.has_previous %}
       <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
-         class="btn-secondary btn-sm">
+         class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs">
         Previous
       </a>
     {% endif %}
@@ -191,7 +191,7 @@
     
     {% if page_obj.has_next %}
       <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" 
-         class="btn-secondary btn-sm">
+         class="inline-flex items-center px-3 py-2 text-sm font-medium text-bodyText bg-white border border-border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 text-xs">
         Next
       </a>
     {% endif %}

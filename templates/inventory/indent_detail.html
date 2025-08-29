@@ -22,7 +22,7 @@
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-danger">Cancel</button>
+      <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-danger border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-danger disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
     </form>
   </div>
 {% endblock %}

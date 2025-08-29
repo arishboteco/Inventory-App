@@ -15,7 +15,7 @@
     {% endif %}
     {% block fields %}{% endblock %}
     <div class="flex gap-2">
-      <button type="submit" class="btn-primary">{% block submit_text %}Save{% endblock %}</button>
+      <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">{% block submit_text %}Save{% endblock %}</button>
       <a href="{% block back_url %}{% endblock %}" class="btn-outline">{% block back_text %}Cancel{% endblock %}</a>
     </div>
   </form>

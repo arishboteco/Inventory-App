@@ -10,6 +10,7 @@
   {% else %}
     {{ field|add_class:"form-control" }}
   {% endif %}
+  {% include "forms/feedback.html" %}
   {% if field.help_text %}
     <p class="text-sm text-gray-500">{{ field.help_text }}</p>
   {% endif %}

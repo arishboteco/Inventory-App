@@ -5,14 +5,16 @@
 {% block filters %}
   <form method="get" class="mb-4 grid gap-2 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">
     <div class="space-y-1">
-      <label class="block text-sm font-medium">Supplier</label>
+      <label for="id_supplier" class="block text-sm font-medium">Supplier</label>
       <input
+        id="id_supplier"
         type="text"
         name="supplier"
         list="grn-suppliers"
         class="form-control w-full"
         value="{{ current_supplier }}"
       />
+      {% include "forms/feedback.html" %}
       <datalist id="grn-suppliers">
         <option value="" label="All"></option>
         {% for s in suppliers %}
@@ -21,12 +23,14 @@
       </datalist>
     </div>
     <div class="space-y-1">
-      <label class="block text-sm font-medium">Start Date</label>
-      <input type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
+      <label for="id_start_date" class="block text-sm font-medium">Start Date</label>
+      <input id="id_start_date" type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
+      {% include "forms/feedback.html" %}
     </div>
     <div class="space-y-1">
-      <label class="block text-sm font-medium">End Date</label>
-      <input type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
+      <label for="id_end_date" class="block text-sm font-medium">End Date</label>
+      <input id="id_end_date" type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
+      {% include "forms/feedback.html" %}
     </div>
     <div class="space-y-1">
       <button type="submit" class="btn-primary w-full">Filter</button>

@@ -36,10 +36,10 @@ class IndentItem(models.Model):
 
     indent_item_id = models.AutoField(primary_key=True)
     indent = models.ForeignKey(
-        Indent, models.DO_NOTHING, db_column="indent_id", blank=True, null=True
+        Indent, models.PROTECT, db_column="indent_id", blank=True, null=True
     )
     item = models.ForeignKey(
-        Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
+        Item, models.PROTECT, db_column="item_id", blank=True, null=True
     )
     requested_qty = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True

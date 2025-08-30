@@ -100,7 +100,7 @@ class StockTransaction(models.Model):
 
     transaction_id = models.AutoField(primary_key=True)
     item = models.ForeignKey(
-        Item, models.DO_NOTHING, db_column="item_id", blank=True, null=True
+        Item, models.PROTECT, db_column="item_id", blank=True, null=True
     )
     quantity_change = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
@@ -109,19 +109,25 @@ class StockTransaction(models.Model):
     user_id = models.CharField(max_length=50, blank=True, null=True)
     user_int = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        models.DO_NOTHING,
+        models.SET_NULL,
         db_column="user_id_int",
         blank=True,
         null=True,
     )
     related_indent = models.ForeignKey(
         "inventory.Indent",
-        models.DO_NOTHING,
+        models.SET_NULL,
         db_column="related_indent_id",
         blank=True,
         null=True,
     )
-    related_po_id = models.IntegerField(blank=True, null=True)
+    related_po = models.ForeignKey(
+        "inventory.PurchaseOrder",
+        models.SET_NULL,
+        db_column="related_po_id",
+        blank=True,
+        null=True,
+    )
     notes = models.TextField(blank=True, null=True)
     transaction_date = models.DateTimeField(auto_now_add=True)
 

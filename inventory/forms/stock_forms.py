@@ -9,10 +9,10 @@ from .base import INPUT_CLASS, StyledFormMixin
 class StockReceivingForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = StockTransaction
-        fields = ["item", "quantity_change", "user_id", "related_po_id", "notes"]
+        fields = ["item", "quantity_change", "user_id", "related_po", "notes"]
         labels = {
             "quantity_change": "Quantity",
-            "related_po_id": "PO ID",
+            "related_po": "PO ID",
         }
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):

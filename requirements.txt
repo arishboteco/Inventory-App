@@ -13,3 +13,4 @@ gevent==24.11.1
 sentry-sdk[django]==2.19.0
 django-redis==5.4.0
 redis==5.0.8
+django-q2==1.8.0

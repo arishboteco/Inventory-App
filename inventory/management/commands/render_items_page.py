@@ -39,4 +39,3 @@ class Command(BaseCommand):
         with open(path_table, "wb") as f:
             f.write(resp_table.rendered_content.encode("utf-8"))
         self.stdout.write(self.style.SUCCESS(f"Rendered table layout to {path_table}"))
-

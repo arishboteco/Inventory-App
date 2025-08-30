@@ -10,7 +10,7 @@ import os
 
 import dj_database_url
 
-from .settings import *
+from .settings import *  # noqa: F401,F403
 
 # SECURITY WARNING: don't run with debug turned on in staging!
 DEBUG = False
@@ -54,11 +54,11 @@ if 'REDIS_URL' in os.environ:
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Static files configuration
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # noqa: F405
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # Media files configuration
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # noqa: F405
 
 # Security settings for staging
 SECURE_SSL_REDIRECT = False  # Set to True if using HTTPS in staging
@@ -127,7 +127,7 @@ LOGGING = {
 }
 
 # Django REST Framework settings for staging
-REST_FRAMEWORK.update({
+REST_FRAMEWORK.update({  # noqa: F405
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
@@ -153,7 +153,7 @@ INVENTORY_SETTINGS = {
 
 # Disable browsable API in staging for security
 if not DEBUG:
-    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [  # noqa: F405
         'rest_framework.renderers.JSONRenderer',
     ]
 

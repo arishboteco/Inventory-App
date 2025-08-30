@@ -106,7 +106,6 @@ def test_ml_dashboard_uses_cache(client):
         assert mock_abc.call_count == 2
 
 
-
 def test_queue_train_models_updates_cache(db):
     cache_key = "test_ml_train_models"
     cache.delete(cache_key)

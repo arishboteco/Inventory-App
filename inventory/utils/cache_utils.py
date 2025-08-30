@@ -15,6 +15,7 @@ CACHE_TIMEOUT_SHORT = 300  # 5 minutes
 CACHE_TIMEOUT_MEDIUM = 900  # 15 minutes
 CACHE_TIMEOUT_LONG = 3600   # 1 hour
 
+
 def get_cache_key(prefix, *args):
     """Generate a consistent cache key"""
     key_parts = [str(arg) for arg in args if arg is not None]
@@ -23,6 +24,7 @@ def get_cache_key(prefix, *args):
     if len(key_string) > 200:
         key_string = f"{prefix}:{hashlib.md5(key_string.encode()).hexdigest()}"
     return key_string
+
 
 def cache_item_details(item_id):
     """Cache item details for frequently accessed items"""
@@ -36,6 +38,7 @@ def cache_item_details(item_id):
             return None
 
     return cache.get_or_set(cache_key, get_item_details, CACHE_TIMEOUT_MEDIUM)
+
 
 def cache_dashboard_stats():
     """Cache dashboard statistics"""
@@ -54,6 +57,7 @@ def cache_dashboard_stats():
 
     return cache.get_or_set(cache_key, get_dashboard_stats, CACHE_TIMEOUT_SHORT)
 
+
 def cache_transaction_types():
     """Cache transaction types for filters"""
     cache_key = get_cache_key('transaction_types')
@@ -67,6 +71,7 @@ def cache_transaction_types():
         )
 
     return cache.get_or_set(cache_key, get_transaction_types, CACHE_TIMEOUT_LONG)
+
 
 def cache_active_suppliers():
     """Cache active suppliers list"""
@@ -82,6 +87,7 @@ def cache_active_suppliers():
 
     return cache.get_or_set(cache_key, get_active_suppliers, CACHE_TIMEOUT_MEDIUM)
 
+
 def invalidate_item_cache(item_id):
     """Invalidate cache for a specific item"""
     cache_keys = [
@@ -89,6 +95,7 @@ def invalidate_item_cache(item_id):
         get_cache_key('dashboard_stats'),
     ]
     cache.delete_many(cache_keys)
+
 
 def invalidate_transaction_cache():
     """Invalidate transaction-related cache"""
@@ -98,6 +105,7 @@ def invalidate_transaction_cache():
     ]
     cache.delete_many(cache_keys)
 
+
 def invalidate_supplier_cache():
     """Invalidate supplier-related cache"""
     cache_keys = [
@@ -105,11 +113,15 @@ def invalidate_supplier_cache():
     ]
     cache.delete_many(cache_keys)
 
+
 # Signal handlers to invalidate cache when models change
+
+
 @receiver(post_save, sender=Item)
 @receiver(post_delete, sender=Item)
 def item_cache_invalidation(sender, instance, **kwargs):
     invalidate_item_cache(instance.item_id)
+
 
 @receiver(post_save, sender=StockTransaction)
 @receiver(post_delete, sender=StockTransaction)
@@ -117,6 +129,7 @@ def transaction_cache_invalidation(sender, instance, **kwargs):
     invalidate_transaction_cache()
     if hasattr(instance, 'item_id'):
         invalidate_item_cache(instance.item_id)
+
 
 @receiver(post_save, sender=Supplier)
 @receiver(post_delete, sender=Supplier)

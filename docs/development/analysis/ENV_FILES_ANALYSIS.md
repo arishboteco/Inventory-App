@@ -1,4 +1,5 @@
 # 🔍 Environment Files Analysis - Purpose & Redundancy
+> **Note:** Placeholder credentials only. Do not commit live secrets to version control.
 
 ## 📋 **Current .env Files Overview**
 
@@ -48,8 +49,8 @@ Your repository has **8 different .env files**, which seems excessive at first g
 ### **Live Credentials in Repository:**
 ```bash
 # From .env.render and .env.render.minimal:
-DATABASE_URL=postgresql://postgres.xuzylmblpkncyztcjrhh:B0t3co1027.@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
-DJANGO_SECRET_KEY=849b052a49e2110ca225ae04ffaf57ec9f71f5cdefb5b7150127b342e1d076e9
+DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>
+DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
 ```
 
 **❌ CRITICAL PROBLEM**: Your production database credentials and secret key are exposed in version control!

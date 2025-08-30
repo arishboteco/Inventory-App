@@ -1,4 +1,5 @@
 # 📋 HOW TO ADD ENVIRONMENT VARIABLES TO RENDER
+> **Note:** Replace placeholders with real values in Render's dashboard. Never commit live secrets to version control.
 
 ## 🎯 **STEP-BY-STEP RENDER CONFIGURATION**
 
@@ -27,7 +28,7 @@ Value: False
 #### **🔗 DATABASE**
 ```
 Key: DATABASE_URL
-Value: postgresql://postgres.xuzylmblpkncyztcjrhh:B0t3co1027.@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
+Value: postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>
 ```
 
 #### **🏠 HOSTS & SECURITY**
@@ -36,7 +37,7 @@ Key: DJANGO_ALLOWED_HOSTS
 Value: .onrender.com,localhost,127.0.0.1
 
 Key: DJANGO_SECRET_KEY
-Value: 849b052a49e2110ca225ae04ffaf57ec9f71f5cdefb5b7150127b342e1d076e9
+Value: <DJANGO_SECRET_KEY>
 ```
 
 #### **🔐 SSL/HTTPS CONFIGURATION**
@@ -78,10 +79,10 @@ Value: True
 #### **📊 SUPABASE INTEGRATION**
 ```
 Key: SUPABASE_URL
-Value: https://xuzylmblpkncyztcjrhh.supabase.co
+Value: <SUPABASE_URL>
 
 Key: SUPABASE_KEY
-Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1enlsbWJscGtuY3l6dGNqcmhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDc5NDkxNSwiZXhwIjoyMDYwMzcwOTE1fQ.qOeTKh3s_Rota_ZhCM1H7CLJIPIHstb3oZszl4LSnEA
+Value: <SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 ### **Step 4: Remove Conflicting Variables**
@@ -122,9 +123,9 @@ For faster setup, here's a format you can copy section by section:
 ```bash
 DJANGO_SETTINGS_MODULE=inventory_app.settings_production
 DEBUG=False
-DATABASE_URL=postgresql://postgres.xuzylmblpkncyztcjrhh:B0t3co1027.@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
+DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>
 DJANGO_ALLOWED_HOSTS=.onrender.com,localhost,127.0.0.1
-DJANGO_SECRET_KEY=849b052a49e2110ca225ae04ffaf57ec9f71f5cdefb5b7150127b342e1d076e9
+DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_HSTS_SECONDS=31536000
 DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True
@@ -134,8 +135,8 @@ DJANGO_SECURE_BROWSER_XSS_FILTER=True
 DJANGO_SECURE_REFERRER_POLICY=strict-origin-when-cross-origin
 DJANGO_SESSION_COOKIE_SECURE=True
 DJANGO_CSRF_COOKIE_SECURE=True
-SUPABASE_URL=https://xuzylmblpkncyztcjrhh.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1enlsbWJscGtuY3l6dGNqcmhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDc5NDkxNSwiZXhwIjoyMDYwMzcwOTE1fQ.qOeTKh3s_Rota_ZhCM1H7CLJIPIHstb3oZszl4LSnEA
+SUPABASE_URL=<SUPABASE_URL>
+SUPABASE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 **✅ Ready for production deployment!**

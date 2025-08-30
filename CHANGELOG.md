@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared `templates/components/kpi_card.html` for consistent card-based KPI display
 - Home link added to primary navigation
 
+- Automated frontend build: `npm run build` runs automatically during
+  `collectstatic`, CI, and deployment scripts
+
 ### Changed
 
 - Updated development workflow documentation

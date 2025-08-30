@@ -65,9 +65,9 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "core",
     "django.contrib.staticfiles",
     "rest_framework",
-    "core",
     "inventory",
     "django_q",
 ]

@@ -52,11 +52,17 @@ pip install -r requirements.txt
 
 ## Static Assets
 
-Build the Tailwind CSS bundle and collect static files:
+Install Node dependencies and let Django build and collect assets automatically:
 
 ```bash
-npx tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify
+npm install
 python manage.py collectstatic --noinput
+```
+
+`collectstatic` runs `npm run build` under the hood. To rebuild CSS manually without collecting static files:
+
+```bash
+npm run build
 ```
 
 ## Configuration
@@ -130,8 +136,8 @@ Docker Compose. It sets up three services:
    docker-compose up --build
    ```
 
-   The web container automatically applies database migrations and
-   collects static files before launching Gunicorn. Visit
+   The web container automatically applies database migrations,
+   builds Tailwind CSS, and collects static files before launching Gunicorn. Visit
    `http://localhost/` to access the application.
 
 ## Purchase Order Tables

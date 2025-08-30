@@ -112,7 +112,12 @@ deploy() {
     # Pull latest images
     log "Pulling latest base images..."
     docker-compose -f "$DOCKER_COMPOSE_FILE" pull db redis nginx
-    
+
+    # Build frontend assets
+    log "Installing Node.js dependencies and building assets..."
+    npm install
+    npm run build
+
     # Build application image
     log "Building application image..."
     docker-compose -f "$DOCKER_COMPOSE_FILE" build web

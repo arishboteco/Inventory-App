@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Django Inventory Management Application",
   "scripts": {
-    "build-css": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify",
-    "dev-css": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --watch"
+    "build": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify",
+    "dev": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --watch"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.0"

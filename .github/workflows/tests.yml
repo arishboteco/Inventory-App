@@ -39,6 +39,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt || true
+      - name: Install Node dependencies
+        run: npm install
+      - name: Build assets
+        run: python manage.py collectstatic --noinput
       - name: Django checks
         run: |
           python manage.py check

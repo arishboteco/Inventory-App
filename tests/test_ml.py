@@ -64,6 +64,7 @@ def test_abc_classification(db):
 def test_ml_dashboard_uses_cache(client):
     # Ensure user is logged in explicitly
     from django.contrib.auth import get_user_model
+
     User = get_user_model()
     user, _ = User.objects.get_or_create(username="admin")
     if not user.has_usable_password():
@@ -74,26 +75,30 @@ def test_ml_dashboard_uses_cache(client):
     # Clear all caches explicitly
     cache.clear()
     from django.core.cache import caches
+
     for cache_name in caches:
         caches[cache_name].clear()
 
     with (
-        patch("inventory.services.ml.train_models", return_value={}) as mock_train,
+        patch("inventory.services.ml.queue_train_models") as mock_queue,
         patch("inventory.services.ml.abc_classification", return_value={}) as mock_abc,
     ):
+        # When queue_train_models is called we synchronously populate the cache to
+        # emulate the background worker completing its task.
+        mock_queue.side_effect = lambda periods=1, ttl=300: cache.set(
+            "ml_train_models", {}, ttl
+        )
+
         response = client.get(reverse("ml_dashboard"))
-        print(f"Response status: {response.status_code}")
-        print(f"Mock train called: {mock_train.called}")
-        print(f"Mock abc called: {mock_abc.called}")
         assert response.status_code == 200
-        assert mock_train.call_count == 1
+        assert mock_queue.call_count == 1
         assert mock_abc.call_count == 1
 
         client.get(reverse("ml_dashboard"))
-        assert mock_train.call_count == 1
+        assert mock_queue.call_count == 1
         assert mock_abc.call_count == 1
 
         cache.clear()
         client.get(reverse("ml_dashboard"))
-        assert mock_train.call_count == 2
+        assert mock_queue.call_count == 2
         assert mock_abc.call_count == 2

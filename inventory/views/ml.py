@@ -17,8 +17,11 @@ def ml_dashboard(request):
 
     forecasts = cache.get("ml_train_models")
     if forecasts is None:
-        forecasts = ml.train_models(periods=1)
-        cache.set("ml_train_models", forecasts, ttl)
+        # Training can be expensive. Trigger it in the background and use any
+        # cached results available. The background task populates the cache when
+        # finished so subsequent requests receive data without blocking.
+        ml.queue_train_models(periods=1, ttl=ttl)
+        forecasts = {}
 
     classifications = cache.get("ml_abc_classification")
     if classifications is None:

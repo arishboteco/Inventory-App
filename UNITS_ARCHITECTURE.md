@@ -15,11 +15,6 @@ CREATE TABLE units (
 );
 ```
 
-In the Django application this table is represented by the
-`Unit` model (`inventory.models.Unit`). Use the Django ORM or the
-`UnitsService` helper to interact with units data rather than
-issuing raw SQL queries.
-
 ## Architecture Logic
 
 ### 1. **unit_id** - Application Reference
@@ -172,8 +167,8 @@ display = str(item.unit_id)  # Shows "19" instead of "kg"
 # ❌ INCORRECT: Manual conversions
 converted = purchase_qty * 1000  # Hard-coded conversion factor
 
-# ❌ INCORRECT: Bypassing the ORM with raw queries
-# e.g., using connection.cursor() to query the units table directly
+# ❌ INCORRECT: Direct database queries
+cursor.execute("SELECT base_unit FROM units WHERE unit_id = ?", [unit_id])
 ```
 
 ## Testing Strategy

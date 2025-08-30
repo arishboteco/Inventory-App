@@ -1,6 +1,7 @@
 # Environment-based configuration
 .env
 .env.*
+.env.staging
 .env.render*
 *env.txt
 *ENV*.txt

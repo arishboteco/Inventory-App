@@ -1,5 +1,7 @@
 # 🚀 Staging Deployment Guide
 
+> **Note:** Placeholder values only. Replace with real credentials in your deployment environment—never commit live secrets.
+
 ## Environment Setup
 
 ### 1. Staging Environment Variables
@@ -9,18 +11,18 @@ Create a `.env.staging` file with:
 ```bash
 # Django Configuration
 DJANGO_DEBUG=False
-DJANGO_SECRET_KEY=staging-secret-key-change-in-production
-DJANGO_ALLOWED_HOSTS=your-staging-domain.com,localhost,127.0.0.1
+DJANGO_SECRET_KEY=<STAGING_SECRET_KEY>
+DJANGO_ALLOWED_HOSTS=<STAGING_DOMAIN>,localhost,127.0.0.1
 
 # Database Configuration (Use staging database)
-DATABASE_URL=postgresql://username:password@staging-db-host:5432/staging_inventory_db
+DATABASE_URL=postgresql://<STAGING_DB_USER>:<STAGING_DB_PASSWORD>@<STAGING_DB_HOST>:5432/<STAGING_DB_NAME>
 DATABASE_SSL_REQUIRE=True
 
 # Application Settings
 DJANGO_SETTINGS_MODULE=inventory_app.settings
 
 # Optional: Monitoring and Logging
-SENTRY_DSN=your-staging-sentry-dsn
+SENTRY_DSN=<SENTRY_DSN>
 LOG_LEVEL=INFO
 
 # Email Settings (for testing)
@@ -92,6 +94,7 @@ LOGGING = {
 ## Deployment Commands
 
 ### 1. Database Migration Check
+
 ```bash
 # Check migration status
 python manage.py showmigrations --settings=inventory_app.settings_staging
@@ -101,12 +104,14 @@ python manage.py migrate --settings=inventory_app.settings_staging
 ```
 
 ### 2. Static Files Collection
+
 ```bash
 # Collect static files
 python manage.py collectstatic --noinput --settings=inventory_app.settings_staging
 ```
 
 ### 3. Application Server
+
 ```bash
 # Start with Gunicorn
 gunicorn inventory_app.wsgi:application \
@@ -122,11 +127,13 @@ gunicorn inventory_app.wsgi:application \
 ## Validation Tests
 
 ### 1. Health Check
+
 ```bash
 curl -f http://staging-domain/healthz || echo "Health check failed"
 ```
 
 ### 2. Database Connectivity
+
 ```bash
 python manage.py shell --settings=inventory_app.settings_staging -c "
 from django.db import connection
@@ -137,6 +144,7 @@ print('Database connection: OK')
 ```
 
 ### 3. Core Functionality
+
 ```bash
 # Run critical path tests
 python manage.py test tests.test_item_service tests.test_recipe_service tests.test_dashboard_service --settings=inventory_app.settings_staging
@@ -145,6 +153,7 @@ python manage.py test tests.test_item_service tests.test_recipe_service tests.te
 ## Docker Option (Alternative)
 
 ### Dockerfile.staging
+
 ```dockerfile
 FROM python:3.13-slim
 
@@ -178,8 +187,9 @@ CMD ["gunicorn", "inventory_app.wsgi:application", "--bind", "0.0.0.0:8000"]
 ```
 
 ### docker-compose.staging.yml
+
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   web:
@@ -198,10 +208,12 @@ services:
 
   db:
     image: postgres:15
+    env_file:
+      - .env.staging
     environment:
-      POSTGRES_DB: staging_inventory
-      POSTGRES_USER: staging_user
-      POSTGRES_PASSWORD: staging_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - staging_postgres_data:/var/lib/postgresql/data/
 
@@ -219,6 +231,7 @@ volumes:
 ## Monitoring Setup
 
 ### 1. Application Monitoring
+
 ```bash
 # Install monitoring packages
 pip install sentry-sdk django-health-check
@@ -229,6 +242,7 @@ echo "django-health-check==3.17.0" >> requirements.txt
 ```
 
 ### 2. Log Monitoring
+
 ```bash
 # Set up log rotation
 sudo tee /etc/logrotate.d/django-staging > /dev/null <<EOF
@@ -246,6 +260,7 @@ EOF
 ## Rollback Plan
 
 ### 1. Application Rollback
+
 ```bash
 # Keep previous version available
 cp -r /app/current /app/backup-$(date +%Y%m%d-%H%M%S)
@@ -256,6 +271,7 @@ sudo systemctl restart gunicorn-staging
 ```
 
 ### 2. Database Rollback
+
 ```bash
 # Database backup before deployment
 pg_dump staging_inventory > backup-$(date +%Y%m%d-%H%M%S).sql
@@ -267,12 +283,14 @@ psql staging_inventory < backup-YYYYMMDD-HHMMSS.sql
 ## Success Criteria
 
 ### Performance Targets
+
 - Page load time: < 2 seconds
-- API response time: < 500ms  
+- API response time: < 500ms
 - Database query time: < 100ms average
 - Zero 5xx errors during testing
 
 ### Functionality Validation
+
 - [ ] User authentication works
 - [ ] CRUD operations on all major entities
 - [ ] Department management features
@@ -282,6 +300,7 @@ psql staging_inventory < backup-YYYYMMDD-HHMMSS.sql
 - [ ] API endpoints respond correctly
 
 ### Load Testing
+
 ```bash
 # Install Apache Bench for basic load testing
 sudo apt-get install apache2-utils

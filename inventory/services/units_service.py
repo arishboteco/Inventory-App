@@ -30,6 +30,25 @@ from django.db.utils import OperationalError
 logger = logging.getLogger(__name__)
 
 
+# Mapping of human-readable unit names to unit_id for legacy compatibility.
+# This supports forms that still provide unit names rather than unit_id values.
+BASE_UNIT_TO_UNIT_ID = {
+    "Kilograms": 19,
+    "Liters": 1,
+    "Pieces": 55,
+    "Boxes": 55,
+    "Cases": 55,
+    "Cartons": 55,
+    "Grams": 19,
+    "Milliliters": 1,
+    "Units": 55,
+    "Each": 55,
+    "Packages": 55,
+    "Bottles": 55,
+    "Cans": 55,
+}
+
+
 class UnitsService:
     """Service for unit conversions and display via the units table."""
 

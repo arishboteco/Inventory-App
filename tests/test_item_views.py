@@ -139,11 +139,8 @@ def test_items_list_view_shows_empty_categories(client, monkeypatch):
 
 def test_items_list_view_populates_categories(client, monkeypatch):
     monkeypatch.setattr(
-        "inventory.services.category_filters.get_supabase_categories",
-        lambda: {
-            None: [{"id": 1, "name": "Food"}],
-            "Food": [{"id": 2, "name": "Fruit"}],
-        },
+        "inventory.services.category_filters.CategoriesService.get_category_choices_grouped",
+        lambda: {"Food": [(2, "Fruit")]},
     )
     url = reverse("items_list") + "?category=Food&subcategory=Fruit"
     resp = client.get(url)

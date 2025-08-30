@@ -72,13 +72,6 @@ You can also set these values directly in the environment instead of using a `.e
 
 Set `DJANGO_DEBUG` to `True` to enable Django's debug mode (defaults to `False`).
 
-To fetch item categories and unit options from Supabase, configure:
-
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-
-Without these variables the application will not load category or unit data from Supabase.
-
 ## Running
 
 Apply database migrations and launch the Django development server:

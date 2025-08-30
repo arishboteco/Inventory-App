@@ -101,6 +101,11 @@ python manage.py migrate
 pytest
 ```
 
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for
+guidelines on reporting issues and submitting pull requests.
+
 ## Docker Deployment
 
 The project includes a production-ready deployment using Docker and

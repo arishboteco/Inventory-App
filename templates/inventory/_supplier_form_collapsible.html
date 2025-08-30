@@ -1,0 +1,16 @@
+{% extends "components/collapsible.html" %}
+{% block title %}Add Supplier{% endblock %}
+{% block content %}
+  <form method="post" action="{% url 'suppliers_list' %}">
+    {% csrf_token %}
+    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+      {% for field in form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
+    </div>
+    <div class="form-actions mt-4">
+      <button type="reset" class="btn-secondary btn-sm">Clear</button>
+      <button type="submit" class="btn-primary btn-sm">Create</button>
+    </div>
+  </form>
+{% endblock %}

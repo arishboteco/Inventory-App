@@ -1,12 +1,17 @@
 <div class="card drawer-panel" style="max-width: 520px;">
   <div class="card-header flex items-center justify-between">
-    <h3 class="text-lg font-semibold">Bulk Upload Items</h3>
+    <h3 class="text-lg font-semibold">{{ title|default:"Bulk Upload Items" }}</h3>
     <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
   </div>
   <div class="card-body">
+    {% if upload_url %}
+    <form method="post" enctype="multipart/form-data" data-modal-form action="{{ upload_url }}">
+    {% else %}
     <form method="post" enctype="multipart/form-data" data-modal-form action="{% url 'upload_csv' %}?partial=1">
+    {% endif %}
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
+      {% if bulk_upload %}<input type="hidden" name="bulk_upload" value="1" />{% endif %}
       <div class="mb-3">
         <label for="{{ form.file.id_for_label }}" class="form-label">Select CSV File</label>
         {{ form.file }}
@@ -17,7 +22,6 @@
         <button type="submit" class="btn-primary">Upload</button>
       </div>
     </form>
-    <p class="text-sm text-gray-600 mt-3">CSV must include headers compatible with the item form fields.</p>
+    <p class="text-sm text-gray-600 mt-3">{{ help_text|default:"CSV must include headers compatible with the item form fields." }}</p>
   </div>
 </div>
-

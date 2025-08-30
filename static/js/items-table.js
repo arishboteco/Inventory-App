@@ -10,7 +10,7 @@
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
     const details = document.getElementById(`details-${itemId}`);
-    const toggleBtn = row.querySelector('button.main-row');
+    const toggleBtn = row.querySelector("button.main-row");
     if (!details || !toggleBtn) return;
 
     const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
@@ -278,10 +278,33 @@
       )
     )
       return;
-    // TODO: AJAX delete; for now, toast only
-    if (window.notifications && window.notifications.showToast) {
-      window.notifications.showToast("Item deleted successfully!", "success");
-    }
+    const csrf = getCsrfToken();
+    fetch(`/items/${itemId}/delete/`, {
+      method: "POST",
+      headers: {
+        ...(csrf ? { "X-CSRFToken": csrf } : {}),
+        "X-Requested-With": "fetch",
+      },
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((data) => {
+        if (data && data.ok) {
+          row.remove();
+          if (window.notifications && window.notifications.showToast) {
+            window.notifications.showToast(
+              "Item deleted successfully!",
+              "success",
+            );
+          }
+        } else if (window.notifications && window.notifications.showToast) {
+          window.notifications.showToast("Unable to delete item.", "error");
+        }
+      })
+      .catch(() => {
+        if (window.notifications && window.notifications.showToast) {
+          window.notifications.showToast("Unable to delete item.", "error");
+        }
+      });
   }
 
   // Event delegation

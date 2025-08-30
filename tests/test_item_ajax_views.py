@@ -15,12 +15,12 @@ def test_purchase_units_view_returns_units():
     rf = RequestFactory()
     request = rf.get("/purchase-units/", {"base_unit": "kg"})
     with patch(
-        "inventory.views.items.stock.FormService.get_purchase_unit_choices",
-        return_value=["kg"],
+        "inventory.views.items.stock.get_purchase_unit_choices",
+        return_value=[("kg", "kg")],
     ) as mock_method:
         response = PurchaseUnitsView.as_view()(request)
     assert response.status_code == 200
-    assert json.loads(response.content) == {"purchase_units": ["kg"]}
+    assert json.loads(response.content) == {"purchase_units": [["kg", "kg"]]}
     mock_method.assert_called_with("kg")
 
 

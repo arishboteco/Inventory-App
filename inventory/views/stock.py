@@ -49,7 +49,7 @@ def stock_movements(request):
                     quantity_change=cd["quantity_change"],
                     transaction_type="RECEIVING",
                     user_id=cd.get("user_id"),
-                    related_po_id=cd.get("related_po_id"),
+                    related_po_id=(cd.get("related_po").pk if cd.get("related_po") else None),
                     notes=cd.get("notes"),
                 )
                 if ok:

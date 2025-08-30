@@ -78,7 +78,7 @@ class StockTransactionSerializer(serializers.ModelSerializer):
             "user_id",
             "user_int",
             "related_indent",
-            "related_po_id",
+            "related_po",
             "notes",
             "transaction_date",
         ]

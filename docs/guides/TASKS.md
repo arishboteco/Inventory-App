@@ -1,5 +1,7 @@
 # Combined Task List
 
+> **Note:** Tasks are synchronized to GitHub issues using `tools/issue_migrator.py`. Update this file and rerun the script to generate labeled issues and track them via milestones or project boards.
+
 This document consolidates the remediation tasks identified for resolving the Internal Server Error and improving project robustness.
 
 ## 1. Align requirements with service dependencies

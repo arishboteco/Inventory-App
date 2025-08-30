@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLEANUP: Remove undefined item_duplicate URL references from templates - fixed template errors causing view failures
 
 ### Added
+- feat: add task issue migration utility
+- docs: archive task history in favor of changelog
 
 - `.github/copilot-instructions.md` - Comprehensive AI agent guidance document
 - Changelog maintenance utility script (tools/changelog.py)

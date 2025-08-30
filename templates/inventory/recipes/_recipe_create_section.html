@@ -1,0 +1,12 @@
+{% extends "components/collapsible.html" %}
+{% block title %}Add Recipe{% endblock %}
+{% block open %}{% if form.errors %}open{% endif %}{% endblock %}
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    {% include "inventory/recipes/_form_fields.html" with form=form %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn-primary">Save</button>
+    </div>
+  </form>
+{% endblock %}

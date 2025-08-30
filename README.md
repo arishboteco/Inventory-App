@@ -30,6 +30,17 @@ This project uses a desktop-first Tailwind CSS strategy. Base styles target larg
 
 Any `<select>` element with the `predictive` class is automatically enhanced with a text input and datalist that filters options as you type. Django forms that use `StyledFormMixin` add this class to select widgets by default. To enable the predictive behaviour on your own dropdown, add `class="predictive"` to the `<select>` or include the class in the widget's `attrs` when defining the form field.
 
+## Icons
+
+The interface uses [Heroicons](https://heroicons.com/) for all SVG icons. Icons are loaded via a reusable `{% icon %}` template tag:
+
+```django
+{% load icon_tags %}
+{% icon 'plus' 'w-4 h-4 text-blue-600' %}
+```
+
+The tag accepts optional `variant` (`outline` or `solid`), `size` (20 or 24), and `aria_label` parameters for accessibility.
+
 ## Installation
 
 This project requires **Python 3.13 or newer**.

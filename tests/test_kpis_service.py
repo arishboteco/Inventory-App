@@ -51,7 +51,7 @@ def test_kpi_calculations(item_factory):
 
 
 @pytest.mark.django_db
-def test_high_price_purchase_detection(item_factory):
+def test_high_price_purchase_detection(item_factory, django_assert_num_queries):
     item = item_factory(name="X")
     supplier = Supplier.objects.create(name="Supp")
     po = PurchaseOrder.objects.create(
@@ -60,11 +60,11 @@ def test_high_price_purchase_detection(item_factory):
     poi = PurchaseOrderItem.objects.create(
         purchase_order=po, item=item, quantity_ordered=1, unit_price=Decimal("100")
     )
-    grn = GoodsReceivedNote.objects.create(
+    grn1 = GoodsReceivedNote.objects.create(
         purchase_order=po, supplier=supplier, received_date=timezone.now().date()
     )
     GRNItem.objects.create(
-        grn=grn,
+        grn=grn1,
         po_item=poi,
         quantity_ordered_on_po=1,
         quantity_received=1,
@@ -80,9 +80,20 @@ def test_high_price_purchase_detection(item_factory):
         quantity_received=1,
         unit_price_at_receipt=Decimal("150"),
     )
+    grn3 = GoodsReceivedNote.objects.create(
+        purchase_order=po, supplier=supplier, received_date=timezone.now().date()
+    )
+    GRNItem.objects.create(
+        grn=grn3,
+        po_item=poi,
+        quantity_ordered_on_po=1,
+        quantity_received=1,
+        unit_price_at_receipt=Decimal("110"),
+    )
 
-    flagged = kpis.high_price_purchases(Decimal("0.2"))
-    assert list(flagged) == [high]
+    with django_assert_num_queries(1):
+        flagged = kpis.high_price_purchases(Decimal("0.2"))
+    assert flagged == [high]
 
 
 @pytest.mark.django_db

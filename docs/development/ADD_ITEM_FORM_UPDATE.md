@@ -38,8 +38,8 @@ Successfully updated the Streamlit-style "Add New Inventory Item" form to use th
 #### URL Configuration Updated:
 ```python
 # inventory/urls.py
-path("purchase-units/", get_purchase_units, name="get_purchase_units"),
-path("subcategories/", get_subcategories, name="get_subcategories"),
+path("purchase-units/", PurchaseUnitsView.as_view(), name="get_purchase_units"),
+path("subcategories/", SubcategoriesView.as_view(), name="get_subcategories"),
 ```
 
 #### View Context Enhanced:

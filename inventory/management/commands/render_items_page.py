@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from django.test import RequestFactory
 from django.urls import reverse
 
-from inventory.views.items import ItemsListView
+from inventory.views.items.list import ItemsListView
 
 
 class Command(BaseCommand):

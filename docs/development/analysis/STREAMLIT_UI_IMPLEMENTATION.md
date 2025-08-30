@@ -53,7 +53,7 @@ Successfully transformed the Django inventory management interface to match the 
 ### Files Modified
 1. **templates/inventory/items_list.html**: Complete redesign (388 lines)
 2. **templates/inventory/_items_table.html**: Enhanced table structure
-3. **inventory/views/items.py**: Updated template names
+3. **inventory/views/items/list.py**: Updated template names
 4. **inventory_app/settings.py**: Added testserver to ALLOWED_HOSTS
 
 ### Design Patterns Used

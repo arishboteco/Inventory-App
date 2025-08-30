@@ -10,7 +10,7 @@ from django.test import RequestFactory
 
 from core.views import root_view
 from inventory.models import Item, StockTransaction, Supplier
-from inventory.views.items import ItemsTableView
+from inventory.views.items.list import ItemsTableView
 from inventory.views.stock import history_reports
 from inventory.views.suppliers import SuppliersTableView
 

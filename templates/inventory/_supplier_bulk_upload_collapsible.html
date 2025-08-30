@@ -1,0 +1,6 @@
+{% extends "components/collapsible.html" %}
+{% block title %}Bulk Upload Suppliers{% endblock %}
+{% block content %}
+  {% url 'suppliers_list' as upload_url %}
+  {% include "inventory/_bulk_upload_partial.html" with form=bulk_form upload_url=upload_url title="Bulk Upload Suppliers" bulk_upload=1 help_text="CSV must include headers compatible with the supplier form fields." %}
+{% endblock %}

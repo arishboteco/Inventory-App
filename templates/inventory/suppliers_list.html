@@ -2,12 +2,7 @@
 {% block page_title %}Suppliers – Inventory App{% endblock %}
 {% block heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 
-{% block primary_actions %}
-  {% url 'supplier_create' as supplier_create_url %}
-  {% include "components/button.html" with href=supplier_create_url variant='primary' label='New Supplier' %}
-  {% url 'suppliers_bulk_upload' as suppliers_bulk_upload_url %}
-  {% include "components/button.html" with href=suppliers_bulk_upload_url variant='secondary' label='Bulk Upload' %}
-{% endblock %}
+{% block primary_actions %}{% endblock %}
 
 {% block secondary_actions %}
   {% url 'suppliers_bulk_delete' as suppliers_bulk_delete_url %}
@@ -29,6 +24,11 @@
 {% block filters %}
   {% url hx_view_name as suppliers_view_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target='#'|add:container_id filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
+{% endblock %}
+
+{% block extra_top %}
+  {% include "inventory/_supplier_form_collapsible.html" with form=form %}
+  {% include "inventory/_supplier_bulk_upload_collapsible.html" with bulk_form=bulk_form %}
 {% endblock %}
 
 {% block data_container %}

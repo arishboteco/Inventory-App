@@ -66,7 +66,51 @@ class SuppliersListView(TemplateView):
                 "container_id": container_id,
             }
         )
+        # Include forms for inline creation and bulk upload
+        if self.request.method == "POST":
+            ctx["form"] = SupplierForm(self.request.POST)
+            ctx["bulk_form"] = BulkUploadForm(self.request.POST, self.request.FILES)
+        else:
+            ctx["form"] = SupplierForm()
+            ctx["bulk_form"] = BulkUploadForm()
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        """Handle inline supplier creation and CSV bulk upload."""
+        if request.POST.get("bulk_upload"):
+            bulk_form = BulkUploadForm(request.POST, request.FILES)
+            if bulk_form.is_valid():
+                inserted = 0
+                file = bulk_form.cleaned_data["file"]
+                data = io.StringIO(file.read().decode("utf-8"))
+                reader = csv.DictReader(data)
+                for row in reader:
+                    form_row = SupplierForm(row)
+                    if form_row.is_valid():
+                        ok, msg = supplier_service.add_supplier(form_row.cleaned_data)
+                        if ok:
+                            inserted += 1
+                        else:
+                            messages.error(request, msg)
+                    else:
+                        messages.error(request, str(form_row.errors))
+                messages.success(request, f"{inserted} supplier(s) uploaded successfully.")
+            else:
+                messages.error(request, "Please upload a valid CSV file.")
+            return redirect("suppliers_list")
+
+        form = SupplierForm(request.POST)
+        if form.is_valid():
+            ok, msg = supplier_service.add_supplier(form.cleaned_data)
+            if ok:
+                messages.success(request, f'Supplier "{form.cleaned_data.get("name")}" created successfully!')
+                return redirect("suppliers_list")
+            messages.error(request, msg)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+        return self.get(request, *args, **kwargs)
 
 
 class SuppliersTableView(TemplateView):

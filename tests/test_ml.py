@@ -6,12 +6,21 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
 
-from inventory.models import Item, StockTransaction
+from inventory.models import Item, StockTransaction, Unit
 from inventory.services import ml
 
 
 def create_item(name: str) -> Item:
-    return Item.objects.create(name=name, unit_id=19)
+    unit, _ = Unit.objects.get_or_create(
+        unit_id=19,
+        defaults={
+            "base_unit": "KG",
+            "purchase_unit": "KG",
+            "conversion_factor": 1.0,
+            "is_default": True,
+        },
+    )
+    return Item.objects.create(name=name, unit=unit)
 
 
 def test_forecast_returns_expected_values(db):
@@ -104,7 +113,6 @@ def test_ml_dashboard_uses_cache(client):
         client.get(reverse("ml_dashboard"))
         assert mock_queue.call_count == 2
         assert mock_abc.call_count == 2
-
 
 
 def test_queue_train_models_updates_cache(db):

@@ -96,7 +96,7 @@
       if (tplU) {
         const selU = tplU.cloneNode(true);
         selU.id = "";
-        selU.name = "unit_id";
+        selU.name = "unit";
         selU.classList.add("form-select");
         Array.from(selU.options).forEach((o) => {
           if (o.value == uid) o.selected = true;
@@ -128,7 +128,7 @@
     const rop = row.querySelector('input[name="reorder_point"]')?.value || "";
     const categoryId =
       row.querySelector('select[name="category_id"]')?.value || "";
-    const unitId = row.querySelector('select[name="unit_id"]')?.value || "";
+    const unitId = row.querySelector('select[name="unit"]')?.value || "";
     const currentStock =
       row.querySelector('input[name="current_stock"]')?.value || "";
     const active =
@@ -138,7 +138,7 @@
     fd.append("name", name);
     if (rop !== "") fd.append("reorder_point", rop);
     if (categoryId !== "") fd.append("category_id", categoryId);
-    if (unitId !== "") fd.append("unit_id", unitId);
+    if (unitId !== "") fd.append("unit", unitId);
     if (currentStock !== "") fd.append("current_stock", currentStock);
     if (active) fd.append("is_active", "on"); // presence -> True for Django
 

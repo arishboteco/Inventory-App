@@ -3,16 +3,24 @@ import csv
 import pytest
 from django.urls import reverse
 
-from inventory.models import Item
+from inventory.models import Item, Unit
 
 pytestmark = pytest.mark.django_db
 
 
 def _create_item(name="Widget", active=True):
+    unit, _ = Unit.objects.get_or_create(
+        unit_id=55,
+        defaults={
+            "base_unit": "PC",
+            "purchase_unit": "PC",
+            "conversion_factor": 1.0,
+            "is_default": True,
+        },
+    )
     return Item.objects.create(
         name=name,
-        unit_id=55,
-
+        unit=unit,
         reorder_point=1,
         notes="n",
         is_active=active,

@@ -25,7 +25,6 @@ def get_low_stock_items():
     }
     whens = [When(unit_id=k, then=Value(v)) for k, v in units_map.items()]
     qs = qs.annotate(
-        unit=F("unit_id"),
         uom=Case(
             *whens,
             default=Value(""),

@@ -8,6 +8,7 @@ class Unit(models.Model):
     base_unit = models.CharField(max_length=10)
     purchase_unit = models.CharField(max_length=50)
     conversion_factor = models.FloatField()
+    is_default = models.BooleanField(default=False)
 
     class Meta:
         managed = True

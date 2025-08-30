@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from inventory.models import Item, StockTransaction
+from inventory.models import Item, StockTransaction, Unit
 from inventory.services import item_service
 
 pytestmark = pytest.mark.django_db
@@ -10,13 +10,23 @@ pytestmark = pytest.mark.django_db
 def _create_item(**kwargs):
     defaults = {
         "name": "Widget",
-        "unit_id": 55,
         "reorder_point": 1,
         "notes": "n",
         "is_active": True,
         "category_id": 1,
     }
     defaults.update(kwargs)
+    unit = Unit.objects.get_or_create(
+        unit_id=55,
+        defaults={
+            "base_unit": "PC",
+            "purchase_unit": "PC",
+            "conversion_factor": 1.0,
+            "is_default": True,
+        },
+    )[0]
+    defaults.setdefault("unit", unit)
+    defaults.pop("unit_id", None)
     return Item.objects.create(**defaults)
 
 
@@ -31,11 +41,19 @@ def test_item_detail_view(client):
 
 
 def test_item_create_view_htmx_success(client, monkeypatch):
-
+    Unit.objects.get_or_create(
+        unit_id=55,
+        defaults={
+            "base_unit": "PC",
+            "purchase_unit": "PC",
+            "conversion_factor": 1.0,
+            "is_default": True,
+        },
+    )
     url = reverse("item_create")
     data = {
         "name": "Widget",
-        "unit_id": "55",
+        "unit": "55",
         "reorder_point": "1",
         "current_stock": "0",
         "notes": "n",
@@ -102,7 +120,7 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
 
     data = {
         "name": "Gadget",
-        "unit_id": "55",
+        "unit": "55",
         "reorder_point": "5",
         "current_stock": "0",
         "notes": "updated",

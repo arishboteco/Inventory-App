@@ -15,7 +15,7 @@ if PROJECT_ROOT not in sys.path:
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings.test")
 django.setup()
 
-from inventory.models import Item, StockTransaction, Supplier  # noqa: E402
+from inventory.models import Item, StockTransaction, Supplier, Unit  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -39,6 +39,28 @@ def create_test_schema(django_db_setup, django_db_blocker):
                         cursor.execute(stmt)
 
 
+@pytest.fixture(autouse=True)
+def ensure_default_units(db):
+    Unit.objects.get_or_create(
+        unit_id=55,
+        defaults={
+            "base_unit": "PC",
+            "purchase_unit": "PC",
+            "conversion_factor": 1.0,
+            "is_default": True,
+        },
+    )
+    Unit.objects.get_or_create(
+        unit_id=19,
+        defaults={
+            "base_unit": "KG",
+            "purchase_unit": "KG",
+            "conversion_factor": 1.0,
+            "is_default": False,
+        },
+    )
+
+
 # ---------- FACTORIES ----------
 
 @pytest.fixture
@@ -50,13 +72,26 @@ def item_factory(db):
     def create_item(**kwargs):
         defaults = {
             "name": "Item",
-            "unit_id": 19,  # Use unit_id=19 which maps to "KG" for consistent test expectations
             "category_id": 1,
             "reorder_point": 0,
             "current_stock": 0,
             "is_active": True,
         }
         defaults.update(kwargs)
+
+        unit = defaults.pop("unit", None)
+        unit_id = defaults.pop("unit_id", 19)
+        unit_obj, _ = Unit.objects.get_or_create(
+            unit_id=unit_id,
+            defaults={
+                "base_unit": "GM",
+                "purchase_unit": "KG",
+                "conversion_factor": 1.0,
+                "is_default": True if unit_id == 19 else False,
+            },
+        )
+        defaults["unit"] = unit or unit_obj
+
         return Item.objects.create(**defaults)
     return create_item
 

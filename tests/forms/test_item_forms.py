@@ -2,20 +2,25 @@
 
 from django import forms
 
-from inventory.models import Item
-from inventory.services.units_service import UnitsService
+from inventory.models import Item, Unit
 
 INPUT_CLASS = "form-input"
 
 
 class TestItemForm(forms.ModelForm):
-    """Simplified item form for testing that only uses unit_id reference."""
+    """Simplified item form for testing that only uses unit reference."""
+
+    unit = forms.ModelChoiceField(
+        queryset=Unit.objects.all(),
+        empty_label=None,
+        widget=forms.Select(attrs={'class': INPUT_CLASS}),
+    )
 
     class Meta:
         model = Item
         fields = [
             "name",
-            "unit_id",
+            "unit",
             "reorder_point",
             "current_stock",
             "notes",
@@ -25,10 +30,6 @@ class TestItemForm(forms.ModelForm):
             'name': forms.TextInput(attrs={
                 'class': INPUT_CLASS,
                 'placeholder': 'Enter item name'
-            }),
-            'unit_id': forms.NumberInput(attrs={
-                'class': INPUT_CLASS,
-                'placeholder': 'Unit ID'
             }),
             'reorder_point': forms.NumberInput(attrs={
                 'class': INPUT_CLASS,
@@ -53,11 +54,16 @@ class TestItemForm(forms.ModelForm):
             "name": {"required": "Item name is required."},
         }
 
-    def clean_unit_id(self):
-        """Validate that the unit_id exists in the units table."""
-        unit_id = self.cleaned_data.get('unit_id')
-        if unit_id and not UnitsService.validate_unit_id(unit_id):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        default_unit = Unit.objects.filter(is_default=True).first()
+        if default_unit:
+            self.fields['unit'].initial = default_unit
+
+    def clean_unit(self):
+        unit = self.cleaned_data.get('unit')
+        if not unit or not Unit.objects.filter(pk=unit.pk).exists():
             raise forms.ValidationError(
-                f"Unit ID {unit_id} does not exist in units table."
+                "Selected unit does not exist in units table."
             )
-        return unit_id
+        return unit

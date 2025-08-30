@@ -39,3 +39,13 @@ def test_dashboard_kpis_endpoint(client, item_factory):
     assert b"Low-stock Items" in resp.content
     assert b"Suppliers" in resp.content
     assert b"Pending Indents" in resp.content
+
+
+@pytest.mark.django_db
+def test_dashboard_has_single_filter_form(client, django_user_model):
+    user = django_user_model.objects.create_user(username="u", password="pw")
+    client.force_login(user)
+    resp = client.get(reverse("dashboard"))
+    assert resp.status_code == 200
+    assert resp.content.count(b"dashboard-filters") == 1
+    assert b'hx-get=""' not in resp.content

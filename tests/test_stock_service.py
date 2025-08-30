@@ -13,7 +13,6 @@ from inventory.models import (
     StockTransaction,
 )
 from inventory.services import stock_service
-from inventory.constants import TransactionType
 
 
 @pytest.fixture(autouse=True)
@@ -140,7 +139,7 @@ def test_concurrent_stock_updates(item_factory):
             if stock_service.record_stock_transaction(
                 item_id=item.item_id,
                 quantity_change=1,
-                transaction_type=TransactionType.ADJUSTMENT.value,
+                transaction_type="TEST",
             ):
                 break
 

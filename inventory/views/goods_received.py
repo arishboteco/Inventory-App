@@ -1,16 +1,18 @@
 import csv
 import logging
 
+from django.contrib import messages
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
-from ..models import GoodsReceivedNote, Supplier
-from ..services import list_utils
+from ..forms.purchase_forms import GRNForm
+from ..models import GoodsReceivedNote, PurchaseOrder, Supplier
+from ..services import goods_receiving_service, list_utils
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +60,47 @@ class GRNListView(TemplateView):
         )
         ctx.update(params)
         ctx["current_supplier"] = params.get("supplier")
+        ctx["quick_form"] = kwargs.get("quick_form") or GRNForm()
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        form = GRNForm(request.POST)
+        if form.is_valid():
+            po_id = request.POST.get("po")
+            try:
+                po = PurchaseOrder.objects.prefetch_related(
+                    "purchaseorderitem_set"
+                ).get(pk=po_id)
+            except PurchaseOrder.DoesNotExist:
+                form.add_error(None, "Invalid purchase order")
+            else:
+                items = po.purchaseorderitem_set.all()
+                items_data = [
+                    {
+                        "item_id": item.item_id,
+                        "po_item_id": item.pk,
+                        "quantity_ordered_on_po": item.quantity_ordered,
+                        "quantity_received": item.quantity_ordered,
+                        "unit_price_at_receipt": item.unit_price,
+                    }
+                    for item in items
+                ]
+                grn_data = {
+                    "po_id": po.pk,
+                    "supplier_id": po.supplier_id,
+                    "received_date": form.cleaned_data["received_date"],
+                    "notes": form.cleaned_data.get("notes"),
+                    "received_by_user_id": getattr(request.user, "username", "System"),
+                }
+                success, msg, _ = goods_receiving_service.create_grn(
+                    grn_data, items_data
+                )
+                if success:
+                    messages.success(request, "GRN created")
+                    return redirect("grn_list")
+                messages.error(request, msg)
+        ctx = self.get_context_data(quick_form=form)
+        return self.render_to_response(ctx)
 
 
 class GRNDetailView(TemplateView):

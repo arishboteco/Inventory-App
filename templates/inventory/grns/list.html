@@ -38,6 +38,10 @@
   </form>
 {% endblock %}
 
+{% block extra_top %}
+  {% include "inventory/grns/_quick_form.html" %}
+{% endblock %}
+
 {% block data_container %}
   <ol class="relative border-l border-border">
     {% for grn in grns %}

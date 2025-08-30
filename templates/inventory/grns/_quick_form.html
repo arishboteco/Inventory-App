@@ -1,0 +1,15 @@
+{% extends "components/collapsible.html" %}
+{% block title %}Quick GRN Entry{% endblock %}
+{% block content %}
+  <form method="post" class="grid gap-4 max-w-md">
+    {% csrf_token %}
+    <div class="space-y-1">
+      <label for="id_po" class="block text-sm font-medium">PO</label>
+      <input id="id_po" type="text" name="po" class="form-control w-full" />
+    </div>
+    {% for field in quick_form %}
+      {% include "components/form_field.html" with field=field %}
+    {% endfor %}
+    {% include "components/button.html" with type='submit' variant='primary' label='Create GRN' extra_classes='w-full' %}
+  </form>
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends "components/create_manage_page.html" %}
+{% extends "components/create_manage_layout.html" %}
 {% block page_title %}Suppliers – Inventory App{% endblock %}
 {% block heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 
@@ -36,7 +36,8 @@
        hx-get="{% url hx_view_name %}"
        hx-trigger="load"
        hx-include="#filters"
-       hx-indicator="#htmx-spinner">
+       hx-indicator="#htmx-spinner"
+       hx-select="#{{ container_id }}">
     {% if total_suppliers == 0 %}
       {% url 'supplier_create' as supplier_create_url %}
       {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="New Supplier" cta_url=supplier_create_url img='img/no_suppliers.svg' %}

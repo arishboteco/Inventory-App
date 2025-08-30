@@ -1,7 +1,7 @@
 {% comment %}
 Responsive table component with sticky headers and row hover states.
 {% endcomment %}
-<div class="max-md:overflow-x-auto">
+<div{% if container_id %} id="{{ container_id }}"{% endif %} class="max-md:overflow-x-auto">
   {% block actions %}{% endblock %}
   <table class="table w-full table-auto text-sm"{% if table_id %} id="{{ table_id }}"{% endif %}>
     {% block caption %}{% endblock %}

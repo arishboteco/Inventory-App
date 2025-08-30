@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from django.db import OperationalError, transaction
 from django.db.models import F
 
+from inventory.constants import TransactionType
 from inventory.models import Item, StockTransaction
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 def record_stock_transaction(
     item_id: int,
     quantity_change: Decimal,
-    transaction_type: str,
+    transaction_type: TransactionType | str,
     user_id: Optional[str] = "System",
     user_int: Optional[int] = None,
     related_indent_id: Optional[int] = None,
@@ -22,6 +23,11 @@ def record_stock_transaction(
     notes: Optional[str] = None,
 ) -> bool:
     quantity_change = Decimal(str(quantity_change))
+    try:
+        tx_type = TransactionType(transaction_type).value
+    except ValueError:
+        logger.error("Invalid transaction type: %s", transaction_type)
+        return False
     for attempt in range(5):
         try:
             with transaction.atomic():
@@ -34,7 +40,7 @@ def record_stock_transaction(
                 StockTransaction.objects.create(
                     item_id=item_id,
                     quantity_change=quantity_change,
-                    transaction_type=transaction_type,
+                    transaction_type=tx_type,
                     user_id=user_id,
                     user_int=user_int,
                     related_indent_id=related_indent_id,
@@ -58,6 +64,11 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
             for tx in transactions:
                 item_id = tx["item_id"]
                 quantity_change = Decimal(str(tx["quantity_change"]))
+                try:
+                    tx_type = TransactionType(tx["transaction_type"]).value
+                except ValueError:
+                    logger.error("Invalid transaction type: %s", tx["transaction_type"])
+                    raise
                 updated = Item.objects.filter(pk=item_id).update(
                     current_stock=F("current_stock") + quantity_change
                 )
@@ -67,7 +78,7 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
                 StockTransaction.objects.create(
                     item_id=item_id,
                     quantity_change=quantity_change,
-                    transaction_type=tx["transaction_type"],
+                    transaction_type=tx_type,
                     user_id=tx.get("user_id"),
                     user_int=tx.get("user_int"),
                     related_indent_id=tx.get("related_indent_id"),

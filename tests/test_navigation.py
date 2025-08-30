@@ -12,6 +12,7 @@ def test_top_nav_template_contains_links(django_user_model):
     request.user = user
     html = render_to_string("components/top_nav.html", request=request)
     expected = [
+        "Home",
         "Dashboard",
         "Inventory",
         "Orders",
@@ -20,6 +21,7 @@ def test_top_nav_template_contains_links(django_user_model):
     ]
     for text in expected:
         assert text in html
+    assert f'href="{reverse("root")}"' in html
 
 
 @pytest.mark.django_db
@@ -51,6 +53,7 @@ def test_home_page_contains_nav_links(client, django_user_model):
     resp = client.get(reverse("root"))
     html = resp.content.decode()
     expected = [
+        "Home",
         "Dashboard",
         "Inventory",
         "Orders",

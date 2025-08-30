@@ -1,8 +1,8 @@
-from django.db.models import F
+from django.db.models import F, Case, CharField, Value, When
 
 from inventory.models import Item
 
-from .item_service import get_unit_display_name
+from .units_service import UnitsService
 
 
 def get_low_stock_items():
@@ -19,10 +19,17 @@ def get_low_stock_items():
     if hasattr(Item, "is_placeholder"):
         qs = qs.filter(is_placeholder=False)
 
-    # Add unit display names in Python instead of database annotation
-    items = list(qs.order_by("name"))
-    for item in items:
-        item.uom = get_unit_display_name(item.unit_id)
-        item.unit = item.unit_id
-
-    return items
+    units_map = {
+        u["unit_id"]: u["purchase_unit"]
+        for u in UnitsService.get_all_units()
+    }
+    whens = [When(unit_id=k, then=Value(v)) for k, v in units_map.items()]
+    qs = qs.annotate(
+        unit=F("unit_id"),
+        uom=Case(
+            *whens,
+            default=Value(""),
+            output_field=CharField(),
+        ),
+    )
+    return qs.order_by("name")

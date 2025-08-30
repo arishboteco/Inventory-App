@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
@@ -47,6 +48,9 @@ class ItemEditView(View):
             "is_edit": True,
             "item": item,
             "excluded_fields": EXCLUDED_FIELDS,
+            "list_url": reverse("items_list"),
+            "list_title": "Items",
+            "current_title": item.name,
         }
         if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
             return render(request, "inventory/_item_form_partial.html", ctx)
@@ -80,6 +84,9 @@ class ItemEditView(View):
             "is_edit": True,
             "item": item,
             "excluded_fields": EXCLUDED_FIELDS,
+            "list_url": reverse("items_list"),
+            "list_title": "Items",
+            "current_title": item.name,
         }
         if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
             return render(request, "inventory/_item_form_partial.html", ctx, status=400)
@@ -205,6 +212,9 @@ class ItemDetailView(View):
             "rows": rows,
             "recent_activity": recent_activity,
             "stock_history": json.dumps(stock_history),
+            "list_url": reverse("items_list"),
+            "list_title": "Items",
+            "current_title": details["name"],
         }
         if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
             return render(request, "inventory/_item_detail_partial.html", ctx)

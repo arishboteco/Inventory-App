@@ -16,37 +16,13 @@
         <!-- Main Navigation -->
         {% if user.is_authenticated %}
         <div class="hidden md:ml-10 md:flex md:space-x-1">
-          {% url 'dashboard' as dashboard_url %}
-          {% url 'items_list' as items_url %}
-          {% url 'purchase_orders_list' as po_url %}
-          {% url 'suppliers_list' as suppliers_url %}
-          {% url 'history_reports' as reports_url %}
-          
-          <a href="{{ dashboard_url }}"
-             class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}nav-item-active{% endif %}"
-             {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>
-            Dashboard
+          {% for link in primary_navigation %}
+          <a href="{% url link.url_name %}"
+             class="nav-item {% if request.resolver_match.url_name == link.url_name %}nav-item-active{% endif %}"
+             {% if request.resolver_match.url_name == link.url_name %}aria-current="page"{% endif %}>
+            {{ link.title }}
           </a>
-          <a href="{{ items_url }}"
-             class="nav-item {% if request.resolver_match.url_name == 'items_list' %}nav-item-active{% endif %}"
-             {% if request.resolver_match.url_name == 'items_list' %}aria-current="page"{% endif %}>
-            Inventory
-          </a>
-          <a href="{{ po_url }}"
-             class="nav-item {% if request.resolver_match.url_name == 'purchase_orders_list' %}nav-item-active{% endif %}"
-             {% if request.resolver_match.url_name == 'purchase_orders_list' %}aria-current="page"{% endif %}>
-            Orders
-          </a>
-          <a href="{{ suppliers_url }}"
-             class="nav-item {% if request.resolver_match.url_name == 'suppliers_list' %}nav-item-active{% endif %}"
-             {% if request.resolver_match.url_name == 'suppliers_list' %}aria-current="page"{% endif %}>
-            Suppliers
-          </a>
-          <a href="{{ reports_url }}"
-             class="nav-item {% if request.resolver_match.url_name == 'history_reports' %}nav-item-active{% endif %}"
-             {% if request.resolver_match.url_name == 'history_reports' %}aria-current="page"{% endif %}>
-            Reports
-          </a>
+          {% endfor %}
         </div>
         {% endif %}
       </div>

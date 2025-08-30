@@ -56,6 +56,9 @@ class GRNListView(TemplateView):
                 "page_obj": page_obj,
                 "suppliers": suppliers,
                 "querystring": querystring,
+                "list_url": reverse("dashboard"),
+                "list_title": "Dashboard",
+                "current_title": "GRNs",
             }
         )
         ctx.update(params)

@@ -1,58 +1,36 @@
-{% extends "_base.html" %}
+{% extends "components/list_layout.html" %}
 {% load static %}
-
-{% comment %}
-Reusable layout for create/manage pages:
-- Heading + optional description
-- Primary actions (e.g., Add, Bulk Upload)
-- KPI strip
-- Filter bar
-- Data container (cards/table/anything)
-- Optional bulk actions bar and pagination
-
-Pages should override the blocks as needed.
-{% endcomment %}
 
 {% block title %}{% block page_title %}Manage{% endblock %}{% endblock %}
 
-{% block content %}
-  <!-- Page header -->
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
-      {% block heading_icon %}{% endblock %}
-      {% block heading %}Manage{% endblock %}
-    </h1>
-    {% block description %}{% endblock %}
-    <hr class="mt-6" />
+{% block heading %}
+  {% block heading_icon %}{% endblock %}
+  {% block page_heading %}{% endblock %}
+{% endblock %}
+
+{% block actions %}
+  <div class="flex items-center gap-2">
+    {% block primary_actions %}{% endblock %}
+    {% block secondary_actions %}{% endblock %}
   </div>
+{% endblock %}
 
-  <!-- Actions (left: primary), (right: contextual) -->
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-2">
-      {% block primary_actions %}{% endblock %}
-    </div>
-    <div class="flex items-center gap-2">
-      {% block secondary_actions %}{% endblock %}
-    </div>
-  </div>
-
-  <!-- KPI grid -->
-  {% block kpis %}{% endblock %}
-
-  <!-- Filters / search -->
+{% block filter_bar %}
   {% block filters %}{% endblock %}
+{% endblock %}
 
-  <!-- Optional extra banner/notice -->
+{% block extra %}
+  {% block description %}{% endblock %}
+  {% block kpis %}{% endblock %}
   {% block extra_top %}{% endblock %}
+{% endblock %}
 
-  <!-- Data container -->
+{% block table_container %}
   {% block data_container %}{% endblock %}
-
-  <!-- Bulk actions region (sticky bar or inline) -->
   {% block bulk_actions %}{% endblock %}
-
-  <!-- Pagination region -->
   {% block pagination %}{% endblock %}
+{% endblock %}
 
+{% block extra_js %}
   {% block page_scripts %}{% endblock %}
 {% endblock %}

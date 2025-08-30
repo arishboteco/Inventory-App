@@ -414,6 +414,9 @@ def history_reports(request):
         "chart_labels": chart_labels,
         "chart_data": chart_data,
         "tabs": tabs,
+        "list_url": reverse("dashboard"),
+        "list_title": "Dashboard",
+        "current_title": "Reports",
     }
     template = (
         "inventory/_history_tabs.html"

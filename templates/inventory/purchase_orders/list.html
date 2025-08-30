@@ -2,9 +2,13 @@
 {% load static %}
 {% load icon_tags %}
 
+{% block breadcrumbs %}
+  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+{% endblock %}
+
 {% block page_title %}Purchase Orders - Inventory Pro{% endblock %}
 
-{% block heading %}Purchase Orders{% endblock %}
+{% block page_heading %}Purchase Orders{% endblock %}
 {% block description %}<p class="page-subtitle">Manage your purchase orders and supplier relationships</p>{% endblock %}
 
 {% block primary_actions %}

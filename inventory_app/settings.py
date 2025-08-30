@@ -97,6 +97,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "inventory_app.context_processors.app_version",
+                "inventory_app.navigation.primary_navigation",
             ],
         },
     },

@@ -85,8 +85,10 @@ def test_ml_dashboard_uses_cache(client):
     ):
         # When queue_train_models is called we synchronously populate the cache to
         # emulate the background worker completing its task.
-        mock_queue.side_effect = lambda periods=1, ttl=300: cache.set(
-            "ml_train_models", {}, ttl
+        mock_queue.side_effect = (
+            lambda periods=1, cache_key="ml_train_models", ttl=300: cache.set(
+                cache_key, {}, ttl
+            )
         )
 
         response = client.get(reverse("ml_dashboard"))
@@ -102,3 +104,24 @@ def test_ml_dashboard_uses_cache(client):
         client.get(reverse("ml_dashboard"))
         assert mock_queue.call_count == 2
         assert mock_abc.call_count == 2
+
+
+
+def test_queue_train_models_updates_cache(db):
+    cache_key = "test_ml_train_models"
+    cache.delete(cache_key)
+    ml.queue_train_models(periods=1, cache_key=cache_key, ttl=300, sync=True)
+    assert cache.get(cache_key) is not None
+
+
+def test_queue_train_models_logs_exception(db, monkeypatch, caplog):
+    def bad_train(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(ml, "train_models", bad_train)
+    cache_key = "test_ml_train_models_error"
+    cache.delete(cache_key)
+    with caplog.at_level("ERROR"):
+        ml.queue_train_models(periods=1, cache_key=cache_key, ttl=300, sync=True)
+    assert cache.get(cache_key) is None
+    assert "Failed to train forecasting models" in caplog.text

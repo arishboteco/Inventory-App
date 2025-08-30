@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "core",
     "inventory",
+    "django_q",
 ]
 
 MIDDLEWARE = [
@@ -188,6 +189,15 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
+}
+
+Q_CLUSTER = {
+    'name': 'inventory',
+    'workers': 1,
+    'timeout': 60,
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default',
 }
 
 # Login URL

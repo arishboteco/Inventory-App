@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from threading import Thread
 from typing import Dict, List, Optional
 
 from django.core.cache import cache
 from django.db.models import Sum
 from django.db.models.functions import Abs, TruncDate
+from django_q.tasks import async_task
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 
 from ..models import Item, StockTransaction
@@ -79,7 +79,7 @@ def train_models(periods: int = 7) -> Dict[int, List[float]]:
         series_by_item.setdefault(row["item_id"], []).append(float(row["total"]))
 
     forecasts: Dict[int, List[float]] = {}
-    for item_id in Item.objects.values_list("id", flat=True):
+    for item_id in Item.objects.values_list("pk", flat=True):
         series = series_by_item.get(item_id, [])
         forecasts[item_id] = forecast_item_demand(
             periods=periods, series=series if series else [0.0]
@@ -88,20 +88,39 @@ def train_models(periods: int = 7) -> Dict[int, List[float]]:
     return forecasts
 
 
-def queue_train_models(
-    periods: int = 7, *, cache_key: str = "ml_train_models", ttl: int = 300
-) -> None:
-    """Queue training in a background thread and store results in cache.
+def train_models_task(periods: int, cache_key: str, ttl: int) -> bool:
+    """Train models and store results in cache.
 
-    This lightweight approach avoids blocking the requesting thread. In a real
-    deployment, a proper background worker such as Celery or a scheduled job
-    should perform this work instead.
+    Returns ``True`` on success and ``False`` if an exception is raised.
+    """
+    try:
+        cache.set(cache_key, train_models(periods), ttl)
+        return True
+    except Exception:  # pragma: no cover - defensive catch-all
+        logger.exception("Failed to train forecasting models")
+        return False
+
+
+def queue_train_models(
+    periods: int = 7,
+    *,
+    cache_key: str = "ml_train_models",
+    ttl: int = 300,
+    sync: bool = False,
+) -> str:
+    """Queue training task and store results in cache when complete.
+
+    Args:
+        periods: Number of future periods (days) to predict.
+        cache_key: Cache key to store forecasts.
+        ttl: Cache time-to-live in seconds.
+        sync: If ``True`` the task runs synchronously (used in tests).
+
+    Returns:
+        The ID of the queued task.
     """
 
-    def _task() -> None:
-        cache.set(cache_key, train_models(periods), ttl)
-
-    Thread(target=_task, daemon=True).start()
+    return async_task(train_models_task, periods, cache_key, ttl, sync=sync)
 
 
 def abc_classification() -> Dict[int, str]:

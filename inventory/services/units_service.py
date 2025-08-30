@@ -24,10 +24,8 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Tuple
 
+from django.db import connection
 from django.db.utils import OperationalError
-from django.core.exceptions import ObjectDoesNotExist
-
-from ..models import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -68,15 +66,22 @@ class UnitsService:
             }
         """
         try:
-            unit = Unit.objects.get(unit_id=unit_id)
-            return {
-                'unit_id': unit.unit_id,
-                'base_unit': unit.base_unit,
-                'purchase_unit': unit.purchase_unit,
-                'conversion_factor': float(unit.conversion_factor),
-            }
-        except ObjectDoesNotExist:
-            pass
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    (
+                        "SELECT base_unit, purchase_unit, conversion_factor "
+                        "FROM units WHERE unit_id = %s"
+                    ),
+                    [unit_id],
+                )
+                row = cursor.fetchone()
+                if row:
+                    return {
+                        'unit_id': unit_id,
+                        'base_unit': row[0],
+                        'purchase_unit': row[1],
+                        'conversion_factor': float(row[2])
+                    }
         except OperationalError as e:
             logger.warning(f"Could not access units table: {e}")
 
@@ -166,40 +171,46 @@ class UnitsService:
     def get_all_units() -> List[Dict]:
         """Get all available units for dropdown population."""
         try:
-            units_qs = Unit.objects.all().order_by('base_unit', 'purchase_unit')
-            units = [
-                {
-                    'unit_id': unit.unit_id,
-                    'base_unit': unit.base_unit,
-                    'purchase_unit': unit.purchase_unit,
-                    'conversion_factor': float(unit.conversion_factor),
-                }
-                for unit in units_qs
-            ]
-            if units:
-                return units
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    (
+                        "SELECT unit_id, base_unit, purchase_unit, conversion_factor "
+                        "FROM units "
+                        "ORDER BY base_unit, purchase_unit"
+                    )
+                )
+                rows = cursor.fetchall()
+                return [
+                    {
+                        'unit_id': row[0],
+                        'base_unit': row[1],
+                        'purchase_unit': row[2],
+                        'conversion_factor': float(row[3])
+                    }
+                    for row in rows
+                ]
         except OperationalError as e:
             logger.warning(f"Could not load units: {e}")
-        return [
-            {
-                'unit_id': 1,
-                'base_unit': 'GM',
-                'purchase_unit': '2 KG',
-                'conversion_factor': 2000.0,
-            },
-            {
-                'unit_id': 19,
-                'base_unit': 'GM',
-                'purchase_unit': 'KG',
-                'conversion_factor': 1000.0,
-            },
-            {
-                'unit_id': 55,
-                'base_unit': 'PC',
-                'purchase_unit': 'PC',
-                'conversion_factor': 1.0,
-            },
-        ]
+            return [
+                {
+                    'unit_id': 1,
+                    'base_unit': 'GM',
+                    'purchase_unit': '2 KG',
+                    'conversion_factor': 2000.0,
+                },
+                {
+                    'unit_id': 19,
+                    'base_unit': 'GM',
+                    'purchase_unit': 'KG',
+                    'conversion_factor': 1000.0,
+                },
+                {
+                    'unit_id': 55,
+                    'base_unit': 'PC',
+                    'purchase_unit': 'PC',
+                    'conversion_factor': 1.0,
+                },
+            ]
 
     @staticmethod
     def get_units_by_base_unit(base_unit: str) -> List[Dict]:

@@ -54,8 +54,19 @@
       </main>
 
       <!-- Modal Root -->
-      <div id="modal-root" class="hidden fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-modal-overlay" data-modal-close aria-label="Close modal"></div>
+      <div
+        id="modal-root"
+        class="hidden fixed inset-0 z-50"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-heading"
+        tabindex="-1"
+      >
+        <div
+          class="absolute inset-0 bg-modal-overlay"
+          data-modal-close
+          aria-label="Close modal"
+        ></div>
         <div class="absolute inset-0 flex items-center justify-center p-4">
           <div id="modal-content" class="max-w-3xl w-full"></div>
         </div>

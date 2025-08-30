@@ -14,12 +14,12 @@ In your Render service dashboard, add these environment variables:
 DJANGO_SETTINGS_MODULE=inventory_app.settings_production
 DEBUG=False
 DJANGO_ALLOWED_HOSTS=<RENDER_DOMAIN>
+DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
 ```
 
 #### **Security Variables:**
 
 ```bash
-DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_HSTS_SECONDS=31536000
 DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True

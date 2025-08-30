@@ -83,6 +83,26 @@ def test_item_delete_view_deactivates_with_transactions(client):
     assert item.is_active is False
 
 
+def test_item_delete_view_fetch_returns_json(client):
+    item = _create_item()
+    url = reverse("item_delete", args=[item.pk])
+    resp = client.post(url, HTTP_X_REQUESTED_WITH="fetch")
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": True}
+    assert Item.objects.count() == 0
+
+
+def test_item_delete_view_fetch_deactivates(client):
+    item = _create_item()
+    StockTransaction.objects.create(item=item, quantity_change=2)
+    url = reverse("item_delete", args=[item.pk])
+    resp = client.post(url, HTTP_X_REQUESTED_WITH="fetch")
+    assert resp.status_code == 200
+    assert resp.json() == {"ok": True}
+    item.refresh_from_db()
+    assert item.is_active is False
+
+
 def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
 
     item_service.get_all_items_with_stock.clear()

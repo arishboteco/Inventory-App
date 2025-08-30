@@ -11,7 +11,6 @@ Inventory-App is a Django application for managing restaurant inventory with a P
 - Dashboard showing key metrics such as low-stock items
 - Bulk upload items and stock transactions from CSV files
 - Unit model for standardized base and purchase unit conversions
-- Default unit flag to preselect common measurement in item forms
 
 ## Style Guide
 

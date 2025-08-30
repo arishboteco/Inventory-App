@@ -1,12 +1,12 @@
 from django import forms
 
-from ..models import Department, Item, Supplier, Unit
+from ..models import Department, Item, Supplier
 from ..services.categories_service import CategoriesService
 from ..services.form_service import (
     get_categories_map,
     get_category_choices,
 )
-from ..services.units_service import BASE_UNIT_TO_UNIT_ID
+from ..services.units_service import UnitsService, BASE_UNIT_TO_UNIT_ID
 from .base import INPUT_CLASS, StyledFormMixin
 
 
@@ -43,21 +43,11 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         widget=forms.Select(attrs={"class": INPUT_CLASS}),
     )
 
-    # Unit selection
-    unit = forms.ModelChoiceField(
-        queryset=Unit.objects.all(),
-        empty_label=None,
-        widget=forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit"}),
-        help_text=(
-            "Select the unit for this item (handles both kitchen and procurement units)"
-        ),
-    )
-
     class Meta:
         model = Item
         fields = [
             "name",
-            "unit",
+            "unit_id",
             "category_id",
             "departments",
             "initial_purchase_price",
@@ -91,6 +81,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             ),
             "lead_time_days": forms.NumberInput(
                 attrs={"class": INPUT_CLASS, "min": "0", "placeholder": "7"}
+            ),
+            "unit_id": forms.Select(
+                attrs={"class": INPUT_CLASS, "data-field": "unit_id"}
             ),
             "reorder_point": forms.NumberInput(
                 attrs={
@@ -130,15 +123,25 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         )
         self.fields["category_id"].choices = category_choices
 
+        # Use unit_id field instead of separate base_unit/purchase_unit fields
+        unit_choices = [("", "Select Unit")] + UnitsService.get_unit_choices_for_forms()
+        self.fields["unit_id"] = forms.ChoiceField(
+            choices=unit_choices,
+            required=True,
+            widget=forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit_id"}),
+            help_text=(
+                "Select the unit for this item (handles both kitchen and "
+                "procurement units)"
+            ),
+        )
+
         # Make name field required
         if "name" in self.fields:
             self.fields["name"].required = True
 
-        # Set default unit
-        if not self.instance.pk:
-            default_unit = Unit.objects.filter(is_default=True).first()
-            if default_unit:
-                self.fields["unit"].initial = default_unit
+        # Set default unit_id for compatibility
+        if not self.instance.pk and "unit_id" in self.fields:
+            self.fields["unit_id"].initial = 55  # Default PC unit
 
         # Add data for JavaScript dropdowns (for categories)
         self.category_options = [choice[0] for choice in get_category_choices()]
@@ -171,10 +174,10 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                 "Category is required when subcategory is specified"
             )
 
-        # Set unit based on base_unit for compatibility
-        if base_unit and not cleaned_data.get("unit"):
-            unit_id = BASE_UNIT_TO_UNIT_ID.get(base_unit, 55)
-            cleaned_data["unit"] = Unit.objects.filter(pk=unit_id).first()
+        # Set unit_id based on base_unit for compatibility
+        if base_unit and not cleaned_data.get("unit_id"):
+            # Map base units to unit_ids (you may need to adjust these mappings)
+            cleaned_data["unit_id"] = BASE_UNIT_TO_UNIT_ID.get(base_unit, 55)
 
         return cleaned_data
 
@@ -182,7 +185,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         """Save the item with enhanced business logic."""
         instance = super().save(commit=False)
 
-        # Update unit based on base_unit if needed
+        # Update unit_id based on base_unit if needed
         if self.cleaned_data.get("base_unit") and not instance.unit_id:
             instance.unit_id = BASE_UNIT_TO_UNIT_ID.get(
                 self.cleaned_data["base_unit"], 55
@@ -194,11 +197,3 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             self.save_m2m()
 
         return instance
-
-    def clean_unit(self):
-        unit = self.cleaned_data.get("unit")
-        if not unit or not Unit.objects.filter(pk=unit.pk).exists():
-            raise forms.ValidationError(
-                "Selected unit does not exist in units table."
-            )
-        return unit

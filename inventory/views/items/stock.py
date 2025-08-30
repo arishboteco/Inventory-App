@@ -9,8 +9,7 @@ from django.views import View
 from ...forms.bulk_forms import BulkUploadForm
 from ...forms.item_forms import ItemForm
 from ...models import Department, Item
-from ...services.form_service import FormService, get_subcategory_choices
-from ...services.units_service import UnitsService
+from ...services.form_service import get_purchase_unit_choices, get_subcategory_choices
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,9 @@ class ItemCreatePartialView(View):
         form = ItemForm(request.POST)
         if form.is_valid():
             item = form.save()
-            return JsonResponse({"ok": True, "id": item.item_id, "message": "Item created"})
+            return JsonResponse(
+                {"ok": True, "id": item.item_id, "message": "Item created"}
+            )
         return JsonResponse({"ok": False, "message": form.errors.as_json()}, status=400)
 
 
@@ -77,7 +78,9 @@ class ItemsBulkUpdateView(View):
             ids = data.getlist("ids[]") or data.getlist("ids")
             ids = [int(x) for x in ids]
             if not ids:
-                return JsonResponse({"ok": False, "message": "No items selected"}, status=400)
+                return JsonResponse(
+                    {"ok": False, "message": "No items selected"}, status=400
+                )
 
             if action == "deactivate":
                 updated = Item.objects.filter(pk__in=ids).update(is_active=False)
@@ -86,11 +89,15 @@ class ItemsBulkUpdateView(View):
             if action == "assign_dept":
                 dept_id = data.get("dept_id")
                 if not dept_id:
-                    return JsonResponse({"ok": False, "message": "dept_id required"}, status=400)
+                    return JsonResponse(
+                        {"ok": False, "message": "dept_id required"}, status=400
+                    )
                 try:
                     dept = Department.objects.get(pk=int(dept_id))
                 except Department.DoesNotExist:
-                    return JsonResponse({"ok": False, "message": "Department not found"}, status=404)
+                    return JsonResponse(
+                        {"ok": False, "message": "Department not found"}, status=404
+                    )
                 items = Item.objects.filter(pk__in=ids)
                 for it in items:
                     it.departments.add(dept)
@@ -108,9 +115,9 @@ class PurchaseUnitsView(View):
     def get(self, request):
         base_unit = request.GET.get("base_unit", "")
         if base_unit:
-            purchase_units = FormService.get_purchase_unit_choices(base_unit)
+            purchase_units = get_purchase_unit_choices(base_unit)
         else:
-            purchase_units = FormService.get_purchase_unit_choices()
+            purchase_units = []
         return JsonResponse({"purchase_units": purchase_units})
 
 
@@ -139,5 +146,8 @@ class CheckSimilarNamesView(View):
             .values("item_id", "name")[:5]
         )
         return JsonResponse(
-            {"similar_items": list(similar_items), "has_similar": len(similar_items) > 0}
+            {
+                "similar_items": list(similar_items),
+                "has_similar": len(similar_items) > 0,
+            }
         )

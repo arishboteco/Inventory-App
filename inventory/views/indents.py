@@ -66,9 +66,23 @@ class IndentsListView(TemplateView):
                 "q": q,
                 "total_indents": total_indents,
                 "filters": filters,
+                "quick_form": IndentForm(),
             }
         )
         return ctx
+
+    def post(self, request, *args, **kwargs):
+        """Handle quick indent submission without line items."""
+
+        form = IndentForm(request.POST)
+        if form.is_valid():
+            indent = form.save()
+            messages.success(request, "Indent submitted")
+            return redirect("indent_detail", pk=indent.pk)
+
+        ctx = self.get_context_data(**kwargs)
+        ctx["quick_form"] = form
+        return render(request, self.template_name, ctx)
 
 
 class IndentsTableView(TemplateView):

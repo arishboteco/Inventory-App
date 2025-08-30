@@ -172,6 +172,13 @@ class ItemsListView(TemplateView):
         filters_list = category_filters.build_filters(request)
         filters_list = [f for f in filters_list if f.get("name") != "base_unit"]
 
+        categories_val = category_ctx.get("categories", [])
+        subcategories_val = category_ctx.get("subcategories", [])
+        if not request.GET.get("category"):
+            categories_val = []
+        if not request.GET.get("subcategory"):
+            subcategories_val = []
+
         ctx.update(
             {
                 "page_size": per_page,
@@ -185,8 +192,11 @@ class ItemsListView(TemplateView):
                 "excluded_fields": EXCLUDED_FIELDS,
                 "inline_units": inline_units,
                 "inline_categories": inline_categories,
-                "categories": category_ctx.get("categories", []),
-                "subcategories": category_ctx.get("subcategories", []),
+                "categories": categories_val,
+                "subcategories": subcategories_val,
+                "list_url": reverse("dashboard"),
+                "list_title": "Dashboard",
+                "current_title": "Inventory",
             }
         )
         return ctx

@@ -1,6 +1,9 @@
 {% extends "components/create_manage_layout.html" %}
+{% block breadcrumbs %}
+  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+{% endblock %}
 {% block page_title %}Indents – Inventory App{% endblock %}
-{% block heading %}Indents ({{ total_indents }}){% endblock %}
+{% block page_heading %}Indents ({{ total_indents }}){% endblock %}
 
 {% block primary_actions %}
   <a href="{% url 'indent_create' %}" class="btn-primary">New Indent</a>

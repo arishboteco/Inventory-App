@@ -67,6 +67,9 @@ class IndentsListView(TemplateView):
                 "total_indents": total_indents,
                 "filters": filters,
                 "quick_form": IndentForm(),
+                "list_url": reverse("dashboard"),
+                "list_title": "Dashboard",
+                "current_title": "Indents",
             }
         )
         return ctx

@@ -1,7 +1,9 @@
 {% extends "components/create_manage_layout.html" %}
-
+{% block breadcrumbs %}
+  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+{% endblock %}
 {% block page_title %}Explore Items – Inventory App{% endblock %}
-{% block heading %}Explore Items{% endblock %}
+{% block page_heading %}Explore Items{% endblock %}
 
 {% block filters %}
 <form method="get">

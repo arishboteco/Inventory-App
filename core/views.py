@@ -10,6 +10,7 @@ from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils.dateparse import parse_date
 
 from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
@@ -76,6 +77,9 @@ def dashboard(request):
         "low_stock": dashboard_service.get_low_stock_items(),
         "trend_labels": json.dumps(labels),
         "trend_values": json.dumps(values),
+        "list_url": reverse("dashboard"),
+        "list_title": "Dashboard",
+        "current_title": "Dashboard",
     }
     return render(request, "core/dashboard.html", context)
 
@@ -131,6 +135,9 @@ def interactive_dashboard(request):
         "trend_values": json.dumps(values),
         "items": Item.objects.filter(is_active=True),
         "suppliers": Supplier.objects.filter(is_active=True),
+        "list_url": reverse("dashboard"),
+        "list_title": "Dashboard",
+        "current_title": "Dashboard",
     }
     return render(request, "core/dashboard.html", context)
 

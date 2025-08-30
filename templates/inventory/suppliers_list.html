@@ -1,6 +1,9 @@
 {% extends "components/create_manage_layout.html" %}
+{% block breadcrumbs %}
+  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+{% endblock %}
 {% block page_title %}Suppliers – Inventory App{% endblock %}
-{% block heading %}Suppliers ({{ total_suppliers }}){% endblock %}
+{% block page_heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 
 {% block primary_actions %}{% endblock %}
 

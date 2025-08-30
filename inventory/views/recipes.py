@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.views.generic import TemplateView
 
@@ -53,7 +54,14 @@ class RecipesListView(TemplateView):
         grid_html = render_to_string(
             self.grid_template, {"recipes": recipes}, request=request
         )
-        ctx = {"recipes_grid": grid_html, "q": q, "form": RecipeForm()}
+        ctx = {
+            "recipes_grid": grid_html,
+            "q": q,
+            "form": RecipeForm(),
+            "list_url": reverse("dashboard"),
+            "list_title": "Dashboard",
+            "current_title": "Recipes",
+        }
         return render(request, self.template_name, ctx)
 
     def post(self, request, *args, **kwargs):
@@ -67,7 +75,14 @@ class RecipesListView(TemplateView):
         grid_html = render_to_string(
             self.grid_template, {"recipes": recipes}, request=request
         )
-        ctx = {"recipes_grid": grid_html, "q": q, "form": form}
+        ctx = {
+            "recipes_grid": grid_html,
+            "q": q,
+            "form": form,
+            "list_url": reverse("dashboard"),
+            "list_title": "Dashboard",
+            "current_title": "Recipes",
+        }
         return render(request, self.template_name, ctx)
 
 

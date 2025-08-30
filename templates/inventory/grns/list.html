@@ -1,7 +1,10 @@
 {% extends "components/create_manage_layout.html" %}
 {% load icon_tags %}
+{% block breadcrumbs %}
+  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+{% endblock %}
 {% block page_title %}Goods Received Notes – Inventory App{% endblock %}
-{% block heading %}Goods Received Notes{% endblock %}
+{% block page_heading %}Goods Received Notes{% endblock %}
 
 {% block filters %}
   <form method="get" class="mb-4 grid gap-2 grid-cols-4 max-lg:grid-cols-4 max-md:grid-cols-2 max-sm:grid-cols-1 items-end">

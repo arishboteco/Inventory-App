@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from django.shortcuts import render
+from django.urls import reverse
 
 from ..models import Item
 from ..services import ml
@@ -38,4 +39,13 @@ def ml_dashboard(request):
                 "classification": classifications.get(item.pk, "C"),
             }
         )
-    return render(request, "inventory/ml_dashboard.html", {"results": results})
+    return render(
+        request,
+        "inventory/ml_dashboard.html",
+        {
+            "results": results,
+            "list_url": reverse("dashboard"),
+            "list_title": "Dashboard",
+            "current_title": "ML Dashboard",
+        },
+    )

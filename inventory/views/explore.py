@@ -34,6 +34,9 @@ def explore(request):
         "page_size": per_page,
         "querystring": list_utils.build_querystring(request),
         "export_url": reverse("explore_export"),
+        "list_url": reverse("dashboard"),
+        "list_title": "Dashboard",
+        "current_title": "Explore",
     }
     return render(request, "inventory/explore.html", ctx)
 

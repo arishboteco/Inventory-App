@@ -1,10 +1,14 @@
 {% extends "components/create_manage_layout.html" %}
 {% load static %}
 
+{% block breadcrumbs %}
+  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+{% endblock %}
+
 {% block page_title %}Item Master Management{% endblock %}
 
 {% block heading_icon %}<span class="text-2xl" aria-hidden="true">📦</span>{% endblock %}
-{% block heading %}Item Master Management{% endblock %}
+{% block page_heading %}Item Master Management{% endblock %}
 {% block description %}<p class="text-gray-600 mt-2">Manage your inventory items: add new items, edit existing ones, and view stock levels.</p>{% endblock %}
 
 {% block primary_actions %}{% endblock %}

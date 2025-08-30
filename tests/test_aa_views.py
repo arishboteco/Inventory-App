@@ -8,7 +8,7 @@ from django.test import RequestFactory
 
 from inventory.models import Indent
 from inventory.views.indents import IndentCreateView
-from inventory.views.items import ItemEditView
+from inventory.views.items.detail import ItemEditView
 
 
 class SimpleUser:
@@ -36,7 +36,7 @@ def test_item_edit_handles_save_error(item_factory):
     # Simulate DB error on save
     with (
         patch("inventory.forms.item_forms.ItemForm.save", side_effect=DatabaseError),
-        patch("inventory.views.items.render", return_value=HttpResponse()),
+        patch("inventory.views.items.detail.render", return_value=HttpResponse()),
     ):
         resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
@@ -62,7 +62,7 @@ def test_item_edit_handles_non_numeric_values(item_factory):
     request = rf.get(f"/items/{item.pk}/edit/")
     _add_messages(request)
     with (
-        patch("inventory.views.items.render", return_value=HttpResponse()),
+        patch("inventory.views.items.detail.render", return_value=HttpResponse()),
     ):
         resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
@@ -78,7 +78,9 @@ def test_item_edit_db_error_returns_404():
     _add_messages(request)
     # Simulate DB error when fetching the object
     with (
-        patch("inventory.views.items.get_object_or_404", side_effect=DatabaseError),
+        patch(
+            "inventory.views.items.detail.get_object_or_404", side_effect=DatabaseError
+        ),
     ):
         with pytest.raises(Http404):
             ItemEditView.as_view()(request, pk=1)

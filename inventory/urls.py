@@ -17,11 +17,11 @@ from .views import (
     StockTransactionViewSet,
     SupplierViewSet,
 )
-from .views.items import (
-    ItemsExportView,
-    check_similar_names,
-    get_purchase_units,
-    get_subcategories,
+from .views.items.list import ItemsExportView
+from .views.items.stock import (
+    CheckSimilarNamesView,
+    PurchaseUnitsView,
+    SubcategoriesView,
 )
 from .views.what_if import what_if_reorder
 
@@ -41,8 +41,12 @@ router.register(r"sale-transactions", SaleTransactionViewSet)
 
 urlpatterns = router.urls + [
     path("items/export/", ItemsExportView.as_view(), name="items_export_api"),
-    path("purchase-units/", get_purchase_units, name="get_purchase_units"),
-    path("subcategories/", get_subcategories, name="get_subcategories"),
-    path("items/check-similar/", check_similar_names, name="check_similar_names"),
+    path("purchase-units/", PurchaseUnitsView.as_view(), name="get_purchase_units"),
+    path("subcategories/", SubcategoriesView.as_view(), name="get_subcategories"),
+    path(
+        "items/check-similar/",
+        CheckSimilarNamesView.as_view(),
+        name="check_similar_names",
+    ),
     path("what-if/reorder/", what_if_reorder, name="what_if_reorder"),
 ]

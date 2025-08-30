@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated development workflow documentation
 - Development workflow documentation and changelog automation
 - CLEANUP: Remove '\_speed' naming convention - renamed item_detail_speed.html to item_detail.html and item_form_speed.html to item_form.html for consistent naming
+- Refactor: split item views into list, detail, and stock modules and converted helper views to class-based implementations
 
 ## [2.1.0] - 2025-08-28
 

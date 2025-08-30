@@ -1,4 +1,5 @@
 {% extends "components/responsive_table.html" %}
+{% load icon_tags %}
 
 {% block caption %}<caption>Purchase Orders</caption>{% endblock %}
 
@@ -27,15 +28,15 @@
   <td class="px-4 py-2">
     <div class="flex justify-end gap-2">
       <a href="{% url 'purchase_order_detail' po.pk %}" class="text-primary" title="View">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.036 12.322a1 1 0 010-.644C3.423 7.51 7.373 4.5 12 4.5c4.628 0 8.578 3.01 9.964 7.178a1 1 0 010 .644C20.578 16.49 16.628 19.5 12 19.5c-4.628 0-8.578-3.01-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        {% icon 'eye' 'w-5 h-5' %}
         <span class="sr-only">View</span>
       </a>
       <a href="{% url 'purchase_order_edit' po.pk %}" class="text-primary" title="Edit">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 3.75h-6a1.5 1.5 0 00-1.5 1.5v13.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 3.75L20.25 9M7.5 9h3.75a.75.75 0 01.75.75V13.5"/></svg>
+        {% icon 'pencil-square' 'w-5 h-5' %}
         <span class="sr-only">Edit</span>
       </a>
       <a href="{% url 'purchase_order_receive' po.pk %}" class="text-primary" title="Receive">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7.5 10.5L12 15l4.5-4.5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15V3"/></svg>
+        {% icon 'arrow-down-tray' 'w-5 h-5' %}
         <span class="sr-only">Receive</span>
       </a>
     </div>

@@ -44,10 +44,7 @@ ALLOWED_HOSTS = env.list(
         "localhost",
         "testserver",
         "127.0.0.1",
-        (
-            "curly-space-sniffle-"
-            "pjxw7ww6r76frgp-8000.app.github.dev"
-        ),
+        "curly-space-sniffle-pjxw7ww6r76frgp-8000.app.github.dev",
     ],
 )
 

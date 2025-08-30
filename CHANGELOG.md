@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `static/js/smart-navigation.js` - removed unused navigation enhancements
 
+- Deprecated `.kpi-grid` and `.kpi` styles in favor of new card-based KPI component
+
 ### Fixed
 
 - Fix critical items page 500 error - template inheritance and data structure issues
@@ -42,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING CHANGE: Complete removal of ItemCreateView and item_create URL - all item creation now uses inline form on items list page for consistent UX
 - MAJOR CLEANUP: Repository refactoring - removed duplicate templates, organized documentation into docs/ structure, cleaned backup files for maintainable codebase
 - PRE-PRODUCTION TESTING COMPLETE: Comprehensive testing completed - inline form functional, clean codebase, ready for production deployment
+- Shared `templates/components/kpi_card.html` for consistent card-based KPI display
 
 ### Changed
 
@@ -49,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development workflow documentation and changelog automation
 - CLEANUP: Remove '\_speed' naming convention - renamed item_detail_speed.html to item_detail.html and item_form_speed.html to item_form.html for consistent naming
 - Refactor: split item views into list, detail, and stock modules and converted helper views to class-based implementations
+- KPI sections in items and purchase orders now render via the shared card component
 
 ## [2.1.0] - 2025-08-28
 

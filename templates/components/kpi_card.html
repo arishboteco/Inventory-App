@@ -1,0 +1,18 @@
+{% load icon_tags %}
+<div class="card">
+  <div class="card-compact">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 bg-{{ color }}-100 rounded-lg flex items-center justify-center">
+          {% with 'w-5 h-5 text-'|add:color|add:'-600' as icon_classes %}
+            {% icon icon icon_classes variant='solid' size=20 %}
+          {% endwith %}
+        </div>
+      </div>
+      <div class="ml-4">
+        <p class="text-sm font-medium text-gray-500">{{ label }}</p>
+        <p class="text-2xl font-semibold text-gray-900">{{ value }}</p>
+      </div>
+    </div>
+  </div>
+</div>

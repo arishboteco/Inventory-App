@@ -19,7 +19,8 @@ def icon(name, css_class="w-5 h-5", variant="outline", size=24, aria_label=None)
         size: Icon size directory (20 or 24).
         aria_label: Optional aria-label for accessibility.
     """
-    base_dir = Path(settings.BASE_DIR) / "node_modules" / "heroicons" / str(size) / variant
+    variant_str = variant.encode("utf-8").decode("utf-8")
+    base_dir = Path(settings.BASE_DIR) / "node_modules" / "heroicons" / str(size) / variant_str
     svg_path = base_dir / f"{name}.svg"
     if not svg_path.exists():
         svg_path = base_dir / "question-mark-circle.svg"

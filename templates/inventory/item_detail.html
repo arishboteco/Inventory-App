@@ -266,13 +266,8 @@
     <!-- Header with Navigation -->
     <div class="speed-header">
         <div>
-            <div class="speed-breadcrumb">
-                <a href="{% url 'items_list' %}">Items</a>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9,18 15,12 9,6"></polyline>
-                </svg>
-                <span>{{ item.name }}</span>
-            </div>
+            {% url 'items_list' as list_url %}
+            {% include "components/breadcrumb.html" with class="speed-breadcrumb" list_url=list_url list_title="Items" current_title=item.name %}
             <h1 class="speed-title">{{ item.name }}</h1>
             {% if item.brand %}
                 <div style="color: var(--speed-text-muted); font-size: 0.875rem;">{{ item.brand }}</div>

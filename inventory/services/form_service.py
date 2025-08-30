@@ -13,12 +13,12 @@ from .supabase_units import get_units
 logger = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=None)
 class FormService:
     """Service for populating form dropdown options"""
 
     @staticmethod
-    def get_base_unit_choices():
+    @lru_cache(maxsize=None)
+    def get_base_unit_choices() -> Tuple[Tuple[str, str], ...]:
         """Get base unit choices from database"""
         try:
             with connection.cursor() as cursor:
@@ -30,13 +30,19 @@ class FormService:
                     """
                 )
                 units = cursor.fetchall()
-                return [(unit[0], unit[0]) for unit in units if unit[0]]
+                return tuple((unit[0], unit[0]) for unit in units if unit[0])
         except OperationalError as e:
             logger.warning(f"Could not load base units from database: {e}")
-            return [('GM', 'GM'), ('ML', 'ML'), ('MT', 'MT'), ('PC', 'PC')]
+            return (
+                ('GM', 'GM'),
+                ('ML', 'ML'),
+                ('MT', 'MT'),
+                ('PC', 'PC'),
+            )
 
     @staticmethod
-    def get_purchase_unit_choices(base_unit=None):
+    @lru_cache(maxsize=None)
+    def get_purchase_unit_choices(base_unit: Optional[str] = None) -> Tuple[Tuple[str, str], ...]:
         """Get purchase unit choices, optionally filtered by base_unit"""
         try:
             with connection.cursor() as cursor:
@@ -60,13 +66,18 @@ class FormService:
                         """
                     )
                 units = cursor.fetchall()
-                return [(unit[0], unit[0]) for unit in units if unit[0]]
+                return tuple((unit[0], unit[0]) for unit in units if unit[0])
         except OperationalError as e:
             logger.warning(f"Could not load purchase units from database: {e}")
-            return [('GM', 'GM'), ('ML', 'ML'), ('MT', 'MT'), ('PC', 'PC')]
+            return (
+                ('GM', 'GM'),
+                ('ML', 'ML'),
+                ('MT', 'MT'),
+                ('PC', 'PC'),
+            )
 
     @staticmethod
-    def get_unit_choices():
+    def get_unit_choices() -> Tuple[Tuple[str, str], ...]:
         """Legacy method for backward compatibility"""
         return FormService.get_base_unit_choices()
 
@@ -202,8 +213,9 @@ def get_purchase_unit_choices(base_unit: Optional[str] = None) -> List[Tuple[str
 # Clear cache functions
 def clear_form_caches():
     """Clear all cached form data."""
-    # Note: get_unit_choices is not cached as it returns static data
     try:
+        FormService.get_base_unit_choices.cache_clear()
+        FormService.get_purchase_unit_choices.cache_clear()
         get_units_map.cache_clear()
         get_category_choices.cache_clear()
         get_categories_map.cache_clear()

@@ -6,7 +6,7 @@ from ..services.form_service import (
     get_categories_map,
     get_category_choices,
 )
-from ..services.units_service import UnitsService
+from ..services.units_service import UnitsService, BASE_UNIT_TO_UNIT_ID
 from .base import INPUT_CLASS, StyledFormMixin
 
 
@@ -177,22 +177,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         # Set unit_id based on base_unit for compatibility
         if base_unit and not cleaned_data.get("unit_id"):
             # Map base units to unit_ids (you may need to adjust these mappings)
-            unit_mapping = {
-                "Kilograms": 19,
-                "Liters": 1,
-                "Pieces": 55,
-                "Boxes": 55,
-                "Cases": 55,
-                "Cartons": 55,
-                "Grams": 19,
-                "Milliliters": 1,
-                "Units": 55,
-                "Each": 55,
-                "Packages": 55,
-                "Bottles": 55,
-                "Cans": 55,
-            }
-            cleaned_data["unit_id"] = unit_mapping.get(base_unit, 55)  # Default to PC
+            cleaned_data["unit_id"] = BASE_UNIT_TO_UNIT_ID.get(base_unit, 55)
 
         return cleaned_data
 
@@ -202,16 +187,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
 
         # Update unit_id based on base_unit if needed
         if self.cleaned_data.get("base_unit") and not instance.unit_id:
-            unit_mapping = {
-                "Kilograms": 19,
-                "Liters": 1,
-                "Pieces": 55,
-                "Boxes": 55,
-                "Packages": 55,
-                "Units": 55,
-                "Each": 55,
-            }
-            instance.unit_id = unit_mapping.get(self.cleaned_data["base_unit"], 55)
+            instance.unit_id = BASE_UNIT_TO_UNIT_ID.get(
+                self.cleaned_data["base_unit"], 55
+            )
 
         if commit:
             instance.save()

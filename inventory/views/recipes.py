@@ -53,7 +53,21 @@ class RecipesListView(TemplateView):
         grid_html = render_to_string(
             self.grid_template, {"recipes": recipes}, request=request
         )
-        ctx = {"recipes_grid": grid_html, "q": q}
+        ctx = {"recipes_grid": grid_html, "q": q, "form": RecipeForm()}
+        return render(request, self.template_name, ctx)
+
+    def post(self, request, *args, **kwargs):
+        form = RecipeForm(request.POST)
+        if form.is_valid():
+            recipe = form.save()
+            messages.success(request, "Recipe created")
+            return redirect("recipe_detail", pk=recipe.pk)
+
+        recipes, q = self._get_recipes()
+        grid_html = render_to_string(
+            self.grid_template, {"recipes": recipes}, request=request
+        )
+        ctx = {"recipes_grid": grid_html, "q": q, "form": form}
         return render(request, self.template_name, ctx)
 
 

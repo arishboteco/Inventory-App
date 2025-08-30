@@ -11,6 +11,10 @@
   {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_list_url hx_target="#recipes_grid" q=q %}
 {% endblock %}
 
+{% block extra_top %}
+  {% include "inventory/recipes/_recipe_create_section.html" %}
+{% endblock %}
+
 {% block data_container %}
   <div id="recipes_grid"
        hx-get="{% url 'recipes_list' %}"

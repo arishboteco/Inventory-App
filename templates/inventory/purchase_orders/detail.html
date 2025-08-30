@@ -1,5 +1,11 @@
 {% extends "components/detail_layout.html" %}
 {% block title %}Purchase Order Detail – Inventory App{% endblock %}
+{% block breadcrumbs %}
+  {% url 'purchase_orders_list' as list_url %}
+  {% with current_title="Purchase Order "|add:po.pk %}
+    {% include "components/breadcrumb.html" with list_url=list_url list_title="Purchase Orders" current_title=current_title %}
+  {% endwith %}
+{% endblock %}
 {% block heading %}Purchase Order {{ po.pk }}{% endblock %}
 {% block actions %}
   <a href="{% url 'purchase_order_edit' po.pk %}" class="btn-primary">Edit</a>

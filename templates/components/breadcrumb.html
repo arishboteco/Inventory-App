@@ -1,0 +1,8 @@
+{% comment %}Reusable breadcrumb component. Expects list_url, list_title, current_title, optional class{% endcomment %}
+<div class="{{ class|default:'flex items-center gap-1 text-sm text-gray-500 mb-4' }}">
+  <a href="{{ list_url }}" class="text-primary hover:underline">{{ list_title }}</a>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="9,18 15,12 9,6"></polyline>
+  </svg>
+  <span>{{ current_title }}</span>
+</div>

@@ -3,7 +3,7 @@ from django import forms
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 
-from inventory.forms.test_item_forms import TestItemForm  # Use simplified test form
+from tests.forms.test_item_forms import TestItemForm  # Use simplified test form
 
 
 @pytest.mark.django_db
@@ -12,10 +12,9 @@ def test_item_form_preserves_metadata(monkeypatch):
     name_field = form.fields["name"]
     unit_field = form.fields["unit_id"]
     assert name_field.label == "Name"
-    assert name_field.required == True
+    assert name_field.required is True
     assert isinstance(name_field.widget, forms.TextInput)
     assert isinstance(unit_field, forms.IntegerField)
-
 
 
 @pytest.mark.django_db
@@ -57,7 +56,7 @@ def test_item_form_save():
     assert item.reorder_point == 10
     assert item.current_stock == 5
     assert item.notes == "Test notes"
-    assert item.is_active == True
+    assert item.is_active is True
 
 
 @pytest.mark.django_db

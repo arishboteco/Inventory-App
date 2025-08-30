@@ -4,7 +4,7 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
-from django.db import connection
+from django.db import DatabaseError, connection
 from django.db.utils import OperationalError
 
 from ..models import Department, Supplier
@@ -85,17 +85,7 @@ class FormService:
 @lru_cache(maxsize=None)
 def get_units_map() -> Dict[str, List[str]]:
     """Get units mapping for JavaScript consumption."""
-    try:
-        return get_units()
-    except Exception as e:
-        logger.warning(f"Could not load units map: {e}")
-        return {
-            'kg': ['kg', 'g', 'lb'],
-            'ltr': ['ltr', 'ml', 'gallon'],
-            'pc': ['pc', 'each', 'dozen'],
-            'box': ['box', 'case', 'carton'],
-            'pack': ['pack', 'bundle', 'set'],
-        }
+    return get_units()
 
 
 @lru_cache(maxsize=None)
@@ -124,7 +114,7 @@ def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
             category: [{'name': subcat[1]} for subcat in subcategories]
             for category, subcategories in grouped.items()
         }
-    except Exception as e:
+    except DatabaseError as e:
         logger.warning(f"Could not load categories map: {e}")
         # Fallback for development/testing
         return {
@@ -167,7 +157,7 @@ def get_subcategory_choices(category: Optional[str] = None) -> List[Tuple[str, s
                 list(set(cat['sub_category'] for cat in all_categories))
             )
             return [(subcat, subcat) for subcat in unique_subcategories]
-    except Exception as e:
+    except DatabaseError as e:
         logger.warning(f"Could not load subcategories: {e}")
         return []
 
@@ -179,7 +169,7 @@ def get_department_choices() -> List[Tuple[int, str]]:
             'department_id', 'name'
         )
         return [(dept[0], dept[1]) for dept in departments if dept[1]]
-    except Exception as e:
+    except DatabaseError as e:
         logger.warning(f"Could not load departments: {e}")
         return []
 
@@ -191,7 +181,7 @@ def get_supplier_choices() -> List[Tuple[int, str]]:
             'supplier_id', 'name'
         )
         return [(supplier[0], supplier[1]) for supplier in suppliers]
-    except Exception as e:
+    except DatabaseError as e:
         logger.warning(f"Could not load suppliers: {e}")
         return []
 
@@ -201,13 +191,9 @@ def get_purchase_unit_choices(base_unit: Optional[str] = None) -> List[Tuple[str
     if not base_unit:
         return []
 
-    try:
-        units_map = get_units_map()
-        purchase_units = units_map.get(base_unit, [base_unit])
-        return [(unit, unit) for unit in purchase_units]
-    except Exception as e:
-        logger.warning(f"Could not load purchase units for {base_unit}: {e}")
-        return [(base_unit, base_unit)] if base_unit else []
+    units_map = get_units_map()
+    purchase_units = units_map.get(base_unit, [base_unit])
+    return [(unit, unit) for unit in purchase_units]
 
 
 # Clear cache functions

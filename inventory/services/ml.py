@@ -91,14 +91,14 @@ def train_models(periods: int = 7) -> Dict[int, List[float]]:
 def train_models_task(periods: int, cache_key: str, ttl: int) -> bool:
     """Train models and store results in cache.
 
-    Returns ``True`` on success and ``False`` if an exception is raised.
+    Returns ``True`` on success and re-raises any encountered exception.
     """
     try:
         cache.set(cache_key, train_models(periods), ttl)
         return True
-    except Exception:  # pragma: no cover - defensive catch-all
-        logger.exception("Failed to train forecasting models")
-        return False
+    except Exception as exc:  # pragma: no cover - defensive catch-all
+        logger.exception("Failed to train forecasting models: %s", exc)
+        raise
 
 
 def queue_train_models(

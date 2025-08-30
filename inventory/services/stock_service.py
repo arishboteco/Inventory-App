@@ -3,7 +3,7 @@ import time
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from django.db import OperationalError, transaction
+from django.db import DatabaseError, OperationalError, transaction
 from django.db.models import F
 
 from inventory.constants import TransactionType
@@ -52,8 +52,8 @@ def record_stock_transaction(
             logger.error("Error recording stock transaction: %s", exc)
             time.sleep(0.1 * attempt)
             continue
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Error recording stock transaction: %s", exc)
+        except DatabaseError as exc:  # pragma: no cover - defensive
+            logger.exception("Error recording stock transaction: %s", exc)
             return False
     return False
 
@@ -86,8 +86,8 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
                     notes=tx.get("notes"),
                 )
         return True
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Bulk stock transaction failed: %s", exc)
+    except DatabaseError as exc:  # pragma: no cover - defensive
+        logger.exception("Bulk stock transaction failed: %s", exc)
         return False
 
 
@@ -109,8 +109,8 @@ def remove_stock_transactions_bulk(transaction_ids: List[int]) -> bool:
                 item.save(update_fields=["current_stock"])
             StockTransaction.objects.filter(transaction_id__in=transaction_ids).delete()
         return True
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Error removing stock transactions: %s", exc)
+    except DatabaseError as exc:  # pragma: no cover - defensive
+        logger.exception("Error removing stock transactions: %s", exc)
         return False
 
 

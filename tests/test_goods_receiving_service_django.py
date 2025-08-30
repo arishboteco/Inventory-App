@@ -2,6 +2,8 @@ from datetime import date
 
 import pytest
 
+from django.db import DatabaseError
+
 from inventory.models import PurchaseOrder, PurchaseOrderItem, Supplier
 from inventory.services import goods_receiving_service, purchase_order_service
 
@@ -41,3 +43,58 @@ def test_create_grn_updates_stock_and_po(item_factory):
     assert po_item.received_total == 5
     po = PurchaseOrder.objects.get(pk=po_id)
     assert po.status == "PARTIAL"
+
+
+@pytest.mark.django_db
+def test_create_grn_database_error(monkeypatch, item_factory):
+    supplier = Supplier.objects.create(name="Vendor")
+    item = item_factory(name="Widget", current_stock=0)
+    grn_data = {
+        "supplier_id": supplier.pk,
+        "received_date": date.today(),
+        "received_by_user_id": "tester",
+    }
+    items_data = [
+        {
+            "item_id": item.item_id,
+            "po_item_id": 1,
+            "quantity_ordered_on_po": 1,
+            "quantity_received": 1,
+            "unit_price_at_receipt": 1,
+        }
+    ]
+
+    def boom(*args, **kwargs):
+        raise DatabaseError("boom")
+
+    monkeypatch.setattr(goods_receiving_service, "_create_grn_header", boom)
+    ok, msg, _ = goods_receiving_service.create_grn(grn_data, items_data)
+    assert not ok
+    assert "database" in msg.lower()
+
+
+@pytest.mark.django_db
+def test_create_grn_unexpected_exception(monkeypatch, item_factory):
+    supplier = Supplier.objects.create(name="Vendor")
+    item = item_factory(name="Widget", current_stock=0)
+    grn_data = {
+        "supplier_id": supplier.pk,
+        "received_date": date.today(),
+        "received_by_user_id": "tester",
+    }
+    items_data = [
+        {
+            "item_id": item.item_id,
+            "po_item_id": 1,
+            "quantity_ordered_on_po": 1,
+            "quantity_received": 1,
+            "unit_price_at_receipt": 1,
+        }
+    ]
+
+    def boom(*args, **kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(goods_receiving_service, "_create_grn_header", boom)
+    with pytest.raises(ValueError):
+        goods_receiving_service.create_grn(grn_data, items_data)

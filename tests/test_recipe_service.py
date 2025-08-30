@@ -2,6 +2,8 @@
 
 import pytest
 from django.db import OperationalError, connection
+from decimal import Decimal
+from django.db import DatabaseError
 
 from inventory.models import Item, Recipe, RecipeComponent, SaleTransaction
 from inventory.services.recipe_service import create_recipe, record_sale, update_recipe
@@ -166,6 +168,38 @@ def test_record_sale_reduces_nested_stock():
     item = Item.objects.get(pk=item_id)
     expected = round(20 - (2 * 1 / (1 - 0.2) / (1 - 0.1)), 2)
     assert float(item.current_stock) == expected
+
+
+def test_record_sale_database_error(monkeypatch):
+    def boom(*args, **kwargs):
+        raise DatabaseError("boom")
+
+    monkeypatch.setattr(Recipe.objects, "get", boom)
+    ok, msg = record_sale(1, Decimal("1"), "u")
+    assert not ok
+    assert "database" in msg.lower()
+
+
+def test_record_sale_unexpected_exception_propagates(monkeypatch, item_factory):
+    item = item_factory(name="Itm")
+    recipe = Recipe.objects.create(name="R", is_active=True, default_yield_unit="KG")
+    RecipeComponent.objects.create(
+        parent_recipe=recipe,
+        component_kind="ITEM",
+        component_id=item.item_id,
+        quantity=1,
+        unit="KG",
+    )
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(
+        "inventory.services.recipe_service.StockTransaction.objects.create", boom
+    )
+
+    with pytest.raises(RuntimeError):
+        record_sale(recipe.recipe_id, Decimal("1"), "u")
 
 
 @pytest.mark.django_db

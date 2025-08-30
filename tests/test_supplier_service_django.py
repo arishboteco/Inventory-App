@@ -2,6 +2,8 @@ import pytest
 from django.urls import reverse
 
 from inventory.models import Supplier
+from django.db import DatabaseError
+
 from inventory.services import supplier_service
 
 
@@ -68,6 +70,27 @@ def test_get_all_suppliers_returns_list_of_dicts():
     all_suppliers = supplier_service.get_all_suppliers(include_inactive=True)
     names_all = {row["name"] for row in all_suppliers}
     assert {"Vendor D", "Vendor E"}.issubset(names_all)
+
+
+@pytest.mark.django_db
+def test_add_supplier_database_error(monkeypatch):
+    def boom(*args, **kwargs):
+        raise DatabaseError("boom")
+
+    monkeypatch.setattr(Supplier.objects, "create", boom)
+    success, msg = supplier_service.add_supplier({"name": "Vendor"})
+    assert not success
+    assert "database" in msg.lower()
+
+
+@pytest.mark.django_db
+def test_add_supplier_unexpected_exception_propagates(monkeypatch):
+    def boom(*args, **kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(Supplier.objects, "create", boom)
+    with pytest.raises(ValueError):
+        supplier_service.add_supplier({"name": "Vendor"})
 
 
 @pytest.mark.django_db

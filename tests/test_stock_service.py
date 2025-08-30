@@ -4,6 +4,8 @@ from decimal import Decimal
 import pytest
 from django.db.utils import OperationalError
 
+from django.db import DatabaseError
+
 from inventory.models import (
     IndentItem,
     Item,
@@ -129,6 +131,31 @@ def test_remove_stock_transactions_bulk_rollback_on_error(item_factory):
     item.refresh_from_db()
     assert item.current_stock == current_stock
     assert StockTransaction.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_record_stock_transaction_database_error(monkeypatch, item_factory):
+    def boom(*args, **kwargs):
+        raise DatabaseError("boom")
+
+    monkeypatch.setattr(Item.objects, "filter", boom)
+    item = item_factory(name="Err", current_stock=0)
+    assert not stock_service.record_stock_transaction(
+        item.item_id, 1, TransactionType.RECEIVING.value, "u"
+    )
+
+
+@pytest.mark.django_db
+def test_record_stock_transaction_unexpected_exception(monkeypatch, item_factory):
+    def boom(*args, **kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(Item.objects, "filter", boom)
+    item = item_factory(name="Err", current_stock=0)
+    with pytest.raises(ValueError):
+        stock_service.record_stock_transaction(
+            item.item_id, 1, TransactionType.RECEIVING.value, "u"
+        )
 
 
 @pytest.mark.django_db(transaction=True)

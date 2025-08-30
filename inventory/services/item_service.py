@@ -9,12 +9,11 @@ mutating operations.
 from __future__ import annotations
 
 import logging
-import traceback
 from decimal import Decimal, InvalidOperation
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
@@ -159,11 +158,9 @@ def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
             False,
             f"Item name '{params['name']}' already exists. Choose a unique name.",
         )
-    except Exception as e:  # pragma: no cover - defensive logging
-        logger.error(
-            "ERROR [item_service.add_new_item]: Database error adding item: %s\n%s",
-            e,
-            traceback.format_exc(),
+    except DatabaseError as e:
+        logger.exception(
+            "ERROR [item_service.add_new_item]: Database error adding item"
         )
         return False, "A database error occurred while adding the item."
 
@@ -230,11 +227,9 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
         return len(objs), []
     except IntegrityError as e:
         return 0, [str(e)]
-    except Exception as e:  # pragma: no cover - defensive logging
-        logger.error(
-            "ERROR [item_service.add_items_bulk]: Database error adding items: %s\n%s",
-            e,
-            traceback.format_exc(),
+    except DatabaseError:
+        logger.exception(
+            "ERROR [item_service.add_items_bulk]: Database error adding items"
         )
         return 0, ["A database error occurred while adding items."]
 
@@ -252,14 +247,9 @@ def remove_items_bulk(item_ids: List[int]) -> Tuple[int, List[str]]:
             get_all_items_with_stock.clear()
             get_distinct_departments_from_items.clear()
         return affected, []
-    except Exception as e:  # pragma: no cover - defensive logging
-        logger.error(
-            (
-                "ERROR [item_service.remove_items_bulk]: "
-                "Database error removing items: %s\n%s"
-            ),
-            e,
-            traceback.format_exc(),
+    except DatabaseError:
+        logger.exception(
+            "ERROR [item_service.remove_items_bulk]: Database error removing items"
         )
         return 0, ["A database error occurred while removing items."]
 
@@ -308,12 +298,10 @@ def update_item(item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
             False,
             f"Update failed: Potential duplicate name '{updates.get('name')}'.",
         )
-    except Exception as exc:  # pragma: no cover - defensive logging
-        logger.error(
-            "ERROR [item_service.update_item]: Database error updating item %s: %s\n%s",
+    except DatabaseError:
+        logger.exception(
+            "ERROR [item_service.update_item]: Database error updating item %s",
             item_id,
-            exc,
-            traceback.format_exc(),
         )
         return False, "A database error occurred while updating the item."
 

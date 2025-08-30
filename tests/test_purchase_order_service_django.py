@@ -2,6 +2,8 @@ from datetime import date
 
 import pytest
 
+from django.db import DatabaseError
+
 from inventory.models import (
     GoodsReceivedNote,
     GRNItem,
@@ -24,6 +26,23 @@ def test_create_po_and_get_po(item_factory):
     po = purchase_order_service.get_po_by_id(po_id)
     assert po["supplier_id"] == supplier.pk
     assert po["items"][0]["item_id"] == item.item_id
+
+
+@pytest.mark.django_db
+def test_create_po_database_error_propagates(monkeypatch, item_factory):
+    supplier = Supplier.objects.create(name="Vendor")
+    item = item_factory(name="Widget")
+
+    def boom(*args, **kwargs):
+        raise DatabaseError("boom")
+
+    monkeypatch.setattr(PurchaseOrder.objects, "create", boom)
+
+    with pytest.raises(DatabaseError):
+        purchase_order_service.create_po(
+            {"supplier_id": supplier.pk, "order_date": date.today()},
+            [{"item_id": item.item_id, "quantity_ordered": 5, "unit_price": 2.0}],
+        )
 
 
 @pytest.mark.django_db

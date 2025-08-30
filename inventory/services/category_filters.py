@@ -21,11 +21,7 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     department = (request.GET.get("department") or "").strip()
 
     # First try Supabase-provided categories (used by tests via monkeypatch)
-    categories_map = {}
-    try:
-        categories_map = get_supabase_categories() or {}
-    except Exception:  # pragma: no cover - defensive
-        logger.debug("Supabase categories unavailable; falling back to DB")
+    categories_map = get_supabase_categories() or {}
 
     if categories_map:
         categories = [c["name"] for c in categories_map.get(None, [])]

@@ -2,7 +2,7 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models import Max, Sum
 
 from inventory.models import Item, PurchaseOrder, PurchaseOrderItem, Supplier
@@ -48,9 +48,9 @@ def create_po(
     except IntegrityError as exc:
         logger.error("Integrity error creating PO: %s", exc)
         return False, f"Database error: {exc}", None
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Error creating PO: %s", exc)
-        return False, f"Database error: {exc}", None
+    except DatabaseError as exc:
+        logger.exception("Error creating PO: %s", exc)
+        raise
 
 
 def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:

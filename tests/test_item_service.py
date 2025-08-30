@@ -11,6 +11,7 @@ from inventory.models import (
     RecipeComponent,
     StockTransaction,
 )
+from django.db import DatabaseError
 from inventory.services import item_service
 
 pytestmark = pytest.mark.django_db
@@ -154,6 +155,27 @@ def test_add_new_item_requires_unit_id():
     success, message = item_service.add_new_item(details)
     assert not success
     assert "unit_id" in message
+
+
+def test_add_new_item_database_error(monkeypatch):
+    def boom(*args, **kwargs):
+        raise DatabaseError("boom")
+
+    monkeypatch.setattr(Item.objects, "create", boom)
+    details = {"name": "Widget", "unit_id": 55}
+    success, message = item_service.add_new_item(details)
+    assert not success
+    assert "database" in message.lower()
+
+
+def test_add_new_item_unexpected_exception_propagates(monkeypatch):
+    def boom(*args, **kwargs):
+        raise ValueError("bad")
+
+    monkeypatch.setattr(Item.objects, "create", boom)
+    details = {"name": "Widget", "unit_id": 55}
+    with pytest.raises(ValueError):
+        item_service.add_new_item(details)
 
 
 def test_remove_items_bulk_marks_inactive():

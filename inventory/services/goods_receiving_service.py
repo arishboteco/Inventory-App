@@ -2,7 +2,7 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Max, Sum
 
 from inventory.constants import TransactionType
@@ -134,6 +134,6 @@ def create_grn(
         PurchaseOrderItem.DoesNotExist,
     ) as exc:
         return False, f"Invalid reference: {exc}", None
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Error creating GRN: %s", exc)
+    except DatabaseError as exc:  # pragma: no cover - defensive
+        logger.exception("Error creating GRN: %s", exc)
         return False, "Database error creating GRN.", None

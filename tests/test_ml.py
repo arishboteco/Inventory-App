@@ -6,6 +6,8 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
 
+import pytest
+
 from inventory.models import Item, StockTransaction
 from inventory.services import ml
 
@@ -121,7 +123,7 @@ def test_queue_train_models_logs_exception(db, monkeypatch, caplog):
     monkeypatch.setattr(ml, "train_models", bad_train)
     cache_key = "test_ml_train_models_error"
     cache.delete(cache_key)
-    with caplog.at_level("ERROR"):
+    with caplog.at_level("ERROR"), pytest.raises(RuntimeError):
         ml.queue_train_models(periods=1, cache_key=cache_key, ttl=300, sync=True)
     assert cache.get(cache_key) is None
     assert "Failed to train forecasting models" in caplog.text

@@ -5,7 +5,7 @@ import logging
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 
 from inventory.constants import PLACEHOLDER_SELECT_COMPONENT, TransactionType
 
@@ -283,8 +283,8 @@ def delete_recipe(recipe_id: int) -> Tuple[bool, str]:
             RecipeComponent.objects.filter(parent_recipe=recipe).delete()
             recipe.delete()
         return True, "Recipe deleted."
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("DB error deleting recipe: %s", exc)
+    except DatabaseError as exc:  # pragma: no cover - defensive
+        logger.exception("DB error deleting recipe: %s", exc)
         return False, "A database error occurred."
 
 
@@ -393,6 +393,6 @@ def record_sale(
     except (Item.DoesNotExist, ValueError) as ve:
         logger.error("Error recording sale: %s", ve)
         return False, str(ve)
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("DB error recording sale: %s", exc)
+    except DatabaseError as exc:  # pragma: no cover - defensive
+        logger.exception("DB error recording sale: %s", exc)
         return False, "A database error occurred during sale recording."

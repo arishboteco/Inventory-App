@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, transaction
 
 from inventory.models import Supplier
 
@@ -32,8 +32,8 @@ def add_supplier(details: Dict[str, Any]) -> Tuple[bool, str]:
             False,
             f"Supplier name '{name}' already exists. Please use a unique name.",
         )
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Error adding supplier: %s", exc)
+    except DatabaseError as exc:
+        logger.exception("Error adding supplier: %s", exc)
         return False, "A database error occurred while adding the supplier."
 
 
@@ -100,8 +100,8 @@ def update_supplier(supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, st
             False,
             f"Update failed: Potential duplicate name '{updates.get('name')}'.",
         )
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.error("Error updating supplier %s: %s", supplier_id, exc)
+    except DatabaseError as exc:
+        logger.exception("Error updating supplier %s: %s", supplier_id, exc)
         return False, "A database error occurred while updating the supplier."
 
 

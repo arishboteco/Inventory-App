@@ -53,10 +53,8 @@ def get_cached(fetch_func: Callable[[], T], ttl: int) -> Callable[[bool], T]:
 
             try:
                 state.value = fetch_func()
-            except Exception:
-                if state.value is not None:
-                    logger.exception("Failed to refresh cached value")
-                    return state.value
+            except Exception as exc:
+                logger.exception("Failed to refresh cached value: %s", exc)
                 raise
             state.time = now
             return state.value

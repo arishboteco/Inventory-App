@@ -1,13 +1,15 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>Suppliers</caption>{% endblock %}
+
 {% block headers %}
-  <th class="px-4 py-2 text-right">ID</th>
-  <th class="px-4 py-2">Name</th>
-  <th class="px-4 py-2">Contact</th>
-  <th class="px-4 py-2">Email</th>
-  <th class="px-4 py-2 text-right">Phone</th>
-  <th class="px-4 py-2">Active</th>
-  <th class="px-4 py-2">Actions</th>
+  <th scope="col" class="px-4 py-2 text-right">ID</th>
+  <th scope="col" class="px-4 py-2">Name</th>
+  <th scope="col" class="px-4 py-2">Contact</th>
+  <th scope="col" class="px-4 py-2">Email</th>
+  <th scope="col" class="px-4 py-2 text-right">Phone</th>
+  <th scope="col" class="px-4 py-2">Active</th>
+  <th scope="col" class="px-4 py-2">Actions</th>
 {% endblock %}
 
 {% block rows %}
@@ -72,4 +74,3 @@
   </div>
   {% endwith %}
 {% endblock %}
-

@@ -1,13 +1,15 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>Recent Transactions</caption>{% endblock %}
+
 {% block headers %}
-  <th>ID</th>
-  <th>Item</th>
-  <th>Type</th>
-  <th>Qty</th>
-  <th>User</th>
-  <th>Date</th>
-  <th>Notes</th>
+  <th scope="col">ID</th>
+  <th scope="col">Item</th>
+  <th scope="col">Type</th>
+  <th scope="col">Qty</th>
+  <th scope="col">User</th>
+  <th scope="col">Date</th>
+  <th scope="col">Notes</th>
 {% endblock %}
 
 {% block rows %}
@@ -39,4 +41,3 @@
     {% include "components/pagination.html" with page_obj=page_obj base_url="" extra_query=query_string %}
   </div>
 {% endblock %}
-

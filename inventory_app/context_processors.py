@@ -12,4 +12,3 @@ def app_version(request):
         "STATIC_VERSION", "dev"
     )
     return {"STATIC_VERSION": version}
-

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def migrate_item_categories(dry_run=True):
     """
     Migrate items from text-based category/sub_category to category_id references.
-    
+
     Args:
         dry_run (bool): If True, only show what would be changed without applying
     """
@@ -33,7 +33,7 @@ def migrate_item_categories(dry_run=True):
         # Get all items that have category text but no category_id_ref
         cursor.execute("""
             SELECT item_id, name, category, sub_category, category_id_ref
-            FROM items 
+            FROM items
             WHERE category IS NOT NULL AND category != ''
             AND (category_id_ref IS NULL OR category_id_ref = 0)
             ORDER BY category, sub_category
@@ -106,7 +106,7 @@ def migrate_item_categories(dry_run=True):
             # Verify the migration
             print("\n=== VERIFICATION ===")
             cursor.execute("""
-                SELECT COUNT(*) FROM items 
+                SELECT COUNT(*) FROM items
                 WHERE category IS NOT NULL AND category != ''
                 AND category_id_ref IS NOT NULL
             """)
@@ -172,7 +172,7 @@ def cleanup_duplicate_category_fields():
     with connection.cursor() as cursor:
         # Check that all items with categories have category_id_ref
         cursor.execute("""
-            SELECT COUNT(*) FROM items 
+            SELECT COUNT(*) FROM items
             WHERE (category IS NOT NULL AND category != '')
             AND (category_id_ref IS NULL OR category_id_ref = 0)
         """)

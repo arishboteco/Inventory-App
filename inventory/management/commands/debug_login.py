@@ -8,6 +8,7 @@ from django.test import RequestFactory
 
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     help = 'Debug login functionality step by step'
 

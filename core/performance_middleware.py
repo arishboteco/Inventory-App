@@ -9,6 +9,7 @@ from django.db import connection
 
 logger = logging.getLogger('performance')
 
+
 class PerformanceMonitoringMiddleware:
     """
     Middleware to monitor database queries and response times in production
@@ -19,9 +20,11 @@ class PerformanceMonitoringMiddleware:
 
     def __call__(self, request):
         # Skip monitoring for static files and admin media
-        if (request.path.startswith('/static/') or
-            request.path.startswith('/media/') or
-            request.path.startswith('/admin/jsi18n/')):
+        if (
+            request.path.startswith('/static/')
+            or request.path.startswith('/media/')
+            or request.path.startswith('/admin/jsi18n/')
+        ):
             return self.get_response(request)
 
         # Start timing

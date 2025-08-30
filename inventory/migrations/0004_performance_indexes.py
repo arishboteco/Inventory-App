@@ -69,8 +69,8 @@ class Migration(migrations.Migration):
             reverse_sql="DROP INDEX IF EXISTS idx_items_reorder_check;",
         ),
 
-    # Stock transaction optimizations (db_table: "stock_transactions") -
-    # only if table exists
+        # Stock transaction optimizations (db_table: "stock_transactions") -
+        # only if table exists
         migrations.RunSQL(
             """
             DO $$
@@ -195,7 +195,7 @@ class Migration(migrations.Migration):
             reverse_sql="DROP INDEX IF EXISTS idx_suppliers_contact_search;",
         ),
 
-    # Only create indexes for tables that exist - skip optional tables for now.
-    # We'll create a follow-up migration for additional tables once they're
-    # confirmed to exist.
+        # Only create indexes for tables that exist - skip optional tables for now.
+        # We'll create a follow-up migration for additional tables once they're
+        # confirmed to exist.
     ]

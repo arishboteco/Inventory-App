@@ -1,11 +1,9 @@
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
 
 from .fields import CoerceFloatField
-from .units import Unit
 
 
 class Item(models.Model):
@@ -13,12 +11,7 @@ class Item(models.Model):
 
     item_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True, blank=False, null=False)
-    unit = models.ForeignKey(
-        Unit,
-        models.PROTECT,
-        db_column="unit_id",
-        related_name="items",
-    )
+    unit_id = models.IntegerField(blank=False, null=False)
     category_id = models.BigIntegerField(
         blank=True, null=True, db_column="category_id_ref"
     )
@@ -100,14 +93,6 @@ class Item(models.Model):
     class Meta:
         managed = True
         db_table = "items"
-
-    def clean(self):
-        if self.unit_id and not Unit.objects.filter(pk=self.unit_id).exists():
-            raise ValidationError({"unit": "Selected unit does not exist in units table."})
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
 
 
 class StockTransaction(models.Model):

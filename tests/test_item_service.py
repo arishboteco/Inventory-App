@@ -10,7 +10,6 @@ from inventory.models import (
     Recipe,
     RecipeComponent,
     StockTransaction,
-    Unit,
 )
 from inventory.services import item_service
 
@@ -33,15 +32,6 @@ def clear_tables(db):
             pass
     item_service.get_all_items_with_stock.clear()
     item_service.get_distinct_departments_from_items.clear()
-    Unit.objects.get_or_create(
-        unit_id=55,
-        defaults={
-            "base_unit": "PC",
-            "purchase_unit": "PC",
-            "conversion_factor": 1.0,
-            "is_default": True,
-        },
-    )
 
 
 def test_add_new_item_inserts_row():

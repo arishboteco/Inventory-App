@@ -3,7 +3,7 @@
 import pytest
 from django.db import OperationalError, connection
 
-from inventory.models import Item, Recipe, RecipeComponent, SaleTransaction, Unit
+from inventory.models import Item, Recipe, RecipeComponent, SaleTransaction
 from inventory.services.recipe_service import create_recipe, record_sale, update_recipe
 
 pytestmark = pytest.mark.django_db
@@ -35,18 +35,9 @@ def create_tables(django_db_blocker):
 
 
 def _create_item(name="Flour", unit_id=19, stock=20):
-    unit, _ = Unit.objects.get_or_create(
-        unit_id=unit_id,
-        defaults={
-            "base_unit": "KG",
-            "purchase_unit": "KG",
-            "conversion_factor": 1.0,
-            "is_default": True,
-        },
-    )
     item = Item.objects.create(
         name=name,
-        unit=unit,
+        unit_id=unit_id,
         category_id=1,
         reorder_point=0,
         current_stock=stock,

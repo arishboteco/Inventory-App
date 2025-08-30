@@ -11,8 +11,7 @@ CREATE TABLE units (
     unit_id INTEGER PRIMARY KEY,      -- Unique identifier used across application
     base_unit TEXT NOT NULL,          -- Standard unit for recipes (GM, ML, PC)
     purchase_unit TEXT NOT NULL,      -- Unit for procurement (2 KG, 50 GM PKT, PC)
-    conversion_factor NUMERIC NOT NULL, -- Factor to convert purchase → base
-    is_default BOOLEAN DEFAULT FALSE   -- Marks default unit selection in forms
+    conversion_factor NUMERIC NOT NULL -- Factor to convert purchase → base
 );
 ```
 
@@ -53,19 +52,10 @@ unit_id | base_unit | purchase_unit | conversion_factor
 
 ## Implementation in Code
 
-### Unit Model
-```python
-class Unit(models.Model):
-    base_unit = models.CharField(max_length=10)
-    purchase_unit = models.CharField(max_length=50)
-    conversion_factor = models.FloatField()
-    is_default = models.BooleanField(default=False)
-```
-
 ### Item Model
 ```python
 class Item(models.Model):
-    unit = models.ForeignKey('Unit', on_delete=models.PROTECT)
+    unit_id = models.IntegerField()  # References units.unit_id
     # DON'T store base_unit/purchase_unit separately - derive from units table
 ```
 

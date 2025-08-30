@@ -8,7 +8,7 @@ from django.db import connection
 from django.db.utils import OperationalError
 
 from ..models import Department, Supplier
-from .supabase_units import get_units
+from .units_service import UnitsService
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,15 @@ class FormService:
 def get_units_map() -> Dict[str, List[str]]:
     """Get units mapping for JavaScript consumption."""
     try:
-        return get_units()
+        units = UnitsService.get_all_units()
+        mapping: Dict[str, List[str]] = {}
+        for unit in units:
+            base = unit["base_unit"]
+            purchase = unit["purchase_unit"]
+            mapping.setdefault(base, [])
+            if purchase not in mapping[base]:
+                mapping[base].append(purchase)
+        return mapping
     except Exception as e:
         logger.warning(f"Could not load units map: {e}")
         return {

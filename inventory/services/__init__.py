@@ -12,9 +12,8 @@ from . import (
     recipe_service,
     sale_service,
     stock_service,
-    supabase_categories,
-    supabase_client,
-    supabase_units,
+    categories_service,
+    units_service,
     supplier_service,
     ui_service,
 )
@@ -33,7 +32,6 @@ __all__ = [
     "sale_service",
     "kpis",
     "counts",
-    "supabase_client",
-    "supabase_units",
-    "supabase_categories",
+    "units_service",
+    "categories_service",
 ]

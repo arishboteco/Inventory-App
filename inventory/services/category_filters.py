@@ -1,7 +1,7 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
-from .supabase_categories import get_categories as get_supabase_categories
+from .categories_service import CategoriesService
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def resolve_category_filters(request) -> Dict[str, Any]:
     """Return selected category values and available options.
 
-    Priority: Supabase categories (mockable in tests). Fallback to DB.
+    Priority: CategoriesService (mockable in tests). Fallback to DB.
     Output format expected by views/tests: lists of strings for
     'categories' and 'subcategories'.
     """
@@ -20,16 +20,17 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     base_unit = (request.GET.get("base_unit") or "").strip()
     department = (request.GET.get("department") or "").strip()
 
-    # First try Supabase-provided categories (used by tests via monkeypatch)
-    categories_map = {}
+    # First try ORM-provided categories (used by tests via monkeypatch)
+    categories_map: Dict[str, List[Tuple[int, str]]] = {}
     try:
-        categories_map = get_supabase_categories() or {}
+        categories_map = CategoriesService.get_category_choices_grouped()
     except Exception:  # pragma: no cover - defensive
-        logger.debug("Supabase categories unavailable; falling back to DB")
+        logger.debug("CategoriesService unavailable; falling back to DB")
 
     if categories_map:
-        categories = [c["name"] for c in categories_map.get(None, [])]
-        subcategories = [c["name"] for c in categories_map.get(category, [])]
+        categories = list(categories_map.keys())
+        subcats = categories_map.get(category, [])
+        subcategories = [sc[1] for sc in subcats]
     else:
         # DB fallback
         categories = list(

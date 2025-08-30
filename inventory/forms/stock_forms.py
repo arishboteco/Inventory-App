@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django import forms
 
-from ..constants import TransactionType
 from ..models import StockTransaction
 from .base import INPUT_CLASS, StyledFormMixin
 
@@ -40,7 +39,7 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
-        obj.transaction_type = TransactionType.RECEIVING.value
+        obj.transaction_type = "RECEIVING"
         if commit:
             obj.save()
         return obj
@@ -70,7 +69,7 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
-        obj.transaction_type = TransactionType.ADJUSTMENT.value
+        obj.transaction_type = "ADJUSTMENT"
         if commit:
             obj.save()
         return obj
@@ -106,7 +105,7 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
-        obj.transaction_type = TransactionType.WASTAGE.value
+        obj.transaction_type = "WASTAGE"
         obj.quantity_change = -abs(obj.quantity_change or 0)
         if commit:
             obj.save()

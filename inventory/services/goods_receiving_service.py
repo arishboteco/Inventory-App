@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from django.db import transaction
 from django.db.models import Max, Sum
 
-from inventory.constants import TransactionType
 from inventory.models import (
     GoodsReceivedNote,
     GRNItem,
@@ -93,7 +92,7 @@ def _process_items(
         stock_service.record_stock_transaction(
             item_id=item.item_id,
             quantity_change=qty,
-            transaction_type=TransactionType.RECEIVING.value,
+            transaction_type="RECEIVING",
             user_id=user_id,
             related_po_id=po.po_id if po else None,
             notes=f"GRN {grn_number}",

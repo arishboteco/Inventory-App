@@ -15,7 +15,6 @@ from ..forms.stock_forms import (
     StockReceivingForm,
     StockWastageForm,
 )
-from ..constants import TransactionType
 from ..models import StockTransaction
 from ..services import stock_service
 
@@ -48,7 +47,7 @@ def stock_movements(request):
                 ok = stock_service.record_stock_transaction(
                     item_id=cd["item"].pk,
                     quantity_change=cd["quantity_change"],
-                    transaction_type=TransactionType.RECEIVING.value,
+                    transaction_type="RECEIVING",
                     user_id=cd.get("user_id"),
                     related_po_id=(cd.get("related_po").pk if cd.get("related_po") else None),
                     notes=cd.get("notes"),
@@ -67,7 +66,7 @@ def stock_movements(request):
                 ok = stock_service.record_stock_transaction(
                     item_id=cd["item"].pk,
                     quantity_change=cd["quantity_change"],
-                    transaction_type=TransactionType.ADJUSTMENT.value,
+                    transaction_type="ADJUSTMENT",
                     user_id=cd.get("user_id"),
                     notes=cd.get("notes"),
                 )
@@ -86,7 +85,7 @@ def stock_movements(request):
                 ok = stock_service.record_stock_transaction(
                     item_id=cd["item"].pk,
                     quantity_change=qty,
-                    transaction_type=TransactionType.WASTAGE.value,
+                    transaction_type="WASTAGE",
                     user_id=cd.get("user_id"),
                     notes=cd.get("notes"),
                 )
@@ -104,7 +103,7 @@ def stock_movements(request):
                 ok = stock_service.record_stock_transaction(
                     item_id=cd["item"].pk,
                     quantity_change=cd["quantity_change"],
-                    transaction_type=TransactionType.ADJUSTMENT.value,
+                    transaction_type="ADJUSTMENT",
                     user_id=cd.get("user_id"),
                     notes=cd.get("notes"),
                 )
@@ -141,8 +140,7 @@ def stock_movements(request):
                                 "item_id": item_id,
                                 "quantity_change": quantity,
                                 "transaction_type": row.get(
-                                    "transaction_type",
-                                    TransactionType.ADJUSTMENT.value,
+                                    "transaction_type", "ADJUSTMENT"
                                 ).strip(),
                                 "user_id": row.get("user_id", "System").strip(),
                                 "user_int": (

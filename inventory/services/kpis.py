@@ -6,7 +6,6 @@ from django.db.models import Avg, Count, F, Max, Q, Sum, OuterRef, Subquery
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from inventory.constants import TransactionType
 from inventory.models import GRNItem, Indent, Item, PurchaseOrder, StockTransaction
 
 
@@ -20,8 +19,7 @@ def receipts_last_7_days():
     week_ago = timezone.now() - timedelta(days=7)
     return (
         StockTransaction.objects.filter(
-            transaction_type=TransactionType.RECEIVING.value,
-            transaction_date__gte=week_ago,
+            transaction_type="RECEIVING", transaction_date__gte=week_ago
         ).aggregate(total=Sum("quantity_change"))["total"]
         or 0
     )
@@ -32,8 +30,7 @@ def issues_last_7_days():
     week_ago = timezone.now() - timedelta(days=7)
     total = (
         StockTransaction.objects.filter(
-            transaction_type=TransactionType.ISSUE.value,
-            transaction_date__gte=week_ago,
+            transaction_type="ISSUE", transaction_date__gte=week_ago
         ).aggregate(total=Sum("quantity_change"))["total"]
         or 0
     )

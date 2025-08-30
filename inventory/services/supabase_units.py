@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List
 
-from ._legacy.supabase_units import *  # noqa: F401,F403
 from .supabase_cache import get_cached
 from .supabase_client import SupabaseException, get_supabase_client
 

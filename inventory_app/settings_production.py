@@ -11,13 +11,30 @@ import os
 import dj_database_url
 import environ
 
-from .settings import *  # noqa: F401,F403
+from . import settings as base_settings
+
+# Explicitly import required base settings
+BASE_DIR = base_settings.BASE_DIR
+SECRET_KEY = base_settings.SECRET_KEY
+INSTALLED_APPS = base_settings.INSTALLED_APPS
+TEMPLATES = base_settings.TEMPLATES
+ROOT_URLCONF = base_settings.ROOT_URLCONF
+WSGI_APPLICATION = base_settings.WSGI_APPLICATION
+AUTH_PASSWORD_VALIDATORS = base_settings.AUTH_PASSWORD_VALIDATORS
+LANGUAGE_CODE = base_settings.LANGUAGE_CODE
+TIME_ZONE = base_settings.TIME_ZONE
+USE_I18N = base_settings.USE_I18N
+USE_TZ = base_settings.USE_TZ
+STATIC_URL = base_settings.STATIC_URL
+STATICFILES_DIRS = base_settings.STATICFILES_DIRS
+DEFAULT_AUTO_FIELD = base_settings.DEFAULT_AUTO_FIELD
+REST_FRAMEWORK = base_settings.REST_FRAMEWORK
+Q_CLUSTER = base_settings.Q_CLUSTER
+LOGIN_URL = base_settings.LOGIN_URL
+LOGIN_EXEMPT_URLS = base_settings.LOGIN_EXEMPT_URLS
 
 # Ensure `env` is available even when imported settings omit it
-try:  # pragma: no cover - defensive fallback
-    env  # type: ignore[name-defined]
-except NameError:  # pragma: no cover
-    env = environ.Env()
+env = getattr(base_settings, "env", environ.Env())
 
 # Override middleware for production (optimized for performance)
 MIDDLEWARE = [

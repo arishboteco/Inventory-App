@@ -1,13 +1,19 @@
 (function () {
   let lastFocused = null;
+  let trapHandler = null;
   function trapFocus(container) {
+    if (trapHandler) container.removeEventListener("keydown", trapHandler);
     const focusable = container.querySelectorAll(
       'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])',
     );
-    if (!focusable.length) return;
+    if (!focusable.length) {
+      container.focus();
+      trapHandler = null;
+      return;
+    }
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    function handler(e) {
+    trapHandler = function (e) {
       if (e.key !== "Tab") return;
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
@@ -16,9 +22,19 @@
         e.preventDefault();
         first.focus();
       }
-    }
-    container.addEventListener("keydown", handler);
+    };
+    container.addEventListener("keydown", trapHandler);
     first.focus();
+  }
+  function setAria(root, content) {
+    const heading = content.querySelector("h1, h2, h3, h4, h5, h6");
+    if (heading) {
+      const id = heading.id || "modal-heading";
+      heading.id = id;
+      root.setAttribute("aria-labelledby", id);
+    } else {
+      root.removeAttribute("aria-labelledby");
+    }
   }
   function openModal(html) {
     const root = document.getElementById("modal-root");
@@ -26,8 +42,9 @@
     if (!root || !content) return;
     lastFocused = document.activeElement;
     content.innerHTML = html;
+    setAria(root, content);
     root.classList.remove("hidden");
-    trapFocus(content);
+    trapFocus(root);
   }
   function openDrawer(html, side = "right") {
     const root = document.getElementById("modal-root");
@@ -35,14 +52,16 @@
     if (!root || !content) return;
     lastFocused = document.activeElement;
     content.innerHTML = `<div class="drawer ${side}">${html}</div>`;
+    setAria(root, content);
     root.classList.remove("hidden");
-    trapFocus(content);
+    trapFocus(root);
   }
   function closeModal() {
     const root = document.getElementById("modal-root");
     const content = document.getElementById("modal-content");
     if (!root || !content) return;
     root.classList.add("hidden");
+    root.removeAttribute("aria-labelledby");
     content.innerHTML = "";
     if (lastFocused && typeof lastFocused.focus === "function") {
       lastFocused.focus();

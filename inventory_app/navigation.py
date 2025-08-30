@@ -1,4 +1,5 @@
 NAVIGATION_LINKS = [
+    {"title": "Home", "url_name": "root"},
     {"title": "Dashboard", "url_name": "dashboard"},
     {"title": "Inventory", "url_name": "items_list"},
     {"title": "Orders", "url_name": "purchase_orders_list"},

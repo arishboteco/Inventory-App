@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MAJOR CLEANUP: Repository refactoring - removed duplicate templates, organized documentation into docs/ structure, cleaned backup files for maintainable codebase
 - PRE-PRODUCTION TESTING COMPLETE: Comprehensive testing completed - inline form functional, clean codebase, ready for production deployment
 - Shared `templates/components/kpi_card.html` for consistent card-based KPI display
+- Home link added to primary navigation
 
 ### Changed
 
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLEANUP: Remove '\_speed' naming convention - renamed item_detail_speed.html to item_detail.html and item_form_speed.html to item_form.html for consistent naming
 - Refactor: split item views into list, detail, and stock modules and converted helper views to class-based implementations
 - KPI sections in items and purchase orders now render via the shared card component
+- Top navigation logo now routes to the home page instead of the dashboard
 
 ## [2.1.0] - 2025-08-28
 

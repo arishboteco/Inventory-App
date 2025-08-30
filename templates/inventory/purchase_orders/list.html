@@ -23,69 +23,12 @@
 
 {% block kpis %}
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            {% icon 'check-circle' 'w-5 h-5 text-blue-600' variant='solid' size=20 %}
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Total Orders</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ page_obj.paginator.count|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
-            {% icon 'clock' 'w-5 h-5 text-yellow-600' variant='solid' size=20 %}
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Pending Orders</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ pending_count|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-            {% icon 'check' 'w-5 h-5 text-green-600' variant='solid' size=20 %}
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Completed Orders</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ completed_count|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-compact">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-            {% icon 'banknotes' 'w-5 h-5 text-purple-600' variant='solid' size=20 %}
-          </div>
-        </div>
-        <div class="ml-4">
-          <p class="text-sm font-medium text-gray-500">Total Value</p>
-          <p class="text-2xl font-semibold text-gray-900">${{ total_value|floatformat:0|default:"0" }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include "components/kpi_card.html" with icon='check-circle' color='blue' label='Total Orders' value=page_obj.paginator.count|default:"0" %}
+  {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending Orders' value=pending_count|default:"0" %}
+  {% include "components/kpi_card.html" with icon='check' color='green' label='Completed Orders' value=completed_count|default:"0" %}
+  {% with total_value_formatted=total_value|floatformat:0|default:"0" %}
+    {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Total Value' value="$"|add:total_value_formatted %}
+  {% endwith %}
 </div>
 {% endblock %}
 

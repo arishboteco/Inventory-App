@@ -43,7 +43,7 @@ services:
     environment:
       POSTGRES_DB: staging_inventory
       POSTGRES_USER: staging_user
-      POSTGRES_PASSWORD: staging_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U staging_user -d staging_inventory"]
       interval: 30s

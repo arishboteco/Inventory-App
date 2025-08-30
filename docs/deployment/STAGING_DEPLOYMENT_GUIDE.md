@@ -201,7 +201,7 @@ services:
     environment:
       POSTGRES_DB: staging_inventory
       POSTGRES_USER: staging_user
-      POSTGRES_PASSWORD: staging_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - staging_postgres_data:/var/lib/postgresql/data/
 
@@ -215,6 +215,8 @@ volumes:
   staging_postgres_data:
   staging_redis_data:
 ```
+
+> **Note:** Set `POSTGRES_PASSWORD` in your `.env.staging` file or deployment environment and keep the actual value out of source control.
 
 ## Monitoring Setup
 

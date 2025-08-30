@@ -12,4 +12,3 @@ Thank you for considering a contribution to Inventory-App!
 - Maintain code style and add tests and documentation where appropriate.
 
 We appreciate your help in improving the project.
-

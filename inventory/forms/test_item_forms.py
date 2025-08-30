@@ -1,6 +1,7 @@
 """Simplified ItemForm for testing with the units table architecture."""
 
 from django import forms
+from django.db.utils import OperationalError
 
 from ..models import Item
 
@@ -70,7 +71,7 @@ class TestItemForm(forms.ModelForm):
                                 "units table."
                             )
                         )
-            except Exception:
+            except OperationalError:
                 # In test environment, allow known test unit IDs
                 if unit_id not in [19, 55]:  # Known good test unit IDs
                     raise forms.ValidationError(

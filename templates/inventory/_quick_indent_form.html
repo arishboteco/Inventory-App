@@ -1,0 +1,15 @@
+{% extends "components/collapsible.html" %}
+{% block title %}Quick Indent{% endblock %}
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+      {% for field in quick_form %}
+        {% include "components/form_field.html" with field=field %}
+      {% endfor %}
+    </div>
+    <div class="mt-4">
+      <button type="submit" class="btn-primary">Submit</button>
+    </div>
+  </form>
+{% endblock %}

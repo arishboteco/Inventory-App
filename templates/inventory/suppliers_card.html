@@ -1,5 +1,7 @@
-{% load static %}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+{% extends "_base.html" %}
+
+{% block content %}
+<div id="suppliers_cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
   {% for row in page_obj %}
   <div class="bg-white rounded shadow p-4 flex justify-between items-start">
     <div>
@@ -47,3 +49,4 @@
   {% include "components/pagination.html" with page_obj=page_obj base_url=cards_url extra_query=extra_query hx_target="#suppliers_cards" %}
 </div>
 {% endwith %}
+{% endblock %}

@@ -150,7 +150,7 @@ class SuppliersTableView(TemplateView):
         qs = self._get_queryset()
         page_obj, per_page = list_utils.paginate(self.request, qs)
         ctx.update(self._filter_params)
-        ctx.update({"page_obj": page_obj, "page_size": per_page})
+        ctx.update({"page_obj": page_obj, "page_size": per_page, "container_id": "suppliers_table"})
         return ctx
 
     def get(self, request, *args, **kwargs):

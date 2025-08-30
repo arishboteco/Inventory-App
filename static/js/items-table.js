@@ -10,7 +10,7 @@
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
     const details = document.getElementById(`details-${itemId}`);
-    const toggleBtn = row.querySelector('[data-action="toggle-details"]');
+    const toggleBtn = row.querySelector('button.main-row');
     if (!details || !toggleBtn) return;
 
     const expanded = toggleBtn.getAttribute("aria-expanded") === "true";

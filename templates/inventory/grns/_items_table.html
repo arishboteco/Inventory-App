@@ -1,9 +1,11 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>GRN Items</caption>{% endblock %}
+
 {% block headers %}
-  <th class="px-4 py-2">Item</th>
-  <th class="px-4 py-2">Ordered</th>
-  <th class="px-4 py-2">Received</th>
+  <th scope="col" class="px-4 py-2">Item</th>
+  <th scope="col" class="px-4 py-2">Ordered</th>
+  <th scope="col" class="px-4 py-2">Received</th>
 {% endblock %}
 
 {% block rows %}

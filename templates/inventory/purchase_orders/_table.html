@@ -1,12 +1,14 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>Purchase Orders</caption>{% endblock %}
+
 {% block headers %}
-<th class="px-4 py-2 text-right">PO #</th>
-<th class="px-4 py-2">Supplier</th>
-<th class="px-4 py-2">Order Date</th>
-<th class="px-4 py-2">Status</th>
-<th class="px-4 py-2">Progress</th>
-<th class="px-4 py-2 text-right">Actions</th>
+<th scope="col" class="px-4 py-2 text-right">PO #</th>
+<th scope="col" class="px-4 py-2">Supplier</th>
+<th scope="col" class="px-4 py-2">Order Date</th>
+<th scope="col" class="px-4 py-2">Status</th>
+<th scope="col" class="px-4 py-2">Progress</th>
+<th scope="col" class="px-4 py-2 text-right">Actions</th>
 {% endblock %}
 
 {% block rows %}

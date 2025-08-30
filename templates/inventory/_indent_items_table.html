@@ -1,8 +1,10 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>Indent Items</caption>{% endblock %}
+
 {% block headers %}
-  <th class="px-4 py-2">Item</th>
-  <th class="px-4 py-2">Qty</th>
+  <th scope="col" class="px-4 py-2">Item</th>
+  <th scope="col" class="px-4 py-2">Qty</th>
 {% endblock %}
 
 {% block rows %}

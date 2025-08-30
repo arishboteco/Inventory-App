@@ -1,10 +1,12 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>Receive Items</caption>{% endblock %}
+
 {% block headers %}
-  <th>Item</th>
-  <th>Ordered</th>
-  <th>Received</th>
-  <th>Receive Now</th>
+  <th scope="col">Item</th>
+  <th scope="col">Ordered</th>
+  <th scope="col">Received</th>
+  <th scope="col">Receive Now</th>
 {% endblock %}
 
 {% block rows %}
@@ -17,4 +19,3 @@
   </tr>
   {% endfor %}
 {% endblock %}
-

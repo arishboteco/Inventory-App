@@ -1,13 +1,15 @@
 {% extends "components/responsive_table.html" %}
 {% load form_tags %}
 
+{% block caption %}<caption>Indents</caption>{% endblock %}
+
 {% block headers %}
-  <th class="px-4 py-2 text-right">ID</th>
-  <th class="px-4 py-2 text-right">MRN</th>
-  <th class="px-4 py-2">Requested By</th>
-  <th class="px-4 py-2">Department</th>
-  <th class="px-4 py-2">Status</th>
-  <th class="px-4 py-2">Actions</th>
+  <th scope="col" class="px-4 py-2 text-right">ID</th>
+  <th scope="col" class="px-4 py-2 text-right">MRN</th>
+  <th scope="col" class="px-4 py-2">Requested By</th>
+  <th scope="col" class="px-4 py-2">Department</th>
+  <th scope="col" class="px-4 py-2">Status</th>
+  <th scope="col" class="px-4 py-2">Actions</th>
 {% endblock %}
 
 {% block rows %}
@@ -46,4 +48,3 @@
   </div>
   {% endwith %}
 {% endblock %}
-

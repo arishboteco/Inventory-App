@@ -1,12 +1,14 @@
 {% extends "components/responsive_table.html" %}
 
+{% block caption %}<caption>Recipe Components</caption>{% endblock %}
+
 {% block headers %}
-  <th>Kind</th>
-  <th>ID</th>
-  <th>Qty</th>
-  <th>Unit</th>
-  <th>Loss %</th>
-  <th></th>
+  <th scope="col">Kind</th>
+  <th scope="col">ID</th>
+  <th scope="col">Qty</th>
+  <th scope="col">Unit</th>
+  <th scope="col">Loss %</th>
+  <th scope="col"></th>
 {% endblock %}
 
 {% block rows %}
@@ -23,4 +25,3 @@
   </tr>
   {% endfor %}
 {% endblock %}
-

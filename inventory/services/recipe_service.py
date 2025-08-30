@@ -7,14 +7,13 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.db import IntegrityError, transaction
 
-from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
+from inventory.constants import PLACEHOLDER_SELECT_COMPONENT, TransactionType
 
 from ..models import Item, Recipe, RecipeComponent, SaleTransaction, StockTransaction
 from .item_service import get_unit_display_name
 
 logger = logging.getLogger(__name__)
 
-TX_SALE = "SALE"
 
 
 # ---------------------------------------------------------------------------
@@ -384,7 +383,7 @@ def record_sale(
                 StockTransaction.objects.create(
                     item=item,
                     quantity_change=Decimal("-1") * qty_dec,
-                    transaction_type=TX_SALE,
+                    transaction_type=TransactionType.SALE.value,
                     user_id=user_id_clean,
                     notes=f"Recipe {recipe_id} sale",
                 )

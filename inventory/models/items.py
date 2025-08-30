@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
+from ..constants import TransactionType
 from .fields import CoerceFloatField
 
 
@@ -105,7 +106,12 @@ class StockTransaction(models.Model):
     quantity_change = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
-    transaction_type = models.CharField(max_length=50, blank=True, null=True)
+    transaction_type = models.CharField(
+        max_length=50,
+        choices=TransactionType.choices(),
+        blank=True,
+        null=True,
+    )
     user_id = models.CharField(max_length=50, blank=True, null=True)
     user_int = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -2,7 +2,7 @@
 
 from django import forms
 
-from ..models import Item
+from inventory.models import Item
 
 INPUT_CLASS = "form-input"
 

@@ -144,8 +144,12 @@
         <a href="{% url 'purchase_orders_list' %}" class="btn-secondary">Clear</a>
       </div>
     </form>
-  </div>
 </div>
+</div>
+{% endblock %}
+
+{% block extra_top %}
+  {% include "inventory/purchase_orders/_quick_form.html" %}
 {% endblock %}
 
 {% block data_container %}

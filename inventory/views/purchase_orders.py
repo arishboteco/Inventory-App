@@ -7,6 +7,7 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
+from django.views.generic import TemplateView
 
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import PurchaseOrder, Supplier
@@ -23,51 +24,87 @@ PO_STATUS_BADGES = {
 }
 
 
-def purchase_orders_list(request):
-    orders = PurchaseOrder.objects.select_related("supplier")
-    filters = {
-        "status": "status",
-        "supplier": "supplier_id",
-        "start_date": "order_date__gte",
-        "end_date": "order_date__lte",
-    }
-    allowed_sorts = {"order_date"}
-    orders, params = list_utils.apply_filters_sort(
-        request,
-        orders,
-        filter_fields=filters,
-        allowed_sorts=allowed_sorts,
-        default_sort="order_date",
-        default_direction="desc",
-    )
-    page_obj, _ = list_utils.paginate(request, orders, default_page_size=20)
-    progress_map = purchase_order_service.get_orders_progress([o.pk for o in page_obj])
-    for o in page_obj:
-        o.badge_class = PO_STATUS_BADGES.get(o.status, "")
-        prog = progress_map.get(o.pk)
-        if prog:
-            o.ordered_total = prog["ordered_total"]
-            o.received_total = prog["received_total"]
-            o.progress_percent = prog["percent"]
-        else:
-            o.ordered_total = Decimal("0")
-            o.received_total = Decimal("0")
-            o.progress_percent = 0
-    statuses = PurchaseOrder._meta.get_field("status").choices
-    suppliers = Supplier.objects.all()
-    querystring = list_utils.build_querystring(request)
-    ctx = {
-        "orders": page_obj,
-        "page_obj": page_obj,
-        "statuses": statuses,
-        "suppliers": suppliers,
-        "querystring": querystring,
-        "sortable": True,
-    }
-    ctx.update(params)
-    ctx["current_status"] = params.get("status")
-    ctx["current_supplier"] = params.get("supplier")
-    return render(request, "inventory/purchase_orders/list.html", ctx)
+class PurchaseOrdersListView(TemplateView):
+    """Display purchase orders with quick creation form."""
+
+    template_name = "inventory/purchase_orders/list.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        orders = PurchaseOrder.objects.select_related("supplier")
+        filters = {
+            "status": "status",
+            "supplier": "supplier_id",
+            "start_date": "order_date__gte",
+            "end_date": "order_date__lte",
+        }
+        allowed_sorts = {"order_date"}
+        orders, params = list_utils.apply_filters_sort(
+            self.request,
+            orders,
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="order_date",
+            default_direction="desc",
+        )
+        page_obj, _ = list_utils.paginate(
+            self.request, orders, default_page_size=20
+        )
+        progress_map = purchase_order_service.get_orders_progress(
+            [o.pk for o in page_obj]
+        )
+        for o in page_obj:
+            o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+            prog = progress_map.get(o.pk)
+            if prog:
+                o.ordered_total = prog["ordered_total"]
+                o.received_total = prog["received_total"]
+                o.progress_percent = prog["percent"]
+            else:
+                o.ordered_total = Decimal("0")
+                o.received_total = Decimal("0")
+                o.progress_percent = 0
+
+        statuses = PurchaseOrder._meta.get_field("status").choices
+        suppliers = Supplier.objects.all()
+        querystring = list_utils.build_querystring(self.request)
+        supplier_url = reverse("supplier_search")
+        quick_form = PurchaseOrderForm(
+            prefix="quick", supplier_suggest_url=supplier_url
+        )
+
+        ctx.update(
+            {
+                "orders": page_obj,
+                "page_obj": page_obj,
+                "statuses": statuses,
+                "suppliers": suppliers,
+                "querystring": querystring,
+                "sortable": True,
+                "quick_form": quick_form,
+            }
+        )
+        ctx.update(params)
+        ctx["current_status"] = params.get("status")
+        ctx["current_supplier"] = params.get("supplier")
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(
+            request.POST, prefix="quick", supplier_suggest_url=supplier_url
+        )
+        if form.is_valid():
+            po = form.save()
+            messages.success(request, "Purchase order created")
+            return redirect("purchase_order_edit", pk=po.pk)
+
+        ctx = self.get_context_data()
+        ctx["quick_form"] = form
+        return self.render_to_response(ctx)
+
+
+purchase_orders_list = PurchaseOrdersListView.as_view()
 
 
 def purchase_order_create(request):

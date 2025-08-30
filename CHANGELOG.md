@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING CHANGE: Complete removal of ItemCreateView and item_create URL - all item creation now uses inline form on items list page for consistent UX
 - MAJOR CLEANUP: Repository refactoring - removed duplicate templates, organized documentation into docs/ structure, cleaned backup files for maintainable codebase
 - PRE-PRODUCTION TESTING COMPLETE: Comprehensive testing completed - inline form functional, clean codebase, ready for production deployment
+- `Unit` model with ORM-powered `UnitsService` and `FormService` replacing raw SQL queries
 
 ### Changed
 

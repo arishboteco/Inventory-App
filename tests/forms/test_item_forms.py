@@ -3,6 +3,7 @@
 from django import forms
 
 from inventory.models import Item
+from inventory.services.units_service import UnitsService
 
 INPUT_CLASS = "form-input"
 
@@ -55,25 +56,8 @@ class TestItemForm(forms.ModelForm):
     def clean_unit_id(self):
         """Validate that the unit_id exists in the units table."""
         unit_id = self.cleaned_data.get('unit_id')
-        if unit_id:
-            from django.db import connection
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT unit_id FROM units WHERE unit_id = %s",
-                        [unit_id],
-                    )
-                    if not cursor.fetchone():
-                        raise forms.ValidationError(
-                            (
-                                f"Unit ID {unit_id} does not exist in "
-                                "units table."
-                            )
-                        )
-            except Exception:
-                # In test environment, allow known test unit IDs
-                if unit_id not in [19, 55]:  # Known good test unit IDs
-                    raise forms.ValidationError(
-                        f"Unit ID {unit_id} is not valid for testing."
-                    )
+        if unit_id and not UnitsService.validate_unit_id(unit_id):
+            raise forms.ValidationError(
+                f"Unit ID {unit_id} does not exist in units table."
+            )
         return unit_id

@@ -4,10 +4,9 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
-from django.db import connection
 from django.db.utils import OperationalError
 
-from ..models import Department, Supplier
+from ..models import Department, Supplier, Unit
 from .supabase_units import get_units
 
 logger = logging.getLogger(__name__)
@@ -21,16 +20,13 @@ class FormService:
     def get_base_unit_choices() -> Tuple[Tuple[str, str], ...]:
         """Get base unit choices from database"""
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT DISTINCT base_unit FROM units
-                    WHERE base_unit IS NOT NULL
-                    ORDER BY base_unit
-                    """
-                )
-                units = cursor.fetchall()
-                return tuple((unit[0], unit[0]) for unit in units if unit[0])
+            units = (
+                Unit.objects.exclude(base_unit__isnull=True)
+                .values_list('base_unit', flat=True)
+                .distinct()
+                .order_by('base_unit')
+            )
+            return tuple((unit, unit) for unit in units if unit)
         except OperationalError as e:
             logger.warning(f"Could not load base units from database: {e}")
             return (
@@ -45,28 +41,11 @@ class FormService:
     def get_purchase_unit_choices(base_unit: Optional[str] = None) -> Tuple[Tuple[str, str], ...]:
         """Get purchase unit choices, optionally filtered by base_unit"""
         try:
-            with connection.cursor() as cursor:
-                if base_unit:
-                    # Get purchase units for a specific base unit
-                    cursor.execute(
-                        """
-                        SELECT DISTINCT purchase_unit FROM units
-                        WHERE base_unit = %s AND purchase_unit IS NOT NULL
-                        ORDER BY purchase_unit
-                        """,
-                        [base_unit],
-                    )
-                else:
-                    # Get all purchase units
-                    cursor.execute(
-                        """
-                        SELECT DISTINCT purchase_unit FROM units
-                        WHERE purchase_unit IS NOT NULL
-                        ORDER BY purchase_unit
-                        """
-                    )
-                units = cursor.fetchall()
-                return tuple((unit[0], unit[0]) for unit in units if unit[0])
+            qs = Unit.objects.exclude(purchase_unit__isnull=True)
+            if base_unit:
+                qs = qs.filter(base_unit=base_unit)
+            units = qs.values_list('purchase_unit', flat=True).distinct().order_by('purchase_unit')
+            return tuple((unit, unit) for unit in units if unit)
         except OperationalError as e:
             logger.warning(f"Could not load purchase units from database: {e}")
             return (

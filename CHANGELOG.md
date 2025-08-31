@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Layout toggle buttons on the items list to switch between table and grid views.
+
 ### Removed
 
 - Legacy speed templates no longer referenced by views:

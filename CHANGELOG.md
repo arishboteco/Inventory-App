@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - KPI sections in items and purchase orders now render via the shared card component
 - Top navigation logo now routes to the home page instead of the dashboard
 - Render deployment now relies on `DJANGO_ENV=production` instead of `DJANGO_SETTINGS_MODULE`
+- Refactor items list: extracted card and table layouts into dedicated partials (`_items_grid.html` and `_items_table.html`) and load via `components/items_table.html`
 
 ## [2.1.0] - 2025-08-28
 

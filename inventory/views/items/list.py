@@ -36,17 +36,16 @@ def _filter_and_sort_items(request, qs=None):
     qs = qs.prefetch_related("departments")
     filters = {
         "active": "is_active",
-        "category": "category",  # Maps to category field
-        "subcategory": "sub_category",  # Maps to sub_category field
-        "base_unit": "base_unit",  # Add base unit filtering
-        "department": "departments__name",  # Add department filtering via many-to-many
+        "category": "category__category",
+        "subcategory": "category__sub_category",
+        "department": "departments__name",
     }
     allowed_sorts = {
         "item_id",
         "name",
-        "base_unit",  # Use base_unit for sorting
-        "category",
-        "sub_category",
+        "unit__base_unit",
+        "category__category",
+        "category__sub_category",
         "current_stock",
         "reorder_point",
         "is_active",
@@ -56,7 +55,7 @@ def _filter_and_sort_items(request, qs=None):
     qs, params = list_utils.apply_filters_sort(
         request,
         qs,
-        search_fields=["name", "category", "sub_category"],  # Enhanced search
+        search_fields=["name", "category__category", "category__sub_category"],
         filter_fields=filters,
         allowed_sorts=allowed_sorts,
         default_sort="name",
@@ -170,7 +169,6 @@ class ItemsListView(TemplateView):
         }
 
         filters_list = category_filters.build_filters(request)
-        filters_list = [f for f in filters_list if f.get("name") != "base_unit"]
 
         categories_val = category_ctx.get("categories", [])
         subcategories_val = category_ctx.get("subcategories", [])

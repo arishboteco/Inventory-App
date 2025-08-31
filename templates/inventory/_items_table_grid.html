@@ -34,12 +34,12 @@
       </td>
       <td data-col="category">
         {% if item.category %}
-          {{ item.category }}{% if item.sub_category %} → {{ item.sub_category }}{% endif %}
+          {{ item.category.category }}{% if item.category.sub_category %} → {{ item.category.sub_category }}{% endif %}
         {% else %}
           <span class="text-gray-400">—</span>
         {% endif %}
       </td>
-      <td data-col="unit">{{ item.base_unit|default:"—" }}</td>
+      <td data-col="unit">{{ item.unit.base_unit|default:"—" }}</td>
       <td data-col="stock">
         {% if item.current_stock is not None %}
           {{ item.current_stock }}

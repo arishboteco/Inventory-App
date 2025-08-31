@@ -30,6 +30,7 @@ def get_unit_display_name(unit_id: int) -> str:
     For new code, use UnitsService.get_purchase_unit_display() directly.
     """
     from .units_service import UnitsService
+
     return UnitsService.get_purchase_unit_display(unit_id)
 
 
@@ -40,6 +41,7 @@ def get_unit_info(unit_id: int) -> dict:
     For new code, use UnitsService.get_unit_info() directly.
     """
     from .units_service import UnitsService
+
     return UnitsService.get_unit_info(unit_id)
 
 
@@ -50,6 +52,7 @@ def convert_to_base_unit(quantity: float, unit_id: int) -> float:
     For new code, use UnitsService.convert_purchase_to_base() directly.
     """
     from .units_service import UnitsService
+
     return UnitsService.convert_purchase_to_base(quantity, unit_id)
 
 
@@ -60,6 +63,7 @@ def convert_from_base_unit(base_quantity: float, unit_id: int) -> float:
     For new code, use UnitsService.convert_base_to_purchase() directly.
     """
     from .units_service import UnitsService
+
     return UnitsService.convert_base_to_purchase(base_quantity, unit_id)
 
 
@@ -108,11 +112,10 @@ def get_distinct_departments_from_items() -> List[str]:
 
     # Get departments that have active items associated with them
     departments = (
-        Department.objects
-        .filter(items__is_active=True)
+        Department.objects.filter(items__is_active=True)
         .distinct()
-        .values_list('name', flat=True)
-        .order_by('name')
+        .values_list("name", flat=True)
+        .order_by("name")
     )
     return list(departments)
 
@@ -123,10 +126,7 @@ def get_all_departments() -> List[Dict[str, Any]]:
     from inventory.models import Department
 
     return list(
-        Department.objects
-        .all()
-        .values('department_id', 'name')
-        .order_by('name')
+        Department.objects.all().values("department_id", "name").order_by("name")
     )
 
 
@@ -352,6 +352,7 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
 
     item = (
         Item.objects.filter(pk=item_id)
+        .select_related("unit", "category")
         .prefetch_related("departments")
         .annotate(
             _stock=Coalesce(Sum("stocktransaction__quantity_change"), Decimal("0"))
@@ -366,10 +367,6 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
         "name": item.name,
         "unit_id": item.unit_id,
         "category_id": item.category_id,
-        "category": item.category,
-        "sub_category": item.sub_category,
-        "base_unit": item.base_unit,
-        "purchase_unit": item.purchase_unit,
         "initial_purchase_price": item.initial_purchase_price,
         "minimum_order_qty": item.minimum_order_qty,
         "lead_time_days": item.lead_time_days,
@@ -379,7 +376,21 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
         "is_active": item.is_active,
     }
 
-    row["unit"] = get_unit_display_name(item.unit_id)
+    if item.unit:
+        row["unit"] = item.unit.purchase_unit
+        row["base_unit"] = item.unit.base_unit
+        row["purchase_unit"] = item.unit.purchase_unit
+    else:
+        row["unit"] = None
+        row["base_unit"] = None
+        row["purchase_unit"] = None
+
+    if item.category:
+        row["category"] = item.category.category
+        row["sub_category"] = item.category.sub_category
+    else:
+        row["category"] = None
+        row["sub_category"] = None
 
     departments = [dept.name for dept in item.departments.all()]
     row["departments"] = departments

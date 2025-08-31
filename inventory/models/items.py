@@ -4,7 +4,9 @@ from django.conf import settings
 from django.db import models
 from django.utils.functional import cached_property
 
+from .category import Category
 from .fields import CoerceFloatField
+from .unit import Unit
 
 
 class Item(models.Model):
@@ -12,53 +14,50 @@ class Item(models.Model):
 
     item_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True, blank=False, null=False)
-    unit_id = models.IntegerField(blank=False, null=False)
-    category_id = models.BigIntegerField(
-        blank=True, null=True, db_column="category_id_ref"
+    unit = models.ForeignKey(
+        Unit,
+        on_delete=models.PROTECT,
+        db_column="unit_id",
+        blank=False,
+        null=False,
     )
-
-    # Business fields for complete item management
-    base_unit = models.CharField(
-        max_length=50,
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        db_column="category_id_ref",
         blank=True,
         null=True,
-        help_text="Base unit of measurement (kg, ltr, pc)",
-    )
-    purchase_unit = models.CharField(
-        max_length=50,
-        blank=True,
-        null=True,
-        help_text="Purchase unit (g, ml, each)",
-    )
-    category = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Item category",
-    )
-    sub_category = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Item subcategory",
     )
 
     # Purchase and supplier information
     initial_purchase_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Initial purchase price per unit"
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Initial purchase price per unit",
     )
     last_purchase_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Most recent purchase price per unit"
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Most recent purchase price per unit",
     )
     preferred_supplier = models.ForeignKey(
-        'Supplier', on_delete=models.SET_NULL, blank=True, null=True,
-        related_name='preferred_items', help_text="Default supplier for this item"
+        "Supplier",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="preferred_items",
+        help_text="Default supplier for this item",
     )
     minimum_order_qty = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Minimum order quantity"
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Minimum order quantity",
     )
     lead_time_days = models.IntegerField(
         blank=True, null=True, help_text="Standard lead time in days"
@@ -77,10 +76,7 @@ class Item(models.Model):
 
     # Many-to-many relationship with departments
     departments = models.ManyToManyField(
-        'Department',
-        through='ItemDepartment',
-        related_name='items',
-        blank=True
+        "Department", through="ItemDepartment", related_name="items", blank=True
     )
 
     def __str__(self) -> str:  # pragma: no cover - simple representation

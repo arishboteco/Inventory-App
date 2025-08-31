@@ -1,3 +1,4 @@
+from .category import Category
 from .departments import Department, ItemDepartment
 from .fields import CoerceFloatField
 from .items import Item, StockTransaction
@@ -11,6 +12,7 @@ from .orders import (
 )
 from .recipes import Recipe, RecipeComponent, SaleTransaction
 from .suppliers import Supplier
+from .unit import Unit
 
 __all__ = [
     "CoerceFloatField",
@@ -28,4 +30,6 @@ __all__ = [
     "SaleTransaction",
     "Department",
     "ItemDepartment",
+    "Category",
+    "Unit",
 ]

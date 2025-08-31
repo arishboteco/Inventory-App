@@ -35,7 +35,7 @@ def test_item_create_view_htmx_success(client, monkeypatch):
     url = reverse("item_create")
     data = {
         "name": "Widget",
-        "unit_id": "55",
+        "unit": "55",
         "reorder_point": "1",
         "current_stock": "0",
         "notes": "n",
@@ -122,7 +122,7 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
 
     data = {
         "name": "Gadget",
-        "unit_id": "55",
+        "unit": "55",
         "reorder_point": "5",
         "current_stock": "0",
         "notes": "updated",

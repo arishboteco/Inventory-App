@@ -1,34 +1,41 @@
-{% extends "components/list_layout.html" %}
+{% extends "_base.html" %}
 {% load static %}
 
 {% block title %}{% block page_title %}Manage{% endblock %}{% endblock %}
 
-{% block heading %}
-  {% block heading_icon %}{% endblock %}
-  {% block page_heading %}{% endblock %}
-{% endblock %}
-
-{% block actions %}
-  <div class="flex items-center gap-2">
-    {% block primary_actions %}{% endblock %}
-    {% block secondary_actions %}{% endblock %}
+{% block content %}
+  {% block breadcrumbs %}{% endblock %}
+  <div class="page-header">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="page-title">{% block page_heading %}{% endblock %}</h1>
+        {% block page_subtitle %}{% endblock %}
+      </div>
+      <div class="flex items-center space-x-3">
+        {% block header_actions %}{% endblock %}
+      </div>
+    </div>
   </div>
-{% endblock %}
 
-{% block filter_bar %}
-  {% block filters %}{% endblock %}
-{% endblock %}
+  {% block filter_bar %}
+    {% block filters %}{% endblock %}
+  {% endblock %}
 
-{% block extra %}
   {% block description %}{% endblock %}
   {% block kpis %}{% endblock %}
   {% block extra_top %}{% endblock %}
-{% endblock %}
 
-{% block table_container %}
-  {% block data_container %}{% endblock %}
+  {% block table_container %}
+  <div id="{% block table_id %}{% endblock %}"
+       hx-get="{% block hx_get %}{% endblock %}"
+       hx-trigger="load"
+       hx-include="#filters"
+       hx-indicator="#htmx-spinner">
+    {% block data_container %}{% endblock %}
+  </div>
   {% block bulk_actions %}{% endblock %}
   {% block pagination %}{% endblock %}
+  {% endblock %}
 {% endblock %}
 
 {% block extra_js %}

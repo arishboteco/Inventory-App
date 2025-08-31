@@ -9,9 +9,14 @@ echo "====================================="
 
 # Configuration
 PRODUCTION_ENV_FILE="env/production.local"
-DOCKER_COMPOSE_FILE="docker-compose.production.yml"
+DOCKER_COMPOSE_FILE="docker-compose.yml"
+DOCKER_PROFILE="production"
 BACKUP_DIR="backups/production/$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="/var/log/inventory-deployment.log"
+
+dc() {
+    docker compose -f "$DOCKER_COMPOSE_FILE" --profile "$DOCKER_PROFILE" "$@"
+}
 
 # Colors for output
 RED='\033[0;31m'
@@ -61,9 +66,9 @@ pre_deployment_checks() {
         error "Docker is not running. Please start Docker and try again."
     fi
 
-    # Check if docker-compose is available
-    if ! command -v docker-compose &> /dev/null; then
-        error "docker-compose is not installed. Please install it and try again."
+    # Check if docker compose is available
+    if ! docker compose version >/dev/null 2>&1; then
+        error "docker compose is not installed. Please install it and try again."
     fi
 
     # Check if production environment file exists
@@ -156,9 +161,9 @@ create_backup() {
     mkdir -p "$BACKUP_DIR"
 
     # Backup existing database if running
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" ps db | grep -q "Up"; then
+    if dc ps db | grep -q "Up"; then
         log "Backing up production database..."
-        docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T db pg_dump -U inventory_user inventory_production > "$BACKUP_DIR/database.sql"
+        dc exec -T db pg_dump -U inventory_user inventory_production > "$BACKUP_DIR/database.sql"
         success "Database backup created"
     fi
 
@@ -191,19 +196,19 @@ deploy() {
 
     # Pull latest images
     log "Pulling latest base images..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" pull db redis nginx monitoring
+    dc pull db redis nginx monitoring
 
     # Build production application image
     log "Building production application image..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" build web
+    dc build web
 
     # Stop existing containers gracefully
     log "Stopping existing containers..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" down --remove-orphans
+    dc down --remove-orphans
 
     # Start production services
     log "Starting production services..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
+    dc up -d
 
     success "Production services started"
 }
@@ -219,7 +224,7 @@ health_checks() {
     # Check service status
     services=("web" "db" "redis" "nginx")
     for service in "${services[@]}"; do
-        if docker-compose -f "$DOCKER_COMPOSE_FILE" ps "$service" | grep -q "Up"; then
+        if dc ps "$service" | grep -q "Up"; then
             success "$service container is running"
         else
             error "$service container failed to start"
@@ -228,7 +233,7 @@ health_checks() {
 
     # Check database connectivity
     log "Checking database connectivity..."
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T web python manage.py shell -c "
+    if dc exec -T web python manage.py shell -c "
 from django.db import connection
 cursor = connection.cursor()
 cursor.execute('SELECT 1')
@@ -241,7 +246,7 @@ print('Database connection: OK')
 
     # Check Redis connectivity
     log "Checking Redis connectivity..."
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T redis redis-cli ping | grep -q "PONG"; then
+    if dc exec -T redis redis-cli ping | grep -q "PONG"; then
         success "Redis connection established"
     else
         warning "Redis connection failed"
@@ -269,7 +274,7 @@ print('Database connection: OK')
 
     # Run production validation script
     log "Running production validation script..."
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T web python staging_validation.py; then
+    if dc exec -T web python staging_validation.py; then
         success "Production validation passed"
     else
         warning "Production validation had issues"
@@ -295,7 +300,7 @@ setup_monitoring() {
     log "Setting up monitoring and alerting..."
 
     # Check if monitoring container is running
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" ps monitoring | grep -q "Up"; then
+    if dc ps monitoring | grep -q "Up"; then
         success "Monitoring service is running"
         log "Node Exporter available at: http://localhost:9100/metrics"
     else
@@ -314,7 +319,7 @@ setup_monitoring() {
     missingok
     create 644 appuser appuser
     postrotate
-        docker-compose -f $PWD/$DOCKER_COMPOSE_FILE exec web kill -USR1 1
+        docker compose -f $PWD/$DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE exec web kill -USR1 1
     endscript
 }
 EOF
@@ -365,10 +370,10 @@ show_deployment_info() {
     echo "5. Test all critical functionality"
     echo ""
     echo "📝 Useful Commands:"
-    echo "- View logs: docker-compose -f $DOCKER_COMPOSE_FILE logs -f"
-    echo "- Restart services: docker-compose -f $DOCKER_COMPOSE_FILE restart"
-    echo "- Scale web workers: docker-compose -f $DOCKER_COMPOSE_FILE up -d --scale web=3"
-    echo "- Database backup: docker-compose -f $DOCKER_COMPOSE_FILE exec db pg_dump -U inventory_user inventory_production > backup.sql"
+    echo "- View logs: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE logs -f"
+    echo "- Restart services: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE restart"
+    echo "- Scale web workers: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE up -d --scale web=3"
+    echo "- Database backup: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE exec db pg_dump -U inventory_user inventory_production > backup.sql"
     echo ""
     highlight "🚀 Production deployment successful! Your application is now live."
 }
@@ -380,14 +385,14 @@ rollback() {
     log "Starting emergency rollback procedure..."
 
     # Stop current deployment
-    docker-compose -f "$DOCKER_COMPOSE_FILE" down
+    dc down
 
     # Restore from backup if available
     if [[ -d "$BACKUP_DIR" && -f "$BACKUP_DIR/database.sql" ]]; then
         log "Restoring database from backup..."
-        docker-compose -f "$DOCKER_COMPOSE_FILE" up -d db
+        dc up -d db
         sleep 30
-        docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T db psql -U inventory_user -d inventory_production < "$BACKUP_DIR/database.sql"
+        dc exec -T db psql -U inventory_user -d inventory_production < "$BACKUP_DIR/database.sql"
     fi
 
     error "Emergency rollback completed. Please investigate issues and retry deployment."
@@ -442,10 +447,10 @@ case "${1:-deploy}" in
         rollback "Manual rollback requested"
         ;;
     "status")
-        docker-compose -f "$DOCKER_COMPOSE_FILE" ps
+        dc ps
         ;;
     "logs")
-        docker-compose -f "$DOCKER_COMPOSE_FILE" logs -f "${2:-web}"
+        dc logs -f "${2:-web}"
         ;;
     "health")
         curl -f https://localhost/healthz && echo "✅ Health check passed"

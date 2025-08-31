@@ -132,7 +132,12 @@ Docker Compose. It sets up three services:
 3. Build and start the stack:
 
    ```bash
-   docker-compose up --build
+   # Development profile
+   docker compose --profile dev up --build
+
+   # For staging or production:
+   # BUILD_ENV=staging ENV_FILE=env/staging.example NGINX_CONF=staging.conf docker compose --profile staging up --build
+   # BUILD_ENV=production ENV_FILE=env/production.example NGINX_CONF=production.conf docker compose --profile production up --build
    ```
 
    The web container automatically applies database migrations and

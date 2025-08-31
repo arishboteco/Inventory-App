@@ -32,7 +32,9 @@
                                 <div class="flex items-center gap-3">
                                     <!-- Item Status Indicator -->
                                     <div class="w-3 h-3 rounded-full {{ item.is_active|yesno:'bg-green-400,bg-red-400' }} flex-shrink-0 shadow-sm"></div>
-                                    <h3 id="item-title-{{ item.item_id }}" class="text-base font-semibold text-gray-900 line-clamp-2">{{ item.name }}</h3>
+                                    <a href="{% url 'item_detail' item.item_id %}" data-ignore-toggle>
+                                        <h3 id="item-title-{{ item.item_id }}" class="text-base font-semibold text-gray-900 line-clamp-2">{{ item.name }}</h3>
+                                    </a>
                                 </div>
                                         <div class="flex items-center flex-wrap gap-3 text-xs text-gray-600 mt-1">
                                     {% if item.category %}
@@ -130,6 +132,10 @@
                            class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200" title="View Details">
                             {% icon 'eye' 'w-5 h-5' %}
                         </a>
+                        <button type="button" data-action="archive"
+                                class="p-2 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-all duration-200" title="{% if item.is_active %}Archive{% else %}Activate{% endif %}">
+                            {% icon 'archive-box' 'w-5 h-5' %}
+                        </button>
                         <button type="button" data-action="delete"
                                 class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200" title="Delete">
                             {% icon 'trash' 'w-5 h-5' %}
@@ -179,6 +185,13 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
                         </a>
+                        <button type="button" data-action="archive"
+                                class="text-gray-400 hover:text-yellow-600 transition-colors"
+                                title="{% if item.is_active %}Archive{% else %}Activate{% endif %}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v4H3zM3 7l1 14h16l1-14"/>
+                            </svg>
+                        </button>
                         <button type="button"
                                 class="text-gray-400 hover:text-red-600 transition-colors"
                                 title="Delete"

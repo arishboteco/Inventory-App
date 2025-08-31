@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor: split item views into list, detail, and stock modules and converted helper views to class-based implementations
 - KPI sections in items and purchase orders now render via the shared card component
 - Top navigation logo now routes to the home page instead of the dashboard
+- Render deployment now relies on `DJANGO_ENV=production` instead of `DJANGO_SETTINGS_MODULE`
 
 ## [2.1.0] - 2025-08-28
 

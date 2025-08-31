@@ -30,8 +30,8 @@ services:
       --error-logfile - 
       inventory_app.wsgi:application
     envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: inventory_app.settings_production
+      - key: DJANGO_ENV
+        value: production
       - key: DEBUG
         value: False
       - key: DJANGO_SECURE_SSL_REDIRECT

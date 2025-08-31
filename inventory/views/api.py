@@ -47,7 +47,7 @@ class ItemViewSet(viewsets.ModelViewSet):
         name: optional substring to filter item names.
     """
 
-    queryset = Item.objects.all()
+    queryset = Item.objects.all().prefetch_related("departments")
     serializer_class = ItemSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = DefaultPagination

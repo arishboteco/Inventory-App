@@ -40,7 +40,10 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def get_departments(self, obj):
         """Return department IDs and names."""
-        return list(obj.departments.values('department_id', 'name'))
+        return [
+            {"department_id": dept.department_id, "name": dept.name}
+            for dept in obj.departments.all()
+        ]
 
     def get_department_names(self, obj):
         """Return comma-separated department names."""

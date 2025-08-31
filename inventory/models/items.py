@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils.functional import cached_property
 
 from .fields import CoerceFloatField
 
@@ -85,10 +86,15 @@ class Item(models.Model):
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return self.name or f"Item {self.pk}"
 
-    @property
+    @cached_property
     def department_names(self):
-        """Return a comma-separated string of department names."""
-        return ", ".join(self.departments.values_list('name', flat=True))
+        """Return a comma-separated string of department names.
+
+        Cached per instance to avoid recomputing the joined list when accessed
+        multiple times. Prefetching ``departments`` ensures this does not hit
+        the database repeatedly.
+        """
+        return ", ".join(dept.name for dept in self.departments.all())
 
     class Meta:
         managed = True

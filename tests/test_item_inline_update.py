@@ -9,7 +9,7 @@ def test_inline_update_updates_category_and_unit(client, item_factory):
     item = item_factory(unit_id=19, category_id=1)
     url = reverse("item_inline_update", args=[item.pk])
 
-    resp = client.post(url, {"unit": "55", "category": "2"})
+    resp = client.post(url, {"unit_id": "55", "category_id": "2"})
 
     assert resp.status_code == 200
     assert resp.json() == {"ok": True, "message": "Item updated"}

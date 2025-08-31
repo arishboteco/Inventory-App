@@ -1,4 +1,8 @@
-from ..settings import *  # noqa
+from .. import settings as base_settings
+
+for attr in dir(base_settings):
+    if attr.isupper():
+        globals()[attr] = getattr(base_settings, attr)
 
 # Ensure tests NEVER hit Supabase/Postgres
 DEBUG = False

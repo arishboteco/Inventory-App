@@ -9,20 +9,18 @@ import logging
 import os
 
 import dj_database_url
+from . import settings as base_settings
 
-from .settings import *  # noqa: F401,F403
+# Import all base settings into the current namespace
+for attr in dir(base_settings):
+    if attr.isupper():
+        globals()[attr] = getattr(base_settings, attr)
 
 # SECURITY WARNING: don't run with debug turned on in staging!
 DEBUG = False
 
 # Allowed hosts for staging environment
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0',
-    # Add your staging domain here
-    # 'staging.yourdomain.com',
-]
+ALLOWED_HOSTS = base_settings.ALLOWED_HOSTS + ['0.0.0.0']
 
 # Allow all hosts from environment variable
 if 'DJANGO_ALLOWED_HOSTS' in os.environ:
@@ -53,12 +51,7 @@ if 'REDIS_URL' in os.environ:
 # Email backend for staging - console for testing
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Static files configuration
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # noqa: F405
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-
-# Media files configuration
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # noqa: F405
 
 # Security settings for staging
 SECURE_SSL_REDIRECT = False  # Set to True if using HTTPS in staging
@@ -127,7 +120,8 @@ LOGGING = {
 }
 
 # Django REST Framework settings for staging
-REST_FRAMEWORK.update({  # noqa: F405
+REST_FRAMEWORK = base_settings.REST_FRAMEWORK.copy()
+REST_FRAMEWORK.update({
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
@@ -153,7 +147,7 @@ INVENTORY_SETTINGS = {
 
 # Disable browsable API in staging for security
 if not DEBUG:
-    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [  # noqa: F405
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
         'rest_framework.renderers.JSONRenderer',
     ]
 

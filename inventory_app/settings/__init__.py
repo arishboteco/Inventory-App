@@ -1,22 +1,24 @@
-"""Settings package shim
+"""Dynamic settings loader.
 
-This package exists alongside a legacy module file `inventory_app/settings.py`.
-To maintain compatibility, import all UPPERCASE settings from that file so that
-`inventory_app.settings` (the package) behaves like the base settings module.
+When ``DJANGO_SETTINGS_MODULE`` points at ``inventory_app.settings`` this
+module selects the appropriate environment submodule based on the
+``DJANGO_ENV`` environment variable (defaulting to ``dev``). If
+``DJANGO_SETTINGS_MODULE`` is already set to a specific submodule like
+``inventory_app.settings.test``, this loader does nothing so the submodule
+can handle configuration itself.
 """
 
-from importlib import util as _util
-from pathlib import Path as _Path
+import os
+from importlib import import_module
 
-_base_path = _Path(__file__).resolve().parent.parent / "settings.py"
-_spec = _util.spec_from_file_location("inventory_app._base_settings", str(_base_path))
-_mod = _util.module_from_spec(_spec)  # type: ignore[arg-type]
-assert _spec and _spec.loader
-_spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+if os.getenv("DJANGO_SETTINGS_MODULE") == "inventory_app.settings":
+    DJANGO_ENV = os.getenv("DJANGO_ENV", "dev")
+    _module = import_module(f"inventory_app.settings.{DJANGO_ENV}")
 
-# Re-export all Django settings-style constants
-for _k, _v in _mod.__dict__.items():
-    if _k.isupper():
-        globals()[_k] = _v
+    for setting in dir(_module):
+        if setting.isupper():
+            globals()[setting] = getattr(_module, setting)
 
-del _util, _Path, _base_path, _spec, _mod, _k, _v
+    __all__ = [s for s in globals() if s.isupper()]
+else:
+    __all__: list[str] = []

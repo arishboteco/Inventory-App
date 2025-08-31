@@ -1,8 +1,8 @@
-from .. import settings as base_settings
+import os
 
-for attr in dir(base_settings):
-    if attr.isupper():
-        globals()[attr] = getattr(base_settings, attr)
+os.environ.setdefault("DJANGO_SECRET_KEY", "test-secret-key")
+
+from .base import *  # noqa
 
 # Ensure tests NEVER hit Supabase/Postgres
 DEBUG = False
@@ -14,7 +14,7 @@ DATABASES = {
     }
 }
 
-# Speed up hashing in tests (optional)
+# Speed up hashing in tests
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 # Use cache-based sessions so we don't need the django_session DB table

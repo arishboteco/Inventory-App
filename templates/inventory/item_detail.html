@@ -18,35 +18,14 @@
 {% endblock %}
 
 {% block detail_table %}
-  <table class="w-full text-sm">
-    <tbody>
-      {% for label, value in rows %}
-      <tr class="border-b last:border-b-0">
-        <th class="text-left py-2 pr-4 font-medium">{{ label }}</th>
-        <td class="py-2">{{ value }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% include "components/detail_section.html" with title="Details" content_template="components/detail_table.html" %}
 {% endblock %}
 
 {% block extra_tables %}
   {% if suppliers %}
-  <h2 class="text-lg font-semibold mt-8 mb-4">Supplier History</h2>
-  <ul class="space-y-2">
-    {% for supplier in suppliers %}
-    <li>{{ supplier.name }}</li>
-    {% endfor %}
-  </ul>
+    {% include "components/detail_section.html" with title="Supplier History" content_template="inventory/_supplier_history.html" %}
   {% endif %}
   {% if stock_movements %}
-  <h2 class="text-lg font-semibold mt-8 mb-4">Stock Movements</h2>
-  <ul class="space-y-2">
-    {% for tx in stock_movements %}
-    <li>
-      {{ tx.transaction_date }} – {{ tx.transaction_type }} {{ tx.quantity_change }}
-    </li>
-    {% endfor %}
-  </ul>
+    {% include "components/detail_section.html" with title="Stock Movements" content_template="inventory/_stock_movements.html" %}
   {% endif %}
 {% endblock %}

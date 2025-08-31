@@ -1,10 +1,9 @@
-"""
-Django management command to reset admin password using environment variable.
-"""
-import os
+"""Django management command to reset admin password using configured value."""
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
+
+from core.config import settings
 
 
 class Command(BaseCommand):
@@ -12,8 +11,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            # Get password from environment or use fallback
-            new_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123!')
+            # Get password from configuration or use fallback
+            new_password = settings.django_superuser_password or "admin123!"
 
             # Find admin user
             admin_user = User.objects.filter(username='admin').first()

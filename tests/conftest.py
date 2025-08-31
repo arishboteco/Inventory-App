@@ -11,8 +11,16 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Use our test settings module (module path: inventory_app/settings/test.py)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings.test")
+from core import config as app_config  # noqa: E402
+
+# Configure settings for tests
+app_config.settings = app_config.load_settings(
+    django_settings_module="inventory_app.settings.test",
+    django_secret_key=app_config.settings.django_secret_key or "test-secret-key",
+)
+os.environ.setdefault(
+    "DJANGO_SETTINGS_MODULE", app_config.settings.django_settings_module
+)
 django.setup()
 
 from inventory.models import Item, StockTransaction, Supplier  # noqa: E402

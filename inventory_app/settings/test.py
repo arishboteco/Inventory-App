@@ -1,8 +1,14 @@
-import os
+from core import config as app_config
 
-os.environ.setdefault("DJANGO_SECRET_KEY", "test-secret-key")
+# Ensure deterministic secret key for tests
+app_config.settings = app_config.load_settings(
+    django_secret_key=app_config.settings.django_secret_key or "test-secret-key",
+    django_settings_module="inventory_app.settings.test",
+)
 
 from .base import *  # noqa
+
+SECRET_KEY = app_config.settings.django_secret_key
 
 # Ensure tests NEVER hit Supabase/Postgres
 DEBUG = False

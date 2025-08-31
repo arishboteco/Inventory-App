@@ -6,6 +6,8 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 from django.test import RequestFactory
 
+from core.config import settings as app_settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,12 +59,11 @@ class Command(BaseCommand):
             )
             return
 
-        # Test password authentication with environment variable
+        # Test password authentication with configured value
         self.stdout.write('\n🔐 Testing Password Authentication...')
-        import os
-        env_password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123!')
+        env_password = app_settings.django_superuser_password or 'admin123!'
         self.stdout.write(
-            f'   Using password from env: {"*" * len(env_password)}'
+            f'   Using configured password: {"*" * len(env_password)}'
         )
 
         try:
@@ -136,8 +137,8 @@ class Command(BaseCommand):
         # Test Django authentication backend
         self.stdout.write('\n🔧 Authentication Backend Test...')
         try:
-            from django.conf import settings
-            backends = settings.AUTHENTICATION_BACKENDS
+            from django.conf import settings as django_settings
+            backends = django_settings.AUTHENTICATION_BACKENDS
             self.stdout.write(f'   Configured backends: {backends}')
 
             for backend_path in backends:
@@ -173,24 +174,23 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'❌ Session test error: {e}'))
 
-        # Environment variables check
-        self.stdout.write('\n🌍 Environment Variables Check...')
-        important_vars = [
-            'DJANGO_SETTINGS_MODULE',
-            'DATABASE_URL',
-            'DJANGO_SECRET_KEY',
-            'DEBUG',
-            'DJANGO_SUPERUSER_USERNAME',
-            'DJANGO_SUPERUSER_PASSWORD',
-        ]
+        # Configuration check
+        self.stdout.write('\n🌍 Configuration Check...')
+        important_vars = {
+            'DJANGO_SETTINGS_MODULE': app_settings.django_settings_module,
+            'DATABASE_URL': app_settings.database_url or 'NOT SET',
+            'DJANGO_SECRET_KEY': app_settings.django_secret_key or 'NOT SET',
+            'DJANGO_DEBUG': str(app_settings.django_debug),
+            'DJANGO_SUPERUSER_USERNAME': app_settings.django_superuser_username,
+            'DJANGO_SUPERUSER_PASSWORD': app_settings.django_superuser_password or 'NOT SET',
+        }
 
-        for var in important_vars:
-            value = os.environ.get(var, 'NOT SET')
-            if var in [
+        for var, value in important_vars.items():
+            if var in {
                 'DJANGO_SECRET_KEY',
                 'DATABASE_URL',
                 'DJANGO_SUPERUSER_PASSWORD',
-            ]:
+            }:
                 display_value = (
                     f"{'*' * min(10, len(value))}..."
                     if value != 'NOT SET'

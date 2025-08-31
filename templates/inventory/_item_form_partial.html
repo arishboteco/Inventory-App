@@ -1,4 +1,4 @@
-<div class="card" style="max-width: 860px; max-height: 90vh; overflow-y: auto;">
+<div class="card max-w-[860px] max-h-[90vh] overflow-y-auto">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">Edit Item — {{ item.name }}</h3>
     <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
@@ -7,11 +7,11 @@
     <form method="post" data-modal-form action="{% url 'item_edit' item.item_id %}?partial=1">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
-      <div class="grid" style="grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem;">
+      <div class="grid grid-cols-12 gap-4">
         <!-- Essentials -->
-        <div class="section-panel" style="grid-column: span 12;" id="essentials-panel">
+        <div class="section-panel col-span-12" id="essentials-panel">
           <h3 class="section-header">Essentials</h3>
-          <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items:start;">
+          <div class="grid grid-cols-3 gap-4 items-start">
             <div class="space-y-1">
               <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
               {{ form.name }}
@@ -39,7 +39,7 @@
             </div>
             <div class="space-y-1">
               <label for="{{ form.is_active.id_for_label }}" class="form-label">Status</label>
-              <div class="inline-flex items-center gap-2 text-gray-700" style="height:38px;align-items:center;">
+              <div class="inline-flex items-center gap-2 text-gray-700 h-[38px]">
                 {{ form.is_active }}
                 <span>Active</span>
               </div>
@@ -49,9 +49,9 @@
         </div>
 
         <!-- Advanced -->
-        <div class="section-panel" style="grid-column: span 12;" id="advanced-panel">
+        <div class="section-panel col-span-12" id="advanced-panel">
           <h3 class="section-header">Advanced</h3>
-          <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items:start;">
+          <div class="grid grid-cols-3 gap-4 items-start">
             <div class="space-y-1">
               <label for="{{ form.preferred_supplier.id_for_label }}" class="form-label">Preferred Supplier</label>
               {{ form.preferred_supplier }}
@@ -88,7 +88,7 @@
         </div>
 
         <!-- Actions -->
-        <div style="grid-column: span 12;">
+        <div class="col-span-12">
           <div class="form-actions">
             <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
             <button type="submit" class="btn-primary">Save</button>

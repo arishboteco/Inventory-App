@@ -54,10 +54,10 @@
       <div class="flex items-center justify-between mb-2">
         <div class="text-sm text-gray-600">Filter and explore</div>
         <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
-          <button type="button" class="btn-icon" data-layout-btn data-value="table" aria-label="Table view"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+          <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
             {% icon 'list-bullet' 'w-4 h-4' %}
           </button>
-          <button type="button" class="btn-icon" data-layout-btn data-value="grid" aria-label="Grid view"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+          <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
             {% icon 'squares-2x2' 'w-4 h-4' %}
           </button>
         </div>

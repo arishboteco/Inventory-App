@@ -1,13 +1,13 @@
 {% load icon_tags %}
-<div class="card" style="max-width:720px">
+<div class="card max-w-[720px]">
   <div class="card-header flex items-center justify-between">
     <div class="font-semibold">{{ item.name }}</div>
-    <button type="button" data-modal-close class="btn-icon" title="Close" aria-label="Close">
+    <button type="button" data-modal-close class="btn-square" title="Close" aria-label="Close">
       {% icon 'x-mark' 'w-4 h-4' %}
     </button>
   </div>
   <div class="card-body">
-    <dl class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:.5rem 1rem">
+    <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
       {% for label, value in rows %}
       <div>
         <dt class="text-xs text-gray-500">{{ label }}</dt>

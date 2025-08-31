@@ -70,6 +70,7 @@
 }
 .btn-sm { @apply px-3 py-1.5 text-xs; }
 .btn-lg { @apply px-6 py-3 text-base; }
+.btn-square { @apply inline-flex items-center justify-center w-8 h-8 p-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200; }
 ```
 
 #### Form Controls

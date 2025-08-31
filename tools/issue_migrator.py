@@ -9,13 +9,14 @@ Example:
         --milestone "Backlog" --dry-run
 """
 import argparse
-import os
 import re
 from pathlib import Path
 from typing import Dict, List
 
 import json
 from urllib import request as urlrequest
+
+from core.config import settings
 
 TASKS_PATH = Path(__file__).parent.parent / "docs/guides/TASKS.md"
 
@@ -99,8 +100,11 @@ def get_milestone_number(repo: str, token: str, milestone: str) -> int | None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create GitHub issues from TASKS.md")
     parser.add_argument("--repo", required=True, help="GitHub repo in 'owner/repo' format")
-    parser.add_argument("--token", default=os.getenv("GITHUB_TOKEN"),
-                        help="GitHub personal access token")
+    parser.add_argument(
+        "--token",
+        default=settings.github_token,
+        help="GitHub personal access token",
+    )
     parser.add_argument("--label", action="append", default=["task"],
                         help="Label to apply to created issues")
     parser.add_argument("--milestone", help="Milestone name to assign to issues")

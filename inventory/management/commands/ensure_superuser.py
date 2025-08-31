@@ -1,11 +1,10 @@
-"""
-Management command to ensure a superuser exists for production deployment.
-"""
-import os
+"""Management command to ensure a superuser exists for production deployment."""
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
+
+from core.config import settings as app_settings
 
 
 class Command(BaseCommand):
@@ -22,9 +21,9 @@ class Command(BaseCommand):
                 return
 
             # Create superuser with environment variables
-            username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
-            email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@inventory.app')
-            password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
+            username = app_settings.django_superuser_username
+            email = app_settings.django_superuser_email
+            password = app_settings.django_superuser_password
 
             if not password:
                 self.stdout.write(

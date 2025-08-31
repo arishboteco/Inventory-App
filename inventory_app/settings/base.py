@@ -6,24 +6,19 @@ Environment-specific settings modules should import everything from here
 and override only the values that differ.
 """
 
-import os
 from pathlib import Path
 
-import environ
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
 
+from core.config import settings as app_settings
 from ..logging import configure_logging
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-env = environ.Env()
-# Only read .env if it exists; tests load env/test.example via pytest.ini
-env_file = BASE_DIR / ".env"
-if env_file.exists():
-    environ.Env.read_env(env_file)
 configure_logging()
 
 
@@ -31,28 +26,20 @@ configure_logging()
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DJANGO_DEBUG", default=False)  # Controlled via environment
+DEBUG = app_settings.django_debug  # Controlled via environment
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY", default=None)
+SECRET_KEY = app_settings.django_secret_key
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = get_random_secret_key()
     else:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set in production")
 
-ALLOWED_HOSTS = env.list(
-    "DJANGO_ALLOWED_HOSTS",
-    default=[
-        "localhost",
-        "testserver",
-        "127.0.0.1",
-        "curly-space-sniffle-pjxw7ww6r76frgp-8000.app.github.dev",
-    ],
-)
+ALLOWED_HOSTS = list(app_settings.django_allowed_hosts)
 
 # Dynamically add Codespaces URL to ALLOWED_HOSTS
-CODESPACE_URL = os.getenv("CODESPACE_NAME")
+CODESPACE_URL = app_settings.codespace_name
 if CODESPACE_URL:
     ALLOWED_HOSTS.append(f"{CODESPACE_URL}-8000.app.github.dev")
 
@@ -109,21 +96,23 @@ WSGI_APPLICATION = "inventory_app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.environ.get("DATABASE_URL")  # prefer Codespaces secrets
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL", default=DATABASE_URL or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-    )
-}
+DATABASE_URL = app_settings.database_url
+if DATABASE_URL:
+    DATABASES = {"default": dj_database_url.parse(DATABASE_URL)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # Only apply options if a database engine is specified
 if DATABASES["default"].get("ENGINE"):
-    # For PostgreSQL, make SSL mode conditional
     if DATABASES["default"]["ENGINE"].endswith("postgresql"):
-        if env.bool("DATABASE_SSL_REQUIRE", default=True):
+        if app_settings.database_ssl_require:
             DATABASES["default"].setdefault("OPTIONS", {})
             DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
-    # Modest keep-alive
     DATABASES["default"]["CONN_MAX_AGE"] = 60
 
 
@@ -168,7 +157,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-STATIC_VERSION = env("STATIC_VERSION", default="dev")
+STATIC_VERSION = app_settings.static_version
 
 # Media files (Uploaded content)
 MEDIA_URL = "/media/"

@@ -8,11 +8,12 @@ module selects the appropriate environment submodule based on the
 can handle configuration itself.
 """
 
-import os
 from importlib import import_module
 
-if os.getenv("DJANGO_SETTINGS_MODULE") == "inventory_app.settings":
-    DJANGO_ENV = os.getenv("DJANGO_ENV", "dev")
+from core.config import settings as app_settings
+
+if app_settings.django_settings_module == "inventory_app.settings":
+    DJANGO_ENV = app_settings.django_env
     _module = import_module(f"inventory_app.settings.{DJANGO_ENV}")
 
     for setting in dir(_module):

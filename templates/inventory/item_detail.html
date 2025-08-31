@@ -8,9 +8,12 @@
 
 {% block actions %}
   <a href="{% url 'item_edit' item.item_id %}" class="btn-secondary">Edit</a>
-  <a href="{% url 'item_toggle_active' item.item_id %}" class="btn-secondary">
-    {% if item.is_active %}Archive{% else %}Activate{% endif %}
-  </a>
+  <form action="{% url 'item_toggle_active' item.item_id %}" method="post" class="inline">
+    {% csrf_token %}
+    <button type="submit" class="btn-secondary">
+      {% if item.is_active %}Archive{% else %}Activate{% endif %}
+    </button>
+  </form>
   <a href="{% url 'item_delete' item.item_id %}" class="btn-danger">Delete</a>
 {% endblock %}
 

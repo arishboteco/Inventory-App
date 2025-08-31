@@ -40,6 +40,12 @@ def test_dashboard_kpis_endpoint(client, item_factory):
     assert b"Suppliers" in resp.content
     assert b"Pending Indents" in resp.content
 
+    html = resp.content.decode()
+    assert f'href="{reverse("items_list")}"' in html
+    assert f'href="{reverse("items_list")}?stock_status=low"' in html
+    assert f'href="{reverse("suppliers_list")}"' in html
+    assert f'href="{reverse("indents_list")}?status=PENDING"' in html
+
 
 @pytest.mark.django_db
 def test_dashboard_has_single_filter_form(client, django_user_model):

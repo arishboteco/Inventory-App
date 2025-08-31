@@ -1,5 +1,9 @@
 {% load icon_tags %}
+{% if href %}
+<a href="{{ href }}" class="card block">
+{% else %}
 <div class="card">
+{% endif %}
   <div class="card-compact">
     <div class="flex items-center">
       <div class="flex-shrink-0">
@@ -15,4 +19,8 @@
       </div>
     </div>
   </div>
+{% if href %}
+</a>
+{% else %}
 </div>
+{% endif %}

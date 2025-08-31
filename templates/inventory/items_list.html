@@ -1,5 +1,5 @@
 {% extends "components/create_manage_layout.html" %}
-{% load static %}
+{% load static icon_tags %}
 
 {% block breadcrumbs %}
   {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
@@ -156,7 +156,17 @@
   <!-- Place filters directly above the table -->
   <div class="card mb-4">
     <div class="card-body">
-      <div class="text-sm text-gray-600 mb-2">Filter and explore</div>
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm text-gray-600">Filter and explore</div>
+        <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
+          <button type="button" class="btn-icon" data-layout-btn data-value="table" aria-label="Table view"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+            {% icon 'list-bullet' 'w-4 h-4' %}
+          </button>
+          <button type="button" class="btn-icon" data-layout-btn data-value="grid" aria-label="Grid view"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+            {% icon 'squares-2x2' 'w-4 h-4' %}
+          </button>
+        </div>
+      </div>
       {% url 'items_table' as items_table_url %}
       {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
     </div>
@@ -237,7 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
       container.setAttribute('data-density', value);
     });
   });
-  document.querySelectorAll('[data-layout-btn]').forEach(btn => {
+  const layoutBtns = document.querySelectorAll('[data-layout-btn]');
+  layoutBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const value = btn.getAttribute('data-value');
       const url = new URL(window.location.href);
@@ -254,6 +265,10 @@ document.addEventListener('DOMContentLoaded', function() {
       window.location.replace(url.toString());
     }
   }
+  const currentLayout = new URL(window.location.href).searchParams.get('layout') || 'table';
+  layoutBtns.forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === currentLayout ? 'true' : 'false');
+  });
   // Announce updates
   const live = document.getElementById('items-aria-live');
   function announce(text){ if(live){ live.textContent = text; } }

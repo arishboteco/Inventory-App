@@ -25,9 +25,16 @@ def _create_item(**kwargs):
     return Item.objects.create(**defaults)
 
 
-def test_items_table_links_to_detail(client):
+def test_item_link_in_grid_layout(client):
     item = _create_item()
     resp = client.get(reverse("items_table") + "?layout=grid")
+    assert resp.status_code == 200
+    assert reverse("item_detail", args=[item.pk]) in resp.content.decode()
+
+
+def test_item_link_in_table_layout(client):
+    item = _create_item()
+    resp = client.get(reverse("items_table") + "?layout=table")
     assert resp.status_code == 200
     assert reverse("item_detail", args=[item.pk]) in resp.content.decode()
 

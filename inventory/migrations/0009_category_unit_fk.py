@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("inventory", "0008_remove_stocktransaction_related_po_id_and_more"),
+        ("inventory", "0009_a_category_unit_models"),
     ]
 
     operations = [

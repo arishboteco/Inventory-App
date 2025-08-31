@@ -32,7 +32,9 @@
                                 <div class="flex items-center gap-3">
                                     <!-- Item Status Indicator -->
                                     <div class="w-3 h-3 rounded-full {{ item.is_active|yesno:'bg-green-400,bg-red-400' }} flex-shrink-0 shadow-sm"></div>
-                                    <a href="{% url 'item_detail' item.item_id %}" data-ignore-toggle>
+                                    <a href="{% url 'item_edit' item.item_id %}"
+                                       data-modal-url="{% url 'item_edit' item.item_id %}?partial=1"
+                                       data-ignore-toggle>
                                         <h3 id="item-title-{{ item.item_id }}" class="text-base font-semibold text-gray-900 line-clamp-2">{{ item.name }}</h3>
                                     </a>
                                 </div>

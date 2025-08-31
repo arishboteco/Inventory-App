@@ -29,7 +29,10 @@ def test_item_link_in_grid_layout(client):
     item = _create_item()
     resp = client.get(reverse("items_table") + "?layout=grid")
     assert resp.status_code == 200
-    assert reverse("item_detail", args=[item.pk]) in resp.content.decode()
+    edit_url = reverse("item_edit", args=[item.pk])
+    html = resp.content.decode()
+    assert f'href="{edit_url}"' in html
+    assert f'data-modal-url="{edit_url}?partial=1"' in html
 
 
 def test_item_link_in_table_layout(client):

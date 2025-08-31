@@ -34,15 +34,19 @@ def test_items_table_links_to_detail(client):
 
 def test_archive_action_toggles_item(client):
     item = _create_item()
-    resp = client.get(reverse("items_table") + "?layout=grid")
-    assert "data-action=\"archive\"" in resp.content.decode()
+    detail_url = reverse("item_detail", args=[item.pk])
+    resp = client.get(detail_url)
 
-    url = reverse("item_toggle_active", args=[item.pk])
-    client.post(url, {"page": "1"})
+    toggle_url = reverse("item_toggle_active", args=[item.pk])
+    html = resp.content.decode()
+    assert f'action="{toggle_url}"' in html
+    assert 'method="post"' in html
+
+    client.post(toggle_url)
     item.refresh_from_db()
     assert item.is_active is False
 
-    client.post(url, {"page": "1"})
+    client.post(toggle_url)
     item.refresh_from_db()
     assert item.is_active is True
 

@@ -30,7 +30,7 @@ def test_ajax_dashboard_data_filters(client, item_factory):
     day = timezone.now().date().isoformat()
     url = (
         reverse("ajax-dashboard-data")
-        + f"?item={item.pk}&supplier={supplier.pk}&start={day}&end={day}"
+        + f"?item={item.pk}&supplier={supplier.pk}&range=1&metric=quantity"
     )
     resp = client.get(url)
     assert resp.status_code == 200

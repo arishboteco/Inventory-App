@@ -1,17 +1,18 @@
 import json
 import logging
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.cache import cache
-from django.db.models import Sum
-from django.db.models.functions import TruncDate
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
+from django.db.models.functions import TruncDate, Coalesce
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.utils.dateparse import parse_date
+from django.utils import timezone
 
 from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
 from inventory.services import counts, dashboard_service, kpis
@@ -95,8 +96,19 @@ def dashboard_kpis(request):
     return render(request, "core/_kpi_cards.html", data)
 
 
-def _stock_trend_data(item_id=None, supplier_id=None, start=None, end=None):
-    """Return stock transaction totals grouped by day."""
+def _stock_trend_data(
+    item_id=None, supplier_id=None, start=None, end=None, metric="quantity"
+):
+    """Return stock transaction totals grouped by day.
+
+    Args:
+        item_id: Optional item identifier to filter by item.
+        supplier_id: Optional supplier identifier to filter by supplier.
+        start: Start date for filtering (inclusive).
+        end: End date for filtering (inclusive).
+        metric: "quantity" to aggregate quantities or "value" for monetary value.
+    """
+
     qs = StockTransaction.objects.all()
     if item_id:
         qs = qs.filter(item_id=item_id)
@@ -110,11 +122,21 @@ def _stock_trend_data(item_id=None, supplier_id=None, start=None, end=None):
     if end:
         qs = qs.filter(transaction_date__date__lte=end)
 
+    annotation = {"total": Sum("quantity_change")}
+    if metric == "value":
+        annotation["total"] = Sum(
+            ExpressionWrapper(
+                F("quantity_change") * Coalesce(F("item__last_purchase_price"), 0),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            )
+        )
+        qs = qs.select_related("item")
+
     data = (
         qs.annotate(day=TruncDate("transaction_date"))
         .values("day")
         .order_by("day")
-        .annotate(total=Sum("quantity_change"))
+        .annotate(**annotation)
     )
     labels = [d["day"].strftime("%Y-%m-%d") for d in data]
     values = [float(d["total"]) for d in data]
@@ -125,10 +147,12 @@ def interactive_dashboard(request):
     """Render dashboard with filter controls for asynchronous charts."""
     item_id = request.GET.get("item")
     supplier_id = request.GET.get("supplier")
-    start = parse_date(request.GET.get("start")) if request.GET.get("start") else None
-    end = parse_date(request.GET.get("end")) if request.GET.get("end") else None
+    metric = request.GET.get("metric", "quantity")
+    days = int(request.GET.get("range", 30))
+    end = timezone.now().date()
+    start = end - timedelta(days=days - 1)
 
-    labels, values = _stock_trend_data(item_id, supplier_id, start, end)
+    labels, values = _stock_trend_data(item_id, supplier_id, start, end, metric)
     context = {
         "low_stock": dashboard_service.get_low_stock_items(),
         "trend_labels": json.dumps(labels),
@@ -146,8 +170,10 @@ def ajax_dashboard_data(request):
     """Return JSON data for dashboard charts based on filters."""
     item_id = request.GET.get("item")
     supplier_id = request.GET.get("supplier")
-    start = parse_date(request.GET.get("start")) if request.GET.get("start") else None
-    end = parse_date(request.GET.get("end")) if request.GET.get("end") else None
+    metric = request.GET.get("metric", "quantity")
+    days = int(request.GET.get("range", 30))
+    end = timezone.now().date()
+    start = end - timedelta(days=days - 1)
 
-    labels, values = _stock_trend_data(item_id, supplier_id, start, end)
+    labels, values = _stock_trend_data(item_id, supplier_id, start, end, metric)
     return JsonResponse({"labels": labels, "values": values})

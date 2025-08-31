@@ -11,7 +11,7 @@ In your Render service dashboard, add these environment variables:
 #### **Required Variables:**
 
 ```bash
-DJANGO_SETTINGS_MODULE=inventory_app.settings_production
+DJANGO_ENV=production
 DEBUG=False
 DJANGO_ALLOWED_HOSTS=<RENDER_DOMAIN>
 DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>

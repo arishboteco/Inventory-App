@@ -198,3 +198,7 @@ The application exposes the following REST endpoints under `/api/`:
 - `/api/goods-received-notes/` – log received goods.
 - `/api/grn-items/` – items contained in a goods received note.
 
+## Deployment
+
+Settings are determined by the `DJANGO_ENV` environment variable. For production deployments (e.g., on Render) set `DJANGO_ENV=production`. The `DJANGO_SETTINGS_MODULE` variable is no longer required.
+

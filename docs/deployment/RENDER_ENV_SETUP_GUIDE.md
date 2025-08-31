@@ -18,8 +18,8 @@ Copy and paste each variable exactly as shown:
 
 #### **🔧 CORE CONFIGURATION**
 ```
-Key: DJANGO_SETTINGS_MODULE
-Value: inventory_app.settings_production
+Key: DJANGO_ENV
+Value: production
 
 Key: DEBUG
 Value: False
@@ -121,7 +121,7 @@ If you have these variables, **DELETE** them:
 For faster setup, here's a format you can copy section by section:
 
 ```bash
-DJANGO_SETTINGS_MODULE=inventory_app.settings_production
+DJANGO_ENV=production
 DEBUG=False
 DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>
 DJANGO_ALLOWED_HOSTS=.onrender.com,localhost,127.0.0.1

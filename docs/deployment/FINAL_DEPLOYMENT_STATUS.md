@@ -136,7 +136,7 @@ DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>?
 DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=<RENDER_DOMAIN>
-DJANGO_SETTINGS_MODULE=inventory_app.settings_production
+DJANGO_ENV=production
 ```
 
 ### **2. Build Process** (Automated via render.yaml)

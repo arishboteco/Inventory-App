@@ -1,0 +1,7 @@
+<ul class="space-y-2">
+  {% for tx in stock_movements %}
+  <li>
+    {{ tx.transaction_date }} – {{ tx.transaction_type }} {{ tx.quantity_change }}
+  </li>
+  {% endfor %}
+</ul>

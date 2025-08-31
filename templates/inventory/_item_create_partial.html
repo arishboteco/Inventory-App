@@ -1,4 +1,4 @@
-<div class="card drawer-panel" style="max-width: 480px;">
+<div class="card drawer-panel max-w-[480px]">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">Add New Item</h3>
     <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
@@ -7,7 +7,7 @@
     <form method="post" data-modal-form action="{% url 'items_list' %}">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
-      <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
+      <div class="grid grid-cols-2 gap-3">
         <div>
           <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
           {{ form.name }}
@@ -48,19 +48,19 @@
           {{ form.lead_time_days }}
           {% include "forms/feedback.html" %}
         </div>
-        <div style="grid-column: span 2;">
+        <div class="col-span-2">
           <label for="{{ form.departments.id_for_label }}" class="form-label">Departments</label>
           <div class="p-2 border rounded">
             {{ form.departments }}
           </div>
           {% include "forms/feedback.html" %}
         </div>
-        <div style="grid-column: span 2;">
+        <div class="col-span-2">
           <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
           {{ form.notes }}
           {% include "forms/feedback.html" %}
         </div>
-        <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:center; gap:.5rem;">
+        <div class="col-span-2 flex justify-between items-center gap-2">
           <div>
             <label for="{{ form.is_active.id_for_label }}" class="inline-flex items-center gap-2 text-gray-700">
               {{ form.is_active }}

@@ -1,4 +1,4 @@
-<div class="card drawer-panel" style="max-width: 520px;">
+<div class="card drawer-panel max-w-[520px]">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">{{ title|default:"Bulk Upload Items" }}</h3>
     <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
@@ -17,7 +17,7 @@
         {{ form.file }}
         {% include "forms/feedback.html" %}
       </div>
-      <div class="flex items-center justify-end" style="gap:.5rem">
+      <div class="flex items-center justify-end gap-2">
         <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
         <button type="submit" class="btn-primary">Upload</button>
       </div>

@@ -261,6 +261,33 @@
     font-size: 1rem;
   }
 
+  .btn-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+    color: #374151;
+    background-color: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 0.375rem;
+    transition: all 0.15s ease;
+  }
+  .btn-square:hover {
+    background-color: #f9fafb;
+    color: #374151;
+  }
+  .btn-square:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
+  }
+  .btn-square:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   /* Form Controls */
   .form-input {
     display: block;
@@ -411,9 +438,7 @@
   /* Button styles */
   .btn-primary,
   .btn-secondary,
-  .btn-danger,
-  .btn-tertiary,
-  .btn-outline {
+  .btn-danger {
     box-shadow: var(--shadow-btn);
   }
 

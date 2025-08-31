@@ -1,5 +1,5 @@
 {% load icon_tags %}
-<div class="mb-2 text-sm text-gray-600 flex items-center" style="gap:.5rem">
+<div class="mb-2 text-sm text-gray-600 flex items-center gap-2">
   <span>Columns:</span>
   <label><input type="checkbox" data-col-toggle value="category" checked> Category</label>
   <label><input type="checkbox" data-col-toggle value="unit" checked> Unit</label>
@@ -11,7 +11,7 @@
 <table class="table w-full bg-white border border-gray-200 rounded-lg table-sticky" id="grid-table">
   <thead class="table-header">
     <tr>
-      <th scope="col" class="sticky top-0 z-10 bg-white" style="width:32px"><input type="checkbox" data-select-all aria-label="Select all"></th>
+      <th scope="col" class="sticky top-0 z-10 bg-white w-8"><input type="checkbox" data-select-all aria-label="Select all"></th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="name">Name</th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="category">Category</th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="unit">Unit</th>
@@ -19,7 +19,7 @@
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="rop">ROP</th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="departments">Departments</th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="status">Status</th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" style="width:120px">Actions</th>
+      <th scope="col" class="sticky top-0 z-10 bg-white w-[120px]">Actions</th>
     </tr>
   </thead>
   <tbody class="table-body">
@@ -67,7 +67,7 @@
         {% endif %}
       </td>
       <td>
-        <div class="flex items-center" style="gap:.25rem">
+        <div class="flex items-center gap-1">
           <button type="button" data-action="table-quick-edit" class="p-1 text-gray-400 hover:text-blue-600" title="Quick Edit" aria-label="Quick edit {{ item.name }}">
             {% icon 'pencil-square' 'w-4 h-4' %}
           </button>

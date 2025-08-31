@@ -1,6 +1,9 @@
 {% extends "components/create_manage_layout.html" %}
 {% load static icon_tags %}
 
+{% block table_id %}items-container{% endblock %}
+{% block hx_get %}{% url 'items_table' %}{% endblock %}
+
 {% block breadcrumbs %}
   {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
 {% endblock %}
@@ -90,7 +93,7 @@
 {% endblock %}
 
 {% block data_container %}
-<div id="items-container" class="card">
+<div class="card">
   <div class="table-scroll">
     <div class="overflow-x-auto" id="items-list">
       {% include "components/items_table.html" with layout=request.GET.layout|default:'table' %}

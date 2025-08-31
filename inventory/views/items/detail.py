@@ -100,10 +100,6 @@ class ItemInlineUpdateView(View):
 
         editable_fields = {
             "name",
-            "item_code",
-            "category",
-            "sub_category",
-            "base_unit",
             "current_stock",
             "reorder_point",
             "notes",

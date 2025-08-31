@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PRE-PRODUCTION TESTING COMPLETE: Comprehensive testing completed - inline form functional, clean codebase, ready for production deployment
 - Shared `templates/components/kpi_card.html` for consistent card-based KPI display
 - Home link added to primary navigation
+- Dashboard KPI cards now link to items, low-stock items, suppliers, and pending indents
 
 ### Changed
 

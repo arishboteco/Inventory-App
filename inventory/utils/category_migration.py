@@ -16,6 +16,8 @@ import logging
 from django.db import connection, transaction
 
 from inventory.services.categories_service import CategoriesService
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ def migrate_item_categories(dry_run=True):
     Args:
         dry_run (bool): If True, only show what would be changed without applying
     """
-    print(f"=== CATEGORY MIGRATION {'(DRY RUN)' if dry_run else '(LIVE)'} ===")
+    logger.info("=== CATEGORY MIGRATION %s ===", "(DRY RUN)" if dry_run else "(LIVE)")
 
     with connection.cursor() as cursor:
         # Get all items that have category text but no category_id_ref
@@ -41,12 +43,14 @@ def migrate_item_categories(dry_run=True):
         items_to_migrate = cursor.fetchall()
 
         if not items_to_migrate:
-            print("No items need category migration.")
+            logger.info("No items need category migration.")
             return
 
-        print(f"Found {len(items_to_migrate)} items to migrate:")
-        print("item_id | name | category > sub_category | proposed_category_id")
-        print("-" * 80)
+        logger.info("Found %d items to migrate:", len(items_to_migrate))
+        logger.info(
+            "item_id | name | category > sub_category | proposed_category_id"
+        )
+        logger.info("-" * 80)
 
         successful_migrations = []
         failed_migrations = []
@@ -79,19 +83,32 @@ def migrate_item_categories(dry_run=True):
                 status = "❌"
 
             display_category = f"{category} > {sub_category or 'None'}"
-            print(f"{item_id:7} | {name[:20]:20} | {display_category:25} | {proposed_id or 'None':17} {status}")
+            logger.info(
+                "%7d | %20s | %25s | %17s %s",
+                item_id,
+                name[:20],
+                display_category,
+                proposed_id or "None",
+                status,
+            )
 
-        print("\n=== MIGRATION SUMMARY ===")
-        print(f"Successful mappings: {len(successful_migrations)}")
-        print(f"Failed mappings: {len(failed_migrations)}")
+        logger.info("\n=== MIGRATION SUMMARY ===")
+        logger.info("Successful mappings: %d", len(successful_migrations))
+        logger.info("Failed mappings: %d", len(failed_migrations))
 
         if failed_migrations:
-            print("\nFailed migrations (need manual review):")
+            logger.warning("\nFailed migrations (need manual review):")
             for item in failed_migrations:
-                print(f"  - Item {item['item_id']} ({item['name']}): '{item['category']}' > '{item['sub_category']}'")
+                logger.warning(
+                    "  - Item %s (%s): '%s' > '%s'",
+                    item["item_id"],
+                    item["name"],
+                    item["category"],
+                    item["sub_category"],
+                )
 
         if not dry_run and successful_migrations:
-            print(f"\nApplying {len(successful_migrations)} category_id updates...")
+            logger.info("\nApplying %d category_id updates...", len(successful_migrations))
 
             with transaction.atomic():
                 for migration in successful_migrations:
@@ -99,27 +116,31 @@ def migrate_item_categories(dry_run=True):
                         "UPDATE items SET category_id_ref = %s WHERE item_id = %s",
                         [migration['category_id'], migration['item_id']]
                     )
-                    print(f"  ✓ Updated item {migration['item_id']} -> category_id={migration['category_id']}")
+                    logger.info(
+                        "  ✓ Updated item %s -> category_id=%s",
+                        migration["item_id"],
+                        migration["category_id"],
+                    )
 
-            print("\nMigration completed successfully!")
+            logger.info("\nMigration completed successfully!")
 
             # Verify the migration
-            print("\n=== VERIFICATION ===")
+            logger.info("\n=== VERIFICATION ===")
             cursor.execute("""
                 SELECT COUNT(*) FROM items
                 WHERE category IS NOT NULL AND category != ''
                 AND category_id_ref IS NOT NULL
             """)
             migrated_count = cursor.fetchone()[0]
-            print(f"Items now using category_id_ref: {migrated_count}")
+            logger.info("Items now using category_id_ref: %d", migrated_count)
 
         elif dry_run:
-            print("\nDry run completed. Use dry_run=False to apply changes.")
+            logger.info("\nDry run completed. Use dry_run=False to apply changes.")
 
 
 def validate_category_migration():
     """Validate that category_id references are working correctly."""
-    print("=== CATEGORY MIGRATION VALIDATION ===")
+    logger.info("=== CATEGORY MIGRATION VALIDATION ===")
 
     with connection.cursor() as cursor:
         # Check items with category_id_ref
@@ -132,9 +153,9 @@ def validate_category_migration():
         """)
         items = cursor.fetchall()
 
-        print(f"Found {len(items)} items with category_id references:")
-        print("item_id | name | category_id | category > sub_category")
-        print("-" * 70)
+        logger.info("Found %d items with category_id references:", len(items))
+        logger.info("item_id | name | category_id | category > sub_category")
+        logger.info("-" * 70)
 
         valid_refs = 0
         invalid_refs = 0
@@ -151,23 +172,30 @@ def validate_category_migration():
                 display_category = "INVALID REFERENCE"
                 status = "❌"
 
-            print(f"{item_id:7} | {name[:20]:20} | {category_id:11} | {display_category:30} {status}")
+            logger.info(
+                "%7d | %20s | %11s | %30s %s",
+                item_id,
+                name[:20],
+                category_id,
+                display_category,
+                status,
+            )
 
-        print("\nValidation Summary:")
-        print(f"Valid references: {valid_refs}")
-        print(f"Invalid references: {invalid_refs}")
+        logger.info("\nValidation Summary:")
+        logger.info("Valid references: %d", valid_refs)
+        logger.info("Invalid references: %d", invalid_refs)
 
         if invalid_refs == 0:
-            print("✓ All category references are valid!")
+            logger.info("✓ All category references are valid!")
         else:
-            print("❌ Some category references need attention.")
+            logger.warning("❌ Some category references need attention.")
 
 
 def cleanup_duplicate_category_fields():
     """Clean up the duplicate category/sub_category text fields after successful migration."""
-    print("=== CATEGORY FIELD CLEANUP ===")
-    print("This will clear the separate category/sub_category text fields")
-    print("after confirming all items have valid category_id_ref values.")
+    logger.info("=== CATEGORY FIELD CLEANUP ===")
+    logger.info("This will clear the separate category/sub_category text fields")
+    logger.info("after confirming all items have valid category_id_ref values.")
 
     with connection.cursor() as cursor:
         # Check that all items with categories have category_id_ref
@@ -179,7 +207,9 @@ def cleanup_duplicate_category_fields():
         unmigrated = cursor.fetchone()[0]
 
         if unmigrated > 0:
-            print(f"❌ Cannot cleanup: {unmigrated} items still need category_id migration")
+            logger.warning(
+                "❌ Cannot cleanup: %d items still need category_id migration", unmigrated
+            )
             return False
 
         # Check that all category_id_ref values are valid
@@ -191,10 +221,13 @@ def cleanup_duplicate_category_fields():
         invalid_refs = cursor.fetchone()[0]
 
         if invalid_refs > 0:
-            print(f"❌ Cannot cleanup: {invalid_refs} items have invalid category_id_ref values")
+            logger.warning(
+                "❌ Cannot cleanup: %d items have invalid category_id_ref values",
+                invalid_refs,
+            )
             return False
 
-        print("✓ All category migrations are valid. Safe to cleanup text fields.")
+        logger.info("✓ All category migrations are valid. Safe to cleanup text fields.")
         return True
 
 

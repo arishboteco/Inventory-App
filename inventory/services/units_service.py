@@ -24,8 +24,6 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Tuple
 
-from django.db.utils import OperationalError
-
 from inventory.models.unit import Unit
 
 logger = logging.getLogger(__name__)
@@ -68,45 +66,19 @@ class UnitsService:
         """
         try:
             unit = Unit.objects.get(unit_id=unit_id)
+        except Unit.DoesNotExist:
             return {
-                'unit_id': unit.unit_id,
-                'base_unit': unit.base_unit,
-                'purchase_unit': unit.purchase_unit,
-                'conversion_factor': float(unit.conversion_factor),
-            }
-        except (Unit.DoesNotExist, OperationalError) as e:
-            if isinstance(e, OperationalError):
-                logger.warning(f"Could not access units table: {e}")
-
-        # Fallback for test environment - based on actual database values
-        fallback_units = {
-            1: {
-                'base_unit': 'GM',
-                'purchase_unit': '2 KG',
-                'conversion_factor': 2000.0,
-            },
-            19: {
-                'base_unit': 'GM',
-                'purchase_unit': 'KG',
-                'conversion_factor': 1000.0,
-            },
-            55: {
-                'base_unit': 'PC',
-                'purchase_unit': 'PC',
+                'unit_id': unit_id,
+                'base_unit': 'unknown',
+                'purchase_unit': 'unknown',
                 'conversion_factor': 1.0,
-            },
-        }
-
-        if unit_id in fallback_units:
-            result = fallback_units[unit_id].copy()
-            result['unit_id'] = unit_id
-            return result
+            }
 
         return {
-            'unit_id': unit_id,
-            'base_unit': 'unknown',
-            'purchase_unit': 'unknown',
-            'conversion_factor': 1.0
+            'unit_id': unit.unit_id,
+            'base_unit': unit.base_unit,
+            'purchase_unit': unit.purchase_unit,
+            'conversion_factor': float(unit.conversion_factor),
         }
 
     @staticmethod
@@ -163,39 +135,16 @@ class UnitsService:
     @lru_cache(maxsize=None)
     def get_all_units() -> List[Dict]:
         """Get all available units for dropdown population."""
-        try:
-            units = Unit.objects.all().order_by('base_unit', 'purchase_unit')
-            return [
-                {
-                    'unit_id': unit.unit_id,
-                    'base_unit': unit.base_unit,
-                    'purchase_unit': unit.purchase_unit,
-                    'conversion_factor': float(unit.conversion_factor),
-                }
-                for unit in units
-            ]
-        except OperationalError as e:
-            logger.warning(f"Could not load units: {e}")
-            return [
-                {
-                    'unit_id': 1,
-                    'base_unit': 'GM',
-                    'purchase_unit': '2 KG',
-                    'conversion_factor': 2000.0,
-                },
-                {
-                    'unit_id': 19,
-                    'base_unit': 'GM',
-                    'purchase_unit': 'KG',
-                    'conversion_factor': 1000.0,
-                },
-                {
-                    'unit_id': 55,
-                    'base_unit': 'PC',
-                    'purchase_unit': 'PC',
-                    'conversion_factor': 1.0,
-                },
-            ]
+        units = Unit.objects.all().order_by('base_unit', 'purchase_unit')
+        return [
+            {
+                'unit_id': unit.unit_id,
+                'base_unit': unit.base_unit,
+                'purchase_unit': unit.purchase_unit,
+                'conversion_factor': float(unit.conversion_factor),
+            }
+            for unit in units
+        ]
 
     @staticmethod
     def get_units_by_base_unit(base_unit: str) -> List[Dict]:

@@ -1,4 +1,5 @@
 from .category import Category
+from .subcategory import SubCategory
 from .departments import Department, ItemDepartment
 from .fields import CoerceFloatField
 from .items import Item, StockTransaction
@@ -31,5 +32,6 @@ __all__ = [
     "Department",
     "ItemDepartment",
     "Category",
+    "SubCategory",
     "Unit",
 ]

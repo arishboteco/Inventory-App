@@ -4,7 +4,7 @@
     {% for item in page_obj.object_list %}
     <div class="item-row bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden h-full" data-item-id="{{ item.item_id }}">
         <!-- Main Row -->
-    <button type="button" class="main-row w-full text-left px-5 py-5 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 cursor-pointer" data-action="toggle-details" aria-label="Toggle details" aria-expanded="false" aria-controls="details-{{ item.item_id }}">
+    <div class="main-row w-full text-left px-5 py-5 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 cursor-pointer" data-action="toggle-details" aria-label="Toggle details" aria-expanded="false" aria-controls="details-{{ item.item_id }}" role="button" tabindex="0">
             <div class="flex items-center justify-between">
                 <!-- Left side - Item info -->
                 <div class="flex items-center space-x-4 flex-1">
@@ -143,7 +143,7 @@
                     </div>
                 </div>
             </div>
-        </button>
+        </div>
 
                     <!-- Department -->
                     <div class="text-right min-w-0">

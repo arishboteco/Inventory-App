@@ -10,20 +10,20 @@
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
     const details = document.getElementById(`details-${itemId}`);
-    const toggleBtn = row.querySelector("button.main-row");
-    if (!details || !toggleBtn) return;
+    const toggleEl = row.querySelector(".main-row");
+    if (!details || !toggleEl) return;
 
-    const expanded = toggleBtn.getAttribute("aria-expanded") === "true";
+    const expanded = toggleEl.getAttribute("aria-expanded") === "true";
     if (expanded) {
       details.classList.add("hidden");
-      toggleBtn.setAttribute("aria-expanded", "false");
+      toggleEl.setAttribute("aria-expanded", "false");
       // reset chevron rotation
-      const svg = toggleBtn.querySelector("svg");
+      const svg = toggleEl.querySelector("svg");
       if (svg) svg.style.transform = "rotate(0deg)";
     } else {
       details.classList.remove("hidden");
-      toggleBtn.setAttribute("aria-expanded", "true");
-      const svg = toggleBtn.querySelector("svg");
+      toggleEl.setAttribute("aria-expanded", "true");
+      const svg = toggleEl.querySelector("svg");
       if (svg) svg.style.transform = "rotate(90deg)";
     }
   }

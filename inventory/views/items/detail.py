@@ -13,7 +13,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_protect
 
 from ...forms.item_forms import ItemForm
-from ...models import Item, StockTransaction
+from ...models import Item, Supplier, StockTransaction
 from ...services import item_service, stock_service
 from .constants import EXCLUDED_FIELDS
 from .list import ItemsTableView
@@ -187,14 +187,22 @@ class ItemDetailView(View):
             ("Notes", details.get("notes", "None")),
             ("Active", "Yes" if details["is_active"] else "No"),
         ]
-        recent_activity = StockTransaction.objects.filter(item_id=pk).order_by(
+        stock_movements = StockTransaction.objects.filter(item_id=pk).order_by(
             "-transaction_date"
-        )[:5]
+        )
+        recent_activity = stock_movements[:5]
+        suppliers = (
+            Supplier.objects.filter(
+                purchaseorder__purchaseorderitem__item_id=pk
+            ).distinct()
+        )
         stock_history = stock_service.get_stock_history(pk)
         ctx = {
             "item": details,
             "rows": rows,
+            "stock_movements": stock_movements,
             "recent_activity": recent_activity,
+            "suppliers": suppliers,
             "stock_history": json.dumps(stock_history),
             "list_url": reverse("items_list"),
             "list_title": "Items",

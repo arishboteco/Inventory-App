@@ -8,6 +8,10 @@
 
 {% block actions %}
   <a href="{% url 'item_edit' item.item_id %}" class="btn-secondary">Edit</a>
+  <a href="{% url 'item_toggle_active' item.item_id %}" class="btn-secondary">
+    {% if item.is_active %}Archive{% else %}Activate{% endif %}
+  </a>
+  <a href="{% url 'item_delete' item.item_id %}" class="btn-danger">Delete</a>
 {% endblock %}
 
 {% block detail_table %}
@@ -24,10 +28,18 @@
 {% endblock %}
 
 {% block extra_tables %}
-  {% if recent_activity %}
-  <h2 class="text-lg font-semibold mt-8 mb-4">Recent Activity</h2>
+  {% if suppliers %}
+  <h2 class="text-lg font-semibold mt-8 mb-4">Supplier History</h2>
   <ul class="space-y-2">
-    {% for tx in recent_activity %}
+    {% for supplier in suppliers %}
+    <li>{{ supplier.name }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if stock_movements %}
+  <h2 class="text-lg font-semibold mt-8 mb-4">Stock Movements</h2>
+  <ul class="space-y-2">
+    {% for tx in stock_movements %}
     <li>
       {{ tx.transaction_date }} – {{ tx.transaction_type }} {{ tx.quantity_change }}
     </li>

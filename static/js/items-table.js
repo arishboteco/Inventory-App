@@ -307,6 +307,32 @@
       });
   }
 
+  function archiveItem(row) {
+    const itemId = row?.dataset.itemId;
+    if (!itemId) return;
+    const csrf = getCsrfToken();
+    fetch(`/items/${itemId}/toggle/`, {
+      method: "POST",
+      headers: {
+        ...(csrf ? { "X-CSRFToken": csrf } : {}),
+        "X-Requested-With": "fetch",
+      },
+      body: new URLSearchParams({ page: "1" }),
+    })
+      .then((r) => {
+        if (r.ok) {
+          window.location.reload();
+        } else if (window.notifications && window.notifications.showToast) {
+          window.notifications.showToast("Unable to update item.", "error");
+        }
+      })
+      .catch(() => {
+        if (window.notifications && window.notifications.showToast) {
+          window.notifications.showToast("Unable to update item.", "error");
+        }
+      });
+  }
+
   // Event delegation
   document.addEventListener("click", function (e) {
     const target = e.target.closest("[data-action]");
@@ -352,6 +378,10 @@
       case "delete":
         e.preventDefault();
         deleteItem(row);
+        break;
+      case "archive":
+        e.preventDefault();
+        archiveItem(row);
         break;
       case "open-edit":
         e.preventDefault();

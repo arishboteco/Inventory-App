@@ -1,4 +1,4 @@
-<div class="card" style="max-width: 860px;">
+<div class="card" style="max-width: 860px; max-height: 90vh; overflow-y: auto;">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">Edit Item — {{ item.name }}</h3>
     <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
@@ -7,36 +7,93 @@
     <form method="post" data-modal-form action="{% url 'item_edit' item.item_id %}?partial=1">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
-      <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;">
-        <div>
-          <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
-          {{ form.name }}
-          {% include "forms/feedback.html" %}
+      <div class="grid" style="grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem;">
+        <!-- Essentials -->
+        <div class="section-panel" style="grid-column: span 12;" id="essentials-panel">
+          <h3 class="section-header">Essentials</h3>
+          <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items:start;">
+            <div class="space-y-1">
+              <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+              {{ form.name }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.unit_id.id_for_label }}" class="form-label">Unit</label>
+              {{ form.unit_id }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.category_id.id_for_label }}" class="form-label">Category</label>
+              {{ form.category_id }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.current_stock.id_for_label }}" class="form-label">Current Stock</label>
+              {{ form.current_stock }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.reorder_point.id_for_label }}" class="form-label">Reorder Point</label>
+              {{ form.reorder_point }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.is_active.id_for_label }}" class="form-label">Status</label>
+              <div class="inline-flex items-center gap-2 text-gray-700" style="height:38px;align-items:center;">
+                {{ form.is_active }}
+                <span>Active</span>
+              </div>
+              {% include "forms/feedback.html" %}
+            </div>
+          </div>
         </div>
-        <div>
-          <label for="{{ form.category_id.id_for_label }}" class="form-label">Category</label>
-          {{ form.category_id }}
-          {% include "forms/feedback.html" %}
+
+        <!-- Advanced -->
+        <div class="section-panel" style="grid-column: span 12;" id="advanced-panel">
+          <h3 class="section-header">Advanced</h3>
+          <div class="grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items:start;">
+            <div class="space-y-1">
+              <label for="{{ form.preferred_supplier.id_for_label }}" class="form-label">Preferred Supplier</label>
+              {{ form.preferred_supplier }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.initial_purchase_price.id_for_label }}" class="form-label">Initial Purchase Price</label>
+              {{ form.initial_purchase_price }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.minimum_order_qty.id_for_label }}" class="form-label">Min Order Qty</label>
+              {{ form.minimum_order_qty }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="space-y-1">
+              <label for="{{ form.lead_time_days.id_for_label }}" class="form-label">Lead Time (days)</label>
+              {{ form.lead_time_days }}
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="col-span-3 space-y-1">
+              <label for="{{ form.departments.id_for_label }}" class="form-label">Departments</label>
+              <div class="dept-grid">
+                {{ form.departments }}
+              </div>
+              {% include "forms/feedback.html" %}
+            </div>
+            <div class="col-span-3 space-y-1">
+              <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+              {{ form.notes }}
+              {% include "forms/feedback.html" %}
+            </div>
+          </div>
         </div>
-        <div>
-          <label for="{{ form.reorder_point.id_for_label }}" class="form-label">Reorder Point</label>
-          {{ form.reorder_point }}
-          {% include "forms/feedback.html" %}
+
+        <!-- Actions -->
+        <div style="grid-column: span 12;">
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
         </div>
-        <div>
-          <label for="{{ form.is_active.id_for_label }}" class="form-label">Active</label>
-          {{ form.is_active }}
-          {% include "forms/feedback.html" %}
-        </div>
-        <div style="grid-column: span 2;">
-          <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
-          {{ form.notes }}
-          {% include "forms/feedback.html" %}
-        </div>
-      </div>
-      <div class="mt-3 flex items-center justify-end" style="gap:.5rem">
-        <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
-        <button type="submit" class="btn-primary">Save</button>
       </div>
     </form>
   </div>

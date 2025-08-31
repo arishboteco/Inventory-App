@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.test import RequestFactory
 
 from inventory.forms.item_forms import ItemForm
-from inventory.models import Category, Unit
+from inventory.models import Category, Department, Item, Unit
 from tests.forms.test_item_forms import TestItemForm  # Use simplified test form
 
 
@@ -94,3 +94,31 @@ def test_item_form_uses_model_choice_fields():
     assert list(category_field.queryset) == list(
         Category.objects.all().order_by("category", "sub_category")
     )
+
+
+@pytest.mark.django_db
+def test_item_edit_modal_renders_all_fields():
+    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    category = Category.objects.create(category="Food", sub_category="Veg")
+    Department.objects.create(name="Kitchen")
+    item = Item.objects.create(name="T", unit=unit, category=category)
+    form = ItemForm(instance=item)
+    request = RequestFactory().get("/")
+    content = render_to_string(
+        "inventory/_item_form_partial.html", {"form": form, "item": item}, request=request
+    )
+    for field in [
+        "name",
+        "unit_id",
+        "category_id",
+        "departments",
+        "initial_purchase_price",
+        "preferred_supplier",
+        "minimum_order_qty",
+        "lead_time_days",
+        "reorder_point",
+        "current_stock",
+        "notes",
+        "is_active",
+    ]:
+        assert f'name="{field}"' in content

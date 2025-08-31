@@ -14,7 +14,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
     env_file:
-      - .env.staging
+      - env/staging.local
     depends_on:
       - db
       - redis
@@ -41,7 +41,7 @@ services:
     volumes:
       - staging_postgres_data:/var/lib/postgresql/data
     env_file:
-      - .env.staging
+      - env/staging.local
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

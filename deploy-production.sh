@@ -8,7 +8,7 @@ echo "🚀 Starting Production Deployment..."
 echo "====================================="
 
 # Configuration
-PRODUCTION_ENV_FILE=".env.production"
+PRODUCTION_ENV_FILE="env/production.local"
 DOCKER_COMPOSE_FILE="docker-compose.production.yml"
 BACKUP_DIR="backups/production/$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="/var/log/inventory-deployment.log"
@@ -50,27 +50,27 @@ highlight() {
 # Pre-deployment checks
 pre_deployment_checks() {
     log "Running pre-deployment checks..."
-    
+
     # Check if running as root
     if [[ $EUID -eq 0 ]]; then
         warning "Running as root. Consider using a non-root user for security."
     fi
-    
+
     # Check if Docker is running
     if ! docker info > /dev/null 2>&1; then
         error "Docker is not running. Please start Docker and try again."
     fi
-    
+
     # Check if docker-compose is available
     if ! command -v docker-compose &> /dev/null; then
         error "docker-compose is not installed. Please install it and try again."
     fi
-    
+
     # Check if production environment file exists
     if [[ ! -f "$PRODUCTION_ENV_FILE" ]]; then
-        error "Production environment file not found. Please create $PRODUCTION_ENV_FILE from template."
+        error "Production environment file not found. Please create $PRODUCTION_ENV_FILE from env/production.example."
     fi
-    
+
     # Check critical environment variables
     source "$PRODUCTION_ENV_FILE"
     critical_vars=("DJANGO_SECRET_KEY" "DATABASE_URL" "DJANGO_ALLOWED_HOSTS")
@@ -79,7 +79,7 @@ pre_deployment_checks() {
             error "Critical environment variable $var is not set in $PRODUCTION_ENV_FILE"
         fi
     done
-    
+
     # Check SSL certificates
     if [[ ! -f "ssl/cert.pem" ]] || [[ ! -f "ssl/key.pem" ]]; then
         warning "SSL certificates not found. HTTPS will not work."
@@ -90,54 +90,54 @@ pre_deployment_checks() {
             error "SSL certificates required for production deployment."
         fi
     fi
-    
+
     # Check disk space
     available_space=$(df / | awk 'NR==2 {print $4}')
     if [[ $available_space -lt 5000000 ]]; then  # Less than 5GB
         warning "Low disk space available: $(($available_space/1000))MB"
     fi
-    
+
     success "Pre-deployment checks completed"
 }
 
 # Security validation
 security_validation() {
     log "Running security validation..."
-    
+
     # Check if DEBUG is disabled
     if grep -q "DEBUG=True" "$PRODUCTION_ENV_FILE"; then
         error "DEBUG=True found in production environment. This is a security risk."
     fi
-    
+
     # Check secret key strength
     secret_key=$(grep "DJANGO_SECRET_KEY=" "$PRODUCTION_ENV_FILE" | cut -d'=' -f2)
     if [[ ${#secret_key} -lt 50 ]]; then
         warning "Django secret key appears to be short. Consider using a longer, more secure key."
     fi
-    
+
     # Check allowed hosts
     allowed_hosts=$(grep "DJANGO_ALLOWED_HOSTS=" "$PRODUCTION_ENV_FILE" | cut -d'=' -f2)
     if [[ "$allowed_hosts" == *"localhost"* ]] || [[ "$allowed_hosts" == *"127.0.0.1"* ]]; then
         warning "localhost/127.0.0.1 found in ALLOWED_HOSTS. Remove for production."
     fi
-    
+
     success "Security validation completed"
 }
 
 # Run comprehensive tests
 run_production_tests() {
     log "Running production readiness tests..."
-    
+
     # Set production test environment
     export DJANGO_SETTINGS_MODULE=inventory_app.settings_production
-    
+
     # Run Django system checks
     if python manage.py check --settings=inventory_app.settings_production --deploy; then
         success "Django production checks passed"
     else
         error "Django production checks failed. Fix issues before deployment."
     fi
-    
+
     # Run tests with production settings
     log "Running test suite with production settings..."
     if python manage.py test --settings=inventory_app.settings_production --verbosity=1; then
@@ -145,77 +145,77 @@ run_production_tests() {
     else
         error "Tests failed with production settings. Deployment aborted."
     fi
-    
+
     success "Production tests completed"
 }
 
 # Create comprehensive backup
 create_backup() {
     log "Creating production backup..."
-    
+
     mkdir -p "$BACKUP_DIR"
-    
+
     # Backup existing database if running
     if docker-compose -f "$DOCKER_COMPOSE_FILE" ps db | grep -q "Up"; then
         log "Backing up production database..."
         docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T db pg_dump -U inventory_user inventory_production > "$BACKUP_DIR/database.sql"
         success "Database backup created"
     fi
-    
+
     # Backup static files
     if [[ -d "staticfiles" ]]; then
         log "Backing up static files..."
         tar -czf "$BACKUP_DIR/staticfiles.tar.gz" staticfiles/
         success "Static files backup created"
     fi
-    
+
     # Backup media files
     if [[ -d "media" ]]; then
         log "Backing up media files..."
         tar -czf "$BACKUP_DIR/media.tar.gz" media/
         success "Media files backup created"
     fi
-    
+
     # Backup configuration
     log "Backing up configuration files..."
     cp "$PRODUCTION_ENV_FILE" "$BACKUP_DIR/"
     cp nginx/production.conf "$BACKUP_DIR/"
     cp "$DOCKER_COMPOSE_FILE" "$BACKUP_DIR/"
-    
+
     success "Comprehensive backup created in $BACKUP_DIR"
 }
 
 # Deploy to production
 deploy() {
     log "Deploying to production environment..."
-    
+
     # Pull latest images
     log "Pulling latest base images..."
     docker-compose -f "$DOCKER_COMPOSE_FILE" pull db redis nginx monitoring
-    
+
     # Build production application image
     log "Building production application image..."
     docker-compose -f "$DOCKER_COMPOSE_FILE" build web
-    
+
     # Stop existing containers gracefully
     log "Stopping existing containers..."
     docker-compose -f "$DOCKER_COMPOSE_FILE" down --remove-orphans
-    
+
     # Start production services
     log "Starting production services..."
     docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
-    
+
     success "Production services started"
 }
 
 # Health checks and validation
 health_checks() {
     log "Performing comprehensive health checks..."
-    
+
     # Wait for services to start
     log "Waiting for services to initialize..."
     sleep 60
-    
+
     # Check service status
     services=("web" "db" "redis" "nginx")
     for service in "${services[@]}"; do
@@ -225,7 +225,7 @@ health_checks() {
             error "$service container failed to start"
         fi
     done
-    
+
     # Check database connectivity
     log "Checking database connectivity..."
     if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T web python manage.py shell -c "
@@ -238,7 +238,7 @@ print('Database connection: OK')
     else
         error "Database connection failed"
     fi
-    
+
     # Check Redis connectivity
     log "Checking Redis connectivity..."
     if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T redis redis-cli ping | grep -q "PONG"; then
@@ -246,12 +246,12 @@ print('Database connection: OK')
     else
         warning "Redis connection failed"
     fi
-    
+
     # Check HTTPS endpoint
     log "Checking HTTPS endpoint..."
     max_attempts=20
     attempt=1
-    
+
     while [[ $attempt -le $max_attempts ]]; do
         if curl -k -f -s https://localhost/healthz > /dev/null; then
             success "HTTPS endpoint responding"
@@ -262,11 +262,11 @@ print('Database connection: OK')
             ((attempt++))
         fi
     done
-    
+
     if [[ $attempt -gt $max_attempts ]]; then
         error "HTTPS endpoint not responding after $max_attempts attempts"
     fi
-    
+
     # Run production validation script
     log "Running production validation script..."
     if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T web python staging_validation.py; then
@@ -279,7 +279,7 @@ print('Database connection: OK')
 # Performance testing
 performance_tests() {
     log "Running performance tests..."
-    
+
     # Basic load test if Apache Bench is available
     if command -v ab &> /dev/null; then
         log "Running basic load test..."
@@ -293,7 +293,7 @@ performance_tests() {
 # Setup monitoring
 setup_monitoring() {
     log "Setting up monitoring and alerting..."
-    
+
     # Check if monitoring container is running
     if docker-compose -f "$DOCKER_COMPOSE_FILE" ps monitoring | grep -q "Up"; then
         success "Monitoring service is running"
@@ -301,7 +301,7 @@ setup_monitoring() {
     else
         warning "Monitoring service not running"
     fi
-    
+
     # Setup log rotation
     if command -v logrotate &> /dev/null; then
         log "Setting up log rotation..."
@@ -325,17 +325,17 @@ EOF
 # Cleanup old resources
 cleanup() {
     log "Cleaning up old resources..."
-    
+
     # Remove unused Docker images
     docker image prune -f
-    
+
     # Remove old backup files (keep last 10)
     if [[ -d "backups/production" ]]; then
         cd backups/production
         ls -t | tail -n +11 | xargs -r rm -rf
         cd ../..
     fi
-    
+
     success "Cleanup completed"
 }
 
@@ -378,10 +378,10 @@ rollback() {
     error_msg="$1"
     warning "Production deployment failed: $error_msg"
     log "Starting emergency rollback procedure..."
-    
+
     # Stop current deployment
     docker-compose -f "$DOCKER_COMPOSE_FILE" down
-    
+
     # Restore from backup if available
     if [[ -d "$BACKUP_DIR" && -f "$BACKUP_DIR/database.sql" ]]; then
         log "Restoring database from backup..."
@@ -389,7 +389,7 @@ rollback() {
         sleep 30
         docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T db psql -U inventory_user -d inventory_production < "$BACKUP_DIR/database.sql"
     fi
-    
+
     error "Emergency rollback completed. Please investigate issues and retry deployment."
 }
 
@@ -397,7 +397,7 @@ rollback() {
 main() {
     # Trap errors and rollback
     trap 'rollback "Unexpected error occurred"' ERR
-    
+
     highlight "🚀 PRODUCTION DEPLOYMENT STARTING"
     echo "This will deploy the application to PRODUCTION environment."
     echo "Ensure you have:"
@@ -407,12 +407,12 @@ main() {
     echo ""
     echo "Continue with production deployment? (y/N)"
     read -r confirm_deployment
-    
+
     if [[ ! "$confirm_deployment" =~ ^[Yy]$ ]]; then
         echo "Deployment cancelled by user."
         exit 0
     fi
-    
+
     pre_deployment_checks
     security_validation
     run_production_tests
@@ -423,7 +423,7 @@ main() {
     setup_monitoring
     cleanup
     show_deployment_info
-    
+
     # Remove error trap on successful completion
     trap - ERR
 }

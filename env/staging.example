@@ -1,5 +1,5 @@
 # Staging Environment Configuration
-# NOTE: Do not commit live secrets. Copy to .env.staging and replace placeholders with real values.
+# NOTE: Do not commit live secrets. Copy to env/staging.local and replace placeholders with real values.
 
 # Django Configuration
 DJANGO_SECRET_KEY=<STAGING_SECRET_KEY>

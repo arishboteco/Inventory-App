@@ -1,5 +1,5 @@
 # Production Environment Configuration
-# NOTE: Do not commit live secrets. Replace placeholders before production deployment.
+# NOTE: Do not commit live secrets. Copy to env/production.local and replace placeholders before production deployment.
 
 # Django Core Configuration
 DJANGO_SECRET_KEY=<PRODUCTION_SECRET_KEY>

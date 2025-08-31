@@ -5,11 +5,11 @@
 .env.render*
 *env.txt
 *ENV*.txt
+env/*.local
 
 # Python virtual environment
 venv/
 .venv/
-env/
 
 # Python cache files
 __pycache__/

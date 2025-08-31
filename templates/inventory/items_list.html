@@ -184,17 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   if (listEl) mo.observe(listEl, { childList: true, subtree: true });
 
-  // Persist Advanced details open/close state
-  const adv = document.getElementById('add-item-advanced');
-  if (adv) {
-    const key = 'add_item_adv_open';
-    const saved = localStorage.getItem(key);
-    if (saved === '1') adv.setAttribute('open', '');
-    adv.addEventListener('toggle', () => {
-      localStorage.setItem(key, adv.open ? '1' : '0');
-    });
-  }
-
   // Sticky header shadow on scroll
   document.querySelectorAll('.table-scroll').forEach(scroller => {
     function onScroll(){

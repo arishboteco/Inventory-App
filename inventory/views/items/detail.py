@@ -124,21 +124,21 @@ class ItemInlineUpdateView(View):
                 setattr(item, field, val)
                 changed = True
 
-        if "unit" in data:
+        if "unit_id" in data:
             try:
-                uid = int(data.get("unit")) if data.get("unit") else None
+                uid = int(data.get("unit_id")) if data.get("unit_id") else None
             except (TypeError, ValueError):
                 uid = None
             if uid:
                 item.unit_id = uid
                 changed = True
 
-        if "category" in data:
+        if "category_id" in data:
             try:
-                cid = int(data.get("category")) if data.get("category") else None
+                cid = int(data.get("category_id")) if data.get("category_id") else None
             except (TypeError, ValueError):
                 cid = None
-            if cid:
+            if cid is not None:
                 item.category_id = cid
                 changed = True
 

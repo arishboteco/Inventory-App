@@ -8,13 +8,17 @@ INPUT_CLASS = "form-input"
 
 
 class TestItemForm(forms.ModelForm):
-    """Simplified item form for testing that only uses unit reference."""
+    """Simplified item form for testing using unit_id field."""
+
+    unit_id = forms.IntegerField(
+        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "placeholder": "Unit ID"})
+    )
 
     class Meta:
         model = Item
         fields = [
             "name",
-            "unit",
+            "unit_id",
             "reorder_point",
             "current_stock",
             "notes",
@@ -23,9 +27,6 @@ class TestItemForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(
                 attrs={"class": INPUT_CLASS, "placeholder": "Enter item name"}
-            ),
-            "unit": forms.NumberInput(
-                attrs={"class": INPUT_CLASS, "placeholder": "Unit ID"}
             ),
             "reorder_point": forms.NumberInput(
                 attrs={
@@ -56,4 +57,10 @@ class TestItemForm(forms.ModelForm):
             "name": {"required": "Item name is required."},
         }
 
-    pass
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.unit_id = self.cleaned_data["unit_id"]
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance

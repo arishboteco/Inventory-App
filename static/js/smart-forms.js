@@ -5,51 +5,8 @@
 
 class SmartFormManager {
     constructor() {
-        this.initializeDynamicCategories();
         this.initializeSmartValidation();
-        this.initializeAutoSuggestions();
         this.initializeFormFlow();
-    }
-
-    initializeDynamicCategories() {
-        const categorySelect = document.querySelector('select[data-field="category"]');
-        const subCategorySelect = document.querySelector('select[data-field="sub_category"]');
-        
-        if (categorySelect && subCategorySelect) {
-            categorySelect.addEventListener('change', (e) => {
-                this.updateSubcategories(e.target.value, subCategorySelect);
-            });
-            
-            // Initialize subcategories if category is pre-selected
-            if (categorySelect.value) {
-                this.updateSubcategories(categorySelect.value, subCategorySelect);
-            }
-        }
-    }
-
-    async updateSubcategories(category, subCategorySelect) {
-        if (!category) {
-            subCategorySelect.innerHTML = '<option value="">Select Category First</option>';
-            return;
-        }
-
-        subCategorySelect.innerHTML = '<option value="">Loading...</option>';
-        
-        try {
-            const response = await fetch(`/items/subcategories/?category=${encodeURIComponent(category)}`);
-            const data = await response.json();
-            
-            subCategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
-            data.subcategories.forEach(subcat => {
-                const option = document.createElement('option');
-                option.value = subcat;
-                option.textContent = subcat;
-                subCategorySelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading subcategories:', error);
-            subCategorySelect.innerHTML = '<option value="">Error loading subcategories</option>';
-        }
     }
 
     initializeSmartValidation() {
@@ -104,65 +61,6 @@ class SmartFormManager {
         } catch (error) {
             console.error('Error checking similar names:', error);
         }
-    }
-
-    initializeAutoSuggestions() {
-        // Smart unit suggestions based on category
-        const categorySelect = document.querySelector('select[data-field="category"]');
-        const baseUnitSelect = document.querySelector('select[data-field="base_unit"]');
-        
-        if (categorySelect && baseUnitSelect) {
-            categorySelect.addEventListener('change', (e) => {
-                this.suggestUnit(e.target.value, baseUnitSelect);
-            });
-        }
-    }
-
-    suggestUnit(category, baseUnitSelect) {
-        const unitSuggestions = {
-            'Grocery': ['GM', 'KG', 'PC'],
-            'Liquor': ['ML', 'LTR', 'BTL'],
-            'Perishable': ['GM', 'KG', 'PC'],
-            'Dairy': ['ML', 'LTR', 'GM'],
-            'Meat': ['GM', 'KG'],
-            'Vegetables': ['GM', 'KG', 'PC'],
-            'Fruits': ['GM', 'KG', 'PC']
-        };
-
-        const suggested = unitSuggestions[category];
-        if (suggested && suggested.length > 0) {
-            // Highlight suggested units
-            const options = baseUnitSelect.querySelectorAll('option');
-            options.forEach(option => {
-                if (suggested.includes(option.value)) {
-                    option.style.backgroundColor = '#e6f3ff';
-                    option.style.fontWeight = 'bold';
-                } else {
-                    option.style.backgroundColor = '';
-                    option.style.fontWeight = '';
-                }
-            });
-
-            // Show suggestion tooltip
-            this.showSuggestionTooltip(baseUnitSelect, `Suggested units for ${category}: ${suggested.join(', ')}`);
-        }
-    }
-
-    showSuggestionTooltip(element, message) {
-        const existingTooltip = document.querySelector('#unit-suggestion');
-        if (existingTooltip) existingTooltip.remove();
-
-        const tooltip = document.createElement('div');
-        tooltip.id = 'unit-suggestion';
-        tooltip.className = 'absolute z-10 p-2 text-xs bg-blue-100 text-blue-800 rounded shadow-lg border border-blue-200';
-        tooltip.textContent = message;
-        tooltip.style.top = '-30px';
-        tooltip.style.left = '0';
-
-        element.parentNode.style.position = 'relative';
-        element.parentNode.appendChild(tooltip);
-
-        setTimeout(() => tooltip.remove(), 3000);
     }
 
     initializeFormFlow() {
@@ -232,22 +130,20 @@ window.fillItemData = async function(itemId) {
         const doc = parser.parseFromString(html, 'text/html');
         
         // Extract item data and populate form
-        const categoryElement = doc.querySelector('[data-field="category"]');
-        const baseUnitElement = doc.querySelector('[data-field="base_unit"]');
-        
+        const categoryElement = doc.querySelector('[data-field="category_id"]');
+        const unitElement = doc.querySelector('[data-field="unit_id"]');
+
         if (categoryElement && categoryElement.textContent.trim()) {
-            const categorySelect = document.querySelector('select[data-field="category"]');
+            const categorySelect = document.querySelector('select[data-field="category_id"]');
             if (categorySelect) {
                 categorySelect.value = categoryElement.textContent.trim();
-                categorySelect.dispatchEvent(new Event('change'));
             }
         }
-        
-        if (baseUnitElement && baseUnitElement.textContent.trim()) {
-            const baseUnitSelect = document.querySelector('select[data-field="base_unit"]');
-            if (baseUnitSelect) {
-                baseUnitSelect.value = baseUnitElement.textContent.trim();
-                baseUnitSelect.dispatchEvent(new Event('change'));
+
+        if (unitElement && unitElement.textContent.trim()) {
+            const unitSelect = document.querySelector('select[data-field="unit_id"]');
+            if (unitSelect) {
+                unitSelect.value = unitElement.textContent.trim();
             }
         }
         

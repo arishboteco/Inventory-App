@@ -35,7 +35,7 @@ def test_item_create_view_htmx_success(client, monkeypatch):
     url = reverse("item_create")
     data = {
         "name": "Widget",
-        "unit": "55",
+        "unit_id": "55",
         "reorder_point": "1",
         "current_stock": "0",
         "notes": "n",
@@ -52,8 +52,7 @@ def test_item_create_view_htmx_failure(client, monkeypatch):
 
     url = reverse("item_create")
     data = {
-        "base_unit": "pcs",
-        "purchase_unit": "box",
+        "unit_id": "55",
         "reorder_point": "1",
         "current_stock": "0",
         "notes": "n",
@@ -122,7 +121,7 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
 
     data = {
         "name": "Gadget",
-        "unit": "55",
+        "unit_id": "55",
         "reorder_point": "5",
         "current_stock": "0",
         "notes": "updated",
@@ -137,7 +136,7 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
     assert item_service.get_distinct_departments_from_items.cache_info().currsize == 0
 
 
-def test_item_edit_view_preselects_category_and_subcategory(client, monkeypatch):
+def test_item_edit_view_preselects_category(client, monkeypatch):
 
     item = _create_item(category_id=2)
     url = reverse("item_edit", args=[item.pk])

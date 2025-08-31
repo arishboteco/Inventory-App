@@ -1,32 +1,38 @@
 from django import forms
 
-from ..models import Department, Item, Supplier, Unit
+from ..models import Department, Item, Supplier
 from ..services.categories_service import CategoriesService
-from ..services.form_service import (
-    get_categories_map,
-    get_category_choices,
-)
+from ..services.units_service import UnitsService
 from .base import INPUT_CLASS, StyledFormMixin
 
 
 class ItemForm(StyledFormMixin, forms.ModelForm):
-    """Enhanced item form with complete business field support."""
+    """Item form using service-backed foreign key fields."""
 
-    # Category field using category foreign key
-    category = forms.ChoiceField(
-        choices=[],  # Will be populated in __init__
+    category_id = forms.ChoiceField(
+        choices=[],
         required=False,
         help_text="Item category for classification",
         widget=forms.Select(
             attrs={
                 "class": INPUT_CLASS,
-                "data-field": "category",
+                "data-field": "category_id",
                 "placeholder": "Select category",
             }
         ),
     )
 
-    # Department assignment with checkbox selection
+    unit_id = forms.ChoiceField(
+        choices=[],
+        required=True,
+        help_text=(
+            "Select the unit for this item (handles both kitchen and procurement units)"
+        ),
+        widget=forms.Select(
+            attrs={"class": INPUT_CLASS, "data-field": "unit_id"}
+        ),
+    )
+
     departments = forms.ModelMultipleChoiceField(
         queryset=Department.objects.all(),
         required=False,
@@ -34,7 +40,6 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         widget=forms.CheckboxSelectMultiple(attrs={"class": "department-checkbox"}),
     )
 
-    # Purchase and supplier information
     preferred_supplier = forms.ModelChoiceField(
         queryset=Supplier.objects.filter(is_active=True),
         required=False,
@@ -46,8 +51,8 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         model = Item
         fields = [
             "name",
-            "unit",
-            "category",
+            "unit_id",
+            "category_id",
             "departments",
             "initial_purchase_price",
             "preferred_supplier",
@@ -81,7 +86,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             "lead_time_days": forms.NumberInput(
                 attrs={"class": INPUT_CLASS, "min": "0", "placeholder": "7"}
             ),
-            "unit": forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit"}),
+            "unit_id": forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit_id"}),
             "reorder_point": forms.NumberInput(
                 attrs={
                     "class": INPUT_CLASS,
@@ -110,61 +115,34 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         error_messages = {
             "name": {"required": "Item name is required."},
         }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Populate category dropdown choices using proper service
-        category_choices = [("", "Select Category")] + (
-            CategoriesService.get_category_choices_for_forms()
-        )
-        self.fields["category"].choices = category_choices
+        # Populate dropdown choices via services
+        unit_choices = UnitsService.get_unit_choices_for_forms()
+        self.fields["unit_id"].choices = [("", "Select Unit")] + unit_choices
 
-        # Use unit_id field instead of separate base_unit/purchase_unit fields
-        self.fields["unit"] = forms.ModelChoiceField(
-            queryset=Unit.objects.all(),
-            required=True,
-            widget=forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit"}),
-            help_text=(
-                "Select the unit for this item (handles both kitchen and "
-                "procurement units)"
-            ),
-        )
+        category_choices = CategoriesService.get_category_choices_for_forms()
+        self.fields["category_id"].choices = [("", "Select Category")] + category_choices
 
-        # Make name field required
         if "name" in self.fields:
             self.fields["name"].required = True
 
-        # Set default unit_id for compatibility
-        if not self.instance.pk and "unit" in self.fields:
-            self.fields["unit"].initial = Unit.objects.filter(unit_id=55).first()
+        if self.instance.pk:
+            self.fields["unit_id"].initial = self.instance.unit_id
+            if self.instance.category_id:
+                self.fields["category_id"].initial = self.instance.category_id
+        else:
+            self.fields["unit_id"].initial = 55
 
-        # Add data for JavaScript dropdowns (for categories)
-        self.category_options = [choice[0] for choice in get_category_choices()]
-        # Will be populated by JavaScript based on category
-        self.sub_category_options = []
-
-        # Add mapping data for JavaScript
-        self.categories_map = get_categories_map()
-
-        # Apply styling to all fields
         self.apply_styling()
 
-    def clean(self):
-        """Validate business rules and field relationships."""
-        cleaned_data = super().clean()
-
-        # Normalize blank category to None for DB compatibility
-        if cleaned_data.get("category") in ("", None):
-            cleaned_data["category"] = None
-        return cleaned_data
-
     def save(self, commit=True):
-        """Save the item with enhanced business logic."""
         instance = super().save(commit=False)
-
+        instance.unit_id = int(self.cleaned_data["unit_id"])
+        category_val = self.cleaned_data.get("category_id")
+        instance.category_id = int(category_val) if category_val else None
         if commit:
             instance.save()
             self.save_m2m()
-
         return instance

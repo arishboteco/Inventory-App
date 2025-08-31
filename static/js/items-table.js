@@ -87,7 +87,7 @@
         categoryCell.innerHTML = "";
         categoryCell.appendChild(sel);
       } else {
-        categoryCell.innerHTML = `<input type="text" name="category" class="form-input" value="${escapeHtml(currentCategory)}" placeholder="Category">`;
+        categoryCell.innerHTML = `<input type="number" name="category_id" class="form-input" value="${escapeHtml(cid)}" placeholder="Category ID">`;
       }
     }
     if (unitCell) {
@@ -104,7 +104,7 @@
         unitCell.innerHTML = "";
         unitCell.appendChild(selU);
       } else {
-        unitCell.innerHTML = `<input type="text" name="base_unit" class="form-input" value="${escapeHtml(currentUnit)}" placeholder="Unit">`;
+        unitCell.innerHTML = `<input type="number" name="unit_id" class="form-input" value="${escapeHtml(currentUnit)}" placeholder="Unit ID">`;
       }
     }
     if (stockCell)

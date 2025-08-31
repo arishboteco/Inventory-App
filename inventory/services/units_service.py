@@ -24,8 +24,9 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Tuple
 
-from django.db import connection
 from django.db.utils import OperationalError
+
+from inventory.models.unit import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -66,24 +67,16 @@ class UnitsService:
             }
         """
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT base_unit, purchase_unit, conversion_factor "
-                        "FROM units WHERE unit_id = %s"
-                    ),
-                    [unit_id],
-                )
-                row = cursor.fetchone()
-                if row:
-                    return {
-                        'unit_id': unit_id,
-                        'base_unit': row[0],
-                        'purchase_unit': row[1],
-                        'conversion_factor': float(row[2])
-                    }
-        except OperationalError as e:
-            logger.warning(f"Could not access units table: {e}")
+            unit = Unit.objects.get(unit_id=unit_id)
+            return {
+                'unit_id': unit.unit_id,
+                'base_unit': unit.base_unit,
+                'purchase_unit': unit.purchase_unit,
+                'conversion_factor': float(unit.conversion_factor),
+            }
+        except (Unit.DoesNotExist, OperationalError) as e:
+            if isinstance(e, OperationalError):
+                logger.warning(f"Could not access units table: {e}")
 
         # Fallback for test environment - based on actual database values
         fallback_units = {
@@ -171,24 +164,16 @@ class UnitsService:
     def get_all_units() -> List[Dict]:
         """Get all available units for dropdown population."""
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT unit_id, base_unit, purchase_unit, conversion_factor "
-                        "FROM units "
-                        "ORDER BY base_unit, purchase_unit"
-                    )
-                )
-                rows = cursor.fetchall()
-                return [
-                    {
-                        'unit_id': row[0],
-                        'base_unit': row[1],
-                        'purchase_unit': row[2],
-                        'conversion_factor': float(row[3])
-                    }
-                    for row in rows
-                ]
+            units = Unit.objects.all().order_by('base_unit', 'purchase_unit')
+            return [
+                {
+                    'unit_id': unit.unit_id,
+                    'base_unit': unit.base_unit,
+                    'purchase_unit': unit.purchase_unit,
+                    'conversion_factor': float(unit.conversion_factor),
+                }
+                for unit in units
+            ]
         except OperationalError as e:
             logger.warning(f"Could not load units: {e}")
             return [

@@ -23,8 +23,9 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
-from django.db import connection
 from django.db.utils import OperationalError
+
+from inventory.models.category import Category
 
 logger = logging.getLogger(__name__)
 
@@ -45,23 +46,15 @@ class CategoriesService:
             }
         """
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT category, sub_category FROM category "
-                        "WHERE category_id = %s"
-                    ),
-                    [category_id],
-                )
-                row = cursor.fetchone()
-                if row:
-                    return {
-                        'category_id': category_id,
-                        'category': row[0],
-                        'sub_category': row[1]
-                    }
-        except OperationalError as e:
-            logger.warning(f"Could not access category table: {e}")
+            category = Category.objects.get(category_id=category_id)
+            return {
+                'category_id': category.category_id,
+                'category': category.category,
+                'sub_category': category.sub_category,
+            }
+        except (Category.DoesNotExist, OperationalError) as e:
+            if isinstance(e, OperationalError):
+                logger.warning(f"Could not access category table: {e}")
 
         # Fallback for test environment - based on actual database values
         fallback_categories = {
@@ -106,23 +99,15 @@ class CategoriesService:
     def get_all_categories() -> List[Dict]:
         """Get all available categories for dropdown population."""
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    SELECT category_id, category, sub_category
-                    FROM category
-                    ORDER BY category, sub_category
-                    """
-                )
-                rows = cursor.fetchall()
-                return [
-                    {
-                        'category_id': row[0],
-                        'category': row[1],
-                        'sub_category': row[2]
-                    }
-                    for row in rows
-                ]
+            categories = Category.objects.all().order_by('category', 'sub_category')
+            return [
+                {
+                    'category_id': cat.category_id,
+                    'category': cat.category,
+                    'sub_category': cat.sub_category,
+                }
+                for cat in categories
+            ]
         except OperationalError as e:
             logger.warning(f"Could not load categories: {e}")
             return [
@@ -193,16 +178,13 @@ class CategoriesService:
     def find_category_id(category: str, sub_category: str) -> Optional[int]:
         """Find category_id for a given category/sub_category combination."""
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT category_id FROM category WHERE category = %s "
-                        "AND sub_category = %s"
-                    ),
-                    [category, sub_category],
+            return (
+                Category.objects.filter(
+                    category=category, sub_category=sub_category
                 )
-                row = cursor.fetchone()
-                return row[0] if row else None
+                .values_list('category_id', flat=True)
+                .first()
+            )
         except OperationalError:
             # Fallback for test environment
             fallback_mappings = {
@@ -221,16 +203,12 @@ class CategoriesService:
         Use when sub_category doesn't matter.
         """
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    (
-                        "SELECT category_id FROM category WHERE category = %s "
-                        "ORDER BY sub_category LIMIT 1"
-                    ),
-                    [category],
-                )
-                row = cursor.fetchone()
-                return row[0] if row else None
+            return (
+                Category.objects.filter(category=category)
+                .order_by('sub_category')
+                .values_list('category_id', flat=True)
+                .first()
+            )
         except OperationalError:
             # Fallback for test environment
             fallback_categories = {

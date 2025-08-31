@@ -1,36 +1,88 @@
-version: '3.9'
+version: "3.9"
 
 services:
   web:
-    build: .
-    command: >
-      sh -c "python manage.py migrate && \
-             python manage.py collectstatic --noinput && \
-             gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000"
+    build:
+      context: .
+      args:
+        BUILD_ENV: ${BUILD_ENV:-dev}
+    env_file:
+      - ${ENV_FILE:-env/dev.example}
     volumes:
       - static_volume:/app/staticfiles
-    env_file:
-      - .env
+      - media_volume:/app/media
+      - log_volume:/var/log/django
     depends_on:
       - db
+    profiles: ["dev", "staging", "production"]
 
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/${NGINX_CONF:-default.conf}:/etc/nginx/conf.d/default.conf:ro
       - static_volume:/app/staticfiles
+      - media_volume:/app/media
     depends_on:
       - web
+    profiles: ["dev", "staging", "production"]
 
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
-      - .env
+      - ${ENV_FILE:-env/dev.example}
+    profiles: ["dev", "staging", "production"]
+
+  redis:
+    image: redis:7-alpine
+    command: ${REDIS_COMMAND:-redis-server --appendonly yes}
+    volumes:
+      - redis_data:/data
+    profiles: ["staging", "production"]
+
+  backup:
+    image: postgres:15-alpine
+    depends_on:
+      - db
+    volumes:
+      - ./backups:/backups
+    environment:
+      PGPASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-inventory_user}
+      POSTGRES_DB: ${POSTGRES_DB:-inventory_production}
+    command: >-
+      sh -c "
+        while true; do
+          echo 'Creating backup...'
+          pg_dump -h db -U ${POSTGRES_USER:-inventory_user} -d ${POSTGRES_DB:-inventory_production} > /backups/backup_\$$(date +%Y%m%d_%H%M%S).sql
+          find /backups -name '*.sql' -mtime +30 -delete
+          sleep 86400
+        done
+      "
+    profiles: ["production"]
+
+  monitoring:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    profiles: ["production"]
 
 volumes:
   postgres_data:
+  redis_data:
   static_volume:
+  media_volume:
+  log_volume:

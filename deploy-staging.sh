@@ -9,8 +9,13 @@ echo "=================================="
 
 # Configuration
 STAGING_ENV_FILE="env/staging.local"
-DOCKER_COMPOSE_FILE="docker-compose.staging.yml"
+DOCKER_COMPOSE_FILE="docker-compose.yml"
+DOCKER_PROFILE="staging"
 BACKUP_DIR="backups/$(date +%Y%m%d-%H%M%S)"
+
+dc() {
+    docker compose -f "$DOCKER_COMPOSE_FILE" --profile "$DOCKER_PROFILE" "$@"
+}
 
 # Colors for output
 RED='\033[0;31m'
@@ -46,9 +51,9 @@ check_prerequisites() {
         error "Docker is not running. Please start Docker and try again."
     fi
 
-    # Check if docker-compose is available
-    if ! command -v docker-compose &> /dev/null; then
-        error "docker-compose is not installed. Please install it and try again."
+    # Check if docker compose is available
+    if ! docker compose version >/dev/null 2>&1; then
+        error "docker compose is not installed. Please install it and try again."
     fi
 
     # Check if staging environment file exists
@@ -89,9 +94,9 @@ create_backup() {
     mkdir -p "$BACKUP_DIR"
 
     # Backup database if it exists
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" ps db | grep -q "Up"; then
+    if dc ps db | grep -q "Up"; then
         log "Backing up database..."
-        docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T db pg_dump -U staging_user staging_inventory > "$BACKUP_DIR/database.sql"
+        dc exec -T db pg_dump -U staging_user staging_inventory > "$BACKUP_DIR/database.sql"
         success "Database backup created"
     fi
 
@@ -111,19 +116,19 @@ deploy() {
 
     # Pull latest images
     log "Pulling latest base images..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" pull db redis nginx
+    dc pull db redis nginx
 
     # Build application image
     log "Building application image..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" build web
+    dc build web
 
     # Stop existing containers
     log "Stopping existing containers..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" down
+    dc down
 
     # Start services
     log "Starting services..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
+    dc up -d
 
     success "Services started"
 }
@@ -137,7 +142,7 @@ health_checks() {
     sleep 30
 
     # Check if web container is running
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" ps web | grep -q "Up"; then
+    if dc ps web | grep -q "Up"; then
         success "Web container is running"
     else
         error "Web container failed to start"
@@ -145,7 +150,7 @@ health_checks() {
 
     # Check database connectivity
     log "Checking database connectivity..."
-    if docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T web python manage.py shell -c "
+    if dc exec -T web python manage.py shell -c "
 from django.db import connection
 cursor = connection.cursor()
 cursor.execute('SELECT 1')
@@ -183,7 +188,7 @@ validation_tests() {
 
     # Run critical tests in staging environment
     log "Running critical path tests..."
-    docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T web python manage.py test \
+    dc exec -T web python manage.py test \
         tests.test_item_service \
         tests.test_recipe_service \
         tests.test_dashboard_service \
@@ -232,9 +237,9 @@ show_info() {
     echo "4. Review logs for any issues"
     echo ""
     echo "📝 Useful Commands:"
-    echo "- View logs: docker-compose -f $DOCKER_COMPOSE_FILE logs -f"
-    echo "- Stop services: docker-compose -f $DOCKER_COMPOSE_FILE down"
-    echo "- Restart services: docker-compose -f $DOCKER_COMPOSE_FILE restart"
+    echo "- View logs: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE logs -f"
+    echo "- Stop services: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE down"
+    echo "- Restart services: docker compose -f $DOCKER_COMPOSE_FILE --profile $DOCKER_PROFILE restart"
     echo ""
 }
 
@@ -245,14 +250,14 @@ rollback() {
     log "Starting rollback procedure..."
 
     # Stop current deployment
-    docker-compose -f "$DOCKER_COMPOSE_FILE" down
+    dc down
 
     # Restore from backup if available
     if [[ -d "$BACKUP_DIR" && -f "$BACKUP_DIR/database.sql" ]]; then
         log "Restoring database from backup..."
-        docker-compose -f "$DOCKER_COMPOSE_FILE" up -d db
+        dc up -d db
         sleep 10
-        docker-compose -f "$DOCKER_COMPOSE_FILE" exec -T db psql -U staging_user -d staging_inventory < "$BACKUP_DIR/database.sql"
+        dc exec -T db psql -U staging_user -d staging_inventory < "$BACKUP_DIR/database.sql"
     fi
 
     error "Rollback completed. Please check the issues and try again."
@@ -290,10 +295,10 @@ case "${1:-deploy}" in
         # Implement rollback logic here
         ;;
     "status")
-        docker-compose -f "$DOCKER_COMPOSE_FILE" ps
+        dc ps
         ;;
     "logs")
-        docker-compose -f "$DOCKER_COMPOSE_FILE" logs -f "${2:-web}"
+        dc logs -f "${2:-web}"
         ;;
     "test")
         run_tests

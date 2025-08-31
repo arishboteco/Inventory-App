@@ -14,13 +14,13 @@
           {% include "forms/feedback.html" %}
         </div>
         <div>
-          <label for="{{ form.unit_id.id_for_label }}" class="form-label">Unit</label>
-          {{ form.unit_id }}
+          <label for="{{ form.unit.id_for_label }}" class="form-label">Unit</label>
+          {{ form.unit }}
           {% include "forms/feedback.html" %}
         </div>
         <div>
-          <label for="{{ form.category_id.id_for_label }}" class="form-label">Category</label>
-          {{ form.category_id }}
+          <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+          {{ form.category }}
           {% include "forms/feedback.html" %}
         </div>
         <div>
@@ -77,4 +77,3 @@
     </form>
   </div>
 </div>
-

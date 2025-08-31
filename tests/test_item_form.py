@@ -10,45 +10,51 @@ from tests.forms.test_item_forms import TestItemForm  # Use simplified test form
 def test_item_form_preserves_metadata(monkeypatch):
     form = TestItemForm()
     name_field = form.fields["name"]
-    unit_field = form.fields["unit_id"]
+    unit_field = form.fields["unit"]
     assert name_field.label == "Name"
     assert name_field.required is True
     assert isinstance(name_field.widget, forms.TextInput)
-    assert isinstance(unit_field, forms.IntegerField)
+    assert isinstance(unit_field, forms.ModelChoiceField)
 
 
 @pytest.mark.django_db
 def test_item_form_validation():
     # Test valid form data with unit_id=19 (maps to "KG")
-    form = TestItemForm(data={
-        "name": "Test Item",
-        "unit_id": 19,  # Use unit_id=19 which exists and maps to "KG"
-        "reorder_point": 10,
-        "current_stock": 0,
-        "notes": "Test notes",
-        "is_active": True,
-    })
+    form = TestItemForm(
+        data={
+            "name": "Test Item",
+            "unit": 19,
+            "reorder_point": 10,
+            "current_stock": 0,
+            "notes": "Test notes",
+            "is_active": True,
+        }
+    )
     assert form.is_valid(), f"Form errors: {form.errors}"
 
     # Test invalid form data (missing required name)
-    form = TestItemForm(data={
-        "unit_id": 19,
-        "reorder_point": 10,
-    })
+    form = TestItemForm(
+        data={
+            "unit": 19,
+            "reorder_point": 10,
+        }
+    )
     assert not form.is_valid()
     assert "name" in form.errors
 
 
 @pytest.mark.django_db
 def test_item_form_save():
-    form = TestItemForm(data={
-        "name": "Test Item",
-        "unit_id": 19,  # Use unit_id=19 which exists and maps to "KG"
-        "reorder_point": 10,
-        "current_stock": 5,
-        "notes": "Test notes",
-        "is_active": True,
-    })
+    form = TestItemForm(
+        data={
+            "name": "Test Item",
+            "unit": 19,  # Use unit_id=19 which exists and maps to "KG"
+            "reorder_point": 10,
+            "current_stock": 5,
+            "notes": "Test notes",
+            "is_active": True,
+        }
+    )
     assert form.is_valid(), f"Form errors: {form.errors}"
     item = form.save()
     assert item.name == "Test Item"
@@ -70,4 +76,4 @@ def test_item_form_render():
     )
     # Check that the form renders without errors
     assert "name" in content.lower()
-    assert "unit_id" in content.lower() or "unit" in content.lower()
+    assert "unit" in content.lower()

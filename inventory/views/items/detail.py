@@ -15,8 +15,6 @@ from django.views.decorators.csrf import csrf_protect
 from ...forms.item_forms import ItemForm
 from ...models import Item, StockTransaction
 from ...services import item_service, stock_service
-from ...services.categories_service import CategoriesService
-from ...services.units_service import UnitsService
 from .constants import EXCLUDED_FIELDS
 from .list import ItemsTableView
 
@@ -130,35 +128,22 @@ class ItemInlineUpdateView(View):
                 setattr(item, field, val)
                 changed = True
 
-        if "unit_id" in data:
+        if "unit" in data:
             try:
-                uid = int(data.get("unit_id")) if data.get("unit_id") else None
+                uid = int(data.get("unit")) if data.get("unit") else None
             except (TypeError, ValueError):
                 uid = None
             if uid:
                 item.unit_id = uid
-                try:
-                    uinfo = UnitsService.get_unit_info(uid)
-                    item.base_unit = uinfo.get("base_unit")
-                    item.purchase_unit = uinfo.get("purchase_unit")
-                except Exception:  # pragma: no cover - defensive
-                    pass
                 changed = True
 
-        if "category_id" in data:
+        if "category" in data:
             try:
-                cid = int(data.get("category_id")) if data.get("category_id") else None
+                cid = int(data.get("category")) if data.get("category") else None
             except (TypeError, ValueError):
                 cid = None
             if cid:
                 item.category_id = cid
-                try:
-                    info = CategoriesService.get_category_info(cid)
-                    if info:
-                        item.category = info.get("category")
-                        item.sub_category = info.get("sub_category")
-                except Exception:  # pragma: no cover - defensive
-                    pass
                 changed = True
 
         if changed:

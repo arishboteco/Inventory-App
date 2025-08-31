@@ -4,8 +4,7 @@ from django.template.loader import render_to_string
 from django.test import RequestFactory
 
 from inventory.forms.item_forms import ItemForm
-from inventory.services.categories_service import CategoriesService
-from inventory.services.units_service import UnitsService
+from inventory.models import Category, Unit
 from tests.forms.test_item_forms import TestItemForm  # Use simplified test form
 
 
@@ -83,7 +82,15 @@ def test_item_form_render():
 
 
 @pytest.mark.django_db
-def test_item_form_uses_services_for_choices():
+def test_item_form_uses_model_choice_fields():
     form = ItemForm()
-    assert form.fields["unit_id"].choices[1:] == UnitsService.get_unit_choices_for_forms()
-    assert form.fields["category_id"].choices[1:] == CategoriesService.get_category_choices_for_forms()
+    unit_field = form.fields["unit_id"]
+    category_field = form.fields["category_id"]
+    assert isinstance(unit_field, forms.ModelChoiceField)
+    assert isinstance(category_field, forms.ModelChoiceField)
+    assert list(unit_field.queryset) == list(
+        Unit.objects.all().order_by("base_unit", "purchase_unit")
+    )
+    assert list(category_field.queryset) == list(
+        Category.objects.all().order_by("category", "sub_category")
+    )

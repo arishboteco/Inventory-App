@@ -23,8 +23,6 @@ import logging
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
-from django.db.utils import OperationalError
-
 from inventory.models.category import Category
 
 logger = logging.getLogger(__name__)
@@ -47,33 +45,17 @@ class CategoriesService:
         """
         try:
             category = Category.objects.get(category_id=category_id)
+        except Category.DoesNotExist:
             return {
-                'category_id': category.category_id,
-                'category': category.category,
-                'sub_category': category.sub_category,
+                'category_id': category_id,
+                'category': 'Uncategorized',
+                'sub_category': 'General',
             }
-        except (Category.DoesNotExist, OperationalError) as e:
-            if isinstance(e, OperationalError):
-                logger.warning(f"Could not access category table: {e}")
-
-        # Fallback for test environment - based on actual database values
-        fallback_categories = {
-            1: {'category': 'Grocery', 'sub_category': 'Juices And Purees'},
-            2: {'category': 'Perishable', 'sub_category': 'Meat And Poultry'},
-            3: {'category': 'Liquor', 'sub_category': 'Tequila'},
-            4: {'category': 'Grocery', 'sub_category': 'Sweetener'},
-            8: {'category': 'Beer', 'sub_category': 'Bottled Beer'},
-        }
-
-        if category_id in fallback_categories:
-            result = fallback_categories[category_id].copy()
-            result['category_id'] = category_id
-            return result
 
         return {
-            'category_id': category_id,
-            'category': 'Uncategorized',
-            'sub_category': 'General'
+            'category_id': category.category_id,
+            'category': category.category,
+            'sub_category': category.sub_category,
         }
 
     @staticmethod
@@ -98,45 +80,15 @@ class CategoriesService:
     @lru_cache(maxsize=None)
     def get_all_categories() -> List[Dict]:
         """Get all available categories for dropdown population."""
-        try:
-            categories = Category.objects.all().order_by('category', 'sub_category')
-            return [
-                {
-                    'category_id': cat.category_id,
-                    'category': cat.category,
-                    'sub_category': cat.sub_category,
-                }
-                for cat in categories
-            ]
-        except OperationalError as e:
-            logger.warning(f"Could not load categories: {e}")
-            return [
-                {
-                    'category_id': 1,
-                    'category': 'Grocery',
-                    'sub_category': 'Juices And Purees',
-                },
-                {
-                    'category_id': 2,
-                    'category': 'Perishable',
-                    'sub_category': 'Meat And Poultry',
-                },
-                {
-                    'category_id': 3,
-                    'category': 'Liquor',
-                    'sub_category': 'Tequila',
-                },
-                {
-                    'category_id': 4,
-                    'category': 'Grocery',
-                    'sub_category': 'Sweetener',
-                },
-                {
-                    'category_id': 8,
-                    'category': 'Beer',
-                    'sub_category': 'Bottled Beer',
-                },
-            ]
+        categories = Category.objects.all().order_by('category', 'sub_category')
+        return [
+            {
+                'category_id': cat.category_id,
+                'category': cat.category,
+                'sub_category': cat.sub_category,
+            }
+            for cat in categories
+        ]
 
     @staticmethod
     def get_categories_by_category(category: str) -> List[Dict]:
@@ -177,24 +129,11 @@ class CategoriesService:
     @staticmethod
     def find_category_id(category: str, sub_category: str) -> Optional[int]:
         """Find category_id for a given category/sub_category combination."""
-        try:
-            return (
-                Category.objects.filter(
-                    category=category, sub_category=sub_category
-                )
-                .values_list('category_id', flat=True)
-                .first()
-            )
-        except OperationalError:
-            # Fallback for test environment
-            fallback_mappings = {
-                ('Grocery', 'Juices And Purees'): 1,
-                ('Perishable', 'Meat And Poultry'): 2,
-                ('Liquor', 'Tequila'): 3,
-                ('Grocery', 'Sweetener'): 4,
-                ('Beer', 'Bottled Beer'): 8,
-            }
-            return fallback_mappings.get((category, sub_category))
+        return (
+            Category.objects.filter(category=category, sub_category=sub_category)
+            .values_list('category_id', flat=True)
+            .first()
+        )
 
     @staticmethod
     def find_category_id_by_category_only(category: str) -> Optional[int]:
@@ -202,22 +141,12 @@ class CategoriesService:
 
         Use when sub_category doesn't matter.
         """
-        try:
-            return (
-                Category.objects.filter(category=category)
-                .order_by('sub_category')
-                .values_list('category_id', flat=True)
-                .first()
-            )
-        except OperationalError:
-            # Fallback for test environment
-            fallback_categories = {
-                'Grocery': 1,
-                'Perishable': 2,
-                'Liquor': 3,
-                'Beer': 8,
-            }
-            return fallback_categories.get(category)
+        return (
+            Category.objects.filter(category=category)
+            .order_by('sub_category')
+            .values_list('category_id', flat=True)
+            .first()
+        )
 
     @staticmethod
     def validate_category_id(category_id: int) -> bool:

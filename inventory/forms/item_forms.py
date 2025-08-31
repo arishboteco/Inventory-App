@@ -1,17 +1,17 @@
 from django import forms
 
-from ..models import Department, Item, Supplier
-from ..services.categories_service import CategoriesService
-from ..services.units_service import UnitsService
+from ..models import Category, Department, Item, Supplier, Unit
 from .base import INPUT_CLASS, StyledFormMixin
 
 
 class ItemForm(StyledFormMixin, forms.ModelForm):
     """Item form using service-backed foreign key fields."""
 
-    category_id = forms.ChoiceField(
-        choices=[],
+    category_id = forms.ModelChoiceField(
+        queryset=Category.objects.none(),
         required=False,
+        to_field_name="category_id",
+        empty_label="Select Category",
         help_text="Item category for classification",
         widget=forms.Select(
             attrs={
@@ -22,9 +22,11 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         ),
     )
 
-    unit_id = forms.ChoiceField(
-        choices=[],
+    unit_id = forms.ModelChoiceField(
+        queryset=Unit.objects.none(),
         required=True,
+        to_field_name="unit_id",
+        empty_label="Select Unit",
         help_text=(
             "Select the unit for this item (handles both kitchen and procurement units)"
         ),
@@ -118,12 +120,13 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Populate dropdown choices via services
-        unit_choices = UnitsService.get_unit_choices_for_forms()
-        self.fields["unit_id"].choices = [("", "Select Unit")] + unit_choices
-
-        category_choices = CategoriesService.get_category_choices_for_forms()
-        self.fields["category_id"].choices = [("", "Select Category")] + category_choices
+        # Populate dropdown querysets via ORM
+        self.fields["unit_id"].queryset = Unit.objects.all().order_by(
+            "base_unit", "purchase_unit"
+        )
+        self.fields["category_id"].queryset = Category.objects.all().order_by(
+            "category", "sub_category"
+        )
 
         if "name" in self.fields:
             self.fields["name"].required = True
@@ -139,10 +142,10 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.unit_id = int(self.cleaned_data["unit_id"])
-        category_val = self.cleaned_data.get("category_id")
-        instance.category_id = int(category_val) if category_val else None
+        instance.unit = self.cleaned_data["unit_id"]
+        instance.category = self.cleaned_data.get("category_id")
         if commit:
             instance.save()
             self.save_m2m()
         return instance
+

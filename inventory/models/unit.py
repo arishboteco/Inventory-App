@@ -12,8 +12,11 @@ class Unit(models.Model):
     unit_id = models.AutoField(primary_key=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "units"
+        verbose_name = "Unit"
+        verbose_name_plural = "Units"
+        ordering = ["base_unit", "purchase_unit"]
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.purchase_unit} ({self.base_unit})"

@@ -11,8 +11,11 @@ class Category(models.Model):
     sub_category = models.TextField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = "category"
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+        ordering = ["category", "sub_category"]
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.category} > {self.sub_category}"

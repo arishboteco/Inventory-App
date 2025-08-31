@@ -335,16 +335,12 @@
 
   // Event delegation
   document.addEventListener("click", function (e) {
+    if (e.target.closest("[data-ignore-toggle]")) {
+      return;
+    }
     const target = e.target.closest("[data-action]");
     if (!target) return;
     const action = target.getAttribute("data-action");
-    // Prevent toggle-details if clicking a link with data-ignore-toggle
-    if (
-      action === "toggle-details" &&
-      e.target.closest("[data-ignore-toggle]")
-    ) {
-      return;
-    }
     const row = findRow(target);
     if (!row) return;
 

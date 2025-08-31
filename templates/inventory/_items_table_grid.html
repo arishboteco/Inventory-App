@@ -29,7 +29,9 @@
         <input type="checkbox" name="selected_items" value="{{ item.item_id }}" aria-label="Select {{ item.name }}" data-action="select-item">
       </td>
       <td data-col="name">
-        <div class="font-medium text-gray-900">{{ item.name }}</div>
+        <div class="font-medium text-gray-900">
+          <a href="{% url 'item_detail' item.item_id %}" data-ignore-toggle>{{ item.name }}</a>
+        </div>
         <div class="text-xs text-gray-500">{% if item.item_code %}SKU: {{ item.item_code }}{% endif %}</div>
       </td>
       <td data-col="category">

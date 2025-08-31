@@ -350,45 +350,39 @@ def reactivate_item(item_id: int) -> Tuple[bool, str]:
 def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
     """Return the details for a single item."""
 
-    row = (
+    item = (
         Item.objects.filter(pk=item_id)
+        .prefetch_related("departments")
         .annotate(
             _stock=Coalesce(Sum("stocktransaction__quantity_change"), Decimal("0"))
         )
-        .values(
-            "item_id",
-            "name",
-            "unit_id",
-            "category_id",
-            "category",
-            "sub_category",
-            "base_unit",
-            "purchase_unit",
-            "initial_purchase_price",
-            "minimum_order_qty",
-            "lead_time_days",
-            "reorder_point",
-            "current_stock",
-            "notes",
-            "is_active",
-            "_stock",
-        )
         .first()
     )
-    if row:
-        row["unit"] = get_unit_display_name(row["unit_id"])
-        row["current_stock"] = row.pop("_stock")
+    if not item:
+        return None
 
-        # Add department information
-        try:
-            item = Item.objects.get(pk=item_id)
-            row["departments"] = list(item.departments.values_list('name', flat=True))
-            row["department_names"] = (
-                ", ".join(row["departments"]) if row["departments"] else "None"
-            )
-        except Item.DoesNotExist:
-            row["departments"] = []
-            row["department_names"] = "None"
+    row = {
+        "item_id": item.item_id,
+        "name": item.name,
+        "unit_id": item.unit_id,
+        "category_id": item.category_id,
+        "category": item.category,
+        "sub_category": item.sub_category,
+        "base_unit": item.base_unit,
+        "purchase_unit": item.purchase_unit,
+        "initial_purchase_price": item.initial_purchase_price,
+        "minimum_order_qty": item.minimum_order_qty,
+        "lead_time_days": item.lead_time_days,
+        "reorder_point": item.reorder_point,
+        "current_stock": item._stock,
+        "notes": item.notes,
+        "is_active": item.is_active,
+    }
 
-        return row
-    return None
+    row["unit"] = get_unit_display_name(item.unit_id)
+
+    departments = [dept.name for dept in item.departments.all()]
+    row["departments"] = departments
+    row["department_names"] = ", ".join(departments) if departments else "None"
+
+    return row

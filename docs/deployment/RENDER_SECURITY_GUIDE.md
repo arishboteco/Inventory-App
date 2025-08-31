@@ -10,8 +10,8 @@
 
 ### **Step 1: Use the Template**
 
-1. Copy `.env.render.template`
-2. Create a local `.env.render` file (already in `.gitignore`)
+1. Copy `env/production.example`
+2. Create a local `env/production.local` file (already in `.gitignore`)
 3. Replace all placeholder values with your real credentials
 
 ### **Step 2: Add to Render Dashboard Only**
@@ -74,7 +74,7 @@ SUPABASE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 ### **✅ DO:**
 
 - Add environment variables directly in Render dashboard
-- Use `.env.render.template` as a reference
+- Use `env/production.example` as a reference
 - Generate new secret keys for production
 - Keep credentials in secure password managers
 - Use different credentials for staging/production

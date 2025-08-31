@@ -61,14 +61,14 @@ python manage.py collectstatic --noinput
 
 ## Configuration
 
-Configuration is controlled via environment variables. Copy `.env.example` to `.env` and set values for your database and other settings:
+Configuration is controlled via environment variables. Template files live in the `env/` directory. Copy `env/dev.example` to `.env` for local development and set values for your database and other settings:
 
 ```bash
-cp .env.example .env
+cp env/dev.example .env
 # edit .env with your configuration
 ```
 
-You can also set these values directly in the environment instead of using a `.env` file.
+You can also set these values directly in the environment instead of using a `.env` file. For staging and production deployments, copy the appropriate template (e.g., `env/staging.example` or `env/production.example`) to a matching `env/*.local` file which is excluded from version control.
 
 Set `DJANGO_DEBUG` to `True` to enable Django's debug mode (defaults to `False`).
 
@@ -118,7 +118,7 @@ Docker Compose. It sets up three services:
 ### Setup
 
 1. Ensure Docker and Docker Compose are installed.
-2. Copy `.env.example` to `.env` and provide values, including a
+2. Copy `env/dev.example` to `.env` and provide values, including a
    `DATABASE_URL` that points to the `db` service and credentials for the
    Postgres container:
 
@@ -201,4 +201,3 @@ The application exposes the following REST endpoints under `/api/`:
 ## Deployment
 
 Settings are determined by the `DJANGO_ENV` environment variable. For production deployments (e.g., on Render) set `DJANGO_ENV=production`. The `DJANGO_SETTINGS_MODULE` variable is no longer required.
-

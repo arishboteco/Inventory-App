@@ -2,9 +2,9 @@
 
 ## ✅ **STAGING DEPLOYMENT SUCCESSFUL!**
 
-**Date:** August 27, 2025  
-**Environment:** Staging  
-**Application URL:** https://curly-space-sniffle-pjxw7ww6r76frgp-8001.app.github.dev  
+**Date:** August 27, 2025
+**Environment:** Staging
+**Application URL:** https://curly-space-sniffle-pjxw7ww6r76frgp-8001.app.github.dev
 **Status:** 🟢 **LIVE AND OPERATIONAL**
 
 ---
@@ -13,7 +13,7 @@
 
 ### ✅ Infrastructure Setup
 - [x] Staging settings configuration (`inventory_app/settings_staging.py`)
-- [x] Environment variables setup (`.env.staging`)  
+- [x] Environment variables setup (`env/staging.local`)
 - [x] Docker configuration files created
 - [x] Nginx configuration for staging
 - [x] Health check endpoint `/healthz`

@@ -1,5 +1,5 @@
-# .env.test - isolated test configuration
-# NOTE: Do not commit live secrets. Replace placeholders before use.
+# Test Environment Configuration
+# NOTE: Do not commit live secrets. Copy to env/test.local for customization and replace placeholders before use.
 
 DJANGO_SECRET_KEY=<TEST_SECRET_KEY>
 DJANGO_DEBUG=False

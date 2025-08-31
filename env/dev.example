@@ -1,4 +1,4 @@
-# NOTE: Do not commit live secrets. Replace placeholders with real values in your local environment.
+# NOTE: Do not commit live secrets. Copy to .env for local development and replace placeholders with real values.
 DJANGO_SECRET_KEY=<DEV_SECRET_KEY>
 DATABASE_URL=<DEV_DATABASE_URL>
 # For local runs, you can set DATABASE_URL=sqlite:///db.sqlite3

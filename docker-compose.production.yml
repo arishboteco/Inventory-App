@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   web:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.production
     command: >
@@ -25,7 +25,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=inventory_app.settings_production
     env_file:
-      - .env.production
+      - env/production.local
     depends_on:
       - db
       - redis
@@ -76,8 +76,8 @@ services:
   redis:
     image: redis:7-alpine
     command: >
-      redis-server 
-      --appendonly yes 
+      redis-server
+      --appendonly yes
       --requirepass ${REDIS_PASSWORD}
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru

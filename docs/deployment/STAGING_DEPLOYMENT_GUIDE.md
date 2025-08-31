@@ -6,7 +6,7 @@
 
 ### 1. Staging Environment Variables
 
-Create a `.env.staging` file with:
+Copy `env/staging.example` to `env/staging.local` and update values:
 
 ```bash
 # Django Configuration
@@ -201,7 +201,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
     env_file:
-      - .env.staging
+      - env/staging.local
     depends_on:
       - db
       - redis
@@ -209,7 +209,7 @@ services:
   db:
     image: postgres:15
     env_file:
-      - .env.staging
+      - env/staging.local
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

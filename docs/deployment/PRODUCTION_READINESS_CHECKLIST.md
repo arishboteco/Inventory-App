@@ -158,7 +158,7 @@ ssl/key.pem     # Your private key
 
 ```bash
 # Copy template and configure
-cp .env.production.example .env.production
+cp env/production.example env/production.local
 
 # Required configurations:
 - DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>

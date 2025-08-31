@@ -20,7 +20,7 @@ from ..logging import configure_logging
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
-# Only read .env if it exists; tests load .env.test via pytest.ini
+# Only read .env if it exists; tests load env/test.example via pytest.ini
 env_file = BASE_DIR / ".env"
 if env_file.exists():
     environ.Env.read_env(env_file)

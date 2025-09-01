@@ -1,8 +1,10 @@
-<details class="border rounded mb-4" {% block open %}{% endblock %}>
-  <summary class="cursor-pointer px-4 py-2 bg-gray-100">
-    <h2 class="text-h2 font-semibold">{% block title %}{% endblock %}</h2>
-  </summary>
-  <div class="p-4">
-    {% block content %}{% endblock %}
-  </div>
-</details>
+<div class="card mb-4">
+  <details {% block open %}{% endblock %}>
+    <summary class="card-header cursor-pointer">
+      <h2 class="text-h2 font-semibold">{% block title %}{% endblock %}</h2>
+    </summary>
+    <div class="card-body">
+      {% block content %}{% endblock %}
+    </div>
+  </details>
+</div>

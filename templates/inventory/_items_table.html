@@ -1,90 +1,253 @@
 {% load icon_tags %}
-<div class="mb-2 text-sm text-gray-600 flex items-center gap-2">
-  <span>Columns:</span>
-  <label><input type="checkbox" data-col-toggle value="category" checked> Category</label>
-  <label><input type="checkbox" data-col-toggle value="unit" checked> Unit</label>
-  <label><input type="checkbox" data-col-toggle value="stock" checked> Stock</label>
-  <label><input type="checkbox" data-col-toggle value="rop" checked> ROP</label>
-  <label><input type="checkbox" data-col-toggle value="departments" checked> Dept</label>
-  <label><input type="checkbox" data-col-toggle value="status" checked> Status</label>
+<div class="mb-2 flex justify-end">
+  <div class="relative" data-col-menu-container>
+    <button
+      type="button"
+      class="btn-square btn-sm"
+      aria-label="Toggle columns"
+      aria-haspopup="true"
+      aria-expanded="false"
+      data-col-menu-button
+    >
+      {% icon 'view-columns' 'w-4 h-4' %}
+    </button>
+    <ul
+      id="columns-menu"
+      class="menu menu-sm p-2 bg-white border border-gray-200 rounded shadow-md absolute right-0 mt-2 hidden z-20"
+      role="menu"
+      data-col-menu
+    >
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
+            value="category"
+            checked
+            class="form-checkbox"
+          />
+          <span>Category</span>
+        </label>
+      </li>
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
+            value="unit"
+            checked
+            class="form-checkbox"
+          />
+          <span>Unit</span>
+        </label>
+      </li>
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
+            value="stock"
+            checked
+            class="form-checkbox"
+          />
+          <span>Stock</span>
+        </label>
+      </li>
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
+            value="rop"
+            checked
+            class="form-checkbox"
+          />
+          <span>ROP</span>
+        </label>
+      </li>
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
+            value="departments"
+            checked
+            class="form-checkbox"
+          />
+          <span>Dept</span>
+        </label>
+      </li>
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
+            value="status"
+            checked
+            class="form-checkbox"
+          />
+          <span>Status</span>
+        </label>
+      </li>
+    </ul>
+  </div>
 </div>
+<!-- prettier-ignore -->
 <table class="table w-full bg-white border border-gray-200 rounded-lg table-sticky" id="grid-table">
   <thead class="table-header">
     <tr>
-      <th scope="col" class="sticky top-0 z-10 bg-white w-8"><input type="checkbox" data-select-all aria-label="Select all"></th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="name">Name</th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="category">Category</th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="unit">Unit</th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="stock">Stock</th>
+      <th scope="col" class="sticky top-0 z-10 bg-white w-8">
+        <input type="checkbox" data-select-all aria-label="Select all" />
+      </th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="name">
+        Name
+      </th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="category">
+        Category
+      </th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="unit">
+        Unit
+      </th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="stock">
+        Stock
+      </th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="rop">ROP</th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="departments">Departments</th>
-      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="status">Status</th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="departments">
+        Departments
+      </th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="status">
+        Status
+      </th>
       <th scope="col" class="sticky top-0 z-10 bg-white w-[120px]">Actions</th>
     </tr>
   </thead>
   <tbody class="table-body">
     {% for item in page_obj.object_list %}
-  <tr class="table-row-hover item-row" data-item-id="{{ item.item_id }}" data-unit-id="{{ item.unit_id }}" data-category-id="{{ item.category_id }}">
+    <tr
+      class="table-row-hover item-row"
+      data-item-id="{{ item.item_id }}"
+      data-unit-id="{{ item.unit_id }}"
+      data-category-id="{{ item.category_id }}"
+    >
       <td>
-        <input type="checkbox" name="selected_items" value="{{ item.item_id }}" aria-label="Select {{ item.name }}" data-action="select-item">
+        <input
+          type="checkbox"
+          name="selected_items"
+          value="{{ item.item_id }}"
+          aria-label="Select {{ item.name }}"
+          data-action="select-item"
+        />
       </td>
       <td data-col="name">
         <div class="font-medium text-gray-900">
-          <a href="{% url 'item_detail' item.item_id %}" data-ignore-toggle>{{ item.name }}</a>
+          <a href="{% url 'item_detail' item.item_id %}" data-ignore-toggle
+            >{{ item.name }}</a
+          >
         </div>
-        <div class="text-xs text-gray-500">{% if item.item_code %}SKU: {{ item.item_code }}{% endif %}</div>
+        <div class="text-xs text-gray-500">
+          {% if item.item_code %}SKU: {{ item.item_code }}{% endif %}
+        </div>
       </td>
       <td data-col="category">
-        {% if item.category %}
-          {{ item.category.category }}{% if item.category.sub_category %} → {{ item.category.sub_category }}{% endif %}
-        {% else %}
-          <span class="text-gray-400">—</span>
+        {% if item.category %} {{ item.category.category }}{% if
+        item.category.sub_category %} → {{ item.category.sub_category }}{% endif
+        %} {% else %}
+        <span class="text-gray-400">—</span>
         {% endif %}
       </td>
       <td data-col="unit">{{ item.unit.base_unit|default:"—" }}</td>
       <td data-col="stock">
-        {% if item.current_stock is not None %}
-          {{ item.current_stock }}
-        {% else %}
-          <span class="text-gray-400">—</span>
+        {% if item.current_stock is not None %} {{ item.current_stock }} {% else
+        %}
+        <span class="text-gray-400">—</span>
         {% endif %}
       </td>
       <td data-col="rop">{{ item.reorder_point|default:"—" }}</td>
       <td data-col="departments">
-        {% if item.departments.all %}
-          {% for dept in item.departments.all %}
-            <span class="badge badge-info">{{ dept.name }}</span>
-          {% endfor %}
-        {% else %}
-          <span class="text-gray-400">—</span>
+        {% if item.departments.all %} {% for dept in item.departments.all %}
+        <span class="badge badge-info">{{ dept.name }}</span>
+        {% endfor %} {% else %}
+        <span class="text-gray-400">—</span>
         {% endif %}
       </td>
       <td data-col="status">
         {% if item.is_active %}
-          <span class="badge badge-success">Active</span>
+        <span class="badge badge-success">Active</span>
         {% else %}
-          <span class="badge badge-error">Inactive</span>
+        <span class="badge badge-error">Inactive</span>
         {% endif %}
       </td>
       <td>
         <div class="flex items-center gap-1">
-          <button type="button" data-action="table-quick-edit" class="btn-square btn-sm text-gray-400 hover:text-blue-600" title="Quick Edit" aria-label="Quick edit {{ item.name }}">
+          <button
+            type="button"
+            data-action="table-quick-edit"
+            class="btn-square btn-sm text-gray-400 hover:text-blue-600"
+            title="Quick Edit"
+            aria-label="Quick edit {{ item.name }}"
+          >
             {% icon 'pencil-square' 'w-4 h-4' %}
           </button>
-          <button type="button" data-action="open-edit" data-href="{% url 'item_edit' item.item_id %}?partial=1" class="btn-square btn-sm text-gray-400 hover:text-blue-600" title="Edit" aria-label="Edit {{ item.name }}">
+          <button
+            type="button"
+            data-action="open-edit"
+            data-href="{% url 'item_edit' item.item_id %}?partial=1"
+            class="btn-square btn-sm text-gray-400 hover:text-blue-600"
+            title="Edit"
+            aria-label="Edit {{ item.name }}"
+          >
             {% icon 'pencil-square' 'w-4 h-4' %}
           </button>
-          <button type="button" data-action="open-modal" data-href="{% url 'item_detail' item.item_id %}?partial=1" class="btn-square btn-sm text-gray-400 hover:text-green-600" title="View Details" aria-label="View details {{ item.name }}">
+          <button
+            type="button"
+            data-action="open-modal"
+            data-href="{% url 'item_detail' item.item_id %}?partial=1"
+            class="btn-square btn-sm text-gray-400 hover:text-green-600"
+            title="View Details"
+            aria-label="View details {{ item.name }}"
+          >
             {% icon 'eye' 'w-4 h-4' %}
           </button>
-          <button type="button" class="btn-square btn-sm text-gray-400 hover:text-red-600" title="Delete" aria-label="Delete {{ item.name }}" data-action="delete">
+          <button
+            type="button"
+            class="btn-square btn-sm text-gray-400 hover:text-red-600"
+            title="Delete"
+            aria-label="Delete {{ item.name }}"
+            data-action="delete"
+          >
             {% icon 'trash' 'w-4 h-4' %}
           </button>
         </div>
       </td>
     </tr>
     {% empty %}
-      <tr><td colspan="9" class="text-center text-gray-500">No items found.</td></tr>
+    <tr>
+      <td colspan="9" class="text-center text-gray-500">No items found.</td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>

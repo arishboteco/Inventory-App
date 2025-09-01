@@ -25,7 +25,7 @@ describe("items-table delete", () => {
 
   test("calls delete endpoint and removes row", async () => {
     const btn = document.querySelector('[data-action="delete"]');
-    btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    btn.click();
     await flushPromises();
     expect(fetch).toHaveBeenCalledWith(
       "/items/1/delete/",
@@ -39,5 +39,60 @@ describe("items-table delete", () => {
       "Item deleted successfully!",
       "success",
     );
+  });
+});
+
+describe("column visibility menu", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <div>
+        <button data-col-menu-button aria-haspopup="true" aria-expanded="false"></button>
+        <ul data-col-menu class="hidden">
+          <li><input type="checkbox" data-col-toggle value="category" checked></li>
+          <li><input type="checkbox" data-col-toggle value="unit" checked></li>
+        </ul>
+      </div>`;
+    // Require script after DOM setup
+    jest.isolateModules(() => {
+      require("./items-table.js");
+    });
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+  });
+
+  test("closes menu on outside click", () => {
+    const btn = document.querySelector("[data-col-menu-button]");
+    const menu = document.querySelector("[data-col-menu]");
+    // Open via keyboard shortcut
+    btn.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+    );
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+    expect(menu.classList.contains("hidden")).toBe(true);
+  });
+
+  test("supports keyboard navigation", () => {
+    const btn = document.querySelector("[data-col-menu-button]");
+    const menu = document.querySelector("[data-col-menu]");
+    btn.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+    );
+    const inputs = menu.querySelectorAll("input");
+    expect(document.activeElement).toBe(inputs[0]);
+    document.activeElement.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+    );
+    expect(document.activeElement).toBe(inputs[1]);
+    document.activeElement.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }),
+    );
+    expect(document.activeElement).toBe(inputs[0]);
+    document.activeElement.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+    expect(menu.classList.contains("hidden")).toBe(true);
+    expect(document.activeElement).toBe(btn);
   });
 });

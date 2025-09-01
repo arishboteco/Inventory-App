@@ -1,47 +1,49 @@
 <form id="filters" class="filters-inline mb-4" method="get">
-  <div class="flex flex-col">
-    <label for="filter-q" class="text-sm font-medium">{{ search_label|default:'Search' }}</label>
-    <input
-      id="filter-q"
-      type="text"
-      name="q"
-      placeholder="{{ search_placeholder }}"
-      class="form-control w-full"
-      value="{{ q }}"
-      hx-get="{{ hx_get }}"
-      hx-target="{{ hx_target }}"
-      hx-trigger="keyup changed delay:{{ search_delay|default:'300ms' }}"
-      hx-include="#filters"
-      {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-    />
-  </div>
-  {% for f in filters %}
+  <div class="flex flex-wrap items-end gap-4">
     <div class="flex flex-col">
-      <label for="{{ f.id|default:f.name }}" class="text-sm font-medium">{{ f.label|default:f.name|capfirst }}</label>
-      <select
-        name="{{ f.name }}"
+      <label for="filter-q" class="text-sm font-medium">{{ search_label|default:'Search' }}</label>
+      <input
+        id="filter-q"
+        type="text"
+        name="q"
+        placeholder="{{ search_placeholder }}"
         class="form-control w-full"
+        value="{{ q }}"
         hx-get="{{ hx_get }}"
         hx-target="{{ hx_target }}"
-        hx-trigger="change"
+        hx-trigger="keyup changed delay:{{ search_delay|default:'300ms' }}"
         hx-include="#filters"
         {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-        id="{{ f.id|default:f.name }}"
-      >
-        {% for opt in f.options %}
-          <option value="{{ opt.value }}"{% if opt.value == f.value %} selected{% endif %}>
-            {{ opt.label|default:opt.value }}
-          </option>
-        {% endfor %}
-      </select>
+      />
     </div>
-  {% endfor %}
-  {% if export_url %}
-    <div class="flex flex-col">
-      <span class="text-sm font-medium">&nbsp;</span>
-      <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-secondary w-full">{{ export_label|default:'Export' }}</button>
-    </div>
-  {% endif %}
+    {% for f in filters %}
+      <div class="flex flex-col">
+        <label for="{{ f.id|default:f.name }}" class="text-sm font-medium">{{ f.label|default:f.name|capfirst }}</label>
+        <select
+          name="{{ f.name }}"
+          class="form-control w-full"
+          hx-get="{{ hx_get }}"
+          hx-target="{{ hx_target }}"
+          hx-trigger="change"
+          hx-include="#filters"
+          {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+          id="{{ f.id|default:f.name }}"
+        >
+          {% for opt in f.options %}
+            <option value="{{ opt.value }}"{% if opt.value == f.value %} selected{% endif %}>
+              {{ opt.label|default:opt.value }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% endfor %}
+    {% if export_url %}
+      <div class="flex flex-col">
+        <span class="text-sm font-medium">&nbsp;</span>
+        <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-secondary w-full">{{ export_label|default:'Export' }}</button>
+      </div>
+    {% endif %}
+  </div>
   {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
   {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
   {% if sort %}<input type="hidden" name="sort" value="{{ sort|default:'name' }}">{% endif %}

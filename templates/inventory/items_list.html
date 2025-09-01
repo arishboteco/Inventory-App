@@ -55,32 +55,7 @@
   {% include "inventory/_bulk_upload_section.html" with bulk_form=bulk_form bulk_success_count=bulk_success_count bulk_errors=bulk_errors %}
 {% endblock %}
 
-{% block filters %}
-  <!-- Title should come before filters -->
-  <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
-
-  <!-- Place filters directly above the table -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <div class="flex items-center justify-between mb-2">
-        <div class="text-sm text-gray-600">Filter and explore</div>
-        <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
-          <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
-            {% icon 'list-bullet' 'w-4 h-4' %}
-          </button>
-          <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
-            {% icon 'squares-2x2' 'w-4 h-4' %}
-          </button>
-        </div>
-      </div>
-      {% url 'items_table' as items_table_url %}
-      {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
-    </div>
-  </div>
-
-  <!-- Screen-reader live region for list updates -->
-  <div id="items-aria-live" class="sr-only" aria-live="polite"></div>
-{% endblock %}
+{# Filter block moved directly above the table within data_container #}
 
 {% block kpis %}
 <div class="card mb-6">
@@ -103,8 +78,24 @@
 {% endblock %}
 
 {% block data_container %}
+<h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
 <div class="card">
   <div class="table-scroll">
+    <div class="sticky top-0 z-10 bg-white p-4">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm text-gray-600">Filter and explore</div>
+        <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
+          <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+            {% icon 'list-bullet' 'w-4 h-4' %}
+          </button>
+          <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+            {% icon 'squares-2x2' 'w-4 h-4' %}
+          </button>
+        </div>
+      </div>
+      {% url 'items_table' as items_table_url %}
+      {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
+    </div>
     <div class="overflow-x-auto" id="items-list">
       {% include "components/items_table.html" with layout=request.GET.layout|default:'table' %}
     </div>
@@ -115,6 +106,7 @@
     <div class="skeleton-row"></div>
   </div>
 </div>
+<div id="items-aria-live" class="sr-only" aria-live="polite"></div>
 {% endblock %}
 
 {% block pagination %}

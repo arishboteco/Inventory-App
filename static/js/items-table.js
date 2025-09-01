@@ -10,7 +10,7 @@
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
     const details = document.getElementById(`details-${itemId}`);
-    const toggleEl = row.querySelector(".main-row");
+    const toggleEl = row.querySelector('[data-action="toggle-details"]');
     if (!details || !toggleEl) return;
 
     const expanded = toggleEl.getAttribute("aria-expanded") === "true";
@@ -606,16 +606,6 @@
     const inp = document.querySelector('input[name="csrfmiddlewaretoken"]');
     return inp ? inp.value : "";
   }
-
-  // Keyboard accessibility for toggle button
-  document.addEventListener("keydown", function (e) {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    const target = e.target.closest('[data-action="toggle-details"]');
-    if (!target) return;
-    e.preventDefault();
-    const row = findRow(target);
-    toggleDetails(row);
-  });
 
   // Expose minimal API for debugging
   window.itemsTable = { toggleDetails, enableInlineEdit, cancelInlineEdit };

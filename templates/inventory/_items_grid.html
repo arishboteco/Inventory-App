@@ -4,14 +4,17 @@
     {% for item in page_obj.object_list %}
     <div class="item-row bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 hover:border-gray-300 overflow-hidden h-full" data-item-id="{{ item.item_id }}">
         <!-- Main Row -->
-    <div class="main-row w-full text-left px-5 py-5 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200 cursor-pointer" data-action="toggle-details" aria-label="Toggle details" aria-expanded="false" aria-controls="details-{{ item.item_id }}" role="button" tabindex="0">
+    <div class="main-row w-full text-left px-5 py-5 hover:bg-gradient-to-r hover:from-gray-50 hover:to-white transition-all duration-200">
             <div class="flex items-center justify-between">
                 <!-- Left side - Item info -->
                 <div class="flex items-center space-x-4 flex-1">
                     <!-- Expand/Collapse Icon -->
                     <button class="expand-icon text-gray-400 hover:text-blue-600 transition-all duration-200 p-1 rounded-lg hover:bg-blue-50"
                             type="button"
-                            data-action="toggle-details">
+                            data-action="toggle-details"
+                            aria-expanded="false"
+                            aria-controls="details-{{ item.item_id }}"
+                            aria-label="Toggle details for {{ item.name }}">
                         <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>

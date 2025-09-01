@@ -96,3 +96,22 @@ def test_items_list_kpi_card_links(client):
     assert html.count(f'href="{url}"') >= 2
     assert f'href="{url}?stock_status=low"' in html
     assert f'href="{po_url}?status=ORDERED"' in html
+
+
+@pytest.mark.django_db
+def test_filters_persist_after_table_refresh(client):
+    """Filters should remain visible after HTMX table updates."""
+    _create_item()
+    # Initial page load contains the filter bar
+    resp = client.get(reverse("items_list"))
+    assert resp.status_code == 200
+    initial_html = resp.content.decode()
+    assert 'id="items-filter-bar"' in initial_html
+
+    # Simulate an HTMX request to refresh the table
+    table_resp = client.get(reverse("items_table"), HTTP_HX_REQUEST="true")
+    assert table_resp.status_code == 200
+    table_html = table_resp.content.decode()
+
+    # The table partial should not contain the filter bar
+    assert 'items-filter-bar' not in table_html

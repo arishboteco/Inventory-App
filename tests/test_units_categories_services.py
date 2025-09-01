@@ -57,4 +57,3 @@ def test_get_category_info_uses_orm(monkeypatch):
         "category": "Grocery",
         "sub_category": "Juices And Purees",
     }
-

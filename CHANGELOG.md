@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `templates/inventory/item_detail_speed.html`
   - `templates/inventory/items_list_speed.html`
   - `templates/inventory/items_list_speed_clean.html`
+- Removed "About" card from items list page.
 
 ### Changed
 - Layout toggles now use HTMX requests and persist selection via `localStorage` with improved ARIA updates.

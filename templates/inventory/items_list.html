@@ -148,10 +148,7 @@ function updateFiltersHeight() {
   }
 }
 
-window.addEventListener('load', updateFiltersHeight);
-window.addEventListener('resize', updateFiltersHeight);
-
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   updateFiltersHeight();
   const bar = document.getElementById('items-filter-bar');
   if (bar) {
@@ -255,5 +252,8 @@ document.addEventListener('DOMContentLoaded', function() {
   setupToggle('add-item-toggle', 'add-item-section');
   setupToggle('bulk-upload-toggle', 'bulk-upload-section');
 });
+
+window.addEventListener('load', updateFiltersHeight);
+window.addEventListener('resize', updateFiltersHeight);
 </script>
 {% endblock %}

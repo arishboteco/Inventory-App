@@ -41,8 +41,8 @@
   <div class="card-body">
     <form method="get" class="grid grid-cols-1 lg:grid-cols-5 gap-4">
       <div>
-        <label class="form-label">Status</label>
-        <select name="status" class="form-select predictive">
+        <label for="status" class="form-label">Status</label>
+        <select id="status" name="status" class="form-select predictive" autocomplete="off">
           <option value="">All Statuses</option>
           {% for value, label in statuses %}
             <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
@@ -52,8 +52,8 @@
         </select>
       </div>
       <div>
-        <label class="form-label">Supplier</label>
-        <select name="supplier" class="form-select predictive">
+        <label for="supplier" class="form-label">Supplier</label>
+        <select id="supplier" name="supplier" class="form-select predictive" autocomplete="off">
           <option value="">All Suppliers</option>
           {% for supplier in suppliers %}
             <option value="{{ supplier.pk }}" {% if current_supplier == supplier.pk|stringformat:"s" %}selected{% endif %}>
@@ -63,12 +63,12 @@
         </select>
       </div>
       <div>
-        <label class="form-label">Start Date</label>
-        <input type="date" name="start_date" value="{{ start_date }}" class="form-input">
+        <label for="start-date" class="form-label">Start Date</label>
+        <input id="start-date" type="date" name="start_date" value="{{ start_date }}" class="form-input" autocomplete="off">
       </div>
       <div>
-        <label class="form-label">End Date</label>
-        <input type="date" name="end_date" value="{{ end_date }}" class="form-input">
+        <label for="end-date" class="form-label">End Date</label>
+        <input id="end-date" type="date" name="end_date" value="{{ end_date }}" class="form-input" autocomplete="off">
       </div>
       <div class="flex items-end space-x-2">
         <button type="submit" class="btn-primary flex-1">

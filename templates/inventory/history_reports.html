@@ -10,12 +10,15 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <div class="flex flex-col gap-2 mb-4">
+    <label for="date-range" class="text-sm font-medium">Date Range</label>
     <input
       id="date-range"
+      name="date_range"
       type="text"
       class="form-control w-full md:w-64"
       placeholder="Select Date Range"
       value="{% if start_date and end_date %}{{ start_date }} to {{ end_date }}{% endif %}"
+      autocomplete="off"
     />
     <div class="flex flex-col md:flex-row md:items-end gap-2">
       <div class="flex-1">

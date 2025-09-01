@@ -6,6 +6,7 @@
         id="filter-q"
         type="text"
         name="q"
+        autocomplete="off"
         placeholder="{{ search_placeholder }}"
         class="form-control w-full"
         value="{{ q }}"
@@ -28,6 +29,7 @@
           hx-include="#filters"
           {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
           id="{{ f.id|default:f.name }}"
+          autocomplete="off"
         >
           {% for opt in f.options %}
             <option value="{{ opt.value }}"{% if opt.value == f.value %} selected{% endif %}>

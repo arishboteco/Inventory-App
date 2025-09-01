@@ -39,6 +39,8 @@ def _filter_and_sort_items(request, qs=None):
         "category": "category__category",
         "subcategory": "category__sub_category",
         "department": "departments__name",
+        "supplier": "preferred_supplier_id",
+        "base_unit": "unit__base_unit",
     }
     allowed_sorts = {
         "item_id",

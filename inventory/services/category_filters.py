@@ -9,12 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 def resolve_category_filters(request) -> Dict[str, Any]:
-    """Return selected category values and available options."""
-    from ..models import Department
+    """Return selected filter values and available options."""
+    from ..models import Department, Supplier, Unit
 
     category = (request.GET.get("category") or "").strip()
     subcategory = (request.GET.get("subcategory") or "").strip()
     department = (request.GET.get("department") or "").strip()
+    base_unit = (request.GET.get("base_unit") or "").strip()
+    supplier = (request.GET.get("supplier") or "").strip()
 
     try:
         categories_map = CategoriesService.get_category_choices_grouped()
@@ -30,15 +32,29 @@ def resolve_category_filters(request) -> Dict[str, Any]:
         Department.objects.all().values_list("name", flat=True).order_by("name")
     )
 
+    base_units = list(
+        Unit.objects.order_by("base_unit")
+        .values_list("base_unit", flat=True)
+        .distinct()
+    )
+
+    suppliers = list(
+        Supplier.objects.filter(is_active=True)
+        .order_by("name")
+        .values_list("supplier_id", "name")
+    )
+
     return {
         "category": category,
         "subcategory": subcategory,
-        "base_unit": "",
+        "base_unit": base_unit,
+        "supplier": supplier,
         "department": department,
         "categories": categories,
         "subcategories": subcategories,
-        "base_units": [],
+        "base_units": base_units,
         "units": [],
+        "suppliers": suppliers,
         "departments": [(d, d) for d in departments],
     }
 
@@ -54,6 +70,14 @@ def build_filters(request) -> List[Dict[str, Any]]:
     subcategory_options = [{"value": "", "label": "All Subcategories"}]
     for c in resolved["subcategories"]:
         subcategory_options.append({"value": c, "label": c})
+
+    base_unit_options = [{"value": "", "label": "All Units"}]
+    for u in resolved["base_units"]:
+        base_unit_options.append({"value": u, "label": u})
+
+    supplier_options = [{"value": "", "label": "All Suppliers"}]
+    for sid, name in resolved.get("suppliers", []):
+        supplier_options.append({"value": str(sid), "label": name})
 
     department_options = [{"value": "", "label": "All Departments"}]
     department_options.extend(
@@ -77,7 +101,13 @@ def build_filters(request) -> List[Dict[str, Any]]:
             "name": "base_unit",
             "label": "Unit",
             "value": resolved["base_unit"],
-            "options": [],
+            "options": base_unit_options,
+        },
+        {
+            "name": "supplier",
+            "label": "Supplier",
+            "value": resolved["supplier"],
+            "options": supplier_options,
         },
         {
             "name": "department",

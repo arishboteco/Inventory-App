@@ -3,12 +3,21 @@
 {% block content %}
   <h1 class="text-h1 font-semibold mb-4">Visualizations</h1>
   <form method="get" class="flex flex-col md:flex-row gap-2 mb-4">
-    <select name="metric" class="form-control">
-      <option value="sales" {% if metric == 'sales' %}selected{% endif %}>Sales</option>
-      <option value="stock" {% if metric == 'stock' %}selected{% endif %}>Stock</option>
-    </select>
-    <input type="date" name="start_date" value="{{ start_date }}" class="form-control" />
-    <input type="date" name="end_date" value="{{ end_date }}" class="form-control" />
+    <div class="flex flex-col">
+      <label for="metric" class="text-sm font-medium">Metric</label>
+      <select id="metric" name="metric" class="form-control" autocomplete="off">
+        <option value="sales" {% if metric == 'sales' %}selected{% endif %}>Sales</option>
+        <option value="stock" {% if metric == 'stock' %}selected{% endif %}>Stock</option>
+      </select>
+    </div>
+    <div class="flex flex-col">
+      <label for="start-date" class="text-sm font-medium">Start Date</label>
+      <input id="start-date" type="date" name="start_date" value="{{ start_date }}" class="form-control" autocomplete="off" />
+    </div>
+    <div class="flex flex-col">
+      <label for="end-date" class="text-sm font-medium">End Date</label>
+      <input id="end-date" type="date" name="end_date" value="{{ end_date }}" class="form-control" autocomplete="off" />
+    </div>
     <button type="submit" class="btn-primary">Apply</button>
   </form>
   <div id="heatmap" class="w-full h-64"></div>

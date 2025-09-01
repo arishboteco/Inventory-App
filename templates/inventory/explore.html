@@ -6,14 +6,22 @@
 {% block page_heading %}Explore Items{% endblock %}
 
 {% block filters %}
-<form method="get">
-  <input type="text" name="q" value="{{ q }}" placeholder="Search" />
-  <select name="active">
-    <option value="" {% if not active %}selected{% endif %}>All</option>
-    <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
-    <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
-  </select>
-  <button type="submit">Filter</button>
+<form method="get" class="flex flex-col gap-2 sm:flex-row sm:items-end">
+  <div class="flex flex-col">
+    <label for="q" class="text-sm font-medium">Search</label>
+    <input id="q" type="text" name="q" value="{{ q }}" placeholder="Search" autocomplete="off" />
+  </div>
+  <div class="flex flex-col">
+    <label for="active" class="text-sm font-medium">Status</label>
+    <select id="active" name="active" autocomplete="off">
+      <option value="" {% if not active %}selected{% endif %}>All</option>
+      <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
+      <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
+    </select>
+  </div>
+  <div>
+    <button type="submit">Filter</button>
+  </div>
 </form>
 <a href="{{ export_url }}?{{ querystring }}">Export CSV</a>
 {% endblock %}

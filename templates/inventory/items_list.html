@@ -10,8 +10,16 @@
 
 {% block page_title %}Item Master Management{% endblock %}
 {% block page_heading %}Item Master Management{% endblock %}
+{% block page_subtitle %}
+  <div class="flex items-center gap-2 text-sm text-gray-600 mt-1">
+    {% icon 'cube' 'w-4 h-4' %}
+    <span>Manage your inventory items</span>
+  </div>
+{% endblock %}
 
 {% block header_actions %}
+  <button type="button" id="add-item-toggle" aria-controls="add-item-section" aria-expanded="false" class="btn-primary btn-sm">Add Item</button>
+  <button type="button" id="bulk-upload-toggle" aria-controls="bulk-upload-section" aria-expanded="false" class="btn-secondary btn-sm">Bulk Upload</button>
   <div id="dept-options" class="hidden">
     <select id="dept-select-template">
       {% for d in departments_for_form %}
@@ -218,6 +226,21 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   }
+  function setupToggle(btnId, sectionId) {
+    const btn = document.getElementById(btnId);
+    const section = document.getElementById(sectionId);
+    if (btn && section) {
+      btn.addEventListener('click', () => {
+        section.open = !section.open;
+        btn.setAttribute('aria-expanded', section.open ? 'true' : 'false');
+        if (section.open) {
+          section.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    }
+  }
+  setupToggle('add-item-toggle', 'add-item-section');
+  setupToggle('bulk-upload-toggle', 'bulk-upload-section');
 });
 </script>
 {% endblock %}

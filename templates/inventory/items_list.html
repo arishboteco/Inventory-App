@@ -69,13 +69,74 @@
       {% url 'items_table' as items_table_url %}
       <div class="flex items-center justify-between mb-2">
         <div class="text-sm text-gray-600">Filter and explore</div>
-        <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
+        <div class="flex items-center gap-2" role="toolbar" aria-label="Table options">
           <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view" hx-get="{{ items_table_url }}?layout=table" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
             {% icon 'list-bullet' 'w-4 h-4' %}
           </button>
           <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view" hx-get="{{ items_table_url }}?layout=grid" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
             {% icon 'squares-2x2' 'w-4 h-4' %}
           </button>
+          <div class="relative{% if request.GET.layout == 'grid' %} hidden{% endif %}" data-col-menu-container>
+            <button
+              type="button"
+              class="btn-square"
+              aria-label="Toggle columns"
+              aria-haspopup="true"
+              aria-expanded="false"
+              data-col-menu-button
+            >
+              {% icon 'view-columns' 'w-4 h-4' %}
+            </button>
+            <ul
+              id="columns-menu"
+              class="menu menu-sm p-2 bg-white border border-gray-200 rounded shadow-md absolute right-0 mt-2 hidden z-20"
+              role="menu"
+              data-col-menu
+            >
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="category" checked class="form-checkbox" />
+                  <span>Category</span>
+                </label>
+              </li>
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="unit" checked class="form-checkbox" />
+                  <span>Unit</span>
+                </label>
+              </li>
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="stock" checked class="form-checkbox" />
+                  <span>Stock</span>
+                </label>
+              </li>
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="stock_status" checked class="form-checkbox" />
+                  <span>Stock Status</span>
+                </label>
+              </li>
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="rop" checked class="form-checkbox" />
+                  <span>ROP</span>
+                </label>
+              </li>
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="departments" checked class="form-checkbox" />
+                  <span>Dept</span>
+                </label>
+              </li>
+              <li role="none">
+                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                  <input type="checkbox" data-col-toggle value="status" checked class="form-checkbox" />
+                  <span>Status</span>
+                </label>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
       {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
@@ -154,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   const filtersForm = document.getElementById('filters');
   const layoutBtns = document.querySelectorAll('[data-layout-btn]');
+  const colMenuContainer = document.querySelector('[data-col-menu-container]');
   function applyLayout(value){
     localStorage.setItem('items_layout', value);
     const layoutInput = filtersForm?.querySelector('input[name="layout"]');
@@ -161,6 +223,9 @@ document.addEventListener('DOMContentLoaded', function () {
     layoutBtns.forEach(btn => {
       btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === value ? 'true' : 'false');
     });
+    if (colMenuContainer) {
+      colMenuContainer.classList.toggle('hidden', value === 'grid');
+    }
   }
   layoutBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -187,9 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
     listEl.addEventListener('htmx:afterSwap', () => {
       announceCount();
       const layoutVal = filtersForm?.querySelector('input[name="layout"]').value || 'table';
-      layoutBtns.forEach(btn => {
-        btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === layoutVal ? 'true' : 'false');
-      });
+      applyLayout(layoutVal);
       updateFiltersHeight();
     });
   }

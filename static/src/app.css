@@ -56,8 +56,8 @@
 
   /* Sticky headers */
   .table-scroll {
-    max-height: 60vh;
-    overflow: auto;
+    height: calc(100vh - var(--filters-height) - 6rem);
+    overflow-y: auto;
   }
   .table-sticky thead th {
     position: sticky;

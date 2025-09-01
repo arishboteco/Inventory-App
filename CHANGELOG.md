@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `templates/inventory/item_detail_speed.html`
   - `templates/inventory/items_list_speed.html`
   - `templates/inventory/items_list_speed_clean.html`
+- Removed "About" card from items list page.
 
 ### Changed
 - Layout toggles now use HTMX requests and persist selection via `localStorage` with improved ARIA updates.
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Adjust table scroll container to use viewport height for responsive layout
 - Fix critical items page 500 error - template inheritance and data structure issues
 - Correct template extends paths in speed templates (base.html → \_base.html)
 - Fix category filter data structure - convert to tuples for template unpacking

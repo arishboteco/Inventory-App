@@ -143,6 +143,17 @@
     padding: 1rem;
   }
 
+  /* Collapsible Card */
+  .card > details > summary {
+    list-style: none;
+  }
+  .card > details > summary::-webkit-details-marker {
+    display: none;
+  }
+  .card > details:not([open]) > .card-header {
+    border-bottom: 0;
+  }
+
   /* Button System */
   .btn-primary {
     display: inline-flex;

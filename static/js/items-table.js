@@ -521,6 +521,63 @@
           .forEach((cb) => (cb.checked = false));
       });
     }
+
+    const menuBtn = document.querySelector("[data-col-menu-button]");
+    const menu = document.querySelector("[data-col-menu]");
+    if (menuBtn && menu) {
+      function openMenu() {
+        menu.classList.remove("hidden");
+        menuBtn.setAttribute("aria-expanded", "true");
+        const first = menu.querySelector("input");
+        if (first) first.focus();
+      }
+      function closeMenu() {
+        menu.classList.add("hidden");
+        menuBtn.setAttribute("aria-expanded", "false");
+        menuBtn.focus();
+      }
+
+      menuBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const expanded = menuBtn.getAttribute("aria-expanded") === "true";
+        if (expanded) closeMenu();
+        else openMenu();
+      });
+
+      menuBtn.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (menuBtn.getAttribute("aria-expanded") !== "true") openMenu();
+          const first = menu.querySelector("input");
+          if (first) first.focus();
+        }
+      });
+
+      menu.addEventListener("keydown", function (e) {
+        const items = Array.from(menu.querySelectorAll("input"));
+        const index = items.indexOf(document.activeElement);
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeMenu();
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          const next = items[(index + 1) % items.length];
+          if (next) next.focus();
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          const prev = items[(index - 1 + items.length) % items.length];
+          if (prev) prev.focus();
+        }
+      });
+
+      document.addEventListener("click", function (e) {
+        if (!menu.contains(e.target) && e.target !== menuBtn) {
+          if (menuBtn.getAttribute("aria-expanded") === "true") {
+            closeMenu();
+          }
+        }
+      });
+    }
   });
 
   function getCsrfToken() {

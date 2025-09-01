@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Adjust table scroll container to use viewport height for responsive layout
+- Fix table scroll container height to ignore filter bar and allow full-page scrolling
 - Fix critical items page 500 error - template inheritance and data structure issues
 - Correct template extends paths in speed templates (base.html → \_base.html)
 - Fix category filter data structure - convert to tuples for template unpacking

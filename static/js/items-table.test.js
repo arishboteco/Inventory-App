@@ -172,9 +172,12 @@ describe("details toggle", () => {
   test("shows and hides details panel", () => {
     const row = document.querySelector('.item-row');
     const panel = document.getElementById("details-1");
+    const btn = row.querySelector('[data-action="toggle-details"]');
     window.itemsTable.toggleDetails(row);
     expect(panel.classList.contains("hidden")).toBe(false);
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
     window.itemsTable.toggleDetails(row);
     expect(panel.classList.contains("hidden")).toBe(true);
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
   });
 });

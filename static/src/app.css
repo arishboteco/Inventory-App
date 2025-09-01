@@ -56,8 +56,7 @@
 
   /* Sticky headers */
   .table-scroll {
-    height: calc(100vh - 6rem);
-    overflow-y: auto;
+    /* Removed fixed height and scroll behavior to allow full-page scrolling */
   }
   .table-sticky thead th {
     position: sticky;

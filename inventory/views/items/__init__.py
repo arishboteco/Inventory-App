@@ -18,11 +18,6 @@ from .stock import (
     PurchaseUnitsView,
     SubcategoriesView,
 )
-from .modals import (
-    AddItemModalView,
-    BulkUploadModalView,
-    ItemsMetricsModalView,
-)
 
 __all__ = [
     "EXCLUDED_FIELDS",
@@ -42,7 +37,4 @@ __all__ = [
     "PurchaseUnitsView",
     "SubcategoriesView",
     "CheckSimilarNamesView",
-    "AddItemModalView",
-    "BulkUploadModalView",
-    "ItemsMetricsModalView",
 ]

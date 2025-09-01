@@ -213,6 +213,15 @@
             {% icon 'pencil-square' 'w-4 h-4' %}
           </button>
           <a
+            href="{% url 'item_edit' item.item_id %}"
+            data-modal-url="{% url 'item_edit' item.item_id %}?partial=1"
+            class="btn-square btn-sm text-gray-400 hover:text-blue-600"
+            title="Edit"
+            aria-label="Edit {{ item.name }}"
+          >
+            {% icon 'pencil' 'w-4 h-4' %}
+          </a>
+          <a
             href="{% url 'item_detail' item.item_id %}"
             data-action="view"
             data-href="{% url 'item_detail' item.item_id %}?partial=1"

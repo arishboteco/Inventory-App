@@ -3,9 +3,6 @@
 
 {% block table_id %}items-container{% endblock %}
 
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
 
 {% block page_title %}Item Master Management{% endblock %}
 {% block page_heading %}Item Master Management{% endblock %}
@@ -37,7 +34,6 @@
     </select>
   </div>
 {% endblock %}
-
 {% block extra_top %}
   {% include "inventory/_add_item_section.html" with form=form %}
   {% include "inventory/_bulk_upload_section.html" with bulk_form=bulk_form bulk_success_count=bulk_success_count bulk_errors=bulk_errors %}

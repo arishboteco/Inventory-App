@@ -23,11 +23,6 @@ from .views.items.list import (
     ItemsListView,
     ItemsTableView,
 )
-from .views.items.modals import (
-    AddItemModalView,
-    BulkUploadModalView,
-    ItemsMetricsModalView,
-)
 from .views.items.stock import (
     ItemCreateHTMXView,
     ItemCreatePartialView,
@@ -65,17 +60,6 @@ urlpatterns = [
     path("items/", ItemsListView.as_view(), name="items_list"),
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
     path("items/export/", ItemsExportView.as_view(), name="items_export"),
-    path("items/modal/add/", AddItemModalView.as_view(), name="item_add_modal"),
-    path(
-        "items/modal/bulk-upload/",
-        BulkUploadModalView.as_view(),
-        name="items_bulk_upload_modal",
-    ),
-    path(
-        "items/modal/metrics/",
-        ItemsMetricsModalView.as_view(),
-        name="items_metrics_modal",
-    ),
     path("items/create/", ItemCreateHTMXView.as_view(), name="item_create"),
     path(
         "items/create/partial/",

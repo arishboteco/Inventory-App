@@ -86,30 +86,16 @@ def test_item_detail_includes_supplier_and_movements(client):
 
 
 @pytest.mark.django_db
-def test_items_list_has_modal_triggers(client):
+def test_items_list_kpi_card_links(client):
     _create_item()
-    resp = client.get(reverse("items_list"))
-    html = resp.content.decode()
-    assert f'data-modal-url="{reverse("item_add_modal")}"' in html
-    assert f'data-modal-url="{reverse("items_bulk_upload_modal")}"' in html
-    assert f'data-modal-url="{reverse("items_metrics_modal")}"' in html
-
-
-@pytest.mark.django_db
-def test_add_item_modal_view(client):
-    resp = client.get(reverse("item_add_modal"))
+    url = reverse("items_list")
+    resp = client.get(url)
     assert resp.status_code == 200
     html = resp.content.decode()
-    assert "Add Item" in html
-    assert "form" in html
-
-
-@pytest.mark.django_db
-def test_metrics_modal_view(client):
-    resp = client.get(reverse("items_metrics_modal"))
-    assert resp.status_code == 200
-    html = resp.content.decode()
-    assert "Key Metrics" in html
+    po_url = reverse("purchase_orders_list")
+    assert html.count(f'href="{url}"') >= 2
+    assert f'href="{url}?stock_status=low"' in html
+    assert f'href="{po_url}?status=ORDERED"' in html
 
 
 @pytest.mark.django_db

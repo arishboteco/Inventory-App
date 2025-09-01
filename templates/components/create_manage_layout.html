@@ -2,21 +2,11 @@
 {% load static %}
 
 {% block title %}{% block page_title %}Manage{% endblock %}{% endblock %}
+{% block nav_heading %}{% block page_heading %}{% endblock %}{% endblock %}
 
 {% block content %}
   {% block breadcrumbs %}{% endblock %}
-  <div class="page-header">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="page-title">{% block page_heading %}{% endblock %}</h1>
-        {% block page_subtitle %}{% endblock %}
-      </div>
-      <div class="flex items-center space-x-3">
-        {% block header_actions %}{% endblock %}
-      </div>
-    </div>
-  </div>
-
+  {% block page_subtitle %}{% endblock %}
   {% block filter_bar %}
     {% block filters %}{% endblock %}
   {% endblock %}

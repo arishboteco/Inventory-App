@@ -117,6 +117,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         error_messages = {
             "name": {"required": "Item name is required."},
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -148,4 +149,3 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             instance.save()
             self.save_m2m()
         return instance
-

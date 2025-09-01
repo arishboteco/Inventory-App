@@ -1,5 +1,6 @@
 {% extends "components/collapsible.html" %}
 {% load static %}
+{% block open %}id="bulk-upload-section"{% endblock %}
 {% block title %}Bulk Upload{% endblock %}
 {% block content %}
   <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>

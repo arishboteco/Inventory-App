@@ -88,12 +88,14 @@
     <h2 class="text-lg font-semibold">Key Metrics</h2>
   </div>
   <div class="card-body">
+    {% url 'items_list' as items_list_url %}
+    {% url 'purchase_orders_list' as po_list_url %}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      {% include "components/kpi_card.html" with icon='cube' color='blue' label='Items' value=page_obj.paginator.count|default:"0" %}
-      {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock' value=stats.low_stock_count|default:"0" %}
-      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending' value=stats.pending_orders|default:"0" %}
+      {% include "components/kpi_card.html" with icon='cube' color='blue' label='Items' value=page_obj.paginator.count|default:"0" href=items_list_url %}
+      {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock' value=stats.low_stock_count|default:"0" href=items_list_url|add:'?stock_status=low' %}
+      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending' value=stats.pending_orders|default:"0" href=po_list_url|add:'?status=ORDERED' %}
       {% with total_value_formatted=stats.total_value|floatformat:0|default:"0" %}
-        {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted %}
+        {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted href=items_list_url %}
       {% endwith %}
     </div>
   </div>

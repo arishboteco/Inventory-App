@@ -26,11 +26,7 @@
   {% block extra_top %}{% endblock %}
 
   {% block table_container %}
-  <div id="{% block table_id %}{% endblock %}"
-       hx-get="{% block hx_get %}{% endblock %}"
-       hx-trigger="load"
-       hx-include="#filters"
-       hx-indicator="#htmx-spinner">
+  <div id="{% block table_id %}{% endblock %}">
     {% block data_container %}{% endblock %}
   </div>
   {% block bulk_actions %}{% endblock %}

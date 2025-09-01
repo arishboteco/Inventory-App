@@ -18,8 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `templates/inventory/item_detail_speed.html`
   - `templates/inventory/items_list_speed.html`
   - `templates/inventory/items_list_speed_clean.html`
-  - `templates/inventory/items_list_speed_test.html`
-  - `templates/inventory/_items_table_speed.html`
+
+### Changed
+- Layout toggles now use HTMX requests and persist selection via `localStorage` with improved ARIA updates.
+- `templates/inventory/items_list_speed_test.html`
+- `templates/inventory/_items_table_speed.html`
 
   These were consolidated into the canonical templates (e.g. `item_form.html`, `item_detail.html`, `items_list.html`).
 

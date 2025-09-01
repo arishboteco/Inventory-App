@@ -203,22 +203,25 @@ class ItemsListView(TemplateView):
 
 
 class ItemsTableView(TemplateView):
-    """Render the paginated table of items."""
-
-    template_name = "components/items_table.html"
+    """Render the paginated table or grid of items."""
 
     def _get_queryset(self):
         qs, params = _filter_and_sort_items(self.request)
         self._filter_params = params
         return qs
 
+    def get_template_names(self):  # pragma: no cover - simple logic
+        layout = (self.request.GET.get("layout") or "table").lower()
+        if layout == "grid":
+            return ["inventory/_items_grid.html"]
+        return ["inventory/_items_table.html"]
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         qs = self._get_queryset()
         page_obj, per_page = list_utils.paginate(self.request, qs)
         ctx.update(self._filter_params)
-        layout = (self.request.GET.get("layout") or "table").lower()
-        ctx.update({"page_obj": page_obj, "page_size": per_page, "layout": layout})
+        ctx.update({"page_obj": page_obj, "page_size": per_page})
         return ctx
 
 

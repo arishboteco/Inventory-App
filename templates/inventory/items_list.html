@@ -63,26 +63,29 @@
 
 {% block data_container %}
 <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
-<div class="card">
-  <div class="table-scroll">
-    <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
-      {% url 'items_table' as items_table_url %}
-      <div class="flex items-center justify-between mb-2">
-        <div class="text-sm text-gray-600">Filter and explore</div>
-        <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
-          <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view" hx-get="{{ items_table_url }}?layout=table" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
-            {% icon 'list-bullet' 'w-4 h-4' %}
-          </button>
-          <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view" hx-get="{{ items_table_url }}?layout=grid" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
-            {% icon 'squares-2x2' 'w-4 h-4' %}
-          </button>
+  <div class="card">
+    <div class="table-scroll">
+      <div id="items-filter-bar" x-data="filtersPanel()" class="sticky top-0 z-10 bg-white p-4">
+        {% url 'items_table' as items_table_url %}
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-sm text-gray-600">Filter and explore</div>
+          <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
+            <button type="button" class="btn-secondary btn-sm" @click="toggle" :aria-expanded="filtersOpen.toString()" aria-controls="filters-wrapper">Filters</button>
+            <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view" hx-get="{{ items_table_url }}?layout=table" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+              {% icon 'list-bullet' 'w-4 h-4' %}
+            </button>
+            <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view" hx-get="{{ items_table_url }}?layout=grid" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+              {% icon 'squares-2x2' 'w-4 h-4' %}
+            </button>
+          </div>
+        </div>
+        <div id="filters-wrapper" x-show="filtersOpen" x-cloak>
+          {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
         </div>
       </div>
-      {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
-    </div>
-    <div class="overflow-x-auto" id="items-list">
-      {% include "components/items_table.html" with layout=request.GET.layout|default:'table' %}
-    </div>
+      <div class="overflow-x-auto" id="items-list">
+        {% include "components/items_table.html" with layout=request.GET.layout|default:'table' %}
+      </div>
   </div>
   <div id="items-loading" class="hidden p-4">
     <div class="skeleton-row"></div>
@@ -121,6 +124,7 @@
 <style>
 .table-scroll[data-shadow="true"] .table-sticky thead th { box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 </style>
+<script src="{% static 'js/filter-panel.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script src="{% static 'js/multiselect-chips.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script>

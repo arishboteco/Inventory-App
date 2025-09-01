@@ -48,6 +48,7 @@
 
       <!-- Page Content -->
       <main class="page-content">
+        {% block breadcrumbs %}{% endblock %}
         {% if messages %}
           {% include "components/alert.html" %}
         {% endif %}

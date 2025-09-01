@@ -74,6 +74,22 @@
           <input
             type="checkbox"
             data-col-toggle
+            value="stock_status"
+            checked
+            class="form-checkbox"
+          />
+          <span>Stock Status</span>
+        </label>
+      </li>
+      <li role="none">
+        <label
+          class="flex items-center gap-2"
+          role="menuitemcheckbox"
+          tabindex="-1"
+        >
+          <input
+            type="checkbox"
+            data-col-toggle
             value="rop"
             checked
             class="form-checkbox"
@@ -135,6 +151,9 @@
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="stock">
         Stock
       </th>
+      <th scope="col" class="sticky top-0 z-10 bg-white" data-col="stock_status">
+        Stock Status
+      </th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="rop">ROP</th>
       <th scope="col" class="sticky top-0 z-10 bg-white" data-col="departments">
         Departments
@@ -184,6 +203,17 @@
         {% if item.current_stock is not None %} {{ item.current_stock }} {% else
         %}
         <span class="text-gray-400">—</span>
+        {% endif %}
+      </td>
+      <td data-col="stock_status">
+        {% if item.current_stock and item.reorder_point %}
+          {% if item.current_stock <= item.reorder_point %}
+            <span class="badge badge-error">Low Stock</span>
+          {% else %}
+            <span class="badge badge-success">In Stock</span>
+          {% endif %}
+        {% else %}
+          <span class="badge badge-gray">No Data</span>
         {% endif %}
       </td>
       <td data-col="rop">{{ item.reorder_point|default:"—" }}</td>
@@ -254,7 +284,7 @@
     </tr>
     {% empty %}
     <tr>
-      <td colspan="9" class="text-center text-gray-500">No items found.</td>
+      <td colspan="10" class="text-center text-gray-500">No items found.</td>
     </tr>
     {% endfor %}
   </tbody>

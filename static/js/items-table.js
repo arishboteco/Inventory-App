@@ -40,6 +40,17 @@
     if (detailsView) detailsView.classList.add("hidden");
   }
 
+  function renderStockStatus(stock, rop) {
+    const s = parseFloat(stock);
+    const r = parseFloat(rop);
+    if (!isNaN(s) && !isNaN(r)) {
+      if (s <= r)
+        return '<span class="badge badge-error">Low Stock</span>';
+      return '<span class="badge badge-success">In Stock</span>';
+    }
+    return '<span class="badge badge-gray">No Data</span>';
+  }
+
   // New: in-row inline editing (no extra row)
   function beginRowEdit(row) {
     if (!row || row.dataset.editing === "1") return;
@@ -186,6 +197,14 @@
           const stockCell = row.querySelector('td[data-col="stock"]');
           if (stockCell && currentStock !== "")
             stockCell.textContent = currentStock;
+          const stockStatusCell = row.querySelector(
+            'td[data-col="stock_status"]',
+          );
+          if (stockStatusCell)
+            stockStatusCell.innerHTML = renderStockStatus(
+              currentStock,
+              rop,
+            );
           const statusCell = row.querySelector('td[data-col="status"]');
           if (statusCell) {
             statusCell.innerHTML = active

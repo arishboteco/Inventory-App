@@ -4,7 +4,7 @@
 {% block title %}Bulk Upload{% endblock %}
 {% block content %}
   <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>
-  <form method="post" action="" enctype="multipart/form-data" class="dropzone border-dashed border-2 p-4" id="bulk-upload-form">
+  <form method="post" action="{% url 'items_bulk_upload' %}" enctype="multipart/form-data" class="dropzone border-dashed border-2 p-4" id="bulk-upload-form">
     {% csrf_token %}
     <input type="hidden" name="bulk_upload" value="1" />
     {% if bulk_form.non_field_errors %}
@@ -16,6 +16,9 @@
     {% endif %}
     <div class="dz-message" data-dz-message><span>Drop CSV file here or click to upload.</span></div>
   </form>
+  <script>
+    new Dropzone('#bulk-upload-form', { url: '{% url "items_bulk_upload" %}' });
+  </script>
   {% if bulk_success_count is not None %}
     <p class="mt-2">{{ bulk_success_count }} transaction(s) recorded successfully.</p>
   {% endif %}

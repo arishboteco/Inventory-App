@@ -182,13 +182,32 @@
         />
       </td>
       <td data-col="name">
-        <div class="font-medium text-gray-900">
-          <a href="{% url 'item_detail' item.item_id %}" data-ignore-toggle
-            >{{ item.name }}</a
+        <div class="flex items-start gap-2">
+          <button
+            type="button"
+            class="main-row text-gray-400 hover:text-blue-600"
+            data-action="toggle-details"
+            aria-expanded="false"
+            aria-controls="details-{{ item.item_id }}"
+            aria-label="Toggle details for {{ item.name }}"
           >
-        </div>
-        <div class="text-xs text-gray-500">
-          {% if item.item_code %}SKU: {{ item.item_code }}{% endif %}
+            {% icon 'chevron-right' 'w-4 h-4 transition-transform duration-200' %}
+          </button>
+          <div>
+            <div
+              class="font-medium text-gray-900"
+              id="item-title-{{ item.item_id }}"
+            >
+              <a
+                href="{% url 'item_detail' item.item_id %}"
+                data-ignore-toggle
+                >{{ item.name }}</a
+              >
+            </div>
+            <div class="text-xs text-gray-500">
+              {% if item.item_code %}SKU: {{ item.item_code }}{% endif %}
+            </div>
+          </div>
         </div>
       </td>
       <td data-col="category">
@@ -279,6 +298,94 @@
           >
             {% icon 'trash' 'w-4 h-4' %}
           </button>
+        </div>
+      </td>
+    </tr>
+    <tr
+      id="details-{{ item.item_id }}"
+      class="hidden bg-gray-50"
+      role="region"
+      aria-labelledby="item-title-{{ item.item_id }}"
+    >
+      <td colspan="10" class="p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
+          <div>
+            <h5 class="font-medium text-gray-900 mb-2">Basic Information</h5>
+            <ul class="space-y-1">
+              <li>
+                <span class="font-medium">Item Code:</span>
+                {{ item.item_code|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Sub Category:</span>
+                {{ item.sub_category|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Base Unit:</span>
+                {{ item.unit.base_unit|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Purchase Unit:</span>
+                {{ item.purchase_unit|default:"Not set" }}
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-medium text-gray-900 mb-2">Stock Information</h5>
+            <ul class="space-y-1">
+              <li>
+                <span class="font-medium">Current Stock:</span>
+                {{ item.current_stock|default:"0" }}
+              </li>
+              <li>
+                <span class="font-medium">Reorder Point:</span>
+                {{ item.reorder_point|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Last Purchase Price:</span>
+                ${{ item.last_purchase_price|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Initial Purchase Price:</span>
+                ${{ item.initial_purchase_price|default:"Not set" }}
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h5 class="font-medium text-gray-900 mb-2">Additional Details</h5>
+            <ul class="space-y-1">
+              <li>
+                <span class="font-medium">Brand:</span>
+                {{ item.brand|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Preferred Supplier:</span>
+                {{ item.preferred_supplier.name|default:"Not set" }}
+              </li>
+              <li>
+                <span class="font-medium">Created:</span>
+                {{ item.created_at|date:"M d, Y" }}
+              </li>
+              <li>
+                <span class="font-medium">Last Updated:</span>
+                {{ item.updated_at|date:"M d, Y H:i" }}
+              </li>
+              <li>
+                <span class="font-medium">Active:</span>
+                {% if item.is_active %}
+                  <span class="text-green-600">Yes</span>
+                {% else %}
+                  <span class="text-red-600">No</span>
+                {% endif %}
+              </li>
+            </ul>
+          </div>
+          {% if item.notes %}
+          <div class="md:col-span-3">
+            <h5 class="font-medium text-gray-900 mb-2">Notes</h5>
+            <p>{{ item.notes }}</p>
+          </div>
+          {% endif %}
         </div>
       </td>
     </tr>

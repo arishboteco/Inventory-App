@@ -43,7 +43,7 @@
   <div class="table-scroll">
     <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
       {% url 'items_table' as items_table_url %}
-      <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center justify-between mb-0">
         <div class="text-sm text-gray-600">Filter and explore</div>
         <div class="flex items-center gap-2" role="toolbar" aria-label="Table options">
           <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view" hx-get="{{ items_table_url }}?layout=table" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>

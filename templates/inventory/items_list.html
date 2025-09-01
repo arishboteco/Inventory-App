@@ -140,13 +140,26 @@
 <script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script src="{% static 'js/multiselect-chips.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script>
+function updateFiltersHeight() {
+  const bar = document.getElementById('items-filter-bar');
+  const scroller = bar?.closest('.table-scroll');
+  if (bar && scroller) {
+    scroller.style.setProperty('--filters-height', bar.offsetHeight + 'px');
+  }
+}
+
+window.addEventListener('load', updateFiltersHeight);
+window.addEventListener('resize', updateFiltersHeight);
+
 document.addEventListener('DOMContentLoaded', function() {
-  const filterBar = document.getElementById('items-filter-bar');
-  if (filterBar) {
-    const scroller = filterBar.closest('.table-scroll');
-    if (scroller) {
-      scroller.style.setProperty('--filters-height', filterBar.offsetHeight + 'px');
-    }
+  updateFiltersHeight();
+  const bar = document.getElementById('items-filter-bar');
+  if (bar) {
+    new ResizeObserver(updateFiltersHeight).observe(bar);
+  }
+  const listEl = document.getElementById('items-list');
+  if (listEl) {
+    listEl.addEventListener('htmx:afterSwap', updateFiltersHeight);
   }
   const searchInput = document.querySelector('input[name="q"]');
   if (searchInput) {
@@ -186,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Announce updates
   const live = document.getElementById('items-aria-live');
   function announce(text){ if(live){ live.textContent = text; } }
-  const listEl = document.getElementById('items-list');
   const mo = new MutationObserver(()=>{
     const count = document.querySelectorAll('.item-row').length;
     announce(`List updated. ${count} items displayed.`);

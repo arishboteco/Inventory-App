@@ -39,7 +39,16 @@
 
 {# Filter block moved directly above the table within data_container #}
 
-{% block kpis %}{% endblock %}
+{% block kpis %}
+<div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+  {% include "components/kpi_card.html" with icon='cube' color='blue' label='Items' value=page_obj.paginator.count|default:"0" %}
+  {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock' value=stats.low_stock_count|default:"0" %}
+  {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending' value=stats.pending_orders|default:"0" %}
+  {% with total_value_formatted=stats.total_value|floatformat:0|default:"0" %}
+    {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted %}
+  {% endwith %}
+</div>
+{% endblock %}
 
 {% block data_container %}
 <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>

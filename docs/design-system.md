@@ -5,7 +5,7 @@ This project uses a small design system shared between code and design tools.
 ## Tokens
 
 Core design tokens are centralized in [`static/css/_variables.scss`](../static/css/_variables.scss). These CSS variables define the
-application's colors, typography scale, and spacing values.
+application's colors, fluid typography scale (using `clamp()` for responsive sizing), and spacing values.
 
 Use them in stylesheets or inline styles via the `var()` function:
 

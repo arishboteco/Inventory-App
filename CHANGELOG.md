@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `static/js/smart-navigation.js` - removed unused navigation enhancements
 
 - Deprecated `.kpi-grid` and `.kpi` styles in favor of new card-based KPI component
+- Typography scale uses `clamp()` variables for fluid sizing and Tailwind now includes a fluid-type plugin
 
 ### Fixed
 

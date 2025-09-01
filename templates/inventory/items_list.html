@@ -3,9 +3,6 @@
 
 {% block table_id %}items-container{% endblock %}
 
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
 
 {% block page_title %}Item Master Management{% endblock %}
 {% block page_heading %}Item Master Management{% endblock %}
@@ -38,16 +35,6 @@
   </div>
 {% endblock %}
 
-{% block description %}
-<div class="card mb-6">
-  <div class="card-header">
-    <h2 class="text-lg font-semibold">About</h2>
-  </div>
-  <div class="card-body">
-    <p class="text-gray-600">Manage your inventory items: add new items, edit existing ones, and view stock levels.</p>
-  </div>
-</div>
-{% endblock %}
 
 {% block extra_top %}
   {% include "inventory/_add_item_section.html" with form=form %}

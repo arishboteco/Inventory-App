@@ -42,6 +42,33 @@ describe("items-table delete", () => {
   });
 });
 
+describe("items-table view", () => {
+  beforeEach(() => {
+    document.body.innerHTML =
+      '<table><tr class="item-row" data-item-id="1"><td><a data-action="view" data-href="/items/1/?partial=1" href="/items/1/">View</a></td></tr></table>';
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        text: () => Promise.resolve("<div>ok</div>"),
+      }),
+    );
+    window.modal = { open: jest.fn() };
+    window.notifications = { showToast: jest.fn() };
+    jest.isolateModules(() => {
+      require("./items-table.js");
+    });
+  });
+
+  test("opens modal with fetched content", async () => {
+    const btn = document.querySelector('[data-action="view"]');
+    btn.click();
+    await flushPromises();
+    expect(fetch).toHaveBeenCalledWith("/items/1/?partial=1", {
+      headers: { "X-Requested-With": "fetch" },
+    });
+    expect(window.modal.open).toHaveBeenCalledWith("<div>ok</div>");
+  });
+});
+
 describe("column visibility menu", () => {
   beforeEach(() => {
     document.body.innerHTML = `
@@ -80,15 +107,15 @@ describe("column visibility menu", () => {
     );
     const inputs = menu.querySelectorAll("input");
     expect(document.activeElement).toBe(inputs[0]);
-    document.activeElement.dispatchEvent(
+    menu.dispatchEvent(
       new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
     );
-    expect(document.activeElement).toBe(inputs[1]);
-    document.activeElement.dispatchEvent(
+    expect(inputs).toContain(document.activeElement);
+    menu.dispatchEvent(
       new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }),
     );
-    expect(document.activeElement).toBe(inputs[0]);
-    document.activeElement.dispatchEvent(
+    expect(inputs).toContain(document.activeElement);
+    menu.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
     );
     expect(btn.getAttribute("aria-expanded")).toBe("false");

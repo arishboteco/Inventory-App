@@ -205,32 +205,31 @@
         <div class="flex items-center gap-1">
           <button
             type="button"
-            data-action="table-quick-edit"
+            data-action="quick-edit"
             class="btn-square btn-sm text-gray-400 hover:text-blue-600"
             title="Quick Edit"
             aria-label="Quick edit {{ item.name }}"
           >
             {% icon 'pencil-square' 'w-4 h-4' %}
           </button>
-          <button
-            type="button"
-            data-action="open-edit"
-            data-href="{% url 'item_edit' item.item_id %}?partial=1"
-            class="btn-square btn-sm text-gray-400 hover:text-blue-600"
-            title="Edit"
-            aria-label="Edit {{ item.name }}"
-          >
-            {% icon 'pencil-square' 'w-4 h-4' %}
-          </button>
-          <button
-            type="button"
-            data-action="open-modal"
+          <a
+            href="{% url 'item_detail' item.item_id %}"
+            data-action="view"
             data-href="{% url 'item_detail' item.item_id %}?partial=1"
             class="btn-square btn-sm text-gray-400 hover:text-green-600"
             title="View Details"
             aria-label="View details {{ item.name }}"
           >
             {% icon 'eye' 'w-4 h-4' %}
+          </a>
+          <button
+            type="button"
+            data-action="archive"
+            class="btn-square btn-sm text-gray-400 hover:text-yellow-600"
+            title="{% if item.is_active %}Archive{% else %}Activate{% endif %}"
+            aria-label="{% if item.is_active %}Archive{% else %}Activate{% endif %} {{ item.name }}"
+          >
+            {% icon 'archive-box' 'w-4 h-4' %}
           </button>
           <button
             type="button"

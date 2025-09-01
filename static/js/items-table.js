@@ -351,11 +351,11 @@
         break;
       case "quick-edit":
         e.preventDefault();
-        enableInlineEdit(row);
-        break;
-      case "table-quick-edit":
-        e.preventDefault();
-        beginRowEdit(row);
+        if (target.closest("table")) {
+          beginRowEdit(row);
+        } else {
+          enableInlineEdit(row);
+        }
         break;
       case "cancel-edit":
         e.preventDefault();
@@ -393,10 +393,11 @@
               window.notifications.showToast("Failed to open editor", "error");
           });
         break;
+      case "view":
       case "open-modal":
         e.preventDefault();
         {
-          const href2 = target.getAttribute("data-href");
+          const href2 = target.getAttribute("data-href") || target.getAttribute("href");
           if (!href2) return;
           fetch(href2, { headers: { "X-Requested-With": "fetch" } })
             .then((r) => r.text())

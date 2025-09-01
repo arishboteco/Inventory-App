@@ -5,26 +5,22 @@
     <div class="flex justify-between h-16">
       <!-- Left side: Logo and main nav -->
       <div class="flex items-center">
-        <!-- Logo -->
-        <a href="{% url 'root' %}" aria-label="Home" class="flex-shrink-0 flex items-center">
-          <div class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <!-- App menu -->
+        <div x-data="{open:false}" class="relative">
+          <button type="button" aria-label="Open app menu" aria-haspopup="true" :aria-expanded="open.toString()"
+                  @click="open=!open" @keydown.escape.window="open=false"
+                  class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500">
             {% icon 'squares-2x2' 'h-5 w-5 text-white' variant='solid' size=20 %}
+          </button>
+          <div x-show="open" x-cloak @click.outside="open=false"
+               class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" role="menu">
+            {% for link in primary_navigation %}
+            <a href="{% url link.url_name %}"
+               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">{{ link.title }}</a>
+            {% endfor %}
           </div>
-          <span class="ml-3 text-xl font-semibold text-gray-900">Inventory Pro</span>
-        </a>
-        
-        <!-- Main Navigation -->
-        {% if user.is_authenticated %}
-        <div class="hidden md:ml-10 md:flex md:space-x-1">
-          {% for link in primary_navigation %}
-          <a href="{% url link.url_name %}"
-             class="nav-item {% if request.resolver_match.url_name == link.url_name %}nav-item-active{% endif %}"
-             {% if request.resolver_match.url_name == link.url_name %}aria-current="page"{% endif %}>
-            {{ link.title }}
-          </a>
-          {% endfor %}
         </div>
-        {% endif %}
+        <a href="{% url 'root' %}" class="ml-3 text-xl font-semibold text-gray-900">Inventory Pro</a>
       </div>
 
       <!-- Right side: User menu and actions -->

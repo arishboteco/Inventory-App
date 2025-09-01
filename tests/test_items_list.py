@@ -99,6 +99,18 @@ def test_items_list_kpi_card_links(client):
 
 
 @pytest.mark.django_db
+def test_layout_buttons_use_htmx(client):
+    _create_item()
+    resp = client.get(reverse("items_list"))
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    table_url = reverse("items_table")
+    assert f'hx-get="{table_url}?layout=table"' in html
+    assert f'hx-get="{table_url}?layout=grid"' in html
+    assert 'hx-target="#items-list"' in html
+
+
+@pytest.mark.django_db
 def test_filters_persist_after_table_refresh(client):
     """Filters should remain visible after HTMX table updates."""
     _create_item()

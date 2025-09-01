@@ -81,18 +81,18 @@
 <div class="card">
   <div class="table-scroll">
     <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
+      {% url 'items_table' as items_table_url %}
       <div class="flex items-center justify-between mb-2">
         <div class="text-sm text-gray-600">Filter and explore</div>
         <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
-          <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+          <button type="button" class="btn-square" data-layout-btn data-value="table" aria-label="Table view" hx-get="{{ items_table_url }}?layout=table" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout|default:'table' == 'table' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
             {% icon 'list-bullet' 'w-4 h-4' %}
           </button>
-          <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
+          <button type="button" class="btn-square" data-layout-btn data-value="grid" aria-label="Grid view" hx-get="{{ items_table_url }}?layout=grid" hx-target="#items-list" hx-include="#filters" hx-indicator="#items-loading" hx-params="not layout"{% if request.GET.layout == 'grid' %} aria-pressed="true"{% else %} aria-pressed="false"{% endif %}>
             {% icon 'squares-2x2' 'w-4 h-4' %}
           </button>
         </div>
       </div>
-      {% url 'items_table' as items_table_url %}
       {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
     </div>
     <div class="overflow-x-auto" id="items-list">
@@ -154,9 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
     new ResizeObserver(updateFiltersHeight).observe(bar);
   }
   const listEl = document.getElementById('items-list');
-  if (listEl) {
-    listEl.addEventListener('htmx:afterSwap', updateFiltersHeight);
-  }
   const searchInput = document.querySelector('input[name="q"]');
   if (searchInput) {
     searchInput.addEventListener('keydown', function(e) {
@@ -170,36 +167,47 @@ document.addEventListener('DOMContentLoaded', function () {
       container.setAttribute('data-density', value);
     });
   });
+  const filtersForm = document.getElementById('filters');
   const layoutBtns = document.querySelectorAll('[data-layout-btn]');
+  function applyLayout(value){
+    localStorage.setItem('items_layout', value);
+    const layoutInput = filtersForm?.querySelector('input[name="layout"]');
+    if (layoutInput) layoutInput.value = value;
+    layoutBtns.forEach(btn => {
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === value ? 'true' : 'false');
+    });
+  }
   layoutBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const value = btn.getAttribute('data-value');
-      const url = new URL(window.location.href);
-      url.searchParams.set('layout', value);
-      localStorage.setItem('items_layout', value);
-      window.location.assign(url.toString());
+      applyLayout(btn.getAttribute('data-value'));
     });
   });
   const savedLayout = localStorage.getItem('items_layout');
-  if (savedLayout) {
-    const url = new URL(window.location.href);
-    if (url.searchParams.get('layout') !== savedLayout) {
-      url.searchParams.set('layout', savedLayout);
-      window.location.replace(url.toString());
+  const currentLayout = filtersForm?.querySelector('input[name="layout"]')?.value || 'table';
+  if (savedLayout && savedLayout !== currentLayout) {
+    const btn = document.querySelector(`[data-layout-btn][data-value="${savedLayout}"]`);
+    if (btn) btn.click();
+  } else {
+    applyLayout(currentLayout);
+  }
+  function announceCount(){
+    const live = document.getElementById('items-aria-live');
+    if (live) {
+      const count = listEl?.querySelectorAll('.item-row').length || 0;
+      live.textContent = `List updated. ${count} items displayed.`;
     }
   }
-  const currentLayout = new URL(window.location.href).searchParams.get('layout') || 'table';
-  layoutBtns.forEach(btn => {
-    btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === currentLayout ? 'true' : 'false');
-  });
-  // Announce updates
-  const live = document.getElementById('items-aria-live');
-  function announce(text){ if(live){ live.textContent = text; } }
-  const mo = new MutationObserver(()=>{
-    const count = document.querySelectorAll('.item-row').length;
-    announce(`List updated. ${count} items displayed.`);
-  });
-  if (listEl) mo.observe(listEl, { childList: true, subtree: true });
+  announceCount();
+  if (listEl) {
+    listEl.addEventListener('htmx:afterSwap', () => {
+      announceCount();
+      const layoutVal = filtersForm?.querySelector('input[name="layout"]').value || 'table';
+      layoutBtns.forEach(btn => {
+        btn.setAttribute('aria-pressed', btn.getAttribute('data-value') === layoutVal ? 'true' : 'false');
+      });
+      updateFiltersHeight();
+    });
+  }
 
   // Sticky header shadow on scroll
   document.querySelectorAll('.table-scroll').forEach(scroller => {
@@ -211,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Dynamic subcategory filter: update options when category changes
-  const filtersForm = document.getElementById('filters');
   if (filtersForm) {
     const catSel = filtersForm.querySelector('select[name="category"]');
     const subSel = filtersForm.querySelector('select[name="subcategory"]');

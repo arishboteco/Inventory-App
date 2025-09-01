@@ -123,3 +123,30 @@ describe("column visibility menu", () => {
     expect(document.activeElement).toBe(btn);
   });
 });
+
+describe("stock_status column toggle", () => {
+  beforeEach(() => {
+    localStorage.setItem("items_table_hidden", '["stock_status"]');
+    document.body.innerHTML = `
+      <div>
+        <label><input type="checkbox" data-col-toggle value="stock_status" checked></label>
+        <table><tr><td data-col="stock_status">val</td></tr></table>
+      </div>`;
+    jest.isolateModules(() => {
+      require("./items-table.js");
+    });
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+  });
+
+  test("toggles visibility of stock_status column", () => {
+    const cb = document.querySelector(
+      '[data-col-toggle][value="stock_status"]',
+    );
+    const cell = document.querySelector('[data-col="stock_status"]');
+    expect(cb.checked).toBe(false);
+    expect(cell.classList.contains("hidden")).toBe(true);
+    cb.checked = true;
+    cb.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(cell.classList.contains("hidden")).toBe(false);
+  });
+});

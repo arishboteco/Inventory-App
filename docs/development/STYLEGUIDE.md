@@ -47,6 +47,8 @@ Spacing utilities map to CSS variables and are mode‑independent:
 | `text-badge` / `--font-size-badge` | Badges and labels |
 | Font family `sans` | Roboto via Google Fonts for all text |
 
+Font-size tokens leverage CSS `clamp()` for fluid, responsive typography across screen sizes.
+
 #### Usage Rules
 
 - **`text-h1`**: Reserve for the main page title. Only one `text-h1` should appear per page.

@@ -11,6 +11,8 @@ from inventory.models import (
     Supplier,
 )
 
+import pytest
+
 
 def _create_item(**kwargs):
     defaults = {
@@ -81,3 +83,16 @@ def test_item_detail_includes_supplier_and_movements(client):
     assert str(tx.quantity_change) in content
     assert '<h2 class="text-lg font-semibold">Supplier History</h2>' in content
     assert '<h2 class="text-lg font-semibold">Stock Movements</h2>' in content
+
+
+@pytest.mark.django_db
+def test_items_list_kpi_card_links(client):
+    _create_item()
+    url = reverse("items_list")
+    resp = client.get(url)
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    po_url = reverse("purchase_orders_list")
+    assert html.count(f'href="{url}"') >= 2
+    assert f'href="{url}?stock_status=low"' in html
+    assert f'href="{po_url}?status=ORDERED"' in html

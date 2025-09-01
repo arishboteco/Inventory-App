@@ -81,7 +81,7 @@
 <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
 <div class="card">
   <div class="table-scroll">
-    <div class="sticky top-0 z-10 bg-white p-4">
+    <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
       <div class="flex items-center justify-between mb-2">
         <div class="text-sm text-gray-600">Filter and explore</div>
         <div class="flex items-center gap-2" role="toolbar" aria-label="Layout options">
@@ -141,6 +141,13 @@
 <script src="{% static 'js/multiselect-chips.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const filterBar = document.getElementById('items-filter-bar');
+  if (filterBar) {
+    const scroller = filterBar.closest('.table-scroll');
+    if (scroller) {
+      scroller.style.setProperty('--filters-height', filterBar.offsetHeight + 'px');
+    }
+  }
   const searchInput = document.querySelector('input[name="q"]');
   if (searchInput) {
     searchInput.addEventListener('keydown', function(e) {

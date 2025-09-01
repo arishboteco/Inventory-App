@@ -61,7 +61,7 @@
   }
   .table-sticky thead th {
     position: sticky;
-    top: 0;
+    top: var(--filters-height, 0);
     background: #f9fafb;
     z-index: 1;
     box-shadow: 0 1px 0 0 #e5e7eb;

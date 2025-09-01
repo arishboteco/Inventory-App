@@ -14,8 +14,9 @@
 {% endblock %}
 
 {% block header_actions %}
-  <button type="button" id="add-item-toggle" aria-controls="add-item-section" aria-expanded="false" class="btn-primary btn-sm">Add Item</button>
-  <button type="button" id="bulk-upload-toggle" aria-controls="bulk-upload-section" aria-expanded="false" class="btn-secondary btn-sm">Bulk Upload</button>
+  <button type="button" class="btn-primary btn-sm" data-modal-url="{% url 'item_add_modal' %}">Add Item</button>
+  <button type="button" class="btn-secondary btn-sm" data-modal-url="{% url 'items_bulk_upload_modal' %}">Bulk Upload</button>
+  <button type="button" class="btn-secondary btn-sm" data-modal-url="{% url 'items_metrics_modal' %}">Metrics</button>
   <div id="dept-options" class="hidden">
     <select id="dept-select-template">
       {% for d in departments_for_form %}
@@ -34,32 +35,11 @@
     </select>
   </div>
 {% endblock %}
-{% block extra_top %}
-  {% include "inventory/_add_item_section.html" with form=form %}
-  {% include "inventory/_bulk_upload_section.html" with bulk_form=bulk_form bulk_success_count=bulk_success_count bulk_errors=bulk_errors %}
-{% endblock %}
+{% block extra_top %}{% endblock %}
 
 {# Filter block moved directly above the table within data_container #}
 
-{% block kpis %}
-<div class="card mb-6">
-  <div class="card-header">
-    <h2 class="text-lg font-semibold">Key Metrics</h2>
-  </div>
-  <div class="card-body">
-    {% url 'items_list' as items_list_url %}
-    {% url 'purchase_orders_list' as po_list_url %}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      {% include "components/kpi_card.html" with icon='cube' color='blue' label='Items' value=page_obj.paginator.count|default:"0" href=items_list_url %}
-      {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock' value=stats.low_stock_count|default:"0" href=items_list_url|add:'?stock_status=low' %}
-      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending' value=stats.pending_orders|default:"0" href=po_list_url|add:'?status=ORDERED' %}
-      {% with total_value_formatted=stats.total_value|floatformat:0|default:"0" %}
-        {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted href=items_list_url %}
-      {% endwith %}
-    </div>
-  </div>
-</div>
-{% endblock %}
+{% block kpis %}{% endblock %}
 
 {% block data_container %}
 <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>

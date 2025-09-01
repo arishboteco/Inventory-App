@@ -150,3 +150,31 @@ describe("stock_status column toggle", () => {
     expect(cell.classList.contains("hidden")).toBe(false);
   });
 });
+
+describe("details toggle", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <table>
+        <tr class="item-row" data-item-id="1">
+          <td data-col="name">
+            <button class="main-row" data-action="toggle-details" aria-expanded="false" aria-controls="details-1">
+              <svg></svg>
+            </button>
+          </td>
+        </tr>
+        <tr id="details-1" class="hidden"><td colspan="10">Details</td></tr>
+      </table>`;
+    jest.isolateModules(() => {
+      require("./items-table.js");
+    });
+  });
+
+  test("shows and hides details panel", () => {
+    const row = document.querySelector('.item-row');
+    const panel = document.getElementById("details-1");
+    window.itemsTable.toggleDetails(row);
+    expect(panel.classList.contains("hidden")).toBe(false);
+    window.itemsTable.toggleDetails(row);
+    expect(panel.classList.contains("hidden")).toBe(true);
+  });
+});

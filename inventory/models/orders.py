@@ -16,7 +16,7 @@ class Indent(models.Model):
     requested_by = models.CharField(max_length=255, blank=True, null=True)
     department = models.CharField(max_length=100, blank=True, null=True)
     date_required = models.DateField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
     status = models.CharField(
         max_length=50,
         choices=IndentStatus.choices,
@@ -61,7 +61,7 @@ class IndentItem(models.Model):
         blank=True,
         null=True,
     )
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.indent} - {self.item}"
@@ -83,7 +83,7 @@ class PurchaseOrder(models.Model):
         choices=PurchaseOrderStatus.choices,
         default=PurchaseOrderStatus.DRAFT,
     )
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"PO {self.pk} to {self.supplier}"
@@ -155,7 +155,7 @@ class GoodsReceivedNote(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, models.CASCADE, db_column="po_id")
     supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     received_date = models.DateField()
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"GRN {self.pk} for PO {self.purchase_order_id}"
@@ -176,7 +176,7 @@ class GRNItem(models.Model):
     quantity_ordered_on_po = models.DecimalField(max_digits=10, decimal_places=2)
     quantity_received = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price_at_receipt = models.DecimalField(max_digits=10, decimal_places=2)
-    item_notes = models.TextField(blank=True, null=True, db_column="notes")
+    item_notes = models.TextField(blank=True, null=True, default="", db_column="notes")
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.grn} item {self.po_item}"

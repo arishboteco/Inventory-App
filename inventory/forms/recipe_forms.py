@@ -3,11 +3,15 @@ import json
 from django import forms
 
 from ..models import Recipe, RecipeComponent
-from .base import StyledFormMixin
+from .base import INPUT_CLASS, StyledFormMixin
 
 
 class RecipeForm(StyledFormMixin, forms.ModelForm):
     tags = forms.CharField(required=False, help_text="Comma-separated tags")
+    plating_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
 
     class Meta:
         model = Recipe

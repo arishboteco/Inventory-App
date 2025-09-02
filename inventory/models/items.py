@@ -69,6 +69,7 @@ class Item(models.Model):
     notes = models.TextField(
         blank=True,
         null=True,
+        default="",
         help_text="Additional notes about this item",
     )
     is_active = models.BooleanField(default=True, null=False)
@@ -130,7 +131,7 @@ class StockTransaction(models.Model):
         blank=True,
         null=True,
     )
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
     transaction_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation

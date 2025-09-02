@@ -29,7 +29,7 @@ class Supplier(models.Model):
         help_text="Supplier rating (1-5 stars)"
     )
 
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
     is_active = models.BooleanField(default=True, null=False)
     updated_at = models.DateTimeField(auto_now=True)
 

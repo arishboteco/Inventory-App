@@ -5,6 +5,10 @@ from .base import INPUT_CLASS, StyledFormMixin
 
 
 class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = PurchaseOrder
         fields = [
@@ -155,6 +159,10 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
 
 
 class GRNForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = GoodsReceivedNote
         fields = ["received_date", "notes"]
@@ -170,6 +178,9 @@ GRNItemFormSet = forms.inlineformset_factory(
         "unit_price_at_receipt",
         "item_notes",
     ],
+    widgets={
+        "item_notes": forms.Textarea(attrs={"class": INPUT_CLASS}),
+    },
     extra=0,
     can_delete=False,
 )

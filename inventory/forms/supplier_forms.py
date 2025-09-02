@@ -5,6 +5,17 @@ from .base import INPUT_CLASS, StyledFormMixin
 
 
 class SupplierForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": INPUT_CLASS,
+                "rows": 3,
+                "placeholder": "Additional notes about this supplier",
+                "aria-label": "Notes",
+            }
+        ),
+    )
     class Meta:
         model = Supplier
         fields = [
@@ -87,14 +98,6 @@ class SupplierForm(StyledFormMixin, forms.ModelForm):
                     "max": "5",
                     "placeholder": "5",
                     "aria-label": "Supplier rating",
-                }
-            ),
-            "notes": forms.Textarea(
-                attrs={
-                    "class": INPUT_CLASS,
-                    "rows": 3,
-                    "placeholder": "Additional notes about this supplier",
-                    "aria-label": "Notes",
                 }
             ),
             # Let StyledFormMixin add checkbox classes

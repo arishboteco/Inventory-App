@@ -1,7 +1,7 @@
 import pytest
 from django.template.loader import render_to_string
 from django.test import RequestFactory
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 import inventory_app.navigation as navigation
 
 
@@ -64,10 +64,17 @@ def test_home_page_contains_nav_links(client, django_user_model):
         assert text in html
 
 
-def test_invalid_navigation_link_is_ignored(monkeypatch):
-    """Ensure navigation links referencing missing routes are omitted."""
+def test_navigation_links_resolve():
+    """Every defined navigation link should resolve to a valid URL."""
+    links = navigation.get_navigation_links()
+    assert len(links) == len(navigation.NAVIGATION_LINKS)
+    for original, resolved in zip(navigation.NAVIGATION_LINKS, links):
+        assert resolved["url"] == reverse(original["url_name"])
+
+
+def test_get_navigation_links_raises_for_missing(monkeypatch):
+    """The helper should raise if an invalid URL name is supplied."""
     bad_links = navigation.NAVIGATION_LINKS + [{"title": "Bad", "url_name": "does_not_exist"}]
     monkeypatch.setattr(navigation, "NAVIGATION_LINKS", bad_links)
-    links = navigation.get_navigation_links()
-    titles = [link["title"] for link in links]
-    assert "Bad" not in titles
+    with pytest.raises(NoReverseMatch):
+        navigation.get_navigation_links()

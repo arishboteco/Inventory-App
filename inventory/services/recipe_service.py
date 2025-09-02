@@ -11,6 +11,7 @@ from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
 
 from ..models import Item, Recipe, RecipeComponent, SaleTransaction, StockTransaction
 from .item_service import get_unit_display_name
+from .stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)
 
@@ -388,6 +389,7 @@ def record_sale(
                     user_id=user_id_clean,
                     notes=f"Recipe {recipe_id} sale",
                 )
+        get_low_stock_items.cache_clear()
         return True, "Sale recorded."
     except Recipe.DoesNotExist:
         return False, "Recipe not found."

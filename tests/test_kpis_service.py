@@ -15,10 +15,12 @@ from inventory.models import (
 )
 from inventory.models.enums import IndentStatus, PurchaseOrderStatus
 from inventory.services import kpis
+from inventory.services.stock_utils import get_low_stock_items
 
 
 @pytest.mark.django_db
 def test_low_stock_items_excludes_inactive(item_factory):
+    get_low_stock_items.clear()
     item_factory(name="Active", reorder_point=10, current_stock=5)
     item_factory(name="Inactive", reorder_point=10, current_stock=5, is_active=False)
     assert kpis.low_stock_items() == ["Active"]

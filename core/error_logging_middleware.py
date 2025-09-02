@@ -1,6 +1,8 @@
 import logging
 import traceback
 
+from django.shortcuts import render
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,5 +51,4 @@ class DetailedErrorLoggingMiddleware:
         logger.error(traceback.format_exc())
         logger.error("🚨 END ERROR REPORT 🚨")
 
-        # Don't return a response - let Django handle it normally
-        return None
+        return render(request, "500.html", status=500)

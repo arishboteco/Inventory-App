@@ -10,6 +10,7 @@ from inventory.models import (
     StockTransaction,
     Supplier,
 )
+from inventory.models.enums import PurchaseOrderStatus
 
 import pytest
 
@@ -95,7 +96,7 @@ def test_items_list_kpi_card_links(client):
     po_url = reverse("purchase_orders_list")
     assert html.count(f'href="{url}"') >= 2
     assert f'href="{url}?stock_status=low"' in html
-    assert f'href="{po_url}?status=ORDERED"' in html
+    assert f'href="{po_url}?status={PurchaseOrderStatus.ORDERED}"' in html
 
 
 @pytest.mark.django_db

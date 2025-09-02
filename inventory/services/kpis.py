@@ -6,7 +6,14 @@ from django.db.models import Avg, Count, F, Max, Q, Sum, OuterRef, Subquery
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from inventory.models import GRNItem, Indent, Item, PurchaseOrder, StockTransaction
+from inventory.models import (
+    GRNItem,
+    Indent,
+    Item,
+    PurchaseOrder,
+    StockTransaction,
+)
+from inventory.models.enums import IndentStatus, PurchaseOrderStatus
 
 
 def stock_value():
@@ -88,25 +95,32 @@ def high_price_purchases(threshold: Decimal) -> List[GRNItem]:
 
 def pending_po_status_counts() -> dict:
     """Return counts of purchase orders by pending status."""
-    qs = PurchaseOrder.objects.filter(status__in=["DRAFT", "ORDERED", "PARTIAL"])
+    pending_statuses = [
+        PurchaseOrderStatus.DRAFT,
+        PurchaseOrderStatus.ORDERED,
+        PurchaseOrderStatus.PARTIAL,
+    ]
+    qs = PurchaseOrder.objects.filter(status__in=pending_statuses)
     counts = {
         row["status"]: row["total"]
         for row in qs.values("status").annotate(total=Count("po_id"))
     }
-    return {status: counts.get(status, 0) for status in ["DRAFT", "ORDERED", "PARTIAL"]}
+    return {status: counts.get(status, 0) for status in pending_statuses}
 
 
 def pending_indent_counts() -> dict:
     """Return counts of indents that are not completed or cancelled."""
-    qs = Indent.objects.filter(status__in=["PENDING", "SUBMITTED", "PROCESSING"])
+    pending_statuses = [
+        IndentStatus.PENDING,
+        IndentStatus.SUBMITTED,
+        IndentStatus.PROCESSING,
+    ]
+    qs = Indent.objects.filter(status__in=pending_statuses)
     counts = {
         row["status"]: row["total"]
         for row in qs.values("status").annotate(total=Count("indent_id"))
     }
-    return {
-        status: counts.get(status, 0)
-        for status in ["PENDING", "SUBMITTED", "PROCESSING"]
-    }
+    return {status: counts.get(status, 0) for status in pending_statuses}
 
 
 def stock_trend_last_7_days() -> Tuple[List[str], List[float]]:

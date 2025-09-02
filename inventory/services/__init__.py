@@ -16,6 +16,7 @@ from . import (
     units_service,
     supplier_service,
     ui_service,
+    stock_utils,
 )
 
 __all__ = [
@@ -34,4 +35,5 @@ __all__ = [
     "counts",
     "units_service",
     "categories_service",
+    "stock_utils",
 ]

@@ -1,6 +1,6 @@
 import pytest
 
-from inventory.services import dashboard_service
+from inventory.services.stock_utils import get_low_stock_items
 
 
 @pytest.mark.django_db
@@ -9,7 +9,7 @@ def test_get_low_stock_items(item_factory):
     item_factory(name="Low", reorder_point=10, current_stock=5, unit_id=19)
     item_factory(name="Inactive", reorder_point=10, current_stock=5, is_active=False, unit_id=19)
     item_factory(name="High", reorder_point=10, current_stock=15, unit_id=19)
-    items = list(dashboard_service.get_low_stock_items())
+    items = list(get_low_stock_items())
     assert len(items) == 1
     item = items[0]
     assert item.name == "Low"

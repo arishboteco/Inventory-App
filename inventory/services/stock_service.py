@@ -9,6 +9,7 @@ from django.db.models import F
 from inventory.models import Item, StockTransaction
 
 from .exceptions import StockServiceError
+from .stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ def record_stock_transaction(
                     related_po_id=related_po_id,
                     notes=notes,
                 )
+            get_low_stock_items.cache_clear()
             return
         except OperationalError as exc:  # pragma: no cover - retry on lock
             logger.error("Error recording stock transaction: %s", exc)
@@ -84,6 +86,7 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
                     related_po_id=tx.get("related_po_id"),
                     notes=tx.get("notes"),
                 )
+        get_low_stock_items.cache_clear()
         return True
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Bulk stock transaction failed: %s", exc)
@@ -107,6 +110,7 @@ def remove_stock_transactions_bulk(transaction_ids: List[int]) -> bool:
                 )
                 item.save(update_fields=["current_stock"])
             StockTransaction.objects.filter(transaction_id__in=transaction_ids).delete()
+        get_low_stock_items.cache_clear()
         return True
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error removing stock transactions: %s", exc)

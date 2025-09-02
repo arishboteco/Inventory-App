@@ -58,6 +58,7 @@ def test_deactivate_and_reactivate_supplier():
 
 @pytest.mark.django_db
 def test_get_all_suppliers_returns_list_of_dicts():
+    supplier_service.get_all_suppliers.clear()
     Supplier.objects.create(name="Vendor D", is_active=True)
     Supplier.objects.create(name="Vendor E", is_active=False)
     active_only = supplier_service.get_all_suppliers()
@@ -107,3 +108,17 @@ def test_toggle_supplier_post(client):
     assert resp.status_code == 200
     supplier.refresh_from_db()
     assert supplier.is_active is True
+
+
+@pytest.mark.django_db
+def test_get_all_suppliers_cache_invalidation(django_assert_num_queries):
+    supplier_service.get_all_suppliers.clear()
+    supplier_service.add_supplier({"name": "A"})
+    supplier_service.get_all_suppliers()  # prime cache
+    with django_assert_num_queries(0):
+        supplier_service.get_all_suppliers()
+
+    supplier_service.add_supplier({"name": "B"})  # clears cache
+    with django_assert_num_queries(1):
+        names = {s["name"] for s in supplier_service.get_all_suppliers()}
+    assert {"A", "B"}.issubset(names)

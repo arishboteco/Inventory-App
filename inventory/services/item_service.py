@@ -19,6 +19,7 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
 from inventory.models import Item
+from .stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +154,7 @@ def add_new_item(details: Dict[str, Any]) -> Tuple[bool, str]:
         item = Item.objects.create(**params)
         get_all_items_with_stock.clear()
         get_distinct_departments_from_items.clear()
+        get_low_stock_items.clear()
         return True, f"Item '{item.name}' added with ID {item.pk}."
     except IntegrityError:
         return (
@@ -227,6 +229,7 @@ def add_items_bulk(items: List[Dict[str, Any]]) -> Tuple[int, List[str]]:
         Item.objects.bulk_create(objs)
         get_all_items_with_stock.clear()
         get_distinct_departments_from_items.clear()
+        get_low_stock_items.clear()
         return len(objs), []
     except IntegrityError as e:
         return 0, [str(e)]
@@ -302,6 +305,7 @@ def update_item(item_id: int, updates: Dict[str, Any]) -> Tuple[bool, str]:
         item.save()
         get_all_items_with_stock.clear()
         get_distinct_departments_from_items.clear()
+        get_low_stock_items.clear()
         return True, f"Item ID {item_id} updated successfully."
     except IntegrityError:
         return (
@@ -326,6 +330,7 @@ def deactivate_item(item_id: int) -> Tuple[bool, str]:
     if updated:
         get_all_items_with_stock.clear()
         get_distinct_departments_from_items.clear()
+        get_low_stock_items.clear()
         return True, "Item deactivated successfully."
     return False, "Item not found or already inactive."
 
@@ -338,6 +343,7 @@ def reactivate_item(item_id: int) -> Tuple[bool, str]:
     if updated:
         get_all_items_with_stock.clear()
         get_distinct_departments_from_items.clear()
+        get_low_stock_items.clear()
         return True, "Item reactivated successfully."
     return False, "Item not found or already active."
 

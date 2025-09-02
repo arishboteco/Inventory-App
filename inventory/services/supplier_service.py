@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 from django.db import IntegrityError, transaction
@@ -27,6 +28,7 @@ def add_supplier(details: Dict[str, Any]) -> Supplier:
             notes=(details.get("notes") or "").strip() or None,
             is_active=details.get("is_active", True),
         )
+        get_all_suppliers.cache_clear()
         return supplier
     except IntegrityError as exc:
         raise SupplierServiceError(
@@ -39,6 +41,7 @@ def add_supplier(details: Dict[str, Any]) -> Supplier:
         ) from exc
 
 
+@lru_cache(maxsize=None)
 def get_all_suppliers(include_inactive: bool = False) -> List[Dict[str, Any]]:
     qs = Supplier.objects.all()
     if not include_inactive:
@@ -55,6 +58,10 @@ def get_all_suppliers(include_inactive: bool = False) -> List[Dict[str, Any]]:
             "is_active",
         )
     )
+
+
+# expose a convenient clear method
+get_all_suppliers.clear = get_all_suppliers.cache_clear  # type: ignore[attr-defined]
 
 
 def get_supplier_details(supplier_id: int) -> Optional[Dict[str, Any]]:
@@ -96,6 +103,7 @@ def update_supplier(supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, st
             setattr(supplier, field, val)
     try:
         supplier.save()
+        get_all_suppliers.cache_clear()
         return True, f"Supplier ID {supplier_id} updated successfully."
     except IntegrityError:
         return (
@@ -110,6 +118,7 @@ def update_supplier(supplier_id: int, updates: Dict[str, Any]) -> Tuple[bool, st
 def deactivate_supplier(supplier_id: int) -> Tuple[bool, str]:
     count = Supplier.objects.filter(pk=supplier_id).update(is_active=False)
     if count:
+        get_all_suppliers.cache_clear()
         return True, "Supplier deactivated successfully."
     return False, "Supplier not found or already inactive."
 
@@ -117,5 +126,6 @@ def deactivate_supplier(supplier_id: int) -> Tuple[bool, str]:
 def reactivate_supplier(supplier_id: int) -> Tuple[bool, str]:
     count = Supplier.objects.filter(pk=supplier_id).update(is_active=True)
     if count:
+        get_all_suppliers.cache_clear()
         return True, "Supplier reactivated successfully."
     return False, "Supplier not found or already active."

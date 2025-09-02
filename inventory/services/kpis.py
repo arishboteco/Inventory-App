@@ -47,13 +47,12 @@ def issues_last_7_days():
 
 def low_stock_count():
     """Number of items below their reorder point."""
-    return get_low_stock_items().count()
+    return len(get_low_stock_items())
 
 
 def low_stock_items(limit: int = 5) -> List[str]:
     """Return names of items that are below their reorder point."""
-    qs = get_low_stock_items().values_list("name", flat=True)
-    return list(qs[:limit])
+    return [item.name for item in get_low_stock_items()[:limit]]
 
 
 def high_price_purchases(threshold: Decimal) -> List[GRNItem]:

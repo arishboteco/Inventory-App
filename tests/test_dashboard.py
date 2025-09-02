@@ -1,9 +1,22 @@
+import json
+
 import pytest
 from django.contrib.auth.models import Permission
 from django.urls import reverse
 from django.utils import timezone
 
+from core.viewmodels import DashboardContext
 from inventory.models import Indent, StockTransaction, Supplier
+
+
+@pytest.mark.django_db
+def test_dashboard_context_basic():
+    ctx = DashboardContext(labels=["2024-01-01"], values=[1])
+    data = ctx.as_dict()
+    assert data["trend_labels"] == json.dumps(["2024-01-01"])
+    assert data["trend_values"] == json.dumps([1])
+    assert data["list_title"] == "Dashboard"
+    assert "items" not in data and "suppliers" not in data
 
 
 @pytest.mark.django_db

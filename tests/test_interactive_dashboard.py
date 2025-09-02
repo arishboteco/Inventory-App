@@ -2,7 +2,22 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 
-from inventory.models import PurchaseOrder, StockTransaction, Supplier
+from core.viewmodels import DashboardContext
+from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
+
+
+@pytest.mark.django_db
+def test_dashboard_context_with_filters(item_factory):
+    item_factory(name="Foo")
+    Supplier.objects.create(name="Supp", is_active=True)
+    ctx = DashboardContext(
+        labels=[],
+        values=[],
+        items=Item.objects.filter(is_active=True),
+        suppliers=Supplier.objects.filter(is_active=True),
+    ).as_dict()
+    assert ctx["items"].count() == 1
+    assert ctx["suppliers"].count() == 1
 
 
 @pytest.mark.django_db

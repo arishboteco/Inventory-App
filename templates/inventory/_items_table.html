@@ -1,4 +1,4 @@
-{% load icon_tags %}
+{% load icon_tags category_tags %}
 <!-- prettier-ignore -->
 <table class="table w-full bg-white border border-gray-200 rounded-lg table-sticky" id="grid-table">
   <thead class="table-header">
@@ -78,11 +78,7 @@
         </div>
       </td>
       <td data-col="category">
-        {% if item.category %} {{ item.category.category }}{% if
-        item.category.sub_category %} → {{ item.category.sub_category }}{% endif
-        %} {% else %}
-        <span class="text-gray-400">—</span>
-        {% endif %}
+        {% format_category item True %}
       </td>
       <td data-col="unit">{{ item.unit.base_unit|default:"—" }}</td>
       <td data-col="stock">

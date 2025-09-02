@@ -9,6 +9,7 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
     )
+
     class Meta:
         model = PurchaseOrder
         fields = [
@@ -163,6 +164,7 @@ class GRNForm(StyledFormMixin, forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
     )
+
     class Meta:
         model = GoodsReceivedNote
         fields = ["received_date", "notes"]

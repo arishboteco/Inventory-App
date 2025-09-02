@@ -14,6 +14,7 @@ from inventory.models import (
     StockTransaction,
 )
 from inventory.models.enums import IndentStatus, PurchaseOrderStatus
+from .stock_utils import get_low_stock_items
 
 
 def stock_value():
@@ -46,22 +47,13 @@ def issues_last_7_days():
 
 def low_stock_count():
     """Number of items below their reorder point."""
-    return Item.objects.filter(
-        reorder_point__isnull=False, current_stock__lt=F("reorder_point")
-    ).count()
+    return get_low_stock_items().count()
 
 
 def low_stock_items(limit: int = 5) -> List[str]:
     """Return names of items that are below their reorder point."""
-    qs = Item.objects.filter(
-        reorder_point__isnull=False,
-        current_stock__lt=F("reorder_point"),
-        is_active=True,
-    )
-    if hasattr(Item, "is_placeholder"):
-        qs = qs.filter(is_placeholder=False)
-    qs = qs.order_by("name")
-    return list(qs.values_list("name", flat=True)[:limit])
+    qs = get_low_stock_items().values_list("name", flat=True)
+    return list(qs[:limit])
 
 
 def high_price_purchases(threshold: Decimal) -> List[GRNItem]:

@@ -9,7 +9,7 @@ from django.db.models import QuerySet
 from django.urls import reverse
 
 from inventory.models import Item, Supplier
-from inventory.services import dashboard_service
+from inventory.services.stock_utils import get_low_stock_items
 
 
 @dataclass
@@ -36,7 +36,7 @@ class DashboardContext:
     def as_dict(self) -> dict:
         """Return the assembled context as a dictionary."""
         context = {
-            "low_stock": dashboard_service.get_low_stock_items(),
+            "low_stock": get_low_stock_items(),
             "trend_labels": json.dumps(self.labels),
             "trend_values": json.dumps(self.values),
             "list_url": reverse("dashboard"),

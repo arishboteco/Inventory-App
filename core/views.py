@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
 from inventory.services import counts, kpis
+from inventory.services.stock_utils import get_low_stock_items
 
 from .viewmodels import DashboardContext
 
@@ -35,7 +36,7 @@ def root_view(request):
                 "receipts": kpis.receipts_last_7_days(),
                 "issues": kpis.issues_last_7_days(),
                 "low_stock": kpis.low_stock_count(),
-                "low_stock_items": kpis.low_stock_items(),
+                "low_stock_items": get_low_stock_items(),
                 "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
                 "pending_po_status": kpis.pending_po_status_counts(),
                 "pending_indent_status": kpis.pending_indent_counts(),

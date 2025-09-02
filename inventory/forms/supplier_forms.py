@@ -16,6 +16,7 @@ class SupplierForm(StyledFormMixin, forms.ModelForm):
             }
         ),
     )
+
     class Meta:
         model = Supplier
         fields = [

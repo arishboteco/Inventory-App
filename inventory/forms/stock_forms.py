@@ -11,6 +11,7 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
     )
+
     class Meta:
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "related_po", "notes"]
@@ -54,6 +55,7 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
     )
+
     class Meta:
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "notes"]
@@ -88,6 +90,7 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
     )
+
     class Meta:
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "notes"]

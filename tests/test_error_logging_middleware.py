@@ -38,3 +38,21 @@ def test_middleware_redacts_sensitive_info(caplog):
     assert "/test/" in log_output
     assert "POST" in log_output
     assert "dummyuser" in log_output
+
+
+def test_process_exception_returns_custom_500_and_logs(caplog):
+    middleware = DetailedErrorLoggingMiddleware(lambda req: None)
+    rf = RequestFactory()
+    request = rf.get("/error/")
+    request.user = DummyUser()
+
+    with caplog.at_level(logging.ERROR):
+        response = middleware.process_exception(request, ValueError("boom"))
+
+    assert response.status_code == 500
+    content = response.content.decode()
+    assert "Something went wrong" in content
+
+    log_output = " ".join(record.getMessage() for record in caplog.records)
+    assert "🚨 DETAILED ERROR REPORT 🚨" in log_output
+    assert "Exception Message: boom" in log_output

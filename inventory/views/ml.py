@@ -26,8 +26,8 @@ def ml_dashboard(request):
 
     classifications = cache.get("ml_abc_classification")
     if classifications is None:
-        classifications = ml.abc_classification()
-        cache.set("ml_abc_classification", classifications, ttl)
+        ml.queue_abc_classification(ttl=ttl)
+        classifications = {}
 
     results = []
     for item in Item.objects.all():

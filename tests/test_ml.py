@@ -80,30 +80,35 @@ def test_ml_dashboard_uses_cache(client):
         caches[cache_name].clear()
 
     with (
-        patch("inventory.services.ml.queue_train_models") as mock_queue,
-        patch("inventory.services.ml.abc_classification", return_value={}) as mock_abc,
+        patch("inventory.services.ml.queue_train_models") as mock_train_queue,
+        patch("inventory.services.ml.queue_abc_classification") as mock_cls_queue,
     ):
-        # When queue_train_models is called we synchronously populate the cache to
-        # emulate the background worker completing its task.
-        mock_queue.side_effect = (
+        # When the background tasks are queued we synchronously populate the cache
+        # to emulate the worker completing its job.
+        mock_train_queue.side_effect = (
             lambda periods=1, cache_key="ml_train_models", ttl=300: cache.set(
+                cache_key, {}, ttl
+            )
+        )
+        mock_cls_queue.side_effect = (
+            lambda cache_key="ml_abc_classification", ttl=300: cache.set(
                 cache_key, {}, ttl
             )
         )
 
         response = client.get(reverse("ml_dashboard"))
         assert response.status_code == 200
-        assert mock_queue.call_count == 1
-        assert mock_abc.call_count == 1
+        assert mock_train_queue.call_count == 1
+        assert mock_cls_queue.call_count == 1
 
         client.get(reverse("ml_dashboard"))
-        assert mock_queue.call_count == 1
-        assert mock_abc.call_count == 1
+        assert mock_train_queue.call_count == 1
+        assert mock_cls_queue.call_count == 1
 
         cache.clear()
         client.get(reverse("ml_dashboard"))
-        assert mock_queue.call_count == 2
-        assert mock_abc.call_count == 2
+        assert mock_train_queue.call_count == 2
+        assert mock_cls_queue.call_count == 2
 
 
 def test_queue_train_models_updates_cache(db):
@@ -124,3 +129,23 @@ def test_queue_train_models_logs_exception(db, monkeypatch, caplog):
         ml.queue_train_models(periods=1, cache_key=cache_key, ttl=300, sync=True)
     assert cache.get(cache_key) is None
     assert "Failed to train forecasting models" in caplog.text
+
+
+def test_queue_abc_classification_updates_cache(db):
+    cache_key = "test_ml_abc_classification"
+    cache.delete(cache_key)
+    ml.queue_abc_classification(cache_key=cache_key, ttl=300, sync=True)
+    assert cache.get(cache_key) is not None
+
+
+def test_queue_abc_classification_logs_exception(db, monkeypatch, caplog):
+    def bad_cls():
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(ml, "abc_classification", bad_cls)
+    cache_key = "test_ml_abc_classification_error"
+    cache.delete(cache_key)
+    with caplog.at_level("ERROR"):
+        ml.queue_abc_classification(cache_key=cache_key, ttl=300, sync=True)
+    assert cache.get(cache_key) is None
+    assert "Failed to compute ABC classifications" in caplog.text

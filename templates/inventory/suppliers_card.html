@@ -10,7 +10,12 @@
       <p class="text-sm text-gray-600">{{ row.contact_person }}</p>
     </div>
     <div class="flex gap-2">
-      <a href="{% url 'supplier_edit' row.supplier_id %}" class="text-primary" title="Edit">
+      <a
+        href="{% url 'supplier_edit' row.supplier_id %}"
+        data-modal-url="{% url 'supplier_edit' row.supplier_id %}?partial=1"
+        class="text-primary"
+        title="Edit"
+      >
         {% icon 'pencil' 'w-5 h-5' %}
       </a>
       <form

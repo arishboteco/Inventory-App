@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed "About" card from items list page.
 
 ### Changed
+- Settings now selected via ``DJANGO_SETTINGS_MODULE`` with dedicated ``dev`` and ``prod`` modules; removed dynamic ``DJANGO_ENV`` loader.
 - Layout toggles now use HTMX requests and persist selection via `localStorage` with improved ARIA updates.
 - `templates/inventory/items_list_speed_test.html`
 - `templates/inventory/_items_table_speed.html`

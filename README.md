@@ -138,7 +138,7 @@ Docker Compose. It sets up three services:
 
    # For staging or production:
    # BUILD_ENV=staging ENV_FILE=env/staging.example NGINX_CONF=staging.conf docker compose --profile staging up --build
-   # BUILD_ENV=production ENV_FILE=env/production.example NGINX_CONF=production.conf docker compose --profile production up --build
+   # BUILD_ENV=prod ENV_FILE=env/production.example NGINX_CONF=production.conf docker compose --profile production up --build
    ```
 
    The web container automatically applies database migrations and
@@ -206,4 +206,4 @@ The application exposes the following REST endpoints under `/api/`:
 
 ## Deployment
 
-Settings are determined by the `DJANGO_ENV` environment variable. For production deployments (e.g., on Render) set `DJANGO_ENV=production`. The `DJANGO_SETTINGS_MODULE` variable is no longer required.
+Settings modules are selected via the `DJANGO_SETTINGS_MODULE` environment variable. Use `inventory_app.settings.dev` for development and `inventory_app.settings.prod` for production deployments (e.g., on Render).

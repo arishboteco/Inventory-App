@@ -29,12 +29,7 @@ configure_logging()
 DEBUG = app_settings.django_debug  # Controlled via environment
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = app_settings.django_secret_key
-if not SECRET_KEY:
-    if DEBUG:
-        SECRET_KEY = get_random_secret_key()
-    else:
-        raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set in production")
+SECRET_KEY = app_settings.django_secret_key or get_random_secret_key()
 
 ALLOWED_HOSTS = list(app_settings.django_allowed_hosts)
 

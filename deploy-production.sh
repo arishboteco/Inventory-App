@@ -134,10 +134,10 @@ run_production_tests() {
     log "Running production readiness tests..."
 
     # Set production test environment
-    export DJANGO_SETTINGS_MODULE=inventory_app.settings_production
+    export DJANGO_SETTINGS_MODULE=inventory_app.settings.prod
 
     # Run Django system checks
-    if python manage.py check --settings=inventory_app.settings_production --deploy; then
+    if python manage.py check --settings=inventory_app.settings.prod --deploy; then
         success "Django production checks passed"
     else
         error "Django production checks failed. Fix issues before deployment."
@@ -145,7 +145,7 @@ run_production_tests() {
 
     # Run tests with production settings
     log "Running test suite with production settings..."
-    if python manage.py test --settings=inventory_app.settings_production --verbosity=1; then
+    if python manage.py test --settings=inventory_app.settings.prod --verbosity=1; then
         success "All tests passed with production settings"
     else
         error "Tests failed with production settings. Deployment aborted."
@@ -238,7 +238,7 @@ from django.db import connection
 cursor = connection.cursor()
 cursor.execute('SELECT 1')
 print('Database connection: OK')
-" --settings=inventory_app.settings_production; then
+" --settings=inventory_app.settings.prod; then
         success "Database connection established"
     else
         error "Database connection failed"

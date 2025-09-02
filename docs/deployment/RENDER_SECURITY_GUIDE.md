@@ -21,7 +21,7 @@
 #### **🔧 CORE SETTINGS**
 
 ```
-DJANGO_ENV=production
+DJANGO_SETTINGS_MODULE=inventory_app.settings.prod
 DEBUG=False
 ```
 

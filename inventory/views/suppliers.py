@@ -14,6 +14,7 @@ from ..forms.bulk_forms import BulkDeleteForm, BulkUploadForm
 from ..forms.supplier_forms import SupplierForm
 from ..models import Supplier
 from ..services import list_utils, supplier_service
+from ..services.exceptions import SupplierServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -90,11 +91,11 @@ class SuppliersListView(TemplateView):
                 for row in reader:
                     form_row = SupplierForm(row)
                     if form_row.is_valid():
-                        ok, msg = supplier_service.add_supplier(form_row.cleaned_data)
-                        if ok:
+                        try:
+                            supplier_service.add_supplier(form_row.cleaned_data)
                             inserted += 1
-                        else:
-                            messages.error(request, msg)
+                        except SupplierServiceError as exc:
+                            messages.error(request, str(exc))
                     else:
                         messages.error(request, str(form_row.errors))
                 messages.success(request, f"{inserted} supplier(s) uploaded successfully.")
@@ -104,11 +105,15 @@ class SuppliersListView(TemplateView):
 
         form = SupplierForm(request.POST)
         if form.is_valid():
-            ok, msg = supplier_service.add_supplier(form.cleaned_data)
-            if ok:
-                messages.success(request, f'Supplier "{form.cleaned_data.get("name")}" created successfully!')
+            try:
+                supplier_service.add_supplier(form.cleaned_data)
+                messages.success(
+                    request,
+                    f'Supplier "{form.cleaned_data.get("name")}" created successfully!',
+                )
                 return redirect("suppliers_list")
-            messages.error(request, msg)
+            except SupplierServiceError as exc:
+                messages.error(request, str(exc))
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -227,10 +232,11 @@ class SupplierCreateView(View):
     def post(self, request):
         form = SupplierForm(request.POST)
         if form.is_valid():
-            success, msg = supplier_service.add_supplier(form.cleaned_data)
-            if success:
+            try:
+                supplier_service.add_supplier(form.cleaned_data)
                 return redirect("suppliers_list")
-            messages.error(request, msg)
+            except SupplierServiceError as exc:
+                messages.error(request, str(exc))
         return render(request, self.template_name, {"form": form, "is_edit": False})
 
 
@@ -326,11 +332,11 @@ class SuppliersBulkUploadView(View):
             for row in reader:
                 form_row = SupplierForm(row)
                 if form_row.is_valid():
-                    success, msg = supplier_service.add_supplier(form_row.cleaned_data)
-                    if success:
+                    try:
+                        supplier_service.add_supplier(form_row.cleaned_data)
                         inserted += 1
-                    else:
-                        errors.append(msg)
+                    except SupplierServiceError as exc:
+                        errors.append(str(exc))
                 else:
                     errors.append(str(form_row.errors))
         ctx = {

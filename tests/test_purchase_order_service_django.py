@@ -16,11 +16,10 @@ from inventory.services import purchase_order_service
 def test_create_po_and_get_po(item_factory):
     supplier = Supplier.objects.create(name="Vendor")
     item = item_factory(name="Widget")
-    success, msg, po_id = purchase_order_service.create_po(
+    po_id = purchase_order_service.create_po(
         {"supplier_id": supplier.pk, "order_date": date.today()},
         [{"item_id": item.item_id, "quantity_ordered": 5, "unit_price": 2.0}],
     )
-    assert success, msg
     po = purchase_order_service.get_po_by_id(po_id)
     assert po["supplier_id"] == supplier.pk
     assert po["items"][0]["item_id"] == item.item_id

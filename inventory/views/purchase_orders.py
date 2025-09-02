@@ -12,6 +12,7 @@ from django.views.generic import TemplateView
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import PurchaseOrder, Supplier
 from ..services import goods_receiving_service, list_utils, purchase_order_service
+from ..services.exceptions import PurchaseOrderServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -138,10 +139,11 @@ def purchase_order_create(request):
                             "unit_price": item_form["unit_price"],
                         }
                     )
-            success, msg, _ = purchase_order_service.create_po(po_data, items_data)
-            if success:
+            try:
+                purchase_order_service.create_po(po_data, items_data)
                 return redirect("purchase_orders_list")
-            messages.error(request, msg)
+            except PurchaseOrderServiceError as exc:
+                messages.error(request, str(exc))
     else:
         form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(

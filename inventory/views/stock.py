@@ -17,6 +17,7 @@ from ..forms.stock_forms import (
 )
 from ..models import StockTransaction
 from ..services import stock_service
+from ..services.exceptions import StockServiceError
 
 
 def stock_movements(request):
@@ -44,18 +45,21 @@ def stock_movements(request):
             )
             if receive_form.is_valid():
                 cd = receive_form.cleaned_data
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=cd["quantity_change"],
-                    transaction_type="RECEIVING",
-                    user_id=cd.get("user_id"),
-                    related_po_id=(cd.get("related_po").pk if cd.get("related_po") else None),
-                    notes=cd.get("notes"),
-                )
-                if ok:
+                try:
+                    stock_service.record_stock_transaction(
+                        item_id=cd["item"].pk,
+                        quantity_change=cd["quantity_change"],
+                        transaction_type="RECEIVING",
+                        user_id=cd.get("user_id"),
+                        related_po_id=(
+                            cd.get("related_po").pk if cd.get("related_po") else None
+                        ),
+                        notes=cd.get("notes"),
+                    )
                     messages.success(request, "Receiving transaction recorded")
                     return redirect("stock_movements")
-                messages.error(request, "Failed to record transaction")
+                except StockServiceError as exc:
+                    messages.error(request, str(exc))
             active = "receive"
         elif "submit_adjust" in request.POST:
             adjust_form = StockAdjustmentForm(
@@ -63,17 +67,18 @@ def stock_movements(request):
             )
             if adjust_form.is_valid():
                 cd = adjust_form.cleaned_data
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=cd["quantity_change"],
-                    transaction_type="ADJUSTMENT",
-                    user_id=cd.get("user_id"),
-                    notes=cd.get("notes"),
-                )
-                if ok:
+                try:
+                    stock_service.record_stock_transaction(
+                        item_id=cd["item"].pk,
+                        quantity_change=cd["quantity_change"],
+                        transaction_type="ADJUSTMENT",
+                        user_id=cd.get("user_id"),
+                        notes=cd.get("notes"),
+                    )
                     messages.success(request, "Adjustment transaction recorded")
                     return redirect("stock_movements" + "?section=adjust")
-                messages.error(request, "Failed to record transaction")
+                except StockServiceError as exc:
+                    messages.error(request, str(exc))
             active = "adjust"
         elif "submit_waste" in request.POST:
             waste_form = StockWastageForm(
@@ -82,17 +87,18 @@ def stock_movements(request):
             if waste_form.is_valid():
                 cd = waste_form.cleaned_data
                 qty = -abs(cd["quantity_change"])
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=qty,
-                    transaction_type="WASTAGE",
-                    user_id=cd.get("user_id"),
-                    notes=cd.get("notes"),
-                )
-                if ok:
+                try:
+                    stock_service.record_stock_transaction(
+                        item_id=cd["item"].pk,
+                        quantity_change=qty,
+                        transaction_type="WASTAGE",
+                        user_id=cd.get("user_id"),
+                        notes=cd.get("notes"),
+                    )
                     messages.success(request, "Wastage transaction recorded")
                     return redirect("stock_movements" + "?section=waste")
-                messages.error(request, "Failed to record transaction")
+                except StockServiceError as exc:
+                    messages.error(request, str(exc))
             active = "waste"
         elif "submit_quick" in request.POST:
             quick_form = StockAdjustmentForm(
@@ -100,17 +106,18 @@ def stock_movements(request):
             )
             if quick_form.is_valid():
                 cd = quick_form.cleaned_data
-                ok = stock_service.record_stock_transaction(
-                    item_id=cd["item"].pk,
-                    quantity_change=cd["quantity_change"],
-                    transaction_type="ADJUSTMENT",
-                    user_id=cd.get("user_id"),
-                    notes=cd.get("notes"),
-                )
-                if ok:
+                try:
+                    stock_service.record_stock_transaction(
+                        item_id=cd["item"].pk,
+                        quantity_change=cd["quantity_change"],
+                        transaction_type="ADJUSTMENT",
+                        user_id=cd.get("user_id"),
+                        notes=cd.get("notes"),
+                    )
                     messages.success(request, "Quick movement recorded")
                     return redirect("stock_movements")
-                messages.error(request, "Failed to record transaction")
+                except StockServiceError as exc:
+                    messages.error(request, str(exc))
             active = "receive"
         elif "bulk_upload" in request.POST:
             bulk_form = StockBulkUploadForm(request.POST, request.FILES)

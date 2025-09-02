@@ -8,6 +8,8 @@ from django.db.models import F
 
 from inventory.models import Item, StockTransaction
 
+from .exceptions import StockServiceError
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,7 +22,13 @@ def record_stock_transaction(
     related_indent_id: Optional[int] = None,
     related_po_id: Optional[int] = None,
     notes: Optional[str] = None,
-) -> bool:
+) -> None:
+    """Record a single stock transaction.
+
+    Raises :class:`StockServiceError` if the operation fails after retries or the
+    item does not exist.
+    """
+
     quantity_change = Decimal(str(quantity_change))
     for attempt in range(5):
         try:
@@ -30,7 +38,7 @@ def record_stock_transaction(
                 )
                 if not updated:
                     logger.warning("Item %s not found", item_id)
-                    return False
+                    raise StockServiceError(f"Item {item_id} not found")
                 StockTransaction.objects.create(
                     item_id=item_id,
                     quantity_change=quantity_change,
@@ -41,15 +49,17 @@ def record_stock_transaction(
                     related_po_id=related_po_id,
                     notes=notes,
                 )
-            return True
+            return
         except OperationalError as exc:  # pragma: no cover - retry on lock
             logger.error("Error recording stock transaction: %s", exc)
             time.sleep(0.1 * attempt)
             continue
+        except StockServiceError:
+            raise
         except Exception as exc:  # pragma: no cover - defensive
             logger.error("Error recording stock transaction: %s", exc)
-            return False
-    return False
+            raise StockServiceError("Error recording stock transaction") from exc
+    raise StockServiceError("Error recording stock transaction")
 
 
 def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:

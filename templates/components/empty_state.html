@@ -4,7 +4,7 @@
   {% if img %}
     <img src="{% static img %}" alt="" class="mx-auto mb-4 w-32 h-32" />
   {% else %}
-    {% icon 'plus' 'mx-auto w-5 h-5 text-form-text' %}
+    {% icon 'plus' 'mx-auto w-5 h-5 text-form-text' aria_label='' %}
   {% endif %}
   <h2 class="text-h2 mb-4 mt-8">{{ title }}</h2>
   <p class="mb-4 text-form-text">{{ message }}</p>

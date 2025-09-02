@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import timedelta
 from decimal import Decimal
@@ -8,14 +7,15 @@ from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.cache import cache
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum
-from django.db.models.functions import TruncDate, Coalesce
+from django.db.models.functions import Coalesce, TruncDate
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.utils import timezone
 
 from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
-from inventory.services import counts, dashboard_service, kpis
+from inventory.services import counts, kpis
+
+from .viewmodels import DashboardContext
 
 logger = logging.getLogger(__name__)
 
@@ -74,14 +74,7 @@ def health_check(request):
 def dashboard(request):
     """Render dashboard shell; KPI cards are loaded asynchronously."""
     labels, values = kpis.stock_trend_last_7_days()
-    context = {
-        "low_stock": dashboard_service.get_low_stock_items(),
-        "trend_labels": json.dumps(labels),
-        "trend_values": json.dumps(values),
-        "list_url": reverse("dashboard"),
-        "list_title": "Dashboard",
-        "current_title": "Dashboard",
-    }
+    context = DashboardContext(labels, values).as_dict()
     return render(request, "core/dashboard.html", context)
 
 
@@ -153,16 +146,12 @@ def interactive_dashboard(request):
     start = end - timedelta(days=days - 1)
 
     labels, values = _stock_trend_data(item_id, supplier_id, start, end, metric)
-    context = {
-        "low_stock": dashboard_service.get_low_stock_items(),
-        "trend_labels": json.dumps(labels),
-        "trend_values": json.dumps(values),
-        "items": Item.objects.filter(is_active=True),
-        "suppliers": Supplier.objects.filter(is_active=True),
-        "list_url": reverse("dashboard"),
-        "list_title": "Dashboard",
-        "current_title": "Dashboard",
-    }
+    context = DashboardContext(
+        labels,
+        values,
+        items=Item.objects.filter(is_active=True),
+        suppliers=Supplier.objects.filter(is_active=True),
+    ).as_dict()
     return render(request, "core/dashboard.html", context)
 
 

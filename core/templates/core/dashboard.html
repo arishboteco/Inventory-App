@@ -5,12 +5,16 @@
   {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
 {% endblock %}
 
-{% block heading %}Dashboard{% endblock %}
+{% block page_title %}Dashboard – Inventory App{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
 
-{% block actions %}
+{% block primary_actions %}
   {% if perms.inventory.add_purchaseorder %}
   <a href="{% url 'purchase_order_create' %}" class="btn-primary">New Purchase Order</a>
   {% endif %}
+{% endblock %}
+
+{% block secondary_actions %}
   <a href="{% url 'grn_list' %}" class="btn-secondary">Record Receipt</a>
 {% endblock %}
 

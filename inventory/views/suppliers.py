@@ -3,6 +3,7 @@ import io
 import logging
 
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -217,13 +218,9 @@ class SuppliersCardView(TemplateView):
 
 
 class SupplierCreateView(View):
-    """Create a new supplier using SupplierForm.
+    """Create a new supplier; returns drawer partials and JSON."""
 
-    GET renders a blank form; POST persists the supplier.
-    Template: inventory/supplier_form.html.
-    """
-
-    template_name = "inventory/supplier_form.html"
+    template_name = "inventory/_supplier_form_partial.html"
 
     def get(self, request):
         form = SupplierForm()
@@ -233,20 +230,22 @@ class SupplierCreateView(View):
         form = SupplierForm(request.POST)
         if form.is_valid():
             try:
-                supplier_service.add_supplier(form.cleaned_data)
-                return redirect("suppliers_list")
+                supplier = supplier_service.add_supplier(form.cleaned_data)
+                return JsonResponse({"ok": True, "id": supplier.pk, "message": "Supplier created"})
             except SupplierServiceError as exc:
-                messages.error(request, str(exc))
-        return render(request, self.template_name, {"form": form, "is_edit": False})
+                return JsonResponse({"ok": False, "message": str(exc)}, status=400)
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "is_edit": False},
+            status=400,
+        )
 
 
 class SupplierEditView(View):
-    """Edit an existing supplier.
+    """Edit an existing supplier; returns drawer partials and JSON."""
 
-    Template: inventory/supplier_form.html.
-    """
-
-    template_name = "inventory/supplier_form.html"
+    template_name = "inventory/_supplier_form_partial.html"
 
     def get(self, request, pk: int):
         supplier = get_object_or_404(Supplier, pk=pk)
@@ -262,10 +261,10 @@ class SupplierEditView(View):
                 supplier.pk, form.cleaned_data
             )
             if success:
-                return redirect("suppliers_list")
-            messages.error(request, msg)
+                return JsonResponse({"ok": True, "message": "Supplier updated"})
+            return JsonResponse({"ok": False, "message": msg}, status=400)
         ctx = {"form": form, "is_edit": True, "supplier": supplier}
-        return render(request, self.template_name, ctx)
+        return render(request, self.template_name, ctx, status=400)
 
 
 @method_decorator(csrf_protect, name="dispatch")

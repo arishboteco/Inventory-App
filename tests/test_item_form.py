@@ -2,6 +2,7 @@ import pytest
 from django import forms
 from django.template.loader import render_to_string
 from django.test import RequestFactory
+from django.urls import reverse
 
 from inventory.forms.item_forms import ItemForm
 from inventory.models import Category, Department, Item, Unit
@@ -68,20 +69,6 @@ def test_item_form_save():
 
 
 @pytest.mark.django_db
-def test_item_form_render():
-    form = TestItemForm()
-    request = RequestFactory().get("/")
-    content = render_to_string(
-        "inventory/item_form.html",
-        {"form": form, "is_edit": False, "excluded_fields": []},
-        request=request,
-    )
-    # Check that the form renders without errors
-    assert "name" in content.lower()
-    assert "unit_id" in content.lower()
-
-
-@pytest.mark.django_db
 def test_item_form_uses_model_choice_fields():
     form = ItemForm()
     unit_field = form.fields["unit_id"]
@@ -122,3 +109,24 @@ def test_item_edit_modal_renders_all_fields():
         "is_active",
     ]:
         assert f'name="{field}"' in content
+
+
+@pytest.mark.django_db
+def test_item_edit_view_returns_json(client):
+    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    category = Category.objects.create(category="Food", sub_category="Veg")
+    item = Item.objects.create(name="T", unit=unit, category=category)
+    url = reverse("item_edit", args=[item.pk])
+    resp = client.post(
+        url,
+        {
+            "name": "T2",
+            "unit_id": unit.pk,
+            "category_id": category.pk,
+            "reorder_point": 1,
+            "current_stock": 1,
+            "is_active": True,
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True

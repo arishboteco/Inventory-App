@@ -1,0 +1,25 @@
+<div class="card drawer-panel max-w-[480px]">
+  <div class="card-header flex items-center justify-between">
+    <h3 class="text-lg font-semibold">{% if is_edit %}Edit Supplier — {{ supplier.name }}{% else %}Add Supplier{% endif %}</h3>
+    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+  </div>
+  <div class="card-body">
+    <form method="post" data-modal-form action="{% if is_edit %}{% url 'supplier_edit' supplier.supplier_id %}?partial=1{% else %}{% url 'supplier_create' %}?partial=1{% endif %}">
+      {% csrf_token %}
+      <input type="hidden" name="partial" value="1"/>
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+        {% for field in form %}
+        <div class="space-y-1 col-span-2">
+          <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+          {{ field }}
+          {% include "forms/feedback.html" %}
+        </div>
+        {% endfor %}
+        <div class="col-span-2 flex justify-between items-center gap-2">
+          <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+          <button type="submit" class="btn-primary">{% if is_edit %}Save{% else %}Create{% endif %}</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

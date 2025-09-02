@@ -128,7 +128,8 @@ def test_item_edit_view_updates_and_clears_cache(client, monkeypatch):
         "is_active": "on",
     }
     resp = client.post(url, data)
-    assert resp.status_code == 302
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
     item.refresh_from_db()
     assert item.name == "Gadget"
 

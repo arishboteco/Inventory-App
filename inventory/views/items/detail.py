@@ -15,16 +15,15 @@ from django.views.decorators.csrf import csrf_protect
 from ...forms.item_forms import ItemForm
 from ...models import Item, Supplier, StockTransaction
 from ...services import item_service, stock_service
-from .constants import EXCLUDED_FIELDS
 from .list import ItemsTableView
 
 logger = logging.getLogger(__name__)
 
 
 class ItemEditView(View):
-    """Edit an existing item."""
+    """Edit an existing item, returning drawer partials and JSON."""
 
-    template_name = "inventory/item_form.html"
+    template_name = "inventory/_item_form_partial.html"
 
     def get_object(self, pk: int):
         try:
@@ -39,19 +38,8 @@ class ItemEditView(View):
             form = ItemForm(instance=item)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
-            messages.error(request, "Unable to load item")
-            return redirect("items_list")
-        ctx = {
-            "form": form,
-            "is_edit": True,
-            "item": item,
-            "excluded_fields": EXCLUDED_FIELDS,
-            "list_url": reverse("items_list"),
-            "list_title": "Items",
-            "current_title": item.name,
-        }
-        if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
-            return render(request, "inventory/_item_form_partial.html", ctx)
+            return JsonResponse({"ok": False, "message": "Unable to load item"}, status=400)
+        ctx = {"form": form, "item": item, "is_edit": True}
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk: int):
@@ -60,35 +48,17 @@ class ItemEditView(View):
             form = ItemForm(request.POST, instance=item)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
-            messages.error(request, "Unable to load item")
-            return redirect("items_list")
+            return JsonResponse({"ok": False, "message": "Unable to load item"}, status=400)
         if form.is_valid():
             try:
                 form.save()
                 item_service.get_all_items_with_stock.clear()
                 item_service.get_distinct_departments_from_items.clear()
-                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
-                    return JsonResponse({"ok": True, "message": "Item updated"})
-                messages.success(request, "Item updated")
-                return redirect("items_list")
+                return JsonResponse({"ok": True, "message": "Item updated"})
             except (ValidationError, DatabaseError):
-                if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
-                    return JsonResponse(
-                        {"ok": False, "message": "Unable to save item"}, status=400
-                    )
-                messages.error(request, "Unable to save item")
-        ctx = {
-            "form": form,
-            "is_edit": True,
-            "item": item,
-            "excluded_fields": EXCLUDED_FIELDS,
-            "list_url": reverse("items_list"),
-            "list_title": "Items",
-            "current_title": item.name,
-        }
-        if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
-            return render(request, "inventory/_item_form_partial.html", ctx, status=400)
-        return render(request, self.template_name, ctx)
+                return JsonResponse({"ok": False, "message": "Unable to save item"}, status=400)
+        ctx = {"form": form, "item": item, "is_edit": True}
+        return render(request, self.template_name, ctx, status=400)
 
 
 class ItemInlineUpdateView(View):

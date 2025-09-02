@@ -2,6 +2,7 @@ import pytest
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 from django.urls import reverse
+import inventory_app.navigation as navigation
 
 
 @pytest.mark.django_db
@@ -61,3 +62,12 @@ def test_home_page_contains_nav_links(client, django_user_model):
     ]
     for text in expected:
         assert text in html
+
+
+def test_invalid_navigation_link_is_ignored(monkeypatch):
+    """Ensure navigation links referencing missing routes are omitted."""
+    bad_links = navigation.NAVIGATION_LINKS + [{"title": "Bad", "url_name": "does_not_exist"}]
+    monkeypatch.setattr(navigation, "NAVIGATION_LINKS", bad_links)
+    links = navigation.get_navigation_links()
+    titles = [link["title"] for link in links]
+    assert "Bad" not in titles

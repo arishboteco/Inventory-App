@@ -15,7 +15,7 @@
           <div x-show="open" x-cloak @click.outside="open=false"
                class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" role="menu">
             {% for link in primary_navigation %}
-            <a href="{% url link.url_name %}"
+            <a href="{{ link.url }}"
                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">{{ link.title }}</a>
             {% endfor %}
           </div>

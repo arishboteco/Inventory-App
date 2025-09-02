@@ -206,4 +206,4 @@ The application exposes the following REST endpoints under `/api/`:
 
 ## Deployment
 
-Settings modules are selected via the `DJANGO_SETTINGS_MODULE` environment variable. Use `inventory_app.settings.dev` for development and `inventory_app.settings.prod` for production deployments (e.g., on Render).
+Settings modules are selected via the `DJANGO_SETTINGS_MODULE` environment variable. Use `inventory_app.settings.dev` for development and `inventory_app.settings.prod` for production deployments (e.g., on Render). The legacy `inventory_app.settings.production` alias remains for backward compatibility but will be removed in a future release.

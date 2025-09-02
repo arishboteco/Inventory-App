@@ -1,17 +1,17 @@
 {% load icon_tags %}
 <div class="flex gap-2">
   <a href="{{ view_url }}" class="text-primary" title="View">
-    {% icon 'eye' 'w-5 h-5' %}
+    {% icon 'eye' 'w-5 h-5' aria_label='' %}
     <span class="sr-only">View</span>
   </a>
   <a href="{{ edit_url }}" class="text-primary" title="Edit">
-    {% icon 'pencil-square' 'w-5 h-5' %}
+    {% icon 'pencil-square' 'w-5 h-5' aria_label='' %}
     <span class="sr-only">Edit</span>
   </a>
   <form action="{{ approve_url }}" method="post" class="inline">
     {% csrf_token %}
     <button type="submit" class="text-primary" title="Approve">
-      {% icon 'check' 'w-5 h-5' %}
+      {% icon 'check' 'w-5 h-5' aria_label='' %}
       <span class="sr-only">Approve</span>
     </button>
   </form>

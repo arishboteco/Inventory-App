@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom 500 error page rendered after detailed error logging.
 - Layout toggle buttons on the items list to switch between table and grid views.
 - Supplier and unit dropdown filters on the items list for more precise results.
+- Aria attributes ensuring accessible icons and icon-only buttons, plus tests for unlabeled images.
 
 ### Removed
 

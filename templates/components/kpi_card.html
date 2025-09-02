@@ -9,7 +9,7 @@
       <div class="flex-shrink-0">
         <div class="w-8 h-8 bg-{{ color }}-100 rounded-lg flex items-center justify-center">
           {% with 'w-5 h-5 text-'|add:color|add:'-600' as icon_classes %}
-            {% icon icon icon_classes variant='solid' size=20 %}
+            {% icon icon icon_classes variant='solid' size=20 aria_label='' %}
           {% endwith %}
         </div>
       </div>

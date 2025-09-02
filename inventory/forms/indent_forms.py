@@ -3,6 +3,7 @@ from __future__ import annotations
 from django import forms
 
 from ..models import Indent, IndentItem
+from ..models.enums import IndentStatus
 from .base import INPUT_CLASS, StyledFormMixin
 
 
@@ -14,7 +15,7 @@ class IndentForm(StyledFormMixin, forms.ModelForm):
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
         if not obj.status:
-            obj.status = "SUBMITTED"
+            obj.status = IndentStatus.SUBMITTED
         if commit:
             obj.save()
         return obj

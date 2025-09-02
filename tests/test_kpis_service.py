@@ -13,6 +13,7 @@ from inventory.models import (
     StockTransaction,
     Supplier,
 )
+from inventory.models.enums import IndentStatus, PurchaseOrderStatus
 from inventory.services import kpis
 
 
@@ -55,7 +56,9 @@ def test_high_price_purchase_detection(item_factory, django_assert_num_queries):
     item = item_factory(name="X")
     supplier = Supplier.objects.create(name="Supp")
     po = PurchaseOrder.objects.create(
-        supplier=supplier, order_date=timezone.now().date(), status="ORDERED"
+        supplier=supplier,
+        order_date=timezone.now().date(),
+        status=PurchaseOrderStatus.ORDERED,
     )
     poi = PurchaseOrderItem.objects.create(
         purchase_order=po, item=item, quantity_ordered=1, unit_price=Decimal("100")
@@ -100,24 +103,38 @@ def test_high_price_purchase_detection(item_factory, django_assert_num_queries):
 def test_pending_po_and_indent_counts():
     supplier = Supplier.objects.create(name="S")
     PurchaseOrder.objects.create(
-        supplier=supplier, order_date=timezone.now().date(), status="DRAFT"
+        supplier=supplier,
+        order_date=timezone.now().date(),
+        status=PurchaseOrderStatus.DRAFT,
     )
     PurchaseOrder.objects.create(
-        supplier=supplier, order_date=timezone.now().date(), status="ORDERED"
+        supplier=supplier,
+        order_date=timezone.now().date(),
+        status=PurchaseOrderStatus.ORDERED,
     )
     PurchaseOrder.objects.create(
-        supplier=supplier, order_date=timezone.now().date(), status="PARTIAL"
+        supplier=supplier,
+        order_date=timezone.now().date(),
+        status=PurchaseOrderStatus.PARTIAL,
     )
-    Indent.objects.create(mrn="1", status="PENDING")
-    Indent.objects.create(mrn="2", status="SUBMITTED")
-    Indent.objects.create(mrn="3", status="PROCESSING")
-    Indent.objects.create(mrn="4", status="COMPLETED")
+    Indent.objects.create(mrn="1", status=IndentStatus.PENDING)
+    Indent.objects.create(mrn="2", status=IndentStatus.SUBMITTED)
+    Indent.objects.create(mrn="3", status=IndentStatus.PROCESSING)
+    Indent.objects.create(mrn="4", status=IndentStatus.COMPLETED)
 
     po_counts = kpis.pending_po_status_counts()
     indent_counts = kpis.pending_indent_counts()
 
-    assert po_counts == {"DRAFT": 1, "ORDERED": 1, "PARTIAL": 1}
-    assert indent_counts == {"PENDING": 1, "SUBMITTED": 1, "PROCESSING": 1}
+    assert po_counts == {
+        PurchaseOrderStatus.DRAFT: 1,
+        PurchaseOrderStatus.ORDERED: 1,
+        PurchaseOrderStatus.PARTIAL: 1,
+    }
+    assert indent_counts == {
+        IndentStatus.PENDING: 1,
+        IndentStatus.SUBMITTED: 1,
+        IndentStatus.PROCESSING: 1,
+    }
 
 
 @pytest.mark.django_db

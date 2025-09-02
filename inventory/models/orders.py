@@ -5,6 +5,7 @@ from django.db.models import Sum
 
 from .items import Item
 from .suppliers import Supplier
+from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
 
 
 class Indent(models.Model):
@@ -16,7 +17,13 @@ class Indent(models.Model):
     department = models.CharField(max_length=100, blank=True, null=True)
     date_required = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    status = models.CharField(max_length=50, blank=True, null=True)
+    status = models.CharField(
+        max_length=50,
+        choices=IndentStatus.choices,
+        default=IndentStatus.SUBMITTED,
+        blank=True,
+        null=True,
+    )
     date_submitted = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     processed_by_user_id = models.CharField(max_length=50, blank=True, null=True)
     date_processed = models.DateTimeField(auto_now=True, blank=True, null=True)
@@ -47,7 +54,13 @@ class IndentItem(models.Model):
     issued_qty = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
-    item_status = models.CharField(max_length=50, blank=True, null=True)
+    item_status = models.CharField(
+        max_length=50,
+        choices=ItemStatus.choices,
+        default=ItemStatus.PENDING,
+        blank=True,
+        null=True,
+    )
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
@@ -67,14 +80,8 @@ class PurchaseOrder(models.Model):
     expected_delivery_date = models.DateField(blank=True, null=True)
     status = models.CharField(
         max_length=20,
-        choices=[
-            ("DRAFT", "Draft"),
-            ("ORDERED", "Ordered"),
-            ("PARTIAL", "Partially Received"),
-            ("COMPLETE", "Completed"),
-            ("CANCELLED", "Cancelled"),
-        ],
-        default="DRAFT",
+        choices=PurchaseOrderStatus.choices,
+        default=PurchaseOrderStatus.DRAFT,
     )
     notes = models.TextField(blank=True, null=True)
 

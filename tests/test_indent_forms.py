@@ -1,6 +1,7 @@
 import pytest
 
 from inventory.forms.indent_forms import IndentForm, IndentItemForm, IndentItemFormSet
+from inventory.models.enums import IndentStatus
 
 
 @pytest.mark.django_db
@@ -30,7 +31,7 @@ def test_indent_form_and_formset_save(item_factory):
     formset.instance = indent
     formset.save()
     indent.refresh_from_db()
-    assert indent.status == "SUBMITTED"
+    assert indent.status == IndentStatus.SUBMITTED
     assert indent.indentitem_set.count() == 1
     assert indent.indentitem_set.first().item_id == item.pk
 

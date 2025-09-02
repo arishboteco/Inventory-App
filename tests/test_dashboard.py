@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from core.viewmodels import DashboardContext
 from inventory.models import Indent, StockTransaction, Supplier
+from inventory.models.enums import IndentStatus
 
 
 @pytest.mark.django_db
@@ -44,7 +45,7 @@ def test_dashboard_kpis_endpoint(client, item_factory):
     )
 
     Supplier.objects.create(name="Supp")
-    Indent.objects.create(mrn="1", status="PENDING")
+    Indent.objects.create(mrn="1", status=IndentStatus.PENDING)
 
     resp = client.get(reverse("dashboard-kpis"))
     assert resp.status_code == 200
@@ -57,7 +58,7 @@ def test_dashboard_kpis_endpoint(client, item_factory):
     assert f'href="{reverse("items_list")}"' in html
     assert f'href="{reverse("items_list")}?stock_status=low"' in html
     assert f'href="{reverse("suppliers_list")}"' in html
-    assert f'href="{reverse("indents_list")}?status=PENDING"' in html
+    assert f'href="{reverse("indents_list")}?status={IndentStatus.PENDING}"' in html
 
 
 @pytest.mark.django_db

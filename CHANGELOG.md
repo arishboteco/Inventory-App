@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supplier and unit dropdown filters on the items list for more precise results.
 - Aria attributes ensuring accessible icons and icon-only buttons, plus tests for unlabeled images.
 
+### Deprecated
+- `inventory_app.settings.production` module alias. Use `inventory_app.settings.prod` instead; the alias will be removed in a future release.
+
 ### Removed
 
 - Legacy speed templates no longer referenced by views:

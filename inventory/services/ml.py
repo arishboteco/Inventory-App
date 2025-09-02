@@ -142,3 +142,33 @@ def abc_classification() -> Dict[int, str]:
             cls = "C"
         classifications[item.pk] = cls
     return classifications
+
+
+def abc_classification_task(cache_key: str, ttl: int) -> bool:
+    """Compute ABC classifications and store results in cache.
+
+    Returns ``True`` on success and ``False`` if an exception is raised.
+    """
+    try:
+        cache.set(cache_key, abc_classification(), ttl)
+        return True
+    except Exception:  # pragma: no cover - defensive catch-all
+        logger.exception("Failed to compute ABC classifications")
+        return False
+
+
+def queue_abc_classification(
+    *, cache_key: str = "ml_abc_classification", ttl: int = 300, sync: bool = False
+) -> str:
+    """Queue classification task and store results in cache when complete.
+
+    Args:
+        cache_key: Cache key to store classifications.
+        ttl: Cache time-to-live in seconds.
+        sync: If ``True`` the task runs synchronously (used in tests).
+
+    Returns:
+        The ID of the queued task.
+    """
+
+    return async_task(abc_classification_task, cache_key, ttl, sync=sync)

@@ -5,14 +5,18 @@ from django.db import IntegrityError, transaction
 
 from inventory.models import Supplier
 
+from .exceptions import SupplierServiceError
+
 logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
-def add_supplier(details: Dict[str, Any]) -> Tuple[bool, str]:
+def add_supplier(details: Dict[str, Any]) -> Supplier:
+    """Create a new supplier or raise :class:`SupplierServiceError` on failure."""
+
     name = (details.get("name") or "").strip()
     if not name:
-        return False, "Supplier name is required and cannot be empty."
+        raise SupplierServiceError("Supplier name is required and cannot be empty.")
     try:
         supplier = Supplier.objects.create(
             name=name,
@@ -23,18 +27,16 @@ def add_supplier(details: Dict[str, Any]) -> Tuple[bool, str]:
             notes=(details.get("notes") or "").strip() or None,
             is_active=details.get("is_active", True),
         )
-        return (
-            True,
-            f"Supplier '{supplier.name}' added successfully with ID {supplier.pk}.",
-        )
-    except IntegrityError:
-        return (
-            False,
-            f"Supplier name '{name}' already exists. Please use a unique name.",
-        )
+        return supplier
+    except IntegrityError as exc:
+        raise SupplierServiceError(
+            f"Supplier name '{name}' already exists. Please use a unique name."
+        ) from exc
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error adding supplier: %s", exc)
-        return False, "A database error occurred while adding the supplier."
+        raise SupplierServiceError(
+            "A database error occurred while adding the supplier."
+        ) from exc
 
 
 def get_all_suppliers(include_inactive: bool = False) -> List[Dict[str, Any]]:

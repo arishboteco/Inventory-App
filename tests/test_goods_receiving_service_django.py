@@ -10,11 +10,10 @@ from inventory.services import goods_receiving_service, purchase_order_service
 def test_create_grn_updates_stock_and_po(item_factory):
     supplier = Supplier.objects.create(name="Vendor")
     item = item_factory(name="Widget", current_stock=0)
-    success, msg, po_id = purchase_order_service.create_po(
+    po_id = purchase_order_service.create_po(
         {"supplier_id": supplier.pk, "order_date": date.today()},
         [{"item_id": item.item_id, "quantity_ordered": 10, "unit_price": 1.0}],
     )
-    assert success, msg
     po_item = PurchaseOrderItem.objects.get(
         purchase_order_id=po_id, item_id=item.item_id
     )

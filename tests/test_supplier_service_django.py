@@ -3,13 +3,13 @@ from django.urls import reverse
 
 from inventory.models import Supplier
 from inventory.services import supplier_service
+from inventory.services.exceptions import SupplierServiceError
 
 
 @pytest.mark.django_db
 def test_add_supplier_inserts_row():
     details = {"name": "Vendor A", "is_active": True}
-    success, _ = supplier_service.add_supplier(details)
-    assert success
+    supplier_service.add_supplier(details)
     assert Supplier.objects.filter(name="Vendor A").exists()
 
 
@@ -17,15 +17,15 @@ def test_add_supplier_inserts_row():
 def test_add_supplier_duplicate_name_fails():
     details = {"name": "Dup", "is_active": True}
     supplier_service.add_supplier(details)
-    success, _ = supplier_service.add_supplier(details)
-    assert not success
+    with pytest.raises(SupplierServiceError):
+        supplier_service.add_supplier(details)
 
 
 @pytest.mark.django_db
 def test_add_supplier_requires_name():
     details = {"name": "  ", "contact_person": "x"}
-    success, _ = supplier_service.add_supplier(details)
-    assert not success
+    with pytest.raises(SupplierServiceError):
+        supplier_service.add_supplier(details)
 
 
 @pytest.mark.django_db

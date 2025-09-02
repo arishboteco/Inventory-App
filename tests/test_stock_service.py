@@ -13,6 +13,7 @@ from inventory.models import (
     StockTransaction,
 )
 from inventory.services import stock_service
+from inventory.services.exceptions import StockServiceError
 
 
 @pytest.fixture(autouse=True)
@@ -34,13 +35,12 @@ def clear_tables(db):
 @pytest.mark.django_db
 def test_record_stock_transaction_updates_stock_and_logs(item_factory):
     item = item_factory(name="Sample", current_stock=10)
-    success = stock_service.record_stock_transaction(
+    stock_service.record_stock_transaction(
         item_id=item.item_id,
         quantity_change=5,
         transaction_type="RECEIVING",
         user_id="tester",
     )
-    assert success
     item.refresh_from_db()
     assert item.current_stock == 15
     assert StockTransaction.objects.filter(item=item).count() == 1
@@ -136,12 +136,15 @@ def test_concurrent_stock_updates(item_factory):
 
     def worker():
         for _ in range(5):
-            if stock_service.record_stock_transaction(
-                item_id=item.item_id,
-                quantity_change=1,
-                transaction_type="TEST",
-            ):
+            try:
+                stock_service.record_stock_transaction(
+                    item_id=item.item_id,
+                    quantity_change=1,
+                    transaction_type="TEST",
+                )
                 break
+            except StockServiceError:
+                continue
 
     with ThreadPoolExecutor(max_workers=5) as executor:
         for _ in range(5):

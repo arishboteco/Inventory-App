@@ -15,6 +15,7 @@ from inventory.models import (
 )
 
 from . import stock_service
+from .exceptions import StockServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +132,7 @@ def create_grn(
         Supplier.DoesNotExist,
         Item.DoesNotExist,
         PurchaseOrderItem.DoesNotExist,
+        StockServiceError,
     ) as exc:
         return False, f"Invalid reference: {exc}", None
     except Exception as exc:  # pragma: no cover - defensive

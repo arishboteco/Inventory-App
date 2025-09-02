@@ -7,13 +7,12 @@ from inventory.services import stock_service
 @pytest.mark.django_db
 def test_record_stock_transaction_updates_stock_and_logs(item_factory):
     item = item_factory(name="Sample", current_stock=10)
-    ok = stock_service.record_stock_transaction(
+    stock_service.record_stock_transaction(
         item_id=item.item_id,
         quantity_change=5,
         transaction_type="RECEIVING",
         user_id="tester",
     )
-    assert ok
     item.refresh_from_db()
     assert item.current_stock == 15
     assert StockTransaction.objects.filter(item=item).count() == 1

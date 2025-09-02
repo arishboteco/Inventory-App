@@ -1,11 +1,13 @@
 import logging
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from django.db import IntegrityError, transaction
 from django.db.models import Max, Sum
 
 from inventory.models import Item, PurchaseOrder, PurchaseOrderItem, Supplier
+
+from .exceptions import PurchaseOrderServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -15,15 +17,23 @@ def generate_po_number() -> str:
     return f"PO-{next_id:04d}"
 
 
-def create_po(
-    po_data: Dict[str, Any], items_data: List[Dict[str, Any]]
-) -> Tuple[bool, str, Optional[int]]:
+def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:
+    """Create a purchase order and return its ID.
+
+    Raises :class:`PurchaseOrderServiceError` if validation fails or the
+    database operation cannot be completed.
+    """
+
     required = ["supplier_id", "order_date"]
     missing = [f for f in required if not po_data.get(f)]
     if missing:
-        return False, f"Missing required fields: {', '.join(missing)}", None
+        raise PurchaseOrderServiceError(
+            f"Missing required fields: {', '.join(missing)}"
+        )
     if not items_data:
-        return False, "Purchase Order must contain at least one item.", None
+        raise PurchaseOrderServiceError(
+            "Purchase Order must contain at least one item."
+        )
     try:
         with transaction.atomic():
             supplier = Supplier.objects.get(pk=po_data["supplier_id"])
@@ -42,15 +52,15 @@ def create_po(
                     quantity_ordered=Decimal(str(item_d["quantity_ordered"])),
                     unit_price=Decimal(str(item_d["unit_price"])),
                 )
-            return True, "Purchase Order created", po.po_id
+            return po.po_id
     except (Supplier.DoesNotExist, Item.DoesNotExist) as exc:
-        return False, f"Invalid reference: {exc}", None
+        raise PurchaseOrderServiceError(f"Invalid reference: {exc}") from exc
     except IntegrityError as exc:
         logger.error("Integrity error creating PO: %s", exc)
-        return False, f"Database error: {exc}", None
+        raise PurchaseOrderServiceError(f"Database error: {exc}") from exc
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error creating PO: %s", exc)
-        return False, f"Database error: {exc}", None
+        raise PurchaseOrderServiceError(f"Database error: {exc}") from exc
 
 
 def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:

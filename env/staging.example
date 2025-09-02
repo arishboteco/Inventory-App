@@ -5,7 +5,7 @@
 DJANGO_SECRET_KEY=<STAGING_SECRET_KEY>
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,your-staging-domain.com
-DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
+DJANGO_SETTINGS_MODULE=inventory_app.settings.staging
 
 # Database Configuration
 # For PostgreSQL (recommended for staging)

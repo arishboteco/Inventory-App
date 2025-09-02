@@ -15,14 +15,14 @@
 - **Issue**: `RuntimeError: cannot use asyncio event loop in Django`
 - **Root Cause**: Gevent workers incompatible with Django database connections
 - **Solution**: Switched from `gevent` to `sync` workers in Gunicorn
-- **Configuration**: `inventory_app/settings_production.py` - Updated worker class
+- **Configuration**: `inventory_app/settings/prod.py` - Updated worker class
 
 ### 2. **Python 3.13 Logging Compatibility** ✅ RESOLVED
 
 - **Issue**: `ValueError: Unable to configure formatter 'verbose'`
 - **Root Cause**: Complex logging formatters incompatible with Python 3.13
 - **Solution**: Simplified logging configuration
-- **File**: `inventory_app/settings_production.py` - Streamlined logging setup
+- **File**: `inventory_app/settings/prod.py` - Streamlined logging setup
 
 ### 3. **Database Connection Issues** ✅ RESOLVED
 
@@ -115,8 +115,8 @@ python manage.py reset_admin_password
 
 ### **Django Configuration**
 
-- `inventory_app/settings_production.py` - Production settings
-- `inventory_app/settings_staging.py` - Staging settings
+- `inventory_app/settings/prod.py` - Production settings
+- `inventory_app/settings/staging.py` - Staging settings
 - `requirements.txt` - Python dependencies
 
 ### **Management Commands**
@@ -136,7 +136,7 @@ DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>?
 DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=<RENDER_DOMAIN>
-DJANGO_ENV=production
+DJANGO_SETTINGS_MODULE=inventory_app.settings.prod
 ```
 
 ### **2. Build Process** (Automated via render.yaml)

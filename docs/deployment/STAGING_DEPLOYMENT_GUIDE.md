@@ -19,7 +19,7 @@ DATABASE_URL=postgresql://<STAGING_DB_USER>:<STAGING_DB_PASSWORD>@<STAGING_DB_HO
 DATABASE_SSL_REQUIRE=True
 
 # Application Settings
-DJANGO_SETTINGS_MODULE=inventory_app.settings
+DJANGO_SETTINGS_MODULE=inventory_app.settings.staging
 
 # Optional: Monitoring and Logging
 SENTRY_DSN=<SENTRY_DSN>
@@ -34,10 +34,10 @@ REDIS_URL=redis://staging-redis:6379/0
 
 ### 2. Staging Settings Override
 
-Create `inventory_app/settings_staging.py`:
+Create `inventory_app/settings/staging.py`:
 
 ```python
-from .settings import *
+from .base import *  # noqa
 
 # Staging-specific overrides
 DEBUG = False
@@ -97,17 +97,17 @@ LOGGING = {
 
 ```bash
 # Check migration status
-python manage.py showmigrations --settings=inventory_app.settings_staging
+python manage.py showmigrations --settings=inventory_app.settings.staging
 
 # Apply migrations (should be no-op)
-python manage.py migrate --settings=inventory_app.settings_staging
+python manage.py migrate --settings=inventory_app.settings.staging
 ```
 
 ### 2. Static Files Collection
 
 ```bash
 # Collect static files
-python manage.py collectstatic --noinput --settings=inventory_app.settings_staging
+python manage.py collectstatic --noinput --settings=inventory_app.settings.staging
 ```
 
 ### 3. Application Server
@@ -121,7 +121,7 @@ gunicorn inventory_app.wsgi:application \
     --keep-alive 2 \
     --max-requests 1000 \
     --max-requests-jitter 100 \
-    --env DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
+    --env DJANGO_SETTINGS_MODULE=inventory_app.settings.staging
 ```
 
 ## Validation Tests
@@ -135,7 +135,7 @@ curl -f http://staging-domain/healthz || echo "Health check failed"
 ### 2. Database Connectivity
 
 ```bash
-python manage.py shell --settings=inventory_app.settings_staging -c "
+python manage.py shell --settings=inventory_app.settings.staging -c "
 from django.db import connection
 cursor = connection.cursor()
 cursor.execute('SELECT 1')
@@ -147,7 +147,7 @@ print('Database connection: OK')
 
 ```bash
 # Run critical path tests
-python manage.py test tests.test_item_service tests.test_recipe_service tests.test_dashboard_service --settings=inventory_app.settings_staging
+python manage.py test tests.test_item_service tests.test_recipe_service tests.test_dashboard_service --settings=inventory_app.settings.staging
 ```
 
 ## Docker Option (Alternative)
@@ -172,7 +172,7 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Set environment variables
-ENV DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
+ENV DJANGO_SETTINGS_MODULE=inventory_app.settings.staging
 ENV PYTHONPATH=/app
 
 # Expose port
@@ -199,7 +199,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DJANGO_SETTINGS_MODULE=inventory_app.settings_staging
+      - DJANGO_SETTINGS_MODULE=inventory_app.settings.staging
     env_file:
       - env/staging.local
     depends_on:

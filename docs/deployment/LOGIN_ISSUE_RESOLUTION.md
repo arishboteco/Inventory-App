@@ -169,7 +169,7 @@ python manage.py createsuperuser
 ### **Option 3: Check Environment Variables**
 Verify these are set in Render dashboard:
 - `DJANGO_SUPERUSER_PASSWORD=YourSecurePassword123!`
-- `DJANGO_ENV=production`
+- `DJANGO_SETTINGS_MODULE=inventory_app.settings.prod`
 
 ---
 

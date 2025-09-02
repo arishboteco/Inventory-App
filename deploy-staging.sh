@@ -77,7 +77,7 @@ run_tests() {
     log "Running tests before deployment..."
 
     # Set test environment
-    export DJANGO_SETTINGS_MODULE=inventory_app.settings
+    export DJANGO_SETTINGS_MODULE=inventory_app.settings.staging
 
     # Run tests
     if python manage.py test --verbosity=2; then
@@ -155,7 +155,7 @@ from django.db import connection
 cursor = connection.cursor()
 cursor.execute('SELECT 1')
 print('Database connection: OK')
-" --settings=inventory_app.settings_staging; then
+" --settings=inventory_app.settings.staging; then
         success "Database connection established"
     else
         error "Database connection failed"
@@ -192,7 +192,7 @@ validation_tests() {
         tests.test_item_service \
         tests.test_recipe_service \
         tests.test_dashboard_service \
-        --settings=inventory_app.settings_staging
+        --settings=inventory_app.settings.staging
 
     success "Validation tests passed"
 }

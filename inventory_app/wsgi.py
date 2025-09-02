@@ -11,12 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-from core.config import settings as app_settings
-
-os.environ.setdefault("DJANGO_ENV", app_settings.django_env)
-os.environ.setdefault(
-    "DJANGO_SETTINGS_MODULE", app_settings.django_settings_module
-)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings.prod")
 
 # Database migrations should be run separately before launching the application.
 application = get_wsgi_application()

@@ -11,11 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-from core.config import settings as app_settings
-
-os.environ.setdefault("DJANGO_ENV", app_settings.django_env)
-os.environ.setdefault(
-    "DJANGO_SETTINGS_MODULE", app_settings.django_settings_module
-)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "inventory_app.settings.prod")
 
 application = get_asgi_application()

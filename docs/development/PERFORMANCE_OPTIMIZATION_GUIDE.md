@@ -39,7 +39,7 @@ redis>=5.0.0
 ### **Step 3: Enhanced Cache Configuration**
 Your production settings will automatically use Redis when REDIS_URL is available.
 
-Current config in `settings_production.py`:
+Current config in `settings/prod.py`:
 ```python
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:

@@ -12,7 +12,7 @@
 ## 📋 **Deployment Status**
 
 ### ✅ Infrastructure Setup
-- [x] Staging settings configuration (`inventory_app/settings_staging.py`)
+- [x] Staging settings configuration (`inventory_app/settings/staging.py`)
 - [x] Environment variables setup (`env/staging.local`)
 - [x] Docker configuration files created
 - [x] Nginx configuration for staging
@@ -149,7 +149,7 @@ The staging deployment demonstrates that our refactored Django application is:
 - **Django Version:** 5.2.5
 - **Python Version:** 3.13
 - **Database:** PostgreSQL (Supabase)
-- **Settings Module:** inventory_app.settings_staging
+- **Settings Module:** inventory_app.settings.staging
 - **Debug Mode:** Disabled
 
 ---

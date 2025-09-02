@@ -7,6 +7,17 @@ from .base import INPUT_CLASS, StyledFormMixin
 class ItemForm(StyledFormMixin, forms.ModelForm):
     """Item form using service-backed foreign key fields."""
 
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": INPUT_CLASS,
+                "rows": 3,
+                "placeholder": "Additional notes about this item",
+            }
+        ),
+    )
+
     category_id = forms.ModelChoiceField(
         queryset=Category.objects.none(),
         required=False,
@@ -103,13 +114,6 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                     "step": "0.01",
                     "min": "0",
                     "placeholder": "0.00",
-                }
-            ),
-            "notes": forms.Textarea(
-                attrs={
-                    "class": INPUT_CLASS,
-                    "rows": 3,
-                    "placeholder": "Additional notes about this item",
                 }
             ),
             "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),

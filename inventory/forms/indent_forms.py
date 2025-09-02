@@ -8,6 +8,10 @@ from .base import INPUT_CLASS, StyledFormMixin
 
 
 class IndentForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = Indent
         fields = ["requested_by", "department", "date_required", "notes"]
@@ -22,6 +26,10 @@ class IndentForm(StyledFormMixin, forms.ModelForm):
 
 
 class IndentItemForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = IndentItem
         fields = ["item", "requested_qty", "notes"]

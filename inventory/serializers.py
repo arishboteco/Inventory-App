@@ -21,6 +21,9 @@ class ItemSerializer(serializers.ModelSerializer):
 
     departments = serializers.SerializerMethodField()
     department_names = serializers.SerializerMethodField()
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = Item
@@ -53,6 +56,10 @@ class ItemSerializer(serializers.ModelSerializer):
 class SupplierSerializer(serializers.ModelSerializer):
     """Serialize supplier contact and status information."""
 
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
+
     class Meta:
         model = Supplier
         fields = [
@@ -70,6 +77,10 @@ class SupplierSerializer(serializers.ModelSerializer):
 
 class StockTransactionSerializer(serializers.ModelSerializer):
     """Show inventory adjustments for a specific item."""
+
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = StockTransaction
@@ -89,6 +100,10 @@ class StockTransactionSerializer(serializers.ModelSerializer):
 
 class IndentSerializer(serializers.ModelSerializer):
     """Expose requisition details submitted by departments."""
+
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = Indent
@@ -111,6 +126,10 @@ class IndentSerializer(serializers.ModelSerializer):
 class IndentItemSerializer(serializers.ModelSerializer):
     """Serialize the items and quantities within an indent."""
 
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
+
     class Meta:
         model = IndentItem
         fields = [
@@ -126,6 +145,10 @@ class IndentItemSerializer(serializers.ModelSerializer):
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     """Provide purchase order headers sent to suppliers."""
+
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = PurchaseOrder
@@ -156,6 +179,10 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
 class GoodsReceivedNoteSerializer(serializers.ModelSerializer):
     """Serialize acknowledgments of received purchase orders."""
 
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
+
     class Meta:
         model = GoodsReceivedNote
         fields = [
@@ -169,6 +196,10 @@ class GoodsReceivedNoteSerializer(serializers.ModelSerializer):
 
 class GRNItemSerializer(serializers.ModelSerializer):
     """Detail items and quantities recorded on a GRN."""
+
+    item_notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = GRNItem
@@ -186,6 +217,10 @@ class GRNItemSerializer(serializers.ModelSerializer):
 class SaleTransactionSerializer(serializers.ModelSerializer):
     """Expose sales of prepared recipes."""
 
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
+
     class Meta:
         model = SaleTransaction
         fields = [
@@ -200,6 +235,10 @@ class SaleTransactionSerializer(serializers.ModelSerializer):
 
 class RecipeComponentSerializer(serializers.ModelSerializer):
     """Serialize components that make up a recipe."""
+
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = RecipeComponent
@@ -222,6 +261,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     """Represent a recipe and its component breakdown."""
 
     components = RecipeComponentSerializer(many=True, read_only=True)
+    plating_notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
 
     class Meta:
         model = Recipe

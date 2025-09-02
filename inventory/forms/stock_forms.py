@@ -7,6 +7,10 @@ from .base import INPUT_CLASS, StyledFormMixin
 
 
 class StockReceivingForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "related_po", "notes"]
@@ -46,6 +50,10 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
 
 
 class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "notes"]
@@ -76,6 +84,10 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
 
 
 class StockWastageForm(StyledFormMixin, forms.ModelForm):
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+    )
     class Meta:
         model = StockTransaction
         fields = ["item", "quantity_change", "user_id", "notes"]

@@ -13,7 +13,7 @@ class Recipe(models.Model):
     type = models.CharField(max_length=50, blank=True, null=True)
     default_yield_qty = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     default_yield_unit = models.CharField(max_length=50, blank=True, null=True)
-    plating_notes = models.TextField(blank=True, null=True)
+    plating_notes = models.TextField(blank=True, null=True, default="")
     tags = models.JSONField(default=list, blank=True, null=True)
     version = models.IntegerField(blank=True, null=True)
     effective_from = models.DateField(auto_now_add=True)
@@ -43,7 +43,7 @@ class RecipeComponent(models.Model):
     unit = models.CharField(max_length=50, blank=True, null=True)
     loss_pct = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     sort_order = models.IntegerField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -63,7 +63,7 @@ class SaleTransaction(models.Model):
     )
     quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     user_id = models.CharField(max_length=50, blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
     sale_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -1,10 +1,10 @@
 {% load icon_tags %}
 {% if href %}
-<a href="{{ href }}" class="card block">
+<a href="{{ href }}" class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden block">
 {% else %}
-<div class="card">
+<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
 {% endif %}
-  <div class="card-compact">
+  <div class="p-4">
     <div class="flex items-center">
       <div class="flex-shrink-0">
         <div class="w-8 h-8 bg-{{ color }}-100 rounded-lg flex items-center justify-center">

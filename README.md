@@ -53,9 +53,10 @@ pip install -r requirements.txt
 
 ## Static Assets
 
-Build the Tailwind CSS bundle and collect static files:
+CSS is processed with PostCSS using Tailwind CSS, Autoprefixer and cssnano for minification. Install Node dependencies and build the bundle before collecting static files:
 
 ```bash
+npm install
 npm run build
 python manage.py collectstatic --noinput
 ```

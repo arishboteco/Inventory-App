@@ -142,14 +142,6 @@
     @apply bg-gray-100 text-gray-700;
   }
 
-  /* Page Layout */
-  .page-title {
-    @apply text-2xl font-bold text-gray-900 leading-snug;
-  }
-  .page-subtitle {
-    @apply text-sm text-gray-500 mt-1;
-  }
-
   /* Legacy styles for compatibility */
   .active {
     @apply font-bold underline;
@@ -221,11 +213,6 @@
   .pagination-active:focus,
   .pagination-input:focus {
     @apply focus:outline-none focus:ring-2 focus:ring-primary;
-  }
-
-  /* Navigation icon sizing fix */
-  .nav-icon {
-    @apply !text-sm mr-2 inline-block w-4 text-center;
   }
 
   /* Top navigation group focus */

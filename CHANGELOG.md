@@ -40,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   These were consolidated into the canonical templates (e.g. `item_form.html`, `item_detail.html`, `items_list.html`).
 - Build and deployment scripts now run `npm run build` to generate Tailwind CSS bundle.
-
 - `static/js/smart-navigation.js` - removed unused navigation enhancements
 
 - Deprecated `.kpi-grid` and `.kpi` styles in favor of new card-based KPI component
@@ -49,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Render deployment uses two Gunicorn workers by default to limit concurrent connections
 - Example environment files document direct Supabase hosts and optional pooler parameters
 - Simplified purchase order progress bar to set width directly with inline style, removing custom CSS variable
+
+- Replaced `.page-title`, `.page-subtitle`, and `.nav-icon` component classes with inline Tailwind utilities.
 
 ### Fixed
 

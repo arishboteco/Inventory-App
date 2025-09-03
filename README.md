@@ -66,6 +66,27 @@ The compiled bundle `static/css/app.css` is generated during this step and is
 excluded from version control. CI/CD pipelines and deployment scripts run
 `npm run build` to ensure the CSS is available at runtime.
 
+## Build Process
+
+Run `npm run build` – or the `npm run build-css` alias – to compile Tailwind CSS
+with PostCSS and produce `static/css/app.css`. This build step must complete
+before `collectstatic` so the application has a production-ready stylesheet.
+
+Render executes the same command during deployment via the `buildCommand` in
+[`render.yaml`](render.yaml). After installing Node dependencies, Render runs
+`npm run build` to generate the CSS, and then Django's `collectstatic` picks up
+the compiled assets.
+
+### Troubleshooting
+
+- **`npm ERR! Missing script: build`** – ensure you are in the project root and
+  `package.json` defines a `build` script. If you prefer the alias, run
+  `npm run build-css` instead.
+- **`npm ERR! Missing script: build-css`** – the alias may be absent; use
+  `npm run build` directly or add the alias to `package.json`.
+- After modifying scripts, rerun `npm install` so dependencies and the lockfile
+  stay in sync.
+
 ## Configuration
 
 Configuration is controlled via environment variables. Template files live in the `env/` directory. Copy `env/dev.example` to `.env` for local development and set values for your database and other settings:

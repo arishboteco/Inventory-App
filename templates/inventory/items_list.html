@@ -16,8 +16,8 @@
 {# Filter block moved directly above the table within data_container #}
 
 {% block kpis %}
-<div class="card mb-6">
-  <div class="card-body">
+<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden mb-6">
+  <div class="p-4">
     {% url 'items_list' as items_list_url %}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       {% include "components/kpi_card.html" with icon='cube' color='blue' label='Active Items' value=stats.total_active|default:"0" %}
@@ -45,7 +45,7 @@
 
 {% block data_container %}
 <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
-<div class="card">
+<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
   <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
     {% url 'items_table' as items_table_url %}
     <div class="flex items-center justify-between mb-0">

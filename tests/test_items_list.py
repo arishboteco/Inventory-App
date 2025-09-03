@@ -151,7 +151,10 @@ def test_item_create_partial_departments_multiselect_container(client):
     resp = client.get(reverse("item_create_partial"))
     assert resp.status_code == 200
     soup = BeautifulSoup(resp.content, "html.parser")
-    root_div = soup.find("div", class_="card drawer-panel max-w-[860px]")
+    root_div = soup.find(
+        "div",
+        class_="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-[860px]",
+    )
     assert root_div is not None
     container = soup.find("div", {"data-multiselect": "chips"})
     assert container is not None

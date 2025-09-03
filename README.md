@@ -61,6 +61,10 @@ npm run build
 python manage.py collectstatic --noinput
 ```
 
+The compiled bundle `static/css/app.css` is generated during this step and is
+excluded from version control. CI/CD pipelines and deployment scripts run
+`npm run build` to ensure the CSS is available at runtime.
+
 ## Configuration
 
 Configuration is controlled via environment variables. Template files live in the `env/` directory. Copy `env/dev.example` to `.env` for local development and set values for your database and other settings:

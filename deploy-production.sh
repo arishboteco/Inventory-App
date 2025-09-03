@@ -194,6 +194,13 @@ create_backup() {
 deploy() {
     log "Deploying to production environment..."
 
+    # Build frontend assets
+    log "Installing Node.js dependencies..."
+    npm install
+
+    log "Building Tailwind CSS bundle..."
+    npm run build
+
     # Pull latest images
     log "Pulling latest base images..."
     dc pull db redis nginx monitoring

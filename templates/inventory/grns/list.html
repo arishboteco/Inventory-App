@@ -15,7 +15,7 @@
         type="text"
         name="supplier"
         list="grn-suppliers"
-        class="form-control w-full"
+        class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         value="{{ current_supplier }}"
       />
       {% include "forms/feedback.html" %}
@@ -28,12 +28,12 @@
     </div>
     <div class="space-y-1">
       <label for="id_start_date" class="block text-sm font-medium">Start Date</label>
-      <input id="id_start_date" type="date" name="start_date" value="{{ start_date }}" class="form-control w-full" />
+      <input id="id_start_date" type="date" name="start_date" value="{{ start_date }}" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
       {% include "forms/feedback.html" %}
     </div>
     <div class="space-y-1">
       <label for="id_end_date" class="block text-sm font-medium">End Date</label>
-      <input id="id_end_date" type="date" name="end_date" value="{{ end_date }}" class="form-control w-full" />
+      <input id="id_end_date" type="date" name="end_date" value="{{ end_date }}" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
       {% include "forms/feedback.html" %}
     </div>
     <div class="space-y-1">

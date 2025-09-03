@@ -88,19 +88,17 @@
 
 #### Form Controls
 
-```css
-.form-input {
-  @apply block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
-}
-.form-select {
-  @apply block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
-}
-.form-label {
-  @apply block text-sm font-medium text-gray-700 mb-1;
-}
-.form-error {
-  @apply text-sm text-red-600 mt-1;
-}
+Use Tailwind utility classes directly on form elements for consistent styling:
+
+```html
+<label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+<input
+  class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+/>
+<select
+  class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+></select>
+<p class="text-sm text-red-600 mt-1">Error message</p>
 ```
 
 #### Status Badges

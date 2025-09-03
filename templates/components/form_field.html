@@ -4,11 +4,11 @@
   {% if field.field.widget.attrs.class %}
     {{ field }}
   {% elif field.field.widget.input_type == "checkbox" %}
-    {{ field|add_class:"form-checkbox" }}
+    {{ field|add_class:"h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" }}
   {% elif field.field.widget.input_type == "radio" %}
-    {{ field|add_class:"form-radio" }}
+    {{ field|add_class:"h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary" }}
   {% else %}
-    {{ field|add_class:"form-control" }}
+    {{ field|add_class:"block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" }}
   {% endif %}
   {% include "forms/feedback.html" %}
   {% if field.help_text %}

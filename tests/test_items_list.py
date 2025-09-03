@@ -3,6 +3,8 @@ from decimal import Decimal
 
 from django.urls import reverse
 
+from bs4 import BeautifulSoup
+
 from inventory.models import (
     Item,
     PurchaseOrder,
@@ -97,6 +99,26 @@ def test_items_list_kpi_card_links(client):
     assert html.count(f'href="{url}"') >= 2
     assert f'href="{url}?stock_status=low"' in html
     assert f'href="{po_url}?status={PurchaseOrderStatus.ORDERED}"' in html
+
+
+@pytest.mark.django_db
+def test_items_toolbar_structure(client):
+    _create_item()
+    resp = client.get(reverse("items_list"))
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    toolbar = soup.find(id="items-toolbar")
+    assert toolbar is not None
+    # Ensure search/filter form is present on the left
+    filters_form = toolbar.find("form", id="filters")
+    assert filters_form is not None
+    # Ensure action buttons are present on the right
+    add_link = toolbar.find("a", href="#add-item-section")
+    bulk_link = toolbar.find("a", href="#bulk-upload-section")
+    export_btn = toolbar.find("button", {"form": "filters", "formaction": reverse("items_export")})
+    assert add_link is not None
+    assert bulk_link is not None
+    assert export_btn is not None
 
 
 @pytest.mark.django_db

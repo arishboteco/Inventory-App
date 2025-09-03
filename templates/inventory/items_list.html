@@ -115,7 +115,16 @@
           </div>
         </div>
       </div>
-      {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' export_url=export_url layout=request.GET.layout|default:'table' %}
+      <div id="items-toolbar" class="flex flex-wrap items-start justify-between gap-4 mt-4">
+        <div class="flex-grow">
+          {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' layout=request.GET.layout|default:'table' %}
+        </div>
+        <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
+          <a href="#add-item-section" class="btn-primary">Add Item</a>
+          <a href="#bulk-upload-section" class="btn-secondary">Bulk Upload</a>
+          <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="btn-secondary">Export</button>
+        </div>
+      </div>
     </div>
     <div class="overflow-x-auto" id="items-list">
       {% include "components/items_table.html" with layout=request.GET.layout|default:'table' %}

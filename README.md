@@ -56,7 +56,7 @@ pip install -r requirements.txt
 Build the Tailwind CSS bundle and collect static files:
 
 ```bash
-npm run build-css
+npm run build
 python manage.py collectstatic --noinput
 ```
 

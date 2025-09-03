@@ -9,11 +9,13 @@
 
     // Build search input
     const searchWrap = document.createElement("div");
-    searchWrap.className = "chips-search col-span-full w-full flex flex-wrap gap-2";
+    searchWrap.className =
+      "chips-search col-span-full w-full flex flex-wrap gap-2";
     const search = document.createElement("input");
     search.type = "text";
     search.placeholder = "Search departments…";
-    search.className = "form-input";
+    search.className =
+      "block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary";
     searchWrap.appendChild(search);
 
     // Build chips area
@@ -66,7 +68,14 @@
     // Layout now uses Tailwind utility classes applied directly; no extra sizing here.
 
     list.querySelectorAll("li").forEach((li) => {
-      li.classList.add("flex", "items-center", "gap-2", "p-2", "border", "rounded");
+      li.classList.add(
+        "flex",
+        "items-center",
+        "gap-2",
+        "p-2",
+        "border",
+        "rounded",
+      );
     });
 
     // Hook events

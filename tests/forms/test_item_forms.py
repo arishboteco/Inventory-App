@@ -4,7 +4,7 @@ from django import forms
 
 from inventory.models import Item
 
-INPUT_CLASS = "form-input"
+INPUT_CLASS = "block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
 
 
 class TestItemForm(forms.ModelForm):
@@ -51,7 +51,11 @@ class TestItemForm(forms.ModelForm):
                     "placeholder": "Additional notes about this item",
                 }
             ),
-            "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                }
+            ),
         }
         error_messages = {
             "name": {"required": "Item name is required."},

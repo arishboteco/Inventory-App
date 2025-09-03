@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from django import forms
 
-INPUT_CLASS = "w-full px-3 py-2 border rounded"
-CHECKBOX_CLASS = "h-4 w-4 text-primary"
+INPUT_CLASS = (
+    "block w-full p-2 border rounded-md "
+    "focus:outline-none focus:ring-2 focus:ring-primary"
+)
+CHECKBOX_CLASS = "h-4 w-4 rounded border-gray-300 " "text-primary focus:ring-primary"
 
 
 class StyledFormMixin:

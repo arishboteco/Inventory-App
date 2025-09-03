@@ -2,6 +2,12 @@
 // Uses event delegation to avoid inline handlers in templates.
 
 (function () {
+  const INPUT_CLASSES =
+    "block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary";
+  const SELECT_CLASSES = INPUT_CLASSES;
+  const CHECKBOX_CLASSES =
+    "h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary";
+
   function findRow(el) {
     return el.closest(".item-row");
   }
@@ -83,7 +89,7 @@
       .toLowerCase()
       .includes("active");
 
-    nameCell.innerHTML = `<input type="text" name="name" class="form-input" value="${escapeHtml(currentName)}">`;
+    nameCell.innerHTML = `<input type="text" name="name" class="${INPUT_CLASSES}" value="${escapeHtml(currentName)}">`;
     if (categoryCell) {
       const tpl = document.getElementById("category-id-select-template");
       const cid = row.getAttribute("data-category-id") || "";
@@ -91,14 +97,14 @@
         const sel = tpl.cloneNode(true);
         sel.id = "";
         sel.name = "category_id";
-        sel.classList.add("form-select");
+        sel.className = `${sel.className} ${SELECT_CLASSES}`;
         Array.from(sel.options).forEach((o) => {
           if (o.value == cid) o.selected = true;
         });
         categoryCell.innerHTML = "";
         categoryCell.appendChild(sel);
       } else {
-        categoryCell.innerHTML = `<input type="number" name="category_id" class="form-input" value="${escapeHtml(cid)}" placeholder="Category ID">`;
+        categoryCell.innerHTML = `<input type="number" name="category_id" class="${INPUT_CLASSES}" value="${escapeHtml(cid)}" placeholder="Category ID">`;
       }
     }
     if (unitCell) {
@@ -108,20 +114,20 @@
         const selU = tplU.cloneNode(true);
         selU.id = "";
         selU.name = "unit_id";
-        selU.classList.add("form-select");
+        selU.className = `${selU.className} ${SELECT_CLASSES}`;
         Array.from(selU.options).forEach((o) => {
           if (o.value == uid) o.selected = true;
         });
         unitCell.innerHTML = "";
         unitCell.appendChild(selU);
       } else {
-        unitCell.innerHTML = `<input type="number" name="unit_id" class="form-input" value="${escapeHtml(currentUnit)}" placeholder="Unit ID">`;
+        unitCell.innerHTML = `<input type="number" name="unit_id" class="${INPUT_CLASSES}" value="${escapeHtml(currentUnit)}" placeholder="Unit ID">`;
       }
     }
     if (stockCell)
-      stockCell.innerHTML = `<input type="number" step="0.01" name="current_stock" class="form-input" value="${escapeHtml(currentStock)}" placeholder="0">`;
-    ropCell.innerHTML = `<input type="number" step="0.01" name="reorder_point" class="form-input" value="${escapeHtml(currentRop)}">`;
-    statusCell.innerHTML = `<label class="inline-flex items-center gap-2"><input type="checkbox" name="is_active" ${isActive ? "checked" : ""} class="form-checkbox"><span>Active</span></label>`;
+      stockCell.innerHTML = `<input type="number" step="0.01" name="current_stock" class="${INPUT_CLASSES}" value="${escapeHtml(currentStock)}" placeholder="0">`;
+    ropCell.innerHTML = `<input type="number" step="0.01" name="reorder_point" class="${INPUT_CLASSES}" value="${escapeHtml(currentRop)}">`;
+    statusCell.innerHTML = `<label class="inline-flex items-center gap-2"><input type="checkbox" name="is_active" ${isActive ? "checked" : ""} class="${CHECKBOX_CLASSES}"><span>Active</span></label>`;
     actionsCell.innerHTML = `<div class="flex items-center gap-1"><button type="button" data-action="save-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Save</button><button type="button" data-action="cancel-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</button></div>`;
   }
 
@@ -691,7 +697,7 @@
           )
         : '<input id=\"bulk-dept-select\" placeholder=\"Dept ID\">';
       const html = `
-          <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"form-label\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
+          <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"block text-sm font-medium text-gray-700 mb-1\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
       if (window.modal) window.modal.open(html);
     }
   });

@@ -48,9 +48,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         queryset=Department.objects.all(),
         required=False,
         help_text="Departments that can use this item",
-        widget=forms.CheckboxSelectMultiple(
-            attrs={"class": "department-checkbox"}
-        ),
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "department-checkbox"}),
     )
 
     preferred_supplier = forms.ModelChoiceField(
@@ -118,7 +116,14 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                     "placeholder": "0.00",
                 }
             ),
-            "is_active": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": (
+                        "h-4 w-4 rounded border-gray-300 "
+                        "text-primary focus:ring-primary"
+                    )
+                },
+            ),
         }
         error_messages = {
             "name": {"required": "Item name is required."},

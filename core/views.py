@@ -32,7 +32,7 @@ def root_view(request):
 
         if data is None:
             data = {
-                "stock_value": kpis.stock_value(),
+                "stock_value": kpis.stock_value_on_hand(),
                 "receipts": kpis.receipts_last_7_days(),
                 "issues": kpis.issues_last_7_days(),
                 "low_stock": kpis.low_stock_count(),

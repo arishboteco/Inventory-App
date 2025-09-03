@@ -131,7 +131,7 @@
         </div>
       </div>
     </div>
-    <div class="overflow-x-auto" id="items-list">
+    <div class="overflow-x-auto" id="items-list" style="margin-top: var(--filters-height);">
       {% include "components/items_table.html" %}
     </div>
   </div>
@@ -177,9 +177,9 @@
 <script>
 function updateFiltersHeight() {
   const bar = document.getElementById('items-filter-bar');
-  const scroller = bar?.closest('.table-scroll');
-  if (bar && scroller) {
-    scroller.style.setProperty('--filters-height', bar.offsetHeight + 'px');
+  const list = document.getElementById('items-list');
+  if (bar && list) {
+    list.style.setProperty('--filters-height', bar.offsetHeight + 'px');
   }
 }
 

@@ -9,6 +9,8 @@ def test_items_table_header_top_zero_and_structure():
     has_top_zero_class = "top-0" in header
     has_top_zero_css = (
         re.search(r"\.table-sticky\s+thead\s+th\s*{[^}]*top:\s*0", css) is not None
+        or re.search(r"\.table-sticky\s+thead\s+th\s*{[^}]*@apply[^;]*top-0", css)
+        is not None
     )
     assert has_top_zero_class or has_top_zero_css
 

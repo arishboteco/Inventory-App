@@ -20,12 +20,12 @@
 @layer components {
   /* Compact form spacing */
   .form-compact .form-label {
-    margin-bottom: 0.2rem;
+    @apply mb-[0.2rem];
   }
   .form-compact .form-input,
   .form-compact select,
   .form-compact textarea {
-    padding: 0.4rem 0.6rem;
+    @apply py-[0.4rem] px-[0.6rem];
   }
 
   /* Sticky headers */
@@ -33,19 +33,15 @@
     /* Removed fixed height and scroll behavior to allow full-page scrolling */
   }
   .table-sticky thead th {
-    position: sticky;
-    top: 0;
-    background: #f9fafb;
-    z-index: 20;
-    box-shadow: 0 1px 0 0 #e5e7eb;
+    @apply sticky top-0 bg-gray-50 z-20 shadow-[0_1px_0_0_#e5e7eb];
   }
   .table-scroll[data-shadow="true"] .table-sticky thead th {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    @apply shadow-[0_2px_6px_rgba(0,0,0,0.06)];
   }
 
   /* Spacing below the filter bar */
   #items-list {
-    margin-top: 1rem;
+    @apply mt-4;
   }
 
   .dept-chip {
@@ -121,17 +117,11 @@
   }
 
   .form-label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.25rem;
+    @apply block text-sm font-medium text-gray-700 mb-1;
   }
 
   .form-error {
-    font-size: 0.875rem;
-    color: #dc2626;
-    margin-top: 0.25rem;
+    @apply text-sm text-red-600 mt-1;
   }
 
   /* Status Badges */
@@ -156,21 +146,15 @@
 
   /* Page Layout */
   .page-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #111827;
-    line-height: 1.375;
+    @apply text-2xl font-bold text-gray-900 leading-snug;
   }
   .page-subtitle {
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
+    @apply text-sm text-gray-500 mt-1;
   }
 
   /* Legacy styles for compatibility */
   .active {
-    font-weight: 700;
-    text-decoration: underline;
+    @apply font-bold underline;
   }
 
   /* Alert component */
@@ -193,90 +177,57 @@
   /* Form component styles */
   /* Form label styles */
   form label {
-    display: block;
-    margin-bottom: 0.5rem;
+    @apply block mb-2;
   }
   form input:not([type="checkbox"]):not([type="radio"]),
   form select,
   form textarea,
   .form-control {
-    font-family: theme("fontFamily.sans");
-    border: 1px solid theme("colors.form.border");
-    background-color: theme("colors.form.bg", "#ffffff");
-    color: theme("colors.form.text");
-    padding: var(--space-2);
-    border-radius: var(--space-1);
-    width: 100%;
+    @apply font-sans border border-form-border bg-form-bg text-form-text p-2 rounded w-full;
   }
   form input:not([type="checkbox"]):not([type="radio"]):focus,
   form select:focus,
   form textarea:focus,
   .form-control:focus {
-    outline: none;
-    border-color: theme("colors.primary");
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    @apply focus:outline-none focus:border-primary focus:shadow-[0_1px_3px_0_rgba(0,0,0,0.1)];
   }
 
   .form-checkbox {
-    border: 1px solid theme("colors.form.border");
-    background-color: theme("colors.form.bg", "#ffffff");
-    color: theme("colors.form.text");
-    border-radius: var(--space-1);
+    @apply border border-form-border bg-form-bg text-form-text rounded;
   }
 
   .form-radio {
-    border: 1px solid theme("colors.form.border");
-    background-color: theme("colors.form.bg", "#ffffff");
-    color: theme("colors.form.text");
-    border-radius: 9999px;
-    accent-color: theme("colors.primary");
+    @apply border border-form-border bg-form-bg text-form-text rounded-full accent-primary;
   }
 
   /* Improved datalist styling for predictive dropdowns */
   input[list]::-webkit-calendar-picker-indicator {
-    display: none !important;
+    @apply !hidden;
   }
 
   input[list] {
-    position: relative;
+    @apply relative;
   }
 
   input[list]::after {
-    content: "▼";
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    font-size: 12px;
-    color: #6b7280;
+    @apply content-['▼'] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-500;
   }
 
   /* Pagination controls */
   .pagination-active {
-    padding: 0.25rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    background-color: #e5e7eb;
+    @apply py-1 px-3 border border-gray-300 rounded-md bg-gray-200;
   }
   .pagination-input {
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    padding: 0.25rem;
+    @apply border border-gray-300 rounded-md p-1;
   }
   .pagination-active:focus,
   .pagination-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px theme("colors.primary");
+    @apply focus:outline-none focus:ring-2 focus:ring-primary;
   }
 
   /* Navigation icon sizing fix */
   .nav-icon {
-    font-size: 0.875rem !important; /* 14px instead of 18px */
-    margin-right: 0.5rem;
-    display: inline-block;
-    width: 1rem;
-    text-align: center;
+    @apply !text-sm mr-2 inline-block w-4 text-center;
   }
 
   /* Top navigation group focus */
@@ -286,9 +237,7 @@
 
   /* Emoji icon sizing */
   .emoji-icon {
-    font-size: 18px;
-    line-height: 1;
-    display: inline-block;
+    @apply text-[18px] leading-none inline-block;
   }
 }
 
@@ -301,9 +250,7 @@
   *,
   *::before,
   *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
+    @apply !animate-none !transition-none scroll-auto;
   }
 }
 
@@ -315,7 +262,6 @@
     @apply text-h2;
   }
   .badge {
-    @apply text-badge;
-    padding: var(--space-0-5) var(--space-1);
+    @apply text-badge py-0.5 px-1;
   }
 }

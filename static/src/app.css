@@ -16,16 +16,6 @@
 }
 
 @layer components {
-  /* Compact form spacing */
-  .form-compact .form-label {
-    @apply mb-[0.2rem];
-  }
-  .form-compact .form-input,
-  .form-compact select,
-  .form-compact textarea {
-    @apply py-[0.4rem] px-[0.6rem];
-  }
-
   /* Sticky headers */
   .table-scroll {
     /* Removed fixed height and scroll behavior to allow full-page scrolling */

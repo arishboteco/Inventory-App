@@ -74,7 +74,7 @@
             </div>
             <div class="col-span-3 space-y-1">
               <label for="{{ form.departments.id_for_label }}" class="form-label">Departments</label>
-              <div class="dept-grid">
+              <div data-multiselect="chips" class="dept-grid">
                 {{ form.departments }}
               </div>
               {% include "forms/feedback.html" %}

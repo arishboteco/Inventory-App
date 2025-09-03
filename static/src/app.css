@@ -60,9 +60,9 @@
   }
   .table-sticky thead th {
     position: sticky;
-    top: var(--filters-height, 0);
+    top: 0;
     background: #f9fafb;
-    z-index: 1;
+    z-index: 20;
     box-shadow: 0 1px 0 0 #e5e7eb;
   }
   .table-scroll[data-shadow="true"] .table-sticky thead th {

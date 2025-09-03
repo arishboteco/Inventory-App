@@ -32,17 +32,6 @@
 
 ### 🧩 **Component System**
 
-#### Navigation Components
-
-```css
-.nav-item {
-  @apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200 no-underline;
-}
-.nav-item-active {
-  @apply text-blue-600 bg-blue-50 hover:text-blue-700 hover:bg-blue-100;
-}
-```
-
 #### Card System
 
 ```css

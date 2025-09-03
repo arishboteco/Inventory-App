@@ -1,7 +1,7 @@
 <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden mb-4">
   <details {% block open %}{% endblock %}>
     <summary class="px-4 py-3 border-b border-gray-200 bg-gray-50 cursor-pointer">
-      <h2 class="text-h2 font-semibold">{% block title %}{% endblock %}</h2>
+      <h2 class="text-h2 md:text-h2 font-semibold">{% block title %}{% endblock %}</h2>
     </summary>
     <div class="p-4">
       {% block content %}{% endblock %}

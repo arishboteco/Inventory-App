@@ -7,16 +7,45 @@
       <div class="flex items-center">
         <!-- App menu -->
         <div x-data="{open:false}" class="relative">
-          <button type="button" aria-label="Open app menu" aria-haspopup="true" :aria-expanded="open.toString()"
-                  @click="open=!open" @keydown.escape.window="open=false"
-                  class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button
+            type="button"
+            aria-label="Open app menu"
+            aria-haspopup="true"
+            :aria-expanded="open.toString()"
+            @click="open=!open"
+            @keydown.escape.window="open=false"
+            class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
             {% icon 'squares-2x2' 'h-5 w-5 text-white' variant='solid' size=20 aria_label='' %}
           </button>
-          <div x-show="open" x-cloak @click.outside="open=false"
-               class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" role="menu">
-            {% for link in primary_navigation %}
-            <a href="{{ link.url }}"
-               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">{{ link.title }}</a>
+          <div
+            x-show="open"
+            x-cloak
+            @click.outside="open=false"
+            data-top-nav
+            class="absolute left-0 mt-2 w-56 sm:w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+            role="menu"
+          >
+            {% for group in navigation_groups %}
+            <div class="border-t border-gray-100 first:border-t-0 top-nav-group" data-nav-group>
+              <button
+                type="button"
+                class="w-full flex justify-between items-center px-4 py-2 text-sm font-semibold text-gray-700 focus:outline-none"
+                aria-expanded="false"
+              >
+                <span>{{ group.category }}</span>
+                {% icon 'chevron-down' 'h-4 w-4 text-gray-400' variant='solid' size=16 aria_label='' %}
+              </button>
+              <div class="hidden" data-nav-panel>
+                {% for link in group.links %}
+                <a
+                  href="{{ link.url }}"
+                  class="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                >{{ link.title }}</a>
+                {% endfor %}
+              </div>
+            </div>
             {% endfor %}
           </div>
         </div>

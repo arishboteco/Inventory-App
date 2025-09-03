@@ -12,56 +12,24 @@ def test_top_nav_template_contains_links(django_user_model):
     request = rf.get("/")
     request.user = user
     html = render_to_string("components/top_nav.html", request=request)
-    expected = [
-        "Home",
-        "Dashboard",
-        "Inventory",
-        "Orders",
-        "Suppliers",
-        "Reports",
-    ]
-    for text in expected:
-        assert text in html
+    groups = navigation.get_navigation_groups()
+    for group in groups:
+        assert group["category"] in html
+        for link in group["links"]:
+            assert link["title"] in html
     assert f'href="{reverse("root")}"' in html
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "url_name,current_title",
-    [
-        ("dashboard", "Dashboard"),
-        ("items_list", "Inventory"),
-        ("purchase_orders_list", "Orders"),
-        ("suppliers_list", "Suppliers"),
-        ("history_reports", "Reports"),
-    ],
-)
-def test_pages_render_nav(client, django_user_model, url_name, current_title):
+@pytest.mark.parametrize("link", navigation.NAVIGATION_LINKS)
+def test_pages_render_nav(client, django_user_model, link):
     user = django_user_model.objects.create_user(username="u", password="pw")
     client.force_login(user)
-    resp = client.get(reverse(url_name))
+    resp = client.get(reverse(link["url_name"]))
     assert resp.status_code == 200
     html = resp.content.decode()
     assert "<nav" in html
-    assert current_title in html
-
-
-@pytest.mark.django_db
-def test_home_page_contains_nav_links(client, django_user_model):
-    user = django_user_model.objects.create_user(username="u", password="pw")
-    client.force_login(user)
-    resp = client.get(reverse("root"))
-    html = resp.content.decode()
-    expected = [
-        "Home",
-        "Dashboard",
-        "Inventory",
-        "Orders",
-        "Suppliers",
-        "Reports",
-    ]
-    for text in expected:
-        assert text in html
+    assert link["title"] in html
 
 
 def test_navigation_links_resolve():

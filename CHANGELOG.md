@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid layout and toggle buttons from the items list.
 - Custom `.dept-grid` and `.auto-grid` CSS utilities and density selectors in favor of Tailwind classes.
 - Obsolete `.nav-btn`, `.toast`, `.skeleton-row`, and fallback sizing utilities replaced by Tailwind equivalents.
+- Compiled CSS bundle `static/css/app.css` removed from version control; generated during build.
 
 ### Changed
 
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `templates/inventory/_items_table_speed.html`
 
   These were consolidated into the canonical templates (e.g. `item_form.html`, `item_detail.html`, `items_list.html`).
+- Build and deployment scripts now run `npm run build` to generate Tailwind CSS bundle.
 
 - `static/js/smart-navigation.js` - removed unused navigation enhancements
 

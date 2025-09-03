@@ -126,8 +126,10 @@ def test_item_edit_partial_departments_multiselect_container():
         "inventory/_item_form_partial.html", {"form": form, "item": item}, request=request
     )
     soup = BeautifulSoup(content, "html.parser")
-    container = soup.find("div", {"data-multiselect": "chips", "class": "dept-grid"})
+    container = soup.find("div", {"data-multiselect": "chips"})
     assert container is not None
+    classes = container.get("class", [])
+    assert "grid" in classes
     checkboxes = container.find_all("input", {"type": "checkbox"})
     assert len(checkboxes) >= 1
 

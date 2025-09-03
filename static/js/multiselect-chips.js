@@ -9,7 +9,7 @@
 
     // Build search input
     const searchWrap = document.createElement("div");
-    searchWrap.className = "chips-search";
+    searchWrap.className = "chips-search col-span-full w-full flex flex-wrap gap-2";
     const search = document.createElement("input");
     search.type = "text";
     search.placeholder = "Search departments…";
@@ -18,7 +18,7 @@
 
     // Build chips area
     const chips = document.createElement("div");
-    chips.className = "chips";
+    chips.className = "chips col-span-full w-full flex flex-wrap gap-2";
 
     container.prepend(chips);
     container.prepend(searchWrap);
@@ -63,7 +63,11 @@
       });
     }
 
-    // Layout is now handled via CSS (.dept-grid and child ul). No inline sizing here.
+    // Layout now uses Tailwind utility classes applied directly; no extra sizing here.
+
+    list.querySelectorAll("li").forEach((li) => {
+      li.classList.add("flex", "items-center", "gap-2", "p-2", "border", "rounded");
+    });
 
     // Hook events
     list.addEventListener("change", updateChips);

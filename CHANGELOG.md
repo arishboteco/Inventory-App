@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `templates/inventory/items_list_speed_clean.html`
 - Removed "About" card from items list page.
 - Grid layout and toggle buttons from the items list.
+- Custom `.dept-grid` and `.auto-grid` CSS utilities and density selectors in favor of Tailwind classes.
 
 ### Changed
 

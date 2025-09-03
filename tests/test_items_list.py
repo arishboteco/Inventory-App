@@ -153,8 +153,10 @@ def test_item_create_partial_departments_multiselect_container(client):
     soup = BeautifulSoup(resp.content, "html.parser")
     root_div = soup.find("div", class_="card drawer-panel max-w-[860px]")
     assert root_div is not None
-    container = soup.find("div", {"data-multiselect": "chips", "class": "dept-grid"})
+    container = soup.find("div", {"data-multiselect": "chips"})
     assert container is not None
+    classes = container.get("class", [])
+    assert "grid" in classes
     checkboxes = container.find_all("input", {"type": "checkbox"})
     assert len(checkboxes) >= 1
 

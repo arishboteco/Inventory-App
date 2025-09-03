@@ -11,6 +11,8 @@ from inventory.models import (
     PurchaseOrderItem,
     StockTransaction,
     Supplier,
+    Unit,
+    Category,
 )
 from inventory.models.enums import PurchaseOrderStatus
 
@@ -38,6 +40,34 @@ def test_item_link_in_grid_layout(client):
     html = resp.content.decode()
     assert f'href="{edit_url}"' in html
     assert f'data-modal-url="{edit_url}?partial=1"' in html
+
+
+@pytest.mark.django_db
+def test_grid_layout_displays_item_details(client):
+    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    category = Category.objects.create(category="Food", sub_category="Fruit")
+    supplier = Supplier.objects.create(name="Acme Corp")
+    Item.objects.create(
+        name="Apple",
+        unit=unit,
+        category=category,
+        preferred_supplier=supplier,
+        reorder_point=Decimal("1"),
+        current_stock=Decimal("2"),
+        notes="n",
+        is_active=True,
+    )
+
+    resp = client.get(reverse("items_table") + "?layout=grid")
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    assert soup.find("div", class_="card-header").get_text(strip=True) == "Apple"
+    body = soup.find("div", class_="card-body")
+    assert "Food → Fruit" in body.get_text()
+    assert "kg" in body.get_text()
+    assert "Acme Corp" in body.get_text()
+    badge = soup.find("div", class_="card-footer").find("span", class_="badge-success")
+    assert badge is not None and badge.get_text(strip=True).startswith("2")
 
 
 def test_item_link_in_table_layout(client):

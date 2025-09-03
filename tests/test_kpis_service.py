@@ -27,9 +27,28 @@ def test_low_stock_items_excludes_inactive(item_factory):
 
 
 @pytest.mark.django_db
+def test_active_and_low_stock_percentage(item_factory):
+    item_factory(name="A", reorder_point=10, current_stock=5, is_active=True)
+    item_factory(name="B", reorder_point=5, current_stock=10, is_active=True)
+    item_factory(name="C", reorder_point=1, current_stock=0, is_active=False)
+    assert kpis.total_active_items() == 2
+    assert kpis.low_stock_percentage() == 50.0
+
+
+@pytest.mark.django_db
+def test_low_stock_percentage_zero_active(item_factory):
+    item_factory(name="A", reorder_point=1, current_stock=0, is_active=False)
+    assert kpis.low_stock_percentage() == 0
+
+
+@pytest.mark.django_db
 def test_kpi_calculations(item_factory):
-    item1 = item_factory(name="A", reorder_point=20, current_stock=10)
-    item2 = item_factory(name="B", reorder_point=1, current_stock=5)
+    item1 = item_factory(
+        name="A", reorder_point=20, current_stock=10, last_purchase_price=Decimal("2")
+    )
+    item2 = item_factory(
+        name="B", reorder_point=1, current_stock=5, last_purchase_price=Decimal("1")
+    )
     week_ago = timezone.now() - timedelta(days=2)
     StockTransaction.objects.create(
         item=item1,
@@ -44,13 +63,52 @@ def test_kpi_calculations(item_factory):
         transaction_date=week_ago,
     )
 
-    assert kpis.stock_value() == 15
+    assert kpis.stock_value_on_hand() == Decimal("25")
     assert kpis.receipts_last_7_days() == 5
     assert kpis.issues_last_7_days() == 2
     assert kpis.low_stock_count() == 1
     labels, values = kpis.stock_trend_last_7_days()
     assert labels and len(labels) == 7
     assert values[-1] == 3.0
+
+
+@pytest.mark.django_db
+def test_average_days_since_last_purchase(item_factory):
+    item1 = item_factory(name="A")
+    item2 = item_factory(name="B")
+    item_factory(name="C", is_active=False)
+    five_days_ago = timezone.now() - timedelta(days=5)
+    tx = StockTransaction.objects.create(
+        item=item1,
+        quantity_change=1,
+        transaction_type="RECEIVING",
+    )
+    tx.transaction_date = five_days_ago
+    tx.save(update_fields=["transaction_date"])
+    avg = kpis.average_days_since_last_purchase()
+    assert avg == pytest.approx(5.0)
+
+
+@pytest.mark.django_db
+def test_fastest_movers_last_7_days(item_factory):
+    item1 = item_factory(name="A")
+    item2 = item_factory(name="B")
+    recent = timezone.now() - timedelta(days=1)
+    StockTransaction.objects.create(
+        item=item1,
+        quantity_change=-5,
+        transaction_type="ISSUE",
+        transaction_date=recent,
+    )
+    StockTransaction.objects.create(
+        item=item2,
+        quantity_change=-2,
+        transaction_type="ISSUE",
+        transaction_date=recent,
+    )
+    result = kpis.fastest_movers_last_7_days()
+    assert result == [("A", 5.0), ("B", 2.0)]
+    assert kpis.fastest_movers_last_7_days(limit=1) == [("A", 5.0)]
 
 
 @pytest.mark.django_db

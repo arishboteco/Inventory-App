@@ -19,15 +19,26 @@
 <div class="card mb-6">
   <div class="card-body">
     {% url 'items_list' as items_list_url %}
-    {% url 'purchase_orders_list' as po_list_url %}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      {% include "components/kpi_card.html" with icon='cube' color='blue' label='Items' value=page_obj.paginator.count|default:"0" href=items_list_url %}
-      {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock' value=stats.low_stock_count|default:"0" href=items_list_url|add:'?stock_status=low' %}
-      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending' value=stats.pending_orders|default:"0" href=po_list_url|add:'?status=ORDERED' %}
-      {% with total_value_formatted=stats.total_value|floatformat:0|default:"0" %}
-        {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted href=items_list_url %}
+      {% include "components/kpi_card.html" with icon='cube' color='blue' label='Active Items' value=stats.total_active|default:"0" %}
+      {% with pct=stats.low_stock_percentage|floatformat:0|default:"0" %}
+        {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock %' value=pct|add:'%' %}
+      {% endwith %}
+      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Avg Days Since Purchase' value=stats.avg_days_since_last_purchase|floatformat:1 %}
+      {% with total_value_formatted=stats.stock_value_on_hand|floatformat:0|default:"0" %}
+        {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted %}
       {% endwith %}
     </div>
+    {% if stats.fastest_movers %}
+    <div class="mt-6">
+      <h3 class="text-sm font-medium text-gray-500 mb-2">Top Fastest Movers (7d)</h3>
+      <ul class="text-sm text-gray-700 space-y-1">
+        {% for name, qty in stats.fastest_movers %}
+          <li>{{ name }} - {{ qty|floatformat:0 }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

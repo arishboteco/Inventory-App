@@ -13,7 +13,6 @@ from inventory.models import (
     Supplier,
     Department,
 )
-from inventory.models.enums import PurchaseOrderStatus
 
 import pytest
 
@@ -100,16 +99,15 @@ def test_item_detail_includes_supplier_and_movements(client):
 
 
 @pytest.mark.django_db
-def test_items_list_kpi_card_links(client):
-    _create_item()
-    url = reverse("items_list")
-    resp = client.get(url)
+def test_items_list_kpis_displayed(client):
+    _create_item(last_purchase_price=Decimal("1.00"))
+    resp = client.get(reverse("items_list"))
     assert resp.status_code == 200
     html = resp.content.decode()
-    po_url = reverse("purchase_orders_list")
-    assert html.count(f'href="{url}"') >= 2
-    assert f'href="{url}?stock_status=low"' in html
-    assert f'href="{po_url}?status={PurchaseOrderStatus.ORDERED}"' in html
+    assert "Active Items" in html
+    assert "Low Stock %" in html
+    assert "Avg Days Since Purchase" in html
+    assert "Stock Value" in html
 
 
 @pytest.mark.django_db

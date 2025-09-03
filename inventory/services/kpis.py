@@ -2,8 +2,19 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import List, Tuple
 
-from django.db.models import Avg, Count, F, Max, Q, Sum, OuterRef, Subquery
-from django.db.models.functions import TruncDate
+from django.db.models import (
+    Avg,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Max,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+)
+from django.db.models.functions import Coalesce, TruncDate
 from django.utils import timezone
 
 from inventory.models import (
@@ -17,9 +28,65 @@ from inventory.models.enums import IndentStatus, PurchaseOrderStatus
 from .stock_utils import get_low_stock_items
 
 
-def stock_value():
-    """Total stock value based on current stock quantities."""
-    return Item.objects.aggregate(total=Sum("current_stock"))["total"] or 0
+def total_active_items() -> int:
+    """Return the number of items currently marked as active."""
+    return Item.objects.filter(is_active=True).count()
+
+
+def low_stock_percentage() -> float:
+    """Percentage of active items that are below their reorder point."""
+    total = total_active_items()
+    if total == 0:
+        return 0
+    return (low_stock_count() / total) * 100
+
+
+def average_days_since_last_purchase() -> float:
+    """Average number of days since the last purchase for active items."""
+    last_receiving = (
+        StockTransaction.objects.filter(
+            item_id=OuterRef("pk"), transaction_type="RECEIVING"
+        )
+        .order_by("-transaction_date")
+        .values("transaction_date")[:1]
+    )
+    now = timezone.now()
+    qs = Item.objects.filter(is_active=True).annotate(
+        last_purchase=Subquery(last_receiving)
+    ).values_list("last_purchase", flat=True)
+    days = [(now - lp).days for lp in qs if lp is not None]
+    return sum(days) / len(days) if days else 0
+
+
+def fastest_movers_last_7_days(limit: int = 5) -> List[Tuple[str, float]]:
+    """Return top N items with highest outgoing quantity in past 7 days."""
+    week_ago = timezone.now() - timedelta(days=7)
+    qs = (
+        StockTransaction.objects.filter(
+            transaction_type="ISSUE", transaction_date__gte=week_ago
+        )
+        .values("item__name")
+        .annotate(total=Sum(-F("quantity_change")))
+        .order_by("-total")[:limit]
+    )
+    return [(row["item__name"], float(row["total"])) for row in qs]
+
+
+def stock_value_on_hand():
+    """Monetary value of all stock on hand."""
+    total = Item.objects.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F("current_stock") * Coalesce("last_purchase_price", 0),
+                output_field=DecimalField(max_digits=19, decimal_places=2),
+            )
+        )
+    )["total"]
+    return total or 0
+
+
+def stock_value():  # pragma: no cover - backwards compatibility
+    return stock_value_on_hand()
 
 
 def receipts_last_7_days():

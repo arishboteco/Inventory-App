@@ -155,20 +155,29 @@ class ItemsListView(TemplateView):
         ctx.update(params)
         ctx.update(category_ctx)
         ctx.update(table_ctx)
+        stats = {}
         try:
-            pending_po_counts = kpis.pending_po_status_counts()
-            pending_orders = sum(pending_po_counts.values())
+            stats["total_active"] = kpis.total_active_items()
         except Exception:  # pragma: no cover - defensive
-            pending_orders = 0
+            stats["total_active"] = 0
         try:
-            total_value = kpis.stock_value()
+            stats["low_stock_percentage"] = kpis.low_stock_percentage()
         except Exception:  # pragma: no cover - defensive
-            total_value = 0
-        stats = {
-            "low_stock_count": kpis.low_stock_count(),
-            "pending_orders": pending_orders,
-            "total_value": total_value,
-        }
+            stats["low_stock_percentage"] = 0
+        try:
+            stats["avg_days_since_last_purchase"] = (
+                kpis.average_days_since_last_purchase()
+            )
+        except Exception:  # pragma: no cover - defensive
+            stats["avg_days_since_last_purchase"] = 0
+        try:
+            stats["stock_value_on_hand"] = kpis.stock_value_on_hand()
+        except Exception:  # pragma: no cover - defensive
+            stats["stock_value_on_hand"] = 0
+        try:
+            stats["fastest_movers"] = kpis.fastest_movers_last_7_days()
+        except Exception:  # pragma: no cover - defensive
+            stats["fastest_movers"] = []
 
         filters_list = category_filters.build_filters(request)
 

@@ -500,7 +500,7 @@
   document.addEventListener("change", function (e) {
     const selAll = e.target?.closest("[data-select-all]");
     if (!selAll) return;
-    const table = document.getElementById("grid-table");
+    const table = document.getElementById("items-table");
     if (!table) return;
     table.querySelectorAll("input[name='selected_items']").forEach((cb) => {
       cb.checked = e.target.checked;

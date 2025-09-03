@@ -11,8 +11,6 @@ from inventory.models import (
     PurchaseOrderItem,
     StockTransaction,
     Supplier,
-    Unit,
-    Category,
     Department,
 )
 from inventory.models.enums import PurchaseOrderStatus
@@ -33,77 +31,29 @@ def _create_item(**kwargs):
     return Item.objects.create(**defaults)
 
 
-def test_item_link_in_grid_layout(client):
-    item = _create_item()
-    resp = client.get(reverse("items_table") + "?layout=grid")
-    assert resp.status_code == 200
-    edit_url = reverse("item_edit", args=[item.pk])
-    html = resp.content.decode()
-    assert f'href="{edit_url}"' in html
-    assert f'data-modal-url="{edit_url}?partial=1"' in html
-
-
 @pytest.mark.django_db
-def test_grid_layout_displays_item_details(client):
-    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
-    category = Category.objects.create(category="Food", sub_category="Fruit")
-    supplier = Supplier.objects.create(name="Acme Corp")
-    Item.objects.create(
-        name="Apple",
-        unit=unit,
-        category=category,
-        preferred_supplier=supplier,
-        reorder_point=Decimal("1"),
-        current_stock=Decimal("2"),
-        notes="n",
-        is_active=True,
-    )
-
-    resp = client.get(reverse("items_table") + "?layout=grid")
-    assert resp.status_code == 200
-    soup = BeautifulSoup(resp.content, "html.parser")
-    assert soup.find("div", class_="card-header").get_text(strip=True) == "Apple"
-    body = soup.find("div", class_="card-body")
-    assert "Food → Fruit" in body.get_text()
-    assert "kg" in body.get_text()
-    assert "Acme Corp" in body.get_text()
-    badge = soup.find("div", class_="card-footer").find("span", class_="badge-success")
-    assert badge is not None and badge.get_text(strip=True).startswith("2")
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("layout", ["grid", "table"])
-def test_reorder_point_displayed_when_set(client, layout):
+def test_reorder_point_displayed_when_set(client):
     _create_item(current_stock=Decimal("5"), reorder_point=Decimal("3"))
-    resp = client.get(reverse("items_table") + f"?layout={layout}")
+    resp = client.get(reverse("items_table"))
     assert resp.status_code == 200
     soup = BeautifulSoup(resp.content, "html.parser")
-    if layout == "grid":
-        footer = soup.find("div", class_="card-footer")
-        assert "Reorder Point: 3" in footer.get_text()
-    else:
-        cell = soup.find("td", {"data-col": "stock_status"})
-        assert "Reorder Point: 3" in cell.get_text()
+    cell = soup.find("td", {"data-col": "stock_status"})
+    assert "Reorder Point: 3" in cell.get_text()
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("layout", ["grid", "table"])
-def test_reorder_point_absent_when_unset(client, layout):
+def test_reorder_point_absent_when_unset(client):
     _create_item(current_stock=Decimal("5"), reorder_point=0)
-    resp = client.get(reverse("items_table") + f"?layout={layout}")
+    resp = client.get(reverse("items_table"))
     assert resp.status_code == 200
     soup = BeautifulSoup(resp.content, "html.parser")
-    if layout == "grid":
-        footer = soup.find("div", class_="card-footer")
-        assert "Reorder Point" not in footer.get_text()
-    else:
-        cell = soup.find("td", {"data-col": "stock_status"})
-        assert "Reorder Point" not in cell.get_text()
+    cell = soup.find("td", {"data-col": "stock_status"})
+    assert "Reorder Point" not in cell.get_text()
 
 
 def test_item_link_in_table_layout(client):
     item = _create_item()
-    resp = client.get(reverse("items_table") + "?layout=table")
+    resp = client.get(reverse("items_table"))
     assert resp.status_code == 200
     assert reverse("item_detail", args=[item.pk]) in resp.content.decode()
 
@@ -209,18 +159,6 @@ def test_item_create_partial_departments_multiselect_container(client):
     assert container is not None
     checkboxes = container.find_all("input", {"type": "checkbox"})
     assert len(checkboxes) >= 1
-
-
-@pytest.mark.django_db
-def test_layout_buttons_use_htmx(client):
-    _create_item()
-    resp = client.get(reverse("items_list"))
-    assert resp.status_code == 200
-    html = resp.content.decode()
-    table_url = reverse("items_table")
-    assert f'hx-get="{table_url}?layout=table"' in html
-    assert f'hx-get="{table_url}?layout=grid"' in html
-    assert 'hx-target="#items-list"' in html
 
 
 @pytest.mark.django_db

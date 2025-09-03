@@ -183,27 +183,13 @@ def test_items_export_view_returns_csv(client):
     assert "Widget" in content
 
 
-def test_items_list_view_renders_layout_buttons(client):
+def test_items_list_view_has_column_menu(client):
     url = reverse("items_list")
     resp = client.get(url)
     assert resp.status_code == 200
     content = resp.content.decode()
-    assert "data-layout-btn" in content
-    assert 'data-value="table"' in content
-    assert 'data-value="grid"' in content
-
-
-def test_items_list_layout_query_switches_partials(client):
-    _create_item()
-    resp = client.get(reverse("items_list") + "?layout=grid")
-    assert resp.status_code == 200
-    html = resp.content.decode()
-    assert '<div class="grid grid-cols-1' in html
-
-    resp = client.get(reverse("items_list") + "?layout=table")
-    assert resp.status_code == 200
-    html = resp.content.decode()
-    assert '<table class="table w-full' in html
+    assert "data-col-menu-button" in content
+    assert "data-layout-btn" not in content
 
 
 def test_toggle_item_post(client):

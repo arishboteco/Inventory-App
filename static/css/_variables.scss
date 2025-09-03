@@ -1,18 +1,4 @@
 :root {
-  /* Color tokens */
-  --color-primary: #2563eb;
-  --color-secondary: #15803d;
-  --color-accent: #b45309;
-  --color-danger: #dc2626;
-  --color-border: #9ca3af;
-  --color-link-hover: #1e3a8a;
-
-  /* Body and text colors */
-  --color-body: #ffffff;
-  --color-body-text: #111827;
-  --color-nav-text: #ffffff;
-  --color-table-hover-bg: #f3f4f6;
-
   /* Shadow tokens */
   --shadow-btn: 0 2px 4px rgba(0, 0, 0, 0.25);
 
@@ -23,10 +9,4 @@
   --space-4: 1rem;
   --space-6: 1.5rem;
   --space-8: 2rem;
-
-  /* Font size tokens */
-  --font-size-base: clamp(1rem, 0.5vw + 0.9rem, 1.25rem);
-  --font-size-h1: clamp(1.6rem, 1vw + 1.3rem, 2.5rem);
-  --font-size-h2: clamp(1.3rem, 0.75vw + 1.1rem, 2rem);
-  --font-size-badge: clamp(0.8rem, 0.3vw + 0.7rem, 1rem);
 }

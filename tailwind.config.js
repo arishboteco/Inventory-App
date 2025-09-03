@@ -36,7 +36,7 @@ module.exports = {
         danger: "#dc2626",
         border: "#9ca3af",
         linkHover: "#1e3a8a",
-        navText: "#ffffff",
+        nav: "var(--color-nav-text)",
         form: {
           bg: "#ffffff",
           border: "#9ca3af",

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - High-contrast department chips with accessible remove buttons for improved keyboard and screen-reader usability.
 - `build` npm script for dedicated Tailwind CSS builds.
 - `build-css` npm script alias that proxies to `npm run build` for backwards compatibility.
+- Semantic Tailwind color tokens (`success`, `warning`, etc.) for consistent theming.
 
 ### Deprecated
 

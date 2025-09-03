@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 PO_STATUS_BADGES = {
     "DRAFT": "bg-gray-200 text-gray-800",
     "ORDERED": "bg-blue-200 text-blue-800",
-    "PARTIAL": "bg-yellow-200 text-yellow-800",
-    "COMPLETE": "bg-green-200 text-green-800",
+    "PARTIAL": "bg-warning-soft text-warning-dark",
+    "COMPLETE": "bg-success-soft text-success-dark",
     "CANCELLED": "bg-red-200 text-red-800",
 }
 

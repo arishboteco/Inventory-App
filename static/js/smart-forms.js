@@ -44,18 +44,18 @@ class SmartFormManager {
         const warning = document.createElement("div");
         warning.id = "similar-names-warning";
         warning.className =
-          "mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md";
+          "mt-2 p-3 bg-warning-lightest border border-warning-soft rounded-md";
         warning.innerHTML = `
                     <div class="flex items-start">
-                        <svg class="w-5 h-5 text-yellow-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <svg class="w-5 h-5 text-warning-medium mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                         </svg>
                         <div>
-                            <h4 class="text-sm font-medium text-yellow-800">Similar items found:</h4>
-                            <ul class="mt-1 text-sm text-yellow-700">
+                            <h4 class="text-sm font-medium text-warning-dark">Similar items found:</h4>
+                            <ul class="mt-1 text-sm text-warning">
                                 ${data.similar_items.map((item) => `<li class="cursor-pointer hover:underline" onclick="fillItemData(${item.id})">${item.name} (${item.category || "No category"})</li>`).join("")}
                             </ul>
-                            <p class="mt-1 text-xs text-yellow-600">Click an item to use its data as a template</p>
+                            <p class="mt-1 text-xs text-warning-medium">Click an item to use its data as a template</p>
                         </div>
                     </div>
                 `;
@@ -74,7 +74,7 @@ class SmartFormManager {
 
   setupFormSections() {
     const sections = document.querySelectorAll(
-      ".bg-gray-50, .bg-blue-50, .bg-green-50",
+      ".bg-gray-50, .bg-blue-50, .bg-success-lightest",
     );
     sections.forEach((section, index) => {
       const header = section.querySelector("h3");

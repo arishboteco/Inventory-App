@@ -59,7 +59,7 @@
               <p class="text-sm">PO {{ grn.purchase_order_id }}</p>
             </div>
             <div class="flex items-center gap-2">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Received</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Received</span>
               <a href="{% url 'grn_export' grn.pk %}" class="text-bodyText" title="Attachments">
                 {% icon 'paper-clip' 'w-5 h-5' %}
               </a>

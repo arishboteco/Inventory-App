@@ -83,6 +83,14 @@
     overflow: auto;
   }
 
+  .dept-grid ul li {
+    @apply flex items-center gap-2 p-2 border rounded;
+  }
+
+  .dept-chip {
+    @apply inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600;
+  }
+
   /* Items list density controls */
   #items-container[data-density="compact"] .main-row {
     padding-top: 0.5rem;

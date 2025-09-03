@@ -50,7 +50,7 @@
         </div>
         <div class="col-span-2">
           <label for="{{ form.departments.id_for_label }}" class="form-label">Departments</label>
-          <div class="p-2 border rounded">
+          <div data-multiselect="chips" class="dept-grid">
             {{ form.departments }}
           </div>
           {% include "forms/feedback.html" %}

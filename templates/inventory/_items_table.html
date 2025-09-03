@@ -34,12 +34,12 @@
   <tbody class="table-body">
     {% for item in page_obj.object_list %}
     <tr
-      class="table-row-hover item-row"
+      class="table-row-hover item-row odd:bg-gray-50"
       data-item-id="{{ item.item_id }}"
       data-unit-id="{{ item.unit_id }}"
       data-category-id="{{ item.category_id }}"
     >
-      <td>
+      <td class="px-4 py-2">
         <input
           type="checkbox"
           name="selected_items"
@@ -48,7 +48,7 @@
           data-action="select-item"
         />
       </td>
-      <td data-col="name">
+      <td data-col="name" class="px-4 py-2">
         <div class="flex items-start gap-2">
           <button
             type="button"
@@ -77,17 +77,17 @@
           </div>
         </div>
       </td>
-      <td data-col="category">
+      <td data-col="category" class="px-4 py-2">
         {% format_category item True %}
       </td>
-      <td data-col="unit">{{ item.unit.base_unit|default:"—" }}</td>
-      <td data-col="stock">
+      <td data-col="unit" class="px-4 py-2">{{ item.unit.base_unit|default:"—" }}</td>
+      <td data-col="stock" class="px-4 py-2">
         {% if item.current_stock is not None %} {{ item.current_stock }} {% else
         %}
         <span class="text-gray-400">—</span>
         {% endif %}
       </td>
-      <td data-col="stock_status">
+      <td data-col="stock_status" class="px-4 py-2">
         <div class="flex flex-col">
           {% if item.current_stock is not None and item.reorder_point is not None %}
             {% if item.current_stock <= item.reorder_point %}
@@ -103,22 +103,22 @@
           {% endif %}
         </div>
       </td>
-      <td data-col="rop">{{ item.reorder_point|default:"—" }}</td>
-      <td data-col="departments">
+      <td data-col="rop" class="px-4 py-2">{{ item.reorder_point|default:"—" }}</td>
+      <td data-col="departments" class="px-4 py-2">
         {% if item.departments.all %} {% for dept in item.departments.all %}
         <span class="badge badge-info">{{ dept.name }}</span>
         {% endfor %} {% else %}
         <span class="text-gray-400">—</span>
         {% endif %}
       </td>
-      <td data-col="status">
+      <td data-col="status" class="px-4 py-2">
         {% if item.is_active %}
         <span class="badge badge-success">Active</span>
         {% else %}
         <span class="badge badge-error">Inactive</span>
         {% endif %}
       </td>
-      <td>
+      <td class="px-4 py-2">
         <div class="flex items-center gap-1">
           <button
             type="button"

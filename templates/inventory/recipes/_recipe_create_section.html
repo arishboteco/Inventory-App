@@ -6,7 +6,7 @@
     {% csrf_token %}
     {% include "inventory/recipes/_form_fields.html" with form=form %}
     <div class="flex gap-2">
-      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Save</button>
     </div>
   </form>
 {% endblock %}

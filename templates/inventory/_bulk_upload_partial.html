@@ -1,7 +1,7 @@
 <div class="card drawer-panel max-w-[520px]">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">{{ title|default:"Bulk Upload Items" }}</h3>
-    <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Close</button>
+    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <div class="card-body">
     {% if upload_url %}
@@ -18,8 +18,8 @@
         {% include "forms/feedback.html" %}
       </div>
       <div class="flex items-center justify-end gap-2">
-        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
-        <button type="submit" class="btn btn-primary">Upload</button>
+        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Upload</button>
       </div>
     </form>
     <p class="text-sm text-gray-600 mt-3">{{ help_text|default:"CSV must include headers compatible with the item form fields." }}</p>

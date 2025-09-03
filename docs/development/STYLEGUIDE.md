@@ -81,7 +81,6 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
   - `.btn-outline` – neutral bordered buttons for navigation links or cancel/back actions.
   - `.btn-tertiary` – subtle buttons that blend with form backgrounds for utility actions like export or download.
 - **Status badges**: `.badge-success`, `.badge-warning`, `.badge-error`
-- **Navigation buttons**: `.nav-btn`
 - **Tables**: `.table`
 - **Forms**: base styles are applied to `input`, `select` and `textarea`
 
@@ -129,16 +128,6 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
   tabindex="0"
   class="badge-success hover:opacity-80 focus:outline-none focus:ring-2"
   >Hover me</span
->
-```
-
-### Navigation Button
-
-```html
-<a
-  href="#"
-  class="nav-btn hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark"
-  >Dashboard</a
 >
 ```
 

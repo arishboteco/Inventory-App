@@ -1,4 +1,5 @@
 import pytest
+from bs4 import BeautifulSoup
 from django import forms
 from django.template.loader import render_to_string
 from django.test import RequestFactory
@@ -111,6 +112,24 @@ def test_item_edit_modal_renders_all_fields():
         "is_active",
     ]:
         assert f'name="{field}"' in content
+
+
+@pytest.mark.django_db
+def test_item_edit_partial_departments_multiselect_container():
+    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    category = Category.objects.create(category="Food", sub_category="Veg")
+    Department.objects.create(name="Kitchen")
+    item = Item.objects.create(name="T", unit=unit, category=category)
+    form = ItemForm(instance=item)
+    request = RequestFactory().get("/")
+    content = render_to_string(
+        "inventory/_item_form_partial.html", {"form": form, "item": item}, request=request
+    )
+    soup = BeautifulSoup(content, "html.parser")
+    container = soup.find("div", {"data-multiselect": "chips", "class": "dept-grid"})
+    assert container is not None
+    checkboxes = container.find_all("input", {"type": "checkbox"})
+    assert len(checkboxes) >= 1
 
 
 @pytest.mark.django_db

@@ -24,7 +24,7 @@ def test_root_view_includes_kpis_for_authenticated_user(
     user = django_user_model.objects.create_user(username="u", password="p")
     client.force_login(user)
 
-    monkeypatch.setattr("inventory.services.kpis.stock_value", lambda: 10)
+    monkeypatch.setattr("inventory.services.kpis.stock_value_on_hand", lambda: 10)
     monkeypatch.setattr("inventory.services.kpis.receipts_last_7_days", lambda: 2)
     monkeypatch.setattr("inventory.services.kpis.issues_last_7_days", lambda: 3)
     monkeypatch.setattr("inventory.services.kpis.low_stock_count", lambda: 4)
@@ -45,7 +45,7 @@ def test_root_view_includes_nav_counts_for_authenticated_user(
     user = django_user_model.objects.create_user(username="u", password="p")
     client.force_login(user)
 
-    monkeypatch.setattr("inventory.services.kpis.stock_value", lambda: 0)
+    monkeypatch.setattr("inventory.services.kpis.stock_value_on_hand", lambda: 0)
     monkeypatch.setattr("inventory.services.kpis.receipts_last_7_days", lambda: 0)
     monkeypatch.setattr("inventory.services.kpis.issues_last_7_days", lambda: 0)
     monkeypatch.setattr("inventory.services.kpis.low_stock_count", lambda: 0)

@@ -153,6 +153,8 @@ def test_item_create_partial_departments_multiselect_container(client):
     resp = client.get(reverse("item_create_partial"))
     assert resp.status_code == 200
     soup = BeautifulSoup(resp.content, "html.parser")
+    root_div = soup.find("div", class_="card drawer-panel max-w-[860px]")
+    assert root_div is not None
     container = soup.find("div", {"data-multiselect": "chips", "class": "dept-grid"})
     assert container is not None
     checkboxes = container.find_all("input", {"type": "checkbox"})
@@ -185,4 +187,4 @@ def test_drawer_width(client):
     soup = BeautifulSoup(resp.content, "html.parser")
     drawer = soup.find("div", class_="drawer-panel")
     assert drawer is not None
-    assert "max-w-[640px]" in drawer.get("class")
+    assert "max-w-[860px]" in drawer.get("class")

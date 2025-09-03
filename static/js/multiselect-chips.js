@@ -67,7 +67,13 @@
     search.focus();
   }
 
+  function init(root = document) {
+    root.querySelectorAll('[data-multiselect="chips"]').forEach(enhance);
+  }
+
+  window.initMultiselectChips = init;
+
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll('[data-multiselect="chips"]').forEach(enhance);
+    init();
   });
 })();

@@ -72,7 +72,7 @@ describe("items-table view", () => {
 describe("column visibility menu", () => {
   beforeEach(() => {
     document.body.innerHTML = `
-      <div>
+      <div data-col-menu-container>
         <button data-col-menu-button aria-haspopup="true" aria-expanded="false"></button>
         <ul data-col-menu class="hidden">
           <li><input type="checkbox" data-col-toggle value="category" checked></li>
@@ -121,6 +121,14 @@ describe("column visibility menu", () => {
     expect(btn.getAttribute("aria-expanded")).toBe("false");
     expect(menu.classList.contains("hidden")).toBe(true);
     expect(document.activeElement).toBe(btn);
+  });
+
+  test("opens menu on focus", () => {
+    const btn = document.querySelector("[data-col-menu-button]");
+    const menu = document.querySelector("[data-col-menu]");
+    btn.dispatchEvent(new Event("focus"));
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    expect(menu.classList.contains("hidden")).toBe(false);
   });
 });
 

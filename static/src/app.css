@@ -18,23 +18,7 @@
 }
 
 @layer components {
-  /* Auto grid and compact form spacing */
-  .auto-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
-    align-items: start;
-  }
-  @media (max-width: 1024px) {
-    .auto-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  @media (max-width: 640px) {
-    .auto-grid {
-      grid-template-columns: 1fr;
-    }
-  }
+  /* Compact form spacing */
   .form-compact .form-label {
     margin-bottom: 0.2rem;
   }
@@ -64,51 +48,11 @@
     margin-top: 1rem;
   }
 
-  /* Department grid */
-  .dept-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 0.5rem;
-    max-height: 220px;
-    overflow: auto;
-  }
-
-  .dept-grid ul li {
-    @apply flex items-center gap-2 p-2 border rounded;
-  }
-
-  .dept-grid > .chips,
-  .dept-grid > .chips-search {
-    @apply col-span-full w-full flex flex-wrap gap-2;
-  }
-
   .dept-chip {
     /* Reuse shared success button styling for consistent look and spacing */
     @apply btn-success btn-sm inline-flex items-center gap-2;
   }
 
-  /* Items list density controls */
-  #items-container[data-density="compact"] .main-row {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  #items-container[data-density="compact"] .item-row h3 {
-    font-size: 0.975rem;
-  }
-  #items-container[data-density="compact"] .meta-sku,
-  #items-container[data-density="compact"] .meta-unit {
-    display: none;
-  }
-  #items-container[data-density="compact"] .badge {
-    padding: 0.05rem 0.5rem;
-    font-size: 0.7rem;
-  }
-  #items-container[data-density="compact"] .expand-icon svg {
-    width: 16px;
-    height: 16px;
-  }
   /* Modern Corporate Design System - Pure CSS (No @apply) */
 
   /* Navigation Components */

@@ -196,10 +196,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
   const container = document.getElementById('items-container');
+  const densityClasses = {
+    compact: ['p-2', 'text-sm'],
+    comfortable: ['p-4', 'text-base']
+  };
   document.querySelectorAll('[data-density-btn]').forEach(btn => {
     btn.addEventListener('click', () => {
       const value = btn.getAttribute('data-value');
-      container.setAttribute('data-density', value);
+      const allClasses = [...densityClasses.compact, ...densityClasses.comfortable];
+      container.classList.remove(...allClasses);
+      if (densityClasses[value]) {
+        container.classList.add(...densityClasses[value]);
+      }
     });
   });
   const filtersForm = document.getElementById('filters');

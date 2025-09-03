@@ -187,7 +187,7 @@
           <button
             type="button"
             data-action="quick-edit"
-            class="btn btn-square btn-sm text-gray-400 hover:text-blue-600"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-blue-600"
             title="Quick Edit"
             aria-label="Quick edit {{ item.name }}"
           >
@@ -196,7 +196,7 @@
           <a
             href="{% url 'item_edit' item.item_id %}"
             data-modal-url="{% url 'item_edit' item.item_id %}?partial=1"
-            class="btn btn-square btn-sm text-gray-400 hover:text-blue-600"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-blue-600"
             title="Edit"
             aria-label="Edit {{ item.name }}"
           >
@@ -206,7 +206,7 @@
             href="{% url 'item_detail' item.item_id %}"
             data-action="view"
             data-href="{% url 'item_detail' item.item_id %}?partial=1"
-            class="btn btn-square btn-sm text-gray-400 hover:text-green-600"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-green-600"
             title="View Details"
             aria-label="View details {{ item.name }}"
           >
@@ -215,7 +215,7 @@
           <button
             type="button"
             data-action="archive"
-            class="btn btn-square btn-sm text-gray-400 hover:text-yellow-600"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-yellow-600"
             title="{% if item.is_active %}Archive{% else %}Activate{% endif %}"
             aria-label="{% if item.is_active %}Archive{% else %}Activate{% endif %} {{ item.name }}"
           >
@@ -223,7 +223,7 @@
           </button>
           <button
             type="button"
-            class="btn btn-square btn-sm text-gray-400 hover:text-red-600"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-red-600"
             title="Delete"
             aria-label="Delete {{ item.name }}"
             data-action="delete"

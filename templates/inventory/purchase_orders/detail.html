@@ -8,10 +8,10 @@
 {% endblock %}
 {% block heading %}Purchase Order {{ po.pk }}{% endblock %}
 {% block actions %}
-  <a href="{% url 'purchase_order_edit' po.pk %}" class="btn btn-primary">Edit</a>
-  <a href="{% url 'purchase_order_receive' po.pk %}" class="btn btn-primary">Receive Goods</a>
-  <a href="{% url 'grn_list' %}" class="btn btn-primary">View GRNs</a>
-  <a href="{% url 'purchase_orders_list' %}" class="btn btn-secondary">Back</a>
+  <a href="{% url 'purchase_order_edit' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Edit</a>
+  <a href="{% url 'purchase_order_receive' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Receive Goods</a>
+  <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">View GRNs</a>
+  <a href="{% url 'purchase_orders_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Back</a>
 {% endblock %}
 {% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}

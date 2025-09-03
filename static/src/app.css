@@ -9,7 +9,7 @@
   }
 
   /* Base link styles: underlined with primary color.
-     Button classes (.btn-*) remove the underline. */
+     Buttons use utility classes to remove the underline. */
   a {
     @apply text-primary underline visited:text-purple-900 hover:text-linkHover focus:text-linkHover;
   }
@@ -30,8 +30,8 @@
   }
 
   .dept-chip {
-    /* Reuse shared success button styling for consistent look and spacing */
-    @apply btn btn-success btn-sm gap-2;
+    /* Reuse success styling for consistent look and spacing */
+    @apply inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-600 gap-2;
   }
 
   /* Modern Corporate Design System */
@@ -67,32 +67,6 @@
   }
   .card > details:not([open]) > .card-header {
     @apply border-b-0;
-  }
-
-  /* Button System */
-  .btn {
-    @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  .btn-primary {
-    @apply bg-primary text-white hover:bg-blue-700 focus:ring-2 focus:ring-primary;
-  }
-  .btn-secondary {
-    @apply bg-white text-gray-700 border border-border hover:bg-gray-50 focus:ring-2 focus:ring-primary;
-  }
-  .btn-success {
-    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-600;
-  }
-  .btn-danger {
-    @apply bg-danger text-white hover:bg-red-700 focus:ring-2 focus:ring-danger;
-  }
-  .btn-sm {
-    @apply px-3 py-1.5 text-xs;
-  }
-  .btn-lg {
-    @apply px-6 py-3 text-base;
-  }
-  .btn-square {
-    @apply justify-center w-8 h-8 p-0 bg-white text-gray-700 border border-border hover:bg-gray-50 focus:ring-2 focus:ring-primary;
   }
 
   /* Form Controls */

@@ -1,6 +1,6 @@
 {% load icon_tags category_tags %}
 <!-- prettier-ignore -->
-<table class="table w-full bg-white border border-gray-200 rounded-lg table-sticky" id="items-table">
+<table class="table w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky" id="items-table">
   <thead class="table-header">
     <tr>
       <th scope="col" class="sticky z-10 bg-white w-8">
@@ -39,7 +39,7 @@
       data-unit-id="{{ item.unit_id }}"
       data-category-id="{{ item.category_id }}"
     >
-      <td class="px-4 py-2">
+      <td class="px-4 py-2 whitespace-normal break-words">
         <input
           type="checkbox"
           name="selected_items"
@@ -48,7 +48,7 @@
           data-action="select-item"
         />
       </td>
-      <td data-col="name" class="px-4 py-2">
+      <td data-col="name" class="px-4 py-2 whitespace-normal break-words">
         <div class="flex items-start gap-2">
           <button
             type="button"
@@ -77,17 +77,17 @@
           </div>
         </div>
       </td>
-      <td data-col="category" class="px-4 py-2">
+      <td data-col="category" class="px-4 py-2 whitespace-normal break-words">
         {% format_category item True %}
       </td>
-      <td data-col="unit" class="px-4 py-2">{{ item.unit.base_unit|default:"—" }}</td>
-      <td data-col="stock" class="px-4 py-2">
+      <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.base_unit|default:"—" }}</td>
+      <td data-col="stock" class="px-4 py-2 whitespace-normal break-words">
         {% if item.current_stock is not None %} {{ item.current_stock }} {% else
         %}
         <span class="text-gray-400">—</span>
         {% endif %}
       </td>
-      <td data-col="stock_status" class="px-4 py-2">
+      <td data-col="stock_status" class="px-4 py-2 whitespace-normal break-words">
         <div class="flex flex-col">
           {% if item.current_stock is not None and item.reorder_point is not None %}
             {% if item.current_stock <= item.reorder_point %}
@@ -103,22 +103,22 @@
           {% endif %}
         </div>
       </td>
-      <td data-col="rop" class="px-4 py-2">{{ item.reorder_point|default:"—" }}</td>
-      <td data-col="departments" class="px-4 py-2">
+      <td data-col="rop" class="px-4 py-2 whitespace-normal break-words">{{ item.reorder_point|default:"—" }}</td>
+      <td data-col="departments" class="px-4 py-2 whitespace-normal break-words">
         {% if item.departments.all %} {% for dept in item.departments.all %}
         <span class="badge badge-info">{{ dept.name }}</span>
         {% endfor %} {% else %}
         <span class="text-gray-400">—</span>
         {% endif %}
       </td>
-      <td data-col="status" class="px-4 py-2">
+      <td data-col="status" class="px-4 py-2 whitespace-normal break-words">
         {% if item.is_active %}
         <span class="badge badge-success">Active</span>
         {% else %}
         <span class="badge badge-error">Inactive</span>
         {% endif %}
       </td>
-      <td class="px-4 py-2">
+      <td class="px-4 py-2 whitespace-normal break-words">
         <div class="flex items-center gap-1">
           <button
             type="button"
@@ -175,7 +175,7 @@
       role="region"
       aria-labelledby="item-title-{{ item.item_id }}"
     >
-      <td colspan="10" class="p-4">
+      <td colspan="10" class="p-4 whitespace-normal break-words">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
           <div>
             <h5 class="font-medium text-gray-900 mb-2">Basic Information</h5>
@@ -259,7 +259,7 @@
     </tr>
     {% empty %}
     <tr>
-      <td colspan="10" class="text-center text-gray-500">No items found.</td>
+      <td colspan="10" class="text-center text-gray-500 whitespace-normal break-words">No items found.</td>
     </tr>
     {% endfor %}
   </tbody>

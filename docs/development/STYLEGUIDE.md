@@ -59,7 +59,7 @@ Font-size tokens leverage CSS `clamp()` for fluid, responsive typography across 
 
 ### Container
 
-- The `.container` utility is centered and applies `var(--space-8)` padding by default.
+- The `.container` utility is centered and applies `p-8` (2rem) padding by default.
 
 ### Custom `max-*` breakpoints
 

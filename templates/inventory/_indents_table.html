@@ -21,7 +21,7 @@
     <td class="px-4 py-2">{{ row.department }}</td>
     <td class="px-4 py-2">
       {% with status_upper=row.status|upper %}
-        <span class="{{ badges|get_item:status_upper|default:'badge-warning' }}">{{ row.status }}</span>
+        <span class="{{ badges|get_item:status_upper|default:'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700' }}">{{ row.status }}</span>
       {% endwith %}
     </td>
     <td class="px-4 py-2">

@@ -454,6 +454,14 @@ a:hover {
   border-width: 1px;
   padding: var(--space-2);
 }
+.dept-grid > .chips,
+.dept-grid > .chips-search {
+  grid-column: 1/-1;
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
 .dept-chip {
   display: inline-flex;
   align-items: center;

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supplier and unit dropdown filters on the items list for more precise results.
 - Aria attributes ensuring accessible icons and icon-only buttons, plus tests for unlabeled images.
 - Display reorder point beneath stock badges in item table view.
+- High-contrast department chips with accessible remove buttons for improved keyboard and screen-reader usability.
 
 ### Deprecated
 

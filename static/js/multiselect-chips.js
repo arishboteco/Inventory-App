@@ -31,8 +31,16 @@
         const label = li ? li.textContent.trim() : cb.value;
         const chip = document.createElement("button");
         chip.type = "button";
-        chip.className = "btn-secondary btn-sm";
-        chip.textContent = label + " ×";
+        chip.className = "dept-chip";
+        chip.setAttribute("aria-label", `Remove ${label}`);
+
+        // Display label and an "×" icon that's hidden from assistive tech
+        chip.append(label + " ");
+        const removeIcon = document.createElement("span");
+        removeIcon.setAttribute("aria-hidden", "true");
+        removeIcon.textContent = "×";
+        chip.appendChild(removeIcon);
+
         chip.addEventListener("click", () => {
           cb.click();
         });

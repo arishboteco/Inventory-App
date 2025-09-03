@@ -46,102 +46,102 @@
 {% block data_container %}
 <h2 class="text-lg font-semibold text-gray-900 mb-2">Inventory Items</h2>
 <div class="card">
-  <div class="table-scroll">
-    <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
-      {% url 'items_table' as items_table_url %}
-      <div class="flex items-center justify-between mb-0">
-        <div class="text-sm text-gray-600">Filter and explore</div>
-        <div class="flex items-center gap-2" role="toolbar" aria-label="Table options">
-          <div class="relative" data-col-menu-container>
-            <button
-              type="button"
-              class="btn-square"
-              aria-label="Show/Hide Columns"
-              title="Show/Hide Columns"
-              aria-haspopup="true"
-              aria-expanded="false"
-              aria-controls="columns-menu"
-              data-col-menu-button
-            >
-              {% icon 'cog-6-tooth' 'w-4 h-4' %}
-            </button>
-            <ul
-              id="columns-menu"
-              class="menu menu-sm p-2 bg-white border border-gray-200 rounded shadow-md absolute right-0 mt-2 hidden z-20"
-              role="menu"
-              data-col-menu
-            >
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="category" checked class="form-checkbox" />
-                  <span>Category</span>
-                </label>
-              </li>
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="unit" checked class="form-checkbox" />
-                  <span>Unit</span>
-                </label>
-              </li>
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="stock" checked class="form-checkbox" />
-                  <span>Stock</span>
-                </label>
-              </li>
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="stock_status" checked class="form-checkbox" />
-                  <span>Stock Status</span>
-                </label>
-              </li>
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="rop" checked class="form-checkbox" />
-                  <span>ROP</span>
-                </label>
-              </li>
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="departments" checked class="form-checkbox" />
-                  <span>Dept</span>
-                </label>
-              </li>
-              <li role="none">
-                <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
-                  <input type="checkbox" data-col-toggle value="status" checked class="form-checkbox" />
-                  <span>Status</span>
-                </label>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div id="items-toolbar" class="flex flex-wrap items-start justify-between gap-4 mt-4">
-        <div class="flex-grow">
-          {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' %}
-        </div>
-        <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
+  <div id="items-filter-bar" class="sticky top-0 z-10 bg-white p-4">
+    {% url 'items_table' as items_table_url %}
+    <div class="flex items-center justify-between mb-0">
+      <div class="text-sm text-gray-600">Filter and explore</div>
+      <div class="flex items-center gap-2" role="toolbar" aria-label="Table options">
+        <div class="relative" data-col-menu-container>
           <button
             type="button"
-            class="btn-primary"
-            data-modal-url="{% url 'item_create_partial' %}"
-            data-modal-type="drawer"
+            class="btn-square"
+            aria-label="Show/Hide Columns"
+            title="Show/Hide Columns"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-controls="columns-menu"
+            data-col-menu-button
           >
-            Add Item
+            {% icon 'cog-6-tooth' 'w-4 h-4' %}
           </button>
-          <button
-            type="button"
-            class="btn-secondary"
-            data-modal-url="{% url 'items_bulk_upload' %}?partial=1"
-            data-modal-type="drawer"
+          <ul
+            id="columns-menu"
+            class="menu menu-sm p-2 bg-white border border-gray-200 rounded shadow-md absolute right-0 mt-2 hidden z-20"
+            role="menu"
+            data-col-menu
           >
-            Bulk Upload
-          </button>
-          <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="btn-secondary">Export</button>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="category" checked class="form-checkbox" />
+                <span>Category</span>
+              </label>
+            </li>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="unit" checked class="form-checkbox" />
+                <span>Unit</span>
+              </label>
+            </li>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="stock" checked class="form-checkbox" />
+                <span>Stock</span>
+              </label>
+            </li>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="stock_status" checked class="form-checkbox" />
+                <span>Stock Status</span>
+              </label>
+            </li>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="rop" checked class="form-checkbox" />
+                <span>ROP</span>
+              </label>
+            </li>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="departments" checked class="form-checkbox" />
+                <span>Dept</span>
+              </label>
+            </li>
+            <li role="none">
+              <label class="flex items-center gap-2" role="menuitemcheckbox" tabindex="-1">
+                <input type="checkbox" data-col-toggle value="status" checked class="form-checkbox" />
+                <span>Status</span>
+              </label>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
+    <div id="items-toolbar" class="flex flex-wrap items-start justify-between gap-4 mt-4">
+      <div class="flex-grow">
+        {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' %}
+      </div>
+      <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
+        <button
+          type="button"
+          class="btn-primary"
+          data-modal-url="{% url 'item_create_partial' %}"
+          data-modal-type="drawer"
+        >
+          Add Item
+        </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          data-modal-url="{% url 'items_bulk_upload' %}?partial=1"
+          data-modal-type="drawer"
+        >
+          Bulk Upload
+        </button>
+        <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="btn-secondary">Export</button>
+      </div>
+    </div>
+  </div>
+  <div class="table-scroll">
     <div id="items-list">
       {% include "components/items_table.html" %}
     </div>
@@ -186,20 +186,7 @@
 <script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script src="{% static 'js/multiselect-chips.js' %}?v={{ STATIC_VERSION }}" defer></script>
 <script>
-function updateFiltersHeight() {
-  const bar = document.getElementById('items-filter-bar');
-  const list = document.getElementById('items-list');
-  if (bar && list) {
-    list.style.paddingTop = bar.offsetHeight + 'px';
-  }
-}
-
 document.addEventListener('DOMContentLoaded', function () {
-  updateFiltersHeight();
-  const bar = document.getElementById('items-filter-bar');
-  if (bar) {
-    new ResizeObserver(updateFiltersHeight).observe(bar);
-  }
   const listEl = document.getElementById('items-list');
   const searchInput = document.querySelector('input[name="q"]');
   if (searchInput) {
@@ -226,7 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
   if (listEl) {
     listEl.addEventListener('htmx:afterSwap', () => {
       announceCount();
-      updateFiltersHeight();
     });
   }
 
@@ -264,8 +250,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 });
-
-window.addEventListener('load', updateFiltersHeight);
-window.addEventListener('resize', updateFiltersHeight);
 </script>
 {% endblock %}

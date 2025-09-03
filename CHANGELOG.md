@@ -9,10 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Custom 500 error page rendered after detailed error logging.
-- Layout toggle buttons on the items list to switch between table and grid views.
 - Supplier and unit dropdown filters on the items list for more precise results.
 - Aria attributes ensuring accessible icons and icon-only buttons, plus tests for unlabeled images.
-- Display reorder point beneath stock badges in item grid and table views.
+- Display reorder point beneath stock badges in item table view.
 
 ### Deprecated
 - `inventory_app.settings.production` module alias. Use `inventory_app.settings.prod` instead; the alias will be removed in a future release.
@@ -25,10 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `templates/inventory/items_list_speed.html`
   - `templates/inventory/items_list_speed_clean.html`
 - Removed "About" card from items list page.
+- Grid layout and toggle buttons from the items list.
 
 ### Changed
 - Settings now selected via ``DJANGO_SETTINGS_MODULE`` with dedicated ``dev`` and ``prod`` modules; removed dynamic ``DJANGO_ENV`` loader.
-- Layout toggles now use HTMX requests and persist selection via `localStorage` with improved ARIA updates.
 - `templates/inventory/items_list_speed_test.html`
 - `templates/inventory/_items_table_speed.html`
 

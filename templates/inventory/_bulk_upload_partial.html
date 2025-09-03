@@ -1,7 +1,7 @@
 <div class="card drawer-panel max-w-[520px]">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">{{ title|default:"Bulk Upload Items" }}</h3>
-    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Close</button>
   </div>
   <div class="card-body">
     {% if upload_url %}
@@ -18,8 +18,8 @@
         {% include "forms/feedback.html" %}
       </div>
       <div class="flex items-center justify-end gap-2">
-        <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
-        <button type="submit" class="btn-primary">Upload</button>
+        <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Upload</button>
       </div>
     </form>
     <p class="text-sm text-gray-600 mt-3">{{ help_text|default:"CSV must include headers compatible with the item form fields." }}</p>

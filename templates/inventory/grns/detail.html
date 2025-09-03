@@ -2,7 +2,7 @@
 {% block title %}GRN Detail – Inventory App{% endblock %}
 {% block heading %}GRN {{ grn.pk }}{% endblock %}
 {% block actions %}
-  <a href="{% url 'grn_list' %}" class="btn-secondary">Back</a>
+  <a href="{% url 'grn_list' %}" class="btn btn-secondary">Back</a>
 {% endblock %}
 {% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}

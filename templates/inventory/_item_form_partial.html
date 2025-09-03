@@ -1,7 +1,7 @@
 <div class="card drawer-panel max-w-[860px] max-h-[90vh] overflow-y-auto">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">Edit Item — {{ item.name }}</h3>
-    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Close</button>
   </div>
   <div class="card-body">
     <form method="post" data-modal-form action="{% url 'item_edit' item.item_id %}?partial=1">
@@ -90,8 +90,8 @@
         <!-- Actions -->
         <div class="col-span-12">
           <div class="form-actions">
-            <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
-            <button type="submit" class="btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
           </div>
         </div>
       </div>

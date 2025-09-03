@@ -121,7 +121,7 @@
       stockCell.innerHTML = `<input type="number" step="0.01" name="current_stock" class="form-input" value="${escapeHtml(currentStock)}" placeholder="0">`;
     ropCell.innerHTML = `<input type="number" step="0.01" name="reorder_point" class="form-input" value="${escapeHtml(currentRop)}">`;
     statusCell.innerHTML = `<label class="inline-flex items-center gap-2"><input type="checkbox" name="is_active" ${isActive ? "checked" : ""} class="form-checkbox"><span>Active</span></label>`;
-    actionsCell.innerHTML = `<div class="flex items-center" style="gap:.25rem"><button type="button" data-action="save-row" class="btn-primary btn-sm">Save</button><button type="button" data-action="cancel-row" class="btn-secondary btn-sm">Cancel</button></div>`;
+    actionsCell.innerHTML = `<div class="flex items-center" style="gap:.25rem"><button type="button" data-action="save-row" class="btn btn-primary btn-sm">Save</button><button type="button" data-action="cancel-row" class="btn btn-secondary btn-sm">Cancel</button></div>`;
   }
 
   function restoreRow(row) {
@@ -624,8 +624,8 @@
       const order = btn.classList.contains("asc")
         ? "ascending"
         : btn.classList.contains("desc")
-        ? "descending"
-        : "none";
+          ? "descending"
+          : "none";
       thead
         .querySelectorAll("th[aria-sort]")
         .forEach((h) => h.setAttribute("aria-sort", "none"));
@@ -679,7 +679,7 @@
       window.location.assign(url.toString());
     } else if (action === "deactivate") {
       const html = `
-        <div class=\"card\" style=\"max-width:420px\">\n          <div class=\"card-header\"><strong>Deactivate ${ids.length} item(s)?</strong></div>\n          <div class=\"card-body\">\n            <p class=\"mb-3\">Items will be marked Inactive. You can reactivate later.</p>\n            <div class=\"flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"btn-secondary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"btn-primary\" data-action=\"confirm-bulk\" data-action-type=\"deactivate\">Confirm</button>\n            </div>\n          </div>\n        </div>`;
+        <div class=\"card\" style=\"max-width:420px\">\n          <div class=\"card-header\"><strong>Deactivate ${ids.length} item(s)?</strong></div>\n          <div class=\"card-body\">\n            <p class=\"mb-3\">Items will be marked Inactive. You can reactivate later.</p>\n            <div class=\"flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"btn btn-secondary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"btn btn-primary\" data-action=\"confirm-bulk\" data-action-type=\"deactivate\">Confirm</button>\n            </div>\n          </div>\n        </div>`;
       if (window.modal) window.modal.open(html);
     } else if (action === "assign") {
       const tpl = document.getElementById("dept-select-template");
@@ -690,7 +690,7 @@
           )
         : '<input id=\"bulk-dept-select\" placeholder=\"Dept ID\">';
       const html = `
-        <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"form-label\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"btn-secondary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"btn-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
+        <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"form-label\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"btn btn-secondary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"btn btn-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
       if (window.modal) window.modal.open(html);
     }
   });

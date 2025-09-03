@@ -4,7 +4,7 @@ Supported variants: primary, secondary, danger, icon, etc.
 Optional `extra_classes` to append additional Tailwind classes.
 {% endcomment %}
 {% if href %}
-<a href="{{ href }}" id="{{ id }}" class="btn-{{ variant|default:'primary' }} {{ extra_classes }}">{{ label }}</a>
+<a href="{{ href }}" id="{{ id }}" class="btn btn-{{ variant|default:'primary' }} {{ extra_classes }}">{{ label }}</a>
 {% else %}
-<button id="{{ id }}" name="{{ name }}" type="{{ type|default:'button' }}" class="btn-{{ variant|default:'primary' }} {{ extra_classes }}">{{ label }}</button>
+<button id="{{ id }}" name="{{ name }}" type="{{ type|default:'button' }}" class="btn btn-{{ variant|default:'primary' }} {{ extra_classes }}">{{ label }}</button>
 {% endif %}

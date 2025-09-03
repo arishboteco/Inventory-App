@@ -1,7 +1,7 @@
 <div class="card drawer-panel max-w-[480px]">
   <div class="card-header flex items-center justify-between">
     <h3 class="text-lg font-semibold">{% if is_edit %}Edit Supplier — {{ supplier.name }}{% else %}Add Supplier{% endif %}</h3>
-    <button type="button" class="btn-secondary btn-sm" data-modal-close>Close</button>
+    <button type="button" class="btn btn-secondary btn-sm" data-modal-close>Close</button>
   </div>
   <div class="card-body">
     <form method="post" data-modal-form action="{% if is_edit %}{% url 'supplier_edit' supplier.supplier_id %}?partial=1{% else %}{% url 'supplier_create' %}?partial=1{% endif %}">
@@ -16,8 +16,8 @@
         </div>
         {% endfor %}
         <div class="col-span-2 flex justify-between items-center gap-2">
-          <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
-          <button type="submit" class="btn-primary">{% if is_edit %}Save{% else %}Create{% endif %}</button>
+          <button type="button" class="btn btn-secondary" data-modal-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">{% if is_edit %}Save{% else %}Create{% endif %}</button>
         </div>
       </div>
     </form>

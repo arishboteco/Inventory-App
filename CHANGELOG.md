@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified purchase order progress bar to set width directly with inline style, removing custom CSS variable
 
 - Replaced `.page-title`, `.page-subtitle`, and `.nav-icon` component classes with inline Tailwind utilities.
+- Replaced `.badge` and `.alert` component classes with inline Tailwind utility sets.
 
 ### Fixed
 

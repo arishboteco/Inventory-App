@@ -70,6 +70,36 @@ def test_grid_layout_displays_item_details(client):
     assert badge is not None and badge.get_text(strip=True).startswith("2")
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("layout", ["grid", "table"])
+def test_reorder_point_displayed_when_set(client, layout):
+    _create_item(current_stock=Decimal("5"), reorder_point=Decimal("3"))
+    resp = client.get(reverse("items_table") + f"?layout={layout}")
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    if layout == "grid":
+        footer = soup.find("div", class_="card-footer")
+        assert "Reorder Point: 3" in footer.get_text()
+    else:
+        cell = soup.find("td", {"data-col": "stock_status"})
+        assert "Reorder Point: 3" in cell.get_text()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("layout", ["grid", "table"])
+def test_reorder_point_absent_when_unset(client, layout):
+    _create_item(current_stock=Decimal("5"), reorder_point=0)
+    resp = client.get(reverse("items_table") + f"?layout={layout}")
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    if layout == "grid":
+        footer = soup.find("div", class_="card-footer")
+        assert "Reorder Point" not in footer.get_text()
+    else:
+        cell = soup.find("td", {"data-col": "stock_status"})
+        assert "Reorder Point" not in cell.get_text()
+
+
 def test_item_link_in_table_layout(client):
     item = _create_item()
     resp = client.get(reverse("items_table") + "?layout=table")

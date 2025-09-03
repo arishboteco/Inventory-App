@@ -44,6 +44,7 @@ The tag accepts optional `variant` (`outline` or `solid`), `size` (20 or 24), an
 ## Installation
 
 This project requires **Python 3.13 or newer**.
+Node.js **22** or newer is recommended for building frontend assets (see `.nvmrc`).
 
 Install dependencies using `pip`:
 

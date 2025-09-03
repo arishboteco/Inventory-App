@@ -11,7 +11,7 @@ module.exports = {
         "2xl": "1536px",
       },
       padding: {
-        DEFAULT: "var(--space-8)",
+        DEFAULT: "2rem",
       },
     },
     screens: {
@@ -36,7 +36,7 @@ module.exports = {
         danger: "#dc2626",
         border: "#9ca3af",
         linkHover: "#1e3a8a",
-        nav: "var(--color-nav-text)",
+        nav: "#ffffff",
         form: {
           bg: "#ffffff",
           border: "#9ca3af",
@@ -50,12 +50,12 @@ module.exports = {
         },
       },
       spacing: {
-        0.5: "var(--space-0-5)",
-        1: "var(--space-1)",
-        2: "var(--space-2)",
-        4: "var(--space-4)",
-        6: "var(--space-6)",
-        8: "var(--space-8)",
+        0.5: "0.125rem",
+        1: "0.25rem",
+        2: "0.5rem",
+        4: "1rem",
+        6: "1.5rem",
+        8: "2rem",
       },
       fontSize: {
         base: ["clamp(1rem, 0.5vw + 0.9rem, 1.25rem)", { lineHeight: "1.5" }],
@@ -67,6 +67,7 @@ module.exports = {
         sans: ["Roboto", "sans-serif"],
       },
       boxShadow: {
+        btn: "0 2px 4px rgba(0, 0, 0, 0.25)",
         "form-focus": "0 0 0 2px rgba(29, 78, 216, 0.4)",
       },
     },

@@ -390,10 +390,11 @@
     padding: 0.625rem 1rem;
     text-align: left;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    background-color: #f9fafb;
     border-bottom: 1px solid #e5e7eb;
   }
   .table-body {

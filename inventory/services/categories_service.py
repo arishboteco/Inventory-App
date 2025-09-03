@@ -47,28 +47,28 @@ class CategoriesService:
             category = Category.objects.get(category_id=category_id)
         except Category.DoesNotExist:
             return {
-                'category_id': category_id,
-                'category': 'Uncategorized',
-                'sub_category': 'General',
+                "category_id": category_id,
+                "category": "Uncategorized",
+                "sub_category": "General",
             }
 
         return {
-            'category_id': category.category_id,
-            'category': category.category,
-            'sub_category': category.sub_category,
+            "category_id": category.category_id,
+            "category": category.category,
+            "sub_category": category.sub_category,
         }
 
     @staticmethod
     def get_category_display(category_id: int) -> str:
         """Get the category name for display in UI."""
         category_info = CategoriesService.get_category_info(category_id)
-        return category_info['category']
+        return category_info["category"]
 
     @staticmethod
     def get_sub_category_display(category_id: int) -> str:
         """Get the sub_category name for display in UI."""
         category_info = CategoriesService.get_category_info(category_id)
-        return category_info['sub_category']
+        return category_info["sub_category"]
 
     @staticmethod
     def get_full_category_display(category_id: int) -> str:
@@ -80,12 +80,12 @@ class CategoriesService:
     @lru_cache(maxsize=None)
     def get_all_categories() -> List[Dict]:
         """Get all available categories for dropdown population."""
-        categories = Category.objects.all().order_by('category', 'sub_category')
+        categories = Category.objects.all().order_by("category", "sub_category")
         return [
             {
-                'category_id': cat.category_id,
-                'category': cat.category,
-                'sub_category': cat.sub_category,
+                "category_id": cat.category_id,
+                "category": cat.category,
+                "sub_category": cat.sub_category,
             }
             for cat in categories
         ]
@@ -94,13 +94,13 @@ class CategoriesService:
     def get_categories_by_category(category: str) -> List[Dict]:
         """Get all sub-categories available for a given category."""
         all_categories = CategoriesService.get_all_categories()
-        return [cat for cat in all_categories if cat['category'] == category]
+        return [cat for cat in all_categories if cat["category"] == category]
 
     @staticmethod
     def get_unique_categories() -> List[str]:
         """Get list of unique category names."""
         all_categories = CategoriesService.get_all_categories()
-        unique_categories = sorted(list(set(cat['category'] for cat in all_categories)))
+        unique_categories = sorted(list(set(cat["category"] for cat in all_categories)))
         return unique_categories
 
     @staticmethod
@@ -108,7 +108,7 @@ class CategoriesService:
         """Get category choices formatted for Django forms (value, label)."""
         all_categories = CategoriesService.get_all_categories()
         return [
-            (cat['category_id'], f"{cat['category']} > {cat['sub_category']}")
+            (cat["category_id"], f"{cat['category']} > {cat['sub_category']}")
             for cat in all_categories
         ]
 
@@ -119,10 +119,10 @@ class CategoriesService:
         grouped = {}
 
         for cat in all_categories:
-            category_name = cat['category']
+            category_name = cat["category"]
             if category_name not in grouped:
                 grouped[category_name] = []
-            grouped[category_name].append((cat['category_id'], cat['sub_category']))
+            grouped[category_name].append((cat["category_id"], cat["sub_category"]))
 
         return grouped
 
@@ -131,7 +131,7 @@ class CategoriesService:
         """Find category_id for a given category/sub_category combination."""
         return (
             Category.objects.filter(category=category, sub_category=sub_category)
-            .values_list('category_id', flat=True)
+            .values_list("category_id", flat=True)
             .first()
         )
 
@@ -143,8 +143,8 @@ class CategoriesService:
         """
         return (
             Category.objects.filter(category=category)
-            .order_by('sub_category')
-            .values_list('category_id', flat=True)
+            .order_by("sub_category")
+            .values_list("category_id", flat=True)
             .first()
         )
 
@@ -152,7 +152,7 @@ class CategoriesService:
     def validate_category_id(category_id: int) -> bool:
         """Check if a category_id exists in the category table."""
         category_info = CategoriesService.get_category_info(category_id)
-        return category_info['category'] != 'Uncategorized'
+        return category_info["category"] != "Uncategorized"
 
 
 # Convenience functions for backward compatibility
@@ -167,13 +167,12 @@ def get_subcategory_choices(category: Optional[str] = None) -> List[Tuple[str, s
     if category:
         subcategories = CategoriesService.get_categories_by_category(category)
         return [
-            (subcat['sub_category'], subcat['sub_category'])
-            for subcat in subcategories
+            (subcat["sub_category"], subcat["sub_category"]) for subcat in subcategories
         ]
     else:
         all_categories = CategoriesService.get_all_categories()
         unique_subcategories = sorted(
-            list(set(cat['sub_category'] for cat in all_categories))
+            list(set(cat["sub_category"] for cat in all_categories))
         )
         return [(subcat, subcat) for subcat in unique_subcategories]
 
@@ -182,6 +181,6 @@ def get_categories_map() -> Dict[str, List[Dict[str, str]]]:
     """Legacy helper; prefer CategoriesService.get_category_choices_grouped()."""
     grouped = CategoriesService.get_category_choices_grouped()
     return {
-        category: [{'name': subcat[1]} for subcat in subcategories]
+        category: [{"name": subcat[1]} for subcat in subcategories]
         for category, subcategories in grouped.items()
     }

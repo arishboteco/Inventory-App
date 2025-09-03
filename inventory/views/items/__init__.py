@@ -8,7 +8,7 @@ from .detail import (
     ItemInlineUpdateView,
     ItemToggleActiveView,
 )
-from .list import ItemsExportView, ItemsListView, ItemsTableView, ItemSearchView
+from .list import ItemSearchView, ItemsExportView, ItemsListView, ItemsTableView
 from .stock import (
     CheckSimilarNamesView,
     ItemCreateHTMXView,

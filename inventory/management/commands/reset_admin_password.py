@@ -7,7 +7,7 @@ from core.config import settings
 
 
 class Command(BaseCommand):
-    help = 'Reset admin password to environment variable or fallback'
+    help = "Reset admin password to environment variable or fallback"
 
     def handle(self, *args, **options):
         try:
@@ -15,12 +15,10 @@ class Command(BaseCommand):
             new_password = settings.django_superuser_password or "admin123!"
 
             # Find admin user
-            admin_user = User.objects.filter(username='admin').first()
+            admin_user = User.objects.filter(username="admin").first()
 
             if not admin_user:
-                self.stdout.write(
-                    self.style.ERROR('❌ No admin user found')
-                )
+                self.stdout.write(self.style.ERROR("❌ No admin user found"))
                 return
 
             # Reset password
@@ -28,16 +26,14 @@ class Command(BaseCommand):
             admin_user.save()
 
             self.stdout.write(
-                self.style.SUCCESS('✅ Admin password reset successfully!')
+                self.style.SUCCESS("✅ Admin password reset successfully!")
             )
-            self.stdout.write('   Username: admin')
+            self.stdout.write("   Username: admin")
             self.stdout.write(
                 f'   Password: {"*" * len(new_password)} '
-                f'({len(new_password)} chars)'
+                f"({len(new_password)} chars)"
             )
-            self.stdout.write(f'   Email: {admin_user.email}')
+            self.stdout.write(f"   Email: {admin_user.email}")
 
         except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f'❌ Failed to reset password: {e}')
-            )
+            self.stdout.write(self.style.ERROR(f"❌ Failed to reset password: {e}"))

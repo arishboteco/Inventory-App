@@ -1,4 +1,4 @@
-from tools.issue_migrator import parse_tasks, TASKS_PATH
+from tools.issue_migrator import TASKS_PATH, parse_tasks
 
 
 def test_parse_tasks_titles():

@@ -4,16 +4,11 @@
   "image": "mcr.microsoft.com/devcontainers/python:1-3.13-bullseye",
   "customizations": {
     "codespaces": {
-      "openFiles": [
-        "README.md"
-      ]
+      "openFiles": ["README.md"]
     },
     "vscode": {
       "settings": {},
-      "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance"
-      ]
+      "extensions": ["ms-python.python", "ms-python.vscode-pylance"]
     }
   },
   "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; echo '✅ Packages installed and requirements met'",
@@ -26,7 +21,5 @@
       "onAutoForward": "openPreview"
     }
   },
-  "forwardPorts": [
-    8000
-  ]
+  "forwardPorts": [8000]
 }

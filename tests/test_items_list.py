@@ -1,20 +1,18 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
-from bs4 import BeautifulSoup
-
 from inventory.models import (
+    Department,
     Item,
     PurchaseOrder,
     PurchaseOrderItem,
     StockTransaction,
     Supplier,
-    Department,
 )
-
-import pytest
 
 
 def _create_item(**kwargs):
@@ -177,7 +175,7 @@ def test_filters_persist_after_table_refresh(client):
     table_html = table_resp.content.decode()
 
     # The table partial should not contain the filter bar
-    assert 'items-filter-bar' not in table_html
+    assert "items-filter-bar" not in table_html
 
 
 @pytest.mark.django_db

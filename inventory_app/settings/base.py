@@ -9,12 +9,11 @@ and override only the values that differ.
 from pathlib import Path
 
 import dj_database_url
-from django.core.exceptions import ImproperlyConfigured
 from django.core.management.utils import get_random_secret_key
 
 from core.config import settings as app_settings
-from ..logging import configure_logging
 
+from ..logging import configure_logging
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

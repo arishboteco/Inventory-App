@@ -16,6 +16,7 @@ import logging
 from django.db import connection, transaction
 
 from inventory.services.categories_service import CategoriesService
+
 if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.INFO)
 
@@ -33,13 +34,15 @@ def migrate_item_categories(dry_run=True):
 
     with connection.cursor() as cursor:
         # Get all items that have category text but no category_id_ref
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT item_id, name, category, sub_category, category_id_ref
             FROM items
             WHERE category IS NOT NULL AND category != ''
             AND (category_id_ref IS NULL OR category_id_ref = 0)
             ORDER BY category, sub_category
-        """)
+        """
+        )
         items_to_migrate = cursor.fetchall()
 
         if not items_to_migrate:
@@ -47,9 +50,7 @@ def migrate_item_categories(dry_run=True):
             return
 
         logger.info("Found %d items to migrate:", len(items_to_migrate))
-        logger.info(
-            "item_id | name | category > sub_category | proposed_category_id"
-        )
+        logger.info("item_id | name | category > sub_category | proposed_category_id")
         logger.info("-" * 80)
 
         successful_migrations = []
@@ -62,24 +63,30 @@ def migrate_item_categories(dry_run=True):
             if sub_category and sub_category.strip():
                 proposed_id = CategoriesService.find_category_id(category, sub_category)
             else:
-                proposed_id = CategoriesService.find_category_id_by_category_only(category)
+                proposed_id = CategoriesService.find_category_id_by_category_only(
+                    category
+                )
 
             if proposed_id:
-                successful_migrations.append({
-                    'item_id': item_id,
-                    'name': name,
-                    'category_id': proposed_id,
-                    'category': category,
-                    'sub_category': sub_category
-                })
+                successful_migrations.append(
+                    {
+                        "item_id": item_id,
+                        "name": name,
+                        "category_id": proposed_id,
+                        "category": category,
+                        "sub_category": sub_category,
+                    }
+                )
                 status = "✓"
             else:
-                failed_migrations.append({
-                    'item_id': item_id,
-                    'name': name,
-                    'category': category,
-                    'sub_category': sub_category
-                })
+                failed_migrations.append(
+                    {
+                        "item_id": item_id,
+                        "name": name,
+                        "category": category,
+                        "sub_category": sub_category,
+                    }
+                )
                 status = "❌"
 
             display_category = f"{category} > {sub_category or 'None'}"
@@ -108,13 +115,15 @@ def migrate_item_categories(dry_run=True):
                 )
 
         if not dry_run and successful_migrations:
-            logger.info("\nApplying %d category_id updates...", len(successful_migrations))
+            logger.info(
+                "\nApplying %d category_id updates...", len(successful_migrations)
+            )
 
             with transaction.atomic():
                 for migration in successful_migrations:
                     cursor.execute(
                         "UPDATE items SET category_id_ref = %s WHERE item_id = %s",
-                        [migration['category_id'], migration['item_id']]
+                        [migration["category_id"], migration["item_id"]],
                     )
                     logger.info(
                         "  ✓ Updated item %s -> category_id=%s",
@@ -126,11 +135,13 @@ def migrate_item_categories(dry_run=True):
 
             # Verify the migration
             logger.info("\n=== VERIFICATION ===")
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(*) FROM items
                 WHERE category IS NOT NULL AND category != ''
                 AND category_id_ref IS NOT NULL
-            """)
+            """
+            )
             migrated_count = cursor.fetchone()[0]
             logger.info("Items now using category_id_ref: %d", migrated_count)
 
@@ -144,13 +155,15 @@ def validate_category_migration():
 
     with connection.cursor() as cursor:
         # Check items with category_id_ref
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT i.item_id, i.name, i.category_id_ref, c.category, c.sub_category
             FROM items i
             LEFT JOIN category c ON i.category_id_ref = c.category_id
             WHERE i.category_id_ref IS NOT NULL
             ORDER BY i.item_id
-        """)
+        """
+        )
         items = cursor.fetchall()
 
         logger.info("Found %d items with category_id references:", len(items))
@@ -199,25 +212,30 @@ def cleanup_duplicate_category_fields():
 
     with connection.cursor() as cursor:
         # Check that all items with categories have category_id_ref
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) FROM items
             WHERE (category IS NOT NULL AND category != '')
             AND (category_id_ref IS NULL OR category_id_ref = 0)
-        """)
+        """
+        )
         unmigrated = cursor.fetchone()[0]
 
         if unmigrated > 0:
             logger.warning(
-                "❌ Cannot cleanup: %d items still need category_id migration", unmigrated
+                "❌ Cannot cleanup: %d items still need category_id migration",
+                unmigrated,
             )
             return False
 
         # Check that all category_id_ref values are valid
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) FROM items i
             LEFT JOIN category c ON i.category_id_ref = c.category_id
             WHERE i.category_id_ref IS NOT NULL AND c.category_id IS NULL
-        """)
+        """
+        )
         invalid_refs = cursor.fetchone()[0]
 
         if invalid_refs > 0:

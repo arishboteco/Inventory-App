@@ -76,9 +76,7 @@ def load_settings(**overrides: object) -> Settings:
         ),
         database_url=env("DATABASE_URL", default=None),
         database_ssl_require=env.bool("DATABASE_SSL_REQUIRE", default=True),
-        django_superuser_username=env(
-            "DJANGO_SUPERUSER_USERNAME", default="admin"
-        ),
+        django_superuser_username=env("DJANGO_SUPERUSER_USERNAME", default="admin"),
         django_superuser_email=env(
             "DJANGO_SUPERUSER_EMAIL", default="admin@inventory.app"
         ),

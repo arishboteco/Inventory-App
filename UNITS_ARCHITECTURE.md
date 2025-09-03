@@ -18,23 +18,27 @@ CREATE TABLE units (
 ## Architecture Logic
 
 ### 1. **unit_id** - Application Reference
+
 - **Purpose**: Unique identifier for a specific unit conversion relationship
 - **Usage**: Foreign key in items table (`item.unit_id`)
 - **Example**: `unit_id=19`, `unit_id=1`, `unit_id=12`
 
 ### 2. **base_unit** - Recipe Measurements
+
 - **Purpose**: Unit used in recipes and cooking operations
 - **Usage**: Recipe calculations, kitchen operations, portion control
 - **Examples**: `grams`, `litres`, `pieces`, `kilograms`
 - **Context**: What chefs use when preparing food
 
-### 3. **purchase_unit** - Procurement Measurements  
+### 3. **purchase_unit** - Procurement Measurements
+
 - **Purpose**: Unit used when purchasing from suppliers
 - **Usage**: Purchase orders, invoicing, supplier negotiations
 - **Examples**: `KG`, `BOX`, `BOTTLE`, `CASE`
 - **Context**: How suppliers sell and invoice items
 
 ### 4. **conversion_factor** - Unit Conversion
+
 - **Purpose**: Multiplier to convert from purchase_unit to base_unit
 - **Usage**: Convert procurement quantities to recipe quantities
 - **Formula**: `base_quantity = purchase_quantity × conversion_factor`
@@ -54,18 +58,21 @@ unit_id | base_unit | purchase_unit | conversion_factor
 ## Business Logic Examples
 
 ### Example 1: Rice (unit_id=1)
+
 - **Base Unit**: `grams` (recipes use gram measurements)
 - **Purchase Unit**: `KG` (suppliers sell in kilograms)
 - **Conversion**: `1000.0` (1 KG = 1000 grams)
 - **Scenario**: Buy 25 KG rice → Recipe has 25,000 grams available
 
 ### Example 2: Beer Bottles (unit_id=12)
+
 - **Base Unit**: `pieces` (recipes count individual bottles)
 - **Purchase Unit**: `BOX` (suppliers sell in boxes)
 - **Conversion**: `24.0` (1 BOX = 24 pieces)
 - **Scenario**: Buy 10 BOX beer → Recipe has 240 pieces available
 
 ### Example 3: Olive Oil (unit_id=5)
+
 - **Base Unit**: `litres` (recipes measure in litres)
 - **Purchase Unit**: `CASE` (suppliers sell in cases)
 - **Conversion**: `12.0` (1 CASE = 12 litres)
@@ -74,6 +81,7 @@ unit_id | base_unit | purchase_unit | conversion_factor
 ## Implementation in Code
 
 ### Item Model
+
 ```python
 class Item(models.Model):
     unit_id = models.BigIntegerField()  # References units.unit_id
@@ -81,6 +89,7 @@ class Item(models.Model):
 ```
 
 ### Units Service Usage
+
 ```python
 from inventory.services.units_service import UnitsService
 
@@ -100,18 +109,21 @@ unit_info = UnitsService.get_unit_info(unit_id=1)
 ## Use Cases
 
 ### Recipe Management
+
 - **Input**: Recipe needs 500 grams rice
 - **Storage**: Store as base_unit quantity in recipe
 - **Calculation**: Calculate portions using base_unit measurements
 - **Display**: Show "500 grams" to kitchen staff
 
-### Purchase Orders  
+### Purchase Orders
+
 - **Input**: Need to buy rice for recipes requiring 25,000 grams total
 - **Conversion**: 25,000 grams ÷ 1000 = 25 KG needed
 - **Order**: Create purchase order for 25 KG
 - **Display**: Show "25 KG" to purchasing team
 
 ### Stock Management
+
 - **Receiving**: Receive 25 KG rice from supplier
 - **Conversion**: 25 KG × 1000 = 25,000 grams added to stock
 - **Usage**: Deduct recipe quantities in grams from stock
@@ -128,16 +140,19 @@ unit_info = UnitsService.get_unit_info(unit_id=1)
 ## Display Guidelines
 
 ### Kitchen Views
+
 - **Use base_unit**: Show quantities in cooking-friendly units
 - **Example**: "Recipe uses 500 grams flour"
 - **Context**: What kitchen staff understand and measure
 
-### Procurement Views  
+### Procurement Views
+
 - **Use purchase_unit**: Show quantities in supplier-friendly units
 - **Example**: "Order 25 KG flour from supplier"
 - **Context**: What purchasing team negotiates and orders
 
 ### Conversion Views
+
 - **Show both units**: Display conversion relationships clearly
 - **Example**: "1 KG = 1000 grams" or "25 KG → 25,000 grams"
 - **Context**: Help users understand unit relationships
@@ -145,6 +160,7 @@ unit_info = UnitsService.get_unit_info(unit_id=1)
 ## API Patterns
 
 ### Recommended Usage
+
 ```python
 # ✅ CORRECT: Use UnitsService
 from inventory.services.units_service import UnitsService
@@ -160,6 +176,7 @@ choices = UnitsService.get_unit_choices_for_forms()
 ```
 
 ### Legacy Patterns (Avoid)
+
 ```python
 # ❌ INCORRECT: Direct unit_id display
 display = str(item.unit_id)  # Shows "19" instead of "kg"
@@ -174,6 +191,7 @@ cursor.execute("SELECT base_unit FROM units WHERE unit_id = ?", [unit_id])
 ## Testing Strategy
 
 The test environment includes fallback unit data:
+
 ```python
 fallback_units = {
     1: {'base_unit': 'grams', 'purchase_unit': 'KG', 'conversion_factor': 1000.0},
@@ -187,12 +205,14 @@ Tests should use valid `unit_id` values and verify proper unit display and conve
 ## Common Pitfalls
 
 ### ❌ Wrong: Displaying unit_id directly
+
 ```python
 # Shows "19" instead of "kg"
 f"Quantity: {quantity} {item.unit_id}"
 ```
 
 ### ✅ Correct: Using UnitsService for display
+
 ```python
 # Shows "2 kg" properly formatted
 unit_display = UnitsService.get_base_unit_display(item.unit_id)
@@ -200,12 +220,14 @@ f"Quantity: {quantity} {unit_display}"
 ```
 
 ### ❌ Wrong: Manual conversion calculations
+
 ```python
 # Hard-coded conversion - breaks when units change
 base_qty = purchase_qty * 1000  # Assumes KG to grams
 ```
 
 ### ✅ Correct: Using UnitsService for conversions
+
 ```python
 # Automatic conversion using correct factor
 base_qty = UnitsService.convert_purchase_to_base(purchase_qty, item.unit_id)
@@ -214,6 +236,7 @@ base_qty = UnitsService.convert_purchase_to_base(purchase_qty, item.unit_id)
 ## Current Architecture Status
 
 ### ✅ **Implemented**
+
 - Complete UnitsService with all unit operations
 - Proper unit display functions for UI
 - Accurate conversion calculations between unit types
@@ -221,6 +244,7 @@ base_qty = UnitsService.convert_purchase_to_base(purchase_qty, item.unit_id)
 - Fixed failing tests using correct unit expectations
 
 ### 📋 **Usage Guidelines**
+
 1. Always use UnitsService for unit display and conversions
 2. Store only unit_id in item records - derive display names dynamically
 3. Use base_unit for recipe/kitchen operations

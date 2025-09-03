@@ -15,10 +15,7 @@ from inventory.models import Department, Item, ItemDepartment
 def get_all_departments() -> List[Dict[str, Any]]:
     """Return all departments as a list of dictionaries."""
     return list(
-        Department.objects
-        .all()
-        .values('department_id', 'name')
-        .order_by('name')
+        Department.objects.all().values("department_id", "name").order_by("name")
     )
 
 
@@ -26,11 +23,7 @@ def get_departments_for_item(item_id: int) -> List[Dict[str, Any]]:
     """Get all departments associated with an item."""
     try:
         item = Item.objects.get(pk=item_id)
-        return list(
-            item.departments
-            .values('department_id', 'name')
-            .order_by('name')
-        )
+        return list(item.departments.values("department_id", "name").order_by("name"))
     except Item.DoesNotExist:
         return []
 
@@ -40,9 +33,7 @@ def get_items_for_department(department_id: int) -> List[Dict[str, Any]]:
     try:
         department = Department.objects.get(pk=department_id)
         return list(
-            department.items
-            .values('item_id', 'name', 'is_active')
-            .order_by('name')
+            department.items.values("item_id", "name", "is_active").order_by("name")
         )
     except Department.DoesNotExist:
         return []
@@ -118,7 +109,7 @@ def set_item_departments(item_id: int, department_ids: List[int]) -> Tuple[bool,
         # Validate all department IDs exist
         departments = Department.objects.filter(department_id__in=department_ids)
         if departments.count() != len(department_ids):
-            found_ids = set(departments.values_list('department_id', flat=True))
+            found_ids = set(departments.values_list("department_id", flat=True))
             invalid_ids = set(department_ids) - found_ids
             return False, f"Invalid department IDs: {list(invalid_ids)}"
 
@@ -132,7 +123,7 @@ def set_item_departments(item_id: int, department_ids: List[int]) -> Tuple[bool,
         # Clear cache
         get_all_departments.cache_clear()
 
-        dept_names = ", ".join(departments.values_list('name', flat=True))
+        dept_names = ", ".join(departments.values_list("name", flat=True))
         return True, f"Set departments for '{item.name}': {dept_names}"
 
     except Item.DoesNotExist:
@@ -168,25 +159,21 @@ def get_department_stats() -> Dict[str, Any]:
     stats = {}
 
     # Total departments
-    stats['total_departments'] = Department.objects.count()
+    stats["total_departments"] = Department.objects.count()
 
     # Departments with items
-    stats['departments_with_items'] = (
-        Department.objects
-        .filter(items__isnull=False)
-        .distinct()
-        .count()
+    stats["departments_with_items"] = (
+        Department.objects.filter(items__isnull=False).distinct().count()
     )
 
     # Total item-department relationships
-    stats['total_relationships'] = ItemDepartment.objects.count()
+    stats["total_relationships"] = ItemDepartment.objects.count()
 
     # Department breakdown
-    stats['department_breakdown'] = list(
-        Department.objects
-        .annotate(item_count=Count('items'))
-        .values('name', 'item_count')
-        .order_by('-item_count', 'name')
+    stats["department_breakdown"] = list(
+        Department.objects.annotate(item_count=Count("items"))
+        .values("name", "item_count")
+        .order_by("-item_count", "name")
     )
 
     return stats

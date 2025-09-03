@@ -1,13 +1,16 @@
 # Inventory Pro - Modern Corporate Design System
+
 ## Style Guide & Component Library
 
 ### 🎨 **Color Palette**
 
 #### Primary Colors
+
 - **Primary Blue**: `#1e40af` (bg-blue-700), `#3b82f6` (bg-blue-600)
 - **Primary Light**: `#dbeafe` (bg-blue-100), `#bfdbfe` (bg-blue-200)
 
 #### Status Colors
+
 - **Success Green**: `#059669` (bg-emerald-600), `#10b981` (bg-emerald-500)
 - **Success Light**: `#dcfdf7` (bg-emerald-100), `#a7f3d0` (bg-emerald-200)
 
@@ -18,6 +21,7 @@
 - **Danger Light**: `#fee2e2` (bg-red-100), `#fecaca` (bg-red-200)
 
 #### Neutral Colors
+
 - **Background**: `#f9fafb` (bg-gray-50)
 - **Surface**: `#ffffff` (bg-white)
 - **Border**: `#e5e7eb` (border-gray-200), `#d1d5db` (border-gray-300)
@@ -29,6 +33,7 @@
 ### 🧩 **Component System**
 
 #### Navigation Components
+
 ```css
 .nav-item {
   @apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all duration-200 no-underline;
@@ -39,6 +44,7 @@
 ```
 
 #### Card System
+
 ```css
 .card {
   @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden;
@@ -55,6 +61,7 @@
 ```
 
 #### Button System
+
 ```css
 .btn-primary {
   @apply inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 no-underline;
@@ -68,12 +75,19 @@
 .btn-danger {
   @apply inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 no-underline;
 }
-.btn-sm { @apply px-3 py-1.5 text-xs; }
-.btn-lg { @apply px-6 py-3 text-base; }
-.btn-square { @apply inline-flex items-center justify-center w-8 h-8 p-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200; }
+.btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+.btn-lg {
+  @apply px-6 py-3 text-base;
+}
+.btn-square {
+  @apply inline-flex items-center justify-center w-8 h-8 p-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200;
+}
 ```
 
 #### Form Controls
+
 ```css
 .form-input {
   @apply block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
@@ -90,18 +104,30 @@
 ```
 
 #### Status Badges
+
 ```css
 .badge {
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
-.badge-success { @apply bg-green-100 text-green-800; }
-.badge-warning { @apply bg-yellow-100 text-yellow-800; }
-.badge-error { @apply bg-red-100 text-red-800; }
-.badge-info { @apply bg-blue-100 text-blue-800; }
-.badge-gray { @apply bg-gray-100 text-gray-800; }
+.badge-success {
+  @apply bg-green-100 text-green-800;
+}
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800;
+}
+.badge-error {
+  @apply bg-red-100 text-red-800;
+}
+.badge-info {
+  @apply bg-blue-100 text-blue-800;
+}
+.badge-gray {
+  @apply bg-gray-100 text-gray-800;
+}
 ```
 
 #### Page Layout
+
 ```css
 .page-header {
   @apply bg-white border-b border-gray-200 px-6 py-4;
@@ -122,6 +148,7 @@
 ### 📐 **Layout Patterns**
 
 #### Top Navigation Structure
+
 ```html
 <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -134,6 +161,7 @@
 ```
 
 #### Page Header Pattern
+
 ```html
 <div class="page-header">
   <div class="flex items-center justify-between">
@@ -149,13 +177,16 @@
 ```
 
 #### Stats Cards Pattern
+
 ```html
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
   <div class="card">
     <div class="card-compact">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+          <div
+            class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"
+          >
             <!-- Icon -->
           </div>
         </div>
@@ -170,6 +201,7 @@
 ```
 
 #### Search & Filter Pattern
+
 ```html
 <div class="card mb-6">
   <div class="card-body">
@@ -185,6 +217,7 @@
 ### 🎯 **Implementation Guidelines**
 
 #### DO's
+
 - ✅ Use consistent spacing (4px, 8px, 16px, 24px, 32px)
 - ✅ Apply hover states to interactive elements
 - ✅ Use proper semantic HTML
@@ -193,6 +226,7 @@
 - ✅ Use consistent border radius (8px for most elements, 12px for large cards)
 
 #### DON'Ts
+
 - ❌ Mix different button styles on the same page
 - ❌ Use inconsistent color variations
 - ❌ Create custom components without following the system
@@ -204,6 +238,7 @@
 ### 🔧 **Functional Requirements Preserved**
 
 #### Items Page Functionality
+
 - ✅ Inline editing with expandable rows
 - ✅ Bulk selection and actions
 - ✅ Search and filtering
@@ -213,6 +248,7 @@
 - ✅ Real-time updates
 
 #### All Pages Must Include
+
 - ✅ Consistent top navigation
 - ✅ Page headers with titles and action buttons
 - ✅ Search functionality where applicable
@@ -226,21 +262,23 @@
 ### 📱 **Responsive Design**
 
 #### Breakpoints
+
 - **Mobile**: `max-md:` (up to 768px)
 - **Tablet**: `md:` (768px and up)
 - **Desktop**: `lg:` (1024px and up)
 - **Large Desktop**: `xl:` (1280px and up)
 
 #### Responsive Patterns
+
 ```html
 <!-- Grid that stacks on mobile -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-
-<!-- Hide on mobile -->
-<div class="hidden md:block">
-
-<!-- Full width on mobile -->
-<div class="w-full md:w-auto">
+  <!-- Hide on mobile -->
+  <div class="hidden md:block">
+    <!-- Full width on mobile -->
+    <div class="w-full md:w-auto"></div>
+  </div>
+</div>
 ```
 
 ---

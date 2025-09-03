@@ -10,7 +10,7 @@ services:
     plan: free
     buildCommand: |
       pip install -r requirements.txt
-      npm install  
+      npm install
       npm run build-css
       python manage.py collectstatic --noinput
       python manage.py migrate
@@ -18,16 +18,16 @@ services:
       python manage.py create_default_superuser
       python manage.py reset_admin_password
     startCommand: >-
-      gunicorn 
-      --bind 0.0.0.0:$PORT 
+      gunicorn
+      --bind 0.0.0.0:$PORT
       --workers 2
-      --worker-class sync 
-      --max-requests 1000 
-      --max-requests-jitter 50 
+      --worker-class sync
+      --max-requests 1000
+      --max-requests-jitter 50
       --timeout 120
-      --preload 
-      --access-logfile - 
-      --error-logfile - 
+      --preload
+      --access-logfile -
+      --error-logfile -
       inventory_app.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE

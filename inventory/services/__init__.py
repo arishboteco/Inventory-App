@@ -1,6 +1,7 @@
 """Service layer for the inventory app."""
 
 from . import (
+    categories_service,
     category_filters,
     counts,
     dashboard_service,
@@ -12,11 +13,10 @@ from . import (
     recipe_service,
     sale_service,
     stock_service,
-    categories_service,
-    units_service,
+    stock_utils,
     supplier_service,
     ui_service,
-    stock_utils,
+    units_service,
 )
 
 __all__ = [

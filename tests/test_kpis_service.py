@@ -75,7 +75,7 @@ def test_kpi_calculations(item_factory):
 @pytest.mark.django_db
 def test_average_days_since_last_purchase(item_factory):
     item1 = item_factory(name="A")
-    item2 = item_factory(name="B")
+    item_factory(name="B")
     item_factory(name="C", is_active=False)
     five_days_ago = timezone.now() - timedelta(days=5)
     tx = StockTransaction.objects.create(

@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Custom 500 error page rendered after detailed error logging.
 - Supplier and unit dropdown filters on the items list for more precise results.
 - Aria attributes ensuring accessible icons and icon-only buttons, plus tests for unlabeled images.
 - Display reorder point beneath stock badges in item table view.
 
 ### Deprecated
+
 - `inventory_app.settings.production` module alias. Use `inventory_app.settings.prod` instead; the alias will be removed in a future release.
 
 ### Removed
@@ -27,7 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Grid layout and toggle buttons from the items list.
 
 ### Changed
-- Settings now selected via ``DJANGO_SETTINGS_MODULE`` with dedicated ``dev`` and ``prod`` modules; removed dynamic ``DJANGO_ENV`` loader.
+
+- Settings now selected via `DJANGO_SETTINGS_MODULE` with dedicated `dev` and `prod` modules; removed dynamic `DJANGO_ENV` loader.
 - `templates/inventory/items_list_speed_test.html`
 - `templates/inventory/_items_table_speed.html`
 
@@ -56,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure items list content aligns directly beneath the filter bar using dynamic padding instead of margin offsets
 
 ### Added
+
 - feat: add task issue migration utility
 - docs: archive task history in favor of changelog
 

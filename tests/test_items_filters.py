@@ -2,8 +2,8 @@ import pytest
 from django.test import RequestFactory
 
 from inventory.models import Item, Supplier, Unit
-from inventory.views.items.list import _filter_and_sort_items
 from inventory.services import category_filters
+from inventory.views.items.list import _filter_and_sort_items
 
 
 @pytest.mark.django_db
@@ -11,7 +11,9 @@ def test_filter_by_supplier_and_unit():
     rf = RequestFactory()
     supplier1 = Supplier.objects.create(name="Acme")
     supplier2 = Supplier.objects.create(name="Beta")
-    unit_kg = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    unit_kg = Unit.objects.create(
+        purchase_unit="kg", base_unit="kg", conversion_factor=1
+    )
     unit_l = Unit.objects.create(purchase_unit="l", base_unit="l", conversion_factor=1)
     item1 = Item.objects.create(
         name="Sugar",

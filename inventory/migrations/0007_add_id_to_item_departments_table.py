@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         # Add id column as primary key to item_departments table
         migrations.RunSQL(
             "ALTER TABLE item_departments ADD COLUMN id SERIAL PRIMARY KEY;",
-            reverse_sql="ALTER TABLE item_departments DROP COLUMN id;"
+            reverse_sql="ALTER TABLE item_departments DROP COLUMN id;",
         ),
     ]

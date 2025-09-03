@@ -2,6 +2,7 @@ import pytest
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 from django.urls import NoReverseMatch, reverse
+
 import inventory_app.navigation as navigation
 
 
@@ -42,7 +43,9 @@ def test_navigation_links_resolve():
 
 def test_get_navigation_links_raises_for_missing(monkeypatch):
     """The helper should raise if an invalid URL name is supplied."""
-    bad_links = navigation.NAVIGATION_LINKS + [{"title": "Bad", "url_name": "does_not_exist"}]
+    bad_links = navigation.NAVIGATION_LINKS + [
+        {"title": "Bad", "url_name": "does_not_exist"}
+    ]
     monkeypatch.setattr(navigation, "NAVIGATION_LINKS", bad_links)
     with pytest.raises(NoReverseMatch):
         navigation.get_navigation_links()

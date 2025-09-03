@@ -92,7 +92,9 @@ def test_item_edit_modal_renders_all_fields():
     form = ItemForm(instance=item)
     request = RequestFactory().get("/")
     content = render_to_string(
-        "inventory/_item_form_partial.html", {"form": form, "item": item}, request=request
+        "inventory/_item_form_partial.html",
+        {"form": form, "item": item},
+        request=request,
     )
     for field in [
         "name",

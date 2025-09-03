@@ -173,12 +173,29 @@ def test_items_toolbar_structure(client):
     filters_form = toolbar.find("form", id="filters")
     assert filters_form is not None
     # Ensure action buttons are present on the right
-    add_link = toolbar.find("a", href="#add-item-section")
-    bulk_link = toolbar.find("a", href="#bulk-upload-section")
-    export_btn = toolbar.find("button", {"form": "filters", "formaction": reverse("items_export")})
-    assert add_link is not None
-    assert bulk_link is not None
+    add_btn = toolbar.find(
+        "button",
+        {
+            "data-modal-url": reverse("item_create_partial"),
+            "data-modal-type": "drawer",
+        },
+    )
+    bulk_btn = toolbar.find(
+        "button",
+        {
+            "data-modal-url": reverse("items_bulk_upload") + "?partial=1",
+            "data-modal-type": "drawer",
+        },
+    )
+    export_btn = toolbar.find(
+        "button", {"form": "filters", "formaction": reverse("items_export")}
+    )
+    assert add_btn is not None
+    assert bulk_btn is not None
     assert export_btn is not None
+    # Collapsible sections should not be present anymore
+    assert soup.find(id="add-item-section") is None
+    assert soup.find(id="bulk-upload-section") is None
 
 
 @pytest.mark.django_db

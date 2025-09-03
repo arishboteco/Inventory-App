@@ -13,11 +13,6 @@
   </div>
 {% endblock %}
 
-{% block extra_top %}
-  {% include "inventory/_add_item_section.html" with form=form %}
-  {% include "inventory/_bulk_upload_section.html" with bulk_form=bulk_form bulk_success_count=bulk_success_count bulk_errors=bulk_errors %}
-{% endblock %}
-
 {# Filter block moved directly above the table within data_container #}
 
 {% block kpis %}
@@ -122,8 +117,22 @@
           {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' layout=request.GET.layout|default:'table' %}
         </div>
         <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0 w-full md:w-auto justify-start md:justify-end">
-          <a href="#add-item-section" class="btn-primary">Add Item</a>
-          <a href="#bulk-upload-section" class="btn-secondary">Bulk Upload</a>
+          <button
+            type="button"
+            class="btn-primary"
+            data-modal-url="{% url 'item_create_partial' %}"
+            data-modal-type="drawer"
+          >
+            Add Item
+          </button>
+          <button
+            type="button"
+            class="btn-secondary"
+            data-modal-url="{% url 'items_bulk_upload' %}?partial=1"
+            data-modal-type="drawer"
+          >
+            Bulk Upload
+          </button>
           <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="btn-secondary">Export</button>
         </div>
       </div>

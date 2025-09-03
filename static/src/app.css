@@ -53,60 +53,39 @@
     @apply btn-success btn-sm inline-flex items-center gap-2;
   }
 
-  /* Modern Corporate Design System - Pure CSS (No @apply) */
+  /* Modern Corporate Design System */
 
   /* Navigation Components */
   .nav-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #4b5563;
-    text-decoration: none;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
-  }
-  .nav-item:hover {
-    color: #111827;
-    background-color: #f9fafb;
+    @apply px-4 py-2 text-sm font-medium text-gray-600 rounded-md transition-colors hover:text-gray-900 hover:bg-gray-50;
   }
   .nav-item-active {
-    color: #2563eb;
-    background-color: #eff6ff;
-  }
-  .nav-item-active:hover {
-    color: #1d4ed8;
-    background-color: #dbeafe;
+    @apply text-blue-600 bg-blue-50 hover:text-blue-700 hover:bg-blue-100;
   }
 
   /* Card Components */
   .card {
-    background-color: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    border: 1px solid #e5e7eb;
-    overflow: hidden;
+    @apply bg-white rounded-xl shadow border border-gray-200 overflow-hidden;
   }
   .card-header {
-    padding: 0.875rem 1rem;
-    border-bottom: 1px solid theme("colors.border");
-    background-color: #f9fafb;
+    @apply px-4 py-3 border-b border-gray-200 bg-gray-50;
   }
   .card-body {
-    padding: 1rem;
+    @apply p-4;
   }
   .card-compact {
-    padding: 1rem;
+    @apply p-4;
   }
 
   /* Collapsible Card */
   .card > details > summary {
-    list-style: none;
+    @apply list-none;
   }
   .card > details > summary::-webkit-details-marker {
-    display: none;
+    @apply hidden;
   }
   .card > details:not([open]) > .card-header {
-    border-bottom: 0;
+    @apply border-b-0;
   }
 
   /* Button System */

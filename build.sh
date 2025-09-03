@@ -15,7 +15,7 @@ echo "📦 Installing Node.js dependencies..."
 npm install
 
 echo "🎨 Building Tailwind CSS..."
-npm run build
+npm run build-css
 
 # Collect static files
 echo "📂 Collecting static files..."

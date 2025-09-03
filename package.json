@@ -4,6 +4,7 @@
   "description": "Django Inventory Management Application",
   "scripts": {
     "build": "mkdir -p static/css && tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify",
+    "build-css": "npm run build",
     "dev-css": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --watch",
     "test": "jest"
   },

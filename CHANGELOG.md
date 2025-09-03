@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Aria attributes ensuring accessible icons and icon-only buttons, plus tests for unlabeled images.
 - Display reorder point beneath stock badges in item table view.
 - High-contrast department chips with accessible remove buttons for improved keyboard and screen-reader usability.
+- `build-css` npm script for dedicated Tailwind CSS builds.
 
 ### Deprecated
 
@@ -39,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `templates/inventory/_items_table_speed.html`
 
   These were consolidated into the canonical templates (e.g. `item_form.html`, `item_detail.html`, `items_list.html`).
-- Build and deployment scripts now run `npm run build` to generate Tailwind CSS bundle.
+
+- Build and deployment scripts now run `npm run build-css` to generate Tailwind CSS bundle.
 - `static/js/smart-navigation.js` - removed unused navigation enhancements
 
 - Deprecated `.kpi-grid` and `.kpi` styles in favor of new card-based KPI component

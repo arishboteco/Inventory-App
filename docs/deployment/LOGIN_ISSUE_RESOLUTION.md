@@ -70,7 +70,7 @@ Your Render deployment will now:
 buildCommand: |
   pip install -r requirements.txt
   npm install
-  npm run build-css
+  npm run build
   python manage.py collectstatic --noinput
   python manage.py migrate
   python manage.py create_default_superuser

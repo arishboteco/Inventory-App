@@ -217,11 +217,44 @@ describe("details toggle", () => {
     const row = document.querySelector(".item-row");
     const panel = document.getElementById("details-1");
     const btn = row.querySelector('[data-action="toggle-details"]');
+    const svg = btn.querySelector("svg");
     window.itemsTable.toggleDetails(row);
     expect(panel.classList.contains("hidden")).toBe(false);
     expect(btn.getAttribute("aria-expanded")).toBe("true");
+    expect(svg.classList.contains("rotate-90")).toBe(true);
     window.itemsTable.toggleDetails(row);
     expect(panel.classList.contains("hidden")).toBe(true);
     expect(btn.getAttribute("aria-expanded")).toBe("false");
+    expect(svg.classList.contains("rotate-90")).toBe(false);
+  });
+});
+
+describe("inline row edit", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <table>
+        <tr class="item-row" data-item-id="1" data-category-id="2" data-unit-id="3">
+          <td data-col="name"><span class="font-medium">Item</span></td>
+          <td data-col="rop">5</td>
+          <td data-col="category">Cat</td>
+          <td data-col="unit">Unit</td>
+          <td data-col="stock">10</td>
+          <td data-col="status">Active</td>
+          <td><button data-action="quick-edit">Edit</button></td>
+        </tr>
+      </table>`;
+    jest.isolateModules(() => {
+      require("./items-table.js");
+    });
+  });
+
+  test("renders actions with gap class", () => {
+    const btn = document.querySelector('[data-action="quick-edit"]');
+    btn.click();
+    const actionsDiv = document.querySelector("tr.item-row td:last-child div");
+    expect(actionsDiv).not.toBeNull();
+    expect(actionsDiv.classList.contains("gap-1")).toBe(true);
+    expect(actionsDiv.classList.contains("flex")).toBe(true);
+    expect(actionsDiv.getAttribute("style")).toBeNull();
   });
 });

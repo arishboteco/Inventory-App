@@ -19,12 +19,12 @@
       toggleEl.setAttribute("aria-expanded", "false");
       // reset chevron rotation
       const svg = toggleEl.querySelector("svg");
-      if (svg) svg.style.transform = "rotate(0deg)";
+      if (svg) svg.classList.remove("rotate-90");
     } else {
       details.classList.remove("hidden");
       toggleEl.setAttribute("aria-expanded", "true");
       const svg = toggleEl.querySelector("svg");
-      if (svg) svg.style.transform = "rotate(90deg)";
+      if (svg) svg.classList.add("rotate-90");
     }
   }
 
@@ -122,7 +122,7 @@
       stockCell.innerHTML = `<input type="number" step="0.01" name="current_stock" class="form-input" value="${escapeHtml(currentStock)}" placeholder="0">`;
     ropCell.innerHTML = `<input type="number" step="0.01" name="reorder_point" class="form-input" value="${escapeHtml(currentRop)}">`;
     statusCell.innerHTML = `<label class="inline-flex items-center gap-2"><input type="checkbox" name="is_active" ${isActive ? "checked" : ""} class="form-checkbox"><span>Active</span></label>`;
-    actionsCell.innerHTML = `<div class="flex items-center" style="gap:.25rem"><button type="button" data-action="save-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Save</button><button type="button" data-action="cancel-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</button></div>`;
+    actionsCell.innerHTML = `<div class="flex items-center gap-1"><button type="button" data-action="save-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Save</button><button type="button" data-action="cancel-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</button></div>`;
   }
 
   function restoreRow(row) {

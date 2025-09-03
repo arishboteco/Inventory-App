@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database connections now close after each request (`CONN_MAX_AGE=0`) to prevent idle sessions
 - Render deployment uses two Gunicorn workers by default to limit concurrent connections
 - Example environment files document direct Supabase hosts and optional pooler parameters
+- Simplified purchase order progress bar to set width directly with inline style, removing custom CSS variable
 
 ### Fixed
 

@@ -50,7 +50,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         queryset=Department.objects.all(),
         required=False,
         help_text="Departments that can use this item",
-        widget=forms.CheckboxSelectMultiple(attrs={"class": "department-checkbox"}),
+        widget=forms.CheckboxSelectMultiple(
+            attrs={"class": "department-checkbox", "data-multiselect": "chips"}
+        ),
     )
 
     preferred_supplier = forms.ModelChoiceField(

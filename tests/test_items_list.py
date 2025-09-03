@@ -13,6 +13,7 @@ from inventory.models import (
     Supplier,
     Unit,
     Category,
+    Department,
 )
 from inventory.models.enums import PurchaseOrderStatus
 
@@ -196,6 +197,18 @@ def test_items_toolbar_structure(client):
     # Collapsible sections should not be present anymore
     assert soup.find(id="add-item-section") is None
     assert soup.find(id="bulk-upload-section") is None
+
+
+@pytest.mark.django_db
+def test_item_create_partial_departments_multiselect_container(client):
+    Department.objects.create(name="Kitchen")
+    resp = client.get(reverse("item_create_partial"))
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    container = soup.find("div", {"data-multiselect": "chips", "class": "dept-grid"})
+    assert container is not None
+    checkboxes = container.find_all("input", {"type": "checkbox"})
+    assert len(checkboxes) >= 1
 
 
 @pytest.mark.django_db

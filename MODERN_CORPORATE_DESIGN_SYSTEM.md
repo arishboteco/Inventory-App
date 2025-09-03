@@ -132,12 +132,6 @@
 .page-header {
   @apply bg-white border-b border-gray-200 px-6 py-4;
 }
-.page-title {
-  @apply text-2xl font-bold text-gray-900;
-}
-.page-subtitle {
-  @apply text-sm text-gray-600 mt-1;
-}
 .page-content {
   @apply flex-1 p-6 bg-gray-50;
 }
@@ -166,8 +160,8 @@
 <div class="page-header">
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="page-title">Page Title</h1>
-      <p class="page-subtitle">Descriptive subtitle</p>
+      <h1 class="text-2xl font-bold text-gray-900">Page Title</h1>
+      <p class="text-sm text-gray-600 mt-1">Descriptive subtitle</p>
     </div>
     <div class="flex items-center space-x-3">
       <!-- Action buttons -->

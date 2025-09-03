@@ -51,7 +51,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         required=False,
         help_text="Departments that can use this item",
         widget=forms.CheckboxSelectMultiple(
-            attrs={"class": "department-checkbox", "data-multiselect": "chips"}
+            attrs={"class": "department-checkbox"}
         ),
     )
 

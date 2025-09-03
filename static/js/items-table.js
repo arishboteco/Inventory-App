@@ -52,7 +52,7 @@
     if (!isNaN(s) && !isNaN(r)) {
       if (s <= r)
         return '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Low Stock</span>';
-      return '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">In Stock</span>';
+      return '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">In Stock</span>';
     }
     return '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">No Data</span>';
   }
@@ -211,7 +211,7 @@
           const statusCell = row.querySelector('td[data-col="status"]');
           if (statusCell) {
             statusCell.innerHTML = active
-              ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>'
+              ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Active</span>'
               : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Inactive</span>';
           }
           if (window.notifications && window.notifications.showToast) {

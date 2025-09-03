@@ -154,9 +154,9 @@ class NotificationManager {
 
     // Type-specific styles
     const typeStyles = {
-      success: "bg-green-500 text-white",
+      success: "bg-success text-white",
       error: "bg-red-500 text-white",
-      warning: "bg-yellow-500 text-white",
+      warning: "bg-warning text-white",
       info: "bg-blue-500 text-white",
     };
 

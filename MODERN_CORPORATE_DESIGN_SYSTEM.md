@@ -59,7 +59,7 @@
   @apply inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 no-underline;
 }
 .btn-success {
-  @apply inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 no-underline;
+  @apply inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-success border border-transparent rounded-lg hover:bg-success-dark focus:outline-none focus:ring-2 focus:ring-success focus:ring-offset-2 transition-all duration-200 no-underline;
 }
 .btn-danger {
   @apply inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 no-underline;
@@ -97,10 +97,10 @@ Use Tailwind utility classes directly on form elements for consistent styling:
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 .badge-success {
-  @apply bg-green-100 text-green-800;
+  @apply bg-success-light text-success-dark;
 }
 .badge-warning {
-  @apply bg-yellow-100 text-yellow-800;
+  @apply bg-warning-light text-warning-dark;
 }
 .badge-error {
   @apply bg-red-100 text-red-800;

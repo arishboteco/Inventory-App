@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 BADGE_BASE = "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
 
 INDENT_STATUS_BADGES = {
-    "PENDING": f"{BADGE_BASE} bg-yellow-100 text-yellow-700",
-    "APPROVED": f"{BADGE_BASE} bg-green-100 text-green-700",
-    "SUBMITTED": f"{BADGE_BASE} bg-yellow-100 text-yellow-700",
-    "PROCESSING": f"{BADGE_BASE} bg-yellow-100 text-yellow-700",
-    "COMPLETED": f"{BADGE_BASE} bg-green-100 text-green-700",
+    "PENDING": f"{BADGE_BASE} bg-warning-light text-warning",
+    "APPROVED": f"{BADGE_BASE} bg-success-light text-success",
+    "SUBMITTED": f"{BADGE_BASE} bg-warning-light text-warning",
+    "PROCESSING": f"{BADGE_BASE} bg-warning-light text-warning",
+    "COMPLETED": f"{BADGE_BASE} bg-success-light text-success",
     "CANCELLED": f"{BADGE_BASE} bg-red-100 text-red-700",
 }
 

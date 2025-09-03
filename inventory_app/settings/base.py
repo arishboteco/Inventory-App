@@ -108,7 +108,9 @@ if DATABASES["default"].get("ENGINE"):
         if app_settings.database_ssl_require:
             DATABASES["default"].setdefault("OPTIONS", {})
             DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
-    DATABASES["default"]["CONN_MAX_AGE"] = 60
+    # Close database connections after each request to prevent long-lived
+    # idle sessions on managed platforms like Render.
+    DATABASES["default"]["CONN_MAX_AGE"] = 0
 
 
 # Password validation

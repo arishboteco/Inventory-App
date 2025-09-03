@@ -207,3 +207,9 @@ The application exposes the following REST endpoints under `/api/`:
 ## Deployment
 
 Settings modules are selected via the `DJANGO_SETTINGS_MODULE` environment variable. Use `inventory_app.settings.dev` for development and `inventory_app.settings.prod` for production deployments (e.g., on Render). The legacy `inventory_app.settings.production` alias remains for backward compatibility but will be removed in a future release.
+
+For Supabase-backed deployments on Render, point `DATABASE_URL` directly to the
+Supabase host (`<project>.supabase.co`). If using the Supabase connection
+pooler in transaction mode, append `?pgbouncer=true&pool_mode=transaction` to
+the URL. The application is configured with `CONN_MAX_AGE=0` to avoid
+long-lived database sessions on managed platforms.

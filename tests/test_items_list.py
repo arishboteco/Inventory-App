@@ -227,3 +227,13 @@ def test_filters_persist_after_table_refresh(client):
 
     # The table partial should not contain the filter bar
     assert 'items-filter-bar' not in table_html
+
+
+@pytest.mark.django_db
+def test_drawer_width(client):
+    resp = client.get(reverse("item_create_partial"))
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    drawer = soup.find("div", class_="drawer-panel")
+    assert drawer is not None
+    assert "max-w-[640px]" in drawer.get("class")

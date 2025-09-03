@@ -8,6 +8,8 @@ describe("table sticky header", () => {
       path.resolve(__dirname, "../src/app.css"),
       "utf8",
     );
-    expect(css).toMatch(/\.table-sticky thead th\s*{[^}]*top: 0/);
+    expect(css).toMatch(
+      /\.table-sticky thead th\s*{[^}]*(@apply[^;]*top-0|top: 0)/,
+    );
   });
 });

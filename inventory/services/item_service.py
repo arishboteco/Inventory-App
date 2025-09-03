@@ -19,6 +19,7 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 
 from inventory.models import Item
+
 from .stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)

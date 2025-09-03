@@ -25,6 +25,7 @@ from inventory.models import (
     StockTransaction,
 )
 from inventory.models.enums import IndentStatus, PurchaseOrderStatus
+
 from .stock_utils import get_low_stock_items
 
 
@@ -51,9 +52,11 @@ def average_days_since_last_purchase() -> float:
         .values("transaction_date")[:1]
     )
     now = timezone.now()
-    qs = Item.objects.filter(is_active=True).annotate(
-        last_purchase=Subquery(last_receiving)
-    ).values_list("last_purchase", flat=True)
+    qs = (
+        Item.objects.filter(is_active=True)
+        .annotate(last_purchase=Subquery(last_receiving))
+        .values_list("last_purchase", flat=True)
+    )
     days = [(now - lp).days for lp in qs if lp is not None]
     return sum(days) / len(days) if days else 0
 

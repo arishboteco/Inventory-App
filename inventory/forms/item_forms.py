@@ -41,9 +41,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
         help_text=(
             "Select the unit for this item (handles both kitchen and procurement units)"
         ),
-        widget=forms.Select(
-            attrs={"class": INPUT_CLASS, "data-field": "unit_id"}
-        ),
+        widget=forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit_id"}),
     )
 
     departments = forms.ModelMultipleChoiceField(
@@ -101,7 +99,9 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             "lead_time_days": forms.NumberInput(
                 attrs={"class": INPUT_CLASS, "min": "0", "placeholder": "7"}
             ),
-            "unit_id": forms.Select(attrs={"class": INPUT_CLASS, "data-field": "unit_id"}),
+            "unit_id": forms.Select(
+                attrs={"class": INPUT_CLASS, "data-field": "unit_id"}
+            ),
             "reorder_point": forms.NumberInput(
                 attrs={
                     "class": INPUT_CLASS,

@@ -99,7 +99,9 @@ class SuppliersListView(TemplateView):
                             messages.error(request, str(exc))
                     else:
                         messages.error(request, str(form_row.errors))
-                messages.success(request, f"{inserted} supplier(s) uploaded successfully.")
+                messages.success(
+                    request, f"{inserted} supplier(s) uploaded successfully."
+                )
             else:
                 messages.error(request, "Please upload a valid CSV file.")
             return redirect("suppliers_list")
@@ -159,7 +161,13 @@ class SuppliersTableView(TemplateView):
         qs = self._get_queryset()
         page_obj, per_page = list_utils.paginate(self.request, qs)
         ctx.update(self._filter_params)
-        ctx.update({"page_obj": page_obj, "page_size": per_page, "container_id": "suppliers_table"})
+        ctx.update(
+            {
+                "page_obj": page_obj,
+                "page_size": per_page,
+                "container_id": "suppliers_table",
+            }
+        )
         return ctx
 
     def get(self, request, *args, **kwargs):
@@ -231,7 +239,9 @@ class SupplierCreateView(View):
         if form.is_valid():
             try:
                 supplier = supplier_service.add_supplier(form.cleaned_data)
-                return JsonResponse({"ok": True, "id": supplier.pk, "message": "Supplier created"})
+                return JsonResponse(
+                    {"ok": True, "id": supplier.pk, "message": "Supplier created"}
+                )
             except SupplierServiceError as exc:
                 return JsonResponse({"ok": False, "message": str(exc)}, status=400)
         return render(

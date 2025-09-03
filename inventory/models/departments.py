@@ -19,15 +19,9 @@ class Department(models.Model):
 class ItemDepartment(models.Model):
     """Many-to-many relationship between items and departments."""
 
-    item = models.ForeignKey(
-        "Item",
-        on_delete=models.CASCADE,
-        db_column="item_id"
-    )
+    item = models.ForeignKey("Item", on_delete=models.CASCADE, db_column="item_id")
     department = models.ForeignKey(
-        Department,
-        on_delete=models.CASCADE,
-        db_column="department_id"
+        Department, on_delete=models.CASCADE, db_column="department_id"
     )
 
     class Meta:

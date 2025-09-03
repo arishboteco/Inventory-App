@@ -1,4 +1,5 @@
 """Utility functions for stock-related queries."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -29,7 +30,9 @@ def get_low_stock_items() -> List[Item]:
         qs = qs.filter(is_placeholder=False)
 
     units_map = {u["unit_id"]: u["purchase_unit"] for u in UnitsService.get_all_units()}
-    whens = [When(unit_id=unit_id, then=Value(uom)) for unit_id, uom in units_map.items()]
+    whens = [
+        When(unit_id=unit_id, then=Value(uom)) for unit_id, uom in units_map.items()
+    ]
 
     qs = qs.annotate(
         uom=Case(

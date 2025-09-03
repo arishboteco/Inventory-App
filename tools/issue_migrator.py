@@ -9,11 +9,10 @@ Example:
         --milestone "Backlog" --dry-run
 """
 import argparse
+import json
 import re
 from pathlib import Path
 from typing import Dict, List
-
-import json
 from urllib import request as urlrequest
 
 from core.config import settings
@@ -39,12 +38,16 @@ def parse_tasks(file_path: Path) -> List[Dict[str, str]]:
                         sub_title = re.match(r"- \*\*(.+?)\*\*", sub).group(1)
                         i += 1
                         sub_body: List[str] = []
-                        while i < len(lines) and (lines[i].startswith("  -") or not lines[i].strip()):
+                        while i < len(lines) and (
+                            lines[i].startswith("  -") or not lines[i].strip()
+                        ):
                             content = lines[i].strip()
                             if content:
                                 sub_body.append(content[2:])
                             i += 1
-                        tasks.append({"title": sub_title, "body": "\n".join(sub_body).strip()})
+                        tasks.append(
+                            {"title": sub_title, "body": "\n".join(sub_body).strip()}
+                        )
                     else:
                         i += 1
             else:
@@ -60,8 +63,15 @@ def parse_tasks(file_path: Path) -> List[Dict[str, str]]:
     return tasks
 
 
-def create_issue(repo: str, token: str, title: str, body: str,
-                 labels: List[str], milestone: int | None, dry_run: bool) -> None:
+def create_issue(
+    repo: str,
+    token: str,
+    title: str,
+    body: str,
+    labels: List[str],
+    milestone: int | None,
+    dry_run: bool,
+) -> None:
     """Create a GitHub issue via REST API."""
     if dry_run:
         print(f"[DRY-RUN] {title}\n{body}\n")
@@ -99,17 +109,24 @@ def get_milestone_number(repo: str, token: str, milestone: str) -> int | None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create GitHub issues from TASKS.md")
-    parser.add_argument("--repo", required=True, help="GitHub repo in 'owner/repo' format")
+    parser.add_argument(
+        "--repo", required=True, help="GitHub repo in 'owner/repo' format"
+    )
     parser.add_argument(
         "--token",
         default=settings.github_token,
         help="GitHub personal access token",
     )
-    parser.add_argument("--label", action="append", default=["task"],
-                        help="Label to apply to created issues")
+    parser.add_argument(
+        "--label",
+        action="append",
+        default=["task"],
+        help="Label to apply to created issues",
+    )
     parser.add_argument("--milestone", help="Milestone name to assign to issues")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Print issues without creating them")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print issues without creating them"
+    )
     args = parser.parse_args()
 
     if not args.token and not args.dry_run:

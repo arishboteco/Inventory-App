@@ -48,9 +48,7 @@ class PurchaseOrdersListView(TemplateView):
             default_sort="order_date",
             default_direction="desc",
         )
-        page_obj, _ = list_utils.paginate(
-            self.request, orders, default_page_size=20
-        )
+        page_obj, _ = list_utils.paginate(self.request, orders, default_page_size=20)
         progress_map = purchase_order_service.get_orders_progress(
             [o.pk for o in page_obj]
         )

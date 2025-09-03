@@ -3,9 +3,9 @@ from decimal import Decimal
 from django.db import models
 from django.db.models import Sum
 
+from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
 from .items import Item
 from .suppliers import Supplier
-from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
 
 
 class Indent(models.Model):

@@ -5,7 +5,9 @@ from inventory.services import item_service
 
 
 @pytest.mark.django_db
-def test_item_viewset_prefetch_departments(client, item_factory, django_assert_num_queries):
+def test_item_viewset_prefetch_departments(
+    client, item_factory, django_assert_num_queries
+):
     dept = Department.objects.create(name="Kitchen")
     item1 = item_factory(name="Item1")
     item2 = item_factory(name="Item2")
@@ -20,7 +22,9 @@ def test_item_viewset_prefetch_departments(client, item_factory, django_assert_n
 
 
 @pytest.mark.django_db
-def test_get_item_details_prefetch(item_factory, django_assert_num_queries, monkeypatch):
+def test_get_item_details_prefetch(
+    item_factory, django_assert_num_queries, monkeypatch
+):
     item = item_factory(name="Item1")
     dept = Department.objects.create(name="Kitchen")
     item.departments.add(dept)

@@ -68,30 +68,30 @@ class UnitsService:
             unit = Unit.objects.get(unit_id=unit_id)
         except Unit.DoesNotExist:
             return {
-                'unit_id': unit_id,
-                'base_unit': 'unknown',
-                'purchase_unit': 'unknown',
-                'conversion_factor': 1.0,
+                "unit_id": unit_id,
+                "base_unit": "unknown",
+                "purchase_unit": "unknown",
+                "conversion_factor": 1.0,
             }
 
         return {
-            'unit_id': unit.unit_id,
-            'base_unit': unit.base_unit,
-            'purchase_unit': unit.purchase_unit,
-            'conversion_factor': float(unit.conversion_factor),
+            "unit_id": unit.unit_id,
+            "base_unit": unit.base_unit,
+            "purchase_unit": unit.purchase_unit,
+            "conversion_factor": float(unit.conversion_factor),
         }
 
     @staticmethod
     def get_purchase_unit_display(unit_id: int) -> str:
         """Get the purchase_unit for display in UI."""
         unit_info = UnitsService.get_unit_info(unit_id)
-        return unit_info['purchase_unit']
+        return unit_info["purchase_unit"]
 
     @staticmethod
     def get_base_unit_display(unit_id: int) -> str:
         """Get the base_unit for recipe calculations."""
         unit_info = UnitsService.get_unit_info(unit_id)
-        return unit_info['base_unit']
+        return unit_info["base_unit"]
 
     @staticmethod
     def convert_purchase_to_base(quantity: float, unit_id: int) -> float:
@@ -110,7 +110,7 @@ class UnitsService:
             Amount in base_unit (e.g., 3000 GM for 1.5 x "2 KG" bags)
         """
         unit_info = UnitsService.get_unit_info(unit_id)
-        return quantity * unit_info['conversion_factor']
+        return quantity * unit_info["conversion_factor"]
 
     @staticmethod
     def convert_base_to_purchase(base_quantity: float, unit_id: int) -> float:
@@ -129,19 +129,19 @@ class UnitsService:
             Amount in purchase_unit (e.g., 1.5 for "2 KG" bags)
         """
         unit_info = UnitsService.get_unit_info(unit_id)
-        return base_quantity / unit_info['conversion_factor']
+        return base_quantity / unit_info["conversion_factor"]
 
     @staticmethod
     @lru_cache(maxsize=None)
     def get_all_units() -> List[Dict]:
         """Get all available units for dropdown population."""
-        units = Unit.objects.all().order_by('base_unit', 'purchase_unit')
+        units = Unit.objects.all().order_by("base_unit", "purchase_unit")
         return [
             {
-                'unit_id': unit.unit_id,
-                'base_unit': unit.base_unit,
-                'purchase_unit': unit.purchase_unit,
-                'conversion_factor': float(unit.conversion_factor),
+                "unit_id": unit.unit_id,
+                "base_unit": unit.base_unit,
+                "purchase_unit": unit.purchase_unit,
+                "conversion_factor": float(unit.conversion_factor),
             }
             for unit in units
         ]
@@ -150,14 +150,14 @@ class UnitsService:
     def get_units_by_base_unit(base_unit: str) -> List[Dict]:
         """Get all purchase units available for a given base unit."""
         all_units = UnitsService.get_all_units()
-        return [unit for unit in all_units if unit['base_unit'] == base_unit]
+        return [unit for unit in all_units if unit["base_unit"] == base_unit]
 
     @staticmethod
     def get_unit_choices_for_forms() -> List[Tuple[int, str]]:
         """Get unit choices formatted for Django forms (value, label)."""
         all_units = UnitsService.get_all_units()
         return [
-            (unit['unit_id'], f"{unit['purchase_unit']} ({unit['base_unit']})")
+            (unit["unit_id"], f"{unit['purchase_unit']} ({unit['base_unit']})")
             for unit in all_units
         ]
 
@@ -165,7 +165,7 @@ class UnitsService:
     def validate_unit_id(unit_id: int) -> bool:
         """Check if a unit_id exists in the units table."""
         unit_info = UnitsService.get_unit_info(unit_id)
-        return unit_info['base_unit'] != 'unknown'
+        return unit_info["base_unit"] != "unknown"
 
 
 # Note: legacy convenience functions have been removed.

@@ -1,5 +1,6 @@
-import pytest
 from decimal import Decimal
+
+import pytest
 from django.utils import timezone
 
 from core.views import _stock_trend_data

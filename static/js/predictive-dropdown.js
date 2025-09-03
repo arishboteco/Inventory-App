@@ -2,7 +2,7 @@
   function upgradeSelect(select) {
     const container = document.createElement("div");
     container.className = "predictive-dropdown-container relative";
-    
+
     const textInput = document.createElement("input");
     textInput.type = "text";
     textInput.className = select.className.replace("predictive", "").trim();
@@ -20,18 +20,19 @@
     }
 
     const dropdown = document.createElement("div");
-    dropdown.className = "predictive-dropdown-list absolute z-50 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden";
+    dropdown.className =
+      "predictive-dropdown-list absolute z-50 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden";
     dropdown.style.top = "100%";
     dropdown.style.left = "0";
 
     const options = Array.from(select.options).map((opt) => ({
       text: opt.text,
       value: opt.value,
-      selected: opt.selected
+      selected: opt.selected,
     }));
 
     // Set initial value if there's a selected option
-    const selectedOption = options.find(opt => opt.selected);
+    const selectedOption = options.find((opt) => opt.selected);
     if (selectedOption) {
       textInput.value = selectedOption.text;
       hiddenInput.value = selectedOption.value;
@@ -41,7 +42,8 @@
       dropdown.innerHTML = "";
       filteredOptions.forEach((option) => {
         const optionEl = document.createElement("div");
-        optionEl.className = "px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0";
+        optionEl.className =
+          "px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0";
         optionEl.textContent = option.text;
         optionEl.addEventListener("click", () => {
           textInput.value = option.text;
@@ -55,16 +57,16 @@
 
     textInput.addEventListener("input", (e) => {
       const query = e.target.value.toLowerCase();
-      const filteredOptions = options.filter(opt => 
-        opt.text.toLowerCase().includes(query)
+      const filteredOptions = options.filter((opt) =>
+        opt.text.toLowerCase().includes(query),
       );
-      
+
       renderOptions(filteredOptions);
       dropdown.classList.remove("hidden");
-      
+
       // Update hidden input
-      const exactMatch = filteredOptions.find(opt => 
-        opt.text.toLowerCase() === query
+      const exactMatch = filteredOptions.find(
+        (opt) => opt.text.toLowerCase() === query,
       );
       hiddenInput.value = exactMatch ? exactMatch.value : "";
     });
@@ -120,7 +122,7 @@
     container.appendChild(textInput);
     container.appendChild(hiddenInput);
     container.appendChild(dropdown);
-    
+
     select.replaceWith(container);
   }
 

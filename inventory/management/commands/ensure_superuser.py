@@ -8,16 +8,14 @@ from core.config import settings as app_settings
 
 
 class Command(BaseCommand):
-    help = 'Ensure a superuser exists for production deployment'
+    help = "Ensure a superuser exists for production deployment"
 
     def handle(self, *args, **options):
         # Only run this in production
         if not settings.DEBUG:
             # Check if any superuser exists
             if User.objects.filter(is_superuser=True).exists():
-                self.stdout.write(
-                    self.style.SUCCESS('✅ Superuser already exists')
-                )
+                self.stdout.write(self.style.SUCCESS("✅ Superuser already exists"))
                 return
 
             # Create superuser with environment variables
@@ -28,17 +26,15 @@ class Command(BaseCommand):
             if not password:
                 self.stdout.write(
                     self.style.WARNING(
-                        '⚠️  No DJANGO_SUPERUSER_PASSWORD set, '
-                        'skipping superuser creation'
+                        "⚠️  No DJANGO_SUPERUSER_PASSWORD set, "
+                        "skipping superuser creation"
                     )
                 )
                 return
 
             # Create the superuser
             User.objects.create_superuser(
-                username=username,
-                email=email,
-                password=password
+                username=username, email=email, password=password
             )
 
             self.stdout.write(
@@ -47,6 +43,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    '⚠️  This command only runs in production (DEBUG=False)'
+                    "⚠️  This command only runs in production (DEBUG=False)"
                 )
             )

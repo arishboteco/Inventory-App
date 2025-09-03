@@ -20,9 +20,7 @@ def clean_notes_fields(apps, schema_editor):
     ]
 
     try:
-        existing_tables = set(
-            schema_editor.connection.introspection.table_names()
-        )
+        existing_tables = set(schema_editor.connection.introspection.table_names())
     except ProgrammingError:
         existing_tables = set()
 

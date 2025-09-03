@@ -69,7 +69,9 @@ def _resolve_link(link: Mapping[str, str]) -> Mapping[str, str]:
     return {"title": link["title"], "url": url}
 
 
-def get_navigation_links(links: Iterable[Mapping[str, str]] | None = None) -> List[dict]:
+def get_navigation_links(
+    links: Iterable[Mapping[str, str]] | None = None,
+) -> List[dict]:
     """Build the list of navigation links with resolved URLs.
 
     Parameters
@@ -101,11 +103,12 @@ def get_navigation_groups(
     resolved = []
     for category, links in groups:
         link_dicts = [{"title": t, "url_name": u} for t, u in links]
-        resolved.append({"category": category, "links": get_navigation_links(link_dicts)})
+        resolved.append(
+            {"category": category, "links": get_navigation_links(link_dicts)}
+        )
     return resolved
 
 
 def primary_navigation(request):
     """Provide grouped navigation data for the top navigation bar."""
     return {"navigation_groups": get_navigation_groups()}
-

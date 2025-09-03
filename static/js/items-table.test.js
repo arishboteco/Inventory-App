@@ -178,7 +178,7 @@ describe("details toggle", () => {
   });
 
   test("shows and hides details panel", () => {
-    const row = document.querySelector('.item-row');
+    const row = document.querySelector(".item-row");
     const panel = document.getElementById("details-1");
     const btn = row.querySelector('[data-action="toggle-details"]');
     window.itemsTable.toggleDetails(row);

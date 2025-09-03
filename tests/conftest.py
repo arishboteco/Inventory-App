@@ -49,12 +49,14 @@ def create_test_schema(django_db_setup, django_db_blocker):
 
 # ---------- FACTORIES ----------
 
+
 @pytest.fixture
 def item_factory(db):
     """
     Factory to create Item objects.
     Usage: item = item_factory(name="Sugar", reorder_point=10, current_stock=5)
     """
+
     def create_item(**kwargs):
         defaults = {
             "name": "Item",
@@ -66,6 +68,7 @@ def item_factory(db):
         }
         defaults.update(kwargs)
         return Item.objects.create(**defaults)
+
     return create_item
 
 
@@ -75,6 +78,7 @@ def supplier_factory(db):
     Factory to create Supplier objects.
     Usage: supplier = supplier_factory(name="Vendor X")
     """
+
     def create_supplier(**kwargs):
         defaults = {
             "name": "Vendor",
@@ -82,6 +86,7 @@ def supplier_factory(db):
         }
         defaults.update(kwargs)
         return Supplier.objects.create(**defaults)
+
     return create_supplier
 
 
@@ -93,6 +98,7 @@ def stock_txn_factory(db):
       stock_txn_factory(item=item, quantity_change=5, transaction_type="RECEIVING")
       OR stock_txn_factory(item_id=item.item_id, ...)
     """
+
     def create_txn(**kwargs):
         assert "item" in kwargs or "item_id" in kwargs, "Provide item or item_id"
         defaults = {
@@ -106,6 +112,7 @@ def stock_txn_factory(db):
             defaults["item_id"] = defaults["item"].item_id
         defaults.pop("item", None)
         return StockTransaction.objects.create(**defaults)
+
     return create_txn
 
 

@@ -44,8 +44,7 @@
     const s = parseFloat(stock);
     const r = parseFloat(rop);
     if (!isNaN(s) && !isNaN(r)) {
-      if (s <= r)
-        return '<span class="badge badge-error">Low Stock</span>';
+      if (s <= r) return '<span class="badge badge-error">Low Stock</span>';
       return '<span class="badge badge-success">In Stock</span>';
     }
     return '<span class="badge badge-gray">No Data</span>';
@@ -201,10 +200,7 @@
             'td[data-col="stock_status"]',
           );
           if (stockStatusCell)
-            stockStatusCell.innerHTML = renderStockStatus(
-              currentStock,
-              rop,
-            );
+            stockStatusCell.innerHTML = renderStockStatus(currentStock, rop);
           const statusCell = row.querySelector('td[data-col="status"]');
           if (statusCell) {
             statusCell.innerHTML = active
@@ -416,7 +412,8 @@
       case "open-modal":
         e.preventDefault();
         {
-          const href2 = target.getAttribute("data-href") || target.getAttribute("href");
+          const href2 =
+            target.getAttribute("data-href") || target.getAttribute("href");
           if (!href2) return;
           fetch(href2, { headers: { "X-Requested-With": "fetch" } })
             .then((r) => r.text())
@@ -580,7 +577,8 @@
       });
 
       menuBtn.addEventListener("focus", () => {
-        if (skipOpen || menuBtn.getAttribute("aria-expanded") === "true") return;
+        if (skipOpen || menuBtn.getAttribute("aria-expanded") === "true")
+          return;
         openMenu();
       });
 

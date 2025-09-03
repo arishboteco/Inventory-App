@@ -3,7 +3,7 @@ name: Check Schema Consistency
 on:
   pull_request:
   push:
-    branches: [ main, feature/* ]
+    branches: [main, feature/*]
 
 jobs:
   check-schema:

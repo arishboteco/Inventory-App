@@ -1,14 +1,17 @@
 # 📋 HOW TO ADD ENVIRONMENT VARIABLES TO RENDER
+
 > **Note:** Replace placeholders with real values in Render's dashboard. Never commit live secrets to version control.
 
 ## 🎯 **STEP-BY-STEP RENDER CONFIGURATION**
 
 ### **Step 1: Access Your Service**
+
 1. Log into your Render dashboard
 2. Navigate to your Django service
 3. Click on the **"Settings"** tab
 
 ### **Step 2: Environment Variables Section**
+
 1. Scroll down to **"Environment Variables"**
 2. Click **"Add Environment Variable"** for each variable below
 
@@ -17,6 +20,7 @@
 Copy and paste each variable exactly as shown:
 
 #### **🔧 CORE CONFIGURATION**
+
 ```
 Key: DJANGO_SETTINGS_MODULE
 Value: inventory_app.settings.prod
@@ -26,12 +30,14 @@ Value: False
 ```
 
 #### **🔗 DATABASE**
+
 ```
 Key: DATABASE_URL
 Value: postgresql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:5432/<DB_NAME>
 ```
 
 #### **🏠 HOSTS & SECURITY**
+
 ```
 Key: DJANGO_ALLOWED_HOSTS
 Value: .onrender.com,localhost,127.0.0.1
@@ -41,6 +47,7 @@ Value: <DJANGO_SECRET_KEY>
 ```
 
 #### **🔐 SSL/HTTPS CONFIGURATION**
+
 ```
 Key: DJANGO_SECURE_SSL_REDIRECT
 Value: True
@@ -56,6 +63,7 @@ Value: True
 ```
 
 #### **🛡️ SECURITY HEADERS**
+
 ```
 Key: DJANGO_SECURE_CONTENT_TYPE_NOSNIFF
 Value: True
@@ -68,6 +76,7 @@ Value: strict-origin-when-cross-origin
 ```
 
 #### **🍪 COOKIE SECURITY**
+
 ```
 Key: DJANGO_SESSION_COOKIE_SECURE
 Value: True
@@ -77,6 +86,7 @@ Value: True
 ```
 
 #### **📊 SUPABASE INTEGRATION**
+
 ```
 Key: SUPABASE_URL
 Value: <SUPABASE_URL>
@@ -86,12 +96,15 @@ Value: <SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 ### **Step 4: Remove Conflicting Variables**
+
 If you have these variables, **DELETE** them:
+
 - `APP_ENV=staging` (conflicts with production settings)
 - `DEBUG=FALSE` (replace with `DEBUG=False`)
 - `DJANGO_SECURE_SSL_REDIRECT=TRUE` (replace with `True`)
 
 ### **Step 5: Save and Deploy**
+
 1. Click **"Save"** after adding all variables
 2. Render will automatically trigger a new deployment
 3. Monitor the deployment logs for any issues
@@ -101,15 +114,18 @@ If you have these variables, **DELETE** them:
 ## ⚠️ **IMPORTANT NOTES**
 
 ### **Case Sensitivity:**
+
 - Use `True` and `False` (not `TRUE`/`FALSE`)
 - Environment variable names are case-sensitive
 
 ### **Security:**
+
 - Never commit `.env` files with real credentials to Git
 - Your `DJANGO_SECRET_KEY` should remain private
 - Supabase keys should be kept secure
 
 ### **Testing:**
+
 - After deployment, test your app thoroughly
 - Check that HTTPS redirects work properly
 - Verify that all features function correctly

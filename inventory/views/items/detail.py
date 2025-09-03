@@ -13,7 +13,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_protect
 
 from ...forms.item_forms import ItemForm
-from ...models import Item, Supplier, StockTransaction
+from ...models import Item, StockTransaction, Supplier
 from ...services import item_service, stock_service
 from .list import ItemsTableView
 
@@ -38,7 +38,9 @@ class ItemEditView(View):
             form = ItemForm(instance=item)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
-            return JsonResponse({"ok": False, "message": "Unable to load item"}, status=400)
+            return JsonResponse(
+                {"ok": False, "message": "Unable to load item"}, status=400
+            )
         ctx = {"form": form, "item": item, "is_edit": True}
         return render(request, self.template_name, ctx)
 
@@ -48,7 +50,9 @@ class ItemEditView(View):
             form = ItemForm(request.POST, instance=item)
         except (DatabaseError, ValueError):
             logger.exception("Error loading form for item %s", pk)
-            return JsonResponse({"ok": False, "message": "Unable to load item"}, status=400)
+            return JsonResponse(
+                {"ok": False, "message": "Unable to load item"}, status=400
+            )
         if form.is_valid():
             try:
                 form.save()
@@ -56,7 +60,9 @@ class ItemEditView(View):
                 item_service.get_distinct_departments_from_items.clear()
                 return JsonResponse({"ok": True, "message": "Item updated"})
             except (ValidationError, DatabaseError):
-                return JsonResponse({"ok": False, "message": "Unable to save item"}, status=400)
+                return JsonResponse(
+                    {"ok": False, "message": "Unable to save item"}, status=400
+                )
         ctx = {"form": form, "item": item, "is_edit": True}
         return render(request, self.template_name, ctx, status=400)
 
@@ -161,11 +167,9 @@ class ItemDetailView(View):
             "-transaction_date"
         )
         recent_activity = stock_movements[:5]
-        suppliers = (
-            Supplier.objects.filter(
-                purchaseorder__purchaseorderitem__item_id=pk
-            ).distinct()
-        )
+        suppliers = Supplier.objects.filter(
+            purchaseorder__purchaseorderitem__item_id=pk
+        ).distinct()
         stock_history = stock_service.get_stock_history(pk)
         ctx = {
             "item": details,

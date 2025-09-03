@@ -61,9 +61,7 @@ def test_item_edit_handles_non_numeric_values(item_factory):
     rf = RequestFactory()
     request = rf.get(f"/items/{item.pk}/edit/")
     _add_messages(request)
-    with (
-        patch("inventory.views.items.detail.render", return_value=HttpResponse()),
-    ):
+    with (patch("inventory.views.items.detail.render", return_value=HttpResponse()),):
         resp = ItemEditView.as_view()(request, pk=item.pk)
     assert resp.status_code == 200
 

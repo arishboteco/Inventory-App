@@ -1,4 +1,3 @@
-
 from django import forms
 
 from inventory.forms.base import StyledFormMixin

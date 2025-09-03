@@ -14,38 +14,38 @@ across the application.
 
 ### Colors
 
-| Token (CSS / Tailwind) | Light Mode | When to Use |
-|------------------------|------------|-------------|
-| `body` / `bg-body` | `#ffffff` | Page background |
-| `bodyText` / `text-bodyText` | `#111827` | Base text color |
-| `--color-primary` / `primary` | `var(--color-primary)` | Links and primary actions |
+| Token (CSS / Tailwind)            | Light Mode               | When to Use                   |
+| --------------------------------- | ------------------------ | ----------------------------- |
+| `body` / `bg-body`                | `#ffffff`                | Page background               |
+| `bodyText` / `text-bodyText`      | `#111827`                | Base text color               |
+| `--color-primary` / `primary`     | `var(--color-primary)`   | Links and primary actions     |
 | `--color-secondary` / `secondary` | `var(--color-secondary)` | Secondary buttons and accents |
-| `--color-accent` / `accent` | `var(--color-accent)` | Highlights and callouts |
-| `--color-danger` / `danger` | `var(--color-danger)` | Destructive actions |
-| `--color-border` / `border` | `var(--color-border)` | Borders and disabled text |
+| `--color-accent` / `accent`       | `var(--color-accent)`    | Highlights and callouts       |
+| `--color-danger` / `danger`       | `var(--color-danger)`    | Destructive actions           |
+| `--color-border` / `border`       | `var(--color-border)`    | Borders and disabled text     |
 
 ### Spacing
 
 Spacing utilities map to CSS variables and are mode‑independent:
 
-| Token (Tailwind / CSS) | When to Use |
-|------------------------|-------------|
-| `p-0.5` / `--space-0-5` | Hairline gaps and subtle adjustments |
-| `p-1` / `--space-1` | Tight spacing around small elements |
-| `p-2` / `--space-2` | Default padding for compact components |
-| `p-4` / `--space-4` | Standard padding and grid gaps |
-| `p-6` / `--space-6` | Large section spacing |
-| `p-8` / `--space-8` | Layout gutters and container padding |
+| Token (Tailwind / CSS)  | When to Use                            |
+| ----------------------- | -------------------------------------- |
+| `p-0.5` / `--space-0-5` | Hairline gaps and subtle adjustments   |
+| `p-1` / `--space-1`     | Tight spacing around small elements    |
+| `p-2` / `--space-2`     | Default padding for compact components |
+| `p-4` / `--space-4`     | Standard padding and grid gaps         |
+| `p-6` / `--space-6`     | Large section spacing                  |
+| `p-8` / `--space-8`     | Layout gutters and container padding   |
 
 ### Typography
 
-| Token (Tailwind / CSS) | When to Use |
-|------------------------|-------------|
-| `text-base` / `--font-size-base` | Body copy |
-| `text-h1` / `--font-size-h1` | Page titles |
-| `text-h2` / `--font-size-h2` | Section headings |
-| `text-badge` / `--font-size-badge` | Badges and labels |
-| Font family `sans` | Roboto via Google Fonts for all text |
+| Token (Tailwind / CSS)             | When to Use                          |
+| ---------------------------------- | ------------------------------------ |
+| `text-base` / `--font-size-base`   | Body copy                            |
+| `text-h1` / `--font-size-h1`       | Page titles                          |
+| `text-h2` / `--font-size-h2`       | Section headings                     |
+| `text-badge` / `--font-size-badge` | Badges and labels                    |
+| Font family `sans`                 | Roboto via Google Fonts for all text |
 
 Font-size tokens leverage CSS `clamp()` for fluid, responsive typography across screen sizes.
 
@@ -66,12 +66,12 @@ Font-size tokens leverage CSS `clamp()` for fluid, responsive typography across 
 Use these variants to target smaller viewports:
 
 | Breakpoint | Applies up to |
-|------------|---------------|
-| `max-sm`   | 639px |
-| `max-md`   | 767px |
-| `max-lg`   | 1023px |
-| `max-xl`   | 1279px |
-| `max-2xl`  | 1535px |
+| ---------- | ------------- |
+| `max-sm`   | 639px         |
+| `max-md`   | 767px         |
+| `max-lg`   | 1023px        |
+| `max-xl`   | 1279px        |
+| `max-2xl`  | 1535px        |
 
 ## Components
 
@@ -108,7 +108,11 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 </div>
 
 <!-- Hover & focus states -->
-<button class="btn-primary px-4 py-2 rounded hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Save</button>
+<button
+  class="btn-primary px-4 py-2 rounded hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark"
+>
+  Save
+</button>
 ```
 
 ### Badges
@@ -121,13 +125,21 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 </div>
 
 <!-- Hover & focus -->
-<span tabindex="0" class="badge-success hover:opacity-80 focus:outline-none focus:ring-2">Hover me</span>
+<span
+  tabindex="0"
+  class="badge-success hover:opacity-80 focus:outline-none focus:ring-2"
+  >Hover me</span
+>
 ```
 
 ### Navigation Button
 
 ```html
-<a href="#" class="nav-btn hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark">Dashboard</a>
+<a
+  href="#"
+  class="nav-btn hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-dark"
+  >Dashboard</a
+>
 ```
 
 ### Table
@@ -141,7 +153,10 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
     </tr>
   </thead>
   <tbody>
-    <tr class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10" tabindex="0">
+    <tr
+      class="hover:bg-gray-100 focus:outline-none focus:bg-primary/10"
+      tabindex="0"
+    >
       <td class="p-2">Pens</td>
       <td class="p-2">12</td>
     </tr>
@@ -152,14 +167,23 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 ### Form Controls
 
 ```html
-  <form class="space-y-2">
-    <input class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none" type="text" placeholder="Name" />
-    <select class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none">
-      <option>Option A</option>
-      <option>Option B</option>
-    </select>
-    <textarea class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none" placeholder="Details"></textarea>
-  </form>
+<form class="space-y-2">
+  <input
+    class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none"
+    type="text"
+    placeholder="Name"
+  />
+  <select
+    class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none"
+  >
+    <option>Option A</option>
+    <option>Option B</option>
+  </select>
+  <textarea
+    class="w-full p-2 border hover:border-primary focus:border-primary focus:outline-none"
+    placeholder="Details"
+  ></textarea>
+</form>
 ```
 
 ## Accessibility
@@ -174,4 +198,3 @@ Use the classes in `static/css/app.css` to ensure a consistent look:
 - Keep responsive behaviour explicit using custom `max-*` breakpoints defined in `tailwind.config.js`.
 - When adding new templates or JavaScript‑driven components, always apply Tailwind
   utilities and existing `static/css/app.css` classes before introducing custom CSS.
-

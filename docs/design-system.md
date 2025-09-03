@@ -22,12 +22,12 @@ Changing a token in `_variables.scss` updates the value across the codebase.
 
 The following token pairs meet WCAG AA (4.5:1) contrast requirements:
 
-| Background token | Text token | Contrast ratio |
-| ---------------- | ---------- | -------------- |
-| `--color-primary` (`#2563EB`) | `--color-nav-text` (`#FFFFFF`) | 5.17:1 |
-| `--color-secondary` (`#15803D`) | `--color-nav-text` (`#FFFFFF`) | 5.02:1 |
-| `--color-accent` (`#B45309`) | `--color-nav-text` (`#FFFFFF`) | 5.02:1 |
-| `--color-body` (`#FFFFFF`) | `--color-body-text` (`#111827`) | 14.00:1 |
+| Background token                | Text token                      | Contrast ratio |
+| ------------------------------- | ------------------------------- | -------------- |
+| `--color-primary` (`#2563EB`)   | `--color-nav-text` (`#FFFFFF`)  | 5.17:1         |
+| `--color-secondary` (`#15803D`) | `--color-nav-text` (`#FFFFFF`)  | 5.02:1         |
+| `--color-accent` (`#B45309`)    | `--color-nav-text` (`#FFFFFF`)  | 5.02:1         |
+| `--color-body` (`#FFFFFF`)      | `--color-body-text` (`#111827`) | 14.00:1        |
 
 Use these pairings for buttons, links, and surfaces to ensure sufficient contrast.
 

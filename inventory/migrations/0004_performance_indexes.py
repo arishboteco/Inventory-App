@@ -2,12 +2,13 @@
 Database Performance Optimization Migration
 Adds strategic indexes for frequently used queries
 """
+
 from django.db import migrations
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('inventory', '0003_add_department_models'),
+        ("inventory", "0003_add_department_models"),
     ]
 
     # Disable atomic transactions for this migration to allow index creation
@@ -17,9 +18,8 @@ class Migration(migrations.Migration):
         # First ensure pg_trgm extension exists
         migrations.RunSQL(
             "CREATE EXTENSION IF NOT EXISTS pg_trgm;",
-            reverse_sql="-- Extension will remain"
+            reverse_sql="-- Extension will remain",
         ),
-
         # Item table optimizations (db_table: "items") - only if table exists
         migrations.RunSQL(
             """
@@ -68,7 +68,6 @@ class Migration(migrations.Migration):
             """,
             reverse_sql="DROP INDEX IF EXISTS idx_items_reorder_check;",
         ),
-
         # Stock transaction optimizations (db_table: "stock_transactions") -
         # only if table exists
         migrations.RunSQL(
@@ -145,7 +144,6 @@ class Migration(migrations.Migration):
             """,
             reverse_sql="DROP INDEX IF EXISTS idx_stock_tx_date_range;",
         ),
-
         # Supplier optimizations (db_table: "suppliers") - only if table exists
         migrations.RunSQL(
             """
@@ -194,7 +192,6 @@ class Migration(migrations.Migration):
             """,
             reverse_sql="DROP INDEX IF EXISTS idx_suppliers_contact_search;",
         ),
-
         # Only create indexes for tables that exist - skip optional tables for now.
         # We'll create a follow-up migration for additional tables once they're
         # confirmed to exist.

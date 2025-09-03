@@ -2,7 +2,6 @@ from collections import namedtuple
 
 from django.template import Context, Template
 
-
 Category = namedtuple("Category", ["category", "sub_category"])
 Item = namedtuple("Item", ["category"])
 
@@ -20,5 +19,7 @@ def test_format_category_with_subcategory():
 
 def test_format_category_placeholder_when_missing():
     item = Item(None)
-    output = render("{% load category_tags %}{% format_category item True %}", item=item)
+    output = render(
+        "{% load category_tags %}{% format_category item True %}", item=item
+    )
     assert "—" in output

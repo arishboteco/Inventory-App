@@ -14,9 +14,7 @@ def test_clean_notes_fields_skips_missing_tables(monkeypatch):
         connection = connection
 
     # Simulate absence of all tables
-    monkeypatch.setattr(
-        connection.introspection, "table_names", lambda cursor=None: []
-    )
+    monkeypatch.setattr(connection.introspection, "table_names", lambda cursor=None: [])
 
     grn_model = django_apps.get_model("inventory", "GoodsReceivedNote")
 
@@ -26,4 +24,3 @@ def test_clean_notes_fields_skips_missing_tables(monkeypatch):
     monkeypatch.setattr(grn_model.objects, "filter", fail_filter)
 
     clean_notes_fields(django_apps, DummySchemaEditor())
-

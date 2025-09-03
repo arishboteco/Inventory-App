@@ -6,7 +6,7 @@
 {% block page_heading %}Recipes{% endblock %}
 
 {% block primary_actions %}
-  <a class="btn btn-primary" href="{% url 'recipe_create' %}">New Recipe</a>
+  <a class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" href="{% url 'recipe_create' %}">New Recipe</a>
 {% endblock %}
 
 {% block filters %}

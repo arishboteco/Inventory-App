@@ -3,8 +3,10 @@ Generic button component. Use `href` for links or rely on `type` for button elem
 Supported variants: primary, secondary, danger, icon, etc.
 Optional `extra_classes` to append additional Tailwind classes.
 {% endcomment %}
-{% if href %}
-<a href="{{ href }}" id="{{ id }}" class="btn btn-{{ variant|default:'primary' }} {{ extra_classes }}">{{ label }}</a>
-{% else %}
-<button id="{{ id }}" name="{{ name }}" type="{{ type|default:'button' }}" class="btn btn-{{ variant|default:'primary' }} {{ extra_classes }}">{{ label }}</button>
-{% endif %}
+{% with base_classes="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" %}
+  {% if href %}
+    <a href="{{ href }}" id="{{ id }}" class="{{ base_classes }} {% if variant == 'secondary' %}bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary{% elif variant == 'danger' %}bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-danger{% elif variant == 'square' %}justify-center w-8 h-8 p-0 bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary{% else %}bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary{% endif %} {{ extra_classes }}">{{ label }}</a>
+  {% else %}
+    <button id="{{ id }}" name="{{ name }}" type="{{ type|default:'button' }}" class="{{ base_classes }} {% if variant == 'secondary' %}bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary{% elif variant == 'danger' %}bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-danger{% elif variant == 'square' %}justify-center w-8 h-8 p-0 bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary{% else %}bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary{% endif %} {{ extra_classes }}">{{ label }}</button>
+  {% endif %}
+{% endwith %}

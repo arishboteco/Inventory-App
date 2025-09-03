@@ -7,14 +7,14 @@
 {% block heading %}{{ item.name }}{% endblock %}
 
 {% block actions %}
-  <a href="{% url 'item_edit' item.item_id %}" class="btn btn-secondary">Edit</a>
+  <a href="{% url 'item_edit' item.item_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Edit</a>
   <form action="{% url 'item_toggle_active' item.item_id %}" method="post" class="inline">
     {% csrf_token %}
-    <button type="submit" class="btn btn-secondary">
+    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">
       {% if item.is_active %}Archive{% else %}Activate{% endif %}
     </button>
   </form>
-  <a href="{% url 'item_delete' item.item_id %}" class="btn btn-danger">Delete</a>
+  <a href="{% url 'item_delete' item.item_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-danger">Delete</a>
 {% endblock %}
 
 {% block detail_table %}

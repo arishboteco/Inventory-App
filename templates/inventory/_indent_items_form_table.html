@@ -15,7 +15,7 @@
     <td>{% include "components/form_field.html" with field=item_form.item %}</td>
     <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
     <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-    <td><button type="button" class="remove-row btn btn-danger">Remove</button></td>
+    <td><button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-danger">Remove</button></td>
   </tr>
   {% endfor %}
 {% endblock %}

@@ -402,7 +402,8 @@
   }
   .table-body td {
     padding: 0.875rem 1rem;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
     font-size: 0.875rem;
     color: #111827;
     border-bottom: 1px solid #e5e7eb;

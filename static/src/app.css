@@ -50,7 +50,7 @@
 
   .dept-chip {
     /* Reuse shared success button styling for consistent look and spacing */
-    @apply btn-success btn-sm inline-flex items-center gap-2;
+    @apply btn btn-success btn-sm gap-2;
   }
 
   /* Modern Corporate Design System */
@@ -89,148 +89,29 @@
   }
 
   /* Button System */
+  .btn {
+    @apply inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed;
+  }
   .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 0.875rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #fff;
-    background-color: theme("colors.primary");
-    border: 1px solid transparent;
-    border-radius: 0.375rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-    cursor: pointer;
+    @apply bg-primary text-white hover:bg-blue-700 focus:ring-2 focus:ring-primary;
   }
-  .btn-primary:hover {
-    background-color: #1d4ed8;
-    color: white;
-  }
-  .btn-primary:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
-  }
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 0.875rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #374151;
-    background-color: #fff;
-    border: 1px solid theme("colors.border");
-    border-radius: 0.375rem;
-    text-decoration: none;
-    transition: all 0.15s ease;
-    cursor: pointer;
+    @apply bg-white text-gray-700 border border-border hover:bg-gray-50 focus:ring-2 focus:ring-primary;
   }
-  .btn-secondary:hover {
-    background-color: #f9fafb;
-    color: #374151;
-  }
-  .btn-secondary:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
-  }
-  .btn-secondary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .btn-success {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: white;
-    background-color: #059669;
-    border: 1px solid transparent;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-600;
   }
-  .btn-success:hover {
-    background-color: #047857;
-    color: white;
-  }
-  .btn-success:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.5);
-  }
-  .btn-success:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .btn-danger {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: white;
-    background-color: #dc2626;
-    border: 1px solid transparent;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
+    @apply bg-danger text-white hover:bg-red-700 focus:ring-2 focus:ring-danger;
   }
-  .btn-danger:hover {
-    background-color: #b91c1c;
-    color: white;
-  }
-  .btn-danger:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.5);
-  }
-  .btn-danger:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .btn-sm {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
+    @apply px-3 py-1.5 text-xs;
   }
   .btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
+    @apply px-6 py-3 text-base;
   }
-
   .btn-square {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    padding: 0.25rem;
-    font-size: 0.75rem;
-    color: #374151;
-    background-color: #fff;
-    border: 1px solid theme("colors.border");
-    border-radius: 0.375rem;
-    transition: all 0.15s ease;
-  }
-  .btn-square:hover {
-    background-color: #f9fafb;
-    color: #374151;
-  }
-  .btn-square:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5);
-  }
-  .btn-square:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    @apply justify-center w-8 h-8 p-0 bg-white text-gray-700 border border-border hover:bg-gray-50 focus:ring-2 focus:ring-primary;
   }
 
   /* Form Controls */
@@ -380,13 +261,6 @@
     top: 100%;
     margin-top: 0.25rem;
     z-index: 10;
-  }
-
-  /* Button styles */
-  .btn-primary,
-  .btn-secondary,
-  .btn-danger {
-    box-shadow: var(--shadow-btn);
   }
 
   /* Navigation button styles */

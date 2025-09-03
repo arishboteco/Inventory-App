@@ -12,14 +12,14 @@
 {% block description %}<p class="page-subtitle">Manage your purchase orders and supplier relationships</p>{% endblock %}
 
 {% block primary_actions %}
-  <a href="{% url 'purchase_order_create' %}" class="btn-primary">
+  <a href="{% url 'purchase_order_create' %}" class="btn btn-primary">
     {% icon 'plus' 'w-4 h-4 mr-2' %}
     New Purchase Order
   </a>
 {% endblock %}
 
 {% block secondary_actions %}
-  <a href="{% url 'grn_list' %}" class="btn-secondary">
+  <a href="{% url 'grn_list' %}" class="btn btn-secondary">
     {% icon 'archive-box-arrow-down' 'w-4 h-4 mr-2' %}
     GRNs
   </a>
@@ -71,11 +71,11 @@
         <input id="end-date" type="date" name="end_date" value="{{ end_date }}" class="form-input" autocomplete="off">
       </div>
       <div class="flex items-end space-x-2">
-        <button type="submit" class="btn-primary flex-1">
+        <button type="submit" class="btn btn-primary flex-1">
           {% icon 'funnel' 'w-4 h-4 mr-2' %}
           Filter
         </button>
-        <a href="{% url 'purchase_orders_list' %}" class="btn-secondary">Clear</a>
+        <a href="{% url 'purchase_orders_list' %}" class="btn btn-secondary">Clear</a>
       </div>
     </form>
 </div>
@@ -92,7 +92,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-gray-900">Purchase Orders</h2>
       <div class="flex items-center space-x-2">
-        <button onclick="toggleBulkActions()" class="btn-sm btn-secondary">
+        <button onclick="toggleBulkActions()" class="btn btn-sm btn-secondary">
           {% icon 'archive-box' 'w-4 h-4 mr-1' %}
           Bulk Actions
         </button>
@@ -114,7 +114,7 @@
   </div>
   <div class="flex items-center space-x-2">
     {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary btn-sm">
+      <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-secondary btn-sm">
         Previous
       </a>
     {% endif %}
@@ -124,7 +124,7 @@
     </span>
 
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn-secondary btn-sm">
+      <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_supplier %}&supplier={{ current_supplier }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="btn btn-secondary btn-sm">
         Next
       </a>
     {% endif %}

@@ -10,12 +10,12 @@
 
 {% block primary_actions %}
   {% if perms.inventory.add_purchaseorder %}
-  <a href="{% url 'purchase_order_create' %}" class="btn-primary">New Purchase Order</a>
+  <a href="{% url 'purchase_order_create' %}" class="btn btn-primary">New Purchase Order</a>
   {% endif %}
 {% endblock %}
 
 {% block secondary_actions %}
-  <a href="{% url 'grn_list' %}" class="btn-secondary">Record Receipt</a>
+  <a href="{% url 'grn_list' %}" class="btn btn-secondary">Record Receipt</a>
 {% endblock %}
 
 {% block extra %}
@@ -58,7 +58,7 @@
               <option value="90">Last 90 Days</option>
             </select>
           </div>
-          <button type="button" id="apply-filters" class="btn-primary w-full">Apply Filters</button>
+          <button type="button" id="apply-filters" class="btn btn-primary w-full">Apply Filters</button>
         </form>
       </div>
     </div>

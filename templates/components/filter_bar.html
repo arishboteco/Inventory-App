@@ -42,7 +42,7 @@
     {% if export_url %}
       <div class="flex flex-col">
         <span class="text-sm font-medium">&nbsp;</span>
-        <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn-secondary w-full">{{ export_label|default:'Export' }}</button>
+        <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="btn btn-secondary w-full">{{ export_label|default:'Export' }}</button>
       </div>
     {% endif %}
   </div>
@@ -52,7 +52,7 @@
   {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
   <noscript>
     <div class="mt-2">
-      <button type="submit" class="btn-primary">Apply</button>
+      <button type="submit" class="btn btn-primary">Apply</button>
     </div>
   </noscript>
 </form>

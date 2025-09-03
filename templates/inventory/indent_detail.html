@@ -2,8 +2,8 @@
 {% block title %}Indent Detail – Inventory App{% endblock %}
 {% block heading %}Indent {{ indent.indent_id }}{% endblock %}
 {% block actions %}
-  <a href="{% url 'indent_pdf' indent.indent_id %}" class="btn-secondary">Download PDF</a>
-  <a href="{% url 'indents_list' %}" class="btn-secondary">Back</a>
+  <a href="{% url 'indent_pdf' indent.indent_id %}" class="btn btn-secondary">Download PDF</a>
+  <a href="{% url 'indents_list' %}" class="btn btn-secondary">Back</a>
 {% endblock %}
 {% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}
@@ -14,15 +14,15 @@
   <div class="mt-4 flex gap-2">
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-secondary">Mark Processing</button>
+      <button type="submit" class="btn btn-secondary">Mark Processing</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-secondary">Mark Completed</button>
+      <button type="submit" class="btn btn-secondary">Mark Completed</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="btn-danger">Cancel</button>
+      <button type="submit" class="btn btn-danger">Cancel</button>
     </form>
   </div>
 {% endblock %}

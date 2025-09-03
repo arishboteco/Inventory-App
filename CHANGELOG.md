@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Display reorder point beneath stock badges in item table view.
 - High-contrast department chips with accessible remove buttons for improved keyboard and screen-reader usability.
 - `build` npm script for dedicated Tailwind CSS builds.
+- `build-css` npm script alias that proxies to `npm run build` for backwards compatibility.
 
 ### Deprecated
 

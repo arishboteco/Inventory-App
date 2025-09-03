@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Deprecated `.kpi-grid` and `.kpi` styles in favor of new card-based KPI component
 - Typography scale uses `clamp()` variables for fluid sizing and Tailwind now includes a fluid-type plugin
+- Database connections now close after each request (`CONN_MAX_AGE=0`) to prevent idle sessions
+- Render deployment uses two Gunicorn workers by default to limit concurrent connections
+- Example environment files document direct Supabase hosts and optional pooler parameters
 
 ### Fixed
 

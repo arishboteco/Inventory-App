@@ -23,15 +23,20 @@
     </div>
     <div class="card-footer px-4 py-2 border-t">
       {% with item.current_stock|default:"0" as stock %}
-      {% if item.current_stock is not None and item.reorder_point is not None %}
-        {% if item.current_stock <= item.reorder_point %}
-          <span class="badge badge-error">{{ stock }}</span>
+      <div class="flex flex-col">
+        {% if item.current_stock is not None and item.reorder_point is not None %}
+          {% if item.current_stock <= item.reorder_point %}
+            <span class="badge badge-error">{{ stock }}</span>
+          {% else %}
+            <span class="badge badge-success">{{ stock }}</span>
+          {% endif %}
         {% else %}
-          <span class="badge badge-success">{{ stock }}</span>
+          <span class="badge badge-gray">{{ stock }}</span>
         {% endif %}
-      {% else %}
-        <span class="badge badge-gray">{{ stock }}</span>
-      {% endif %}
+        {% if item.reorder_point %}
+          <p class="text-xs text-gray-500">Reorder Point: {{ item.reorder_point }}</p>
+        {% endif %}
+      </div>
       {% endwith %}
     </div>
   </div>

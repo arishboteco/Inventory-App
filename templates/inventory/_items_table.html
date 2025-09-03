@@ -88,15 +88,20 @@
         {% endif %}
       </td>
       <td data-col="stock_status">
-        {% if item.current_stock and item.reorder_point %}
-          {% if item.current_stock <= item.reorder_point %}
-            <span class="badge badge-error">Low Stock</span>
+        <div class="flex flex-col">
+          {% if item.current_stock is not None and item.reorder_point is not None %}
+            {% if item.current_stock <= item.reorder_point %}
+              <span class="badge badge-error">Low Stock</span>
+            {% else %}
+              <span class="badge badge-success">In Stock</span>
+            {% endif %}
           {% else %}
-            <span class="badge badge-success">In Stock</span>
+            <span class="badge badge-gray">No Data</span>
           {% endif %}
-        {% else %}
-          <span class="badge badge-gray">No Data</span>
-        {% endif %}
+          {% if item.reorder_point %}
+            <p class="text-xs text-gray-500">Reorder Point: {{ item.reorder_point }}</p>
+          {% endif %}
+        </div>
       </td>
       <td data-col="rop">{{ item.reorder_point|default:"—" }}</td>
       <td data-col="departments">

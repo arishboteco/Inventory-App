@@ -21,7 +21,10 @@
   <td class="px-4 py-2"><span class="px-2 py-1 rounded-full text-badge {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
   <td class="px-4 py-2">
     <div class="w-full bg-gray-200 rounded-full h-2" role="progressbar" aria-valuenow="{{ po.progress_percent }}" aria-valuemin="0" aria-valuemax="100">
-      <div class="h-2 bg-primary rounded-full" style="width: {{ po.progress_percent }}%"></div>
+      <div
+        class="h-2 bg-primary rounded-full"
+        style="width: {{ po.progress_percent }}%"
+      ></div>
     </div>
     <div class="text-xs text-right mt-1">{{ po.received_total }} / {{ po.ordered_total }}</div>
   </td>

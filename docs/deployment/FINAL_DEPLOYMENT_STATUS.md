@@ -147,7 +147,7 @@ pip install -r requirements.txt
 
 # Install Node.js dependencies & build CSS
 npm install
-npm run build
+npm run build-css
 
 # Collect static files
 python manage.py collectstatic --noinput

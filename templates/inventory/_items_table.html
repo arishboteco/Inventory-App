@@ -1,34 +1,98 @@
 {% load icon_tags category_tags %}
 <!-- prettier-ignore -->
-<table class="table w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky" id="items-table">
+<table
+  class="table w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky"
+  id="items-table"
+  data-sortable
+>
   <thead class="table-header">
     <tr>
       <th scope="col" class="sticky z-10 w-8 px-4 py-2 font-semibold">
         <input type="checkbox" data-select-all aria-label="Select all" />
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="name">
-        Name
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="name"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col1">
+          Name<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="category">
-        Category
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="category"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col2">
+          Category<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="unit">
-        Unit
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="unit"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col3">
+          Unit<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="stock">
-        Stock
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="stock"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col4">
+          Stock<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="stock_status">
-        Stock Status
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="stock_status"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col5">
+          Stock Status<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="rop">ROP</th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="departments">
-        Departments
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="rop"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col6">
+          ROP<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2 font-semibold" data-col="status">
-        Status
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="departments"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col7">
+          Departments<span class="ml-1">⇅</span>
+        </button>
       </th>
-      <th scope="col" class="sticky z-10 w-[120px] px-4 py-2 font-semibold">Actions</th>
+      <th
+        scope="col"
+        class="sticky z-10 px-4 py-2 font-semibold"
+        data-col="status"
+        aria-sort="none"
+      >
+        <button class="sort flex items-center" data-sort="col8">
+          Status<span class="ml-1">⇅</span>
+        </button>
+      </th>
+      <th scope="col" class="sticky z-10 w-[120px] px-4 py-2 font-semibold">
+        Actions
+      </th>
     </tr>
   </thead>
   <tbody class="table-body">

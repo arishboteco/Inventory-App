@@ -5,10 +5,10 @@ window.addEventListener("DOMContentLoaded", () => {
     const headers = table.querySelectorAll("thead th");
     const valueNames = [];
     headers.forEach((th, index) => {
-      const key = `col${index}`;
-      valueNames.push(key);
-      const text = th.textContent.trim();
-      th.innerHTML = `<button class="sort flex items-center" data-sort="${key}">${text}<span class="ml-1">⇅</span></button>`;
+      const btn = th.querySelector("[data-sort]");
+      if (btn) {
+        valueNames.push(btn.getAttribute("data-sort"));
+      }
     });
     table.querySelectorAll("tbody tr").forEach((tr) => {
       tr.querySelectorAll("td").forEach((td, index) => {

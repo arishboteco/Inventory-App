@@ -159,6 +159,42 @@ describe("stock_status column toggle", () => {
   });
 });
 
+describe("sorting aria updates", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <table data-sortable>
+        <thead>
+          <tr><th aria-sort="none"><button data-sort="col1" class="sort">Name</button></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="col0">A</td></tr>
+          <tr><td class="col0">B</td></tr>
+        </tbody>
+      </table>`;
+    jest.isolateModules(() => {
+      require("./items-table.js");
+    });
+  });
+
+  test("updates aria-sort when button toggles", async () => {
+    const btn = document.querySelector("[data-sort]");
+    btn.addEventListener("click", () => {
+      btn.classList.add("asc");
+    });
+    btn.click();
+    await flushPromises();
+    expect(btn.closest("th").getAttribute("aria-sort")).toBe("ascending");
+
+    btn.addEventListener("click", () => {
+      btn.classList.remove("asc");
+      btn.classList.add("desc");
+    });
+    btn.click();
+    await flushPromises();
+    expect(btn.closest("th").getAttribute("aria-sort")).toBe("descending");
+  });
+});
+
 describe("details toggle", () => {
   beforeEach(() => {
     document.body.innerHTML = `

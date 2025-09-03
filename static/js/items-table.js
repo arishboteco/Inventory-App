@@ -615,6 +615,24 @@
     }
   });
 
+  document.addEventListener("click", function (e) {
+    const btn = e.target.closest("th button[data-sort]");
+    if (!btn) return;
+    const th = btn.closest("th");
+    const thead = th.closest("thead");
+    setTimeout(() => {
+      const order = btn.classList.contains("asc")
+        ? "ascending"
+        : btn.classList.contains("desc")
+        ? "descending"
+        : "none";
+      thead
+        .querySelectorAll("th[aria-sort]")
+        .forEach((h) => h.setAttribute("aria-sort", "none"));
+      th.setAttribute("aria-sort", order);
+    });
+  });
+
   function getCsrfToken() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
     if (m) return decodeURIComponent(m[1]);

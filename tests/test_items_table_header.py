@@ -15,3 +15,11 @@ def test_items_table_header_top_zero_and_structure():
     table = re.search(r"<table.*?</table>", tpl, re.DOTALL).group(0)
     assert re.search(r"<table[^>]*>\s*<thead", table)
     assert not re.search(r"<table[^>]*>\s*<tr", table)
+    assert "data-sortable" in table
+
+    ths = re.findall(r"<th[^>]*>.*?</th>", header, re.DOTALL)
+    assert "data-sort" not in ths[0]
+    assert "data-sort" not in ths[-1]
+    for i, th in enumerate(ths[1:-1], start=1):
+        assert f'data-sort="col{i}"' in th
+        assert 'aria-sort="none"' in th

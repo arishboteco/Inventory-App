@@ -463,20 +463,35 @@ a:hover {
   gap: var(--space-2);
 }
 .dept-chip {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background-color: #059669;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.dept-chip:hover {
+  background-color: #047857;
+  color: #fff;
+}
+.dept-chip:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.5);
+}
+.dept-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dept-chip {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  border-radius: 9999px;
-  --tw-bg-opacity: 1;
-  background-color: rgb(219 234 254 / var(--tw-bg-opacity, 1));
-  padding: var(--space-1) var(--space-2);
-  --tw-text-opacity: 1;
-  color: rgb(30 64 175 / var(--tw-text-opacity, 1));
-}
-.dept-chip:focus-visible {
-  outline-style: solid;
-  outline-width: 2px;
-  outline-color: #2563eb;
+  gap: var(--space-2);
 }
 #items-container[data-density="compact"] .main-row {
   padding: 0.5rem 1rem;

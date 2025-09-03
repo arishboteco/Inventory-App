@@ -93,7 +93,8 @@
   }
 
   .dept-chip {
-    @apply inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600;
+    /* Reuse shared success button styling for consistent look and spacing */
+    @apply btn-success btn-sm inline-flex items-center gap-2;
   }
 
   /* Items list density controls */

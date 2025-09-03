@@ -33,8 +33,8 @@
   .table-sticky thead th {
     @apply sticky top-0 bg-gray-50 z-20 shadow-[0_1px_0_0_#e5e7eb];
   }
-  .table-scroll[data-shadow="true"] .table-sticky thead th {
-    @apply shadow-[0_2px_6px_rgba(0,0,0,0.06)];
+  .table-header-shadow {
+    @apply group-data-[shadow=true]:shadow-[0_2px_6px_rgba(0,0,0,0.06)];
   }
 
   /* Spacing below the filter bar */

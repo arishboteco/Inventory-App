@@ -13,7 +13,7 @@
     {% for proj in projections %}
       {% with data_id='data-'|add:proj.item.item_id|stringformat:"s" %}
       <div>
-        <h2 class="text-h2 mb-2">{{ proj.item.name }}</h2>
+        <h2 class="text-h2 md:text-h2 mb-2">{{ proj.item.name }}</h2>
         <canvas id="chart-{{ proj.item.item_id }}" class="w-full h-64"></canvas>
         {{ proj.history|json_script:data_id }}
       </div>

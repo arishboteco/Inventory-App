@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Django Inventory Management Application",
   "scripts": {
-    "build-css": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify",
+    "build": "mkdir -p static/css && tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify",
     "dev-css": "tailwindcss -i ./static/src/app.css -o ./static/css/app.css --watch",
     "test": "jest"
   },

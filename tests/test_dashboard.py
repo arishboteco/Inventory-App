@@ -1,5 +1,4 @@
 import json
-
 import pytest
 from django.contrib.auth.models import Permission
 from django.urls import reverse
@@ -28,7 +27,7 @@ def test_dashboard_low_stock(client, item_factory, django_user_model):
     client.force_login(user)
     item_factory(name="Foo", reorder_point=10, current_stock=5)
     item_factory(name="Inactive", reorder_point=10, current_stock=5, is_active=False)
-    resp = client.get(reverse("dashboard"))
+    resp = client.get(reverse("root"))
     assert resp.status_code == 200
     assert b"Foo" in resp.content
     assert b"Inactive" not in resp.content
@@ -65,7 +64,7 @@ def test_dashboard_kpis_endpoint(client, item_factory):
 def test_dashboard_has_single_filter_form(client, django_user_model):
     user = django_user_model.objects.create_user(username="u", password="pw")
     client.force_login(user)
-    resp = client.get(reverse("dashboard"))
+    resp = client.get(reverse("root"))
     assert resp.status_code == 200
     assert resp.content.count(b"dashboard-filters") == 1
     assert b'hx-get=""' not in resp.content

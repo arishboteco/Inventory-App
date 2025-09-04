@@ -203,7 +203,7 @@ class ItemsListView(TemplateView):
                 "inline_categories": inline_categories,
                 "categories": categories_val,
                 "subcategories": subcategories_val,
-                "list_url": reverse("dashboard"),
+                "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Inventory",
             }

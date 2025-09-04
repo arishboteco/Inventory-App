@@ -58,7 +58,7 @@ class RecipesListView(TemplateView):
             "recipes_grid": grid_html,
             "q": q,
             "form": RecipeForm(),
-            "list_url": reverse("dashboard"),
+            "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Recipes",
         }
@@ -79,7 +79,7 @@ class RecipesListView(TemplateView):
             "recipes_grid": grid_html,
             "q": q,
             "form": form,
-            "list_url": reverse("dashboard"),
+            "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Recipes",
         }

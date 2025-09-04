@@ -1,82 +1,54 @@
 import logging
+import json
 from datetime import timedelta
-from decimal import Decimal
 
-from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
-from django.core.cache import cache
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.db.models.functions import Coalesce, TruncDate
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.urls import reverse
 
 from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
 from inventory.services import counts, kpis
-from inventory.services.stock_utils import get_low_stock_items
-
 from .viewmodels import DashboardContext
 
 logger = logging.getLogger(__name__)
 
 
 def root_view(request):
-    """Render the home page or login form depending on authentication."""
+    """Render login form or dashboard depending on authentication."""
     logger.debug("User authenticated: %s", request.user.is_authenticated)
     if request.user.is_authenticated:
-        # Optionally bypass cache during tests
-        bypass_cache = getattr(settings, "DISABLE_DASHBOARD_CACHE", False)
-        cache_key = "dashboard_data_v2"
-        data = None if bypass_cache else cache.get(cache_key)
-
-        if data is None:
-            data = {
-                "stock_value": kpis.stock_value_on_hand(),
-                "receipts": kpis.receipts_last_7_days(),
-                "issues": kpis.issues_last_7_days(),
-                "low_stock": kpis.low_stock_count(),
-                "low_stock_items": get_low_stock_items(),
-                "high_price_purchases": kpis.high_price_purchases(Decimal("0.1")),
-                "pending_po_status": kpis.pending_po_status_counts(),
-                "pending_indent_status": kpis.pending_indent_counts(),
-                "item_count": counts.item_count(),
-                "supplier_count": counts.supplier_count(),
-                "pending_po_count": counts.pending_po_count(),
-            }
-            if not bypass_cache:
-                cache.set(cache_key, data, 300)  # Cache for 5 minutes
-
-        return render(request, "core/home.html", data)
+        end = timezone.now().date()
+        start = end - timedelta(days=29)
+        labels, values = _stock_trend_data(start=start, end=end)
+        context = {
+            "item_count": counts.item_count(),
+            "low_stock": kpis.low_stock_count(),
+            "supplier_count": counts.supplier_count(),
+            "pending_indents": sum(kpis.pending_indent_counts().values()),
+            "trend_labels": json.dumps(labels),
+            "trend_values": json.dumps(values),
+            "items": Item.objects.filter(is_active=True),
+            "suppliers": Supplier.objects.filter(is_active=True),
+            "list_url": reverse("root"),
+            "list_title": "Dashboard",
+            "current_title": "Dashboard",
+        }
+        return render(request, "core/dashboard.html", context)
 
     form = AuthenticationForm(request, data=request.POST or None)
-    if request.method == "POST":
-        logger.debug("POST data: %s", request.POST)
-        logger.debug("Form is valid: %s", form.is_valid())
-        if not form.is_valid():
-            logger.debug("Form errors: %s", form.errors)
-        if form.is_valid():
-            user = form.get_user()
-            logger.info("Logging in user: %s", user.username)
-            login(request, user)
-            logger.debug(
-                "User authenticated after login: %s",
-                request.user.is_authenticated,
-            )
-            return redirect("root")
-
-    return render(request, "core/home.html", {"form": form})
+    if request.method == "POST" and form.is_valid():
+        login(request, form.get_user())
+        return redirect("root")
+    return render(request, "core/dashboard.html", {"form": form})
 
 
 def health_check(request):
     return HttpResponse("ok")
-
-
-def dashboard(request):
-    """Render dashboard shell; KPI cards are loaded asynchronously."""
-    labels, values = kpis.stock_trend_last_7_days()
-    context = DashboardContext(labels, values).as_dict()
-    return render(request, "core/dashboard.html", context)
 
 
 def dashboard_kpis(request):

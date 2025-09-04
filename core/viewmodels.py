@@ -40,7 +40,7 @@ class DashboardContext:
             "low_stock": get_low_stock_items(),
             "trend_labels": json.dumps(self.labels),
             "trend_values": json.dumps(self.values),
-            "list_url": reverse("dashboard"),
+            "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Dashboard",
         }

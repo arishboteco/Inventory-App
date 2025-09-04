@@ -306,7 +306,7 @@ psql staging_inventory < backup-YYYYMMDD-HHMMSS.sql
 sudo apt-get install apache2-utils
 
 # Basic load test
-ab -n 1000 -c 10 http://staging-domain/dashboard/
+ab -n 1000 -c 10 http://staging-domain/
 
 # Test API endpoints
 ab -n 500 -c 5 http://staging-domain/api/items/

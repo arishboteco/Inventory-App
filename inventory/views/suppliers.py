@@ -66,7 +66,7 @@ class SuppliersListView(TemplateView):
                 "export_url": reverse("suppliers_table"),
                 "hx_view_name": hx_view_name,
                 "container_id": container_id,
-                "list_url": reverse("dashboard"),
+                "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Suppliers",
             }

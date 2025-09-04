@@ -1,7 +1,7 @@
 {% extends "components/collapsible.html" %}
 {% block title %}Quick Purchase Order{% endblock %}
 {% block content %}
-<form method="post">
+<form method="post" class="space-y-4">
   {% csrf_token %}
   <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
     {% include "components/form_field.html" with field=quick_form.supplier %}

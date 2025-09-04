@@ -3,7 +3,7 @@
   Expects list_url, list_title, current_title, optional class.
   Always starts with a link back to the Inventory Pro dashboard.
 {% endcomment %}
-<div class="{{ class|default:'flex items-center gap-1 text-sm text-gray-500 mb-4' }}">
+<div class="{{ class|default:'flex items-center gap-1 text-label text-gray-500 mb-4' }}">
   <a href="{% url 'root' %}" class="text-primary hover:underline">Inventory Pro</a>
   {% if list_url and list_title and list_title != current_title %}
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -93,10 +93,10 @@ def test_item_detail_includes_supplier_and_movements(client):
     assert tx.transaction_type in content
     assert str(tx.quantity_change) in content
     assert (
-        '<h2 class="text-h2 md:text-lg font-semibold">Supplier History</h2>' in content
+        '<h2 class="text-h2 md:text-h3 font-semibold">Supplier History</h2>' in content
     )
     assert (
-        '<h2 class="text-h2 md:text-lg font-semibold">Stock Movements</h2>' in content
+        '<h2 class="text-h2 md:text-h3 font-semibold">Stock Movements</h2>' in content
     )
 
 

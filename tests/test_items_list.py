@@ -92,8 +92,12 @@ def test_item_detail_includes_supplier_and_movements(client):
     assert supplier.name in content
     assert tx.transaction_type in content
     assert str(tx.quantity_change) in content
-    assert '<h2 class="text-h2 md:text-lg font-semibold">Supplier History</h2>' in content
-    assert '<h2 class="text-h2 md:text-lg font-semibold">Stock Movements</h2>' in content
+    assert (
+        '<h2 class="text-h2 md:text-lg font-semibold">Supplier History</h2>' in content
+    )
+    assert (
+        '<h2 class="text-h2 md:text-lg font-semibold">Stock Movements</h2>' in content
+    )
 
 
 @pytest.mark.django_db
@@ -153,7 +157,7 @@ def test_item_create_partial_departments_multiselect_container(client):
     soup = BeautifulSoup(resp.content, "html.parser")
     root_div = soup.find(
         "div",
-        class_="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-[860px]",
+        class_="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl",
     )
     assert root_div is not None
     container = soup.find("div", {"data-multiselect": "chips"})
@@ -190,4 +194,4 @@ def test_drawer_width(client):
     soup = BeautifulSoup(resp.content, "html.parser")
     drawer = soup.find("div", class_="drawer-panel")
     assert drawer is not None
-    assert "max-w-[860px]" in drawer.get("class")
+    assert "max-w-drawer-xl" in drawer.get("class")

@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const ctx = document.getElementById("stock-trend-chart").getContext("2d");
   const placeholder = document.getElementById("stock-trend-placeholder");
+  const primaryColor = getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-primary")
+    .trim();
   let chart;
 
   async function fetchData() {
@@ -27,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
         {
           label: metric,
           data: data.values,
-          borderColor: "#3b82f6",
+          borderColor: primaryColor,
           fill: false,
           tension: 0.1,
         },

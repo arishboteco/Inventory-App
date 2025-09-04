@@ -1,43 +1,87 @@
 (function () {
+
   function enhance(container) {
     if (!container || container.dataset.enhanced === "1") return;
-    const list = container.querySelector("ul");
+    let list = container.querySelector("ul");
+    // Fallback: Some renderers may output raw checkboxes without a UL
+    if (!list) {
+      const checkboxes = container.querySelectorAll(
+        'input[type="checkbox"].department-checkbox, input[type="checkbox"][name*="departments"]',
+      );
+      if (checkboxes.length) {
+        list = document.createElement("ul");
+        checkboxes.forEach((cb) => {
+          const li = document.createElement("li");
+          const label = cb.closest("label");
+          if (label) {
+            // Move the entire label into the LI for proper semantics
+            li.appendChild(label);
+          } else {
+            // As a fallback, append the checkbox and its following text node
+            li.appendChild(cb);
+            if (cb.nextSibling) li.appendChild(cb.nextSibling);
+          }
+          list.appendChild(li);
+        });
+        container.appendChild(list);
+      }
+    }
     if (!list) return;
 
     container.dataset.enhanced = "1";
     container.classList.add("relative");
 
-    // Build search input
-    const searchWrap = document.createElement("div");
-    searchWrap.className =
-      "chips-search col-span-full w-full flex flex-wrap gap-2";
-    const search = document.createElement("input");
-    search.type = "text";
-    search.placeholder = "Search departments…";
-    search.className =
-      "block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary";
-    searchWrap.appendChild(search);
+    // Ensure the list spans full width and lays out items responsively
+    // This prevents the UL from squeezing into a single grid column when the container uses grid
+  list.classList.add(
+      "col-span-full",
+      "w-full",
+      "flex",
+      "flex-wrap",
+      "gap-2",
+      "max-h-52",
+      "overflow-y-auto",
+      "pr-1",
+    );
 
     // Build chips area
     const chips = document.createElement("div");
     chips.className = "chips col-span-full w-full flex flex-wrap gap-2";
 
-    container.prepend(chips);
-    container.prepend(searchWrap);
+  container.prepend(chips);
 
     function updateChips() {
       chips.innerHTML = "";
       const checked = list.querySelectorAll('input[type="checkbox"]:checked');
       checked.forEach((cb) => {
         const li = cb.closest("li");
-        const label = li ? li.textContent.trim() : cb.value;
+        const labelNode = li ? li.querySelector("label") : null;
+        const label = labelNode ? labelNode.textContent.trim() : (li ? li.textContent.trim() : cb.value);
         const chip = document.createElement("button");
         chip.type = "button";
-        chip.className = "dept-chip";
+        chip.className = [
+          "inline-flex",
+          "items-center",
+          "gap-2",
+          "px-3",
+          "py-1.5",
+          "text-sm",
+          "font-medium",
+          "rounded-full",
+          "bg-blue-600",
+          "text-white",
+          "hover:bg-blue-700",
+          "transition",
+          "focus:outline-none",
+          "focus:ring-2",
+          "focus:ring-primary",
+          "disabled:opacity-50",
+          "disabled:cursor-not-allowed",
+        ].join(" ");
         chip.setAttribute("aria-label", `Remove ${label}`);
 
         // Display label and an "×" icon that's hidden from assistive tech
-        chip.append(label + " ");
+    chip.append(label + " ");
         const removeIcon = document.createElement("span");
         removeIcon.setAttribute("aria-hidden", "true");
         removeIcon.textContent = "×";
@@ -56,38 +100,78 @@
       });
     }
 
-    function filterList(q) {
-      const items = list.querySelectorAll("li");
-      const qq = q.toLowerCase();
-      items.forEach((li) => {
-        const text = li.textContent.toLowerCase();
-        const shouldHide = !text.includes(qq);
-        li.classList.toggle("hidden", shouldHide);
-        li.setAttribute("aria-hidden", shouldHide ? "true" : "false");
-      });
-    }
+  // Search removed per design: all options remain visible
 
     // Layout now uses Tailwind utility classes applied directly; no extra sizing here.
 
-    list.querySelectorAll("li").forEach((li) => {
-      li.classList.add(
-        "flex",
-        "items-center",
-        "gap-2",
-        "p-2",
-        "border",
-        "rounded",
-      );
-    });
+    function styleOptions() {
+      list.querySelectorAll("li").forEach((li) => {
+        li.classList.add("p-0", "border-0", "rounded");
+        const label = li.querySelector("label");
+        const cb = li.querySelector('input[type="checkbox"]');
+        if (!label || !cb) return;
+
+        // Make label look like a chip-like toggle sized to its text
+        label.classList.add(
+          "inline-flex",
+          "items-center",
+          "gap-2",
+          "px-3",
+          "py-2",
+          "rounded-full",
+          "border",
+          "transition",
+          "cursor-pointer",
+          "select-none",
+          "whitespace-nowrap",
+        );
+
+        // Hide the native checkbox visually but keep it accessible
+        cb.classList.add("sr-only");
+
+        const selectedClasses = [
+          "bg-blue-600",
+          "text-white",
+          "border-blue-600",
+        ];
+        const unselectedClasses = [
+          "bg-blue-50",
+          "text-blue-700",
+          "border-blue-200",
+        ];
+
+        if (cb.checked) {
+          label.classList.remove(...unselectedClasses);
+          label.classList.add(...selectedClasses);
+          label.setAttribute("aria-checked", "true");
+        } else {
+          label.classList.remove(...selectedClasses);
+          label.classList.add(...unselectedClasses);
+          label.setAttribute("aria-checked", "false");
+        }
+
+        // Keyboard toggle support on label
+        label.tabIndex = 0;
+        label.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            cb.click();
+          }
+        });
+      });
+    }
+
+    // Initial styling
+    styleOptions();
 
     // Hook events
-    list.addEventListener("change", updateChips);
-    search.addEventListener("input", (e) => filterList(e.target.value));
+  list.addEventListener("change", () => {
+      updateChips();
+      styleOptions();
+    });
 
     // Initialize
     updateChips();
-    // Focus search for quick keyboard access
-    search.focus();
   }
 
   function init(root = document) {

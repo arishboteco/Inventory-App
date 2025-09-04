@@ -42,7 +42,8 @@
     if (!root || !content) return;
     lastFocused = document.activeElement;
     content.innerHTML = html;
-    if (window.initMultiselectChips) window.initMultiselectChips(content);
+  if (window.initMultiselectChips) window.initMultiselectChips(content);
+  if (window.initPredictiveDropdowns) window.initPredictiveDropdowns(content);
     setAria(root, content);
     root.classList.remove("hidden");
     trapFocus(root);
@@ -53,7 +54,8 @@
     if (!root || !content) return;
     lastFocused = document.activeElement;
     content.innerHTML = `<div class="drawer ${side}">${html}</div>`;
-    if (window.initMultiselectChips) window.initMultiselectChips(content);
+  if (window.initMultiselectChips) window.initMultiselectChips(content);
+  if (window.initPredictiveDropdowns) window.initPredictiveDropdowns(content);
     setAria(root, content);
     root.classList.remove("hidden");
     trapFocus(root);

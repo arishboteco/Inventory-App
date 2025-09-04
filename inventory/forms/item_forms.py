@@ -147,8 +147,23 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             self.fields["unit_id"].initial = self.instance.unit_id
             if self.instance.category_id:
                 self.fields["category_id"].initial = self.instance.category_id
-        else:
-            self.fields["unit_id"].initial = 55
+
+        # On create (unbound form), avoid pre-filling values so placeholders show
+        if not self.is_bound and not self.instance.pk:
+            # Do not set a default unit/category
+            self.fields["unit_id"].initial = None
+            self.fields["category_id"].initial = None
+            # Clear numeric defaults to show placeholders
+            for f in [
+                "initial_purchase_price",
+                "minimum_order_qty",
+                "lead_time_days",
+                "reorder_point",
+                "current_stock",
+            ]:
+                if f in self.fields:
+                    # Using empty string ensures the input renders blank
+                    self.initial[f] = ""
 
         self.apply_styling()
 

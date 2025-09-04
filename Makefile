@@ -46,3 +46,8 @@ changelog-show:
 # Ensure the dev server is running on port 8000
 up:
 	bash scripts/ensure-port-8000.sh 8000
+
+.PHONY: dev
+# Run Django server and CSS watcher together
+dev:
+	bash scripts/dev.sh

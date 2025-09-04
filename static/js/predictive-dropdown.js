@@ -6,7 +6,9 @@
     const textInput = document.createElement("input");
     textInput.type = "text";
     textInput.className = select.className.replace("predictive", "").trim();
-    textInput.placeholder = "Type to search...";
+  // Use select's placeholder/empty_label if present, else a generic hint
+  const selectPlaceholder = select.getAttribute("placeholder") || select.getAttribute("data-placeholder");
+  textInput.placeholder = selectPlaceholder || "Type to search...";
     const textId = select.id ? select.id + "_text" : "";
     if (textId) {
       textInput.id = textId;
@@ -25,17 +27,25 @@
     dropdown.style.top = "100%";
     dropdown.style.left = "0";
 
-    const options = Array.from(select.options).map((opt) => ({
+    const rawOptions = Array.from(select.options).map((opt) => ({
       text: opt.text,
       value: opt.value,
       selected: opt.selected,
     }));
 
+    const emptyOption = rawOptions.find((o) => !o.value);
+    const options = rawOptions.filter((o) => o.value !== "");
+
     // Set initial value if there's a selected option
-    const selectedOption = options.find((opt) => opt.selected);
+    const selectedOption = rawOptions.find(
+      (opt) => opt.selected && opt.value !== "",
+    );
     if (selectedOption) {
       textInput.value = selectedOption.text;
       hiddenInput.value = selectedOption.value;
+    } else {
+      // If only the empty option is selected, leave input empty so placeholder shows
+      hiddenInput.value = "";
     }
 
     function renderOptions(filteredOptions) {
@@ -114,6 +124,12 @@
       }
     });
 
+    // Derive placeholder: prefer attribute, then data-placeholder, then empty option text
+    const attrPlaceholder =
+      select.getAttribute("placeholder") || select.getAttribute("data-placeholder");
+    const resolvedPlaceholder = attrPlaceholder || (emptyOption && emptyOption.text) || textInput.placeholder;
+    textInput.placeholder = resolvedPlaceholder;
+
     if (select.id) {
       const label = document.querySelector(`label[for="${select.id}"]`);
       if (label) label.setAttribute("for", textInput.id);
@@ -126,7 +142,13 @@
     select.replaceWith(container);
   }
 
+  // Expose a global initializer so dynamically injected content can be upgraded
+  window.initPredictiveDropdowns = function (root) {
+    const scope = root || document;
+    scope.querySelectorAll("select.predictive").forEach(upgradeSelect);
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("select.predictive").forEach(upgradeSelect);
+    window.initPredictiveDropdowns();
   });
 })();

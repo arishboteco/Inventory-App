@@ -146,9 +146,10 @@
       </td>
       <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.base_unit|default:"—" }}</td>
       <td data-col="stock" class="px-4 py-2 whitespace-normal break-words">
-        {% if item.current_stock is not None %} {{ item.current_stock }} {% else
-        %}
-        <span class="text-gray-400">—</span>
+        {% if item.current_stock is not None %}
+          {{ item.current_stock|floatformat:0 }}
+        {% else %}
+          <span class="text-gray-400">—</span>
         {% endif %}
       </td>
       <td data-col="stock_status" class="px-4 py-2 whitespace-normal break-words">

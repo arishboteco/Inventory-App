@@ -56,7 +56,6 @@
     row.dataset.origHtml = row.innerHTML; // for cancel/restore
 
     const nameCell = row.querySelector('td[data-col="name"]');
-    const ropCell = row.querySelector('td[data-col="rop"]');
     const categoryCell = row.querySelector('td[data-col="category"]');
     const unitCell = row.querySelector('td[data-col="unit"]');
     const stockCell = row.querySelector('td[data-col="stock"]');
@@ -66,8 +65,6 @@
     const currentName = (
       nameCell?.querySelector(".font-medium")?.textContent || ""
     ).trim();
-    const ropText = (ropCell?.textContent || "").trim();
-    const currentRop = /^[-+]?[0-9]*\.?[0-9]+$/.test(ropText) ? ropText : "";
     const currentCategory = (categoryCell?.textContent || "")
       .trim()
       .split("→")[0]
@@ -118,7 +115,6 @@
     }
     if (stockCell)
       stockCell.innerHTML = `<input type="number" step="0.01" name="current_stock" class="${INPUT_CLASSES}" value="${escapeHtml(currentStock)}" placeholder="0">`;
-    ropCell.innerHTML = `<input type="number" step="0.01" name="reorder_point" class="${INPUT_CLASSES}" value="${escapeHtml(currentRop)}">`;
     statusCell.innerHTML = `<label class="inline-flex items-center gap-2"><input type="checkbox" name="is_active" ${isActive ? "checked" : ""} class="${CHECKBOX_CLASSES}"><span>Active</span></label>`;
     actionsCell.innerHTML = `<div class="flex items-center gap-1"><button type="button" data-action="save-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Save</button><button type="button" data-action="cancel-row" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</button></div>`;
   }
@@ -134,7 +130,6 @@
     if (!row) return;
     const itemId = row.dataset.itemId;
     const name = row.querySelector('input[name="name"]')?.value || "";
-    const rop = row.querySelector('input[name="reorder_point"]')?.value || "";
     const categoryId =
       row.querySelector('select[name="category_id"]')?.value || "";
     const unitId = row.querySelector('select[name="unit_id"]')?.value || "";
@@ -145,7 +140,6 @@
 
     const fd = new FormData();
     fd.append("name", name);
-    if (rop !== "") fd.append("reorder_point", rop);
     if (categoryId !== "") fd.append("category_id", categoryId);
     if (unitId !== "") fd.append("unit_id", unitId);
     if (currentStock !== "") fd.append("current_stock", currentStock);
@@ -168,8 +162,6 @@
             'td[data-col="name"] .font-medium',
           );
           if (nameCell && name) nameCell.textContent = name;
-          const ropCell = row.querySelector('td[data-col="rop"]');
-          if (ropCell && rop !== "") ropCell.textContent = rop;
           const categoryCell = row.querySelector('td[data-col="category"]');
           if (categoryCell && categoryId !== "") {
             const sel = document.getElementById("category-id-select-template");
@@ -198,8 +190,10 @@
           const stockStatusCell = row.querySelector(
             'td[data-col="stock_status"]',
           );
-          if (stockStatusCell)
+          if (stockStatusCell) {
+            const rop = row.getAttribute("data-rop") || "";
             stockStatusCell.innerHTML = renderStockStatus(currentStock, rop);
+          }
           const statusCell = row.querySelector('td[data-col="status"]');
           if (statusCell) {
             statusCell.innerHTML = active

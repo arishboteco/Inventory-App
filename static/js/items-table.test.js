@@ -235,7 +235,6 @@ describe("inline row edit", () => {
       <table>
         <tr class="item-row" data-item-id="1" data-category-id="2" data-unit-id="3">
           <td data-col="name"><span class="font-medium">Item</span></td>
-          <td data-col="rop">5</td>
           <td data-col="category">Cat</td>
           <td data-col="unit">Unit</td>
           <td data-col="stock">10</td>

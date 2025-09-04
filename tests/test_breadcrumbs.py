@@ -28,4 +28,4 @@ def test_dashboard_page_displays_breadcrumb(client, django_user_model):
     html = resp.content.decode()
     assert "Inventory Pro" in html
     assert "Dashboard" in html
-    assert "flex items-center gap-1 text-sm text-gray-500 mb-4" in html
+    assert "flex items-center gap-1 text-label text-gray-500 mb-4" in html

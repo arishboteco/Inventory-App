@@ -1,6 +1,6 @@
 {% load form_tags %}
 <div class="{% if container_class %}{{ container_class }} {% endif %}space-y-1">
-  <label for="{{ field.id_for_label }}" class="block mb-1 text-sm font-medium">{{ field.label }}</label>
+  <label for="{{ field.id_for_label }}" class="block mb-1 text-label font-medium">{{ field.label }}</label>
   {% if field.field.widget.attrs.class %}
     {{ field }}
   {% elif field.field.widget.input_type == "checkbox" %}
@@ -12,10 +12,10 @@
   {% endif %}
   {% include "forms/feedback.html" %}
   {% if field.help_text %}
-    <p class="text-sm text-gray-500">{{ field.help_text }}</p>
+    <p class="text-label text-gray-500">{{ field.help_text }}</p>
   {% endif %}
   {% if field.errors %}
-    <ul class="text-sm text-red-600 list-disc pl-5">
+    <ul class="text-label text-red-600 list-disc pl-5">
       {% for error in field.errors %}
         <li>{{ error }}</li>
       {% endfor %}

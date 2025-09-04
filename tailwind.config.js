@@ -89,9 +89,6 @@ module.exports = {
         "screen-90": "90vh",
       },
       fontSize: {
-        base: ["clamp(1rem, 0.5vw + 0.9rem, 1.25rem)", { lineHeight: "1.5" }],
-        h1: ["clamp(1.6rem, 1vw + 1.3rem, 2.5rem)", { lineHeight: "1.25" }],
-        h2: ["clamp(1.3rem, 0.75vw + 1.1rem, 2rem)", { lineHeight: "1.3" }],
         badge: ["clamp(0.8rem, 0.3vw + 0.7rem, 1rem)", { lineHeight: "1" }],
       },
       fontFamily: {
@@ -103,5 +100,33 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-fluid-type"), require("@tailwindcss/forms")],
+  plugins: [
+    require("tailwindcss-fluid-type")({
+      settings: {
+        fontSizeMin: 1,
+        fontSizeMax: 1.25,
+        ratioMin: 1.2,
+        ratioMax: 1.333,
+        screenMin: 20,
+        screenMax: 96,
+        unit: "rem",
+        prefix: "",
+        extendValues: true,
+      },
+      values: {
+        xs: [-2, 1.6],
+        sm: [-1, 1.6],
+        base: [0, 1.6],
+        lg: [1, 1.6],
+        xl: [2, 1.4],
+        h1: [5, 1.2],
+        h2: [4, 1.3],
+        h3: [3, 1.4],
+        label: [-1, 1.6],
+        body: [0, 1.6],
+        caption: [-2, 1.6],
+      },
+    }),
+    require("@tailwindcss/forms"),
+  ],
 };

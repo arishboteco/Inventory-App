@@ -1,6 +1,6 @@
 <form id="filters" class="flex flex-wrap gap-4 items-end mb-0" method="get">
     <div class="flex flex-col">
-      <label for="filter-q" class="text-sm font-medium">{{ search_label|default:'Search' }}</label>
+      <label for="filter-q" class="text-label font-medium">{{ search_label|default:'Search' }}</label>
       <input
         id="filter-q"
         type="text"
@@ -18,7 +18,7 @@
     </div>
     {% for f in filters %}
       <div class="flex flex-col">
-        <label for="{{ f.id|default:f.name }}" class="text-sm font-medium">{{ f.label|default:f.name|capfirst }}</label>
+        <label for="{{ f.id|default:f.name }}" class="text-label font-medium">{{ f.label|default:f.name|capfirst }}</label>
         <select
           name="{{ f.name }}"
           class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
@@ -40,8 +40,8 @@
     {% endfor %}
     {% if export_url %}
       <div class="flex flex-col">
-        <span class="text-sm font-medium">&nbsp;</span>
-        <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary w-full">{{ export_label|default:'Export' }}</button>
+        <span class="text-label font-medium">&nbsp;</span>
+        <button type="submit" {% if export_param_name and export_param_value %}name="{{ export_param_name }}" value="{{ export_param_value }}"{% endif %} formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary w-full">{{ export_label|default:'Export' }}</button>
       </div>
     {% endif %}
   {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
@@ -50,7 +50,7 @@
   {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
   <noscript>
     <div class="mt-2">
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Apply</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Apply</button>
     </div>
   </noscript>
 </form>

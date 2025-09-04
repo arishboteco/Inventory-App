@@ -8,10 +8,10 @@
     @apply bg-body text-bodyText font-sans;
   }
 
-  /* Base link styles: underlined with primary color.
+  /* Base link styles: underlined with primary color and visible focus ring.
      Buttons use utility classes to remove the underline. */
   a {
-    @apply text-primary underline visited:text-purple-900 hover:text-linkHover focus:text-linkHover;
+    @apply text-primary underline visited:text-purple-900 hover:text-linkHover focus:text-linkHover focus:outline-none focus:ring-2 focus:ring-primary;
   }
 }
 
@@ -31,7 +31,7 @@
 
   .dept-chip {
     /* Reuse success styling for consistent look and spacing */
-    @apply inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-success text-white hover:bg-success-dark focus:ring-2 focus:ring-success gap-2;
+    @apply inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-success text-white hover:bg-success-dark focus:ring-2 focus:ring-primary gap-2;
   }
 
   /* Legacy styles for compatibility */
@@ -52,7 +52,7 @@
   form input:not([type="checkbox"]):not([type="radio"]):focus,
   form select:focus,
   form textarea:focus {
-    @apply focus:outline-none focus:border-primary focus:shadow-[0_1px_3px_0_rgba(0,0,0,0.1)];
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:shadow-[0_1px_3px_0_rgba(0,0,0,0.1)];
   }
 
   /* Improved datalist styling for predictive dropdowns */
@@ -66,11 +66,6 @@
 
   input[list]::after {
     @apply content-['▼'] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-500;
-  }
-
-  /* Top navigation group focus */
-  .top-nav-group button:focus {
-    @apply outline-none ring-2 ring-blue-500;
   }
 
   /* Emoji icon sizing */
@@ -91,4 +86,3 @@
     @apply !animate-none !transition-none scroll-auto;
   }
 }
-

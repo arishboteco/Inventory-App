@@ -14,7 +14,7 @@
             :aria-expanded="open.toString()"
             @click="open=!open"
             @keydown.escape.window="open=false"
-            class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {% icon 'squares-2x2' 'h-5 w-5 text-white' variant='solid' size=20 aria_label='' %}
           </button>
@@ -30,7 +30,7 @@
             <div class="border-t border-gray-100 first:border-t-0 top-nav-group" data-nav-group>
               <button
                 type="button"
-                class="w-full flex justify-between items-center px-4 py-2 text-sm font-semibold text-gray-700 focus:outline-none"
+                class="w-full flex justify-between items-center px-4 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-expanded="false"
               >
                 <span>{{ group.category }}</span>
@@ -40,7 +40,7 @@
                 {% for link in group.links %}
                 <a
                   href="{{ link.url }}"
-                  class="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  class="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100 no-underline focus:outline-none focus:ring-2 focus:ring-primary"
                   role="menuitem"
                 >{{ link.title }}</a>
                 {% endfor %}
@@ -64,7 +64,7 @@
             <label for="global-search" class="sr-only">Search items and orders</label>
             <input id="global-search" type="text"
                    placeholder="Search items, orders..."
-                   class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                   class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               {% icon 'magnifying-glass' 'h-5 w-5 text-gray-400' aria_label='' %}
             </div>
@@ -72,7 +72,7 @@
         </div>
 
         <!-- Notifications -->
-        <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 relative" aria-label="View notifications">
+        <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 relative focus:outline-none focus:ring-2 focus:ring-primary" aria-label="View notifications">
           {% icon 'bell' 'h-6 w-6' aria_label='' %}
           <!-- Notification badge -->
           <span class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
@@ -82,7 +82,7 @@
         <!-- User Menu -->
         {% if user.is_authenticated %}
         <div class="relative">
-          <button class="flex items-center space-x-3 text-sm rounded-lg p-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button class="flex items-center space-x-3 text-sm rounded-lg p-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary">
             <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
               <span class="text-blue-600 font-medium">{% if user.first_name %}{{ user.first_name.0|upper }}{% elif user.username %}{{ user.username.0|upper }}{% else %}?{% endif %}</span>
             </div>
@@ -94,7 +94,7 @@
 
         {% if user.is_authenticated %}
         <!-- Mobile menu button -->
-        <button class="md:hidden p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100" aria-label="Open mobile menu">
+        <button class="md:hidden p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Open mobile menu">
           {% icon 'bars-3' 'h-6 w-6' aria_label='' %}
         </button>
         {% endif %}

@@ -94,8 +94,9 @@ class SmartFormManager {
     const progressBar = document.createElement("div");
     progressBar.id = "form-progress";
     progressBar.className = "mb-4 bg-gray-200 rounded-full h-2";
+    progressBar.style.setProperty("--progress", "0%");
     progressBar.innerHTML =
-      '<div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>';
+      '<div class="bg-blue-600 h-2 rounded-full transition-all duration-300 w-0" style="width: var(--progress)"></div>';
 
     form.insertBefore(progressBar, form.firstChild);
 
@@ -126,9 +127,9 @@ class SmartFormManager {
     const optionalProgress = (filledAll / allFields.length) * 40; // 40% for all fields
     const totalProgress = Math.min(100, requiredProgress + optionalProgress);
 
-    const progressBar = document.querySelector("#form-progress .bg-blue-600");
+    const progressBar = document.getElementById("form-progress");
     if (progressBar) {
-      progressBar.style.width = `${totalProgress}%`;
+      progressBar.style.setProperty("--progress", `${totalProgress}%`);
     }
   }
 }

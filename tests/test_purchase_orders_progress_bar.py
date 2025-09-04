@@ -24,5 +24,6 @@ def test_purchase_order_progress_bar_renders_width():
         "inventory/purchase_orders/_table.html",
         {"orders": [po], "page_obj": page_obj, "querystring": ""},
     )
-    assert 'style="width: 42%"' in html
-    assert "--progress" not in html
+    assert "--progress: 42%" in html
+    assert "width: var(--progress)" in html
+    assert 'style="width: 42%"' not in html

@@ -45,12 +45,12 @@
   /* Form component styles */
   /* Form label styles */
   form label {
-    @apply block mb-2;
+    @apply block mb-2 leading-normal;
   }
   form input:not([type="checkbox"]):not([type="radio"]),
   form select,
   form textarea {
-    @apply font-sans border border-form-border bg-form-bg text-form-text p-2 rounded w-full;
+    @apply font-sans border border-form-border bg-form-bg text-form-text px-3 py-2.5 rounded w-full leading-normal;
   }
   form input:not([type="checkbox"]):not([type="radio"]):focus,
   form select:focus,

@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLEANUP: Remove undefined item_duplicate URL references from templates - fixed template errors causing view failures
 - Ensure items list content aligns directly beneath the filter bar using dynamic padding instead of margin offsets
 - Use `hidden` utility class with Tailwind safelist for multiselect chip filtering to improve accessibility and build stability
+- Prevent vertical overflow on large viewports by increasing form field padding and enforcing consistent `leading-normal` line-height
 
 ### Added
 

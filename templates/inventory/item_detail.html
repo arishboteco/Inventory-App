@@ -14,7 +14,7 @@
       {% if item.is_active %}Archive{% else %}Activate{% endif %}
     </button>
   </form>
-  <a href="{% url 'item_delete' item.item_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-danger">Delete</a>
+  <a href="{% url 'item_delete' item.item_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Delete</a>
 {% endblock %}
 
 {% block detail_table %}

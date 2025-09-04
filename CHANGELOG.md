@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Render deployment uses two Gunicorn workers by default to limit concurrent connections
 - Example environment files document direct Supabase hosts and optional pooler parameters
 - Simplified purchase order progress bar to set width directly with inline style, removing custom CSS variable
+- Reduced fluid typography range and heading scale for more balanced text across viewports
 
 - Replaced `.page-title`, `.page-subtitle`, and `.nav-icon` component classes with inline Tailwind utilities.
 - Replaced `.badge` and `.alert` component classes with inline Tailwind utility sets.

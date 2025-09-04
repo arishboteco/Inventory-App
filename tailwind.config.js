@@ -103,10 +103,10 @@ module.exports = {
   plugins: [
     require("tailwindcss-fluid-type")({
       settings: {
-        fontSizeMin: 1,
-        fontSizeMax: 1.25,
-        ratioMin: 1.2,
-        ratioMax: 1.333,
+        fontSizeMin: 0.875,
+        fontSizeMax: 1.125,
+        ratioMin: 1.15,
+        ratioMax: 1.2,
         screenMin: 20,
         screenMax: 96,
         unit: "rem",
@@ -119,9 +119,9 @@ module.exports = {
         base: [0, 1.6],
         lg: [1, 1.6],
         xl: [2, 1.4],
-        h1: [5, 1.2],
-        h2: [4, 1.3],
-        h3: [3, 1.4],
+        h1: [3, 1.25],
+        h2: [2, 1.25],
+        h3: [1, 1.3],
         label: [-1, 1.6],
         body: [0, 1.6],
         caption: [-2, 1.6],

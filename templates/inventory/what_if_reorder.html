@@ -21,6 +21,7 @@
     {% endfor %}
   </div>
   <script>
+  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
   {% for proj in projections %}
     const data{{ proj.item.item_id }} = JSON.parse(document.getElementById('data-{{ proj.item.item_id }}').textContent);
     const ctx{{ proj.item.item_id }} = document.getElementById('chart-{{ proj.item.item_id }}').getContext('2d');
@@ -31,7 +32,7 @@
         datasets: [{
           label: 'Stock',
           data: data{{ proj.item.item_id }},
-          borderColor: '#3b82f6',
+          borderColor: primaryColor,
           fill: false,
           tension: 0.1
         }]

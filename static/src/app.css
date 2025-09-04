@@ -4,6 +4,9 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-primary: theme("colors.primary");
+  }
   body {
     @apply bg-body text-bodyText font-sans;
   }
@@ -21,7 +24,7 @@
     /* Removed fixed height and scroll behavior to allow full-page scrolling */
   }
   .table-sticky thead th {
-    @apply sticky top-0 bg-gray-50 z-20 shadow-[0_1px_0_0_#e5e7eb];
+    @apply sticky top-0 bg-gray-50 z-20 border-b border-border;
   }
 
   /* Spacing below the filter bar */
@@ -70,7 +73,7 @@
 
   /* Emoji icon sizing */
   .emoji-icon {
-    @apply text-[18px] leading-none inline-block;
+    @apply text-lg leading-none inline-block;
   }
 }
 

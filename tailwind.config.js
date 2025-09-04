@@ -76,6 +76,17 @@ module.exports = {
         4: "1rem",
         6: "1.5rem",
         8: "2rem",
+        9.5: "2.375rem",
+        30: "7.5rem",
+      },
+      maxWidth: {
+        "drawer-sm": "30rem",
+        "drawer-md": "32.5rem",
+        "drawer-lg": "45rem",
+        "drawer-xl": "53.75rem",
+      },
+      maxHeight: {
+        "screen-90": "90vh",
       },
       fontSize: {
         base: ["clamp(1rem, 0.5vw + 0.9rem, 1.25rem)", { lineHeight: "1.5" }],

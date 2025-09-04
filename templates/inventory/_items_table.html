@@ -1,7 +1,7 @@
 {% load icon_tags category_tags %}
 <!-- prettier-ignore -->
 <table
-  class="table w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky"
+  class="table w-full table-auto bg-white border border-gray-200 rounded-lg table-sticky"
   id="items-table"
   data-sortable
 >
@@ -12,7 +12,7 @@
       </th>
       <th
         scope="col"
-        class="sticky z-10 px-4 py-2 font-semibold"
+        class="sticky z-10 px-4 py-2 font-semibold min-w-[200px]"
         data-col="name"
         aria-sort="none"
       >
@@ -22,7 +22,7 @@
       </th>
       <th
         scope="col"
-        class="sticky z-10 px-4 py-2 font-semibold"
+        class="sticky z-10 px-4 py-2 font-semibold min-w-[150px]"
         data-col="category"
         aria-sort="none"
       >
@@ -112,7 +112,10 @@
           data-action="select-item"
         />
       </td>
-      <td data-col="name" class="px-4 py-2 whitespace-normal break-words">
+      <td
+        data-col="name"
+        class="px-4 py-2 whitespace-normal break-words min-w-[200px]"
+      >
         <div class="flex items-start gap-2">
           <button
             type="button"
@@ -126,7 +129,7 @@
           </button>
           <div>
             <div
-              class="font-medium text-gray-900"
+              class="font-medium text-gray-900 cell-content"
               id="item-title-{{ item.item_id }}"
             >
               <a
@@ -141,7 +144,10 @@
           </div>
         </div>
       </td>
-      <td data-col="category" class="px-4 py-2 whitespace-normal break-words">
+      <td
+        data-col="category"
+        class="px-4 py-2 min-w-[150px] cell-content"
+      >
         {% format_category item True %}
       </td>
       <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.base_unit|default:"—" }}</td>

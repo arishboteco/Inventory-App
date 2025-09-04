@@ -740,6 +740,11 @@
     line-height: 1;
     display: inline-block;
   }
+
+  /* Table cell overflow handling */
+  .cell-content {
+    @apply truncate break-words;
+  }
 }
 
 @layer utilities {

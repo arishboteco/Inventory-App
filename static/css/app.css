@@ -951,6 +951,12 @@ input[list]:after {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(59 130 246 / var(--tw-ring-opacity, 1));
 }
+.cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: break-word;
+}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1245,6 +1251,12 @@ input[list]:after {
   width: -moz-max-content;
   width: max-content;
 }
+.min-w-\[150px\] {
+  min-width: 150px;
+}
+.min-w-\[200px\] {
+  min-width: 200px;
+}
 .max-w-3xl {
   max-width: 48rem;
 }
@@ -1289,9 +1301,6 @@ input[list]:after {
 }
 .table-auto {
   table-layout: auto;
-}
-.table-fixed {
-  table-layout: fixed;
 }
 .translate-x-full {
   --tw-translate-x: 100%;

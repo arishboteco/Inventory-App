@@ -1,5 +1,6 @@
 module.exports = {
   content: ["./templates/**/*.{html,js}", "./static/js/**/*.js"],
+  safelist: ["hidden"],
   theme: {
     container: {
       center: true,

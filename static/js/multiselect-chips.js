@@ -61,7 +61,9 @@
       const qq = q.toLowerCase();
       items.forEach((li) => {
         const text = li.textContent.toLowerCase();
-        li.style.display = text.includes(qq) ? "" : "none";
+        const shouldHide = !text.includes(qq);
+        li.classList.toggle("hidden", shouldHide);
+        li.setAttribute("aria-hidden", shouldHide ? "true" : "false");
       });
     }
 

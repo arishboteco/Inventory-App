@@ -19,6 +19,8 @@ def test_items_table_header_top_zero_and_structure():
     assert not re.search(r"<table[^>]*>\s*<tr", table)
     assert "data-sortable" in table
 
+    assert 'data-col="rop"' not in tpl
+
     ths = re.findall(r"<th[^>]*>.*?</th>", header, re.DOTALL)
     assert "data-sort" not in ths[0]
     assert "data-sort" not in ths[-1]

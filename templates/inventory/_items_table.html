@@ -63,20 +63,10 @@
       <th
         scope="col"
         class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="rop"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col6">
-          ROP<span class="ml-1">⇅</span>
-        </button>
-      </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
         data-col="departments"
         aria-sort="none"
       >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col7">
+        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col6">
           Departments<span class="ml-1">⇅</span>
         </button>
       </th>
@@ -86,7 +76,7 @@
         data-col="status"
         aria-sort="none"
       >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col8">
+        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col7">
           Status<span class="ml-1">⇅</span>
         </button>
       </th>
@@ -102,6 +92,7 @@
       data-item-id="{{ item.item_id }}"
       data-unit-id="{{ item.unit_id }}"
       data-category-id="{{ item.category_id }}"
+      data-rop="{{ item.reorder_point|default:'' }}"
     >
       <td class="px-4 py-2 whitespace-normal break-words">
         <input
@@ -167,7 +158,6 @@
           {% endif %}
         </div>
       </td>
-      <td data-col="rop" class="px-4 py-2 whitespace-normal break-words">{{ item.reorder_point|default:"—" }}</td>
       <td data-col="departments" class="px-4 py-2 whitespace-normal break-words">
         {% if item.departments.all %} {% for dept in item.departments.all %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{{ dept.name }}</span>

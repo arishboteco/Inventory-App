@@ -421,7 +421,7 @@ def history_reports(request):
         "chart_labels": chart_labels,
         "chart_data": chart_data,
         "tabs": tabs,
-        "list_url": reverse("dashboard"),
+        "list_url": reverse("root"),
         "list_title": "Dashboard",
         "current_title": "Reports",
     }

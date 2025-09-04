@@ -81,7 +81,7 @@ class PurchaseOrdersListView(TemplateView):
                 "querystring": querystring,
                 "sortable": True,
                 "quick_form": quick_form,
-                "list_url": reverse("dashboard"),
+                "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Orders",
             }

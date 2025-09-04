@@ -20,7 +20,7 @@ from django.templatetags.static import static
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
-from core.views import dashboard, dashboard_kpis, health_check, root_view
+from core.views import dashboard_kpis, health_check, root_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -38,8 +38,7 @@ urlpatterns = [
         name="login",
     ),
     path("", root_view, name="root"),
-    path("dashboard/", dashboard, name="dashboard"),
-    path("dashboard/kpis/", dashboard_kpis, name="dashboard-kpis"),
+    path("kpis/", dashboard_kpis, name="dashboard-kpis"),
     path("healthz", health_check, name="health-check"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("", include("core.urls")),

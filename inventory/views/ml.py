@@ -44,7 +44,7 @@ def ml_dashboard(request):
         "inventory/ml_dashboard.html",
         {
             "results": results,
-            "list_url": reverse("dashboard"),
+            "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "ML Dashboard",
         },

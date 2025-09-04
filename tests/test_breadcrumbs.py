@@ -23,7 +23,7 @@ def test_breadcrumb_component_includes_root(django_user_model):
 def test_dashboard_page_displays_breadcrumb(client, django_user_model):
     user = django_user_model.objects.create_user(username="u", password="pw")
     client.force_login(user)
-    resp = client.get(reverse("dashboard"))
+    resp = client.get(reverse("root"))
     assert resp.status_code == 200
     html = resp.content.decode()
     assert "Inventory Pro" in html

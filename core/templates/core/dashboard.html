@@ -1,81 +1,91 @@
-{% extends "components/list_layout.html" %}
+{% extends "_base.html" %}
 {% load static %}
 
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
-
-{% block page_title %}Dashboard – Inventory App{% endblock %}
-{% block page_heading %}Dashboard{% endblock %}
-
-{% block primary_actions %}
-  {% if perms.inventory.add_purchaseorder %}
-  <a href="{% url 'purchase_order_create' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">New Purchase Order</a>
-  {% endif %}
-{% endblock %}
-
-{% block secondary_actions %}
-  <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Record Receipt</a>
-{% endblock %}
-
-{% block extra %}
-  <div id="kpi-cards" class="mb-8" hx-get="{% url 'dashboard-kpis' %}" hx-trigger="load" hx-target="#kpi-cards" hx-swap="outerHTML">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="card"><div class="card-body">Loading...</div></div>
-    </div>
-  </div>
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="card">
-      <div class="card-header"><h3 class="text-lg font-semibold">Filters</h3></div>
-      <div class="card-body">
-        <form id="dashboard-filters" class="space-y-4">
-          <div>
-            <label for="item" class="block text-sm font-medium text-gray-700 mb-1">Item</label>
-            <select id="item" name="item" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive">
-              <option value="">All Items</option>
-              {% for i in items %}<option value="{{ i.pk }}">{{ i.name }}</option>{% endfor %}
-            </select>
-          </div>
-          <div>
-            <label for="supplier" class="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
-            <select id="supplier" name="supplier" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive">
-              <option value="">All Suppliers</option>
-              {% for s in suppliers %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}
-            </select>
-          </div>
-          <div>
-            <label for="metric" class="block text-sm font-medium text-gray-700 mb-1">Metric</label>
-            <select id="metric" name="metric" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="quantity">Quantity</option>
-              <option value="value">Value</option>
-            </select>
-          </div>
-          <div>
-            <label for="range" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-            <select id="range" name="range" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="7">Last 7 Days</option>
-              <option value="30" selected>Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-            </select>
-          </div>
-          <button type="button" id="apply-filters" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary w-full">Apply Filters</button>
+{% block content %}
+<div class="container mx-auto px-8 max-md:px-6 max-sm:px-4 py-8 space-y-8">
+  {% if not user.is_authenticated %}
+    <div class="bg-primary text-white rounded p-8 text-center">
+      <h1 class="text-h1 font-bold">Welcome to Inventory App</h1>
+      <p class="mt-2">Manage stock effortlessly</p>
+      <div class="mt-4">
+        <form method="post" class="bg-white p-6 rounded shadow-lg max-w-md mx-auto">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-4">
+              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}
+                <div class="text-red-500 text-sm mt-1">{{ field.errors }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary w-full">Login</button>
         </form>
       </div>
     </div>
-      <div class="card lg:col-span-2">
-      <div class="card-header"><h3 class="text-lg font-semibold">Stock Trend</h3></div>
-      <div class="card-body">
-        <div id="stock-trend-placeholder" class="h-64 flex items-center justify-center text-gray-500 hidden">
-          No data available for the selected filters.
+  {% else %}
+    {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
+    {% include "core/_kpi_cards.html" with items=item_count low_stock=low_stock suppliers=supplier_count pending_indents=pending_indents %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-8">
+      <div class="card">
+        <div class="card-header"><h3 class="text-lg font-semibold">Filters</h3></div>
+        <div class="card-body">
+          <form id="dashboard-filters" class="space-y-4">
+            <div>
+              <label for="item" class="block text-sm font-medium text-gray-700 mb-1">Item</label>
+              <select id="item" name="item" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive">
+                <option value="">All Items</option>
+                {% for i in items %}<option value="{{ i.pk }}">{{ i.name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="supplier" class="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+              <select id="supplier" name="supplier" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive">
+                <option value="">All Suppliers</option>
+                {% for s in suppliers %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label for="metric" class="block text-sm font-medium text-gray-700 mb-1">Metric</label>
+              <select id="metric" name="metric" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="quantity">Quantity</option>
+                <option value="value">Value</option>
+              </select>
+            </div>
+            <div>
+              <label for="range" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+              <select id="range" name="range" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="7">Last 7 Days</option>
+                <option value="30" selected>Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+              </select>
+            </div>
+            <button type="button" id="apply-filters" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary w-full">Apply Filters</button>
+          </form>
         </div>
-        <div class="h-64"><canvas id="stock-trend-chart" class="w-full h-full"></canvas></div>
+      </div>
+      <div class="card lg:col-span-2">
+        <div class="card-header"><h3 class="text-lg font-semibold">Stock Trend</h3></div>
+        <div class="card-body">
+          <div id="stock-trend-placeholder" class="h-64 flex items-center justify-center text-gray-500 hidden">
+            No data available for the selected filters.
+          </div>
+          <div class="h-64"><canvas id="stock-trend-chart" class="w-full h-full"></canvas></div>
+        </div>
       </div>
     </div>
-  </div>
+  {% endif %}
+</div>
 {% endblock %}
-
-{% block table_container %}{% endblock %}
 
 {% block extra_js %}
+  {% if user.is_authenticated %}
+  <script>
+    window.initialTrendLabels = {{ trend_labels|safe }};
+    window.initialTrendValues = {{ trend_values|safe }};
+  </script>
   <script src="{% static 'core/dashboard.js' %}?v={{ STATIC_VERSION }}" defer></script>
+  {% endif %}
 {% endblock %}
+

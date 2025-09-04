@@ -1,18 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const ctx = document.getElementById("stock-trend-chart").getContext("2d");
+  const canvas = document.getElementById("stock-trend-chart");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
   const placeholder = document.getElementById("stock-trend-placeholder");
   const primaryColor = getComputedStyle(document.documentElement)
     .getPropertyValue("--color-primary")
     .trim();
   let chart;
 
-  async function fetchData() {
-    const form = document.getElementById("dashboard-filters");
-    const params = new URLSearchParams(new FormData(form));
-    const response = await fetch(`/dashboard/data/?${params.toString()}`);
-    const data = await response.json();
-
-    if (!data.values.length) {
+  function renderChart(labels, values, metric) {
+    if (!values.length) {
       if (chart) {
         chart.destroy();
         chart = null;
@@ -22,14 +19,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     placeholder.classList.add("hidden");
-    const metric =
-      params.get("metric") === "value" ? "Stock Value" : "Stock Quantity";
     const dataset = {
-      labels: data.labels,
+      labels,
       datasets: [
         {
           label: metric,
-          data: data.values,
+          data: values,
           borderColor: primaryColor,
           fill: false,
           tension: 0.1,
@@ -41,10 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       chart = new Chart(ctx, {
         type: "line",
         data: dataset,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-        },
+        options: { responsive: true, maintainAspectRatio: false },
       });
     } else {
       chart.data = dataset;
@@ -52,6 +44,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  async function fetchData() {
+    const form = document.getElementById("dashboard-filters");
+    const params = new URLSearchParams(new FormData(form));
+    const response = await fetch(`/dashboard-data/?${params.toString()}`);
+    const data = await response.json();
+    const metric =
+      params.get("metric") === "value" ? "Stock Value" : "Stock Quantity";
+    renderChart(data.labels, data.values, metric);
+  }
+
   document.getElementById("apply-filters").addEventListener("click", fetchData);
-  fetchData();
+  renderChart(
+    window.initialTrendLabels || [],
+    window.initialTrendValues || [],
+    "Stock Quantity"
+  );
 });

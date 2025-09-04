@@ -24,7 +24,6 @@ NAVIGATION_GROUPS: List[tuple[str, List[tuple[str, str]]]] = [
         "Overview",
         [
             ("Home", "root"),
-            ("Dashboard", "dashboard"),
         ],
     ),
     (

@@ -116,7 +116,7 @@ python manage.py createsuperuser
 ```
 
 Visit `http://localhost:8000/` to sign in from the home page. After a successful
-login you will be redirected to the dashboard at `/dashboard/`.
+login you will land on the dashboard at `/`.
 
 ## Testing
 

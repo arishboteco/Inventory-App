@@ -20,18 +20,10 @@
     if (!details || !toggleEl) return;
 
     const expanded = toggleEl.getAttribute("aria-expanded") === "true";
-    if (expanded) {
-      details.classList.add("hidden");
-      toggleEl.setAttribute("aria-expanded", "false");
-      // reset chevron rotation
-      const svg = toggleEl.querySelector("svg");
-      if (svg) svg.classList.remove("rotate-90");
-    } else {
-      details.classList.remove("hidden");
-      toggleEl.setAttribute("aria-expanded", "true");
-      const svg = toggleEl.querySelector("svg");
-      if (svg) svg.classList.add("rotate-90");
-    }
+    details.classList.toggle("hidden", expanded);
+    toggleEl.setAttribute("aria-expanded", expanded ? "false" : "true");
+    const svg = toggleEl.querySelector("svg");
+    if (svg) svg.classList.toggle("rotate-90", !expanded);
   }
 
   function enableInlineEdit(row) {

@@ -1,9 +1,11 @@
 <a href="{% url 'recipe_detail' recipe.recipe_id %}" class="block bg-white rounded-lg shadow hover:shadow-xl transition-transform transform hover:-translate-y-1">
-  {% if recipe.image %}
-  <img src="{{ recipe.image }}" alt="{{ recipe.name }}" class="w-full h-40 object-cover rounded-t-lg" />
-  {% endif %}
-  <div class="p-4">
-    <h3 class="text-lg font-semibold mb-2">{{ recipe.name }}</h3>
-    <p class="text-sm text-gray-600">{{ recipe.component_count }} ingredients</p>
+  <div class="flex items-start gap-4 overflow-hidden p-4">
+    {% if recipe.image %}
+      <img src="{{ recipe.image }}" alt="{{ recipe.name }}" class="w-24 max-w-full h-auto object-contain rounded flex-shrink-0" />
+    {% endif %}
+    <div class="flex-1 overflow-hidden">
+      <h3 class="text-lg font-semibold mb-2 truncate">{{ recipe.name }}</h3>
+      <p class="text-sm text-gray-600 truncate">{{ recipe.component_count }} ingredients</p>
+    </div>
   </div>
 </a>

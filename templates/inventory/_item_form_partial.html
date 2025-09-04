@@ -1,4 +1,4 @@
-<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl max-h-screen-90 overflow-y-auto">
+<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden max-w-drawer-xl max-h-screen-90 overflow-y-auto flex flex-col">
   <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
     <h3 class="text-lg font-semibold">Edit Item — {{ item.name }}</h3>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
@@ -9,8 +9,8 @@
       <input type="hidden" name="partial" value="1"/>
       <div class="grid grid-cols-12 gap-4">
         <!-- Essentials -->
-        <div class="section-panel col-span-12" id="essentials-panel">
-          <h3 class="section-header">Essentials</h3>
+        <div class="col-span-12 bg-gray-50 p-4 rounded border border-gray-200" id="essentials-panel">
+          <h3 class="text-lg font-semibold mb-2">Essentials</h3>
           <div class="grid grid-cols-3 gap-4 items-start">
             <div class="space-y-1">
               <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -49,8 +49,8 @@
         </div>
 
         <!-- Advanced -->
-        <div class="section-panel col-span-12" id="advanced-panel">
-          <h3 class="section-header">Advanced</h3>
+        <div class="col-span-12 bg-gray-50 p-4 rounded border border-gray-200" id="advanced-panel">
+          <h3 class="text-lg font-semibold mb-2">Advanced</h3>
           <div class="grid grid-cols-3 gap-4 items-start">
             <div class="space-y-1">
               <label for="{{ form.preferred_supplier.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Preferred Supplier</label>
@@ -89,7 +89,7 @@
 
         <!-- Actions -->
         <div class="col-span-12">
-          <div class="form-actions">
+          <div class="flex gap-2 justify-end">
             <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
             <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Save</button>
           </div>

@@ -4,7 +4,7 @@
 {% block title %}Bulk Upload{% endblock %}
 {% block content %}
   <p class="mb-2">Download the CSV template and fill it with your stock transactions before uploading. <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary">Download sample CSV</a></p>
-  <form method="post" action="{% url 'items_bulk_upload' %}" enctype="multipart/form-data" class="dropzone border-dashed border-2 p-4" id="bulk-upload-form">
+  <form method="post" action="{% url 'items_bulk_upload' %}" enctype="multipart/form-data" class="flex flex-col items-center justify-center border-2 border-dashed border-border p-4 rounded" id="bulk-upload-form">
     {% csrf_token %}
     <input type="hidden" name="bulk_upload" value="1" />
     {% if bulk_form.non_field_errors %}

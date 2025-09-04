@@ -75,6 +75,11 @@
   .emoji-icon {
     @apply text-lg leading-none inline-block;
   }
+
+  /* Dropzone component styling */
+  #bulk-upload-form .dz-message {
+    @apply text-gray-500 text-center;
+  }
 }
 
 @layer utilities {

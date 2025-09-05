@@ -193,6 +193,12 @@ class ItemsListView(TemplateView):
                 "page_size": per_page,
                 "filters": filters_list,
                 "export_url": reverse("items_export"),
+                "predictive_filter_names": [
+                    "category",
+                    "base_unit",
+                    "supplier",
+                    "department",
+                ],
                 "stats": stats,
                 "form": form,
                 "bulk_form": bulk_form,

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 from django.db import connection
 from django.db.utils import OperationalError
 
-from ..models import Department, Supplier
+from inventory.models import Department, Supplier
 from .units_service import UnitsService
 
 logger = logging.getLogger(__name__)
@@ -228,3 +228,25 @@ def clear_form_caches():
     except AttributeError:
         # Cache methods may not exist if not decorated
         pass
+
+
+def department_choices():
+    # -> [("", "All Departments"), (1, "Admin"), ...]
+    return [("", "All Departments")] + list(
+        Department.objects.order_by("name").values_list("id", "name")
+    )
+
+
+def category_choices():
+    return [("", "All Categories")] + list(
+        Category.objects.order_by("name").values_list("id", "name")
+    )
+
+
+def subcategory_choices(category_id=None):
+    qs = Subcategory.objects.all()
+    if category_id:
+        qs = qs.filter(category_id=category_id)
+    return [("", "All Subcategories")] + list(
+        qs.order_by("name").values_list("id", "name")
+    )

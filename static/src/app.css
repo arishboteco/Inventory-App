@@ -3,6 +3,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide scrollbars for horizontally scrollable nav containers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Fluid nav link sizing that adapts to available width without wrapping */
+.nav-link {
+  font-size: clamp(12px, 1.2vw, 16px);
+  line-height: 1.25rem; /* ~20px for consistent hit area */
+  padding: 0.25rem 0.375rem; /* 4px 6px */
+  border-radius: 0.375rem; /* rounded-md */
+  text-decoration: none;
+  outline: none;
+}
+.nav-link:focus { box-shadow: 0 0 0 2px var(--color-primary, #3b82f6); }
+.nav-link--active {
+  color: #1d4ed8; /* text-blue-700 */
+  background: #eff6ff; /* bg-blue-50 */
+}
+.nav-link--inactive {
+  color: #374151; /* text-gray-700 */
+}
+.nav-link--inactive:hover {
+  color: #2563eb; /* hover:text-blue-600 */
+  background: #f3f4f6; /* hover:bg-gray-100 */
+}
+
+/* Fluid search width: keeps a reasonable min size and caps maximum */
+.search-fluid { width: clamp(14rem, 24vw, 28rem); }
+
 @layer base {
   :root {
     --color-primary: theme("colors.primary");

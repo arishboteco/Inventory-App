@@ -21,16 +21,14 @@ logger = logging.getLogger(__name__)
 # sections in the future.
 NAVIGATION_GROUPS: List[tuple[str, List[tuple[str, str]]]] = [
     (
-        "Overview",
-        [
-            ("Home", "root"),
-        ],
-    ),
-    (
         "Management",
         [
             ("Inventory", "items_list"),
+            ("Stock Movements", "stock_movements"),
+            ("Indents", "indents_list"),
+            ("GRNs", "grn_list"),
             ("Orders", "purchase_orders_list"),
+            ("Recipes", "recipes_list"),
             ("Suppliers", "suppliers_list"),
         ],
     ),
@@ -38,6 +36,8 @@ NAVIGATION_GROUPS: List[tuple[str, List[tuple[str, str]]]] = [
         "Analytics",
         [
             ("Reports", "history_reports"),
+            ("Visualizations", "visualizations"),
+            ("Explore", "explore"),
         ],
     ),
 ]
@@ -65,7 +65,7 @@ def _resolve_link(link: Mapping[str, str]) -> Mapping[str, str]:
     except NoReverseMatch:
         logger.error("Navigation link '%s' could not be reversed", link["url_name"])
         raise
-    return {"title": link["title"], "url": url}
+    return {"title": link["title"], "url": url, "url_name": link["url_name"]}
 
 
 def get_navigation_links(

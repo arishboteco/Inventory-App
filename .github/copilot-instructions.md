@@ -1,148 +1,56 @@
 # Copilot Instructions for Inventory-App
 
-## Project Overview
+## What this app is
+Django 5.2 app for restaurant inventory. PostgreSQL in prod; tests use SQLite in-memory. Tracks items, suppliers, stock movements, purchase orders/GRNs, recipes, and KPIs.
 
-Django 5.2.5 restaurant inventory management system with PostgreSQL, migrated from Supabase. Features real-time stock tracking, purchase orders, recipe management, and ML-driven analytics.
+## Architecture you must follow
+- Service layer in `inventory/services/` holds business logic. Views are thin HTTP adapters. Example: `services/form_service.py` provides dropdown/unit choices; `services/dashboard_service.py` computes KPIs; `services/stock_service.py` records stock movements; `services/item_service.py` handles item display/unit resolution.
+- Models are modular in `inventory/models/` (`items.py`, `orders.py`, `recipes.py`, `departments.py`). Import via `from inventory.models import Item, Department, ...` (see `inventory/models/__init__.py`).
+- Navigation is centralized in `inventory_app/navigation.py` and injected via the `primary_navigation` context processor. Top nav template lives at `templates/components/top_nav.html` and includes an inline desktop nav and grouped dropdown.
 
-## Architecture Patterns
+## Frontend conventions
+- Tailwind/PostCSS build: entry `static/src/app.css` → output `static/css/app.css`. Build with `npm run build`; dev watch `npm run dev-css`.
+- JS modules in `static/js/`: `top-nav.js` (accessible grouped menu), `modal.js`, `multiselect-chips.js` (enhanced multi-select), `predictive-dropdown.js`, `forms.js`, table helpers. The legacy `smart-navigation.js` was removed; don’t reference it.
+- Desktop-first CSS with `max-*` responsive variants (e.g., `max-md:hidden`). Tokens in `static/src/tokens.css` feed `tailwind.config.js`.
 
-### Service Layer Architecture
+## URLs and views
+- Two routers:
+  - API: `inventory/urls.py` (DRF endpoints)
+  - UI: `inventory/ui_urls.py` (HTML pages). Common names: `items_list`, `purchase_orders_list`, `suppliers_list`, `history_reports`, etc. Root is `root` in `inventory_app/urls.py`.
+- Item creation has two endpoints: `item_create` (HTMX post handler) and `item_create_partial` (small form for modal/drawer, template `templates/inventory/_item_create_partial.html`). Tests assert specific classes like `drawer-panel` and `max-w-drawer-xl` in that partial.
 
-Business logic lives in `inventory/services/` with single-responsibility services:
+## Settings and environments
+- Settings modules are under `inventory_app/settings/`: `base.py` (shared), `dev.py`, `staging.py`, `prod.py`/`production.py`, `test.py`.
+- Templates dir is global `templates/`; context processors include `inventory_app.navigation.primary_navigation`.
+- Static settings: files served by WhiteNoise; version string is `STATIC_VERSION` for cache-busting in templates.
 
-- `item_service.py` - Item CRUD, unit resolution, display formatting
-- `dashboard_service.py` - KPI calculations, low-stock alerts
-- `form_service.py` - Dropdown population, category/unit choices
-- `stock_service.py` - Stock movements, adjustments, wastage tracking
+## Dev workflows (use these exact commands)
+- Install: `make install`
+- CSS build (one-off): `npm run build`
+- Dev loop (Django + CSS watcher): `make dev` (runs `scripts/dev.sh`)
+- Run tests: `pytest` (pytest-django; test DB is SQLite in-memory). Note: `pytest.ini` adds `--reuse-db` and loads env from `env/test.example`.
+- Lint/format: `make fmt && make lint`
+- Optional: `python manage.py collectstatic --noinput` for packaging.
 
-Always use services for business logic. Views should only handle HTTP concerns.
+## Units system (critical domain rule)
+- Items store only `unit_id`. Use `UnitsService` (see `UNITS_ARCHITECTURE.md`) to get display units and convert between base (recipe) and purchase units. Never hand-roll conversions or display `unit_id`.
 
-### Model Organization
+## Testing expectations baked into templates
+- Several tests parse HTML with BeautifulSoup. Keep IDs/classes stable:
+  - Top nav exists on all pages (`templates/_base.html` includes `components/top_nav.html`).
+  - The item create partial must render a root div with classes: `bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl` and a departments multiselect container: `<div data-multiselect="chips" class="grid ...">`.
+- Tests run fast: migrations for `inventory` are disabled in test settings; avoid Postgres-specific SQL in test paths.
 
-Models split by domain in `inventory/models/`:
+## Common pitfalls in this repo
+- Bypassing the service layer from views or templates.
+- Forgetting to build CSS before relying on classes like `max-w-drawer-xl` (missing CSS makes visual checks fail). Use `npm run build`.
+- Using removed files like `static/js/smart-navigation.js` or old settings module names. Use current settings in `inventory_app/settings/`.
 
-- `items.py` - Item, StockTransaction
-- `orders.py` - PurchaseOrder, Indent, GRN entities
-- `recipes.py` - Recipe, RecipeComponent, SaleTransaction
-- `departments.py` - Department, ItemDepartment (many-to-many)
+## Quick file map to start editing
+- Views: `inventory/views/...` (lists, detail, stock, etc.)
+- Services: `inventory/services/...`
+- Templates: `templates/inventory/*.html`, shared components under `templates/components/`
+- Static JS/CSS: `static/js/*.js`, `static/src/app.css`
+- Entry URLs: `inventory_app/urls.py`, includes API/UI routes
 
-Import models from `inventory.models` (uses `__init__.py` exports).
-
-### Form System with StyledFormMixin
-
-All forms inherit `StyledFormMixin` from `inventory/forms/base.py`:
-
-```python
-class ItemForm(StyledFormMixin, forms.ModelForm):
-    # Automatically applies Tailwind classes and 'predictive' to selects
-```
-
-The mixin adds `predictive` class to select widgets for JavaScript enhancement.
-
-## Development Workflows
-
-### Essential Commands
-
-```bash
-# Run tests (uses pytest with Django settings)
-make test
-
-# Format and lint (Black + Ruff)
-make fmt && make lint
-
-# Build CSS and collect static files
-npx tailwindcss -i ./static/src/app.css -o ./static/css/app.css --minify
-python manage.py collectstatic --noinput
-
-# Database migrations
-python manage.py makemigrations
-python manage.py migrate
-```
-
-### Testing Strategy
-
-- Test files in `tests/` directory with `test_*.py` naming
-- Use `pytest` with Django test database reuse (`--reuse-db`)
-- Current coverage: 99.1% (112/113 tests passing)
-- Run `pytest` not `python manage.py test`
-
-## UI & Frontend Patterns
-
-### Tailwind CSS Strategy
-
-Desktop-first approach with `max-*` variants for mobile:
-
-```html
-<div class="grid grid-cols-4 max-md:grid-cols-1"></div>
-```
-
-Design tokens in `static/src/tokens.css` → `tailwind.config.js`. Update tokens file for global color changes.
-
-### Predictive Dropdowns
-
-Any `<select class="predictive">` gets enhanced with search functionality. Forms using `StyledFormMixin` get this automatically.
-
-### JavaScript Modules
-
-- `static/js/dynamic-units.js` - Unit dependency management
-- `static/js/smart-forms.js` - Form enhancements
-- `static/js/smart-navigation.js` - Navigation helpers
-
-## Data Flow & Integration
-
-### Unit System
-
-Complex unit relationships with base_unit → purchase_unit mappings:
-
-- Use `FormService.get_unit_choices()` for dropdowns
-- `item_service.get_unit_display_name()` for consistent formatting
-- Dynamic unit loading via AJAX endpoints
-
-### URL Structure
-
-Dual URL pattern:
-
-- `inventory/urls.py` - API endpoints
-- `inventory/ui_urls.py` - HTML views
-  Both included in main URLconf.
-
-### Environment Configuration
-
-Multi-environment setup:
-
-- `inventory_app/settings.py` - Development
-- `inventory_app/settings_production.py` - Production
-- `inventory_app/settings_staging.py` - Staging
-- `inventory_app/settings_test.py` - Testing
-
-Uses `django-environ` for environment variables.
-
-## Key Conventions
-
-### Code Quality
-
-- Python 3.13 target (`pyproject.toml`)
-- Black formatting (88 char line length)
-- Ruff linting with auto-fix
-- Run `flake8` and `pytest` before commits
-
-### Performance Patterns
-
-- Use `only()` and `select_related()` in querysets
-- Service layer caching with `@lru_cache`
-- Optimized templates for fast rendering
-
-### Error Handling
-
-Custom middleware in `core/middleware.py` for login enforcement and error logging.
-
-## Migration Context
-
-Recently migrated from Supabase to Django models. Some services still have legacy Supabase integration (`supabase_*.py`) for transition period. Prefer Django ORM patterns for new code.
-
-## Common Pitfalls
-
-- Don't bypass the service layer for business logic
-- Always use `StyledFormMixin` for forms
-- Use `item_service.get_unit_display_name()` not direct unit_id access
-- Test with both empty and populated databases due to unit resolution complexity
+When adding features: put business logic in services, wire a thin view, render a template using shared components, and keep selectors/IDs compatible with tests.

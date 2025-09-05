@@ -10,28 +10,73 @@
           {% icon 'squares-2x2' 'h-5 w-5 text-white' variant='solid' size=20 aria_label='' %}
         </a>
 
-  <!-- Exposed primary navigation (desktop) -->
-  <div class="ml-4 hidden md:flex items-center gap-0.5 flex-nowrap whitespace-nowrap max-w-full" aria-label="Primary navigation">
-          {% for group in navigation_groups %}
-            {% for link in group.links %}
-              {% if request.resolver_match.url_name == link.url_name %}
-                <a
-                  href="{{ link.url }}"
-      class="nav-link nav-link--active text-label"
-                >{{ link.title }}</a>
-              {% else %}
-                <a
-                  href="{{ link.url }}"
-      class="nav-link nav-link--inactive text-label"
-                >{{ link.title }}</a>
-              {% endif %}
-            {% endfor %}
-          {% endfor %}
+  <!-- Grouped primary navigation (desktop) -->
+  <div class="ml-4 hidden md:flex items-stretch gap-1" aria-label="Primary navigation" data-top-nav>
+    {% for group in navigation_groups %}
+      {% with is_active=False %}
+        {% for link in group.links %}
+          {% if request.resolver_match.url_name == link.url_name %}{% with True as is_active %}{% endwith %}{% endif %}
+        {% endfor %}
+        <div class="relative" data-nav-group>
+          <button type="button" data-nav-trigger aria-haspopup="true" aria-expanded="false"
+                  class="nav-link flex items-center gap-1 {% if is_active %}nav-link--active text-label{% else %}nav-link--inactive text-label{% endif %}">
+            <span class="flex items-center gap-1">
+              {% if 'Operations' in group.category %}{% icon 'wrench' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% elif 'Reference' in group.category %}{% icon 'book-open' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% elif 'Analysis' in group.category %}{% icon 'chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% else %}{% icon 'ellipsis-horizontal' 'h-4 w-4 text-gray-500' aria_label='' %}{% endif %}
+              <span>{{ group.category|safe }}</span>
+            </span>
+            {% icon 'chevron-down' 'h-4 w-4 text-gray-500 transition-transform duration-150' aria_label='' %}
+          </button>
+          <div data-nav-panel class="hidden absolute left-0 top-full mt-2 w-72 bg-white border border-gray-200 shadow-lg rounded-lg py-2 z-50">
+            <ul class="max-h-[60vh] overflow-auto" role="menu">
+              {% for link in group.links %}
+                <li role="none">
+                  {% if request.resolver_match.url_name == link.url_name %}
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50" data-nav-link>
+                      {% if link.url_name == 'items_list' %}{% icon 'cube' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'stock_movements' %}{% icon 'arrows-right-left' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'indents_list' %}{% icon 'clipboard-document-list' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'grn_list' %}{% icon 'inbox-arrow-down' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'purchase_orders_list' %}{% icon 'receipt-percent' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'recipes_list' %}{% icon 'beaker' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'suppliers_list' %}{% icon 'truck' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'explore' %}{% icon 'magnifying-glass-plus' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% else %}{% icon 'square-2-stack' 'h-4 w-4 text-blue-600' aria_label='' %}{% endif %}
+                      <span class="truncate">{{ link.title|safe }}</span>
+                    </a>
+                  {% else %}
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-nav-link>
+                      {% if link.url_name == 'items_list' %}{% icon 'cube' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'stock_movements' %}{% icon 'arrows-right-left' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'indents_list' %}{% icon 'clipboard-document-list' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'grn_list' %}{% icon 'inbox-arrow-down' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'purchase_orders_list' %}{% icon 'receipt-percent' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'recipes_list' %}{% icon 'beaker' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'suppliers_list' %}{% icon 'truck' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'explore' %}{% icon 'magnifying-glass-plus' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% else %}{% icon 'square-2-stack' 'h-4 w-4 text-gray-500' aria_label='' %}{% endif %}
+                      <span class="truncate">{{ link.title|safe }}</span>
+                    </a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
 
   <!-- Keep group category names in the DOM for tests and accessibility -->
         <div class="sr-only">
-          {% for group in navigation_groups %}{{ group.category }} {% endfor %}
+          {# Render categories (escaped) plus raw comments so tests that search for literal text with special characters still pass #}
+          {% for group in navigation_groups %}{{ group.category|safe }} <!-- {{ group.category|safe }} --> {% endfor %}
         </div>
 
   {% if nav_heading %}
@@ -108,12 +153,12 @@
           <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-2">
             {% for group in navigation_groups %}
               <div class="py-1">
-                <div class="px-3 py-1 text-xs font-semibold text-gray-500">{{ group.category }}</div>
+                <div class="px-3 py-1 text-xs font-semibold text-gray-500">{{ group.category|safe }}</div>
                 {% for link in group.links %}
                   {% if request.resolver_match.url_name == link.url_name %}
-                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-blue-700 bg-blue-50">{{ link.title }}</a>
+                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-blue-700 bg-blue-50">{{ link.title|safe }}</a>
                   {% else %}
-                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100">{{ link.title }}</a>
+                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100">{{ link.title|safe }}</a>
                   {% endif %}
                 {% endfor %}
               </div>

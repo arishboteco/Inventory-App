@@ -21,23 +21,33 @@ logger = logging.getLogger(__name__)
 # sections in the future.
 NAVIGATION_GROUPS: List[tuple[str, List[tuple[str, str]]]] = [
     (
-        "Management",
+        "Operations",
         [
-            ("Inventory", "items_list"),
-            ("Stock Movements", "stock_movements"),
-            ("Indents", "indents_list"),
-            ("GRNs", "grn_list"),
-            ("Orders", "purchase_orders_list"),
-            ("Recipes", "recipes_list"),
-            ("Suppliers", "suppliers_list"),
+            ("Items & Stock (Inventory)", "items_list"),
+            ("Transactions (Stock Movements)", "stock_movements"),
+            ("Requests (Indents / Requisitions)", "indents_list"),
+            ("Receipts (GRNs)", "grn_list"),
+            ("Purchase Orders (Orders)", "purchase_orders_list"),
         ],
     ),
     (
-        "Analytics",
+        "Reference",
+        [
+            ("Recipes / BOMs", "recipes_list"),
+            ("Vendors (Suppliers)", "suppliers_list"),
+        ],
+    ),
+    (
+        "Analysis",
         [
             ("Reports", "history_reports"),
-            ("Visualizations", "visualizations"),
-            ("Explore", "explore"),
+            ("Dashboards (Visualizations)", "visualizations"),
+        ],
+    ),
+    (
+        "Other",
+        [
+            ("More / Explore", "explore"),
         ],
     ),
 ]

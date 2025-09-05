@@ -56,6 +56,18 @@
             <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
             <div class="relative" data-col-menu-container>
               <button type="button" class="inline-flex items-center justify-center w-8 h-8 p-0 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" aria-label="Show/Hide Columns" title="Show/Hide Columns" aria-haspopup="true" aria-expanded="false" aria-controls="columns-menu" data-col-menu-button>{% icon 'cog-6-tooth' 'w-4 h-4' %}</button>
+              <!-- Column visibility dropdown -->
+              <div id="columns-menu" data-col-menu class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-3 z-40">
+                <p class="text-xs font-medium text-gray-500 mb-2">Toggle Columns</p>
+                <ul class="space-y-1 text-sm">
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="category" checked> <span>Category</span></label></li>
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="unit" checked> <span>Unit</span></label></li>
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="stock" checked> <span>Stock</span></label></li>
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="stock_status" checked> <span>Stock Status</span></label></li>
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="departments" checked> <span>Departments</span></label></li>
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="status" checked> <span>Status</span></label></li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -76,6 +88,15 @@
         <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
         <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
         <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
+      </div>
+      <!-- Bulk Actions Bar -->
+      <div id="bulk-actions" class="hidden border-t border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between" role="region" aria-label="Bulk actions bar">
+        <span id="bulk-count" class="text-sm text-gray-700">0 selected</span>
+        <div class="flex items-center gap-2">
+          <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Deactivate</button>
+          <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Assign Dept</button>
+          <button type="button" data-bulk-action="export" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
+        </div>
       </div>
     </div>
   <div id="items-aria-live" class="sr-only" aria-live="polite"></div>
@@ -166,4 +187,23 @@
       }
     });
     </script>
+    <!-- Hidden templates for inline editing selects -->
+    <template id="category-id-select-template" class="hidden">
+      <select class="hidden">
+        <option value="">-- Category --</option>
+        {% for cid,label in inline_categories %}
+          <option value="{{ cid }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </template>
+    <template id="unit-select-template" class="hidden">
+      <select class="hidden">
+        <option value="">-- Unit --</option>
+        {% for uid, label in inline_units %}
+          <option value="{{ uid }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </template>
+  <!-- Items table interactions (detail dropdown, quick actions, modal view, bulk actions) -->
+  <script src="{% static 'js/items-table.js' %}?v={{ STATIC_VERSION }}" defer></script>
   {% endblock %}

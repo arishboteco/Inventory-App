@@ -143,6 +143,11 @@ class ItemsListView(TemplateView):
         qs, params = _filter_and_sort_items(request)
         page_obj, per_page = list_utils.paginate(request, qs)
         table_ctx = {**params, "page_obj": page_obj, "page_size": per_page}
+        # Build a base querystring (excluding page) for use in sort links / pagination
+        try:
+            querystring = list_utils.build_querystring(request)
+        except Exception:  # pragma: no cover - defensive
+            querystring = ""
 
         form = ItemForm(request.POST) if request.method == "POST" else ItemForm()
         bulk_form = BulkUploadForm()
@@ -212,6 +217,7 @@ class ItemsListView(TemplateView):
                 "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Inventory",
+                "querystring": querystring,
             }
         )
         return ctx
@@ -233,7 +239,11 @@ class ItemsTableView(TemplateView):
         qs = self._get_queryset()
         page_obj, per_page = list_utils.paginate(self.request, qs)
         ctx.update(self._filter_params)
-        ctx.update({"page_obj": page_obj, "page_size": per_page})
+        try:
+            querystring = list_utils.build_querystring(self.request)
+        except Exception:  # pragma: no cover - defensive
+            querystring = ""
+        ctx.update({"page_obj": page_obj, "page_size": per_page, "querystring": querystring})
         return ctx
 
 

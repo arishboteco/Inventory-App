@@ -10,75 +10,29 @@
       <th scope="col" class="sticky z-10 w-8 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
         <input type="checkbox" data-select-all aria-label="Select all" />
       </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="name"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col1">
-          Name<span class="ml-1">⇅</span>
-        </button>
+      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" aria-sort="{% if sort == 'name' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+          Name
+          {% if sort == 'name' %}
+            <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+          {% else %}
+            <span class="text-xs text-gray-400">⇅</span>
+          {% endif %}
+        </a>
       </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="category"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col2">
-          Category<span class="ml-1">⇅</span>
-        </button>
+      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" aria-sort="{% if sort == 'category__category' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="unit"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col3">
-          Unit<span class="ml-1">⇅</span>
-        </button>
+      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" aria-sort="{% if sort == 'unit__base_unit' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="stock"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col4">
-          Stock<span class="ml-1">⇅</span>
-        </button>
+      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" aria-sort="{% if sort == 'current_stock' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="stock_status"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col5">
-          Stock Status<span class="ml-1">⇅</span>
-        </button>
-      </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="departments"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col6">
-          Departments<span class="ml-1">⇅</span>
-        </button>
-      </th>
-      <th
-        scope="col"
-        class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md"
-        data-col="status"
-        aria-sort="none"
-      >
-        <button class="sort flex items-center focus:outline-none focus:ring-2 focus:ring-primary" data-sort="col7">
-          Status<span class="ml-1">⇅</span>
-        </button>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" aria-sort="none">Stock Status</th>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" aria-sort="none">Departments</th>
+      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" aria-sort="{% if sort == 'is_active' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
+        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
       <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
         Actions
@@ -135,7 +89,7 @@
       <td data-col="category" class="px-4 py-2 whitespace-normal break-words">
         {% format_category item True %}
       </td>
-      <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.base_unit|default:"—" }}</td>
+  <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.purchase_unit|default:"—" }}</td>
       <td data-col="stock" class="px-4 py-2 whitespace-normal break-words">
         {% if item.current_stock is not None %}
           {{ item.current_stock|floatformat:0 }}
@@ -143,21 +97,19 @@
           <span class="text-gray-400">—</span>
         {% endif %}
       </td>
-      <td data-col="stock_status" class="px-4 py-2 whitespace-normal break-words">
-        <div class="flex flex-col">
-          {% if item.current_stock is not None and item.reorder_point is not None %}
-            {% if item.current_stock <= item.reorder_point %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Low Stock</span>
-            {% else %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">In Stock</span>
-            {% endif %}
+      <td data-col="stock_status" class="px-4 py-2 whitespace-normal break-words" data-stock-qty="{{ item.current_stock|default:'' }}" data-rop="{{ item.reorder_point|default:'' }}">
+        {% if item.current_stock is not None and item.reorder_point is not None %}
+          {% if item.current_stock <= item.reorder_point %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700" data-status="low">Low Stock</span>
           {% else %}
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">No Data</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success" data-status="ok">In Stock</span>
           {% endif %}
-          {% if item.reorder_point %}
-            <p class="text-xs text-gray-500">Reorder Point: {{ item.reorder_point }}</p>
-          {% endif %}
-        </div>
+        {% else %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" data-status="na">No Data</span>
+        {% endif %}
+        {% if item.reorder_point %}
+          <p class="text-xs text-gray-500">Reorder Point: {{ item.reorder_point }}</p>
+        {% endif %}
       </td>
       <td data-col="departments" class="px-4 py-2 whitespace-normal break-words">
         {% if item.departments.all %} {% for dept in item.departments.all %}

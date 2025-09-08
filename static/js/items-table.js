@@ -2,6 +2,8 @@
 // Uses event delegation to avoid inline handlers in templates.
 
 (function () {
+  // Track the currently edited row (quick edit mode)
+  let currentEditingRow = null;
   const INPUT_CLASSES =
     "block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary";
   const SELECT_CLASSES = INPUT_CLASSES;
@@ -51,9 +53,20 @@
 
   // New: in-row inline editing (no extra row)
   function beginRowEdit(row) {
-    if (!row || row.dataset.editing === "1") return;
+    if (!row) return;
+    // If this row is already being edited, treat call as a toggle (cancel)
+    if (row.dataset.editing === "1") {
+      restoreRow(row);
+      return;
+    }
+    // If another row is in edit mode, restore it first
+    if (currentEditingRow && currentEditingRow !== row) {
+      restoreRow(currentEditingRow);
+    }
     row.dataset.editing = "1";
     row.dataset.origHtml = row.innerHTML; // for cancel/restore
+    row.classList.add("editing-row", "bg-yellow-50");
+    currentEditingRow = row;
 
     const nameCell = row.querySelector('td[data-col="name"]');
     const categoryCell = row.querySelector('td[data-col="category"]');
@@ -124,6 +137,8 @@
     row.innerHTML = row.dataset.origHtml;
     delete row.dataset.origHtml;
     delete row.dataset.editing;
+  row.classList.remove("editing-row", "bg-yellow-50");
+  if (currentEditingRow === row) currentEditingRow = null;
   }
 
   function saveRow(row) {
@@ -318,6 +333,10 @@
   function archiveItem(row) {
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
+    // Detect current active state from status cell text
+    const statusCell = row.querySelector('td[data-col="status"]');
+    const currentlyActive =
+      statusCell && /Active/i.test(statusCell.textContent || "");
     const csrf = getCsrfToken();
     fetch(`/items/${itemId}/toggle/`, {
       method: "POST",
@@ -329,6 +348,18 @@
     })
       .then((r) => {
         if (r.ok) {
+          // Persist a toast to show after reload so the user receives feedback.
+          try {
+            const msg = currentlyActive
+              ? "Item archived"
+              : "Item activated";
+            localStorage.setItem(
+              "items_pending_toast",
+              JSON.stringify({ message: msg, type: "success" }),
+            );
+          } catch (e) {
+            /* ignore storage errors */
+          }
           window.location.reload();
         } else if (window.notifications && window.notifications.showToast) {
           window.notifications.showToast("Unable to update item.", "error");
@@ -518,6 +549,24 @@
   });
 
   document.addEventListener("DOMContentLoaded", function () {
+    // Show any pending toast (e.g., from archive/activate action that required reload)
+    try {
+      const pending = localStorage.getItem("items_pending_toast");
+      if (pending) {
+        const data = JSON.parse(pending);
+        if (
+          data &&
+          data.message &&
+          window.notifications &&
+          window.notifications.showToast
+        ) {
+          window.notifications.showToast(data.message, data.type || "info");
+        }
+        localStorage.removeItem("items_pending_toast");
+      }
+    } catch (e) {
+      /* ignore */
+    }
     const hidden = JSON.parse(
       localStorage.getItem("items_table_hidden") || "[]",
     );
@@ -693,6 +742,13 @@
       const html = `
           <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"block text-sm font-medium text-gray-700 mb-1\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
       if (window.modal) window.modal.open(html);
+    }
+  });
+
+  // Global Escape key cancels current quick edit (if any)
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && currentEditingRow) {
+      restoreRow(currentEditingRow);
     }
   });
 })();

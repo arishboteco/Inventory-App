@@ -51,7 +51,7 @@
             <span class="text-sm text-gray-600 ml-2">Filter and explore</span>
           </div>
           <div class="flex flex-wrap items-center gap-2 justify-end">
-            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer">Add Item</button>
+            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer" data-modal-prefetch="eager" data-modal-inline-template="inline-item-create-drawer">Add Item</button>
             <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'items_bulk_upload' %}?partial=1" data-modal-type="drawer">Bulk Upload</button>
             <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
             <div class="relative" data-col-menu-container>
@@ -89,6 +89,12 @@
         <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
         <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
       </div>
+      <!-- Inline hidden drawer content for Add Item to ensure zero-latency open.
+           JS will prefer cached fetch response; if not present yet, it can
+           fall back to this template before network round-trip completes. -->
+      <template id="inline-item-create-drawer">
+        {% include 'inventory/_item_create_bare.html' %}
+      </template>
       <!-- Bulk Actions Bar -->
       <div id="bulk-actions" class="hidden border-t border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between" role="region" aria-label="Bulk actions bar">
         <span id="bulk-count" class="text-sm text-gray-700">0 selected</span>

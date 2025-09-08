@@ -51,7 +51,7 @@ SENTRY_DSN=<SENTRY_DSN>
 #### **Start Command:**
 
 ```bash
-gunicorn --bind 0.0.0.0:$PORT --workers 4 --worker-class gevent --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --preload --access-logfile - --error-logfile - inventory_app.wsgi:application
+gunicorn --bind 0.0.0.0:$PORT --workers 3 --worker-class sync --max-requests 1000 --max-requests-jitter 50 --timeout 120 --preload --access-logfile - --error-logfile - inventory_app.wsgi:application
 ```
 
 #### **Health Check Path:**
@@ -101,7 +101,7 @@ Static files are handled by WhiteNoise and will be automatically collected durin
 
 Our production configuration includes:
 
-- ✅ **4 Gunicorn workers** with gevent for async handling
+- ✅ **3 Gunicorn workers** using sync class (gevent removed to avoid DB threading issues)
 - ✅ **1000 connections per worker** for high concurrency
 - ✅ **Request lifecycle management** (1000 requests per worker)
 - ✅ **Preloading** for faster response times

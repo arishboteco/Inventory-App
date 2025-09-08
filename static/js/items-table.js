@@ -543,20 +543,26 @@
         const first = menu.querySelector("input");
         if (first) first.focus();
       }
-      function closeMenu() {
+      // focusReturn determines whether focus is explicitly moved back to the button.
+      // Returning focus on outside clicks was swallowing the user's next intended click
+      // (e.g. on filter inputs below), making it appear those controls were unclickable.
+      function closeMenu(focusReturn = true) {
+        if (menuBtn.getAttribute("aria-expanded") !== "true") return;
         menu.classList.add("hidden");
         menuBtn.setAttribute("aria-expanded", "false");
-        skipOpen = true;
-        menuBtn.focus();
-        setTimeout(() => {
-          skipOpen = false;
-        });
+        if (focusReturn) {
+          skipOpen = true;
+          menuBtn.focus();
+          setTimeout(() => {
+            skipOpen = false;
+          });
+        }
       }
 
       menuBtn.addEventListener("click", function (e) {
         e.stopPropagation();
         const expanded = menuBtn.getAttribute("aria-expanded") === "true";
-        if (expanded) closeMenu();
+        if (expanded) closeMenu(true);
         else openMenu();
       });
 
@@ -577,7 +583,8 @@
 
       menuContainer.addEventListener("focusout", (e) => {
         if (!menuContainer.contains(e.relatedTarget)) {
-          closeMenu();
+          // Do not force focus back to button; allow focus to proceed to the newly clicked element.
+          closeMenu(false);
         }
       });
 
@@ -586,7 +593,7 @@
         const index = items.indexOf(document.activeElement);
         if (e.key === "Escape") {
           e.preventDefault();
-          closeMenu();
+          closeMenu(true);
         } else if (e.key === "ArrowDown") {
           e.preventDefault();
           const next = items[(index + 1) % items.length];
@@ -601,7 +608,8 @@
       document.addEventListener("click", function (e) {
         if (!menu.contains(e.target) && e.target !== menuBtn) {
           if (menuBtn.getAttribute("aria-expanded") === "true") {
-            closeMenu();
+            // Outside click: close without stealing focus
+            closeMenu(false);
           }
         }
       });

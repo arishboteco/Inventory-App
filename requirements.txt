@@ -1,17 +1,28 @@
-Django==5.2.5
-djangorestframework==3.16.1
-django-filter==24.2
-django-environ==0.12.0
-dj-database-url==2.1.0
-whitenoise==6.9.0
-gunicorn==23.0.0
-psycopg[binary]==3.2.9
-fpdf2==2.8.4
-pydantic==2.11.7
-supabase==2.18.1
-statsmodels==0.14.5
-gevent==24.11.1
-sentry-sdk[django]==2.19.0
-django-redis==5.4.0
-redis==5.0.8
-django-q2==1.8.0
+###############################################
+# Runtime Dependencies
+#
+# Trimmed to only what the application code actually imports.
+# Optional/unused packages (supabase client, redis cache backend,
+# sentry SDK, gevent) were removed to reduce build size & attack surface.
+# Add them back via a separate optional requirements file if/when wired.
+###############################################
+
+Django==5.2.5                 # Web framework
+djangorestframework==3.16.1   # REST API
+django-filter==24.2           # Filtering integration for DRF
+django-environ==0.12.0        # Environment variable parsing
+dj-database-url==2.1.0        # Parse DATABASE_URL
+whitenoise==6.9.0             # Static files in production
+gunicorn==23.0.0              # WSGI server (sync workers)
+psycopg[binary]==3.2.9        # PostgreSQL driver v3
+fpdf2==2.8.4                  # PDF generation for GRNs / indents
+pydantic==2.11.7              # Data validation / view models
+statsmodels==0.14.5           # Forecasting (Holt-Winters)
+django-q2==1.8.0              # Background task queue
+
+# NOTE: Removed (previously present):
+#   supabase (no runtime usage; docs only)
+#   sentry-sdk[django] (not initialized yet)
+#   django-redis / redis (no CACHES config yet)
+#   gevent (we use sync gunicorn workers now)
+# If needed, create requirements-optional.txt with those packages.

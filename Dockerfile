@@ -34,14 +34,6 @@ RUN pip install --upgrade pip && \
     pip install -r requirements.txt && \
     if [ "$BUILD_ENV" = "prod" ] && [ -f requirements-prod.txt ]; then \
         pip install -r requirements-prod.txt; \
-    fi && \
-    if [ "$BUILD_ENV" = "prod" ]; then \
-        pip install \ \
-            gunicorn[gevent]==23.0.0 \ \
-            psycopg[binary]==3.2.9 \ \
-            redis==5.0.1 \ \
-            sentry-sdk[django]==1.32.0 \ \
-            django-health-check==3.17.0; \
     fi
 
 # Copy project
@@ -57,4 +49,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     else exit 0; fi
 
 # Default command
-CMD ["sh", "-c", "python manage.py migrate && if [ '$BUILD_ENV' != 'dev' ]; then python manage.py collectstatic --noinput; fi && if [ '$BUILD_ENV' = 'prod' ]; then exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --workers 4 --worker-class gevent --worker-connections 1000 --max-requests 1000 --max-requests-jitter 100 --timeout 30 --keep-alive 2; else exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 30; fi"]
+CMD ["sh", "-c", "python manage.py migrate && if [ '$BUILD_ENV' != 'dev' ]; then python manage.py collectstatic --noinput; fi && exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 30"]

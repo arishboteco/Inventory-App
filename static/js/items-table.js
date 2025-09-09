@@ -795,6 +795,109 @@
 
   // (Removed) Separate arrow-toggle handler; arrows will be updated by server response.
 
+  // Keyboard navigation and shortcuts on focused rows
+  function findInRow(row, selector) {
+    return row ? row.querySelector(selector) : null;
+  }
+  function simulateClick(el) {
+    if (!el) return;
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  }
+  document.addEventListener("keydown", function (e) {
+    // Act only when the focused element is a row or inside a row
+    const row = e.target && e.target.closest && e.target.closest("tr.item-row");
+    if (!row) return;
+    const key = e.key;
+    if (key === "ArrowDown" || key === "ArrowUp") {
+      e.preventDefault();
+      const all = Array.from(document.querySelectorAll("tr.item-row"));
+      const idx = all.indexOf(row);
+      if (idx === -1) return;
+      const next = key === "ArrowDown" ? all[idx + 1] : all[idx - 1];
+      if (next) next.focus();
+      return;
+    }
+    if (key === "Enter" || key === " ") {
+      // Open View Details modal
+      const view = findInRow(row, 'a[data-modal-url*="item_detail"]');
+      if (view) {
+        e.preventDefault();
+        simulateClick(view);
+      }
+      return;
+    }
+    if (key.toLowerCase && key.toLowerCase() === "e") {
+      // Edit drawer
+      const edit = findInRow(row, 'a[data-modal-url*="/edit/"]');
+      if (edit) {
+        e.preventDefault();
+        simulateClick(edit);
+      }
+      return;
+    }
+    if (key.toLowerCase && key.toLowerCase() === "a") {
+      // Archive/Activate
+      const btn = findInRow(row, '[data-action="archive"]');
+      if (btn) {
+        e.preventDefault();
+        archiveItem(row);
+      }
+      return;
+    }
+    if (key === "Delete" || key === "Backspace") {
+      const btn = findInRow(row, '[data-action="delete"]');
+      if (btn) {
+        e.preventDefault();
+        deleteItem(row);
+      }
+      return;
+    }
+  });
+
+  // Highlight search query within Name and Category cells
+  function getQueryTerm() {
+    try {
+      const url = new URL(window.location.href);
+      const q = url.searchParams.get("q");
+      if (q) return q.trim();
+    } catch (_) { /* noop */ }
+    const form = document.getElementById("filters");
+    if (form) {
+      const inp = form.querySelector('input[name="q"]');
+      if (inp && inp.value) return String(inp.value).trim();
+    }
+    return "";
+  }
+  function clearHighlights(scope) {
+    scope.querySelectorAll('mark.search-hit').forEach((m) => {
+      const text = m.textContent;
+      m.replaceWith(document.createTextNode(text));
+    });
+  }
+  function highlightCell(cell, term) {
+    if (!cell || !term) return;
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "ig");
+    // Remove previous marks first
+    clearHighlights(cell);
+    // Replace textual content only (simple innerHTML approach for small cells)
+    cell.innerHTML = cell.innerHTML.replace(regex, '<mark class="search-hit">$1</mark>');
+  }
+  function highlightTable() {
+    const term = getQueryTerm();
+    const list = document.getElementById('items-list') || document;
+    // Clear all previous marks
+    clearHighlights(list);
+    if (!term) return;
+    document.querySelectorAll('#items-table td[data-col="name"], #items-table td[data-col="category"]').forEach((td)=>{
+      highlightCell(td, term);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', highlightTable);
+  document.addEventListener('htmx:afterSwap', (e)=>{
+    if (e && e.target && e.target.id === 'items-list') highlightTable();
+  });
+
   function getCsrfToken() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
     if (m) return decodeURIComponent(m[1]);

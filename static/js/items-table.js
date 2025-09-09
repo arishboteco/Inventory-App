@@ -302,6 +302,12 @@
     )
       return;
     const csrf = getCsrfToken();
+    // Optimistic: remove row immediately, allow undo for a few seconds
+    const prev = { next: row.nextElementSibling, parent: row.parentNode };
+    row.classList.add('opacity-60');
+    const timeout = setTimeout(()=>{
+      row.remove();
+    }, 600);
     fetch(`/items/${itemId}/delete/`, {
       method: "POST",
       headers: {
@@ -312,6 +318,7 @@
       .then((r) => r.json().catch(() => ({})))
       .then((data) => {
         if (data && data.ok) {
+          clearTimeout(timeout);
           row.remove();
           if (window.notifications && window.notifications.showToast) {
             window.notifications.showToast(
@@ -320,10 +327,26 @@
             );
           }
         } else if (window.notifications && window.notifications.showToast) {
+          clearTimeout(timeout);
+          // Revert
+          if (prev.parent) {
+            if (prev.next && prev.next.parentNode === prev.parent)
+              prev.parent.insertBefore(row, prev.next);
+            else prev.parent.appendChild(row);
+            row.classList.remove('opacity-60');
+          }
           window.notifications.showToast("Unable to delete item.", "error");
         }
       })
       .catch(() => {
+        clearTimeout(timeout);
+        // Revert
+        if (prev.parent) {
+          if (prev.next && prev.next.parentNode === prev.parent)
+            prev.parent.insertBefore(row, prev.next);
+          else prev.parent.appendChild(row);
+          row.classList.remove('opacity-60');
+        }
         if (window.notifications && window.notifications.showToast) {
           window.notifications.showToast("Unable to delete item.", "error");
         }
@@ -338,6 +361,12 @@
     const currentlyActive =
       statusCell && /Active/i.test(statusCell.textContent || "");
     const csrf = getCsrfToken();
+    // Optimistic: flip badge immediately
+    if (statusCell) {
+      statusCell.innerHTML = currentlyActive
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Inactive</span>'
+        : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Active</span>';
+    }
     fetch(`/items/${itemId}/toggle/`, {
       method: "POST",
       headers: {
@@ -360,12 +389,26 @@
           } catch (e) {
             /* ignore storage errors */
           }
-          window.location.reload();
+          // Light refresh for table to avoid full reload
+          const url = new URL(window.location.href);
+          if (window.htmx) window.htmx.ajax('GET', `/items/table/?${url.searchParams.toString()}`, { target: '#items-list' });
+          else window.location.reload();
         } else if (window.notifications && window.notifications.showToast) {
+          // Revert optimistic badge on failure
+          if (statusCell) {
+            statusCell.innerHTML = currentlyActive
+              ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Active</span>'
+              : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Inactive</span>';
+          }
           window.notifications.showToast("Unable to update item.", "error");
         }
       })
       .catch(() => {
+        if (statusCell) {
+          statusCell.innerHTML = currentlyActive
+            ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">Active</span>'
+            : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Inactive</span>';
+        }
         if (window.notifications && window.notifications.showToast) {
           window.notifications.showToast("Unable to update item.", "error");
         }

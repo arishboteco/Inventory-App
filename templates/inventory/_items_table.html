@@ -135,6 +135,8 @@
           <a
             href="{% url 'item_edit' item.item_id %}"
             data-modal-url="{% url 'item_edit' item.item_id %}?partial=1"
+            data-modal-type="drawer"
+            data-modal-prefetch="hover"
             class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-blue-600"
             title="Edit"
             aria-label="Edit {{ item.name }}"
@@ -143,8 +145,8 @@
           </a>
           <a
             href="{% url 'item_detail' item.item_id %}"
-            data-action="view"
-            data-href="{% url 'item_detail' item.item_id %}?partial=1"
+            data-modal-url="{% url 'item_detail' item.item_id %}?partial=1"
+            data-modal-prefetch="hover"
             class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary hover:text-success"
             title="View Details"
             aria-label="View details {{ item.name }}"

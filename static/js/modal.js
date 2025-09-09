@@ -133,6 +133,23 @@
     return entry.html;
   }
 
+  // Prefetch helper
+  function prefetch(url) {
+    if (!url) return;
+    if (cacheGet(url)) return;
+    if (INFLIGHT.has(url)) return;
+    const p = fetch(url)
+      .then((r) => (r.ok ? r.text() : Promise.reject()))
+      .then((html) => {
+        cacheSet(url, html);
+        INFLIGHT.delete(url);
+      })
+      .catch(() => {
+        INFLIGHT.delete(url);
+      });
+    INFLIGHT.set(url, p);
+  }
+
   function schedulePrefetch(el) {
     const url = el.getAttribute("data-modal-url");
     if (!url || cacheGet(url)) return;
@@ -262,6 +279,35 @@
       }
     }
   });
+
+  // Hover/focus prefetch for annotated triggers
+  document.addEventListener("pointerenter", function (e) {
+    const el = e.target.closest('[data-modal-url][data-modal-prefetch="hover"]');
+    if (!el) return;
+    const url = el.getAttribute("data-modal-url");
+    prefetch(url);
+  });
+  document.addEventListener("focusin", function (e) {
+    const el = e.target.closest('[data-modal-url][data-modal-prefetch="hover"]');
+    if (!el) return;
+    const url = el.getAttribute("data-modal-url");
+    prefetch(url);
+  });
+
+  // Idle prefetch for elements marked eager/idle
+  function prefetchMarked() {
+    const eager = document.querySelectorAll('[data-modal-url][data-modal-prefetch="eager"]');
+    eager.forEach((el) => prefetch(el.getAttribute("data-modal-url")));
+    const idle = () => {
+      const els = document.querySelectorAll('[data-modal-url][data-modal-prefetch="idle"]');
+      els.forEach((el) => prefetch(el.getAttribute("data-modal-url")));
+    };
+    if (window.requestIdleCallback) requestIdleCallback(idle, { timeout: 1200 });
+    else setTimeout(idle, 800);
+  }
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", prefetchMarked);
+  else prefetchMarked();
 
   // Prefetch on hover / focus for perceived instant open
   document.addEventListener(

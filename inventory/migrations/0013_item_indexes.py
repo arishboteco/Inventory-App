@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("inventory", "0001_initial"),
+        ("inventory", "0012_alter_goodsreceivednote_notes_and_more"),
     ]
 
     operations = [

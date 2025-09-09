@@ -32,6 +32,8 @@ def _filter_and_sort_items(request, qs=None):
             output_field=BooleanField(),
         )
     )
+    # Eager load related FK objects to avoid per-row queries during table render
+    qs = qs.select_related("unit", "category", "preferred_supplier")
     # Avoid N+1 on departments badges
     qs = qs.prefetch_related("departments")
     filters = {

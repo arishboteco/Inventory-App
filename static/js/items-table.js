@@ -665,23 +665,125 @@
     }
   });
 
-  document.addEventListener("click", function (e) {
-    const btn = e.target.closest("th button[data-sort]");
-    if (!btn) return;
-    const th = btn.closest("th");
-    const thead = th.closest("thead");
-    setTimeout(() => {
-      const order = btn.classList.contains("asc")
-        ? "ascending"
-        : btn.classList.contains("desc")
-          ? "descending"
-          : "none";
-      thead
-        .querySelectorAll("th[aria-sort]")
-        .forEach((h) => h.setAttribute("aria-sort", "none"));
-      th.setAttribute("aria-sort", order);
-    });
+  // (Removed) Legacy handler for button-based sort headers; current headers use anchor links.
+
+  // Lazy load item details when expanding a row
+  document.addEventListener('click', function(e){
+    const toggle = e.target.closest('[data-action="toggle-details"]');
+    if(!toggle) return;
+    const row = toggle.closest('tr.item-row');
+    if(!row) return;
+    const id = row.getAttribute('data-item-id');
+    const container = document.getElementById('details-content-' + id);
+    if(container && !container.dataset.loaded){
+      const url = container.getAttribute('data-url');
+      fetch(url)
+        .then(r=> r.ok ? r.text(): Promise.reject())
+        .then(html=>{
+          container.innerHTML = html;
+          container.dataset.loaded = '1';
+        })
+        .catch(()=>{
+          container.innerHTML = '<div class="text-xs text-red-600">Failed to load details.</div>';
+        });
+    }
   });
+
+  // Optimistic client-side sort to reduce perceived latency
+  document.addEventListener('click', function(e){
+    const link = e.target.closest('a[data-sort-link][hx-get]');
+    if(!link) return;
+    if(window.__tableSortInFlight) { e.preventDefault(); return; }
+    const table = document.getElementById('items-table');
+    if(!table) return;
+    const tbody = table.querySelector('tbody');
+    if(!tbody) return;
+    const th = link.closest('th');
+    const allTh = Array.from(th.parentElement.children);
+    const colIndex = allTh.indexOf(th);
+    const itemRows = Array.from(tbody.querySelectorAll('tr.item-row'));
+    if(itemRows.length < 2) return;
+    // Determine desired sort key and direction from link and current URL
+    const sortKey = link.getAttribute('data-sort-key') || '';
+    const linkUrl = new URL(link.getAttribute('href'), window.location.origin);
+    const dirParam = linkUrl.searchParams.get('direction') || 'asc';
+    const dirDesc = dirParam.toLowerCase() === 'desc';
+    const mult = dirDesc ? -1 : 1;
+    // Build a cleaned URL: keep current filters, drop existing sort/direction, add the new pair
+    const cleaned = new URL(linkUrl.pathname, window.location.origin);
+    const current = new URL(window.location.href);
+    // Retain all current params except page/sort/direction
+    current.searchParams.forEach((v,k)=>{
+      if(k === 'page' || k === 'sort' || k === 'direction') return;
+      cleaned.searchParams.append(k, v);
+    });
+    if(sortKey){
+      cleaned.searchParams.append('sort', sortKey);
+      cleaned.searchParams.append('direction', dirParam);
+    }
+    // Apply deduped URL back to link and use it for HTMX
+    const finalUrl = cleaned.toString();
+    link.setAttribute('href', finalUrl);
+    link.setAttribute('hx-get', finalUrl);
+
+    // Build pairs of [itemRow, detailsRow?] so details stay attached to their item
+    const pairs = itemRows.map((row)=>{
+      const id = row.getAttribute('data-item-id');
+      const next = row.nextElementSibling;
+      const details = next && next.id === ('details-' + id) ? next : null;
+      return { row, details };
+    });
+
+    const getVal = (row)=>{
+      const cell = row.children[colIndex];
+      if(!cell) return '';
+      const txt = (cell.textContent || '').trim();
+      const num = parseFloat(txt.replace(/,/g,''));
+      return isNaN(num) ? txt.toLowerCase() : num;
+    };
+
+    pairs.sort((a,b)=>{
+      const va = getVal(a.row); const vb = getVal(b.row);
+      if(typeof va === 'number' && typeof vb === 'number') return (va - vb) * mult;
+      if(va < vb) return -1 * mult;
+      if(va > vb) return 1 * mult;
+      return 0;
+    });
+
+    // Visual hint and throttle
+    window.__tableSortInFlight = true;
+    tbody.classList.add('opacity-60');
+    th.classList.add('opacity-70');
+    link.dataset.sortBusy = '1';
+
+    // Reorder in next frame to avoid layout thrash
+    requestAnimationFrame(()=>{
+      for(const p of pairs){
+        tbody.appendChild(p.row);
+        if(p.details) tbody.appendChild(p.details);
+      }
+    });
+
+    // Cleanup after server swaps in the authoritative table
+    document.addEventListener('htmx:afterSwap', function handler(ev){
+      if(ev.target && ev.target.id === 'items-list'){
+        tbody.classList.remove('opacity-60');
+        th.classList.remove('opacity-70');
+        window.__tableSortInFlight = false;
+        // Re-enable links marked busy
+        document.querySelectorAll('a[data-sort-link][data-sort-busy="1"]').forEach(a=>{ delete a.dataset.sortBusy; });
+        document.removeEventListener('htmx:afterSwap', handler);
+      }
+    });
+
+    // Prevent default and trigger a single HTMX request with the cleaned URL
+    e.preventDefault();
+    if(window.htmx){
+      window.htmx.ajax('GET', finalUrl, { target: '#items-list' });
+    }
+  });
+
+  // (Removed) Separate arrow-toggle handler; arrows will be updated by server response.
 
   function getCsrfToken() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);

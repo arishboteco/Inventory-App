@@ -182,6 +182,10 @@ class ItemDetailView(View):
             "list_title": "Items",
             "current_title": details["name"],
         }
+        # When expanding inline in the items table, use a compact inline partial
+        if (request.GET.get("inline") or "").lower() in {"1", "true", "yes"}:
+            return render(request, "inventory/_item_detail_inline.html", ctx)
+        # For modal/drawer usage, keep the existing broader partial
         if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
             return render(request, "inventory/_item_detail_partial.html", ctx)
         return render(request, self.template_name, ctx)

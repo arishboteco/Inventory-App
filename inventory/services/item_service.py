@@ -375,12 +375,14 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
         "unit_id": item.unit_id,
         "category_id": item.category_id,
         "initial_purchase_price": item.initial_purchase_price,
+        "last_purchase_price": item.last_purchase_price,
         "minimum_order_qty": item.minimum_order_qty,
         "lead_time_days": item.lead_time_days,
         "reorder_point": item.reorder_point,
         "current_stock": item._stock,
         "notes": item.notes,
         "is_active": item.is_active,
+        "updated_at": item.updated_at,
     }
 
     if item.unit:
@@ -398,6 +400,13 @@ def get_item_details(item_id: int) -> Optional[Dict[str, Any]]:
     else:
         row["category"] = None
         row["sub_category"] = None
+
+    if item.preferred_supplier:
+        # Prefer a simple name string for template display
+        try:
+            row["preferred_supplier"] = item.preferred_supplier.name
+        except Exception:  # pragma: no cover - defensive
+            row["preferred_supplier"] = str(item.preferred_supplier)
 
     departments = [dept.name for dept in item.departments.all()]
     row["departments"] = departments

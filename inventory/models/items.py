@@ -96,6 +96,12 @@ class Item(models.Model):
     class Meta:
         managed = True
         db_table = "items"
+        indexes = [
+            models.Index(fields=["name"], name="item_name_idx"),
+            models.Index(fields=["current_stock"], name="item_cstock_idx"),
+            models.Index(fields=["reorder_point"], name="item_rop_idx"),
+            models.Index(fields=["is_active"], name="item_active_idx"),
+        ]
 
 
 class StockTransaction(models.Model):

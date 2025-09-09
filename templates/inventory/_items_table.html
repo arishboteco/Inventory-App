@@ -10,8 +10,8 @@
       <th scope="col" class="sticky z-10 w-8 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
         <input type="checkbox" data-select-all aria-label="Select all" />
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" aria-sort="{% if sort == 'name' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
-        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" data-sort="col1" aria-sort="none">
+        <a data-sort-link data-sort-key="name" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
           Name
           {% if sort == 'name' %}
             <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
@@ -20,19 +20,19 @@
           {% endif %}
         </a>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" aria-sort="{% if sort == 'category__category' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
-        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" data-sort="col2" aria-sort="none">
+        <a data-sort-link data-sort-key="category__category" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" aria-sort="{% if sort == 'unit__base_unit' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
-        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" data-sort="col3" aria-sort="none">
+        <a data-sort-link data-sort-key="unit__base_unit" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
-      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" aria-sort="{% if sort == 'current_stock' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
-        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" data-sort="col4" aria-sort="none">
+        <a data-sort-link data-sort-key="current_stock" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" aria-sort="none">Stock Status</th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" aria-sort="none">Departments</th>
-      <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" aria-sort="{% if sort == 'is_active' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
-        <a href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" data-sort="col5" aria-sort="none">Stock Status</th>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" data-sort="col6" aria-sort="none">Departments</th>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" data-sort="col7" aria-sort="none">
+        <a data-sort-link data-sort-key="is_active" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
       </th>
       <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
         Actions
@@ -172,92 +172,18 @@
         </div>
       </td>
     </tr>
-   <tr
-      id="details-{{ item.item_id }}"
-      class="hidden bg-gray-50"
-      role="region"
-      aria-labelledby="item-title-{{ item.item_id }}"
-    >
-  {# There are 9 data columns (select, name, category, unit, stock, stock_status, departments, status, actions). Using an incorrect higher colspan caused visual gaps in some browsers. #}
-    <td colspan="9" class="p-4 whitespace-normal break-words">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-700">
-          <div>
-            <h5 class="font-medium text-gray-900 mb-2">Basic Information</h5>
-            <ul class="space-y-1">
-              <li>
-                <span class="font-medium">Item Code:</span>
-                {{ item.item_code|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Sub Category:</span>
-                {{ item.sub_category|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Base Unit:</span>
-                {{ item.unit.base_unit|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Purchase Unit:</span>
-                {{ item.purchase_unit|default:"Not set" }}
-              </li>
-            </ul>
+    <tr id="details-{{ item.item_id }}" class="hidden bg-gray-50" role="region" aria-labelledby="item-title-{{ item.item_id }}">
+      <td colspan="9" class="p-0">
+        <div
+          id="details-content-{{ item.item_id }}"
+          class="p-4 whitespace-normal break-words"
+          data-lazy-detail
+          data-url="{% url 'item_detail' item.item_id %}?inline=1"
+        >
+          <div class="text-xs text-gray-500 flex items-center gap-2">
+            <span class="animate-spin h-4 w-4 rounded-full border-2 border-gray-300 border-t-primary"></span>
+            Loading details…
           </div>
-          <div>
-            <h5 class="font-medium text-gray-900 mb-2">Stock Information</h5>
-            <ul class="space-y-1">
-              <li>
-                <span class="font-medium">Current Stock:</span>
-                {{ item.current_stock|default:"0" }}
-              </li>
-              <li>
-                <span class="font-medium">Reorder Point:</span>
-                {{ item.reorder_point|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Last Purchase Price:</span>
-                ${{ item.last_purchase_price|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Initial Purchase Price:</span>
-                ${{ item.initial_purchase_price|default:"Not set" }}
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h5 class="font-medium text-gray-900 mb-2">Additional Details</h5>
-            <ul class="space-y-1">
-              <li>
-                <span class="font-medium">Brand:</span>
-                {{ item.brand|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Preferred Supplier:</span>
-                {{ item.preferred_supplier.name|default:"Not set" }}
-              </li>
-              <li>
-                <span class="font-medium">Created:</span>
-                {{ item.created_at|date:"M d, Y" }}
-              </li>
-              <li>
-                <span class="font-medium">Last Updated:</span>
-                {{ item.updated_at|date:"M d, Y H:i" }}
-              </li>
-              <li>
-                <span class="font-medium">Active:</span>
-                {% if item.is_active %}
-                  <span class="text-success">Yes</span>
-                {% else %}
-                  <span class="text-red-600">No</span>
-                {% endif %}
-              </li>
-            </ul>
-          </div>
-          {% if item.notes %}
-          <div class="md:col-span-3">
-            <h5 class="font-medium text-gray-900 mb-2">Notes</h5>
-            <p>{{ item.notes }}</p>
-          </div>
-          {% endif %}
         </div>
       </td>
     </tr>

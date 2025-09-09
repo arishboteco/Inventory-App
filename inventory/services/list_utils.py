@@ -9,7 +9,7 @@ produce filtered and sorted querysets, paginated results and CSV exports.
 from __future__ import annotations
 
 import csv
-from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple, List
 
 from django.core.paginator import Paginator
 from django.db.models import Q, QuerySet
@@ -67,23 +67,124 @@ def apply_filters_sort(
             qs = qs.filter(conditions)
         params["q"] = q
 
-    for param, lookup in (filter_fields or {}).items():
-        value = (request.GET.get(param) or "").strip()
-        if value:
-            qs = qs.filter(**{lookup: value})
-        params[param] = value
+    # Helper to convert repeated or comma-separated values into a list
+    def _values_for(param_name: str) -> List[str]:
+        values = []
+        # Include repeated query params, e.g. ?status=open&status=pending
+        for v in request.GET.getlist(param_name):
+            if v is None:
+                continue
+            # Support comma-separated values in a single param as well
+            parts = [p.strip() for p in str(v).split(",")]
+            values.extend([p for p in parts if p])
+        return values
 
-    allowed_sorts = set(allowed_sorts or [])
-    allowed_sorts.add(default_sort)
-    sort = (request.GET.get("sort") or default_sort).strip()
-    direction = (request.GET.get("direction") or default_direction).strip().lower()
-    if sort not in allowed_sorts:
-        sort = default_sort
-    if direction not in {"asc", "desc"}:
-        direction = default_direction
-    ordering = sort if direction == "asc" else f"-{sort}"
-    qs = qs.order_by(ordering)
-    params.update({"sort": sort, "direction": direction})
+    # Known Django lookup suffixes to detect and adapt __in semantics
+    LOOKUP_SUFFIXES = {
+        "exact",
+        "iexact",
+        "contains",
+        "icontains",
+        "startswith",
+        "istartswith",
+        "endswith",
+        "iendswith",
+        "in",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "range",
+        "date",
+        "year",
+        "month",
+        "day",
+        "week",
+        "week_day",
+        "hour",
+        "minute",
+        "second",
+        "isnull",
+        "regex",
+        "iregex",
+    }
+
+    for param, lookup in (filter_fields or {}).items():
+        values = _values_for(param)
+        if not values:
+            # Preserve echo value for templates (use empty string if none)
+            params[param] = (request.GET.get(param) or "").strip()
+            continue
+
+        # If a single value, keep the provided lookup as-is
+        if len(values) == 1:
+            raw_val = values[0]
+            # Normalize booleans
+            low = raw_val.lower()
+            if low in {"true", "1", "yes", "on"}:
+                norm_val: Any = True
+            elif low in {"false", "0", "no", "off"}:
+                norm_val = False
+            else:
+                norm_val = raw_val
+            qs = qs.filter(**{lookup: norm_val})
+        else:
+            # Multiple values: coerce to an __in lookup on the base path
+            parts = lookup.split("__")
+            # If last part is a lookup suffix, drop it to keep the field path
+            if parts[-1] in LOOKUP_SUFFIXES:
+                base_path = "__".join(parts[:-1]) if len(parts) > 1 else parts[0]
+            else:
+                base_path = lookup
+            in_lookup = f"{base_path}__in"
+            qs = qs.filter(**{in_lookup: values})
+
+        # For params echo-back, join multiple values with commas for stability
+        params[param] = ",".join(values)
+
+    allowed_sorts_set = set(allowed_sorts or [])
+    allowed_sorts_set.add(default_sort)
+
+    # Support multiple sort/direction pairs; fall back to single if none
+    sorts = [s.strip() for s in request.GET.getlist("sort") if s and s.strip()]
+    dirs = [d.strip().lower() for d in request.GET.getlist("direction") if d]
+
+    # If no repeated params, respect single values
+    if not sorts:
+        single_sort = (request.GET.get("sort") or default_sort).strip()
+        sorts = [single_sort]
+    if not dirs:
+        single_dir = (request.GET.get("direction") or default_direction).strip().lower()
+        dirs = [single_dir]
+
+    # Pair the sorts with directions (pad/truncate), keeping last occurrence
+    paired: List[Tuple[str, str]] = []
+    for idx, s in enumerate(sorts):
+        d = dirs[idx] if idx < len(dirs) else default_direction
+        d = d if d in {"asc", "desc"} else default_direction
+        if s in allowed_sorts_set:
+            paired.append((s, d))
+
+    # De-duplicate keeping the last direction for each sort while preserving order
+    seen = {}
+    for s, d in paired:
+        seen[s] = d  # last one wins
+    ordered_unique: List[Tuple[str, str]] = []
+    for s in [] if not paired else [p[0] for p in paired]:
+        if s in seen:
+            ordered_unique.append((s, seen.pop(s)))
+    # If empty after filtering, use default
+    if not ordered_unique:
+        ordered_unique = [(default_sort, default_direction)]
+
+    ordering_fields = [s if d == "asc" else f"-{s}" for s, d in ordered_unique]
+    qs = qs.order_by(*ordering_fields)
+
+    # Backward compatible single sort/direction for templates (primary sort)
+    params.update({
+        "sort": ordered_unique[0][0],
+        "direction": ordered_unique[0][1],
+    })
     return qs, params
 
 

@@ -370,6 +370,31 @@
     } else {
       setTimeout(prefetchFirstEdit, 350);
     }
+    // Idle prefetch for first few View Details modals as well
+    const prefetchFirstView = () => {
+      const viewLinks = Array.from(document.querySelectorAll('[data-modal-url]'))
+        .filter((el) => {
+          const u = el.getAttribute('data-modal-url') || '';
+          // Match /items/<id>/ with optional ?partial=1, but exclude /edit/
+          return /\/items\/\d+\/?/.test(u) && !/\/edit\//.test(u);
+        });
+      if (viewLinks.length) {
+        schedulePrefetch(viewLinks[0]);
+        const more = viewLinks.slice(1, 4);
+        more.forEach((el, idx) => {
+          setTimeout(() => {
+            if (!cacheGet(el.getAttribute('data-modal-url'))) {
+              schedulePrefetch(el);
+            }
+          }, 300 + idx * 180);
+        });
+      }
+    };
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(prefetchFirstView, { timeout: 2200 });
+    } else {
+      setTimeout(prefetchFirstView, 420);
+    }
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(prefetchFn, { timeout: 1500 });
     } else {

@@ -14,19 +14,7 @@
     return el.closest(".item-row");
   }
 
-  function toggleDetails(row) {
-    const itemId = row?.dataset.itemId;
-    if (!itemId) return;
-    const details = document.getElementById(`details-${itemId}`);
-    const toggleEl = row.querySelector('[data-action="toggle-details"]');
-    if (!details || !toggleEl) return;
-
-    const expanded = toggleEl.getAttribute("aria-expanded") === "true";
-    details.classList.toggle("hidden", expanded);
-    toggleEl.setAttribute("aria-expanded", expanded ? "false" : "true");
-    const svg = toggleEl.querySelector("svg");
-    if (svg) svg.classList.toggle("rotate-90", !expanded);
-  }
+  // Row-level inline details removed: details now shown exclusively in the modal
 
   function enableInlineEdit(row) {
     const itemId = row?.dataset.itemId;
@@ -427,10 +415,9 @@
     if (!row) return;
 
     switch (action) {
-      case "toggle-details":
-        e.preventDefault();
-        toggleDetails(row);
-        break;
+  // case "toggle-details": // removed
+  //   e.preventDefault();
+  //   break;
       case "quick-edit":
         e.preventDefault();
         if (target.closest("table")) {
@@ -710,27 +697,7 @@
 
   // (Removed) Legacy handler for button-based sort headers; current headers use anchor links.
 
-  // Lazy load item details when expanding a row
-  document.addEventListener('click', function(e){
-    const toggle = e.target.closest('[data-action="toggle-details"]');
-    if(!toggle) return;
-    const row = toggle.closest('tr.item-row');
-    if(!row) return;
-    const id = row.getAttribute('data-item-id');
-    const container = document.getElementById('details-content-' + id);
-    if(container && !container.dataset.loaded){
-      const url = container.getAttribute('data-url');
-      fetch(url)
-        .then(r=> r.ok ? r.text(): Promise.reject())
-        .then(html=>{
-          container.innerHTML = html;
-          container.dataset.loaded = '1';
-        })
-        .catch(()=>{
-          container.innerHTML = '<div class="text-xs text-red-600">Failed to load details.</div>';
-        });
-    }
-  });
+  // Removed: lazy inline details loader
 
   // Optimistic client-side sort to reduce perceived latency
   document.addEventListener('click', function(e){

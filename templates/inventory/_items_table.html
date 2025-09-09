@@ -58,27 +58,15 @@
         />
       </td>
       <td data-col="name" class="px-4 py-2 whitespace-normal break-words">
-        <div class="flex items-start gap-2">
-          <button
-            type="button"
-            class="main-row text-gray-400 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-primary"
-            data-action="toggle-details"
-            aria-expanded="false"
-            aria-controls="details-{{ item.item_id }}"
-            aria-label="Toggle details for {{ item.name }}"
+        <div>
+          <div
+            class="font-medium text-gray-900"
+            id="item-title-{{ item.item_id }}"
           >
-            {% icon 'chevron-right' 'w-4 h-4 transition-transform duration-200' %}
-          </button>
-          <div>
-            <div
-              class="font-medium text-gray-900"
-              id="item-title-{{ item.item_id }}"
-            >
-              <span data-ignore-toggle>{{ item.name }}</span>
-            </div>
-            <div class="text-xs text-gray-500">
-              {% if item.item_code %}SKU: {{ item.item_code }}{% endif %}
-            </div>
+            <span>{{ item.name }}</span>
+          </div>
+          <div class="text-xs text-gray-500">
+            {% if item.item_code %}SKU: {{ item.item_code }}{% endif %}
           </div>
         </div>
       </td>
@@ -173,22 +161,7 @@
           </button>
         </div>
       </td>
-    </tr>
-    <tr id="details-{{ item.item_id }}" class="hidden bg-gray-50" role="region" aria-labelledby="item-title-{{ item.item_id }}">
-      <td colspan="9" class="p-0">
-        <div
-          id="details-content-{{ item.item_id }}"
-          class="p-4 whitespace-normal break-words"
-          data-lazy-detail
-          data-url="{% url 'item_detail' item.item_id %}?inline=1"
-        >
-          <div class="text-xs text-gray-500 flex items-center gap-2">
-            <span class="animate-spin h-4 w-4 rounded-full border-2 border-gray-300 border-t-primary"></span>
-            Loading details…
-          </div>
-        </div>
-      </td>
-    </tr>
+  </tr>
     {% empty %}
     <tr>
       <td colspan="9" class="text-center text-gray-500 whitespace-normal break-words">No items found.</td>

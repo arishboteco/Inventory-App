@@ -6,26 +6,52 @@
       {% icon 'x-mark' 'w-4 h-4' %}
     </button>
   </div>
-  <div class="p-4">
-    <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
-      {% for label, value in rows %}
-      <div>
-        <dt class="text-xs text-gray-500">{{ label }}</dt>
-        <dd class="text-sm text-gray-900">{{ value }}</dd>
-      </div>
-      {% endfor %}
-    </dl>
-    <hr class="my-4" />
-    <h4 class="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
-    <ul class="space-y-1 text-sm text-gray-700">
-      {% for tx in recent_activity %}
-      <li class="flex items-center justify-between">
-        <span>{{ tx.transaction_type }} ({{ tx.quantity }})</span>
-        <span class="text-gray-500">{{ tx.transaction_date|date:"Y-m-d H:i" }}</span>
-      </li>
-      {% empty %}
-      <li class="text-gray-500">No recent activity.</li>
-      {% endfor %}
-    </ul>
+  <div class="p-4 space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section class="bg-white rounded-md border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Basic Information</h3>
+        <dl class="grid grid-cols-1 gap-2 text-sm">
+          <div><dt class="text-gray-500">Item ID</dt><dd class="text-gray-900">{{ item.item_id }}</dd></div>
+          <div><dt class="text-gray-500">Category</dt><dd class="text-gray-900">{{ item.category|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Sub Category</dt><dd class="text-gray-900">{{ item.sub_category|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Base Unit</dt><dd class="text-gray-900">{{ item.base_unit|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Purchase Unit</dt><dd class="text-gray-900">{{ item.purchase_unit|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Departments</dt><dd class="text-gray-900">{{ item.department_names|default:"None" }}</dd></div>
+        </dl>
+      </section>
+      <section class="bg-white rounded-md border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Stock Information</h3>
+        <dl class="grid grid-cols-1 gap-2 text-sm">
+          <div><dt class="text-gray-500">Current Stock</dt><dd class="text-gray-900">{{ item.current_stock|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Reorder Point</dt><dd class="text-gray-900">{{ item.reorder_point|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Initial Purchase Price</dt><dd class="text-gray-900">{{ item.initial_purchase_price|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Last Purchase Price</dt><dd class="text-gray-900">{{ item.last_purchase_price|default:"Not set" }}</dd></div>
+        </dl>
+      </section>
+      <section class="bg-white rounded-md border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Additional Details</h3>
+        <dl class="grid grid-cols-1 gap-2 text-sm">
+          <div><dt class="text-gray-500">Preferred Supplier</dt><dd class="text-gray-900">{{ item.preferred_supplier|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Minimum Order Qty</dt><dd class="text-gray-900">{{ item.minimum_order_qty|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Lead Time (Days)</dt><dd class="text-gray-900">{{ item.lead_time_days|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Notes</dt><dd class="text-gray-900">{{ item.notes|default:"None" }}</dd></div>
+          <div><dt class="text-gray-500">Active</dt><dd class="text-gray-900">{% if item.is_active %}Yes{% else %}No{% endif %}</dd></div>
+          <div><dt class="text-gray-500">Last Updated</dt><dd class="text-gray-900">{{ item.updated_at|date:"Y-m-d H:i" }}</dd></div>
+        </dl>
+      </section>
+    </div>
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
+      <ul class="space-y-1 text-sm text-gray-700">
+        {% for tx in recent_activity %}
+        <li class="flex items-center justify-between">
+          <span>{{ tx.transaction_type }} ({{ tx.quantity }})</span>
+          <span class="text-gray-500">{{ tx.transaction_date|date:"Y-m-d H:i" }}</span>
+        </li>
+        {% empty %}
+        <li class="text-gray-500">No recent activity.</li>
+        {% endfor %}
+      </ul>
+    </div>
   </div>
 </div>

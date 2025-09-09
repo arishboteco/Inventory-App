@@ -400,6 +400,32 @@
     } else {
       setTimeout(prefetchFn, 0);
     }
+
+    // Viewport-based prefetch: when edit drawers become visible, prefetch once.
+    function primeViewportPrefetch(root = document) {
+      if (!('IntersectionObserver' in window)) return;
+      const candidates = Array.from(
+        root.querySelectorAll('[data-modal-url]')
+      ).filter((el)=>/\/items\/\d+\/edit\//.test(el.getAttribute('data-modal-url')||''));
+      if (!candidates.length) return;
+      let budget = 12; // safety cap per page view
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach((entry)=>{
+          if (budget <= 0) return;
+          if (entry.isIntersecting) {
+            const el = entry.target;
+            schedulePrefetch(el);
+            io.unobserve(el);
+            budget -= 1;
+          }
+        });
+      }, { rootMargin: '120px' });
+      candidates.forEach((el)=> io.observe(el));
+    }
+    primeViewportPrefetch(document);
+    document.addEventListener('htmx:afterSwap', (e)=>{
+      if (e && e.target) primeViewportPrefetch(e.target);
+    });
   });
 
   // Intercept modal form submits for partial saves

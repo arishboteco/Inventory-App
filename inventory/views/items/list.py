@@ -2,7 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.db import DatabaseError, IntegrityError
-from django.db.models import BooleanField, Case, F, Value, When
+from django.db.models import BooleanField, Case, F, Value, When, Q
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -40,10 +40,7 @@ def _filter_and_sort_items(request, qs=None):
         "active": "is_active",
         "category": "category__category",
         "subcategory": "category__sub_category",
-    # Department filter: use iexact for case-insensitive matching on name.
-    # (Exact match was failing when users typed mixed case or when predictive
-    # dropdown normalised casing.)
-    "department": "departments__name__iexact",
+        # Department handled below (accept ID or name; supports multi-select)
         "supplier": "preferred_supplier_id",
         "base_unit": "unit__base_unit",
     }
@@ -67,13 +64,28 @@ def _filter_and_sort_items(request, qs=None):
         allowed_sorts=allowed_sorts,
         default_sort="name",
     )
-    # If department parameter is numeric, treat it as primary key fallback.
-    dept_raw = (request.GET.get("department") or "").strip()
-    if dept_raw and dept_raw.isdigit():
-        qs = qs.filter(departments__department_id=dept_raw)
-    # When filtering across M2M ensure distinct to avoid duplicate rows.
-    if params.get("department"):
-        qs = qs.distinct()
+    # Department filter: accept IDs or names; support multi-select (__in)
+    raw_vals = request.GET.getlist("department")
+    if len(raw_vals) == 1 and "," in (raw_vals[0] or ""):
+        raw_vals = [v.strip() for v in raw_vals[0].split(",")]
+    dep_vals = [v for v in (raw_vals or []) if str(v).strip()]
+
+    if dep_vals:
+        # Resolve any names to IDs using case-insensitive match; keep numeric IDs as-is
+        id_ints = [int(v) for v in dep_vals if str(v).isdigit()]
+        name_vals = [v for v in dep_vals if not str(v).isdigit()]
+        try:
+            q_dep = Q(department_id__in=id_ints)
+            for nm in name_vals:
+                q_dep |= Q(name__iexact=nm)
+            resolved_ids = list(
+                Department.objects.filter(q_dep).values_list("department_id", flat=True)
+            )
+        except Exception:  # pragma: no cover - defensive
+            resolved_ids = id_ints  # best-effort fallback
+        if resolved_ids:
+            qs = qs.filter(departments__department_id__in=resolved_ids).distinct()
+            params["department"] = ",".join(dep_vals)
     # Apply stock status filter if present
     stock_status = (request.GET.get("stock_status") or "").strip().lower()
     if stock_status == "low":

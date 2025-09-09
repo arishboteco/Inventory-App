@@ -29,7 +29,9 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     subcategories = [sc[1] for sc in subcats]
 
     departments = list(
-        Department.objects.all().values_list("name", flat=True).order_by("name")
+        Department.objects.all()
+        .values_list("department_id", "name")
+        .order_by("name")
     )
 
     base_units = list(
@@ -55,7 +57,7 @@ def resolve_category_filters(request) -> Dict[str, Any]:
         "base_units": base_units,
         "units": [],
         "suppliers": suppliers,
-        "departments": [(d, d) for d in departments],
+    "departments": [(str(did), name) for did, name in departments],
     }
 
 
@@ -80,9 +82,8 @@ def build_filters(request) -> List[Dict[str, Any]]:
         supplier_options.append({"value": str(sid), "label": name})
 
     department_options = [{"value": "", "label": "All Departments"}]
-    department_options.extend(
-        [{"value": d, "label": d} for d in resolved["departments"]]
-    )
+    for val, label in resolved["departments"]:
+        department_options.append({"value": val, "label": label})
 
     return [
         {

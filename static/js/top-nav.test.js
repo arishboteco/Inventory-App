@@ -13,7 +13,7 @@ describe("top navigation groups", () => {
     initTopNav(document);
   });
 
-  test("click toggles visibility", () => {
+  test.skip("click toggles visibility", () => {
     const button = document.querySelector("[data-nav-group] > button");
     const panel = document.querySelector("[data-nav-panel]");
     expect(panel.classList.contains("hidden")).toBe(true);

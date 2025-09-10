@@ -22,6 +22,7 @@ from .views.items.list import (
     ItemsExportView,
     ItemsListView,
     ItemsTableView,
+    distinct_values,
 )
 from .views.items.stock import (
     ItemCreateHTMXView,
@@ -60,6 +61,7 @@ urlpatterns = [
     path("items/", ItemsListView.as_view(), name="items_list"),
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
     path("items/export/", ItemsExportView.as_view(), name="items_export"),
+    path("items/distinct/<str:field>/", distinct_values, name="items_distinct"),
     path("items/create/", ItemCreateHTMXView.as_view(), name="item_create"),
     path(
         "items/create/partial/",

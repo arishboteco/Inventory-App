@@ -15,7 +15,7 @@
   }
 
   // Row-level inline details removed: details now shown exclusively in the modal
-
+  function toggleDetails() {}
   function enableInlineEdit(row) {
     const itemId = row?.dataset.itemId;
     if (!itemId) return;

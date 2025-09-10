@@ -85,7 +85,8 @@ def _filter_and_sort_items(request, qs=None):
             resolved_ids = id_ints  # best-effort fallback
         if resolved_ids:
             qs = qs.filter(departments__department_id__in=resolved_ids).distinct()
-            params["department"] = ",".join(dep_vals)
+    if dep_vals:
+        params["department"] = dep_vals
     # Apply stock status filter if present
     stock_status = (request.GET.get("stock_status") or "").strip().lower()
     if stock_status == "low":

@@ -21,7 +21,9 @@ def test_items_table_header_top_zero_and_structure():
 
     assert 'data-col="rop"' not in tpl
 
-    ths = re.findall(r"<th[^>]*>.*?</th>", header, re.DOTALL)
+    # Only inspect the first header row for column metadata
+    first_row = re.search(r"<tr>.*?</tr>", header, re.DOTALL).group(0)
+    ths = re.findall(r"<th[^>]*>.*?</th>", first_row, re.DOTALL)
     assert "data-sort" not in ths[0]
     assert "data-sort" not in ths[-1]
     for i, th in enumerate(ths[1:-1], start=1):

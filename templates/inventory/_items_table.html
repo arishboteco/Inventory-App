@@ -1,44 +1,149 @@
 {% load icon_tags category_tags %}
 <!-- prettier-ignore -->
-<table
-  class="min-w-full w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky"
-  id="items-table"
-  data-sortable
->
-  <thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-    <tr>
-      <th scope="col" class="sticky z-10 w-8 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
-        <input type="checkbox" data-select-all aria-label="Select all" />
-      </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" data-sort="col1" aria-sort="none">
-        <a data-sort-link data-sort-key="name" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
-          Name
-          {% if sort == 'name' %}
-            <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
-          {% else %}
-            <span class="text-xs text-gray-400">⇅</span>
-          {% endif %}
-        </a>
-      </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" data-sort="col2" aria-sort="none">
-        <a data-sort-link data-sort-key="category__category" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
-      </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" data-sort="col3" aria-sort="none">
-        <a data-sort-link data-sort-key="unit__base_unit" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
-      </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" data-sort="col4" aria-sort="none">
-        <a data-sort-link data-sort-key="current_stock" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
-      </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" data-sort="col5" aria-sort="none">Stock Status</th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" data-sort="col6" aria-sort="none">Departments</th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" data-sort="col7" aria-sort="none">
-        <a data-sort-link data-sort-key="is_active" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
-      </th>
-      <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
-        Actions
-      </th>
-    </tr>
-  </thead>
+<form id="filters" method="get">
+  <table
+    class="min-w-full w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky"
+    id="items-table"
+    data-sortable
+  >
+    <thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+      <tr>
+        <th scope="col" class="sticky z-10 w-8 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
+          <input type="checkbox" data-select-all aria-label="Select all" />
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" data-sort="col1" aria-sort="none">
+          <a data-sort-link data-sort-key="name" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+            Name
+            {% if sort == 'name' %}
+              <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+            {% else %}
+              <span class="text-xs text-gray-400">⇅</span>
+            {% endif %}
+          </a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" data-sort="col2" aria-sort="none">
+          <a data-sort-link data-sort-key="category__category" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" data-sort="col3" aria-sort="none">
+          <a data-sort-link data-sort-key="unit__base_unit" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" data-sort="col4" aria-sort="none">
+          <a data-sort-link data-sort-key="current_stock" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" data-sort="col5" aria-sort="none">Stock Status</th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" data-sort="col6" aria-sort="none">Departments</th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" data-sort="col7" aria-sort="none">
+          <a data-sort-link data-sort-key="is_active" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+        </th>
+        <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
+          Actions
+        </th>
+      </tr>
+      <tr class="bg-gray-50 border-b border-gray-200">
+        <th class="px-4 py-2"></th>
+        <th class="px-4 py-2">
+          <input
+            type="text"
+            name="q"
+            value="{{ q }}"
+            placeholder="Search"
+            autocomplete="off"
+            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            hx-get="{% url 'items_table' %}"
+            hx-target="#items-list"
+            hx-trigger="keyup changed delay:300ms"
+            hx-include="#filters"
+            hx-indicator="#items-loading"
+          />
+        </th>
+        <th class="px-4 py-2">
+          <select
+            name="category"
+            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            hx-get="{% url 'items_table' %}"
+            hx-target="#items-list"
+            hx-trigger="change"
+            hx-include="#filters"
+            hx-indicator="#items-loading"
+            autocomplete="off"
+          >
+            <option value="">All Categories</option>
+            {% for c in categories %}
+              <option value="{{ c }}"{% if c == category %} selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </th>
+        <th class="px-4 py-2">
+          <select
+            name="base_unit"
+            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            hx-get="{% url 'items_table' %}"
+            hx-target="#items-list"
+            hx-trigger="change"
+            hx-include="#filters"
+            hx-indicator="#items-loading"
+            autocomplete="off"
+          >
+            <option value="">All Units</option>
+            {% for u in base_units %}
+              <option value="{{ u }}"{% if u == base_unit %} selected{% endif %}>{{ u }}</option>
+            {% endfor %}
+          </select>
+        </th>
+        <th class="px-4 py-2"></th>
+        <th class="px-4 py-2">
+          <select
+            name="stock_status"
+            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            hx-get="{% url 'items_table' %}"
+            hx-target="#items-list"
+            hx-trigger="change"
+            hx-include="#filters"
+            hx-indicator="#items-loading"
+            autocomplete="off"
+          >
+            <option value="">All Statuses</option>
+            <option value="low"{% if stock_status == 'low' %} selected{% endif %}>Low</option>
+            <option value="out"{% if stock_status == 'out' %} selected{% endif %}>Out</option>
+            <option value="normal"{% if stock_status == 'normal' %} selected{% endif %}>In Stock</option>
+          </select>
+        </th>
+        <th class="px-4 py-2">
+          <select
+            name="department"
+            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            hx-get="{% url 'items_table' %}"
+            hx-target="#items-list"
+            hx-trigger="change"
+            hx-include="#filters"
+            hx-indicator="#items-loading"
+            autocomplete="off"
+          >
+            <option value="">All Departments</option>
+            {% for val, label in departments %}
+              <option value="{{ val }}"{% if val == department %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </th>
+        <th class="px-4 py-2">
+          <select
+            name="active"
+            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            hx-get="{% url 'items_table' %}"
+            hx-target="#items-list"
+            hx-trigger="change"
+            hx-include="#filters"
+            hx-indicator="#items-loading"
+            autocomplete="off"
+          >
+            <option value="">All</option>
+            <option value="true"{% if active == 'true' or active == '1' %} selected{% endif %}>Active</option>
+            <option value="false"{% if active == 'false' or active == '0' %} selected{% endif %}>Inactive</option>
+          </select>
+        </th>
+        <th class="px-4 py-2"></th>
+      </tr>
+    </thead>
   <tbody class="bg-white divide-y divide-border">
     {% for item in page_obj.object_list %}
     <tr
@@ -169,4 +274,8 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
+  </table>
+  {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
+  {% if sort %}<input type="hidden" name="sort" value="{{ sort|default:'name' }}">{% endif %}
+  {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
+</form>

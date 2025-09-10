@@ -120,9 +120,10 @@ def test_items_toolbar_structure(client):
     soup = BeautifulSoup(resp.content, "html.parser")
     toolbar = soup.find(id="items-toolbar")
     assert toolbar is not None
-    # Ensure search/filter form is present on the left
-    filters_form = toolbar.find("form", id="filters")
+    # Filter form should exist but not inside the toolbar
+    filters_form = soup.find("form", id="filters")
     assert filters_form is not None
+    assert toolbar.find("form", id="filters") is None
     # Ensure action buttons are present on the right
     add_btn = toolbar.find(
         "button",
@@ -172,19 +173,19 @@ def test_item_create_partial_departments_multiselect_container(client):
 def test_filters_persist_after_table_refresh(client):
     """Filters should remain visible after HTMX table updates."""
     _create_item()
-    # Initial page load contains the filter bar
+    # Initial page load contains the filter form
     resp = client.get(reverse("items_list"))
     assert resp.status_code == 200
     initial_html = resp.content.decode()
-    assert 'id="items-filter-bar"' in initial_html
+    assert 'id="filters"' in initial_html
 
     # Simulate an HTMX request to refresh the table
     table_resp = client.get(reverse("items_table"), HTTP_HX_REQUEST="true")
     assert table_resp.status_code == 200
     table_html = table_resp.content.decode()
 
-    # The table partial should not contain the filter bar
-    assert "items-filter-bar" not in table_html
+    # The table partial should still contain the filter form
+    assert 'id="filters"' in table_html
 
 
 @pytest.mark.django_db

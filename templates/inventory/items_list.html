@@ -130,10 +130,45 @@
           live.textContent = `List updated. ${count} items displayed.`;
         }
       }
+      const categorySelect = document.getElementById('filter-category');
+      const subcategorySelect = document.getElementById('filter-subcategory');
+      async function loadSubcategories(cat){
+        if(!subcategorySelect) return;
+        subcategorySelect.innerHTML = '<option value="">All Subcategories</option>';
+        if(!cat){
+          if (window.initPredictiveDropdowns)
+            window.initPredictiveDropdowns(subcategorySelect.parentNode);
+          return;
+        }
+        try {
+          const resp = await fetch(`/items/subcategories/?category=${encodeURIComponent(cat)}`);
+          if(resp.ok){
+            const data = await resp.json();
+            data.forEach(sc => {
+              const opt = document.createElement('option');
+              opt.value = sc;
+              opt.textContent = sc;
+              if (sc === subcategorySelect.dataset.selected)
+                opt.selected = true;
+              subcategorySelect.appendChild(opt);
+            });
+            if (window.initPredictiveDropdowns)
+              window.initPredictiveDropdowns(subcategorySelect.parentNode);
+          }
+        } catch(err){
+          console.error('Failed to load subcategories', err);
+        }
+      }
+      if(categorySelect && subcategorySelect){
+        categorySelect.addEventListener('change', () => loadSubcategories(categorySelect.value));
+      }
+
       announceCount();
       if (listEl) {
-        listEl.addEventListener('htmx:afterSwap', () => {
+        listEl.addEventListener('htmx:afterSwap', (e) => {
           announceCount();
+          if (window.initMultiselectChips) window.initMultiselectChips(e.target);
+          if (window.initPredictiveDropdowns) window.initPredictiveDropdowns(e.target);
         });
       }
 

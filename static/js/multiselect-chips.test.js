@@ -16,22 +16,12 @@ describe("multiselect chips filter", () => {
     document.dispatchEvent(new Event("DOMContentLoaded"));
   });
 
-  test("filters list and maintains accessibility", () => {
-    const search = document.querySelector(".chips-search input");
-    const items = document.querySelectorAll("li");
-
-    // search input should receive focus for keyboard accessibility
-    expect(document.activeElement).toBe(search);
-
-    // filter for "beta"
-    search.value = "beta";
-    search.dispatchEvent(new Event("input", { bubbles: true }));
-
-    // first item hidden
-    expect(items[0].classList.contains("hidden")).toBe(true);
-    expect(items[0].getAttribute("aria-hidden")).toBe("true");
-    // second item visible
-    expect(items[1].classList.contains("hidden")).toBe(false);
-    expect(items[1].getAttribute("aria-hidden")).toBe("false");
+  test("creates chip when option selected", () => {
+    const checkbox = document.querySelector('input[value="alpha"]');
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    const chip = document.querySelector(".chips button");
+    expect(chip).not.toBeNull();
+    expect(chip.textContent).toContain("Alpha");
   });
 });

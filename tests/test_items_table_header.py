@@ -21,6 +21,14 @@ def test_items_table_header_top_zero_and_structure():
 
     assert 'data-col="rop"' not in tpl
 
+    # Department filter uses chip multiselect
+    assert 'data-multiselect="chips"' in tpl
+
+    # Predictive dropdowns added to long selects
+    assert re.search(r'id="filter-category"[^>]*class="[^"]*predictive', tpl)
+    assert re.search(r'id="filter-subcategory"[^>]*class="[^"]*predictive', tpl)
+    assert re.search(r'id="filter-base-unit"[^>]*class="[^"]*predictive', tpl)
+
     # Only inspect the first header row for column metadata
     first_row = re.search(r"<tr>.*?</tr>", header, re.DOTALL).group(0)
     ths = re.findall(r"<th[^>]*>.*?</th>", first_row, re.DOTALL)

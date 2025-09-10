@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView
+from django.views.decorators.http import require_GET
 
 from inventory.services.item_service import get_unit_display_name
 
@@ -119,6 +120,52 @@ def _filter_and_sort_items(request, qs=None):
         }
     )
     return qs, params
+
+
+@require_GET
+def distinct_values(request, field):
+    """Return distinct values for a given column respecting current filters."""
+    qs, _ = _filter_and_sort_items(request)
+    field_map = {
+        "name": "name",
+        "category": "category__category",
+        "unit": "unit__base_unit",
+        "active": "is_active",
+        "department": "departments__department_id",
+    }
+    if field == "stock_status":
+        data = []
+        if qs.filter(current_stock__lt=F("reorder_point"), current_stock__gt=0).exists():
+            data.append({"value": "low", "label": "Low"})
+        if qs.filter(current_stock__lte=0).exists():
+            data.append({"value": "out", "label": "Out"})
+        if qs.filter(current_stock__gte=F("reorder_point")).exists():
+            data.append({"value": "normal", "label": "In Stock"})
+        return JsonResponse(data, safe=False)
+    lookup = field_map.get(field)
+    if not lookup:
+        return JsonResponse([], safe=False)
+    if field == "department":
+        vals = qs.values("departments__department_id", "departments__name").distinct()
+        data = [
+            {
+                "value": str(v["departments__department_id"]),
+                "label": v["departments__name"],
+            }
+            for v in vals
+            if v["departments__department_id"]
+        ]
+    else:
+        vals = (
+            qs.values_list(lookup, flat=True)
+            .distinct()
+        )
+        data = [
+            {"value": str(v), "label": str(v)}
+            for v in vals
+            if v not in [None, ""]
+        ]
+    return JsonResponse(data, safe=False)
 
 
 class ItemsListView(TemplateView):

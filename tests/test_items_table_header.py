@@ -18,18 +18,8 @@ def test_items_table_header_top_zero_and_structure():
     assert re.search(r"<table[^>]*>\s*<thead", table)
     assert not re.search(r"<table[^>]*>\s*<tr", table)
     assert "data-sortable" in table
-
     assert 'data-col="rop"' not in tpl
 
-    # Department filter uses chip multiselect
-    assert 'data-multiselect="chips"' in tpl
-
-    # Predictive dropdowns added to long selects
-    assert re.search(r'id="filter-category"[^>]*class="[^"]*predictive', tpl)
-    assert re.search(r'id="filter-subcategory"[^>]*class="[^"]*predictive', tpl)
-    assert re.search(r'id="filter-base-unit"[^>]*class="[^"]*predictive', tpl)
-
-    # Only inspect the first header row for column metadata
     first_row = re.search(r"<tr>.*?</tr>", header, re.DOTALL).group(0)
     ths = re.findall(r"<th[^>]*>.*?</th>", first_row, re.DOTALL)
     assert "data-sort" not in ths[0]
@@ -38,10 +28,5 @@ def test_items_table_header_top_zero_and_structure():
         assert f'data-sort="col{i}"' in th
         assert 'aria-sort="none"' in th
 
-
-def test_header_filter_control_partial_exists():
-    partial = Path("templates/components/header_filter_control.html").read_text()
-    for attr in ["hx-get", "hx-target", "hx-include", "hx-indicator"]:
-        assert attr in partial
-    tpl = Path("templates/inventory/_items_table.html").read_text()
-    assert "components/header_filter_control.html" in tpl
+    for field in ["name", "category", "unit", "stock_status", "department", "active"]:
+        assert f'data-field="{field}"' in header

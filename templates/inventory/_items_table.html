@@ -60,7 +60,7 @@
           <select
             id="filter-category"
             name="category"
-            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            class="predictive w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             {% include "components/header_filter_control.html" %}
             hx-trigger="change"
             autocomplete="off"
@@ -70,13 +70,28 @@
               <option value="{{ c }}"{% if c == category %} selected{% endif %}>{{ c }}</option>
             {% endfor %}
           </select>
+          <label for="filter-subcategory" class="sr-only">Subcategory</label>
+          <select
+            id="filter-subcategory"
+            name="subcategory"
+            data-selected="{{ subcategory }}"
+            class="mt-1 predictive w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            {% include "components/header_filter_control.html" %}
+            hx-trigger="change"
+            autocomplete="off"
+          >
+            <option value="">All Subcategories</option>
+            {% for sc in subcategories %}
+              <option value="{{ sc }}"{% if sc == subcategory %} selected{% endif %}>{{ sc }}</option>
+            {% endfor %}
+          </select>
         </th>
         <th class="px-4 py-2">
           <label for="filter-base-unit" class="sr-only">Unit</label>
           <select
             id="filter-base-unit"
             name="base_unit"
-            class="w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            class="predictive w-full h-8 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             {% include "components/header_filter_control.html" %}
             hx-trigger="change"
             autocomplete="off"
@@ -106,20 +121,30 @@
         </th>
         <th class="px-4 py-2">
           <label for="filter-department" class="sr-only">Departments</label>
-          <select
+          <div
             id="filter-department"
-            name="department"
-            multiple
-            class="w-full h-20 px-2 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            {% include "components/header_filter_control.html" %}
-            hx-trigger="change"
-            autocomplete="off"
+            data-multiselect="chips"
+            class="max-h-20 overflow-y-auto"
           >
-            <option value="">All Departments</option>
-            {% for val, label in departments %}
-              <option value="{{ val }}"{% if val in department %} selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
+            <ul class="flex flex-wrap gap-2">
+              {% for val, label in departments %}
+              <li>
+                <label class="inline-flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    class="department-checkbox"
+                    name="department"
+                    value="{{ val }}"
+                    {% if val in department %}checked{% endif %}
+                    {% include "components/header_filter_control.html" %}
+                    hx-trigger="change"
+                  />
+                  <span>{{ label }}</span>
+                </label>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
         </th>
         <th class="px-4 py-2">
           <label for="filter-active" class="sr-only">Status</label>

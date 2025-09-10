@@ -3,6 +3,7 @@ from django.test import RequestFactory
 
 from inventory.models import Item, Supplier, Unit
 from inventory.models.departments import Department
+from inventory.models.category import Category
 from inventory.services import category_filters
 from inventory.views.items.list import _filter_and_sort_items
 
@@ -89,3 +90,31 @@ def test_filter_by_multiple_departments():
         str(dept1.department_id),
         str(dept2.department_id),
     }
+
+
+@pytest.mark.django_db
+def test_filter_by_subcategory():
+    rf = RequestFactory()
+    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    cat1 = Category.objects.create(category="Food", sub_category="Spices")
+    cat2 = Category.objects.create(category="Food", sub_category="Dairy")
+    item1 = Item.objects.create(
+        name="Sugar",
+        unit=unit,
+        category=cat1,
+        reorder_point=1,
+        notes="n",
+        is_active=True,
+    )
+    Item.objects.create(
+        name="Milk",
+        unit=unit,
+        category=cat2,
+        reorder_point=1,
+        notes="n",
+        is_active=True,
+    )
+    request = rf.get("/items/", {"subcategory": "Spices"})
+    qs, params = _filter_and_sort_items(request)
+    assert list(qs) == [item1]
+    assert params["subcategory"] == "Spices"

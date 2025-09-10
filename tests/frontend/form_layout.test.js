@@ -25,7 +25,7 @@ describe("form layout regression", () => {
   });
 });
 
-test("items_list template has no subcategory script", () => {
+test("items_list template includes subcategory script", () => {
   const fs = require("fs");
   const path = require("path");
   const tpl = fs.readFileSync(
@@ -39,5 +39,23 @@ test("items_list template has no subcategory script", () => {
     ),
     "utf8",
   );
-  expect(tpl.includes("items/subcategories")).toBe(false);
+  expect(tpl.includes("items/subcategories")).toBe(true);
+});
+
+test("items_table uses chip multiselect and predictive selects", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const tpl = fs.readFileSync(
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "templates",
+      "inventory",
+      "_items_table.html",
+    ),
+    "utf8",
+  );
+  expect(tpl.includes('data-multiselect="chips"')).toBe(true);
+  expect(tpl.includes('predictive')).toBe(true);
 });

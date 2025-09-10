@@ -1,7 +1,7 @@
 /** @jest-environment jsdom */
 
-describe('form layout regression', () => {
-  test('form does not overflow vertically at large viewport sizes', () => {
+describe("form layout regression", () => {
+  test("form does not overflow vertically at large viewport sizes", () => {
     // Simulate a large viewport
     window.innerWidth = 1920;
     window.innerHeight = 1080;
@@ -17,10 +17,27 @@ describe('form layout regression', () => {
       </form>
     `;
 
-    const form = document.querySelector('form');
+    const form = document.querySelector("form");
     expect(form.scrollHeight).toBeLessThanOrEqual(window.innerHeight);
-    form.querySelectorAll('label,input,p').forEach(el => {
+    form.querySelectorAll("label,input,p").forEach((el) => {
       expect(el.scrollHeight).toBe(el.clientHeight);
     });
   });
+});
+
+test("items_list template has no subcategory script", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const tpl = fs.readFileSync(
+    path.join(
+      __dirname,
+      "..",
+      "..",
+      "templates",
+      "inventory",
+      "items_list.html",
+    ),
+    "utf8",
+  );
+  expect(tpl.includes("items/subcategories")).toBe(false);
 });

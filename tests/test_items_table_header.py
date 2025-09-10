@@ -29,3 +29,11 @@ def test_items_table_header_top_zero_and_structure():
     for i, th in enumerate(ths[1:-1], start=1):
         assert f'data-sort="col{i}"' in th
         assert 'aria-sort="none"' in th
+
+
+def test_header_filter_control_partial_exists():
+    partial = Path("templates/components/header_filter_control.html").read_text()
+    for attr in ["hx-get", "hx-target", "hx-include", "hx-indicator"]:
+        assert attr in partial
+    tpl = Path("templates/inventory/_items_table.html").read_text()
+    assert "components/header_filter_control.html" in tpl

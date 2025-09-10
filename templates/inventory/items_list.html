@@ -145,45 +145,6 @@
         scroller.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
       });
-
-      // Dynamic subcategory filter: update options when category changes
-      const filtersForm = document.getElementById('filters');
-      if (filtersForm) {
-        const catSel = filtersForm.querySelector('select[name="category"]');
-        const catHidden = filtersForm.querySelector('input[type="hidden"][name="category"]');
-        const categoryInput = catHidden || catSel; // whichever exists
-        const subSel = filtersForm.querySelector('select[name="subcategory"]');
-        if (categoryInput && subSel) {
-          const onCategoryChange = async () => {
-            const cat = categoryInput.value;
-            subSel.innerHTML = '<option value="">All Subcategories</option>';
-            if (!cat) { subSel.dispatchEvent(new Event('change', { bubbles: true })); return; }
-            try {
-              const res = await fetch(`/items/subcategories/?category=${encodeURIComponent(cat)}`);
-              const data = await res.json();
-              if (data && Array.isArray(data.subcategories)) {
-                data.subcategories.forEach(s => {
-                  const opt = document.createElement('option');
-                  // Handle tuple-like [value, label] or plain string
-                  if (Array.isArray(s) && s.length >= 2) {
-                    opt.value = s[0]; opt.textContent = s[1];
-                  } else {
-                    opt.value = s; opt.textContent = s;
-                  }
-                  subSel.appendChild(opt);
-                });
-              }
-            } catch (e) { /* noop */ }
-            // trigger table refresh via HTMX
-            subSel.dispatchEvent(new Event('change', { bubbles: true }));
-            // If subcategory is predictive on other pages, re-init. Here it's native.
-            if (window.initPredictiveDropdowns) {
-              window.initPredictiveDropdowns(filtersForm);
-            }
-          };
-          categoryInput.addEventListener('change', onCategoryChange);
-        }
-      }
     });
     </script>
     <!-- Hidden templates for inline editing selects -->

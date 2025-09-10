@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom `.dept-grid` and `.auto-grid` CSS utilities and density selectors in favor of Tailwind classes.
 - Obsolete `.nav-btn`, `.toast`, `.skeleton-row`, and fallback sizing utilities replaced by Tailwind equivalents.
 - Compiled CSS bundle `static/css/app.css` removed from version control; generated during build.
+- Stale migration `inventory/migrations/0002_item_indexes.py` removed; indexes now applied via `0013_item_indexes`.
 
 ### Changed
 

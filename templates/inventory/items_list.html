@@ -71,13 +71,6 @@
             </div>
           </div>
         </div>
-        <!-- Filter bar -->
-        <div id="items-filter-bar" class="px-4 pb-2 pt-2 border-b border-gray-100 bg-white">
-          {% url 'items_table' as items_table_url %}
-          <div class="filters-line flex flex-wrap md:flex-nowrap gap-2 md:gap-3 w-full">
-            {% include "components/filter_bar.html" with q=request.GET.q filters=filters hx_get=items_table_url hx_target='#items-list' hx_indicator='#items-loading' search_placeholder='e.g., Tomato, Rice' page_size=page_size sort=sort direction=direction predictive_names=predictive_filter_names only %}
-          </div>
-        </div>
       </div>
       <div class="table-scroll group pt-2 md:pt-3">
         <div id="items-list">

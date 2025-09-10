@@ -2,7 +2,7 @@ import logging
 
 from django.contrib import messages
 from django.db import DatabaseError, IntegrityError
-from django.db.models import BooleanField, Case, F, Value, When, Q
+from django.db.models import BooleanField, Case, F, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -267,7 +267,10 @@ class ItemsTableView(TemplateView):
             querystring = list_utils.build_querystring(self.request)
         except Exception:  # pragma: no cover - defensive
             querystring = ""
-        ctx.update({"page_obj": page_obj, "page_size": per_page, "querystring": querystring})
+        ctx.update(
+            {"page_obj": page_obj, "page_size": per_page, "querystring": querystring}
+        )
+        ctx.update(category_filters.resolve_category_filters(self.request))
         return ctx
 
 

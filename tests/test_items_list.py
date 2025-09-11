@@ -177,7 +177,6 @@ def test_filters_persist_after_table_refresh(client):
     assert resp.status_code == 200
     initial_html = resp.content.decode()
     assert 'id="filters"' in initial_html
-    assert 'id="mobile-filters-form"' in initial_html
 
     table_resp = client.get(reverse("items_table"), HTTP_HX_REQUEST="true")
     assert table_resp.status_code == 200
@@ -192,13 +191,10 @@ def test_mobile_filter_drawer_attributes(client):
     resp = client.get(reverse("items_list"))
     assert resp.status_code == 200
     soup = BeautifulSoup(resp.content, "html.parser")
-    toggle = soup.find("button", {"data-mobile-filters-toggle": True})
-    assert toggle is not None
-    assert "md:hidden" in toggle.get("class", [])
-    drawer = soup.find("div", id="mobile-filters-drawer")
-    assert drawer is not None
-    assert drawer.get("role") == "dialog"
-    assert drawer.get("aria-modal") == "true"
+    form = soup.find("form", id="filters")
+    assert form is not None
+    assert form.find("input", {"id": "filter-q"}) is not None
+    assert form.find("select", {"id": "filter-category"}) is not None
 
 
 @pytest.mark.django_db

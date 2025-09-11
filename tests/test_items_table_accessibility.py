@@ -19,12 +19,14 @@ def test_column_menu_has_accessibility_attrs():
 
 def test_filter_controls_have_labels_and_ids():
     content = Path("templates/inventory/_items_table.html").read_text()
-    for label in [
-        "Filter Name",
-        "Filter Category",
-        "Filter Unit",
-        "Filter Stock Status",
-        "Filter Departments",
-        "Filter Status",
-    ]:
-        assert f'aria-label="{label}"' in content
+    pairs = [
+        ("filter-q", "Filter Name"),
+        ("filter-category", "Filter Category"),
+        ("filter-unit", "Filter Unit"),
+        ("filter-stock-status", "Filter Stock Status"),
+        ("filter-department", "Filter Departments"),
+        ("filter-active", "Filter Status"),
+    ]
+    for fid, label in pairs:
+        assert f'id="{fid}"' in content
+        assert f'<label for="{fid}" class="sr-only">{label}</label>' in content

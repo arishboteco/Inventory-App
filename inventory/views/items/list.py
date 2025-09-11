@@ -385,6 +385,12 @@ class ItemsTableView(TemplateView):
             {"page_obj": page_obj, "page_size": per_page, "querystring": querystring}
         )
         ctx.update(category_filters.resolve_category_filters(self.request))
+        ctx["predictive_filter_names"] = [
+            "category",
+            "base_unit",
+            "supplier",
+            "department",
+        ]
         return ctx
 
 

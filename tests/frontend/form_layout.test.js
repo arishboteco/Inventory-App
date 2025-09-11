@@ -25,7 +25,7 @@ describe("form layout regression", () => {
   });
 });
 
-test("items_list template includes column filter script", () => {
+test("items_list template includes table filter script", () => {
   const fs = require("fs");
   const path = require("path");
   const tpl = fs.readFileSync(
@@ -39,10 +39,10 @@ test("items_list template includes column filter script", () => {
     ),
     "utf8",
   );
-  expect(tpl.includes("column-filters.js")).toBe(true);
+  expect(tpl.includes("table-filters.js")).toBe(true);
 });
 
-test("items_table renders column filter buttons", () => {
+test("items_table renders inline filter controls", () => {
   const fs = require("fs");
   const path = require("path");
   const tpl = fs.readFileSync(
@@ -56,5 +56,5 @@ test("items_table renders column filter buttons", () => {
     ),
     "utf8",
   );
-  expect(tpl.includes('data-filter-btn')).toBe(true);
+  expect(tpl.includes('data-inline-filter')).toBe(true);
 });

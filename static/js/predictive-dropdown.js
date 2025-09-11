@@ -197,6 +197,11 @@
   originalSelect.style.whiteSpace = "nowrap";
   originalSelect.style.border = "0";
     originalSelect.tabIndex = -1; // keep out of tab order
+
+  originalSelect.addEventListener("input", () => {
+    const match = options.find((o) => o.value === originalSelect.value);
+    textInput.value = match ? match.text : "";
+  });
   }
 
   window.initPredictiveDropdowns = function (root) {

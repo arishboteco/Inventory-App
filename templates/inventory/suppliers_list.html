@@ -26,7 +26,7 @@
 
 {% block filters %}
   {% url hx_view_name as suppliers_view_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target='#'|add:container_id filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
+    {% include "components/responsive_filter_controls.html" with search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target='#'|add:container_id filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
 {% endblock %}
 
 {% block extra_top %}

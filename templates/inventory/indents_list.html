@@ -11,7 +11,7 @@
 
 {% block filters %}
   {% url 'indents_table' as indents_table_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters search_delay="500ms" %}
+    {% include "components/responsive_filter_controls.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters search_delay="500ms" %}
 {% endblock %}
 
 {% block extra_top %}

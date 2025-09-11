@@ -11,7 +11,7 @@
 
 {% block filters %}
   {% url 'recipes_list' as recipes_list_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_list_url hx_target="#recipes_grid" q=q %}
+    {% include "components/responsive_filter_controls.html" with search_placeholder="Search recipes..." hx_get=recipes_list_url hx_target="#recipes_grid" q=q %}
 {% endblock %}
 
 {% block extra_top %}

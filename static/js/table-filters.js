@@ -3,7 +3,7 @@
     let t; return function(){clearTimeout(t); t=setTimeout(fn, delay);};
   }
   function bind(root){
-    const form = root.getElementById ? root : document.getElementById('filters');
+    const form = (root.querySelector && root.querySelector('#filters')) || document.getElementById('filters');
     if(!form) return;
     const inputs = form.querySelectorAll('[data-inline-filter]');
     inputs.forEach(el=>{

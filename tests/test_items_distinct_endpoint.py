@@ -17,3 +17,28 @@ def test_distinct_unit_respects_category_filter(client):
     resp = client.get(url, {"category": "Food"})
     assert resp.status_code == 200
     assert resp.json() == [{"value": "kg", "label": "kg"}]
+
+
+@pytest.mark.django_db
+def test_distinct_pagination(client):
+    cat = Category.objects.create(category="Cat", sub_category="Sub")
+    units = [
+        Unit.objects.create(purchase_unit=f"u{i}", base_unit=f"u{i}", conversion_factor=1)
+        for i in range(5)
+    ]
+    for idx, u in enumerate(units):
+        Item.objects.create(
+            name=f"Item {idx}",
+            unit=u,
+            category=cat,
+            reorder_point=1,
+            notes="n",
+            is_active=True,
+        )
+    url = reverse("items_distinct", args=["unit"])
+    resp1 = client.get(url, {"limit": 2, "page": 1})
+    resp2 = client.get(url, {"limit": 2, "page": 2})
+    resp3 = client.get(url, {"limit": 2, "page": 3})
+    assert len(resp1.json()) == 2
+    assert len(resp2.json()) == 2
+    assert len(resp3.json()) == 1

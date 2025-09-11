@@ -138,6 +138,9 @@
       if (listEl) {
         listEl.addEventListener('htmx:afterSwap', (e) => {
           announceCount();
+          if (window.tableFilters && window.tableFilters.bind) {
+            window.tableFilters.bind(e.target);
+          }
         });
       }
 

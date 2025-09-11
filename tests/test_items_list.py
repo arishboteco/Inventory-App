@@ -173,19 +173,32 @@ def test_item_create_partial_departments_multiselect_container(client):
 def test_filters_persist_after_table_refresh(client):
     """Filters should remain visible after HTMX table updates."""
     _create_item()
-    # Initial page load contains the filter form
     resp = client.get(reverse("items_list"))
     assert resp.status_code == 200
     initial_html = resp.content.decode()
     assert 'id="filters"' in initial_html
+    assert 'id="mobile-filters-form"' in initial_html
 
-    # Simulate an HTMX request to refresh the table
     table_resp = client.get(reverse("items_table"), HTTP_HX_REQUEST="true")
     assert table_resp.status_code == 200
     table_html = table_resp.content.decode()
 
-    # The table partial should still contain the filter form
     assert 'id="filters"' in table_html
+
+
+@pytest.mark.django_db
+def test_mobile_filter_drawer_attributes(client):
+    _create_item()
+    resp = client.get(reverse("items_list"))
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    toggle = soup.find("button", {"data-mobile-filters-toggle": True})
+    assert toggle is not None
+    assert "md:hidden" in toggle.get("class", [])
+    drawer = soup.find("div", id="mobile-filters-drawer")
+    assert drawer is not None
+    assert drawer.get("role") == "dialog"
+    assert drawer.get("aria-modal") == "true"
 
 
 @pytest.mark.django_db

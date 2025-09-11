@@ -28,6 +28,7 @@ describe("column-filters dropdown", () => {
     fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve([{ value: "a", label: "A" }]),
+      headers: { get: () => null },
     });
     const btn = document.querySelector("[data-filter-btn]");
     btn.click();
@@ -43,11 +44,21 @@ describe("column-filters dropdown", () => {
     fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve([{ value: "a", label: "A" }]),
+      headers: { get: () => null },
     });
     const btn = document.querySelector("[data-filter-btn]");
     btn.click();
     await flushPromises();
     const showMore = document.querySelector("[data-show-more]");
     expect(showMore.classList.contains("hidden")).toBe(true);
+  });
+  test("rebinds after htmx swap", async () => {
+    const container = document.createElement("div");
+    container.innerHTML = '<button data-filter-btn data-field="unit" data-param="base_unit"></button>';
+    document.body.appendChild(container);
+    document.body.dispatchEvent(new Event("htmx:afterSwap", { bubbles: true }));
+    await flushPromises();
+    const btn = container.querySelector("[data-filter-btn]");
+    expect(btn._cfBound).toBe(true);
   });
 });

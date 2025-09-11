@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `build` npm script for dedicated Tailwind CSS builds.
 - `build-css` npm script alias that proxies to `npm run build` for backwards compatibility.
 - Semantic Tailwind color tokens (`success`, `warning`, etc.) for consistent theming.
+- Predictive filter bar with keyboard-friendly dropdowns and HTMX integration.
+- Column filters now rebind after HTMX swaps and respect client-side caching.
 
 ### Deprecated
 
@@ -54,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example environment files document direct Supabase hosts and optional pooler parameters
 - Simplified purchase order progress bar to set width directly with inline style, removing custom CSS variable
 - Reduced fluid typography range and heading scale for more balanced text across viewports
+- Distinct-value lookups now query dedicated tables with short-term caching for faster column filtering.
 
 - Replaced `.page-title`, `.page-subtitle`, and `.nav-icon` component classes with inline Tailwind utilities.
 - Replaced `.badge` and `.alert` component classes with inline Tailwind utility sets.

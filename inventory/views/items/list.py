@@ -3,6 +3,7 @@ import logging
 from django.contrib import messages
 from django.db import DatabaseError, IntegrityError
 from django.db.models import BooleanField, Case, F, Q, Value, When
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -13,7 +14,7 @@ from inventory.services.item_service import get_unit_display_name
 
 from ...forms.bulk_forms import BulkUploadForm
 from ...forms.item_forms import ItemForm
-from ...models import Item, Supplier
+from ...models import Item, Supplier, Category, Unit
 from ...models.departments import Department
 from ...services import category_filters, kpis, list_utils
 from ...services.categories_service import CategoriesService
@@ -146,6 +147,13 @@ def _filter_and_sort_items(request, qs=None):
 def distinct_values(request, field):
     """Return distinct values for a given column respecting current filters."""
     qs, _ = _basic_item_filters(request)
+    CACHE_TTL = 30
+    cache_key = f"distinct:{field}:{request.GET.urlencode()}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        resp = JsonResponse(cached, safe=False)
+        resp["Cache-Control"] = f"max-age={CACHE_TTL}"
+        return resp
     try:
         limit = int(request.GET.get("limit", 50))
     except (TypeError, ValueError):
@@ -159,10 +167,7 @@ def distinct_values(request, field):
     offset = (page - 1) * limit
     field_map = {
         "name": "name",
-        "category": "category__category",
-        "unit": "unit__base_unit",
         "active": "is_active",
-        "department": "departments__department_id",
     }
     if field == "stock_status":
         data = []
@@ -173,24 +178,46 @@ def distinct_values(request, field):
         if qs.filter(current_stock__gte=F("reorder_point")).exists():
             data.append({"value": "normal", "label": "In Stock"})
         return JsonResponse(data, safe=False)
-    lookup = field_map.get(field)
-    if not lookup:
-        return JsonResponse([], safe=False)
     if field == "department":
         vals = (
-            qs.values("departments__department_id", "departments__name")
-            .order_by("departments__name")
+            Department.objects.filter(items__in=qs)
+            .order_by("name")
+            .values_list("department_id", "name")
             .distinct()
         )[offset : offset + limit]
         data = [
-            {
-                "value": str(v["departments__department_id"]),
-                "label": v["departments__name"],
-            }
+            {"value": str(pk), "label": name}
+            for pk, name in vals
+            if pk
+        ]
+    elif field == "category":
+        vals = (
+            Category.objects.filter(item__in=qs)
+            .order_by("category")
+            .values_list("category", flat=True)
+            .distinct()
+        )[offset : offset + limit]
+        data = [
+            {"value": str(v), "label": str(v)}
             for v in vals
-            if v["departments__department_id"]
+            if v not in [None, ""]
+        ]
+    elif field == "unit":
+        vals = (
+            Unit.objects.filter(item__in=qs)
+            .order_by("base_unit")
+            .values_list("base_unit", flat=True)
+            .distinct()
+        )[offset : offset + limit]
+        data = [
+            {"value": str(v), "label": str(v)}
+            for v in vals
+            if v not in [None, ""]
         ]
     else:
+        lookup = field_map.get(field)
+        if not lookup:
+            return JsonResponse([], safe=False)
         vals = (
             qs.order_by(lookup)
             .values_list(lookup, flat=True)
@@ -201,7 +228,10 @@ def distinct_values(request, field):
             for v in vals
             if v not in [None, ""]
         ]
-    return JsonResponse(data, safe=False)
+    cache.set(cache_key, data, CACHE_TTL)
+    resp = JsonResponse(data, safe=False)
+    resp["Cache-Control"] = f"max-age={CACHE_TTL}"
+    return resp
 
 
 class ItemsListView(TemplateView):

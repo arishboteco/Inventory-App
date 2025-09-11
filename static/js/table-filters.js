@@ -15,6 +15,7 @@
       }
     });
   }
-  document.addEventListener('DOMContentLoaded', ()=>bind(document));
-  document.body.addEventListener('htmx:afterSwap', (e)=>bind(e.target));
+  window.tableFilters = { bind };
+  document.addEventListener('DOMContentLoaded', () => bind(document));
+  document.body.addEventListener('htmx:afterSwap', (e) => bind(e.target));
 })();

@@ -782,6 +782,9 @@
         window.__tableSortInFlight = false;
         // Re-enable links marked busy
         document.querySelectorAll('a[data-sort-link][data-sort-busy="1"]').forEach(a=>{ delete a.dataset.sortBusy; });
+        if (window.tableFilters && window.tableFilters.bind) {
+          window.tableFilters.bind(ev.target);
+        }
         document.removeEventListener('htmx:afterSwap', handler);
       }
     });
@@ -898,8 +901,12 @@
     if (getQueryTerm()) highlightTable(document);
   });
   document.addEventListener('htmx:afterSwap', (e) => {
-    if (e && e.target && e.target.id === 'items-list' && getQueryTerm())
-      highlightTable(e.target);
+    if (e && e.target && e.target.id === 'items-list') {
+      if (getQueryTerm()) highlightTable(e.target);
+      if (window.tableFilters && window.tableFilters.bind) {
+        window.tableFilters.bind(e.target);
+      }
+    }
   });
 
   function getCsrfToken() {

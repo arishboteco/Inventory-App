@@ -883,19 +883,23 @@
     // Replace textual content only (simple innerHTML approach for small cells)
     cell.innerHTML = cell.innerHTML.replace(regex, '<mark class="search-hit">$1</mark>');
   }
-  function highlightTable() {
+  function highlightTable(scope = document) {
     const term = getQueryTerm();
-    const list = document.getElementById('items-list') || document;
-    // Clear all previous marks
-    clearHighlights(list);
+    // Clear previous marks within scope
+    clearHighlights(scope);
     if (!term) return;
-    document.querySelectorAll('#items-table td[data-col="name"], #items-table td[data-col="category"]').forEach((td)=>{
-      highlightCell(td, term);
-    });
+    scope
+      .querySelectorAll('#items-table td[data-col="name"], #items-table td[data-col="category"]')
+      .forEach((td) => {
+        highlightCell(td, term);
+      });
   }
-  document.addEventListener('DOMContentLoaded', highlightTable);
-  document.addEventListener('htmx:afterSwap', (e)=>{
-    if (e && e.target && e.target.id === 'items-list') highlightTable();
+  document.addEventListener('DOMContentLoaded', () => {
+    if (getQueryTerm()) highlightTable(document);
+  });
+  document.addEventListener('htmx:afterSwap', (e) => {
+    if (e && e.target && e.target.id === 'items-list' && getQueryTerm())
+      highlightTable(e.target);
   });
 
   function getCsrfToken() {

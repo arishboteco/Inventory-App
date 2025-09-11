@@ -23,20 +23,9 @@ from .constants import EXCLUDED_FIELDS
 logger = logging.getLogger(__name__)
 
 
-def _filter_and_sort_items(request, qs=None):
-    """Return items queryset and filter metadata from request params."""
+def _basic_item_filters(request, qs=None):
+    """Apply lightweight filtering based on request params without annotations."""
     qs = qs or Item.objects.all()
-    qs = qs.annotate(
-        stock_ok=Case(
-            When(current_stock__gte=F("reorder_point"), then=Value(True)),
-            default=Value(False),
-            output_field=BooleanField(),
-        )
-    )
-    # Eager load related FK objects to avoid per-row queries during table render
-    qs = qs.select_related("unit", "category", "preferred_supplier")
-    # Avoid N+1 on departments badges
-    qs = qs.prefetch_related("departments")
     filters = {
         "active": "is_active",
         "category": "category__category",
@@ -45,26 +34,17 @@ def _filter_and_sort_items(request, qs=None):
         "supplier": "preferred_supplier_id",
         "base_unit": "unit__base_unit",
     }
-    allowed_sorts = {
-        "item_id",
-        "name",
-        "unit__base_unit",
-        "category__category",
-        "category__sub_category",
-        "current_stock",
-        "reorder_point",
-        "is_active",
-        "initial_purchase_price",
-        "last_purchase_price",
-    }
     qs, params = list_utils.apply_filters_sort(
         request,
         qs,
         search_fields=["name", "category__category", "category__sub_category"],
         filter_fields=filters,
-        allowed_sorts=allowed_sorts,
-        default_sort="name",
+        allowed_sorts=[],
+        default_sort="item_id",
     )
+    params.pop("sort", None)
+    params.pop("direction", None)
+
     # Department filter: accept IDs or names; support multi-select (__in)
     raw_vals = request.GET.getlist("department")
     if len(raw_vals) == 1 and "," in (raw_vals[0] or ""):
@@ -88,6 +68,7 @@ def _filter_and_sort_items(request, qs=None):
             qs = qs.filter(departments__department_id__in=resolved_ids).distinct()
     if dep_vals:
         params["department"] = dep_vals
+
     # Apply stock status filter if present
     stock_status = (request.GET.get("stock_status") or "").strip().lower()
     if stock_status == "low":
@@ -98,6 +79,7 @@ def _filter_and_sort_items(request, qs=None):
         qs = qs.filter(current_stock__gte=F("reorder_point"))
     if stock_status:
         params.update({"stock_status": stock_status})
+
     # Optional visibility toggles without changing current defaults
     show_inactive = (request.GET.get("show_inactive") or "").lower() in {
         "1",
@@ -122,10 +104,59 @@ def _filter_and_sort_items(request, qs=None):
     return qs, params
 
 
+def _filter_and_sort_items(request, qs=None):
+    """Return items queryset and filter metadata from request params."""
+    qs, params = _basic_item_filters(request, qs)
+    qs = qs.annotate(
+        stock_ok=Case(
+            When(current_stock__gte=F("reorder_point"), then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        )
+    )
+    # Eager load related FK objects to avoid per-row queries during table render
+    qs = qs.select_related("unit", "category", "preferred_supplier")
+    # Avoid N+1 on departments badges
+    qs = qs.prefetch_related("departments")
+    allowed_sorts = {
+        "item_id",
+        "name",
+        "unit__base_unit",
+        "category__category",
+        "category__sub_category",
+        "current_stock",
+        "reorder_point",
+        "is_active",
+        "initial_purchase_price",
+        "last_purchase_price",
+    }
+    qs, sort_params = list_utils.apply_filters_sort(
+        request,
+        qs,
+        search_fields=None,
+        filter_fields=None,
+        allowed_sorts=allowed_sorts,
+        default_sort="name",
+    )
+    params.update(sort_params)
+    return qs, params
+
+
 @require_GET
 def distinct_values(request, field):
     """Return distinct values for a given column respecting current filters."""
-    qs, _ = _filter_and_sort_items(request)
+    qs, _ = _basic_item_filters(request)
+    try:
+        limit = int(request.GET.get("limit", 50))
+    except (TypeError, ValueError):
+        limit = 50
+    limit = max(1, min(limit, 100))
+    try:
+        page = int(request.GET.get("page", 1))
+    except (TypeError, ValueError):
+        page = 1
+    page = max(page, 1)
+    offset = (page - 1) * limit
     field_map = {
         "name": "name",
         "category": "category__category",
@@ -146,7 +177,11 @@ def distinct_values(request, field):
     if not lookup:
         return JsonResponse([], safe=False)
     if field == "department":
-        vals = qs.values("departments__department_id", "departments__name").distinct()
+        vals = (
+            qs.values("departments__department_id", "departments__name")
+            .order_by("departments__name")
+            .distinct()
+        )[offset : offset + limit]
         data = [
             {
                 "value": str(v["departments__department_id"]),
@@ -157,9 +192,10 @@ def distinct_values(request, field):
         ]
     else:
         vals = (
-            qs.values_list(lookup, flat=True)
+            qs.order_by(lookup)
+            .values_list(lookup, flat=True)
             .distinct()
-        )
+        )[offset : offset + limit]
         data = [
             {"value": str(v), "label": str(v)}
             for v in vals

@@ -31,11 +31,13 @@
       items.forEach((o, idx) => {
         const row = document.createElement('div');
         row.className = 'px-3 py-2 cursor-pointer hover:bg-blue-50';
-        row.textContent = o.textContent || o.value || '';
+        const label = o.textContent || o.value || '';
+        row.textContent = label;
         row.setAttribute('role', 'option');
         row.addEventListener('mousedown', (e)=>{
           e.preventDefault();
-          input.value = o.value || o.textContent || '';
+          // Display the label (e.g., "123 - Name")
+          input.value = label;
           input.dispatchEvent(new Event('input', {bubbles:true}));
           input.dispatchEvent(new Event('change', {bubbles:true}));
           hide();
@@ -58,7 +60,12 @@
       window.addEventListener('scroll', position, true);
       window.addEventListener('resize', position);
       document.addEventListener('mousedown', onDocDown);
+      try {
+        // Best-effort: prevent native popups by stopping pointer default
+        input.addEventListener('pointerdown', preventOnce, {capture:true, once:true});
+      } catch(e) {}
     }
+    function preventOnce(e){ e.preventDefault && e.preventDefault(); }
     function hide(){
       overlay.classList.add('hidden');
       if (overlay.parentNode === document.body) document.body.removeChild(overlay);
@@ -71,8 +78,18 @@
       hide();
     }
 
-    input.addEventListener('focus', show);
+    function suppressNativeAutocomplete(){
+      try {
+        input.setAttribute('autocomplete', 'nope-' + Math.random().toString(36).slice(2));
+        input.setAttribute('autocorrect', 'off');
+        input.setAttribute('autocapitalize', 'none');
+        input.setAttribute('spellcheck', 'false');
+      } catch (e) {}
+    }
+    input.addEventListener('focus', () => { suppressNativeAutocomplete(); show(); });
     input.addEventListener('input', ()=>render(input.value));
+    input.addEventListener('mousedown', suppressNativeAutocomplete);
+    input.addEventListener('keydown', suppressNativeAutocomplete, true);
     input.addEventListener('keydown', (e)=>{
       const rows = overlay.querySelectorAll('[role="option"]');
       if (e.key === 'Escape') { hide(); return; }

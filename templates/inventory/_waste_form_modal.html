@@ -1,9 +1,6 @@
 <form method="post" action="" class="space-y-3">
   {% csrf_token %}
   <input type="hidden" name="submit_waste" value="1" />
-  {% if waste_form.non_field_errors %}
-  <div class="text-sm text-red-600">{{ waste_form.non_field_errors }}</div>
-  {% endif %}
   {{ waste_form.as_p }}
   <div class="flex items-center justify-end gap-2">
     <button type="button" data-close class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</button>

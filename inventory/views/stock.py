@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
 
+from inventory.models import Item
 from ..forms.stock_forms import (
     StockAdjustmentForm,
     StockBulkUploadForm,
@@ -23,6 +24,8 @@ from ..models.orders import PurchaseOrder
 
 
 def stock_movements(request):
+    
+
     sections = {
         "receive": "Goods Received",
         "adjust": "Stock Adjustment",
@@ -40,6 +43,71 @@ def stock_movements(request):
     bulk_form = StockBulkUploadForm()
     bulk_success_count = None
     bulk_errors: list[str] | None = None
+
+    def _display_item_name(form):
+        if not form.is_bound:
+            return
+        key = form.add_prefix("item")
+        try:
+            raw = (form.data.get(key) or "").strip()
+        except Exception:
+            return
+        if raw.isdigit():
+            item = Item.objects.filter(pk=int(raw)).only("name").first()
+            if item:
+                data = form.data.copy()
+                try:
+                    # QueryDict
+                    data[key] = f"{item.pk} - {item.name}"
+                except Exception:
+                    pass
+                form.data = data
+
+    def _flash_form(which: str, form):
+        data = {}
+        try:
+            data = form.data.dict()
+        except Exception:
+            # Fallback best-effort
+            try:
+                data = {k: v for k, v in form.data.items()}
+            except Exception:
+                data = {}
+        request.session["stock_form_flash"] = {
+            "which": which,
+            "data": data,
+            "errors": form.errors.get_json_data(),
+        }
+
+    def _hydrate_from_flash():
+        nonlocal receive_form, adjust_form, waste_form, reopen_modal
+        payload = request.session.pop("stock_form_flash", None)
+        if not payload:
+            return
+        which = payload.get("which")
+        data = payload.get("data") or {}
+        errors = payload.get("errors") or {}
+        if which == "receive":
+            receive_form = StockReceivingForm(data, prefix="receive", item_suggest_url=item_url)
+            for field, items in errors.items():
+                for e in items:
+                    receive_form.add_error(None if field == "__all__" else field, e.get("message"))
+            _display_item_name(receive_form)
+            reopen_modal = "receive"
+        elif which == "adjust":
+            adjust_form = StockAdjustmentForm(data, prefix="adjust", item_suggest_url=item_url)
+            for field, items in errors.items():
+                for e in items:
+                    adjust_form.add_error(None if field == "__all__" else field, e.get("message"))
+            _display_item_name(adjust_form)
+            reopen_modal = "adjust"
+        elif which == "waste":
+            waste_form = StockWastageForm(data, prefix="waste", item_suggest_url=item_url)
+            for field, items in errors.items():
+                for e in items:
+                    waste_form.add_error(None if field == "__all__" else field, e.get("message"))
+            _display_item_name(waste_form)
+            reopen_modal = "waste"
 
     if request.method == "POST":
         if "submit_receive" in request.POST:
@@ -63,9 +131,16 @@ def stock_movements(request):
                     messages.success(request, "Receiving transaction recorded")
                     return redirect("stock_movements")
                 except StockServiceError as exc:
-                    receive_form.add_error(None, str(exc))
-                    reopen_modal = "receive"
-            active = "receive"
+                    msg = str(exc)
+                    if "not found" in msg.lower():
+                        receive_form.add_error("item", "Choose a valid item from the list.")
+                    else:
+                        receive_form.add_error(None, msg)
+                    _flash_form("receive", receive_form)
+                    return redirect(reverse("stock_movements") + "?section=receive")
+            else:
+                _flash_form("receive", receive_form)
+                return redirect(reverse("stock_movements") + "?section=receive")
         elif "submit_adjust" in request.POST:
             adjust_form = StockAdjustmentForm(
                 request.POST, prefix="adjust", item_suggest_url=item_url
@@ -84,9 +159,16 @@ def stock_movements(request):
                     messages.success(request, "Adjustment transaction recorded")
                     return redirect(reverse("stock_movements") + "?section=adjust")
                 except StockServiceError as exc:
-                    adjust_form.add_error(None, str(exc))
-                    reopen_modal = "adjust"
-            active = "adjust"
+                    msg = str(exc)
+                    if "not found" in msg.lower():
+                        adjust_form.add_error("item", "Choose a valid item from the list.")
+                    else:
+                        adjust_form.add_error(None, msg)
+                    _flash_form("adjust", adjust_form)
+                    return redirect(reverse("stock_movements") + "?section=adjust")
+            else:
+                _flash_form("adjust", adjust_form)
+                return redirect(reverse("stock_movements") + "?section=adjust")
         elif "submit_waste" in request.POST:
             waste_form = StockWastageForm(
                 request.POST, prefix="waste", item_suggest_url=item_url
@@ -106,9 +188,16 @@ def stock_movements(request):
                     messages.success(request, "Wastage transaction recorded")
                     return redirect(reverse("stock_movements") + "?section=waste")
                 except StockServiceError as exc:
-                    waste_form.add_error(None, str(exc))
-                    reopen_modal = "waste"
-            active = "waste"
+                    msg = str(exc)
+                    if "not found" in msg.lower():
+                        waste_form.add_error("item", "Choose a valid item from the list.")
+                    else:
+                        waste_form.add_error(None, msg)
+                    _flash_form("waste", waste_form)
+                    return redirect(reverse("stock_movements") + "?section=waste")
+            else:
+                _flash_form("waste", waste_form)
+                return redirect(reverse("stock_movements") + "?section=waste")
         elif "submit_quick" in request.POST:
             quick_form = StockAdjustmentForm(
                 request.POST, prefix="quick", item_suggest_url=item_url
@@ -196,6 +285,9 @@ def stock_movements(request):
                     bulk_errors.append("No valid rows found in the uploaded file.")
 
             active = request.GET.get("section", "receive")
+    # Hydrate any flashed invalid form after PRG
+    _hydrate_from_flash()
+
     qs = StockTransaction.objects.select_related("item").order_by("-transaction_date")
     paginator = Paginator(qs, 25)
     page_number = request.GET.get("page")

@@ -68,7 +68,7 @@
               if (message) { err.textContent = message; err.classList.remove('hidden'); }
               else { err.textContent = ''; err.classList.add('hidden'); }
               if (submitBtn) submitBtn.disabled = !!message;
-              if (message && poField) poField.value = '';
+              // PO is optional; do not clear it automatically on invalid item
             }
             function getDatalistOption(input){
               const listId = itemInput.getAttribute('list');
@@ -121,17 +121,30 @@
             // Initialize state
             debouncedRefresh();
 
-            // On submit, swap user-visible name to the resolved ID so backend receives item_id; restore name post-request
+            // On submit, post the ID in a hidden field and keep the visible name intact
             if (form) {
               form.addEventListener('submit', function(){
                 const id = resolveItemId();
-                if (id) {
-                  itemInput.dataset.prevValue = itemInput.value;
-                  itemInput.value = id;
-                  setTimeout(() => {
-                    if (itemInput.dataset.prevValue) itemInput.value = itemInput.dataset.prevValue;
-                  }, 0);
+                if (!id) return;
+                let hidden = form.querySelector(`input[type="hidden"][data-item-hidden-for="${itemInput.name}"]`);
+                if (!hidden) {
+                  hidden = document.createElement('input');
+                  hidden.type = 'hidden';
+                  hidden.setAttribute('data-item-hidden-for', itemInput.name);
+                  form.appendChild(hidden);
                 }
+                // ensure backend receives the ID for the expected field name
+                hidden.name = itemInput.name;
+                hidden.value = id;
+                // rename the visible field so the server ignores it
+                if (!itemInput.dataset.originalName) {
+                  itemInput.dataset.originalName = itemInput.name;
+                }
+                itemInput.name = itemInput.dataset.originalName + '_display';
+                // After a tick (form submit), restore name so subsequent use is intact
+                setTimeout(()=>{
+                  itemInput.name = itemInput.dataset.originalName;
+                }, 0);
               });
             }
           }

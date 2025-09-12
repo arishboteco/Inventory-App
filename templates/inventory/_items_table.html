@@ -1,6 +1,6 @@
 {% load icon_tags category_tags %}
 <!-- prettier-ignore -->
-<form id="filters" method="get" hx-get="{% url 'items_table' %}" hx-target="#items-list" hx-push-url="true" hx-indicator="#items-loading">
+<form id="filters" method="get">
   <table
     class="min-w-full w-full table-fixed bg-white border border-gray-200 rounded-lg table-sticky"
     id="items-table"
@@ -11,104 +11,66 @@
           <input id="select-all" type="checkbox" data-select-all aria-label="Select all" />
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" data-sort="col1" aria-sort="none">
-          <a data-sort-link data-sort-key="name" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
-            Name
-            {% if sort == 'name' %}
-              <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
-            {% else %}
-              <span class="text-xs text-gray-400">⇅</span>
-            {% endif %}
-          </a>
+          <div class="flex items-center gap-1">
+            <a data-sort-link data-sort-key="name" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+              Name
+              {% if sort == 'name' %}
+                <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+              {% else %}
+                <span class="text-xs text-gray-400">⇅</span>
+              {% endif %}
+            </a>
+            <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Filter Name" data-filter-btn data-field="name" data-param="q">
+              {% icon 'funnel' 'w-4 h-4' %}
+            </button>
+          </div>
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" data-sort="col2" aria-sort="none">
-          <a data-sort-link data-sort-key="category__category" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+          <div class="flex items-center gap-1">
+            <a data-sort-link data-sort-key="category__category" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+            <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Filter Category" data-filter-btn data-field="category" data-param="category">
+              {% icon 'funnel' 'w-4 h-4' %}
+            </button>
+          </div>
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" data-sort="col3" aria-sort="none">
-          <a data-sort-link data-sort-key="unit__base_unit" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+          <div class="flex items-center gap-1">
+            <a data-sort-link data-sort-key="unit__base_unit" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+            <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Filter Unit" data-filter-btn data-field="unit" data-param="base_unit">
+              {% icon 'funnel' 'w-4 h-4' %}
+            </button>
+          </div>
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" data-sort="col4" aria-sort="none">
           <a data-sort-link data-sort-key="current_stock" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" data-sort="col5" aria-sort="none">
-          <span>Stock Status</span>
+          <div class="flex items-center gap-1">
+            <span>Stock Status</span>
+            <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Filter Stock Status" data-filter-btn data-field="stock_status" data-param="stock_status">
+              {% icon 'funnel' 'w-4 h-4' %}
+            </button>
+          </div>
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" data-sort="col6" aria-sort="none">
-          <span>Departments</span>
+          <div class="flex items-center gap-1">
+            <span>Departments</span>
+            <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Filter Departments" data-filter-btn data-field="department" data-param="department">
+              {% icon 'funnel' 'w-4 h-4' %}
+            </button>
+          </div>
         </th>
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" data-sort="col7" aria-sort="none">
-          <a data-sort-link data-sort-key="is_active" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+          <div class="flex items-center gap-1">
+            <a data-sort-link data-sort-key="is_active" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+            <button type="button" class="ml-1 text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Filter Status" data-filter-btn data-field="active" data-param="active">
+              {% icon 'funnel' 'w-4 h-4' %}
+            </button>
+          </div>
         </th>
         <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
           Actions
         </th>
-      </tr>
-      <tr class="bg-gray-50">
-        <th></th>
-        <th class="px-4 py-2">
-          <label for="filter-q" class="sr-only">Filter Name</label>
-          <input id="filter-q" name="q" type="text" value="{{ q }}" placeholder="Search name" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter />
-        </th>
-        <th class="px-4 py-2">
-          <label for="filter-category" class="sr-only">Filter Category</label>
-          <select id="filter-category" name="category" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'category' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
-            <option value="">All Categories</option>
-            {% for c in categories %}
-              <option value="{{ c }}"{% if c in category %} selected{% endif %}>{{ c }}</option>
-            {% endfor %}
-          </select>
-          <label for="filter-subcategory" class="sr-only">Filter Subcategory</label>
-          <select id="filter-subcategory" name="subcategory" multiple class="mt-1 w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'subcategory' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
-            <option value="">All Subcategories</option>
-            {% for sc in subcategories %}
-              <option value="{{ sc }}"{% if sc in subcategory %} selected{% endif %}>{{ sc }}</option>
-            {% endfor %}
-          </select>
-        </th>
-        <th class="px-4 py-2">
-          <label for="filter-unit" class="sr-only">Filter Unit</label>
-          <select id="filter-unit" name="base_unit" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'base_unit' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
-            <option value="">All Units</option>
-            {% for u in base_units %}
-              <option value="{{ u }}"{% if u in base_unit %} selected{% endif %}>{{ u }}</option>
-            {% endfor %}
-          </select>
-        </th>
-        <th class="px-4 py-2">
-          <label for="filter-supplier" class="sr-only">Filter Supplier</label>
-          <select id="filter-supplier" name="supplier" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'supplier' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
-            <option value="">All Suppliers</option>
-            {% for sid, name in suppliers %}
-              <option value="{{ sid }}"{% if sid|stringformat:'s' in supplier %} selected{% endif %}>{{ name }}</option>
-            {% endfor %}
-          </select>
-        </th>
-        <th class="px-4 py-2">
-          <label for="filter-stock-status" class="sr-only">Filter Stock Status</label>
-          <select id="filter-stock-status" name="stock_status" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter>
-            <option value="">All Stock Statuses</option>
-            <option value="low"{% if stock_status == 'low' %} selected{% endif %}>Low Stock</option>
-            <option value="out"{% if stock_status == 'out' %} selected{% endif %}>Out of Stock</option>
-            <option value="normal"{% if stock_status == 'normal' %} selected{% endif %}>In Stock</option>
-          </select>
-        </th>
-        <th class="px-4 py-2">
-          <label for="filter-department" class="sr-only">Filter Departments</label>
-          <select id="filter-department" name="department" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'department' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
-            <option value="">All Departments</option>
-            {% for did, name in departments %}
-              <option value="{{ did }}"{% if did in department %} selected{% endif %}>{{ name }}</option>
-            {% endfor %}
-          </select>
-        </th>
-        <th class="px-4 py-2">
-          <label for="filter-active" class="sr-only">Filter Status</label>
-          <select id="filter-active" name="active" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter>
-            <option value="">All Statuses</option>
-            <option value="true"{% if active == 'true' %} selected{% endif %}>Active</option>
-            <option value="false"{% if active == 'false' %} selected{% endif %}>Inactive</option>
-          </select>
-        </th>
-        <th></th>
       </tr>
     </thead>
   <tbody class="bg-white divide-y divide-border">

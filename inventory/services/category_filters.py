@@ -12,20 +12,11 @@ def resolve_category_filters(request) -> Dict[str, Any]:
     """Return selected filter values and available options."""
     from ..models import Department, Supplier, Unit
 
-    def _values_for(name: str) -> List[str]:
-        vals: List[str] = []
-        for v in request.GET.getlist(name):
-            if v is None:
-                continue
-            parts = [p.strip() for p in str(v).split(",")]
-            vals.extend([p for p in parts if p])
-        return vals
-
-    category = _values_for("category")
-    subcategory = _values_for("subcategory")
-    department = _values_for("department")
-    base_unit = _values_for("base_unit")
-    supplier = _values_for("supplier")
+    category = (request.GET.get("category") or "").strip()
+    subcategory = (request.GET.get("subcategory") or "").strip()
+    department = [v for v in request.GET.getlist("department") if v.strip()]
+    base_unit = (request.GET.get("base_unit") or "").strip()
+    supplier = (request.GET.get("supplier") or "").strip()
 
     try:
         categories_map = CategoriesService.get_category_choices_grouped()
@@ -34,9 +25,7 @@ def resolve_category_filters(request) -> Dict[str, Any]:
         categories_map = {}
 
     categories = list(categories_map.keys())
-    subcats: List[tuple] = []
-    for c in category:
-        subcats.extend(categories_map.get(c, []))
+    subcats = categories_map.get(category, [])
     subcategories = [sc[1] for sc in subcats]
 
     departments = list(
@@ -98,25 +87,25 @@ def build_filters(request) -> List[Dict[str, Any]]:
         {
             "name": "category",
             "label": "Category",
-            "value": ",".join(resolved["category"]),
+            "value": resolved["category"],
             "options": category_options,
         },
         {
             "name": "subcategory",
             "label": "Subcategory",
-            "value": ",".join(resolved["subcategory"]),
+            "value": resolved["subcategory"],
             "options": subcategory_options,
         },
         {
             "name": "base_unit",
             "label": "Unit",
-            "value": ",".join(resolved["base_unit"]),
+            "value": resolved["base_unit"],
             "options": base_unit_options,
         },
         {
             "name": "supplier",
             "label": "Supplier",
-            "value": ",".join(resolved["supplier"]),
+            "value": resolved["supplier"],
             "options": supplier_options,
         },
         {

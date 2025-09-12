@@ -1,20 +1,20 @@
 import logging
 
 from django.contrib import messages
+from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError
 from django.db.models import BooleanField, Case, F, Q, Value, When
-from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import TemplateView
 from django.views.decorators.http import require_GET
+from django.views.generic import TemplateView
 
 from inventory.services.item_service import get_unit_display_name
 
 from ...forms.bulk_forms import BulkUploadForm
 from ...forms.item_forms import ItemForm
-from ...models import Item, Supplier, Category, Unit
+from ...models import Category, Item, Supplier, Unit
 from ...models.departments import Department
 from ...services import category_filters, kpis, list_utils
 from ...services.categories_service import CategoriesService
@@ -171,7 +171,9 @@ def distinct_values(request, field):
     }
     if field == "stock_status":
         data = []
-        if qs.filter(current_stock__lt=F("reorder_point"), current_stock__gt=0).exists():
+        if qs.filter(
+            current_stock__lt=F("reorder_point"), current_stock__gt=0
+        ).exists():
             data.append({"value": "low", "label": "Low"})
         if qs.filter(current_stock__lte=0).exists():
             data.append({"value": "out", "label": "Out"})
@@ -185,11 +187,7 @@ def distinct_values(request, field):
             .values_list("department_id", "name")
             .distinct()
         )[offset : offset + limit]
-        data = [
-            {"value": str(pk), "label": name}
-            for pk, name in vals
-            if pk
-        ]
+        data = [{"value": str(pk), "label": name} for pk, name in vals if pk]
     elif field == "category":
         vals = (
             Category.objects.filter(item__in=qs)
@@ -197,11 +195,7 @@ def distinct_values(request, field):
             .values_list("category", flat=True)
             .distinct()
         )[offset : offset + limit]
-        data = [
-            {"value": str(v), "label": str(v)}
-            for v in vals
-            if v not in [None, ""]
-        ]
+        data = [{"value": str(v), "label": str(v)} for v in vals if v not in [None, ""]]
     elif field == "unit":
         vals = (
             Unit.objects.filter(item__in=qs)
@@ -209,25 +203,15 @@ def distinct_values(request, field):
             .values_list("base_unit", flat=True)
             .distinct()
         )[offset : offset + limit]
-        data = [
-            {"value": str(v), "label": str(v)}
-            for v in vals
-            if v not in [None, ""]
-        ]
+        data = [{"value": str(v), "label": str(v)} for v in vals if v not in [None, ""]]
     else:
         lookup = field_map.get(field)
         if not lookup:
             return JsonResponse([], safe=False)
-        vals = (
-            qs.order_by(lookup)
-            .values_list(lookup, flat=True)
-            .distinct()
-        )[offset : offset + limit]
-        data = [
-            {"value": str(v), "label": str(v)}
-            for v in vals
-            if v not in [None, ""]
+        vals = (qs.order_by(lookup).values_list(lookup, flat=True).distinct())[
+            offset : offset + limit
         ]
+        data = [{"value": str(v), "label": str(v)} for v in vals if v not in [None, ""]]
     cache.set(cache_key, data, CACHE_TTL)
     resp = JsonResponse(data, safe=False)
     resp["Cache-Control"] = f"max-age={CACHE_TTL}"
@@ -385,12 +369,6 @@ class ItemsTableView(TemplateView):
             {"page_obj": page_obj, "page_size": per_page, "querystring": querystring}
         )
         ctx.update(category_filters.resolve_category_filters(self.request))
-        ctx["predictive_filter_names"] = [
-            "category",
-            "base_unit",
-            "supplier",
-            "department",
-        ]
         return ctx
 
 

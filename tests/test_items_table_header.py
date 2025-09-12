@@ -28,5 +28,5 @@ def test_items_table_header_top_zero_and_structure():
         assert f'data-sort="col{i}"' in th
         assert 'aria-sort="none"' in th
 
-    for name_attr in ["q", "category", "base_unit", "stock_status", "department", "active"]:
-        assert f'name="{name_attr}"' in header
+    for field in ["name", "category", "unit", "stock_status", "department", "active"]:
+        assert f'data-field="{field}"' in header

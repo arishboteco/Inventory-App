@@ -173,28 +173,19 @@ def test_item_create_partial_departments_multiselect_container(client):
 def test_filters_persist_after_table_refresh(client):
     """Filters should remain visible after HTMX table updates."""
     _create_item()
+    # Initial page load contains the filter form
     resp = client.get(reverse("items_list"))
     assert resp.status_code == 200
     initial_html = resp.content.decode()
     assert 'id="filters"' in initial_html
 
+    # Simulate an HTMX request to refresh the table
     table_resp = client.get(reverse("items_table"), HTTP_HX_REQUEST="true")
     assert table_resp.status_code == 200
     table_html = table_resp.content.decode()
 
+    # The table partial should still contain the filter form
     assert 'id="filters"' in table_html
-
-
-@pytest.mark.django_db
-def test_mobile_filter_drawer_attributes(client):
-    _create_item()
-    resp = client.get(reverse("items_list"))
-    assert resp.status_code == 200
-    soup = BeautifulSoup(resp.content, "html.parser")
-    form = soup.find("form", id="filters")
-    assert form is not None
-    assert form.find("input", {"id": "filter-q"}) is not None
-    assert form.find("select", {"id": "filter-category"}) is not None
 
 
 @pytest.mark.django_db

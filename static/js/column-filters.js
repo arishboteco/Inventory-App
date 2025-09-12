@@ -9,44 +9,9 @@
     return tpl.content.firstElementChild.cloneNode(true);
   }
 
-  function trapFocus(el) {
-    const focusable = el.querySelectorAll(
-      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
-    );
-    if (!focusable.length) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    el._trapHandler = (e) => {
-      if (e.key !== "Tab") return;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    el.addEventListener("keydown", el._trapHandler);
-    first.focus();
-  }
-
-  function openOverlay(el, opener) {
-    el.classList.remove("hidden");
-    el._opener = opener;
-    trapFocus(el);
-    el._escHandler = (ev) => {
-      if (ev.key === "Escape") closeOverlay(el);
-    };
-    document.addEventListener("keydown", el._escHandler);
-  }
-
-  function closeOverlay(el) {
-    el.classList.add("hidden");
-    if (el._trapHandler) el.removeEventListener("keydown", el._trapHandler);
-    if (el._escHandler) document.removeEventListener("keydown", el._escHandler);
-    if (el._outsideHandler)
-      document.removeEventListener("mousedown", el._outsideHandler);
-    if (el._opener) el._opener.focus();
+  function closeDropdown(drop) {
+    if (drop) drop.classList.add("hidden");
+    document.removeEventListener("click", drop ? drop._outsideHandler : null);
   }
 
   function positionDropdown(drop, btn) {
@@ -145,7 +110,7 @@
         "#items-list",
       );
     }
-    closeOverlay(drop);
+    closeDropdown(drop);
   }
 
   function initColumnFilters(root) {
@@ -155,7 +120,7 @@
       btn._cfBound = true;
       btn.addEventListener("click", async () => {
         if (btn._dropdown && !btn._dropdown.classList.contains("hidden")) {
-          closeOverlay(btn._dropdown);
+          closeDropdown(btn._dropdown);
           return;
         }
         let drop = btn._dropdown;
@@ -232,7 +197,7 @@
             .addEventListener("click", () => applyFilter(drop, btn));
           drop._outsideHandler = (ev) => {
             if (!drop.contains(ev.target) && ev.target !== btn)
-              closeOverlay(drop);
+              closeDropdown(drop);
           };
         } else {
           const params = new URLSearchParams(window.location.search);
@@ -246,35 +211,16 @@
           }
         }
         positionDropdown(drop, btn);
-        openOverlay(drop, btn);
-        document.addEventListener("mousedown", drop._outsideHandler);
+        drop.classList.remove("hidden");
+        document.addEventListener("click", drop._outsideHandler);
         const search = drop.querySelector("[data-filter-search]");
         if (search) search.focus();
       });
     });
   }
 
-  function initMobileFilters() {
-    const btn = document.querySelector("[data-mobile-filters-toggle]");
-    const drawer = document.getElementById("mobile-filters-drawer");
-    if (!btn || !drawer) return;
-    if (!btn._mfBound) {
-      btn._mfBound = true;
-      btn.addEventListener("click", () => openOverlay(drawer, btn));
-    }
-    drawer.querySelectorAll("[data-dismiss]").forEach((el) => {
-      if (el._mfBound) return;
-      el._mfBound = true;
-      el.addEventListener("click", () => closeOverlay(drawer));
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    initColumnFilters();
-    initMobileFilters();
-  });
-  document.body.addEventListener("htmx:afterSwap", (e) => {
-    initColumnFilters(e.target);
-    initMobileFilters();
-  });
+  document.addEventListener("DOMContentLoaded", () => initColumnFilters());
+  document.body.addEventListener("htmx:afterSwap", (e) =>
+    initColumnFilters(e.target),
+  );
 })();

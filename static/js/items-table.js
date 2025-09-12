@@ -125,8 +125,8 @@
     row.innerHTML = row.dataset.origHtml;
     delete row.dataset.origHtml;
     delete row.dataset.editing;
-  row.classList.remove("editing-row", "bg-yellow-50");
-  if (currentEditingRow === row) currentEditingRow = null;
+    row.classList.remove("editing-row", "bg-yellow-50");
+    if (currentEditingRow === row) currentEditingRow = null;
   }
 
   function saveRow(row) {
@@ -292,8 +292,8 @@
     const csrf = getCsrfToken();
     // Optimistic: remove row immediately, allow undo for a few seconds
     const prev = { next: row.nextElementSibling, parent: row.parentNode };
-    row.classList.add('opacity-60');
-    const timeout = setTimeout(()=>{
+    row.classList.add("opacity-60");
+    const timeout = setTimeout(() => {
       row.remove();
     }, 600);
     fetch(`/items/${itemId}/delete/`, {
@@ -321,7 +321,7 @@
             if (prev.next && prev.next.parentNode === prev.parent)
               prev.parent.insertBefore(row, prev.next);
             else prev.parent.appendChild(row);
-            row.classList.remove('opacity-60');
+            row.classList.remove("opacity-60");
           }
           window.notifications.showToast("Unable to delete item.", "error");
         }
@@ -333,7 +333,7 @@
           if (prev.next && prev.next.parentNode === prev.parent)
             prev.parent.insertBefore(row, prev.next);
           else prev.parent.appendChild(row);
-          row.classList.remove('opacity-60');
+          row.classList.remove("opacity-60");
         }
         if (window.notifications && window.notifications.showToast) {
           window.notifications.showToast("Unable to delete item.", "error");
@@ -367,9 +367,7 @@
         if (r.ok) {
           // Persist a toast to show after reload so the user receives feedback.
           try {
-            const msg = currentlyActive
-              ? "Item archived"
-              : "Item activated";
+            const msg = currentlyActive ? "Item archived" : "Item activated";
             localStorage.setItem(
               "items_pending_toast",
               JSON.stringify({ message: msg, type: "success" }),
@@ -379,7 +377,12 @@
           }
           // Light refresh for table to avoid full reload
           const url = new URL(window.location.href);
-          if (window.htmx) window.htmx.ajax('GET', `/items/table/?${url.searchParams.toString()}`, { target: '#items-list' });
+          if (window.htmx)
+            window.htmx.ajax(
+              "GET",
+              `/items/table/?${url.searchParams.toString()}`,
+              { target: "#items-list" },
+            );
           else window.location.reload();
         } else if (window.notifications && window.notifications.showToast) {
           // Revert optimistic badge on failure
@@ -415,9 +418,9 @@
     if (!row) return;
 
     switch (action) {
-  // case "toggle-details": // removed
-  //   e.preventDefault();
-  //   break;
+      // case "toggle-details": // removed
+      //   e.preventDefault();
+      //   break;
       case "quick-edit":
         e.preventDefault();
         if (target.closest("table")) {
@@ -700,99 +703,105 @@
   // Removed: lazy inline details loader
 
   // Optimistic client-side sort to reduce perceived latency
-  document.addEventListener('click', function(e){
-    const link = e.target.closest('a[data-sort-link][hx-get]');
-    if(!link) return;
-    if(window.__tableSortInFlight) { e.preventDefault(); return; }
-    const table = document.getElementById('items-table');
-    if(!table) return;
-    const tbody = table.querySelector('tbody');
-    if(!tbody) return;
-    const th = link.closest('th');
+  document.addEventListener("click", function (e) {
+    const link = e.target.closest("a[data-sort-link][hx-get]");
+    if (!link) return;
+    if (window.__tableSortInFlight) {
+      e.preventDefault();
+      return;
+    }
+    const table = document.getElementById("items-table");
+    if (!table) return;
+    const tbody = table.querySelector("tbody");
+    if (!tbody) return;
+    const th = link.closest("th");
     const allTh = Array.from(th.parentElement.children);
     const colIndex = allTh.indexOf(th);
-    const itemRows = Array.from(tbody.querySelectorAll('tr.item-row'));
-    if(itemRows.length < 2) return;
+    const itemRows = Array.from(tbody.querySelectorAll("tr.item-row"));
+    if (itemRows.length < 2) return;
     // Determine desired sort key and direction from link and current URL
-    const sortKey = link.getAttribute('data-sort-key') || '';
-    const linkUrl = new URL(link.getAttribute('href'), window.location.origin);
-    const dirParam = linkUrl.searchParams.get('direction') || 'asc';
-    const dirDesc = dirParam.toLowerCase() === 'desc';
+    const sortKey = link.getAttribute("data-sort-key") || "";
+    const linkUrl = new URL(link.getAttribute("href"), window.location.origin);
+    const dirParam = linkUrl.searchParams.get("direction") || "asc";
+    const dirDesc = dirParam.toLowerCase() === "desc";
     const mult = dirDesc ? -1 : 1;
     // Build a cleaned URL: keep current filters, drop existing sort/direction, add the new pair
     const cleaned = new URL(linkUrl.pathname, window.location.origin);
     const current = new URL(window.location.href);
     // Retain all current params except page/sort/direction
-    current.searchParams.forEach((v,k)=>{
-      if(k === 'page' || k === 'sort' || k === 'direction') return;
+    current.searchParams.forEach((v, k) => {
+      if (k === "page" || k === "sort" || k === "direction") return;
       cleaned.searchParams.append(k, v);
     });
-    if(sortKey){
-      cleaned.searchParams.append('sort', sortKey);
-      cleaned.searchParams.append('direction', dirParam);
+    if (sortKey) {
+      cleaned.searchParams.append("sort", sortKey);
+      cleaned.searchParams.append("direction", dirParam);
     }
     // Apply deduped URL back to link and use it for HTMX
     const finalUrl = cleaned.toString();
-    link.setAttribute('href', finalUrl);
-    link.setAttribute('hx-get', finalUrl);
+    link.setAttribute("href", finalUrl);
+    link.setAttribute("hx-get", finalUrl);
 
     // Build pairs of [itemRow, detailsRow?] so details stay attached to their item
-    const pairs = itemRows.map((row)=>{
-      const id = row.getAttribute('data-item-id');
+    const pairs = itemRows.map((row) => {
+      const id = row.getAttribute("data-item-id");
       const next = row.nextElementSibling;
-      const details = next && next.id === ('details-' + id) ? next : null;
+      const details = next && next.id === "details-" + id ? next : null;
       return { row, details };
     });
 
-    const getVal = (row)=>{
+    const getVal = (row) => {
       const cell = row.children[colIndex];
-      if(!cell) return '';
-      const txt = (cell.textContent || '').trim();
-      const num = parseFloat(txt.replace(/,/g,''));
+      if (!cell) return "";
+      const txt = (cell.textContent || "").trim();
+      const num = parseFloat(txt.replace(/,/g, ""));
       return isNaN(num) ? txt.toLowerCase() : num;
     };
 
-    pairs.sort((a,b)=>{
-      const va = getVal(a.row); const vb = getVal(b.row);
-      if(typeof va === 'number' && typeof vb === 'number') return (va - vb) * mult;
-      if(va < vb) return -1 * mult;
-      if(va > vb) return 1 * mult;
+    pairs.sort((a, b) => {
+      const va = getVal(a.row);
+      const vb = getVal(b.row);
+      if (typeof va === "number" && typeof vb === "number")
+        return (va - vb) * mult;
+      if (va < vb) return -1 * mult;
+      if (va > vb) return 1 * mult;
       return 0;
     });
 
     // Visual hint and throttle
     window.__tableSortInFlight = true;
-    tbody.classList.add('opacity-60');
-    th.classList.add('opacity-70');
-    link.dataset.sortBusy = '1';
+    tbody.classList.add("opacity-60");
+    th.classList.add("opacity-70");
+    link.dataset.sortBusy = "1";
 
     // Reorder in next frame to avoid layout thrash
-    requestAnimationFrame(()=>{
-      for(const p of pairs){
+    requestAnimationFrame(() => {
+      for (const p of pairs) {
         tbody.appendChild(p.row);
-        if(p.details) tbody.appendChild(p.details);
+        if (p.details) tbody.appendChild(p.details);
       }
     });
 
     // Cleanup after server swaps in the authoritative table
-    document.addEventListener('htmx:afterSwap', function handler(ev){
-      if(ev.target && ev.target.id === 'items-list'){
-        tbody.classList.remove('opacity-60');
-        th.classList.remove('opacity-70');
+    document.addEventListener("htmx:afterSwap", function handler(ev) {
+      if (ev.target && ev.target.id === "items-list") {
+        tbody.classList.remove("opacity-60");
+        th.classList.remove("opacity-70");
         window.__tableSortInFlight = false;
         // Re-enable links marked busy
-        document.querySelectorAll('a[data-sort-link][data-sort-busy="1"]').forEach(a=>{ delete a.dataset.sortBusy; });
-        if (window.tableFilters && window.tableFilters.bind) {
-          window.tableFilters.bind(ev.target);
-        }
-        document.removeEventListener('htmx:afterSwap', handler);
+        document
+          .querySelectorAll('a[data-sort-link][data-sort-busy="1"]')
+          .forEach((a) => {
+            delete a.dataset.sortBusy;
+          });
+        document.removeEventListener("htmx:afterSwap", handler);
       }
     });
 
     // Prevent default and trigger a single HTMX request with the cleaned URL
     e.preventDefault();
-    if(window.htmx){
-      window.htmx.ajax('GET', finalUrl, { target: '#items-list' });
+    if (window.htmx) {
+      window.htmx.ajax("GET", finalUrl, { target: "#items-list" });
     }
   });
 
@@ -863,7 +872,9 @@
       const url = new URL(window.location.href);
       const q = url.searchParams.get("q");
       if (q) return q.trim();
-    } catch (_) { /* noop */ }
+    } catch (_) {
+      /* noop */
+    }
     const form = document.getElementById("filters");
     if (form) {
       const inp = form.querySelector('input[name="q"]');
@@ -872,7 +883,7 @@
     return "";
   }
   function clearHighlights(scope) {
-    scope.querySelectorAll('mark.search-hit').forEach((m) => {
+    scope.querySelectorAll("mark.search-hit").forEach((m) => {
       const text = m.textContent;
       m.replaceWith(document.createTextNode(text));
     });
@@ -884,7 +895,10 @@
     // Remove previous marks first
     clearHighlights(cell);
     // Replace textual content only (simple innerHTML approach for small cells)
-    cell.innerHTML = cell.innerHTML.replace(regex, '<mark class="search-hit">$1</mark>');
+    cell.innerHTML = cell.innerHTML.replace(
+      regex,
+      '<mark class="search-hit">$1</mark>',
+    );
   }
   function highlightTable(scope = document) {
     const term = getQueryTerm();
@@ -892,21 +906,19 @@
     clearHighlights(scope);
     if (!term) return;
     scope
-      .querySelectorAll('#items-table td[data-col="name"], #items-table td[data-col="category"]')
+      .querySelectorAll(
+        '#items-table td[data-col="name"], #items-table td[data-col="category"]',
+      )
       .forEach((td) => {
         highlightCell(td, term);
       });
   }
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     if (getQueryTerm()) highlightTable(document);
   });
-  document.addEventListener('htmx:afterSwap', (e) => {
-    if (e && e.target && e.target.id === 'items-list') {
-      if (getQueryTerm()) highlightTable(e.target);
-      if (window.tableFilters && window.tableFilters.bind) {
-        window.tableFilters.bind(e.target);
-      }
-    }
+  document.addEventListener("htmx:afterSwap", (e) => {
+    if (e && e.target && e.target.id === "items-list" && getQueryTerm())
+      highlightTable(e.target);
   });
 
   function getCsrfToken() {

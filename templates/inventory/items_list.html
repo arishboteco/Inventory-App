@@ -43,6 +43,9 @@
 
 {% block data_container %}
     {% url 'items_table' as items_table_url %}
+    <div class="mb-4">
+      {% include "components/filter_bar.html" with filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" %}
+    </div>
     <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
       <div id="items-toolbar">
         <!-- Actions bar -->
@@ -98,13 +101,14 @@
           <button type="button" data-bulk-action="export" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
         </div>
       </div>
+      {% include "components/column_filter_dropdown.html" %}
     </div>
   <div id="items-aria-live" class="sr-only" aria-live="polite"></div>
 {% endblock %}
 
 {% block page_scripts %}
     <script src="{% static 'js/predictive-dropdown.js' %}?v={{ STATIC_VERSION }}" defer></script>
-    <script src="{% static 'js/table-filters.js' %}?v={{ STATIC_VERSION }}" defer></script>
+    <script src="{% static 'js/column-filters.js' %}?v={{ STATIC_VERSION }}" defer></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const listEl = document.getElementById('items-list');
@@ -138,9 +142,6 @@
       if (listEl) {
         listEl.addEventListener('htmx:afterSwap', (e) => {
           announceCount();
-          if (window.tableFilters && window.tableFilters.bind) {
-            window.tableFilters.bind(e.target);
-          }
         });
       }
 

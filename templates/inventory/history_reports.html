@@ -22,7 +22,7 @@
     />
     <div class="flex flex-col md:flex-row md:items-end gap-2">
       <div class="flex-1">
-        {% include "components/responsive_filter_controls.html" with hx_get=history_url hx_target="#history_table" hx_indicator="#htmx-spinner" filters=filters sort=sort direction=direction q=item search_placeholder="Item ID" %}
+        {% include "components/filter_bar.html" with hx_get=history_url hx_target="#history_table" hx_indicator="#htmx-spinner" filters=filters sort=sort direction=direction q=item search_placeholder="Item ID" %}
       </div>
       <div class="flex gap-2">
         <a

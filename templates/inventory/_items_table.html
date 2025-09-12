@@ -46,18 +46,18 @@
         <th></th>
         <th class="px-4 py-2">
           <label for="filter-q" class="sr-only">Filter Name</label>
-          <input id="filter-q" name="q" type="text" value="{{ q }}" placeholder="Search name" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter />
+          <input id="filter-q" name="q" type="text" value="{{ q }}" placeholder="Search name" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter hx-trigger="input" />
         </th>
         <th class="px-4 py-2">
           <label for="filter-category" class="sr-only">Filter Category</label>
-          <select id="filter-category" name="category" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'category' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
+          <select id="filter-category" name="category" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'category' in predictive_filter_names %} predictive{% endif %}" data-inline-filter hx-trigger="change">
             <option value="">All Categories</option>
             {% for c in categories %}
               <option value="{{ c }}"{% if c in category %} selected{% endif %}>{{ c }}</option>
             {% endfor %}
           </select>
           <label for="filter-subcategory" class="sr-only">Filter Subcategory</label>
-          <select id="filter-subcategory" name="subcategory" multiple class="mt-1 w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'subcategory' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
+          <select id="filter-subcategory" name="subcategory" multiple class="mt-1 w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'subcategory' in predictive_filter_names %} predictive{% endif %}" data-inline-filter hx-trigger="change">
             <option value="">All Subcategories</option>
             {% for sc in subcategories %}
               <option value="{{ sc }}"{% if sc in subcategory %} selected{% endif %}>{{ sc }}</option>
@@ -66,7 +66,7 @@
         </th>
         <th class="px-4 py-2">
           <label for="filter-unit" class="sr-only">Filter Unit</label>
-          <select id="filter-unit" name="base_unit" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'base_unit' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
+          <select id="filter-unit" name="base_unit" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'base_unit' in predictive_filter_names %} predictive{% endif %}" data-inline-filter hx-trigger="change">
             <option value="">All Units</option>
             {% for u in base_units %}
               <option value="{{ u }}"{% if u in base_unit %} selected{% endif %}>{{ u }}</option>
@@ -75,7 +75,7 @@
         </th>
         <th class="px-4 py-2">
           <label for="filter-supplier" class="sr-only">Filter Supplier</label>
-          <select id="filter-supplier" name="supplier" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'supplier' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
+          <select id="filter-supplier" name="supplier" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'supplier' in predictive_filter_names %} predictive{% endif %}" data-inline-filter hx-trigger="change">
             <option value="">All Suppliers</option>
             {% for sid, name in suppliers %}
               <option value="{{ sid }}"{% if sid|stringformat:'s' in supplier %} selected{% endif %}>{{ name }}</option>
@@ -84,7 +84,7 @@
         </th>
         <th class="px-4 py-2">
           <label for="filter-stock-status" class="sr-only">Filter Stock Status</label>
-          <select id="filter-stock-status" name="stock_status" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter>
+          <select id="filter-stock-status" name="stock_status" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter hx-trigger="change">
             <option value="">All Stock Statuses</option>
             <option value="low"{% if stock_status == 'low' %} selected{% endif %}>Low Stock</option>
             <option value="out"{% if stock_status == 'out' %} selected{% endif %}>Out of Stock</option>
@@ -93,7 +93,7 @@
         </th>
         <th class="px-4 py-2">
           <label for="filter-department" class="sr-only">Filter Departments</label>
-          <select id="filter-department" name="department" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'department' in predictive_filter_names %} predictive{% endif %}" data-inline-filter>
+          <select id="filter-department" name="department" multiple class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_filter_names and 'department' in predictive_filter_names %} predictive{% endif %}" data-inline-filter hx-trigger="change">
             <option value="">All Departments</option>
             {% for did, name in departments %}
               <option value="{{ did }}"{% if did in department %} selected{% endif %}>{{ name }}</option>
@@ -102,7 +102,7 @@
         </th>
         <th class="px-4 py-2">
           <label for="filter-active" class="sr-only">Filter Status</label>
-          <select id="filter-active" name="active" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter>
+          <select id="filter-active" name="active" class="w-full h-8 px-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-inline-filter hx-trigger="change">
             <option value="">All Statuses</option>
             <option value="true"{% if active == 'true' %} selected{% endif %}>Active</option>
             <option value="false"{% if active == 'false' %} selected{% endif %}>Inactive</option>

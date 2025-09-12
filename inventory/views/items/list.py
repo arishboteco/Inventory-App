@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 def _basic_item_filters(request, qs=None):
     """Apply lightweight filtering based on request params without annotations."""
     qs = qs or Item.objects.all()
+    # Allow multi-select by passing repeated params or comma-separated values
     filters = {
         "active": "is_active",
         "category": "category__category",
@@ -361,8 +362,10 @@ class ItemsListView(TemplateView):
                 "page_size": per_page,
                 "filters": filters_list,
                 "export_url": reverse("items_export"),
+                # Enable predictive multi-select enhancement for filters
                 "predictive_filter_names": [
                     "category",
+                    "subcategory",
                     "base_unit",
                     "supplier",
                     "department",

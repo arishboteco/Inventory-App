@@ -107,10 +107,51 @@
 {% endblock %}
 
 {% block page_scripts %}
-    <script src="{% static 'js/predictive-dropdown.js' %}?v={{ STATIC_VERSION }}" defer></script>
+  {# Predictive is skipped for multi-select; keep loaded for other pages if needed #}
     
+    {% if category_map %}
+      {{ category_map|json_script:"category-map-data" }}
+    {% endif %}
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Dynamic subcategory population based on category selection (supports multi-select)
+      let catMap = {};
+      const dataEl = document.getElementById('category-map-data');
+      if (dataEl) {
+        try { catMap = JSON.parse(dataEl.textContent || '{}'); } catch (_) { catMap = {}; }
+      }
+      const formEl = document.getElementById('filters');
+      if (formEl) {
+        const categorySel = formEl.querySelector('select[name="category"]');
+        const subcatSel = formEl.querySelector('select[name="subcategory"]');
+        const rebuildSubcategories = () => {
+          if (!subcatSel) return;
+          const sels = categorySel ? Array.from(categorySel.selectedOptions) : [];
+          const selectedCats = sels.map(o => o.value).filter(Boolean);
+          const union = new Set();
+          if (selectedCats.length === 0) {
+            Object.values(catMap || {}).forEach(list => list.forEach(sc => union.add(sc)));
+          } else {
+            selectedCats.forEach(c => ((catMap && catMap[c]) || []).forEach(sc => union.add(sc)));
+          }
+          const prev = new Set(Array.from(subcatSel.selectedOptions).map(o => o.value));
+          while (subcatSel.firstChild) subcatSel.removeChild(subcatSel.firstChild);
+          const mk = (val, label) => { const opt = document.createElement('option'); opt.value = val; opt.textContent = label; return opt; };
+          subcatSel.appendChild(mk('', 'All Subcategories'));
+          Array.from(union).sort((a,b)=>String(a).localeCompare(String(b))).forEach(sc => {
+            const opt = mk(sc, sc);
+            if (prev.has(sc)) opt.selected = true;
+            subcatSel.appendChild(opt);
+          });
+          // Notify any predictive multi-select wrapper to refresh its snapshot
+          subcatSel.dispatchEvent(new Event('predMulti:refresh'));
+          subcatSel.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        if (categorySel && subcatSel) {
+          categorySel.addEventListener('change', rebuildSubcategories);
+          rebuildSubcategories();
+        }
+      }
       const listEl = document.getElementById('items-list');
       const container = document.getElementById('items-container');
       const densityClasses = {

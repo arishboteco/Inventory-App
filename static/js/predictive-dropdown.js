@@ -15,6 +15,8 @@
   function upgradeSelect(originalSelect) {
     // Only enhance selects explicitly marked as predictive
     if (!originalSelect.classList.contains("predictive")) return;
+    // Skip multi-selects; those are handled by predictive-multiselect.js
+    if (originalSelect.multiple) return;
     if (originalSelect.dataset.predictiveUpgraded === "1") return;
     originalSelect.dataset.predictiveUpgraded = "1";
 

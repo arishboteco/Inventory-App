@@ -29,12 +29,19 @@
           {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
           id="{{ f.id|default:f.name }}"
           autocomplete="off"
+          {% if f.multiple %}multiple size="1"{% endif %}
           {% if predictive_names and f.name in predictive_names %}
             data-placeholder="{{ f.label|default:f.name|capfirst }}"
           {% endif %}
         >
           {% for opt in f.options %}
-            <option value="{{ opt.value }}"{% if opt.value == f.value %} selected{% endif %}>
+            <option value="{{ opt.value }}"
+              {% if f.multiple %}
+                {% if opt.value in f.value %}selected{% endif %}
+              {% else %}
+                {% if opt.value == f.value %}selected{% endif %}
+              {% endif %}
+            >
               {{ opt.label|default:opt.value }}
             </option>
           {% endfor %}

@@ -49,12 +49,14 @@ class Settings:
     django_allowed_hosts: List[str]
     database_url: Optional[str]
     database_ssl_require: bool
+    database_conn_max_age: int
     django_superuser_username: str
     django_superuser_email: str
     django_superuser_password: Optional[str]
     static_version: str
     codespace_name: Optional[str]
     github_token: Optional[str]
+    redis_url: Optional[str]
 
 
 def load_settings(**overrides: object) -> Settings:
@@ -76,6 +78,7 @@ def load_settings(**overrides: object) -> Settings:
         ),
         database_url=env("DATABASE_URL", default=None),
         database_ssl_require=env.bool("DATABASE_SSL_REQUIRE", default=True),
+    database_conn_max_age=env.int("DB_CONN_MAX_AGE", default=0),
         django_superuser_username=env("DJANGO_SUPERUSER_USERNAME", default="admin"),
         django_superuser_email=env(
             "DJANGO_SUPERUSER_EMAIL", default="admin@inventory.app"
@@ -84,6 +87,7 @@ def load_settings(**overrides: object) -> Settings:
         static_version=env("STATIC_VERSION", default="dev"),
         codespace_name=env("CODESPACE_NAME", default=None),
         github_token=env("GITHUB_TOKEN", default=None),
+        redis_url=env("REDIS_URL", default=None),
     )
     values.update(overrides)
     return Settings(**values)

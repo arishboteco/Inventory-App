@@ -14,6 +14,9 @@ class Department(models.Model):
         managed = True
         db_table = "departments"
         ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"], name="dept_name_idx"),
+        ]
 
 
 class ItemDepartment(models.Model):
@@ -30,6 +33,10 @@ class ItemDepartment(models.Model):
         unique_together = ("item", "department")
         verbose_name = "Item Department"
         verbose_name_plural = "Item Departments"
+        indexes = [
+            models.Index(fields=["item"], name="itemdept_item_idx"),
+            models.Index(fields=["department"], name="itemdept_dept_idx"),
+        ]
 
     def __str__(self):
         return f"{self.item.name} - {self.department.name}"

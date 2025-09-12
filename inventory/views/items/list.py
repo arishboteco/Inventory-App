@@ -3,6 +3,7 @@ import logging
 from django.contrib import messages
 from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError
+from django.db.models import Prefetch
 from django.db.models import BooleanField, Case, F, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import redirect
@@ -115,10 +116,30 @@ def _filter_and_sort_items(request, qs=None):
             output_field=BooleanField(),
         )
     )
-    # Eager load related FK objects to avoid per-row queries during table render
-    qs = qs.select_related("unit", "category", "preferred_supplier")
-    # Avoid N+1 on departments badges
-    qs = qs.prefetch_related("departments")
+    # Eager load related FK objects; restrict columns to those used in the table
+    qs = (
+        qs.select_related("unit", "category", "preferred_supplier")
+        .only(
+            "item_id",
+            "name",
+            "unit",
+            "category",
+            "current_stock",
+            "reorder_point",
+            "is_active",
+            "preferred_supplier",
+        )
+        .defer("notes")
+    )
+    # Avoid N+1 on departments badges and limit fields fetched for departments
+    qs = qs.prefetch_related(
+        Prefetch(
+            "departments",
+            queryset=Department.objects.only("department_id", "name").order_by(
+                "name"
+            ),
+        )
+    )
     allowed_sorts = {
         "item_id",
         "name",
@@ -274,8 +295,15 @@ class ItemsListView(TemplateView):
         form = ItemForm(request.POST) if request.method == "POST" else ItemForm()
         bulk_form = BulkUploadForm()
 
-        suppliers = Supplier.objects.filter(is_active=True).order_by("name")
-        departments_for_form = Department.objects.all().order_by("name")
+        # Narrow columns for chooser lists; these change rarely so we can cheaply fetch
+        suppliers = (
+            Supplier.objects.filter(is_active=True)
+            .only("supplier_id", "name")
+            .order_by("name")
+        )
+        departments_for_form = (
+            Department.objects.only("department_id", "name").order_by("name")
+        )
         inline_units = UnitsService.get_unit_choices_for_forms()
         inline_categories = CategoriesService.get_category_choices_for_forms()
 
@@ -283,26 +311,39 @@ class ItemsListView(TemplateView):
         ctx.update(category_ctx)
         ctx.update(table_ctx)
         stats = {}
+        # Cache expensive KPI computations to avoid recomputing per request
         try:
-            stats["total_active"] = kpis.total_active_items()
+            stats["total_active"] = cache.get_or_set(
+                "kpi:items:total_active", kpis.total_active_items, 120
+            )
         except Exception:  # pragma: no cover - defensive
             stats["total_active"] = 0
         try:
-            stats["low_stock_percentage"] = kpis.low_stock_percentage()
+            stats["low_stock_percentage"] = cache.get_or_set(
+                "kpi:items:low_stock_pct", kpis.low_stock_percentage, 120
+            )
         except Exception:  # pragma: no cover - defensive
             stats["low_stock_percentage"] = 0
         try:
-            stats["avg_days_since_last_purchase"] = (
-                kpis.average_days_since_last_purchase()
+            stats["avg_days_since_last_purchase"] = cache.get_or_set(
+                "kpi:items:avg_days_since_last_purchase",
+                kpis.average_days_since_last_purchase,
+                300,
             )
         except Exception:  # pragma: no cover - defensive
             stats["avg_days_since_last_purchase"] = 0
         try:
-            stats["stock_value_on_hand"] = kpis.stock_value_on_hand()
+            stats["stock_value_on_hand"] = cache.get_or_set(
+                "kpi:items:stock_value_on_hand", kpis.stock_value_on_hand, 120
+            )
         except Exception:  # pragma: no cover - defensive
             stats["stock_value_on_hand"] = 0
         try:
-            stats["fastest_movers"] = kpis.fastest_movers_last_7_days()
+            stats["fastest_movers"] = cache.get_or_set(
+                "kpi:items:fastest_movers_7d",
+                kpis.fastest_movers_last_7_days,
+                300,
+            )
         except Exception:  # pragma: no cover - defensive
             stats["fastest_movers"] = []
 
@@ -412,6 +453,8 @@ class ItemSearchView(TemplateView):
                 if key.endswith("item"):
                     query = val
                     break
-        items = Item.objects.filter(name__icontains=query)[:20]
+        items = (
+            Item.objects.only("item_id", "name").filter(name__icontains=query)[:20]
+        )
         ctx["items"] = items
         return ctx

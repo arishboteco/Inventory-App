@@ -42,3 +42,8 @@ class Supplier(models.Model):
     class Meta:
         managed = True
         db_table = "suppliers"
+        indexes = [
+            models.Index(fields=["name"], name="supplier_name_idx"),
+            models.Index(fields=["is_active"], name="supplier_active_idx"),
+            models.Index(fields=["updated_at"], name="supplier_updated_idx"),
+        ]

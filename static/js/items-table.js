@@ -408,10 +408,12 @@
 
   // Event delegation
   document.addEventListener("click", function (e) {
-    if (e.target.closest("[data-ignore-toggle]")) {
+    const tgt = e.target;
+    if (!(tgt instanceof Element)) return;
+    if (tgt.closest("[data-ignore-toggle]")) {
       return;
     }
-    const target = e.target.closest("[data-action]");
+    const target = tgt.closest("[data-action]");
     if (!target) return;
     const action = target.getAttribute("data-action");
     const row = findRow(target);
@@ -688,7 +690,9 @@
       });
 
       document.addEventListener("click", function (e) {
-        if (!menu.contains(e.target) && e.target !== menuBtn) {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        if (!menu.contains(t) && t !== menuBtn) {
           if (menuBtn.getAttribute("aria-expanded") === "true") {
             // Outside click: close without stealing focus
             closeMenu(false);
@@ -704,7 +708,9 @@
 
   // Optimistic client-side sort to reduce perceived latency
   document.addEventListener("click", function (e) {
-    const link = e.target.closest("a[data-sort-link][hx-get]");
+    const tgt = e.target;
+    if (!(tgt instanceof Element)) return;
+    const link = tgt.closest("a[data-sort-link][hx-get]");
     if (!link) return;
     if (window.__tableSortInFlight) {
       e.preventDefault();
@@ -817,7 +823,8 @@
   }
   document.addEventListener("keydown", function (e) {
     // Act only when the focused element is a row or inside a row
-    const row = e.target && e.target.closest && e.target.closest("tr.item-row");
+    const t = e.target;
+    const row = t && t.closest && t.closest("tr.item-row");
     if (!row) return;
     const key = e.key;
     if (key === "ArrowDown" || key === "ArrowUp") {

@@ -107,9 +107,8 @@ if DATABASES["default"].get("ENGINE"):
         if app_settings.database_ssl_require:
             DATABASES["default"].setdefault("OPTIONS", {})
             DATABASES["default"]["OPTIONS"]["sslmode"] = "require"
-    # Close database connections after each request to prevent long-lived
-    # idle sessions on managed platforms like Render.
-    DATABASES["default"]["CONN_MAX_AGE"] = 0
+    # Connection lifetime (0 means close each request). Tunable via env.
+    DATABASES["default"]["CONN_MAX_AGE"] = app_settings.database_conn_max_age
 
 
 # Password validation
@@ -154,6 +153,24 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATIC_VERSION = app_settings.static_version
+
+# WhiteNoise tuning for better static performance
+WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+WHITENOISE_AUTOREFRESH = DEBUG
+WHITENOISE_USE_FINDERS = DEBUG
+
+# Optional Redis cache if REDIS_URL is set
+if app_settings.redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": app_settings.redis_url,
+            "OPTIONS": {
+                "client_class": "django_redis.client.DefaultClient",
+            },
+            "TIMEOUT": 300,
+        }
+    }
 
 # Media files (Uploaded content)
 MEDIA_URL = "/media/"

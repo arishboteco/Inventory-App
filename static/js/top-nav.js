@@ -147,4 +147,7 @@ if (typeof window !== 'undefined') {
   window.topNav = { initTopNav };
 }
 
-module.exports = { initTopNav };
+// Export for test environments (Jest/CommonJS) without breaking browsers
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { initTopNav };
+}

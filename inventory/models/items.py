@@ -146,3 +146,8 @@ class StockTransaction(models.Model):
     class Meta:
         managed = True
         db_table = "stock_transactions"
+        indexes = [
+            models.Index(fields=["transaction_date"], name="stx_date_idx"),
+            models.Index(fields=["transaction_type"], name="stx_type_idx"),
+            models.Index(fields=["item", "transaction_date"], name="stx_item_date_idx"),
+        ]

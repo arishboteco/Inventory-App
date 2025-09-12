@@ -187,11 +187,13 @@
 
   // delegation for close and open events
   document.addEventListener("click", function (e) {
-    if (e.target.closest("[data-modal-close]")) {
+    const tgt = e.target;
+    if (!(tgt instanceof Element)) return;
+    if (tgt.closest("[data-modal-close]")) {
       closeModal();
       return;
     }
-    const opener = e.target.closest("[data-modal-url]");
+    const opener = tgt.closest("[data-modal-url]");
     if (opener) {
       e.preventDefault();
   const url = opener.getAttribute("data-modal-url");
@@ -282,13 +284,17 @@
 
   // Hover/focus prefetch for annotated triggers
   document.addEventListener("pointerenter", function (e) {
-    const el = e.target.closest('[data-modal-url][data-modal-prefetch="hover"]');
+    const tgt = e.target;
+    if (!(tgt instanceof Element)) return;
+    const el = tgt.closest('[data-modal-url][data-modal-prefetch="hover"]');
     if (!el) return;
     const url = el.getAttribute("data-modal-url");
     prefetch(url);
   });
   document.addEventListener("focusin", function (e) {
-    const el = e.target.closest('[data-modal-url][data-modal-prefetch="hover"]');
+    const tgt = e.target;
+    if (!(tgt instanceof Element)) return;
+    const el = tgt.closest('[data-modal-url][data-modal-prefetch="hover"]');
     if (!el) return;
     const url = el.getAttribute("data-modal-url");
     prefetch(url);
@@ -313,7 +319,9 @@
   document.addEventListener(
     "mouseover",
     (e) => {
-      const opener = e.target.closest("[data-modal-url]");
+      const tgt = e.target;
+      if (!(tgt instanceof Element)) return;
+      const opener = tgt.closest("[data-modal-url]");
       if (opener) schedulePrefetch(opener);
     },
     { passive: true },
@@ -321,7 +329,9 @@
   document.addEventListener(
     "focusin",
     (e) => {
-      const opener = e.target.closest("[data-modal-url]");
+      const tgt = e.target;
+      if (!(tgt instanceof Element)) return;
+      const opener = tgt.closest("[data-modal-url]");
       if (opener) schedulePrefetch(opener);
     },
     { passive: true },

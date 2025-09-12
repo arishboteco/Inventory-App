@@ -17,8 +17,10 @@ def test_column_menu_has_accessibility_attrs():
     assert 'aria-label="Show/Hide Columns"' in btn
 
 
-def test_filter_controls_have_labels_and_ids():
+def test_no_dropdown_filter_controls_present():
     content = Path("templates/inventory/_items_table.html").read_text()
+    # Assert removed filter triggers are not present anymore
+    assert "data-filter-btn" not in content
     for label in [
         "Filter Name",
         "Filter Category",
@@ -27,4 +29,4 @@ def test_filter_controls_have_labels_and_ids():
         "Filter Departments",
         "Filter Status",
     ]:
-        assert f'aria-label="{label}"' in content
+        assert f'aria-label="{label}"' not in content

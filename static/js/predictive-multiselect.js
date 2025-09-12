@@ -206,7 +206,7 @@
     sel.addEventListener('predMulti:refresh', refreshOptions);
 
     // Insert elements
-    const parent = sel.parentNode;
+  const parent = sel.parentNode;
     parent.insertBefore(container, sel);
   container.appendChild(chipBar);
   container.appendChild(trigger);
@@ -215,6 +215,20 @@
     // hide original select visually
     sel.style.display = 'none';
     sel.tabIndex = -1;
+
+    // Accessibility: link input to original label if present
+    const selId = sel.getAttribute('id');
+    if (selId){
+      const label = document.querySelector(`label[for='${selId}']`);
+      if (label){
+        let lid = label.getAttribute('id');
+        if (!lid){
+          lid = selId + '-label';
+          label.setAttribute('id', lid);
+        }
+        trigger.setAttribute('aria-labelledby', lid);
+      }
+    }
 
     // initialize
     syncTrigger();

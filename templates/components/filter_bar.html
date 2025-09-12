@@ -1,12 +1,12 @@
 <form id="filters" class="flex flex-wrap md:flex-nowrap items-end gap-2 md:gap-3 mb-0 w-full" method="get">
   <div class="flex flex-col md:flex-none min-w-[9rem] md:min-w-[9rem] md:basis-[clamp(9rem,14vw,15rem)] md:flex-1">
-      <label for="filter-q" class="text-label text-xs font-medium text-gray-700 truncate md:max-w-[8rem]">{{ search_label|default:'Search' }}</label>
+    <label id="label-filter-q" for="filter-q" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-gray-700 truncate md:max-w-[8rem]{% endif %}">{{ search_label|default:'Search' }}</label>
       <input
         id="filter-q"
         type="text"
         name="q"
         autocomplete="off"
-        placeholder="{{ search_placeholder }}"
+  placeholder="{{ search_placeholder|default:'Search items' }}"
         class="block w-full h-9 px-3 pr-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         value="{{ q }}"
         hx-get="{{ hx_get }}"
@@ -18,7 +18,7 @@
     </div>
     {% for f in filters %}
       <div class="flex flex-col md:flex-none min-w-[9rem] md:min-w-[9rem] md:basis-[clamp(9rem,14vw,15rem)] md:flex-1">
-        <label for="{{ f.id|default:f.name }}" class="text-label text-xs font-medium text-gray-700 truncate md:max-w-[8rem]">{{ f.label|default:f.name|capfirst }}</label>
+        <label id="label-filter-{{ f.name }}" for="filter-{{ f.name }}" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-gray-700 truncate md:max-w-[8rem]{% endif %}">{{ f.label|default:f.name|capfirst }}</label>
         <select
           name="{{ f.name }}"
           class="block w-full h-9 px-3 pr-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_names and f.name in predictive_names %} predictive{% endif %}"
@@ -27,7 +27,7 @@
           hx-trigger="change"
           hx-include="#filters"
           {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-          id="{{ f.id|default:f.name }}"
+          id="filter-{{ f.name }}"
           autocomplete="off"
           {% if f.multiple %}multiple size="1"{% endif %}
           {% if predictive_names and f.name in predictive_names %}

@@ -44,7 +44,7 @@
 {% block data_container %}
     {% url 'items_table' as items_table_url %}
     <div class="mb-4">
-      {% include "components/filter_bar.html" with filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" %}
+  {% include "components/filter_bar.html" with filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" hide_labels=True search_placeholder='Search items by name or category' %}
     </div>
     <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
       <div id="items-toolbar">
@@ -52,12 +52,18 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
           <div class="flex items-center gap-2">
             <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Inventory Items</h2>
-            <span class="text-sm text-gray-600 ml-2">Filter and explore</span>
           </div>
           <div class="flex flex-wrap items-center gap-2 justify-end">
             <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer" data-modal-prefetch="eager" data-modal-inline-template="inline-item-create-drawer">Add Item</button>
             <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'items_bulk_upload' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">Bulk Upload</button>
             <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
+                <div id="bulk-actions-top" class="hidden border border-gray-200 bg-gray-50 px-3 py-2 rounded-lg flex items-center gap-2" role="region" aria-label="Bulk actions">
+                  <span id="bulk-count-top" class="text-sm text-gray-700">0 selected</span>
+                  <div class="flex items-center gap-2">
+                    <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Deactivate</button>
+                    <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Assign Dept</button>
+                  </div>
+                </div>
             <div class="relative" data-col-menu-container>
               <button type="button" class="inline-flex items-center justify-center w-8 h-8 p-0 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" aria-label="Show/Hide Columns" title="Show/Hide Columns" aria-haspopup="true" aria-expanded="false" aria-controls="columns-menu" data-col-menu-button>{% icon 'cog-6-tooth' 'w-4 h-4' %}</button>
               <!-- Column visibility dropdown -->
@@ -98,7 +104,7 @@
         <div class="flex items-center gap-2">
           <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Deactivate</button>
           <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Assign Dept</button>
-          <button type="button" data-bulk-action="export" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
+          
         </div>
       </div>
       

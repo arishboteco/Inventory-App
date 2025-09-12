@@ -10,7 +10,7 @@
         <th scope="col" class="sticky z-10 w-8 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">
           <input id="select-all" type="checkbox" data-select-all aria-label="Select all" />
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" data-sort="col1" aria-sort="none">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="name" data-field="name" data-sort="col1" aria-sort="none">
           <div class="flex items-center gap-1">
             <a data-sort-link data-sort-key="name" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
               Name
@@ -23,13 +23,13 @@
             
           </div>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" data-sort="col2" aria-sort="none">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="category" data-field="category" data-sort="col2" aria-sort="none">
           <div class="flex items-center gap-1">
             <a data-sort-link data-sort-key="category__category" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Category {% if sort == 'category__category' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
             
           </div>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" data-sort="col3" aria-sort="none">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="unit" data-field="unit" data-sort="col3" aria-sort="none">
           <div class="flex items-center gap-1">
             <a data-sort-link data-sort-key="unit__base_unit" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=unit__base_unit&direction={% if sort == 'unit__base_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Unit {% if sort == 'unit__base_unit' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
             
@@ -38,13 +38,13 @@
         <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock" data-sort="col4" aria-sort="none">
           <a data-sort-link data-sort-key="current_stock" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Stock {% if sort == 'current_stock' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" data-sort="col5" aria-sort="none">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="stock_status" data-field="stock_status" data-sort="col5" aria-sort="none">
           <div class="flex items-center gap-1"><span>Stock Status</span></div>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" data-sort="col6" aria-sort="none">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="departments" data-field="department" data-sort="col6" aria-sort="none">
           <div class="flex items-center gap-1"><span>Departments</span></div>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" data-sort="col7" aria-sort="none">
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md" data-col="status" data-field="active" data-sort="col7" aria-sort="none">
           <div class="flex items-center gap-1">
             <a data-sort-link data-sort-key="is_active" href="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'items_table' %}?{{ querystring|default:'' }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-target="#items-list" hx-indicator="#items-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
             

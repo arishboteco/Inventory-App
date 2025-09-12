@@ -659,18 +659,38 @@
         }
       });
 
+      // Track last interaction type to avoid janky auto-open on mouse click focus
+      let lastWasPointer = false;
+      const resetPointer = () => {
+        // Clear after a tick to scope it to the current gesture
+        setTimeout(() => (lastWasPointer = false), 100);
+      };
+      document.addEventListener(
+        "mousedown",
+        () => {
+          lastWasPointer = true;
+          resetPointer();
+        },
+        true,
+      );
+      document.addEventListener(
+        "touchstart",
+        () => {
+          lastWasPointer = true;
+          resetPointer();
+        },
+        true,
+      );
+
+      // Auto-open on focus for keyboard users only
       menuBtn.addEventListener("focus", () => {
         if (skipOpen || menuBtn.getAttribute("aria-expanded") === "true")
           return;
+        if (lastWasPointer) return; // prevent jank on mouse focus
         openMenu();
       });
 
-      menuContainer.addEventListener("focusout", (e) => {
-        if (!menuContainer.contains(e.relatedTarget)) {
-          // Do not force focus back to button; allow focus to proceed to the newly clicked element.
-          closeMenu(false);
-        }
-      });
+      // Close on blur of menu button and outside clicks only
 
       menu.addEventListener("keydown", function (e) {
         const items = Array.from(menu.querySelectorAll("input"));
@@ -945,12 +965,22 @@
   }
   function updateBulkBar() {
     const count = countSelections();
-    const bar = document.getElementById("bulk-actions");
-    const label = document.getElementById("bulk-count");
-    if (!bar || !label) return;
-    label.textContent = `${count} selected`;
-    if (count > 0) bar.classList.remove("hidden");
-    else bar.classList.add("hidden");
+    const bottomBar = document.getElementById("bulk-actions");
+    const bottomLabel = document.getElementById("bulk-count");
+    const topBar = document.getElementById("bulk-actions-top");
+    const topLabel = document.getElementById("bulk-count-top");
+
+    if (bottomLabel) bottomLabel.textContent = `${count} selected`;
+    if (topLabel) topLabel.textContent = `${count} selected`;
+
+    if (bottomBar) {
+      if (count > 0) bottomBar.classList.remove("hidden");
+      else bottomBar.classList.add("hidden");
+    }
+    if (topBar) {
+      if (count > 0) topBar.classList.remove("hidden");
+      else topBar.classList.add("hidden");
+    }
   }
 
   document.addEventListener("change", function (e) {

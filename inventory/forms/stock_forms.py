@@ -14,7 +14,7 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = StockTransaction
-        fields = ["item", "quantity_change", "user_id", "related_po", "notes"]
+        fields = ["item", "quantity_change", "related_po", "notes"]
         labels = {
             "quantity_change": "Quantity",
             "related_po": "PO ID",
@@ -22,7 +22,13 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        item_attrs = {"class": INPUT_CLASS}
+        item_attrs = {
+            "class": INPUT_CLASS,
+            "data-predictive-input": "1",
+            "autocomplete": "off",
+            "autocapitalize": "none",
+            "spellcheck": "false",
+        }
         if item_suggest_url:
             item_attrs.update(
                 {
@@ -34,6 +40,20 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
             )
         self.fields["item"].widget = forms.TextInput()
         self.fields["item"].widget.attrs.update(item_attrs)
+        # Predictive PO only (user is auto-populated from request)
+        if "related_po" in self.fields:
+            self.fields["related_po"].widget = forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "hx-get": "/stock/pos/search/",
+                    "hx-trigger": "keyup changed delay:500ms",
+                    "hx-target": "#po-options",
+                    "list": "po-options",
+                    "autocomplete": "off",
+                    "autocapitalize": "none",
+                    "spellcheck": "false",
+                }
+            )
         self.apply_styling()
 
     def clean_quantity_change(self):
@@ -58,12 +78,18 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = StockTransaction
-        fields = ["item", "quantity_change", "user_id", "notes"]
+        fields = ["item", "quantity_change", "notes"]
         labels = {"quantity_change": "Quantity Change"}
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        item_attrs = {"class": INPUT_CLASS}
+        item_attrs = {
+            "class": INPUT_CLASS,
+            "data-predictive-input": "1",
+            "autocomplete": "off",
+            "autocapitalize": "none",
+            "spellcheck": "false",
+        }
         if item_suggest_url:
             item_attrs.update(
                 {
@@ -75,6 +101,7 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
             )
         self.fields["item"].widget = forms.TextInput()
         self.fields["item"].widget.attrs.update(item_attrs)
+        # User is auto-populated from request
         self.apply_styling()
 
     def save(self, commit: bool = True):
@@ -93,12 +120,18 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = StockTransaction
-        fields = ["item", "quantity_change", "user_id", "notes"]
+        fields = ["item", "quantity_change", "notes"]
         labels = {"quantity_change": "Quantity"}
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        item_attrs = {"class": INPUT_CLASS}
+        item_attrs = {
+            "class": INPUT_CLASS,
+            "data-predictive-input": "1",
+            "autocomplete": "off",
+            "autocapitalize": "none",
+            "spellcheck": "false",
+        }
         if item_suggest_url:
             item_attrs.update(
                 {
@@ -110,6 +143,7 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
             )
         self.fields["item"].widget = forms.TextInput()
         self.fields["item"].widget.attrs.update(item_attrs)
+        # User is auto-populated from request
         self.apply_styling()
 
     def clean_quantity_change(self):

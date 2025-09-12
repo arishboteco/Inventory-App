@@ -24,6 +24,7 @@ from .views.items.list import (
     ItemsTableView,
     distinct_values,
 )
+from .views.items.list import item_meta
 from .views.items.stock import (
     ItemCreateHTMXView,
     ItemCreatePartialView,
@@ -41,7 +42,7 @@ from .views.purchase_orders import (
     purchase_orders_list,
 )
 from .views.recipes import RecipesListView, recipe_create, recipe_detail
-from .views.stock import history_reports, stock_movements
+from .views.stock import history_reports, stock_movements, UserSearchView, POSearchView
 from .views.suppliers import (
     SupplierCreateView,
     SupplierEditView,
@@ -85,6 +86,7 @@ urlpatterns = [
     ),
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
     path("items/search/", ItemSearchView.as_view(), name="item_search"),
+        path("items/meta/<int:item_id>/", item_meta, name="item_meta"),
     path(
         "items/purchase-units/", PurchaseUnitsView.as_view(), name="get_purchase_units"
     ),
@@ -112,6 +114,8 @@ urlpatterns = [
     ),
     path("suppliers/search/", SupplierSearchView.as_view(), name="supplier_search"),
     path("stock-movements/", stock_movements, name="stock_movements"),
+    path("stock/users/search/", UserSearchView.as_view(), name="user_search"),
+    path("stock/pos/search/", POSearchView.as_view(), name="po_search"),
     path("history-reports/", history_reports, name="history_reports"),
     path("visualizations/", visualizations, name="visualizations"),
     path("indents/", IndentsListView.as_view(), name="indents_list"),

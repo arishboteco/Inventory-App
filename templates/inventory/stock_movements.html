@@ -1,11 +1,152 @@
-{% extends "_base.html" %}
+{% extends "components/create_manage_layout.html" %}
 {% load static %}
-{% block title %}Stock Movements – Inventory App{% endblock %}
-{% block content %}
-  <h1 class="text-xl md:text-h2 font-semibold mb-4">Stock Movements</h1>
-  {% include "inventory/_manual_entry_section.html" %}
-  {% include "inventory/_bulk_upload_section.html" %}
-  {% include "inventory/_recent_transactions_section.html" %}
-  {% include "components/button.html" with id="record-movement-btn" label="Record Movement" variant="primary" type="button" extra_classes="rounded-full fixed bottom-6 right-6 z-40 px-4 py-2" %}
-  {% include "components/modal.html" with id="record-modal" open_id="record-movement-btn" content_template="inventory/_record_movement_form.html" %}
+
+{% block page_title %}Transactions – Stock Movements{% endblock %}
+{% block page_heading %}Stock Movements{% endblock %}
+
+{% block extra_top %}
+  <datalist id="item-options"></datalist>
+  <datalist id="po-options"></datalist>
+{% endblock %}
+
+{% block table_id %}transactions-container{% endblock %}
+
+{% block data_container %}
+  <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+    <div id="transactions-toolbar">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Recent Transactions</h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 justify-end">
+          <button id="receive-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Receive Stock</button>
+          <button id="adjust-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Adjust Stock</button>
+          <button id="waste-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Record Wastage</button>
+          <button id="bulk-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Bulk Upload</button>
+          <a href="{% url 'history_reports' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">View Reports</a>
+        </div>
+      </div>
+    </div>
+    <div class="p-4">
+      {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string %}
+    </div>
+  </div>
+
+  {% include "components/modal.html" with id="receive-modal" open_id="receive-open" title="Receive Stock" content_template="inventory/_receive_form_modal.html" %}
+  {% include "components/modal.html" with id="adjust-modal" open_id="adjust-open" title="Adjust Stock" content_template="inventory/_adjust_form_modal.html" %}
+  {% include "components/modal.html" with id="waste-modal" open_id="waste-open" title="Record Wastage" content_template="inventory/_waste_form_modal.html" %}
+  {% include "components/modal.html" with id="stock-bulk-modal" open_id="bulk-open" title="Bulk Upload" content_template="inventory/_stock_bulk_modal.html" %}
+      <script>
+        (function(){
+          function setupItemMeta(modalId){
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            // Text input for item with datalist
+            const itemInput = modal.querySelector('input[name$="-item"], input[name="item"]');
+            if (!itemInput) return;
+            let info = modal.querySelector('[data-item-meta]');
+            if (!info) {
+              info = document.createElement('div');
+              info.setAttribute('data-item-meta','');
+              info.className = 'mt-1 text-xs text-gray-500';
+              const wrap = itemInput.closest('p, .form-group, div') || itemInput.parentElement;
+              if (wrap) wrap.appendChild(info); else itemInput.insertAdjacentElement('afterend', info);
+            }
+            let err = modal.querySelector('[data-item-error]');
+            if (!err) {
+              err = document.createElement('div');
+              err.setAttribute('data-item-error','');
+              err.className = 'mt-1 text-xs text-red-600 hidden';
+              const wrap = itemInput.closest('p, .form-group, div') || itemInput.parentElement;
+              if (wrap) wrap.insertBefore(err, info); else itemInput.insertAdjacentElement('afterend', err);
+            }
+            const poField = modal.querySelector('input[name$="-related_po"], input[name="related_po"]');
+            const form = itemInput.closest('form');
+            const submitBtn = form && form.querySelector('button[type="submit"]');
+            let debounceTimer = null;
+            function setInvalid(message){
+              if (message) { err.textContent = message; err.classList.remove('hidden'); }
+              else { err.textContent = ''; err.classList.add('hidden'); }
+              if (submitBtn) submitBtn.disabled = !!message;
+              if (message && poField) poField.value = '';
+            }
+            function getDatalistOption(input){
+              const listId = itemInput.getAttribute('list');
+              const list = listId ? document.getElementById(listId) : null;
+              if (!list) return null;
+              const typed = (itemInput.value || '').trim().toLowerCase();
+              // exact match on label or value
+              const opts = Array.from(list.querySelectorAll('option'));
+              return opts.find(o => (
+                (o.value || '').trim().toLowerCase() === typed ||
+                (o.textContent || '').trim().toLowerCase() === typed
+              )) || null;
+            }
+
+            function resolveItemId(){
+              const opt = getDatalistOption(itemInput);
+              if (opt && (opt.dataset.id || opt.getAttribute('data-id'))) {
+                return opt.dataset.id || opt.getAttribute('data-id');
+              }
+              // support merged patterns like "Name (ID: 123)"
+              const m = (itemInput.value || '').match(/\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
+              return m ? m[1] : '';
+            }
+
+            function refresh(){
+              const id = resolveItemId();
+              const typed = (itemInput.value || '').trim();
+              if (!typed) { info.textContent = ''; setInvalid(''); return; }
+              if (!id) { info.textContent = ''; setInvalid('Choose a valid item from the list.'); return; }
+              fetch(`/items/meta/${id}/`).then(r=>r.ok?r.json():null).then(data=>{
+                if (!data || !data.ok) { info.textContent=''; setInvalid('Selected item not found.'); return; }
+                const parts = [];
+                if (data.unit) parts.push(data.unit);
+                if (data.category) parts.push(data.category);
+                if (data.subcategory) parts.push(data.subcategory);
+                info.textContent = parts.filter(Boolean).join(' • ');
+                setInvalid('');
+                if (poField && !poField.value && data.po_suggestion) {
+                  poField.value = data.po_suggestion;
+                }
+              }).catch(()=>{ info.textContent=''; });
+            }
+            function debouncedRefresh(){
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(refresh, 250);
+            }
+            itemInput.addEventListener('input', debouncedRefresh);
+            itemInput.addEventListener('change', refresh);
+            itemInput.addEventListener('blur', refresh);
+            // Initialize state
+            debouncedRefresh();
+
+            // On submit, swap user-visible name to the resolved ID so backend receives item_id; restore name post-request
+            if (form) {
+              form.addEventListener('submit', function(){
+                const id = resolveItemId();
+                if (id) {
+                  itemInput.dataset.prevValue = itemInput.value;
+                  itemInput.value = id;
+                  setTimeout(() => {
+                    if (itemInput.dataset.prevValue) itemInput.value = itemInput.dataset.prevValue;
+                  }, 0);
+                }
+              });
+            }
+          }
+          document.addEventListener('DOMContentLoaded', function(){
+            setupItemMeta('receive-modal');
+            setupItemMeta('adjust-modal');
+            setupItemMeta('waste-modal');
+            // Re-open modal if server indicated a form error
+            var which = '{{ open_modal|default:"" }}';
+            if (which) {
+              var triggerId = which + '-open';
+              var btn = document.getElementById(triggerId);
+              if (btn) btn.click();
+            }
+          });
+        })();
+      </script>
 {% endblock %}

@@ -1,25 +1,45 @@
 {% comment %}
 Generic modal component. Include with:
-{% include "components/modal.html" with id="my-modal" open_id="open-btn" content_template="path/to/template.html" %}
-The `content_template` is rendered inside the modal container.
+{% include "components/modal.html" with id="my-modal" open_id="open-btn" title="Optional Title" content_template="path/to/template.html" %}
+The `content_template` is rendered inside the modal panel.
 {% endcomment %}
-<div id="{{ id }}" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
-  <div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
-    <button type="button" class="absolute top-2 right-2 text-bodyText hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary" data-close>
+<div id="{{ id }}" class="fixed inset-0 hidden z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-xl shadow border border-gray-200 w-full max-w-lg md:max-w-xl lg:max-w-2xl relative max-h-[90vh] overflow-y-auto">
+    {% if title %}
+    <div class="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-gray-100">
+      <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+      <button type="button" class="absolute top-3 right-3 text-bodyText hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded" data-close>
+        <span class="sr-only">Close</span>&times;
+      </button>
+    </div>
+    {% else %}
+    <button type="button" class="absolute top-3 right-3 text-bodyText hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded" data-close>
       <span class="sr-only">Close</span>&times;
     </button>
-    {% include content_template %}
+    {% endif %}
+    <div class="p-6">
+      {% include content_template %}
+    </div>
   </div>
+  
 </div>
 <script>
   (function () {
     const modal = document.getElementById('{{ id }}');
     const openBtn = document.getElementById('{{ open_id }}');
-    const closeBtn = modal.querySelector('[data-close]');
-    function open() { modal.classList.remove('hidden'); }
+    const closeBtns = modal.querySelectorAll('[data-close]');
+    function open() {
+      modal.classList.remove('hidden');
+      const firstInput = modal.querySelector('input, select, textarea, button');
+      firstInput && firstInput.focus && firstInput.focus();
+    }
     function close() { modal.classList.add('hidden'); }
     openBtn && openBtn.addEventListener('click', open);
-    closeBtn && closeBtn.addEventListener('click', close);
+    closeBtns.forEach(btn => btn.addEventListener('click', close));
     modal.addEventListener('click', function (e) { if (e.target === modal) { close(); } });
+    window.addEventListener('keydown', function (e) {
+      if (!modal.classList.contains('hidden') && e.key === 'Escape') close();
+    });
   })();
+  
 </script>

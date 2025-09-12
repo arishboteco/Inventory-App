@@ -16,6 +16,7 @@ from inventory.services.item_service import get_unit_display_name
 from ...forms.bulk_forms import BulkUploadForm
 from ...forms.item_forms import ItemForm
 from ...models import Category, Item, Supplier, Unit
+from ...models.orders import PurchaseOrderItem
 from ...models.departments import Department
 from ...services import category_filters, kpis, list_utils
 from ...services.categories_service import CategoriesService
@@ -461,3 +462,46 @@ class ItemSearchView(TemplateView):
         )
         ctx["items"] = items
         return ctx
+
+
+@require_GET
+def item_meta(request, item_id: int):
+    """Return metadata for an item: name, unit display, category, subcategory, and a suggested PO id if any.
+
+    The PO suggestion is the most recent purchase order that includes this item.
+    """
+    try:
+        item = (
+            Item.objects.select_related("unit", "category")
+            .only("item_id", "name", "unit", "category")
+            .get(pk=item_id)
+        )
+    except Item.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "not_found"}, status=404)
+    unit_display = get_unit_display_name(item.unit_id) if item.unit_id else ""
+    cat = getattr(item, "category", None)
+    category = getattr(cat, "category", "")
+    subcategory = getattr(cat, "sub_category", "")
+    # Suggest the latest PO that references this item
+    po_suggestion = None
+    try:
+        poi = (
+            PurchaseOrderItem.objects.select_related("purchase_order")
+            .filter(item_id=item.item_id)
+            .order_by("-purchase_order__order_date")
+            .first()
+        )
+        if poi and poi.purchase_order_id:
+            po_suggestion = poi.purchase_order_id
+    except Exception:
+        po_suggestion = None
+    data = {
+        "ok": True,
+        "item_id": item.item_id,
+        "name": item.name,
+        "unit": unit_display,
+        "category": category,
+        "subcategory": subcategory,
+        "po_suggestion": po_suggestion,
+    }
+    return JsonResponse(data)

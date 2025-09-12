@@ -1,0 +1,21 @@
+{% load static %}
+<form method="post" action="{% url 'items_bulk_upload' %}" enctype="multipart/form-data" class="space-y-3">
+  {% csrf_token %}
+  <input type="hidden" name="bulk_upload" value="1" />
+  {{ bulk_form.as_p }}
+  <p class="text-sm text-gray-600">Download CSV template: <a href="{% static 'sample_stock_upload.csv' %}" class="text-primary underline">sample_stock_upload.csv</a></p>
+  <div class="flex items-center justify-end gap-2">
+    <button type="button" data-close class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</button>
+    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Upload</button>
+  </div>
+  {% if bulk_success_count is not None %}
+    <p class="mt-2">{{ bulk_success_count }} transaction(s) recorded successfully.</p>
+  {% endif %}
+  {% if bulk_errors %}
+    <ul class="text-red-700 mt-2">
+      {% for e in bulk_errors %}
+        <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</form>

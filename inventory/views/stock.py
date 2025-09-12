@@ -8,6 +8,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.generic import TemplateView
 
 from ..forms.stock_forms import (
     StockAdjustmentForm,
@@ -18,6 +19,7 @@ from ..forms.stock_forms import (
 from ..models import StockTransaction
 from ..services import stock_service
 from ..services.exceptions import StockServiceError
+from ..models.orders import PurchaseOrder
 
 
 def stock_movements(request):
@@ -34,6 +36,7 @@ def stock_movements(request):
     adjust_form = StockAdjustmentForm(prefix="adjust", item_suggest_url=item_url)
     waste_form = StockWastageForm(prefix="waste", item_suggest_url=item_url)
     quick_form = StockAdjustmentForm(prefix="quick", item_suggest_url=item_url)
+    reopen_modal: str | None = None
     bulk_form = StockBulkUploadForm()
     bulk_success_count = None
     bulk_errors: list[str] | None = None
@@ -50,7 +53,8 @@ def stock_movements(request):
                         item_id=cd["item"].pk,
                         quantity_change=cd["quantity_change"],
                         transaction_type="RECEIVING",
-                        user_id=cd.get("user_id"),
+                        user_id=(getattr(request.user, "username", None) or "System"),
+                        user_int=(getattr(request.user, "pk", None) or None),
                         related_po_id=(
                             cd.get("related_po").pk if cd.get("related_po") else None
                         ),
@@ -59,7 +63,8 @@ def stock_movements(request):
                     messages.success(request, "Receiving transaction recorded")
                     return redirect("stock_movements")
                 except StockServiceError as exc:
-                    messages.error(request, str(exc))
+                    receive_form.add_error(None, str(exc))
+                    reopen_modal = "receive"
             active = "receive"
         elif "submit_adjust" in request.POST:
             adjust_form = StockAdjustmentForm(
@@ -72,13 +77,15 @@ def stock_movements(request):
                         item_id=cd["item"].pk,
                         quantity_change=cd["quantity_change"],
                         transaction_type="ADJUSTMENT",
-                        user_id=cd.get("user_id"),
+                        user_id=(getattr(request.user, "username", None) or "System"),
+                        user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
                     )
                     messages.success(request, "Adjustment transaction recorded")
-                    return redirect("stock_movements" + "?section=adjust")
+                    return redirect(reverse("stock_movements") + "?section=adjust")
                 except StockServiceError as exc:
-                    messages.error(request, str(exc))
+                    adjust_form.add_error(None, str(exc))
+                    reopen_modal = "adjust"
             active = "adjust"
         elif "submit_waste" in request.POST:
             waste_form = StockWastageForm(
@@ -92,13 +99,15 @@ def stock_movements(request):
                         item_id=cd["item"].pk,
                         quantity_change=qty,
                         transaction_type="WASTAGE",
-                        user_id=cd.get("user_id"),
+                        user_id=(getattr(request.user, "username", None) or "System"),
+                        user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
                     )
                     messages.success(request, "Wastage transaction recorded")
-                    return redirect("stock_movements" + "?section=waste")
+                    return redirect(reverse("stock_movements") + "?section=waste")
                 except StockServiceError as exc:
-                    messages.error(request, str(exc))
+                    waste_form.add_error(None, str(exc))
+                    reopen_modal = "waste"
             active = "waste"
         elif "submit_quick" in request.POST:
             quick_form = StockAdjustmentForm(
@@ -228,8 +237,41 @@ def stock_movements(request):
         "bulk_errors": bulk_errors,
         "page_obj": page_obj,
         "query_string": query_string,
+        "open_modal": reopen_modal,
     }
     return render(request, "inventory/stock_movements.html", ctx)
+
+
+class UserSearchView(TemplateView):
+    template_name = "inventory/_user_options.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        query = (self.request.GET.get("q") or "").strip()
+        qs = (
+            StockTransaction.objects.exclude(user_id__isnull=True)
+            .exclude(user_id="")
+            .values_list("user_id", flat=True)
+            .distinct()
+            .order_by("user_id")
+        )
+        if query:
+            qs = [u for u in qs if query.lower() in (u or "").lower()]
+        ctx["users"] = list(qs)[:20]
+        return ctx
+
+
+class POSearchView(TemplateView):
+    template_name = "inventory/_po_options.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        query = (self.request.GET.get("q") or "").strip()
+        pos = PurchaseOrder.objects.only("po_id").order_by("-po_id")
+        if query and query.isdigit():
+            pos = pos.filter(po_id__icontains=query)
+        ctx["pos"] = pos[:20]
+        return ctx
 
 
 def history_reports(request):

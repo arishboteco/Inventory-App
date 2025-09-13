@@ -3,30 +3,47 @@
   {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
 {% endblock %}
 {% block page_title %}Indents – Inventory App{% endblock %}
-{% block page_heading %}Indents ({{ total_indents }}){% endblock %}
-
-{% block primary_actions %}
-  <a href="{% url 'indent_create' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">New Indent</a>
-{% endblock %}
+{% block page_heading %}Indents{% endblock %}
 
 {% block filters %}
   {% url 'indents_table' as indents_table_url %}
   {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters search_delay="500ms" %}
 {% endblock %}
 
-{% block extra_top %}
-  {% include "inventory/_quick_indent_form.html" %}
-{% endblock %}
+{# No quick indent on this page; creation only via New Indent #}
 
 {% block data_container %}
-  <div id="indents_table"
-       hx-get="{% url 'indents_table' %}"
-       hx-trigger="load"
-       hx-include="#filters"
-       hx-indicator="#htmx-spinner">
-    {% if total_indents == 0 %}
-      {% url 'indent_create' as indent_create_url %}
-      {% include "components/empty_state.html" with title="No Indents" message="Create your first indent to get started." cta_label="New Indent" cta_url=indent_create_url %}
-    {% endif %}
+  <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+    <div id="indents-toolbar">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
+        <div class="flex items-center gap-2">
+          <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Indents</h2>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 justify-end">
+          <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'indent_create' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">New Indent</button>
+        </div>
+      </div>
+    </div>
+    <div class="p-4">
+      <div id="indents_table"
+           hx-get="{% url 'indents_table' %}"
+           hx-trigger="load"
+           hx-include="#filters"
+           hx-indicator="#htmx-spinner">
+        {% if total_indents == 0 %}
+          <div class="p-4 max-sm:p-2 text-center border border-form-border rounded bg-form-bg">
+            <h2 class="text-h2 md:text-h2 mb-4 mt-8">No Indents</h2>
+            <p class="mb-4 text-form-text text-body">Create your first indent to get started.</p>
+            <button type="button"
+                    class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary"
+                    data-modal-url="{% url 'indent_create' %}?partial=1"
+                    data-modal-type="drawer"
+                    data-modal-prefetch="idle">
+              New Indent
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 {% endblock %}

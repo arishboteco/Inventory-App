@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Sum
 
 from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
+from .departments import Department
 from .items import Item
 from .suppliers import Supplier
 
@@ -14,7 +15,13 @@ class Indent(models.Model):
     indent_id = models.AutoField(primary_key=True)
     mrn = models.CharField(max_length=100, unique=True, null=False, blank=False)
     requested_by = models.CharField(max_length=255, blank=True, null=True)
-    department = models.CharField(max_length=100, blank=True, null=True)
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.PROTECT,
+        db_column="department_id",
+        blank=True,
+        null=True,
+    )
     date_required = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True, default="")
     status = models.CharField(

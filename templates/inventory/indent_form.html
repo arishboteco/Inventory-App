@@ -4,9 +4,29 @@
 {% block form_attrs %}id="indent-form"{% endblock %}
 {% block fields %}
   <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-    {% for field in form %}
-      {% include "components/form_field.html" with field=field %}
-    {% endfor %}
+    <div>
+      <label class="block mb-1 text-label font-medium leading-normal">Requested by</label>
+      <input type="text" readonly aria-readonly="true"
+             class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+             value="{{ requested_by_display|default:form.requested_by.value|default:'' }}" />
+      {{ form.requested_by }}
+    </div>
+    <div>
+      <label class="block mb-1 text-label font-medium leading-normal">Department</label>
+      {{ form.department }}
+      <select id="department-ui" class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" data-placeholder="Select Department">
+        <option value="">Select Department</option>
+        {% for did, dname in department_options %}
+          <option value="{{ did }}">{{ dname }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      {% include "components/form_field.html" with field=form.date_required %}
+    </div>
+    <div>
+      {% include "components/form_field.html" with field=form.notes %}
+    </div>
   </div>
   {{ formset.management_form }}
   {% if formset.non_form_errors %}
@@ -28,6 +48,19 @@
 {% block extra %}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+      // Bind department UI select to hidden field
+      (function(){
+        try {
+          const ui = document.getElementById('department-ui');
+          const hidden = document.getElementById('id_department');
+          if (hidden && ui) {
+            if (hidden.value) ui.value = hidden.value;
+            if (window.initPredictiveDropdowns) window.initPredictiveDropdowns(ui.parentElement);
+            ui.addEventListener('change', function(){ hidden.value = ui.value; });
+            ui.addEventListener('input', function(){ hidden.value = ui.value; });
+          }
+        } catch(e) {}
+      })();
       initFormset({
         formsetPrefix: 'items',
         addButtonId: 'add-row',
@@ -35,6 +68,195 @@
         formClass: 'form-row',
         removeButtonClass: 'remove-row'
       });
+      function bindItemInputs(scope){
+        const root = scope || document;
+        const inputs = root.querySelectorAll('input[list="#item-options"], input[list="item-options"], input[name^="items-"][name$="-item"]');
+        inputs.forEach((itemInput)=>{
+          if (itemInput._boundIndentMeta) return;
+          itemInput._boundIndentMeta = true;
+          const wrapper = itemInput.closest('div') || itemInput.parentElement;
+          let info = null;
+          let err = null;
+          if (wrapper) {
+            info = document.createElement('div');
+            info.className = 'mt-1 text-xs text-gray-500';
+            info.setAttribute('data-item-meta','');
+            wrapper.appendChild(info);
+            err = document.createElement('div');
+            err.className = 'mt-1 text-xs text-red-600 hidden';
+            err.setAttribute('data-item-error','');
+            wrapper.appendChild(err);
+          }
+          function setInvalid(message){
+            if (!err) return;
+            if (message) { err.textContent = message; err.classList.remove('hidden'); }
+            else { err.textContent = ''; err.classList.add('hidden'); }
+          }
+          function getDatalistOption(){
+            const listId = itemInput.getAttribute('list');
+            const list = listId ? document.getElementById(listId) : null;
+            if (!list) return null;
+            const typed = (itemInput.value || '').trim().toLowerCase();
+            const opts = Array.from(list.querySelectorAll('option'));
+            return opts.find(o => ((o.value||'').trim().toLowerCase() === typed) || ((o.textContent||'').trim().toLowerCase() === typed)) || null;
+          }
+          function resolveItemId(){
+            const opt = getDatalistOption();
+            if (opt && (opt.dataset.id || opt.getAttribute('data-id'))) {
+              return opt.dataset.id || opt.getAttribute('data-id');
+            }
+            const m = (itemInput.value || '').match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
+            if (m) return m[1] || m[2];
+            return '';
+          }
+          let debounceTimer = null;
+          function refresh(){
+            const id = resolveItemId();
+            const typed = (itemInput.value || '').trim();
+            if (info) info.textContent = '';
+            if (!typed) { setInvalid(''); return; }
+            if (!id) { setInvalid('Choose a valid item from the list.'); return; }
+            fetch(`/items/meta/${id}/`).then(r=>r.ok?r.json():null).then(data=>{
+              if (!data || !data.ok) { setInvalid('Selected item not found.'); return; }
+              const parts = [];
+              if (data.unit) parts.push(data.unit);
+              if (data.category) parts.push(data.category);
+              if (data.subcategory) parts.push(data.subcategory);
+              if (info) info.textContent = parts.filter(Boolean).join(' • ');
+              setInvalid('');
+            }).catch(()=>{});
+          }
+          function debounced(){ clearTimeout(debounceTimer); debounceTimer = setTimeout(refresh, 250); }
+          itemInput.addEventListener('input', debounced);
+          itemInput.addEventListener('change', refresh);
+          itemInput.addEventListener('blur', refresh);
+        });
+      }
+      function checkDuplicates(){
+        const form = document.getElementById('indent-form');
+        const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+        const inputs = form ? Array.from(form.querySelectorAll('input[name^="items-"][name$="-item"]')) : [];
+        const list = document.getElementById('item-options');
+        const toId = (val)=>{
+          if (!val) return '';
+          let id = '';
+          if (list){
+            const opts = Array.from(list.querySelectorAll('option'));
+            const match = opts.find(o => ((o.value||'').trim().toLowerCase() === val.trim().toLowerCase()) || ((o.textContent||'').trim().toLowerCase() === val.trim().toLowerCase()));
+            if (match) id = match.dataset.id || match.getAttribute('data-id') || '';
+          }
+          if (!id){
+            const m = val.match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
+            if (m) id = m[1] || m[2] || '';
+          }
+          return id;
+        };
+        const ids = inputs.map(inp => toId(inp.value)).filter(Boolean);
+        const counts = ids.reduce((acc,id)=>{ acc[id]=(acc[id]||0)+1; return acc; },{});
+        let hasDup = false;
+        inputs.forEach(inp => {
+          const id = toId(inp.value);
+          let warn = inp.closest('div')?.querySelector('[data-dup-warning]');
+          if (!warn){ warn = document.createElement('div'); warn.className='mt-1 text-xs text-orange-600 hidden'; warn.setAttribute('data-dup-warning',''); const wrap=inp.closest('div')||inp.parentElement; if (wrap) wrap.appendChild(warn); }
+          if (id && counts[id] > 1){ hasDup = true; warn.textContent = 'Duplicate item selected'; warn.classList.remove('hidden'); }
+          else { warn.textContent=''; warn.classList.add('hidden'); }
+        });
+        if (submitBtn) submitBtn.disabled = !!hasDup;
+      }
+      function ensureHiddenIdsOnSubmit(){
+        const form = document.getElementById('indent-form');
+        if (!form || form._boundSubmit) return;
+        form._boundSubmit = true;
+        form.addEventListener('submit', function(ev){
+          let invalid = false;
+          const inputs = form.querySelectorAll('input[name^="items-"][name$="-item"]');
+          inputs.forEach((itemInput)=>{
+            const listId = itemInput.getAttribute('list');
+            const list = listId ? document.getElementById(listId) : null;
+            const typed = (itemInput.value || '').trim();
+            let id = '';
+            if (list) {
+              const opts = Array.from(list.querySelectorAll('option'));
+              const match = opts.find(o => ((o.value||'').trim().toLowerCase() === typed.toLowerCase()) || ((o.textContent||'').trim().toLowerCase() === typed.toLowerCase()));
+              if (match) id = match.dataset.id || match.getAttribute('data-id') || '';
+            }
+            if (!id) {
+              const m = typed.match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
+              if (m) id = m[1] || m[2] || '';
+            }
+            const err = itemInput.closest('div')?.querySelector('[data-item-error]');
+            if (!typed) { if (err){ err.classList.add('hidden'); } return; }
+            if (!id) {
+              invalid = true;
+              if (err){ err.textContent = 'Choose a valid item from the list.'; err.classList.remove('hidden'); }
+              return;
+            }
+            // Inject hidden field with the original name and set value to ID
+            let hidden = form.querySelector(`input[type="hidden"][data-item-hidden-for='${itemInput.name}']`);
+            if (!hidden) {
+              hidden = document.createElement('input');
+              hidden.type = 'hidden';
+              hidden.setAttribute('data-item-hidden-for', itemInput.name);
+              form.appendChild(hidden);
+            }
+            hidden.name = itemInput.name;
+            hidden.value = id;
+            // Rename the visible input so Django ignores it
+            if (!itemInput.dataset.originalName) itemInput.dataset.originalName = itemInput.name;
+            itemInput.name = itemInput.dataset.originalName + '_display';
+            setTimeout(()=>{ itemInput.name = itemInput.dataset.originalName; }, 0);
+          });
+          if (invalid) {
+            ev.preventDefault();
+          }
+        });
+      }
+      bindItemInputs();
+      ensureHiddenIdsOnSubmit();
+      const addBtn = document.getElementById('add-row');
+      if (addBtn) addBtn.addEventListener('click', function(){ setTimeout(()=>{ bindItemInputs(); checkDuplicates(); if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(document.getElementById('items-table')); }, 0); });
+      document.getElementById('indent-form')?.addEventListener('input', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')) { checkDuplicates(); } });
+      checkDuplicates();
+
+      // Auto-add a new row when last row has content
+      function resolveItemIdFromInput(inp){
+        const listId = inp.getAttribute('list');
+        const list = listId ? document.getElementById(listId) : null;
+        const typed = (inp.value || '').trim();
+        let id = '';
+        if (list){
+          const opts = Array.from(list.querySelectorAll('option'));
+          const match = opts.find(o => ((o.value||'').trim().toLowerCase()===typed.toLowerCase()) || ((o.textContent||'').trim().toLowerCase()===typed.toLowerCase()));
+          if (match) id = match.dataset.id || match.getAttribute('data-id') || '';
+        }
+        if (!id){
+          const m = typed.match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
+          if (m) id = m[1] || m[2] || '';
+        }
+        return id;
+      }
+      function checkAutoAdd(){
+        const table = document.getElementById('items-table');
+        if (!table) return;
+        const rows = table.querySelectorAll('tr.form-row');
+        if (!rows.length) return;
+        const last = rows[rows.length - 1];
+        if (last.dataset.autoExtended === '1') return;
+        const itemInput = last.querySelector('input[name$="-item"]');
+        const qtyInput = last.querySelector('input[name$="-requested_qty"]');
+        const hasItem = itemInput && resolveItemIdFromInput(itemInput);
+        const hasQty = qtyInput && parseFloat(qtyInput.value) > 0;
+        if (hasItem && hasQty){
+          const btn = document.getElementById('add-row');
+          if (btn){ btn.click(); last.dataset.autoExtended = '1'; setTimeout(()=>{ bindItemInputs(); }, 0); }
+        }
+      }
+      document.getElementById('items-table')?.addEventListener('input', function(e){
+        if (e.target && (e.target.matches('input[name$="-item"]') || e.target.matches('input[name$="-requested_qty"]'))){
+          checkAutoAdd();
+        }
+      });
+      setTimeout(checkAutoAdd, 0);
     });
   </script>
 {% endblock %}

@@ -54,6 +54,10 @@
           window.initMultiselectChips(content);
         if (window.initPredictiveDropdowns)
           window.initPredictiveDropdowns(content);
+        if (window.initPredictiveDatalistOverlay)
+          window.initPredictiveDatalistOverlay(content);
+        if (window.initIndentForm)
+          window.initIndentForm(content);
       });
     }
     setAria(root, content);
@@ -72,6 +76,10 @@
           window.initMultiselectChips(content);
         if (window.initPredictiveDropdowns)
           window.initPredictiveDropdowns(content);
+        if (window.initPredictiveDatalistOverlay)
+          window.initPredictiveDatalistOverlay(content);
+        if (window.initIndentForm)
+          window.initIndentForm(content);
       });
     }
     setAria(root, content);

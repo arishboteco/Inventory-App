@@ -451,15 +451,34 @@ class ItemSearchView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        # Accept multiple parameter shapes from different widgets/contexts
+        # 1) explicit ?q=
+        # 2) htmx input submits value under "value"
+        # 3) formset input name ending with "item" (e.g., items-0-item)
         query = (self.request.GET.get("q") or "").strip()
         if not query:
+            query = (self.request.GET.get("value") or "").strip()
+        if not query:
             for key, val in self.request.GET.items():
-                if key.endswith("item"):
-                    query = val
+                if str(key).endswith("item"):
+                    query = str(val).strip()
                     break
-        items = (
-            Item.objects.only("item_id", "name").filter(name__icontains=query)[:20]
+        qs = Item.objects.only("item_id", "name").filter(name__icontains=query)
+        # Optional department restriction
+        dep_raw = (
+            self.request.GET.get("department")
+            or self.request.GET.get("department_id")
+            or self.request.GET.get("department-ui")
         )
+        if dep_raw:
+            try:
+                if str(dep_raw).isdigit():
+                    qs = qs.filter(departments__department_id=int(dep_raw))
+                else:
+                    qs = qs.filter(departments__name__iexact=str(dep_raw))
+            except Exception:
+                pass
+        items = qs[:20]
         ctx["items"] = items
         return ctx
 

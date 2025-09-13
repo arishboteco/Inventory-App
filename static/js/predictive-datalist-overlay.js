@@ -7,23 +7,46 @@
     if (input._overlay) return input._overlay;
 
   const overlay = document.createElement('div');
-  overlay.className = 'predictive-overlay absolute left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto hidden z-[60]';
+  overlay.className = 'predictive-overlay fixed left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto hidden z-[70]';
     overlay.setAttribute('role', 'listbox');
 
     function position(){
       const rect = input.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-      overlay.style.position = 'absolute';
+      overlay.style.position = 'fixed';
       overlay.style.minWidth = rect.width + 'px';
       overlay.style.width = rect.width + 'px';
-      overlay.style.top = rect.bottom + scrollTop + 'px';
-      overlay.style.left = rect.left + scrollLeft + 'px';
+      overlay.style.top = rect.bottom + 'px';
+      overlay.style.left = rect.left + 'px';
     }
 
     let activeIndex = -1;
-    function render(filter){
+    async function render(filter){
       const q = (filter || '').toLowerCase();
+      // If this input has an hx-get for suggestions, proactively refresh the datalist
+      // Some environments don't reliably send the event to HTMX when typing inside
+      // overlays; refreshing here guarantees options are current.
+      try {
+        const suggestUrl = input.getAttribute('hx-get') || input.getAttribute('data-suggest-url');
+        if (suggestUrl) {
+          const lastQ = datalist.getAttribute('data-last-q') || '';
+          if (q !== lastQ) {
+            datalist.setAttribute('data-last-q', q);
+            const url = new URL(suggestUrl, window.location.origin);
+            if (q) url.searchParams.set('q', q);
+            // Also include the field's name form for servers expecting *-item
+            if (input.name && q) url.searchParams.set(input.name, q);
+            const depHidden = document.getElementById('id_department');
+            const depUI = document.getElementById('department-ui');
+            const depVal = (depHidden && depHidden.value) || (depUI && depUI.value) || '';
+            if (depVal) url.searchParams.set('department', depVal);
+            const html = await fetch(url.toString(), { headers: { 'X-Requested-With': 'fetch' } }).then(r=> r.ok ? r.text() : '');
+            if (html) {
+              datalist.innerHTML = html;
+            }
+          }
+        }
+      } catch (e) { /* non-fatal */ }
+
       const options = Array.from(datalist.querySelectorAll('option'));
       const items = options.filter(o => !q || (o.value || o.textContent || '').toLowerCase().includes(q));
       overlay.innerHTML = '';
@@ -56,7 +79,13 @@
       position();
       render(input.value);
       overlay.classList.remove('hidden');
-      document.body.appendChild(overlay);
+      // Append to modal content when inside a modal/drawer to ensure proper stacking
+      const modalContent = document.getElementById('modal-content');
+      if (modalContent && modalContent.contains(input)) {
+        modalContent.appendChild(overlay);
+      } else {
+        document.body.appendChild(overlay);
+      }
       window.addEventListener('scroll', position, true);
       window.addEventListener('resize', position);
       document.addEventListener('mousedown', onDocDown);
@@ -68,7 +97,7 @@
     function preventOnce(e){ e.preventDefault && e.preventDefault(); }
     function hide(){
       overlay.classList.add('hidden');
-      if (overlay.parentNode === document.body) document.body.removeChild(overlay);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
       window.removeEventListener('scroll', position, true);
       window.removeEventListener('resize', position);
       document.removeEventListener('mousedown', onDocDown);
@@ -124,6 +153,8 @@
   document.addEventListener('DOMContentLoaded', ()=>{
     init();
   });
+  // Expose initializer so other components (modal/drawer) can init overlays for injected HTML
+  window.initPredictiveDatalistOverlay = init;
   document.body.addEventListener('htmx:afterSwap', (e)=>{
     init(e.target);
     // If a datalist was updated, refresh any open overlay using it

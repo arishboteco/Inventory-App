@@ -1,7 +1,6 @@
-// .devcontainer/postCreateCommand.sh
-// This script runs after the Codespace is created.
-
 #!/usr/bin/env bash
+# .devcontainer/postCreateCommand.sh
+# This script runs after the Codespace is created.
 set -euo pipefail
 
 # Install Python and Node dependencies

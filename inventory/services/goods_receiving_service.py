@@ -16,6 +16,7 @@ from inventory.models import (
 
 from . import stock_service
 from .exceptions import StockServiceError
+from . import indent_consolidation_service
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,18 @@ def _process_items(
         )
 
     GRNItem.objects.bulk_create(grn_items)
+    # Apply received quantities to pending indents for fulfillment roll-up
+    try:
+        receipts = [
+            {
+                "item_id": gi.po_item.item_id,
+                "quantity_received": gi.quantity_received,
+            }
+            for gi in grn_items
+        ]
+        indent_consolidation_service.apply_receipts_to_indents(receipts)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.warning("Failed to allocate receipts to indents: %s", exc)
     if po:
         _update_po_status(po)
 

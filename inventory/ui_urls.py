@@ -9,6 +9,7 @@ from .views.indents import (
     indent_detail,
     indent_pdf,
     indent_update_status,
+    indents_consolidate,
 )
 from .views.items.detail import (
     ItemDeleteView,
@@ -128,6 +129,7 @@ urlpatterns = [
         name="indent_update_status",
     ),
     path("indents/<int:pk>/pdf/", indent_pdf, name="indent_pdf"),
+    path("indents/consolidate/", indents_consolidate, name="indents_consolidate"),
     path("purchase-orders/", purchase_orders_list, name="purchase_orders_list"),
     path(
         "purchase-orders/create/", purchase_order_create, name="purchase_order_create"

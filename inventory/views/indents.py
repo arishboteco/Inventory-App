@@ -3,7 +3,8 @@ import logging
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import DatabaseError, transaction, connection, IntegrityError
-from django.db.models import BooleanField, Case, Q, Value, When
+from django.db.models import BooleanField, Case, Q, Value, When, Sum, DecimalField
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -16,6 +17,7 @@ from django.views.generic import TemplateView
 
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..services import list_utils
+from ..services import indent_consolidation_service
 from ..indent_pdf import generate_indent_pdf
 from ..models import Department, Indent
 
@@ -147,8 +149,16 @@ class IndentsTableView(TemplateView):
                 ),
                 default=Value(False),
                 output_field=BooleanField(),
-            )
+            ),
         )
+        try:
+            zero = Value(0, output_field=DecimalField(max_digits=12, decimal_places=2))
+            qs = qs.annotate(
+                req_total=Coalesce(Sum("indentitem__requested_qty"), zero),
+                iss_total=Coalesce(Sum("indentitem__issued_qty"), zero),
+            )
+        except Exception:
+            logger.exception("Failed to annotate indent totals; continuing without totals")
 
         # Apply search, filters, and sorting using shared utils
         qs, params = list_utils.apply_filters_sort(
@@ -582,3 +592,34 @@ def indent_pdf(request, pk: int):
     filename = f"Indent_{safe_mrn}.pdf"
     response["Content-Disposition"] = f"attachment; filename={filename}"
     return response
+
+
+@require_POST
+@csrf_protect
+def indents_consolidate(request):
+    """Consolidate selected approved indents into POs by supplier.
+
+    Expects POST with one or more `indent_id` values or `ids` CSV.
+    Returns partial updated table if HTMX, else redirects to orders list.
+    """
+    ids: list[int] = []
+    if request.POST.getlist("indent_id"):
+        try:
+            ids = [int(x) for x in request.POST.getlist("indent_id") if str(x).isdigit()]
+        except Exception:
+            ids = []
+    elif request.POST.get("ids"):
+        try:
+            ids = [int(x.strip()) for x in request.POST.get("ids", "").split(",") if x.strip().isdigit()]
+        except Exception:
+            ids = []
+    result = indent_consolidation_service.consolidate_approved_indents(ids)
+    # For HTMX, return refreshed table
+    if request.headers.get("HX-Request"):
+        view = IndentsTableView()
+        view.request = request
+        ctx = view.get_context_data()
+        ctx["consolidation"] = result
+        return render(request, view.template_name, ctx)
+    # Non-HTMX: go to orders list to review created POs
+    return redirect("purchase_orders_list")

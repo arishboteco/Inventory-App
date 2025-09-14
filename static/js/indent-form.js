@@ -4,11 +4,24 @@
     const list = listId ? document.getElementById(listId) : null;
     const typed = (inp.value || '').trim();
     let id = '';
+
+    // First try to match against datalist options
     if (list){
       const opts = Array.from(list.querySelectorAll('option'));
       const match = opts.find(o => ((o.value||'').trim().toLowerCase()===typed.toLowerCase()) || ((o.textContent||'').trim().toLowerCase()===typed.toLowerCase()));
       if (match) id = match.dataset.id || match.getAttribute('data-id') || '';
     }
+
+    // If no datalist match, try to extract ID from the input value
+    // The predictive overlay sets value to "ID - Name" format
+    if (!id && typed.includes(' - ')) {
+      const idMatch = typed.match(/^(\d+)\s*-\s*.+/);
+      if (idMatch) {
+        id = idMatch[1];
+      }
+    }
+
+    // Fallback to regex patterns
     if (!id){
       const m = typed.match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
       if (m) id = m[1] || m[2] || '';
@@ -38,13 +51,6 @@
           const parts=[]; if (data.unit) parts.push(data.unit); if (data.category) parts.push(data.category); if (data.subcategory) parts.push(data.subcategory);
           if (info) info.textContent = parts.filter(Boolean).join(' • ');
           setInvalid('');
-          // When a valid item is confirmed, re-run auto-add check so the next row appears promptly
-          try {
-            const table = itemInput.closest('#items-table');
-            if (table && typeof table._maybeAdd === 'function') {
-              table._maybeAdd();
-            }
-          } catch(_) {}
         }).catch(()=>{});
       }
       let t=null; const deb=()=>{ clearTimeout(t); t=setTimeout(refresh,250); };
@@ -95,57 +101,47 @@
     });
   }
 
-  function setupAutoAdd(root){
+  // Multi-add selector/button wiring
+  function setupMultiAdd(root){
     const scope = root || document;
-    const table = (scope && scope.querySelector) ? scope.querySelector('#items-table') : document.getElementById('items-table');
-    const addBtn = (scope && scope.querySelector) ? scope.querySelector('#add-row') : document.getElementById('add-row');
-    if (!table || !addBtn) return;
-    // Prevent duplicate bindings if initIndentForm runs multiple times
-    if (table._autoAddBound) return; table._autoAddBound = true;
-    function maybeAdd(){
-      const rows = table.querySelectorAll('tr.form-row');
-      if (!rows.length) return;
-      const last = rows[rows.length-1];
-      if (last.dataset.autoExtended === '1') return;
-      const itemInput = last.querySelector("input[name$='-item']");
-      const qtyInput = last.querySelector("input[name$='-requested_qty']");
-      const hasItem = itemInput && resolveItemIdFromInput(itemInput);
-      const hasQty = qtyInput && parseFloat(qtyInput.value) > 0;
-      if (hasItem && hasQty){
-        addBtn.click();
-        last.dataset.autoExtended = '1';
-        setTimeout(()=>{
-          bindItemInputs(table);
-          if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(table);
-          checkDuplicates(scope);
-          // Focus next row's item field for faster entry
-          const rows2 = table.querySelectorAll('tr.form-row');
-          const newLast = rows2[rows2.length-1];
-          const nextItem = newLast && newLast.querySelector("input[name$='-item']");
-          if (nextItem) nextItem.focus();
-        }, 0);
-      }
+    const addOneBtn = (scope && scope.querySelector) ? scope.querySelector('#add-row') : document.getElementById('add-row');
+    const addRowsBtn = (scope && scope.querySelector) ? scope.querySelector('#add-rows-btn') : document.getElementById('add-rows-btn');
+    const addRowsCount = (scope && scope.querySelector) ? scope.querySelector('#add-rows-count') : document.getElementById('add-rows-count');
+    if (!addRowsBtn || !addOneBtn) return;
+    if (addRowsBtn._bound) return; // guard against double-binding when re-initialized
+    addRowsBtn._bound = true;
+    function clickAdd(times){
+      for (let i=0;i<times;i++){ addOneBtn.click(); }
+      setTimeout(()=>{
+        const table = (scope && scope.querySelector) ? scope.querySelector('#items-table') : document.getElementById('items-table');
+        const rows = table ? table.querySelectorAll('tr.form-row') : [];
+        const last = rows[rows.length-1];
+        const inp = last ? last.querySelector("input[name$='-item']") : null;
+        if (inp) inp.focus();
+      }, 0);
     }
-    // Expose a scoped trigger for other scripts (e.g., after async item meta fetch)
-    table._maybeAdd = maybeAdd;
-  function handler(){ maybeAdd(); checkDuplicates(scope); }
-    table.addEventListener('input', function(e){
-      if (e.target && (e.target.matches("input[name$='-item']") || e.target.matches("input[name$='-requested_qty']"))) {
-        handler();
-      }
+    addRowsBtn.addEventListener('click', function(){
+      const n = parseInt((addRowsCount && addRowsCount.value) || '5', 10);
+      if (Number.isFinite(n) && n>0) clickAdd(n);
     });
-    table.addEventListener('change', function(e){
-      if (e.target && (e.target.matches("input[name$='-item']") || e.target.matches("input[name$='-requested_qty']"))) {
-        handler();
-      }
+  }
+
+  // Ensure formset is initialized (adds Add item cloning behavior)
+  function setupFormset(root){
+    const scope = root || document;
+    const form = (scope && scope.querySelector) ? scope.querySelector('#indent-form') : document.getElementById('indent-form');
+    if (!form || form._formsetInitialized) return;
+    const hasBits = (scope && scope.querySelector) ? !!scope.querySelector('#add-row') && !!scope.querySelector('#items-table tbody') : !!document.getElementById('add-row');
+    if (!hasBits) return;
+    if (typeof window.initFormset !== 'function') return;
+    window.initFormset({
+      formsetPrefix: 'items',
+      addButtonId: 'add-row',
+      formContainer: '#items-table tbody',
+      formClass: 'form-row',
+      removeButtonClass: 'remove-row'
     });
-    // Re-check after formset script adds a row
-    document.addEventListener('click', function(e){
-      if (e.target && e.target.id === 'add-row') {
-        setTimeout(maybeAdd, 0);
-      }
-    });
-    setTimeout(maybeAdd, 0);
+    form._formsetInitialized = true;
   }
 
   function setupDepartmentSync(root){
@@ -173,10 +169,24 @@
 
   window.initIndentForm = function(root){
     const scope = root || document;
+    const form = (scope && scope.querySelector) ? scope.querySelector('#indent-form') : document.getElementById('indent-form');
+    if (!form || form._indentFormInitialized) return;
+    form._indentFormInitialized = true;
+    
     bindItemInputs(scope);
     ensureHiddenIdsOnSubmit(scope);
-    setupAutoAdd(scope);
     setupDepartmentSync(scope);
     checkDuplicates(scope);
+    setupFormset(scope);
+    setupMultiAdd(scope);
   };
+
+  // Auto-initialize for standalone indent forms
+  document.addEventListener('DOMContentLoaded', function(){
+    const indentForm = document.getElementById('indent-form');
+    if (indentForm && (!document.getElementById('modal-root') || !document.getElementById('modal-root').contains(indentForm))) {
+      // This is a standalone indent form, initialize it
+      window.initIndentForm(document);
+    }
+  });
 })();

@@ -69,7 +69,7 @@
     const content = document.getElementById("modal-content");
     if (!root || !content) return;
     lastFocused = document.activeElement;
-    content.innerHTML = `<div class="drawer ${side}">${html}</div>`;
+    content.innerHTML = `<div class="drawer ${side} wide">${html}</div>`;
     if (!skipInit) {
       requestAnimationFrame(() => {
         if (window.initMultiselectChips)

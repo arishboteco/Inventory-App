@@ -5,7 +5,7 @@ Responsive table component with sticky headers and row hover states.
   {% block actions %}{% endblock %}
   <table class="min-w-full w-full table-auto text-label"{% if table_id %} id="{{ table_id }}"{% endif %}>
     {% block caption %}{% endblock %}
-    <thead class="sticky top-0 bg-primary text-white">
+    <thead class="sticky top-0 bg-primary text-white z-10">
       <tr>
         {% block headers %}{% endblock %}
       </tr>

@@ -1,35 +1,34 @@
 <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl">
   <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-    <h3 class="text-lg font-semibold">New Indent</h3>
+    <div class="flex items-baseline gap-3">
+      <h3 class="text-lg font-semibold">New Indent</h3>
+      <span class="text-sm text-gray-500">Requested by: {{ requested_by_display|default:form.requested_by.value|default:'-' }}</span>
+    </div>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <div class="p-4">
     <form method="post" data-modal-form action="{% url 'indent_create' %}" id="indent-form">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1" />
-      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
-        <div>
-          <label for="requested_by_display" class="block mb-1 text-label font-medium leading-normal">Requested by</label>
-          <input id="requested_by_display" type="text" readonly aria-readonly="true"
-                 class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                 value="{{ requested_by_display|default:form.requested_by.value|default:'' }}" />
-          {{ form.requested_by }} {# hidden field #}
-        </div>
-        <div>
-          <label for="department-ui" class="block mb-1 text-label font-medium leading-normal">Department</label>
+      {{ form.requested_by }} {# keep hidden; shown in header #}
+      <div class="grid grid-cols-1 md:grid-cols-12 md:gap-3 gap-2 items-end">
+        <div class="md:col-span-4">
+          <label for="department-ui" class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Department</label>
           {{ form.department }} {# hidden field #}
-          <select id="department-ui" name="department-ui" class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" data-placeholder="Select Department">
+          <select id="department-ui" name="department-ui" class="block w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" data-placeholder="Select Department">
             <option value="">Select Department</option>
             {% for did, dname in department_options %}
               <option value="{{ did }}">{{ dname }}</option>
             {% endfor %}
           </select>
         </div>
-        <div>
-          {% include "components/form_field.html" with field=form.date_required %}
+        <div class="md:col-span-3">
+          <label class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Date required</label>
+          {{ form.date_required|add_class:"px-2 py-1.5 text-sm h-9" }}
         </div>
-        <div>
-          {% include "components/form_field.html" with field=form.notes %}
+        <div class="md:col-span-5">
+          <label class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Notes</label>
+          {{ form.notes|add_class:"px-2 py-1.5 text-sm h-9 resize-y md:resize-none" }}
         </div>
       </div>
       {% if department_options %}
@@ -49,9 +48,19 @@
       {% endif %}
       {% include "inventory/_indent_items_form_table.html" with formset=formset table_id="items-table" %}
       <datalist id="item-options"></datalist>
-      <div class="mt-3 flex justify-end gap-2">
+      <div class="mt-3 flex flex-wrap justify-end gap-2 items-center">
         <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        <button type="button" id="add-row" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Add Item</button>
+        <button type="button" id="add-row" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Add item</button>
+        <div class="flex items-center gap-2">
+          <label for="add-rows-count" class="text-sm text-gray-600">Rows</label>
+          <select id="add-rows-count" class="px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="2">2</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+          <button type="button" id="add-rows-btn" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Add rows</button>
+        </div>
         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Submit</button>
       </div>
     </form>
@@ -93,7 +102,7 @@
       } catch(e) {}
     })();
 
-    // Bind item inputs for meta display and ID submission (mirrors indent_form.html)
+  // Bind item inputs for meta display and ID submission (mirrors indent_form.html)
     (function(){
       function bindItemInputs(scope){
         const root = scope || document;
@@ -143,46 +152,28 @@
       document.getElementById('indent-form')?.addEventListener('input', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')) { checkDuplicates(); } });
       checkDuplicates();
 
-      // Auto-add row when last row has content
-      function resolveItemIdFromInput(inp){
-        const listId = inp.getAttribute('list');
-        const list = listId ? document.getElementById(listId) : null;
-        const typed = (inp.value || '').trim();
-        let id = '';
-        if (list){
-          const opts = Array.from(list.querySelectorAll('option'));
-          const match = opts.find(o => ((o.value||'').trim().toLowerCase()===typed.toLowerCase()) || ((o.textContent||'').trim().toLowerCase()===typed.toLowerCase()));
-          if (match) id = match.dataset.id || match.getAttribute('data-id') || '';
-        }
-        if (!id){
-          const m = typed.match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
-          if (m) id = m[1] || m[2] || '';
-        }
-        return id;
+      // Multi-add selector: add N rows quickly
+      const addRowsBtn = document.getElementById('add-rows-btn');
+      const addRowsCount = document.getElementById('add-rows-count');
+      function clickAdd(times){
+        const btn = document.getElementById('add-row');
+        if (!btn) return;
+        for (let i=0;i<times;i++){ btn.click(); }
+        setTimeout(()=>{
+          const table = document.getElementById('items-table');
+          const rows = table ? table.querySelectorAll('tr.form-row') : [];
+          const last = rows[rows.length-1];
+          const inp = last ? last.querySelector("input[name$='-item']") : null;
+          if (inp) inp.focus();
+        }, 0);
       }
-      function checkAutoAdd(){
-        const table = document.getElementById('items-table');
-        if (!table) return;
-        const rows = table.querySelectorAll('tr.form-row');
-        if (!rows.length) return;
-        const last = rows[rows.length - 1];
-        if (last.dataset.autoExtended === '1') return;
-        const itemInput = last.querySelector('input[name$="-item"]');
-        const qtyInput = last.querySelector('input[name$="-requested_qty"]');
-        const hasItem = itemInput && resolveItemIdFromInput(itemInput);
-        const hasQty = qtyInput && parseFloat(qtyInput.value) > 0;
-        if (hasItem && hasQty){
-          const btn = document.getElementById('add-row');
-          if (btn){ btn.click(); last.dataset.autoExtended = '1'; setTimeout(()=>{ bindItemInputs(); }, 0); }
-        }
+      if (addRowsBtn && !addRowsBtn._bound){
+        addRowsBtn._bound = true;
+        addRowsBtn.addEventListener('click', function(){
+          const n = parseInt(addRowsCount?.value || '5', 10);
+          if (Number.isFinite(n) && n>0) clickAdd(n);
+        });
       }
-      document.getElementById('items-table')?.addEventListener('input', function(e){
-        if (e.target && (e.target.matches('input[name$="-item"]') || e.target.matches('input[name$="-requested_qty"]'))){
-          checkAutoAdd();
-        }
-      });
-      // Initial check in case template pre-fills one row
-      setTimeout(checkAutoAdd, 0);
     })();
   })();
 </script>

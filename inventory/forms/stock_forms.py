@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from django import forms
 
-from ..models import StockTransaction, Item
+from ..models import Item, StockTransaction
 from .base import INPUT_CLASS, StyledFormMixin
 
 

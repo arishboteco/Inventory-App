@@ -116,7 +116,7 @@ class IndentSerializer(serializers.ModelSerializer):
             "notes",
             "status",
             "date_submitted",
-            "processed_by_user_id",
+            "processed_by",
             "date_processed",
             "created_at",
             "updated_at",

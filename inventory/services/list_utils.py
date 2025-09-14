@@ -9,7 +9,7 @@ produce filtered and sorted querysets, paginated results and CSV exports.
 from __future__ import annotations
 
 import csv
-from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, Tuple, List
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Sequence, Tuple
 
 from django.core.paginator import Paginator
 from django.db.models import Q, QuerySet

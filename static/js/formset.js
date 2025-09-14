@@ -42,9 +42,18 @@ function initFormset({
       if (el.type !== "hidden") {
         el.value = "";
       }
+      // Reset any per-element custom flags from previously cloned nodes
+      if (el._indentBound) delete el._indentBound;
     });
+    // Ensure row-level state is fresh for auto-add
+    if (newForm && newForm.dataset) delete newForm.dataset.autoExtended;
     container.appendChild(newForm);
     totalForms.value = formCount + 1;
+    try {
+      // Re-bind enhanced behaviors for indent modal when new rows are added
+      if (window.initIndentForm) window.initIndentForm(container.closest('form') || document);
+      if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(container);
+    } catch (_) {}
   });
   if (removeButtonClass) {
     container.addEventListener("click", function (e) {

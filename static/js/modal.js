@@ -452,33 +452,122 @@
     if (!(form instanceof HTMLFormElement)) return;
     if (!form.hasAttribute("data-modal-form")) return;
     e.preventDefault();
-    const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
-    const fd = new FormData(form);
-    fd.set("partial", "1");
-    const url = form.getAttribute("action") || window.location.href;
-    fetch(url, {
-      method: "POST",
-      headers: csrf ? { "X-CSRFToken": csrf } : {},
-      body: fd,
-    })
-      .then((r) => r.json().catch(() => ({})))
-      .then((data) => {
-        if (data && data.ok) {
-          if (window.notifications)
-            window.notifications.showToast(data.message || "Saved", "success");
-          closeModal();
-          window.location.reload();
-        } else {
-          if (window.notifications)
-            window.notifications.showToast(
-              (data && data.message) || "Save failed",
-              "error",
-            );
+    try {
+      // Pre-submit guard: sync department hidden field from UI select if present
+      try {
+        const hiddenDept = form.querySelector('#id_department');
+        const uiDept = form.querySelector('#department-ui');
+        if (hiddenDept && uiDept) {
+          hiddenDept.value = uiDept.value;
         }
+      } catch (err) { /* non-fatal */ }
+      const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+      // Client-side preflight validation for better UX
+      const showInlineError = (msg)=>{
+        try {
+          let alert = form.querySelector('[data-modal-error]');
+          if (!alert) {
+            alert = document.createElement('div');
+            alert.setAttribute('data-modal-error', '');
+            alert.className = 'mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm';
+            form.insertBefore(alert, form.firstElementChild);
+          }
+          alert.textContent = msg;
+          alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch(_) {}
+      };
+      const cssEscape = (s)=>{
+        try { return (window.CSS && window.CSS.escape) ? window.CSS.escape(String(s)) : String(s); } catch(_) { return String(s); }
+      };
+      const hiddenDept = form.querySelector('#id_department');
+      const uiDept = form.querySelector('#department-ui');
+      if (hiddenDept && uiDept) hiddenDept.value = uiDept.value;
+      if (hiddenDept && !hiddenDept.value) {
+        showInlineError('Please select a department');
+        if (window.notifications) window.notifications.showToast('Please select a department', 'error');
+        return;
+      }
+      // Ensure at least one valid line (item id + positive qty)
+      let hasValidLine = false;
+      const hiddenItems = Array.from(form.querySelectorAll('input[type="hidden"][data-item-hidden-for]'));
+      for (const h of hiddenItems){
+        const name = h.getAttribute('data-item-hidden-for') || h.name || '';
+        if (!name) continue;
+        const qtyName = name.replace(/-item$/, '-requested_qty');
+        const qty = form.querySelector(`input[name="${cssEscape(qtyName)}"]`);
+        const qtyVal = qty ? parseFloat(qty.value) : NaN;
+        if ((h.value || '').trim() && !Number.isNaN(qtyVal) && qtyVal > 0) { hasValidLine = true; break; }
+      }
+      if (!hasValidLine) {
+        showInlineError('Add at least one item with a positive quantity');
+        if (window.notifications) window.notifications.showToast('Add at least one item with a positive quantity', 'error');
+        return;
+      }
+
+      const fd = new FormData(form);
+      fd.set("partial", "1");
+      const url = form.getAttribute("action") || window.location.href;
+      const headers = Object.assign(
+        { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        csrf ? { "X-CSRFToken": csrf } : {}
+      );
+      fetch(url, {
+        method: "POST",
+        headers,
+        body: fd,
+        credentials: 'same-origin',
       })
-      .catch(() => {
-        if (window.notifications)
-          window.notifications.showToast("Network error", "error");
-      });
+        .then(async (r) => {
+          const ct = r.headers.get('content-type') || '';
+          let data = null;
+          if (ct.includes('application/json')) {
+            try { data = await r.json(); } catch (_) { data = null; }
+          }
+          if (!data) {
+            try {
+              const txt = await r.text();
+              // Try to extract a meaningful message from HTML/text
+              const msg = (txt && txt.slice) ? txt.slice(0, 400) : 'Unexpected response';
+              data = { ok: false, message: r.statusText || msg };
+            } catch (_) {
+              data = { ok: false, message: r.statusText || 'Request failed' };
+            }
+          }
+          if (r.ok && data && data.ok) {
+            if (window.notifications)
+              window.notifications.showToast(data.message || "Saved", "success");
+            closeModal();
+            // Navigate to the newly created indent so user sees it immediately, avoiding filtered list cases
+            if (data && data.id) {
+              try { window.location.href = `/indents/${data.id}/`; return; } catch(_) {}
+            }
+            window.location.reload();
+          } else {
+            // Show inline error inside the modal form for better visibility
+            const msg = (data && data.message) || `${r.status} ${r.statusText || 'Save failed'}`;
+            showInlineError(msg);
+            if (window.console) console.debug('[modal] submit failed', { status: r.status, statusText: r.statusText, data });
+            if (window.notifications)
+              window.notifications.showToast(msg, "error");
+          }
+        })
+        .catch(() => {
+          const msg = 'Network error';
+          showInlineError(msg);
+          if (window.notifications) window.notifications.showToast(msg, "error");
+        });
+    } catch (fatal) {
+      // Surface any unexpected runtime error to the UI so it doesn't fail silently
+      const msg = (fatal && fatal.message) ? `Unexpected error: ${fatal.message}` : 'Unexpected error';
+      try {
+        let alert = form.querySelector('[data-modal-error]') || document.createElement('div');
+        alert.setAttribute('data-modal-error', '');
+        alert.className = 'mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm';
+        alert.textContent = msg;
+        if (!alert.parentElement) form.insertBefore(alert, form.firstElementChild);
+      } catch(_) {}
+      if (window.console) console.error('[modal] fatal submit error', fatal);
+      if (window.notifications) window.notifications.showToast(msg, 'error');
+    }
   });
 })();

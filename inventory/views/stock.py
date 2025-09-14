@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views.generic import TemplateView
 
 from inventory.models import Item
+
 from ..forms.stock_forms import (
     StockAdjustmentForm,
     StockBulkUploadForm,
@@ -18,13 +19,13 @@ from ..forms.stock_forms import (
     StockWastageForm,
 )
 from ..models import StockTransaction
+from ..models.orders import PurchaseOrder
 from ..services import stock_service
 from ..services.exceptions import StockServiceError
-from ..models.orders import PurchaseOrder
 
 
 def stock_movements(request):
-    
+
 
     sections = {
         "receive": "Goods Received",

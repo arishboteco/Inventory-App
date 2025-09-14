@@ -2,9 +2,9 @@ import logging
 
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db import DatabaseError, transaction, connection
+from django.db import DatabaseError, transaction, connection, IntegrityError
 from django.db.models import BooleanField, Case, Q, Value, When
-from django.http import HttpResponse, Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -16,7 +16,7 @@ from django.views.generic import TemplateView
 
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..indent_pdf import generate_indent_pdf
-from ..models import Indent, Department
+from ..models import Department, Indent
 
 logger = logging.getLogger(__name__)
 
@@ -185,22 +185,57 @@ class IndentCreateView(View):
         formset = IndentItemFormSet(request.POST, prefix="items", form_kwargs={"item_suggest_url": suggest_url})
         is_partial = (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}
         if form.is_valid() and formset.is_valid():
+            stage = "pre"
             try:
+                # Perform all DB writes inside a single atomic block; if anything fails,
+                # the exception will unwind to this except and the block will be rolled back.
                 with transaction.atomic():
                     indent = form.save(commit=False)
-                    # Normalize department: if UI posted an ID, convert to name for ORM save
+                    # Normalize department: map UI value to FK
                     dep_raw = (
                         request.POST.get("department")
                         or request.POST.get("id_department")
                         or request.POST.get("department-ui")
                         or ""
                     )
+                    # If no department is provided at all, fail early with a friendly message
+                    if not str(dep_raw).strip():
+                        if is_partial:
+                            from django.http import JsonResponse
+                            return JsonResponse({"ok": False, "message": "Please select a department"}, status=400)
+                        messages.error(request, "Please select a department")
+                        return render(request, self.template_name, {"form": form, "formset": formset})
                     if str(dep_raw).isdigit():
+                        # Validate that department exists to avoid FK DB errors later
                         try:
-                            dep_obj = Department.objects.only("name").get(pk=int(dep_raw))
-                            indent.department = dep_obj.name
+                            dep_id = int(dep_raw)
                         except Exception:
-                            pass
+                            dep_id = None
+                        if dep_id is not None and Department.objects.filter(pk=dep_id).exists():
+                            indent.department_id = dep_id
+                        else:
+                            if is_partial:
+                                from django.http import JsonResponse
+
+                                return JsonResponse({
+                                    "ok": False,
+                                    "message": "Please select a valid department",
+                                }, status=400)
+                            messages.error(request, "Please select a valid department")
+                            return render(request, self.template_name, {"form": form, "formset": formset})
+                    elif dep_raw:
+                        try:
+                            indent.department = Department.objects.get(name=dep_raw)
+                        except Department.DoesNotExist:
+                            indent.department = None
+                    # After normalization, ensure we have a department set prior to saving
+                    if not getattr(indent, "department_id", None) and not getattr(indent, "department", None):
+                        if is_partial:
+                            from django.http import JsonResponse
+
+                            return JsonResponse({"ok": False, "message": "Please select a valid department"}, status=400)
+                        messages.error(request, "Please select a valid department")
+                        return render(request, self.template_name, {"form": form, "formset": formset})
                     # Fill requested_by if not provided
                     if not indent.requested_by:
                         try:
@@ -212,63 +247,24 @@ class IndentCreateView(View):
                         except Exception:
                             rb = None
                         indent.requested_by = rb or indent.requested_by or ""
-                    # Use a savepoint so we can gracefully recover from schema errors
-                    sp_id = transaction.savepoint()
+
+                    # Save with retry on MRN unique conflicts
+                    stage = "indent_save"
                     try:
                         indent.save()
-                        indent_pk = indent.pk
-                        transaction.savepoint_commit(sp_id)
-                    except DatabaseError as save_err:
-                        # Roll back to the savepoint to clear the transaction state
-                        transaction.savepoint_rollback(sp_id)
-                        # Fallback: older schema uses department_id (FK) instead of text column
-                        # If the error complains about missing "department" column, insert manually
-                        msg = str(save_err).lower()
-                        if "column \"department\"" in msg and "relation \"indents\"" in msg and "does not exist" in msg:
-                            # Resolve department id from provided value or name; fallback to 'General'
-                            dep_raw = (
-                                request.POST.get("department")
-                                or request.POST.get("id_department")
-                                or request.POST.get("department-ui")
-                                or getattr(indent, "department", None)
-                                or "General"
-                            )
-                            dept_id = None
-                            try:
-                                if str(dep_raw).isdigit():
-                                    dept = Department.objects.get(pk=int(dep_raw))
-                                    dept_id = dept.pk
-                                else:
-                                    dept, _ = Department.objects.get_or_create(name=str(dep_raw) or "General")
-                                    dept_id = dept.pk
-                            except Exception:
-                                dept_id = None
-                            # Build manual insert
-                            with connection.cursor() as cur:
-                                cur.execute(
-                                    """
-                                    INSERT INTO indents (mrn, requested_by, date_required, status, notes, department_id, created_at, updated_at)
-                                    VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
-                                    RETURNING indent_id
-                                    """,
-                                    [
-                                        indent.mrn,
-                                        indent.requested_by or "",
-                                        getattr(indent, "date_required", None),
-                                        indent.status or "Submitted",
-                                        getattr(indent, "notes", "") or "",
-                                        dept_id,
-                                    ],
-                                )
-                                indent_pk = cur.fetchone()[0]
-                            # Create a lightweight instance for the formset
-                            indent = Indent(indent_id=indent_pk)
-                        else:
-                            # Unexpected DB error: re-raise so outer handler can report properly
-                            raise
-
+                    except IntegrityError:
+                        # Likely MRN collision with existing data; regenerate a unique MRN and retry once
+                        try:
+                            # Time-based unique MRN fallback
+                            ts = timezone.now().strftime("%Y%m%d%H%M%S%f")
+                            indent.mrn = f"MRN-{ts}"
+                        except Exception:
+                            indent.mrn = f"MRN-{int(timezone.now().timestamp())}"
+                        indent.save()
+                    stage = "formset_save"
                     formset.instance = indent
                     formset.save()
+
                 if is_partial:
                     from django.http import JsonResponse
 
@@ -276,14 +272,161 @@ class IndentCreateView(View):
                         {"ok": True, "message": f"Indent {getattr(indent, 'mrn', '')} created", "id": indent.pk}
                     )
                 return redirect("indent_detail", pk=indent.pk)
-            except DatabaseError as e:
-                if is_partial:
-                    from django.http import JsonResponse
-
-                    return JsonResponse(
-                        {"ok": False, "message": f"Unable to save indent: {e}"}, status=400
+            except DatabaseError as db_ex:
+                # Attempt a compatibility fallback for environments where the indents table
+                # has older columns (e.g., 'department' text instead of 'department_id').
+                try:
+                    # If this looks like a missing/invalid department, short-circuit with a friendly message
+                    msg_text = str(db_ex) if db_ex else ""
+                    if is_partial and (
+                        "department" in msg_text.lower()
+                        and ("null" in msg_text.lower() or "foreign key" in msg_text.lower() or "invalid" in msg_text.lower())
+                    ):
+                        from django.http import JsonResponse
+                        return JsonResponse({"ok": False, "message": "Please select a valid department"}, status=400)
+                    # If failure happened during line items save, do NOT fallback insert; ensure atomicity
+                    if 'stage' in locals() and stage == "formset_save":
+                        raise
+                    # Gather raw values we can use for a manual insert
+                    dep_raw = (
+                        request.POST.get("department")
+                        or request.POST.get("id_department")
+                        or request.POST.get("department-ui")
+                        or ""
                     )
-                messages.error(request, "Unable to save indent")
+                    # Build a snapshot of the object without hitting the DB again
+                    obj = form.save(commit=False)
+                    if not getattr(obj, "mrn", None):
+                        # Reuse the save() generator logic indirectly by calling form.save(commit=False) earlier
+                        pass
+                    # Resolve department display name if only a text column exists
+                    dept_name = None
+                    if str(dep_raw).isdigit():
+                        try:
+                            d = Department.objects.only("name").get(pk=int(dep_raw))
+                            dept_name = d.name
+                        except Exception:
+                            dept_name = None
+                    elif dep_raw:
+                        dept_name = str(dep_raw)
+
+                    # If we still don't have any department info, abort with a friendly message
+                    if not dept_name and not (str(dep_raw).isdigit() and Department.objects.filter(pk=int(dep_raw)).exists()):
+                        raise ValueError("Invalid department")
+
+                    # One atomic block to ensure all-or-nothing
+                    with transaction.atomic():
+                        with connection.cursor() as cur:
+                            # Discover actual columns present
+                            table = "indents"
+                            cols = {c.name for c in connection.introspection.get_table_description(cur, table)}
+                            # Determine primary key column name if possible
+                            pk_col = "indent_id" if "indent_id" in cols else ("id" if "id" in cols else None)
+                            insert_cols = []
+                            params = []
+                            # Portable timestamps
+                            now = timezone.now()
+                            # Core fields
+                            if "mrn" in cols:
+                                insert_cols.append("mrn")
+                                params.append(getattr(obj, "mrn", None))
+                            if "requested_by" in cols:
+                                insert_cols.append("requested_by")
+                                params.append(getattr(obj, "requested_by", "") or "")
+                            if "date_required" in cols:
+                                insert_cols.append("date_required")
+                                params.append(getattr(obj, "date_required", None))
+                            if "status" in cols:
+                                insert_cols.append("status")
+                                params.append(getattr(obj, "status", "SUBMITTED") or "SUBMITTED")
+                            if "notes" in cols:
+                                insert_cols.append("notes")
+                                params.append(getattr(obj, "notes", "") or "")
+                            # Department compatibility: prefer FK if present, else name
+                            dept_id_val = None
+                            try:
+                                if str(dep_raw).isdigit():
+                                    dept_id_val = int(dep_raw)
+                                elif dep_raw:
+                                    d = Department.objects.only("department_id").get(name=str(dep_raw))
+                                    dept_id_val = d.pk
+                            except Exception:
+                                dept_id_val = None
+                            if "department_id" in cols:
+                                insert_cols.append("department_id")
+                                params.append(dept_id_val)
+                            elif "department" in cols:
+                                insert_cols.append("department")
+                                params.append(dept_name or "")
+                            # Timestamps if present
+                            if "created_at" in cols:
+                                insert_cols.append("created_at")
+                                params.append(now)
+                            if "updated_at" in cols:
+                                insert_cols.append("updated_at")
+                                params.append(now)
+
+                            if not insert_cols:
+                                raise
+
+                            # Build portable INSERT
+                            col_sql = ", ".join(insert_cols)
+                            placeholders = ", ".join(["%s"] * len(insert_cols))
+                            vendor = connection.vendor
+
+                            if vendor == "postgresql" and pk_col:
+                                cur.execute(
+                                    f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders}) RETURNING {pk_col}",
+                                    params,
+                                )
+                                new_id = cur.fetchone()[0]
+                            else:
+                                cur.execute(
+                                    f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders})",
+                                    params,
+                                )
+                                try:
+                                    new_id = cur.lastrowid
+                                except Exception:
+                                    # Fallback best-effort: last inserted PK
+                                    if not pk_col:
+                                        raise
+                                    cur2 = connection.cursor()
+                                    try:
+                                        cur2.execute(f"SELECT MAX({pk_col}) FROM {table}")
+                                        new_id = cur2.fetchone()[0]
+                                    finally:
+                                        cur2.close()
+
+                        # Proceed to save formset rows pointing to this indent
+                        compat_indent = Indent(indent_id=new_id)
+                        formset.instance = compat_indent
+                        formset.save()
+
+                    if is_partial:
+                        from django.http import JsonResponse
+
+                        return JsonResponse(
+                            {"ok": True, "message": f"Indent {getattr(obj, 'mrn', '')} created", "id": new_id}
+                        )
+                    return redirect("indent_detail", pk=new_id)
+                except Exception as ex:
+                    # Ensure we report a friendly message and avoid leaking the atomic error
+                    logger.exception("Database error while creating indent")
+                    if is_partial:
+                        from django.http import JsonResponse
+                        # Map common DB errors to actionable messages; include raw text only in DEBUG
+                        raw = str(ex) if ex else ""
+                        friendly = None
+                        low = raw.lower()
+                        if "foreign key" in low or ("department" in low and ("null" in low or "invalid" in low)):
+                            friendly = "Please select a valid department"
+                        elif "unique" in low and "mrn" in low:
+                            friendly = "MRN already exists. Please try again."
+                        from django.conf import settings
+                        message = friendly or (raw if getattr(settings, 'DEBUG', False) else "Unable to save indent due to a database error. Please try again.")
+                        return JsonResponse({"ok": False, "message": message}, status=400)
+                    messages.error(request, "Unable to save indent")
         if is_partial:
             from django.http import JsonResponse
 

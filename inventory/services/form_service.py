@@ -8,6 +8,7 @@ from django.db import connection
 from django.db.utils import OperationalError
 
 from inventory.models import Department, Supplier
+
 from .units_service import UnitsService
 
 logger = logging.getLogger(__name__)

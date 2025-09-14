@@ -2,8 +2,8 @@ import pytest
 from django.test import RequestFactory
 
 from inventory.models import Item, Supplier, Unit
-from inventory.models.departments import Department
 from inventory.models.category import Category
+from inventory.models.departments import Department
 from inventory.services import category_filters
 from inventory.views.items.list import _filter_and_sort_items
 

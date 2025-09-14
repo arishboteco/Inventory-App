@@ -9,16 +9,16 @@
       <input type="hidden" name="partial" value="1" />
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         <div>
-          <label class="block mb-1 text-label font-medium leading-normal">Requested by</label>
-          <input type="text" readonly aria-readonly="true"
+          <label for="requested_by_display" class="block mb-1 text-label font-medium leading-normal">Requested by</label>
+          <input id="requested_by_display" type="text" readonly aria-readonly="true"
                  class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                  value="{{ requested_by_display|default:form.requested_by.value|default:'' }}" />
           {{ form.requested_by }} {# hidden field #}
         </div>
         <div>
-          <label class="block mb-1 text-label font-medium leading-normal">Department</label>
+          <label for="department-ui" class="block mb-1 text-label font-medium leading-normal">Department</label>
           {{ form.department }} {# hidden field #}
-          <select id="department-ui" class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" data-placeholder="Select Department">
+          <select id="department-ui" name="department-ui" class="block w-full px-3 py-2.5 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" data-placeholder="Select Department">
             <option value="">Select Department</option>
             {% for did, dname in department_options %}
               <option value="{{ did }}">{{ dname }}</option>
@@ -58,7 +58,7 @@
   </div>
 </div>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  (function () {
     if (window.initFormset) {
       window.initFormset({
         formsetPrefix: 'items',
@@ -74,11 +74,21 @@
         const ui = document.getElementById('department-ui');
         const hidden = document.getElementById('id_department');
         if (hidden && ui) {
-          // Initialize UI value from hidden
-          if (hidden.value) ui.value = hidden.value;
+          // Initialize: prefer hidden -> UI, otherwise UI -> hidden if UI already has a value
+          if (hidden.value) {
+            ui.value = hidden.value;
+          } else if (ui.value) {
+            hidden.value = ui.value;
+          }
           if (window.initPredictiveDropdowns) window.initPredictiveDropdowns(ui.parentElement);
           ui.addEventListener('change', function(){ hidden.value = ui.value; });
           ui.addEventListener('input', function(){ hidden.value = ui.value; });
+          // Ensure hidden is synced on submit as a final guard
+          const form = document.getElementById('indent-form');
+          if (form && !form._syncDeptOnSubmit){
+            form._syncDeptOnSubmit = true;
+            form.addEventListener('submit', function(){ hidden.value = ui.value; });
+          }
         }
       } catch(e) {}
     })();
@@ -174,5 +184,5 @@
       // Initial check in case template pre-fills one row
       setTimeout(checkAutoAdd, 0);
     })();
-  });
+  })();
 </script>

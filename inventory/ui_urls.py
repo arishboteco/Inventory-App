@@ -23,8 +23,8 @@ from .views.items.list import (
     ItemsListView,
     ItemsTableView,
     distinct_values,
+    item_meta,
 )
-from .views.items.list import item_meta
 from .views.items.stock import (
     ItemCreateHTMXView,
     ItemCreatePartialView,
@@ -42,7 +42,7 @@ from .views.purchase_orders import (
     purchase_orders_list,
 )
 from .views.recipes import RecipesListView, recipe_create, recipe_detail
-from .views.stock import history_reports, stock_movements, UserSearchView, POSearchView
+from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.suppliers import (
     SupplierCreateView,
     SupplierEditView,

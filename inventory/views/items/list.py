@@ -3,8 +3,7 @@ import logging
 from django.contrib import messages
 from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError
-from django.db.models import Prefetch
-from django.db.models import BooleanField, Case, F, Q, Value, When
+from django.db.models import BooleanField, Case, F, Prefetch, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -16,8 +15,8 @@ from inventory.services.item_service import get_unit_display_name
 from ...forms.bulk_forms import BulkUploadForm
 from ...forms.item_forms import ItemForm
 from ...models import Category, Item, Supplier, Unit
-from ...models.orders import PurchaseOrderItem
 from ...models.departments import Department
+from ...models.orders import PurchaseOrderItem
 from ...services import category_filters, kpis, list_utils
 from ...services.categories_service import CategoriesService
 from ...services.units_service import UnitsService

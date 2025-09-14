@@ -38,6 +38,13 @@
           const parts=[]; if (data.unit) parts.push(data.unit); if (data.category) parts.push(data.category); if (data.subcategory) parts.push(data.subcategory);
           if (info) info.textContent = parts.filter(Boolean).join(' • ');
           setInvalid('');
+          // When a valid item is confirmed, re-run auto-add check so the next row appears promptly
+          try {
+            const table = itemInput.closest('#items-table');
+            if (table && typeof table._maybeAdd === 'function') {
+              table._maybeAdd();
+            }
+          } catch(_) {}
         }).catch(()=>{});
       }
       let t=null; const deb=()=>{ clearTimeout(t); t=setTimeout(refresh,250); };
@@ -48,7 +55,8 @@
   }
 
   function checkDuplicates(root){
-    const form = (root||document).getElementById('indent-form');
+    const scope = root || document;
+    const form = (scope && scope.querySelector) ? scope.querySelector('#indent-form') : document.getElementById('indent-form');
     const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
     const inputs = form ? Array.from(form.querySelectorAll("input[name^='items-'][name$='-item']")) : [];
     const ids = inputs.map(inp => resolveItemIdFromInput(inp)).filter(Boolean);
@@ -64,7 +72,8 @@
   }
 
   function ensureHiddenIdsOnSubmit(root){
-    const form = (root||document).getElementById('indent-form');
+    const scope = root || document;
+    const form = (scope && scope.querySelector) ? scope.querySelector('#indent-form') : document.getElementById('indent-form');
     if (!form || form._boundHidden) return; form._boundHidden=true;
     form.addEventListener('submit', function(ev){
       const inputs = form.querySelectorAll("input[name^='items-'][name$='-item']");
@@ -88,9 +97,11 @@
 
   function setupAutoAdd(root){
     const scope = root || document;
-    const table = scope.getElementById ? scope.getElementById('items-table') : document.getElementById('items-table');
-    const addBtn = scope.getElementById ? scope.getElementById('add-row') : document.getElementById('add-row');
+    const table = (scope && scope.querySelector) ? scope.querySelector('#items-table') : document.getElementById('items-table');
+    const addBtn = (scope && scope.querySelector) ? scope.querySelector('#add-row') : document.getElementById('add-row');
     if (!table || !addBtn) return;
+    // Prevent duplicate bindings if initIndentForm runs multiple times
+    if (table._autoAddBound) return; table._autoAddBound = true;
     function maybeAdd(){
       const rows = table.querySelectorAll('tr.form-row');
       if (!rows.length) return;
@@ -115,7 +126,9 @@
         }, 0);
       }
     }
-    function handler(){ maybeAdd(); checkDuplicates(scope); }
+    // Expose a scoped trigger for other scripts (e.g., after async item meta fetch)
+    table._maybeAdd = maybeAdd;
+  function handler(){ maybeAdd(); checkDuplicates(scope); }
     table.addEventListener('input', function(e){
       if (e.target && (e.target.matches("input[name$='-item']") || e.target.matches("input[name$='-requested_qty']"))) {
         handler();
@@ -126,17 +139,35 @@
         handler();
       }
     });
+    // Re-check after formset script adds a row
+    document.addEventListener('click', function(e){
+      if (e.target && e.target.id === 'add-row') {
+        setTimeout(maybeAdd, 0);
+      }
+    });
     setTimeout(maybeAdd, 0);
   }
 
   function setupDepartmentSync(root){
     const scope = root || document;
-    const ui = scope.getElementById ? scope.getElementById('department-ui') : document.getElementById('department-ui');
-    const hidden = scope.getElementById ? scope.getElementById('id_department') : document.getElementById('id_department');
+    const ui = (scope && scope.querySelector) ? scope.querySelector('#department-ui') : document.getElementById('department-ui');
+    const hidden = (scope && scope.querySelector) ? scope.querySelector('#id_department') : document.getElementById('id_department');
     if (hidden && ui){
-      if (hidden.value) ui.value = hidden.value;
-      ui.addEventListener('change', ()=> hidden.value = ui.value);
-      ui.addEventListener('input', ()=> hidden.value = ui.value);
+      // Initialize hidden from UI if hidden is empty but UI already has a value
+      if (hidden.value) {
+        ui.value = hidden.value;
+      } else if (ui.value) {
+        hidden.value = ui.value;
+      }
+      ui.addEventListener('change', ()=> { hidden.value = ui.value; });
+      ui.addEventListener('input', ()=> { hidden.value = ui.value; });
+
+      // Ensure sync just before submit in case no change/input fired after opening modal
+      const form = (scope && scope.querySelector) ? scope.querySelector('#indent-form') : document.getElementById('indent-form');
+      if (form && !form._syncDeptOnSubmit){
+        form._syncDeptOnSubmit = true;
+        form.addEventListener('submit', function(){ hidden.value = ui.value; });
+      }
     }
   }
 

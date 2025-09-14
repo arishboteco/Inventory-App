@@ -1,5 +1,5 @@
-import logging
 import json
+import logging
 from datetime import timedelta
 
 from django.contrib.auth import login
@@ -8,11 +8,12 @@ from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.db.models.functions import Coalesce, TruncDate
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
 from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
 from inventory.services import counts, kpis
+
 from .viewmodels import DashboardContext
 
 logger = logging.getLogger(__name__)

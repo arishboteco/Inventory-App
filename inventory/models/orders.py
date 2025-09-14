@@ -3,8 +3,8 @@ from decimal import Decimal
 from django.db import models
 from django.db.models import Sum
 
-from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
 from .departments import Department
+from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
 from .items import Item
 from .suppliers import Supplier
 
@@ -32,7 +32,13 @@ class Indent(models.Model):
         null=True,
     )
     date_submitted = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    processed_by_user_id = models.CharField(max_length=50, blank=True, null=True)
+    processed_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        db_column='processed_by_id',
+    )
     date_processed = models.DateTimeField(auto_now=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

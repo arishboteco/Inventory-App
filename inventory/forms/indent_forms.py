@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from django import forms
-from datetime import date, timedelta
+from datetime import date
+from decimal import Decimal
 
-from ..models import Indent, IndentItem, Department
-from .stock_forms import ItemNameResolutionMixin
+from django import forms
+
+from ..models import Department, Indent, IndentItem
 from ..models.enums import IndentStatus
 from .base import INPUT_CLASS, StyledFormMixin
+from .stock_forms import ItemNameResolutionMixin
 
 
 class IndentForm(StyledFormMixin, forms.ModelForm):
@@ -59,6 +61,8 @@ class IndentForm(StyledFormMixin, forms.ModelForm):
                 # Fall back silently if anything goes wrong
                 pass
         self.apply_styling()
+
+    # No explicit department clean: optional at form level for backward-compat/tests.
 
     def save(self, commit: bool = True):
         obj = super().save(commit=False)
@@ -128,11 +132,41 @@ class IndentItemForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
             raise forms.ValidationError("Quantity must be positive")
         return qty
 
+    def save(self, commit: bool = True):
+        obj = super().save(commit=False)
+        # Some environments enforce NOT NULL on issued_qty; default to 0
+        if getattr(obj, "issued_qty", None) is None:
+            try:
+                obj.issued_qty = Decimal("0")
+            except Exception:
+                obj.issued_qty = 0
+        if commit:
+            obj.save()
+        return obj
+
+
+class _IndentItemFormSetBase(forms.BaseInlineFormSet):
+    def save(self, commit=True):
+        instances = super().save(commit=False)
+        # Default issued_qty to 0 for all instances to satisfy NOT NULL constraints
+        for obj in instances:
+            if getattr(obj, "issued_qty", None) is None:
+                try:
+                    obj.issued_qty = Decimal("0")
+                except Exception:
+                    obj.issued_qty = 0
+            if commit:
+                obj.save()
+        # Handle deletions
+        if commit:
+            self.save_m2m()
+        return instances
 
 IndentItemFormSet = forms.inlineformset_factory(
     Indent,
     IndentItem,
     form=IndentItemForm,
+    formset=_IndentItemFormSetBase,
     fields=["item", "requested_qty", "notes"],
     extra=1,
     can_delete=True,

@@ -1,8 +1,9 @@
+{% load form_tags %}
 <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl">
   <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
     <div class="flex items-baseline gap-3">
-      <h3 class="text-lg font-semibold">New Indent</h3>
-      <span class="text-sm text-gray-500">Requested by: {{ requested_by_display|default:form.requested_by.value|default:'-' }}</span>
+      <h3 class="text-base font-semibold">New Indent</h3>
+      <span class="text-xs text-gray-500">Requested by: {{ requested_by_display|default:form.requested_by.value|default:'-' }}</span>
     </div>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
@@ -15,7 +16,7 @@
         <div class="md:col-span-4">
           <label for="department-ui" class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Department</label>
           {{ form.department }} {# hidden field #}
-          <select id="department-ui" name="department-ui" class="block w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" data-placeholder="Select Department">
+          <select id="department-ui" name="department-ui" class="block w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-placeholder="Select Department" data-overlay="native">
             <option value="">Select Department</option>
             {% for did, dname in department_options %}
               <option value="{{ did }}">{{ dname }}</option>
@@ -46,22 +47,27 @@
         {% endfor %}
       </ul>
       {% endif %}
-      {% include "inventory/_indent_items_form_table.html" with formset=formset table_id="items-table" %}
+  {% include "inventory/_indent_items_form_table.html" with formset=formset table_id="items-table" %}
       <datalist id="item-options"></datalist>
       <div class="mt-3 flex flex-wrap justify-end gap-2 items-center">
-        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        <button type="button" id="add-row" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Add item</button>
+        <button type="button" class="inline-flex items-center px-4 h-9 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <!-- Keep add button for JS, but hide it visually to have a single visible control -->
+        <button type="button" id="add-row" hidden aria-hidden="true" tabindex="-1">Add item</button>
+        <!-- Compact input group for Rows + Add rows -->
         <div class="flex items-center gap-2">
-          <label for="add-rows-count" class="text-sm text-gray-600">Rows</label>
-          <select id="add-rows-count" class="px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
-            <option value="2">2</option>
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-          </select>
-          <button type="button" id="add-rows-btn" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Add rows</button>
+          <span class="text-xs text-gray-600 leading-none">Rows</span>
+          <div class="inline-flex items-stretch rounded-md border border-border overflow-hidden bg-white shadow-sm">
+            <label for="add-rows-count" class="sr-only">Rows</label>
+            <select id="add-rows-count" class="pl-2 pr-8 h-9 text-sm focus:outline-none focus:ring-0 border-0 min-w-[3.5rem]">
+              <option value="2">2</option>
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+            </select>
+            <button type="button" id="add-rows-btn" class="inline-flex items-center px-3 h-9 text-sm font-medium bg-white text-gray-700 hover:bg-secondaryHover focus:outline-none focus:ring-2 focus:ring-primary border-l border-border whitespace-nowrap">Add rows</button>
+          </div>
         </div>
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Submit</button>
+        <button type="submit" class="inline-flex items-center px-4 h-9 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary shadow-sm">Submit</button>
       </div>
     </form>
   </div>
@@ -104,27 +110,36 @@
 
   // Bind item inputs for meta display and ID submission (mirrors indent_form.html)
     (function(){
+      // Helpers used by both direct-binding and delegated listeners
+      function ensureInfoBlocks(itemInput){
+        const wrap = itemInput.closest('div') || itemInput.parentElement;
+        if (!wrap) return {info: null, err: null};
+        let info = wrap.querySelector('[data-item-meta]');
+        if (!info){ info = document.createElement('div'); info.className = 'mt-1 text-xs text-gray-500'; info.setAttribute('data-item-meta',''); wrap.appendChild(info); }
+        let err = wrap.querySelector('[data-item-error]');
+        if (!err){ err = document.createElement('div'); err.className = 'mt-1 text-xs text-red-600 hidden'; err.setAttribute('data-item-error',''); wrap.appendChild(err); }
+        return {info, err};
+      }
+      function setInvalidFor(itemInput, message){ const {err} = ensureInfoBlocks(itemInput); if (!err) return; if (message){ err.textContent = message; err.classList.remove('hidden'); } else { err.textContent=''; err.classList.add('hidden'); } }
+      function getDatalistOptionFor(itemInput){ const listId=itemInput.getAttribute('list'); const list=listId?document.getElementById(listId):document.getElementById('item-options'); if(!list) return null; const typed=(itemInput.value||'').trim().toLowerCase(); const opts=Array.from(list.querySelectorAll('option')); return opts.find(o=>((o.value||'').trim().toLowerCase()===typed)||((o.textContent||'').trim().toLowerCase()===typed))||null; }
+      function resolveItemIdFor(itemInput){ const opt=getDatalistOptionFor(itemInput); if (opt && (opt.dataset.id || opt.getAttribute('data-id'))) return opt.dataset.id || opt.getAttribute('data-id'); const m=(itemInput.value||'').match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i); return m? (m[1]||m[2]) : ''; }
+      function refreshFor(itemInput){ const {info} = ensureInfoBlocks(itemInput); const id=resolveItemIdFor(itemInput); const typed=(itemInput.value||'').trim(); if (info) info.textContent=''; if(!typed){ setInvalidFor(itemInput, ''); return; } if(!id){ setInvalidFor(itemInput, 'Choose a valid item from the list.'); return; }
+        fetch(`/items/meta/${id}/`).then(r=>r.ok?r.json():null).then(data=>{ if(!data||!data.ok){ setInvalidFor(itemInput, 'Selected item not found.'); return; } const parts=[]; if(data.unit) parts.push(data.unit); if(data.category) parts.push(data.category); if(data.subcategory) parts.push(data.subcategory); if(info) info.textContent=parts.filter(Boolean).join(' • '); setInvalidFor(itemInput, ''); }).catch(()=>{});
+      }
       function bindItemInputs(scope){
         const root = scope || document;
         const inputs = root.querySelectorAll('input[list="#item-options"], input[list="item-options"], input[name^="items-"][name$="-item"]');
         inputs.forEach((itemInput)=>{
           if (itemInput._boundIndentMeta) return;
           itemInput._boundIndentMeta = true;
+          // Keep predictive overlay enabled for richer search UX
           const wrapper = itemInput.closest('div') || itemInput.parentElement;
-          let info = null; let err = null;
-          if (wrapper) {
-            info = document.createElement('div'); info.className = 'mt-1 text-xs text-gray-500'; info.setAttribute('data-item-meta',''); wrapper.appendChild(info);
-            err = document.createElement('div'); err.className = 'mt-1 text-xs text-red-600 hidden'; err.setAttribute('data-item-error',''); wrapper.appendChild(err);
-          }
-          function setInvalid(message){ if (!err) return; if (message){ err.textContent = message; err.classList.remove('hidden'); } else { err.textContent=''; err.classList.add('hidden'); } }
-          function getDatalistOption(){ const listId=itemInput.getAttribute('list'); const list=listId?document.getElementById(listId):null; if(!list) return null; const typed=(itemInput.value||'').trim().toLowerCase(); const opts=Array.from(list.querySelectorAll('option')); return opts.find(o=>((o.value||'').trim().toLowerCase()===typed)||((o.textContent||'').trim().toLowerCase()===typed))||null; }
-          function resolveItemId(){ const opt=getDatalistOption(); if (opt && (opt.dataset.id || opt.getAttribute('data-id'))) return opt.dataset.id || opt.getAttribute('data-id'); const m=(itemInput.value||'').match(/^(\d+)\s*-|\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i); return m? (m[1]||m[2]) : ''; }
+          ensureInfoBlocks(itemInput);
           let debounceTimer=null;
-          function refresh(){ const id=resolveItemId(); const typed=(itemInput.value||'').trim(); if (info) info.textContent=''; if(!typed){ setInvalid(''); return; } if(!id){ setInvalid('Choose a valid item from the list.'); return; } fetch(`/items/meta/${id}/`).then(r=>r.ok?r.json():null).then(data=>{ if(!data||!data.ok){ setInvalid('Selected item not found.'); return; } const parts=[]; if(data.unit) parts.push(data.unit); if(data.category) parts.push(data.category); if(data.subcategory) parts.push(data.subcategory); if(info) info.textContent=parts.filter(Boolean).join(' • '); setInvalid(''); }).catch(()=>{}); }
-          function debounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(refresh,250); }
+          function debounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>refreshFor(itemInput),250); }
           itemInput.addEventListener('input', debounced);
-          itemInput.addEventListener('change', refresh);
-          itemInput.addEventListener('blur', refresh);
+          itemInput.addEventListener('change', ()=>refreshFor(itemInput));
+          itemInput.addEventListener('blur', ()=>refreshFor(itemInput));
         });
       }
       function checkDuplicates(){
@@ -145,10 +160,23 @@
           const err=itemInput.closest('div')?.querySelector('[data-item-error]'); if(!typed){ if(err){ err.classList.add('hidden'); } return; } if(!id){ invalid=true; if(err){ err.textContent='Choose a valid item from the list.'; err.classList.remove('hidden'); } return; }
           let hidden=form.querySelector(`input[type="hidden"][data-item-hidden-for='${itemInput.name}']`); if(!hidden){ hidden=document.createElement('input'); hidden.type='hidden'; hidden.setAttribute('data-item-hidden-for', itemInput.name); form.appendChild(hidden); }
           hidden.name=itemInput.name; hidden.value=id; if(!itemInput.dataset.originalName) itemInput.dataset.originalName=itemInput.name; itemInput.name=itemInput.dataset.originalName + '_display'; setTimeout(()=>{ itemInput.name=itemInput.dataset.originalName; }, 0);
-        }); if(invalid){ ev.preventDefault(); }
+  }); if(invalid){ ev.preventDefault(); }
         }); }
-      bindItemInputs(); ensureHiddenIdsOnSubmit();
-      const addBtn=document.getElementById('add-row'); if(addBtn) addBtn.addEventListener('click', function(){ setTimeout(()=>{ bindItemInputs(); checkDuplicates(); if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(document.getElementById('items-table')); }, 0); });
+  bindItemInputs(); ensureHiddenIdsOnSubmit();
+  // Initial pass: if any inputs already have a value, render their meta now
+  document.querySelectorAll("#items-table input[name^='items-'][name$='-item']").forEach(inp=>{ if ((inp.value||'').trim()) { const ev=new Event('change', {bubbles:true}); inp.dispatchEvent(ev); } });
+      // Delegated safety net: ensure meta renders even if a row was added after bind
+      const formEl = document.getElementById('indent-form');
+      if (formEl && !formEl._delegatedMeta){
+        formEl._delegatedMeta = true;
+        let t = null;
+        formEl.addEventListener('input', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')){ if (t) clearTimeout(t); const target=e.target; t=setTimeout(()=>{ refreshFor(target); }, 250); } });
+        formEl.addEventListener('change', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')){ refreshFor(e.target); } });
+        formEl.addEventListener('blur', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')){ refreshFor(e.target); } }, true);
+      }
+      const addBtn=document.getElementById('add-row'); if(addBtn) addBtn.addEventListener('click', function(){ setTimeout(()=>{ bindItemInputs(); checkDuplicates(); if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(document.getElementById('items-table')); // Preemptively create info blocks for new inputs
+          document.querySelectorAll("#items-table input[name^='items-'][name$='-item']").forEach(inp=>ensureInfoBlocks(inp));
+        }, 50); });
       document.getElementById('indent-form')?.addEventListener('input', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')) { checkDuplicates(); } });
       checkDuplicates();
 

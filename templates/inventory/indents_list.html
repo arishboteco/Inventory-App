@@ -1,13 +1,13 @@
 {% extends "components/create_manage_layout.html" %}
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
+{% block breadcrumbs %}{% endblock %}
 {% block page_title %}Indents – Inventory App{% endblock %}
 {% block page_heading %}Indents{% endblock %}
 
 {% block filters %}
   {% url 'indents_table' as indents_table_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search indents..." hx_get=indents_table_url hx_target="#indents_table" filters=filters search_delay="500ms" %}
+  <div class="mb-4">
+    {% include "components/filter_bar.html" with hide_labels=True search_placeholder="Search by MRN, requester or department" hx_get=indents_table_url hx_target="#indents_table" hx_indicator="#indents-loading" filters=filters search_delay="400ms" %}
+  </div>
 {% endblock %}
 
 {# No quick indent on this page; creation only via New Indent #}
@@ -24,12 +24,12 @@
         </div>
       </div>
     </div>
-    <div class="p-4">
-      <div id="indents_table"
-           hx-get="{% url 'indents_table' %}"
-           hx-trigger="load"
-           hx-include="#filters"
-           hx-indicator="#htmx-spinner">
+    <div class="table-scroll group pt-2 md:pt-3">
+   <div id="indents_table"
+     hx-get="{% url 'indents_table' %}"
+     hx-trigger="load"
+     hx-include="#filters"
+     hx-indicator="#indents-loading">
         {% if total_indents == 0 %}
           <div class="p-4 max-sm:p-2 text-center border border-form-border rounded bg-form-bg">
             <h2 class="text-h2 md:text-h2 mb-4 mt-8">No Indents</h2>
@@ -46,4 +46,21 @@
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.table-scroll').forEach(scroller => {
+      function onScroll(){ scroller.toggleAttribute('data-shadow', scroller.scrollTop > 0); }
+      scroller.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    });
+  });
+</script>
+<div id="indents-loading" class="hidden p-4">
+  <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
+  <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
+  <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
+</div>
 {% endblock %}

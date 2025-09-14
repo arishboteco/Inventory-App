@@ -1,5 +1,9 @@
 (function(){
   function buildOverlay(input){
+    const overlayPref = (input.getAttribute('data-overlay') || '').toLowerCase();
+    if (overlayPref === 'native' || input.hasAttribute('data-overlay-disabled')) {
+      return null;
+    }
     const listId = input.getAttribute('list');
     const datalist = listId && document.getElementById(listId);
     if (!datalist) return null;
@@ -75,6 +79,7 @@
       }
     }
 
+    let originalListAttr = null;
     function show(){
       position();
       render(input.value);
@@ -86,6 +91,15 @@
       } else {
         document.body.appendChild(overlay);
       }
+      // Temporarily remove native datalist binding to suppress UA tooltip/popover
+      try {
+        if (originalListAttr === null) {
+          originalListAttr = input.getAttribute('list');
+        }
+        if (input.hasAttribute('list')) {
+          input.removeAttribute('list');
+        }
+      } catch(e) {}
       window.addEventListener('scroll', position, true);
       window.addEventListener('resize', position);
       document.addEventListener('mousedown', onDocDown);
@@ -98,6 +112,12 @@
     function hide(){
       overlay.classList.add('hidden');
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      // Restore native datalist binding after overlay hides
+      try {
+        if (originalListAttr !== null && !input.hasAttribute('list')) {
+          input.setAttribute('list', originalListAttr);
+        }
+      } catch(e) {}
       window.removeEventListener('scroll', position, true);
       window.removeEventListener('resize', position);
       document.removeEventListener('mousedown', onDocDown);
@@ -147,7 +167,9 @@
 
   function init(root){
     const scope = root || document;
-    scope.querySelectorAll('input[list]').forEach(buildOverlay);
+    scope
+      .querySelectorAll("input[list]:not([data-overlay='native']):not([data-overlay-disabled])")
+      .forEach(buildOverlay);
   }
 
   document.addEventListener('DOMContentLoaded', ()=>{

@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
+from ..services import list_utils
 from ..indent_pdf import generate_indent_pdf
 from ..models import Department, Indent
 
@@ -46,8 +47,18 @@ class IndentsListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         status = (self.request.GET.get("status") or "").strip()
+        dept = (self.request.GET.get("department") or "").strip()
+        requested_by = (self.request.GET.get("requested_by") or "").strip()
+        start_date = (self.request.GET.get("start") or "").strip()
+        end_date = (self.request.GET.get("end") or "").strip()
         q = (self.request.GET.get("q") or "").strip()
         total_indents = Indent.objects.count()
+        # Build filter options for the filter bar
+        dept_options = (
+            Department.objects.only("department_id", "name")
+            .order_by("name")
+            .values_list("department_id", "name")
+        )
         filters = [
             {
                 "name": "status",
@@ -60,11 +71,33 @@ class IndentsListView(TemplateView):
                     {"value": "COMPLETED", "label": "Completed"},
                     {"value": "CANCELLED", "label": "Cancelled"},
                 ],
-            }
+            },
+            {
+                "name": "department",
+                "label": "Department",
+                "value": dept,
+                "options": ([{"value": "", "label": "All Departments"}] + [
+                    {"value": str(did), "label": name} for did, name in dept_options
+                ]),
+            },
+            {
+                "name": "requested_by",
+                "label": "Requested By",
+                "value": requested_by,
+                "options": [
+                    {"value": "", "label": "All Requesters"},
+                    {"value": "admin", "label": "admin"},
+                    {"value": "testuser", "label": "testuser"},
+                ],
+            },
         ]
         ctx.update(
             {
                 "status": status,
+                "department": dept,
+                "requested_by": requested_by,
+                "start": start_date,
+                "end": end_date,
                 "q": q,
                 "total_indents": total_indents,
                 "filters": filters,
@@ -103,19 +136,9 @@ class IndentsTableView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        status = (self.request.GET.get("status") or "").strip()
-        q = (self.request.GET.get("q") or "").strip()
-        qs = Indent.objects.all()
-        if status:
-            qs = qs.filter(status=status)
-        if q:
-            qs = qs.filter(
-                Q(mrn__icontains=q)
-                | Q(requested_by__icontains=q)
-                | Q(department__name__icontains=q)
-            )
+        # Base queryset with overdue annotation
         today = timezone.now().date()
-        qs = qs.annotate(
+        qs = Indent.objects.all().annotate(
             is_overdue=Case(
                 When(
                     Q(date_required__lt=today)
@@ -125,18 +148,45 @@ class IndentsTableView(TemplateView):
                 default=Value(False),
                 output_field=BooleanField(),
             )
-        ).order_by("-indent_id")
+        )
+
+        # Apply search, filters, and sorting using shared utils
+        qs, params = list_utils.apply_filters_sort(
+            self.request,
+            qs,
+            search_fields=["mrn", "requested_by", "department__name"],
+            filter_fields={
+                "status": "status",
+                "department": "department_id",
+                "requested_by": "requested_by__iexact",
+                "start": "date_required__gte",
+                "end": "date_required__lte",
+            },
+            allowed_sorts=[
+                "indent_id",
+                "mrn",
+                "requested_by",
+                "department__name",
+                "status",
+                "date_required",
+            ],
+            default_sort="mrn",
+            default_direction="desc",
+        )
         paginator = Paginator(qs, 25)
         page_number = self.request.GET.get("page")
         page_obj = paginator.get_page(page_number)
-        ctx.update(
-            {
-                "page_obj": page_obj,
-                "status": status,
-                "q": q,
-                "badges": INDENT_STATUS_BADGES,
-            }
-        )
+        # Build querystring for header sort links and pagination without page
+        try:
+            querystring = list_utils.build_querystring(self.request)
+        except Exception:
+            querystring = ""
+        ctx.update({
+            "page_obj": page_obj,
+            "badges": INDENT_STATUS_BADGES,
+            "querystring": querystring,
+            **params,
+        })
         return ctx
 
 
@@ -499,6 +549,9 @@ def indent_detail(request, pk: int):
     except Exception:
         wa_url = None
     ctx = {"indent": indent, "items": items, "rows": rows, "wa_url": wa_url}
+    # Support modal/drawer partial render
+    if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
+        return render(request, "inventory/_indent_detail_partial.html", ctx)
     return render(request, "inventory/indent_detail.html", ctx)
 
 
@@ -508,6 +561,13 @@ def indent_update_status(request, pk: int, status: str):
     indent = get_object_or_404(Indent, pk=pk)
     indent.status = status.upper()
     indent.save()
+    # If HTMX request, return the updated table fragment to stay on the same page
+    if request.headers.get("HX-Request"):
+        # Reuse the table view logic to render current filtered/sorted list
+        view = IndentsTableView()
+        view.request = request
+        ctx = view.get_context_data()
+        return render(request, view.template_name, ctx)
     return redirect("indent_detail", pk=pk)
 
 
@@ -516,6 +576,9 @@ def indent_pdf(request, pk: int):
     items = indent.indentitem_set.select_related("item").all()
     pdf_bytes = generate_indent_pdf(indent, items)
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    filename = f"indent_{indent.pk}.pdf"
+    mrn = getattr(indent, "mrn", None) or str(indent.pk)
+    # Normalize spacing and enforce desired naming scheme
+    safe_mrn = str(mrn).replace("/", "-").replace(" ", "")
+    filename = f"Indent_{safe_mrn}.pdf"
     response["Content-Disposition"] = f"attachment; filename={filename}"
     return response

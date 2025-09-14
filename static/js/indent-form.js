@@ -170,13 +170,17 @@
   window.initIndentForm = function(root){
     const scope = root || document;
     const form = (scope && scope.querySelector) ? scope.querySelector('#indent-form') : document.getElementById('indent-form');
-    if (!form || form._indentFormInitialized) return;
-    form._indentFormInitialized = true;
-    
+    if (!form) return;
+    // Always bind inputs found in the provided scope so newly added rows get behavior.
     bindItemInputs(scope);
+    checkDuplicates(scope);
+
+    // One-time initializations for the overall form
+    if (form._indentFormInitialized) return;
+    form._indentFormInitialized = true;
+
     ensureHiddenIdsOnSubmit(scope);
     setupDepartmentSync(scope);
-    checkDuplicates(scope);
     setupFormset(scope);
     setupMultiAdd(scope);
   };

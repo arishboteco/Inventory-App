@@ -20,6 +20,18 @@
   <style>
     /* Hint browsers to avoid native datalist popover when our overlay is active */
     input[list][data-predictive-input]::-webkit-calendar-picker-indicator { display: none !important; }
+    /* Ensure predictive overlays use light theme */
+    .predictive-overlay,
+    .predictive-dropdown-list {
+      background-color: #ffffff !important;
+      color: #111827 !important; /* gray-900 */
+      border-color: #d1d5db !important; /* gray-300 */
+    }
+    .predictive-overlay [role="option"],
+    .predictive-dropdown-list [role="option"],
+    .predictive-dropdown-list div {
+      color: inherit !important;
+    }
   </style>
   <script src="{% static 'js/predictive-dropdown.js' %}?v={{ STATIC_VERSION }}" defer></script>
   <script src="{% static 'js/predictive-multiselect.js' %}?v={{ STATIC_VERSION }}" defer></script>

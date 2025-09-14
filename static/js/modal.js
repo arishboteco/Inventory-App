@@ -52,12 +52,13 @@
       requestAnimationFrame(() => {
         if (window.initMultiselectChips)
           window.initMultiselectChips(content);
+        // Initialize indent form first so it can mark inputs to opt out of overlays
+        if (window.initIndentForm)
+          window.initIndentForm(content);
         if (window.initPredictiveDropdowns)
           window.initPredictiveDropdowns(content);
         if (window.initPredictiveDatalistOverlay)
           window.initPredictiveDatalistOverlay(content);
-        if (window.initIndentForm)
-          window.initIndentForm(content);
       });
     }
     setAria(root, content);
@@ -74,12 +75,12 @@
       requestAnimationFrame(() => {
         if (window.initMultiselectChips)
           window.initMultiselectChips(content);
+        if (window.initIndentForm)
+          window.initIndentForm(content);
         if (window.initPredictiveDropdowns)
           window.initPredictiveDropdowns(content);
         if (window.initPredictiveDatalistOverlay)
           window.initPredictiveDatalistOverlay(content);
-        if (window.initIndentForm)
-          window.initIndentForm(content);
       });
     }
     setAria(root, content);

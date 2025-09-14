@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib import messages
+from django import forms
 from django.core.paginator import Paginator
 from django.db import DatabaseError, transaction, connection, IntegrityError
 from django.db.models import BooleanField, Case, Q, Value, When, Sum, DecimalField
@@ -16,10 +17,14 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
+from ..forms.indent_issue_forms import IndentItemIssueForm, IndentIssueFormset
 from ..services import list_utils
+from ..services import indent_issue_service
 from ..services import indent_consolidation_service
 from ..indent_pdf import generate_indent_pdf
 from ..models import Department, Indent
+from ..models import IndentItem as IndentItemModel
+from ..models import Supplier as SupplierModel
 
 logger = logging.getLogger(__name__)
 
@@ -531,7 +536,22 @@ class IndentCreateView(View):
 
 def indent_detail(request, pk: int):
     indent = get_object_or_404(Indent, pk=pk)
-    items = indent.indentitem_set.select_related("item").all()
+    items = (
+        indent.indentitem_set.select_related("item")
+        .prefetch_related("po_links", "po_links__po_item", "po_links__po_item__purchase_order")
+        .all()
+    )
+    # Compute remaining quantity for display
+    try:
+        from decimal import Decimal
+
+        for it in items:
+            rq = Decimal(str(getattr(it, "requested_qty", 0) or 0))
+            iq = Decimal(str(getattr(it, "issued_qty", 0) or 0))
+            it.remaining_qty = rq - iq
+    except Exception:
+        for it in items:
+            it.remaining_qty = getattr(it, "requested_qty", 0)
     badge_class = INDENT_STATUS_BADGES.get(indent.status.upper(), "")
     rows = [
         (
@@ -569,8 +589,34 @@ def indent_detail(request, pk: int):
 @csrf_protect
 def indent_update_status(request, pk: int, status: str):
     indent = get_object_or_404(Indent, pk=pk)
-    indent.status = status.upper()
-    indent.save()
+    target = (status or "").upper()
+    current = (indent.status or "").upper() or "SUBMITTED"
+    allowed = {
+        "SUBMITTED": {"APPROVED"},
+        "APPROVED": {"PROCESSING"},
+        "PROCESSING": {"COMPLETED", "CANCELLED"},
+    }
+    # Permission: approval restricted to staff/superuser or explicit permission
+    if target == "APPROVED":
+        user = getattr(request, "user", None)
+        if not (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or user.has_perm("inventory.change_indent")):
+            from django.http import HttpResponse
+
+            return HttpResponse("Forbidden", status=403)
+    # Validate transition
+    if current not in allowed or target not in allowed[current]:
+        from django.http import HttpResponse
+
+        return HttpResponse("Invalid status transition", status=400)
+    # Apply transition and audit fields where applicable
+    indent.status = target
+    if target in {"APPROVED", "COMPLETED"}:
+        try:
+            indent.processed_by = getattr(request, "user", None)
+        except Exception:
+            indent.processed_by = None
+        indent.date_processed = timezone.now()
+    indent.save(update_fields=["status", "processed_by", "date_processed", "updated_at"]) if target in {"APPROVED", "COMPLETED"} else indent.save(update_fields=["status", "updated_at"])  # type: ignore
     # If HTMX request, return the updated table fragment to stay on the same page
     if request.headers.get("HX-Request"):
         # Reuse the table view logic to render current filtered/sorted list
@@ -623,3 +669,122 @@ def indents_consolidate(request):
         return render(request, view.template_name, ctx)
     # Non-HTMX: go to orders list to review created POs
     return redirect("purchase_orders_list")
+
+
+def consolidate_indents(request):
+    """Preview consolidation of APPROVED indents grouped by preferred supplier.
+
+    GET: shows grouped suppliers and summed pending quantities (requested - issued).
+    Optional query param `ids` as CSV of indent IDs to constrain the scope.
+    POST: performs consolidation via service and redirects with a success message.
+    """
+    ids: list[int] = []
+    if request.GET.get("ids"):
+        try:
+            ids = [int(x.strip()) for x in request.GET.get("ids", "").split(",") if x.strip().isdigit()]
+        except Exception:
+            ids = []
+    base_filter = {"indent__status": "APPROVED"}
+    if ids:
+        base_filter["indent_id__in"] = ids
+    # Gather approved indent items with pending quantities and a preferred supplier
+    qs = (
+        IndentItemModel.objects.select_related("item", "indent", "item__preferred_supplier")
+        .filter(**base_filter)
+    )
+    groups: dict[int, dict] = {}
+    total_items = 0
+    for ii in qs:
+        req = (ii.requested_qty or 0) or 0
+        iss = (ii.issued_qty or 0) or 0
+        pending = (req - iss)
+        if pending <= 0:
+            continue
+        item = ii.item  # type: ignore
+        supplier_id = getattr(item, "preferred_supplier_id", None)
+        if not supplier_id:
+            continue
+        g = groups.setdefault(supplier_id, {"items": {}, "supplier": None})
+        if g["supplier"] is None:
+            try:
+                g["supplier"] = SupplierModel.objects.only("supplier_id", "name").get(pk=supplier_id)
+            except Exception:
+                g["supplier"] = None
+        entry = g["items"].setdefault(item.pk, {"item": item, "qty": 0})
+        entry["qty"] += pending
+        total_items += 1
+    # Transform to template-friendly structure
+    grouped = []
+    for supplier_id, data in groups.items():
+        items_list = sorted(data["items"].values(), key=lambda x: getattr(x["item"], "name", ""))
+        grouped.append({
+            "supplier": data["supplier"],
+            "supplier_id": supplier_id,
+            "items": items_list,
+            "total_lines": len(items_list),
+        })
+    # Sort suppliers by name
+    grouped.sort(key=lambda g: (getattr(g["supplier"], "name", "") or "").lower())
+
+    if request.method == "POST":
+        # Perform consolidation for the same scope
+        result = indent_consolidation_service.consolidate_approved_indents(ids)
+        if result.created_po_ids:
+            messages.success(request, f"Created {len(result.created_po_ids)} purchase order(s)")
+            return redirect("purchase_orders_list")
+        messages.info(request, "No eligible items found to consolidate")
+        return redirect("indents_list")
+
+    return render(
+        request,
+        "inventory/indents_consolidate_preview.html",
+        {
+            "groups": grouped,
+            "total_groups": len(grouped),
+            "total_items": total_items,
+            "ids_csv": ",".join(str(x) for x in ids) if ids else "",
+        },
+    )
+
+
+def issue_indent(request, pk: int):
+    indent = get_object_or_404(Indent, pk=pk)
+    items = list(indent.indentitem_set.select_related("item").order_by("indent_item_id").all())
+    # Build formset for all items in this indent
+    if request.method == "POST":
+        Formset = forms.formset_factory(IndentItemIssueForm, formset=IndentIssueFormset, extra=0)  # type: ignore
+        formset = Formset(request.POST)
+        if formset.is_valid():
+            lines: list[indent_issue_service.IssueLine] = []
+            for form in formset.forms:
+                data = form.cleaned_data
+                lines.append(
+                    indent_issue_service.IssueLine(
+                        indent_item_id=int(data.get("indent_item_id")),
+                        issue_qty=data.get("issue_qty"),
+                        source_location=(data.get("source_location") or ""),
+                    )
+                )
+            result = indent_issue_service.issue_indent(indent.indent_id, lines, request.user)
+            if result.ok:
+                messages.success(request, result.message)
+                return redirect("indent_detail", pk=indent.pk)
+            messages.info(request, result.message)
+            return redirect("indent_detail", pk=indent.pk)
+    else:
+        Formset = forms.formset_factory(IndentItemIssueForm, formset=IndentIssueFormset, extra=0)  # type: ignore
+        initial = IndentIssueFormset.initial_for_indent(indent.indent_id)
+        formset = Formset(initial=initial)
+
+    # Pair items with forms for template rendering
+    pairs = list(zip(items, formset.forms))
+    return render(
+        request,
+        "inventory/indent_issue_form.html",
+        {
+            "indent": indent,
+            "items": items,
+            "formset": formset,
+            "pairs": pairs,
+        },
+    )

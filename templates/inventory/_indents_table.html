@@ -66,6 +66,8 @@
         <a href="{% url 'indent_pdf' row.indent_id %}" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Print / PDF">
           {% icon 'printer' 'w-4 h-4' %}
         </a>
+  {% if row.status|upper == 'SUBMITTED' %}
+  {% if request.user.is_staff or request.user.is_superuser or perms.inventory.change_indent %}
         <form action="{% url 'indent_update_status' row.indent_id 'APPROVED' %}"
               method="post"
               class="inline"
@@ -78,6 +80,48 @@
             {% icon 'check' 'w-4 h-4' %}
           </button>
         </form>
+        {% endif %}
+        {% endif %}
+        {% if row.status|upper == 'APPROVED' %}
+        <form action="{% url 'indent_update_status' row.indent_id 'PROCESSING' %}"
+              method="post"
+              class="inline"
+              hx-post="{% url 'indent_update_status' row.indent_id 'PROCESSING' %}?{{ querystring|default:'' }}&page={{ page_obj.number }}"
+              hx-target="#indents_table"
+              hx-include="#filters"
+              hx-indicator="#indents-loading">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Mark Processing">
+            {% icon 'play' 'w-4 h-4' %}
+          </button>
+        </form>
+        {% endif %}
+        {% if row.status|upper == 'PROCESSING' %}
+        <form action="{% url 'indent_update_status' row.indent_id 'COMPLETED' %}"
+              method="post"
+              class="inline"
+              hx-post="{% url 'indent_update_status' row.indent_id 'COMPLETED' %}?{{ querystring|default:'' }}&page={{ page_obj.number }}"
+              hx-target="#indents_table"
+              hx-include="#filters"
+              hx-indicator="#indents-loading">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Complete">
+            {% icon 'check-circle' 'w-4 h-4' %}
+          </button>
+        </form>
+    <form action="{% url 'indent_update_status' row.indent_id 'CANCELLED' %}"
+              method="post"
+              class="inline"
+              hx-post="{% url 'indent_update_status' row.indent_id 'CANCELLED' %}?{{ querystring|default:'' }}&page={{ page_obj.number }}"
+              hx-target="#indents_table"
+      hx-include="#filters"
+      hx-indicator="#indents-loading">
+          {% csrf_token %}
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-400 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Cancel">
+            {% icon 'x-mark' 'w-4 h-4' %}
+          </button>
+        </form>
+        {% endif %}
       </div>
     </td>
   </tr>

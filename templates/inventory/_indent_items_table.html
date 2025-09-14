@@ -4,14 +4,18 @@
 
 {% block headers %}
   <th scope="col" class="px-4 py-2">Item</th>
-  <th scope="col" class="px-4 py-2">Qty</th>
+  <th scope="col" class="px-4 py-2 text-right">Requested</th>
+  <th scope="col" class="px-4 py-2 text-right">Issued</th>
+  <th scope="col" class="px-4 py-2 text-right">Remaining</th>
 {% endblock %}
 
 {% block rows %}
   {% for row in items %}
     <tr class="odd:bg-gray-50 hover:bg-gray-100">
       <td class="px-4 py-2">{{ row.item.name }}</td>
-      <td class="px-4 py-2">{{ row.requested_qty }}</td>
+      <td class="px-4 py-2 text-right">{{ row.requested_qty }}</td>
+      <td class="px-4 py-2 text-right">{{ row.issued_qty|default:0 }}</td>
+  <td class="px-4 py-2 text-right">{% with rq=row.requested_qty|default:0 iq=row.issued_qty|default:0 %}{{ rq|add:-iq }}{% endwith %}</td>
     </tr>
   {% endfor %}
 {% endblock %}

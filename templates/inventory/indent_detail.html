@@ -3,6 +3,7 @@
 {% block heading %}Indent {{ indent.mrn|default:indent.indent_id }}{% endblock %}
 {% block actions %}
   <a href="{% url 'indent_pdf' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Download PDF</a>
+  <a href="{% url 'issue_indent' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Fulfill Indent</a>
   {% if wa_url %}
   <a href="{{ wa_url }}" target="_blank" rel="noopener" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Prepare WhatsApp Message</a>
   {% endif %}
@@ -14,11 +15,51 @@
 {% block extra_tables %}
   <h2 class="text-h2 md:text-h2 mb-4 mt-8">Items</h2>
   {% include "inventory/_indent_items_table.html" with items=items %}
+  <h2 class="text-h2 md:text-h2 mb-2 mt-6">Linked Purchase Orders</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">PO</th>
+          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Planned Qty</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for ii in items %}
+          {% for link in ii.po_links.all %}
+            <tr>
+              <td class="px-3 py-2 text-sm">{{ ii.item.name }}</td>
+              <td class="px-3 py-2 text-sm">
+                {% with poi=link.po_item %}
+                  <a href="{% url 'purchase_order_detail' poi.purchase_order_id %}" class="text-blue-600 hover:underline">PO {{ poi.purchase_order_id }}</a>
+                {% endwith %}
+              </td>
+              <td class="px-3 py-2 text-sm text-right">{{ link.planned_qty }}</td>
+            </tr>
+          {% endfor %}
+        {% empty %}
+          <tr><td class="px-3 py-2 text-sm text-gray-500" colspan="3">No linked purchase orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   <div class="mt-4 flex gap-2">
+    {% if indent.status|upper == 'SUBMITTED' %}
+    {% if request.user.is_staff or request.user.is_superuser or perms.inventory.change_indent %}
+    <form action="{% url 'indent_update_status' indent.indent_id 'APPROVED' %}" method="post" class="inline">
+      {% csrf_token %}
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Approve</button>
+    </form>
+    {% endif %}
+    {% endif %}
+    {% if indent.status|upper == 'APPROVED' %}
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
       {% csrf_token %}
       <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Processing</button>
     </form>
+    {% endif %}
+    {% if indent.status|upper == 'PROCESSING' %}
     <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
       {% csrf_token %}
       <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Completed</button>
@@ -27,5 +68,6 @@
       {% csrf_token %}
       <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Cancel</button>
     </form>
+    {% endif %}
   </div>
 {% endblock %}

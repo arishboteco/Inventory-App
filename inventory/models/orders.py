@@ -161,6 +161,29 @@ class PurchaseOrderItem(models.Model):
         db_table = "purchase_order_items"
 
 
+class IndentPOLink(models.Model):
+    """Links an indent line to its planned purchase order line."""
+
+    link_id = models.AutoField(primary_key=True)
+    indent_item = models.ForeignKey(
+        "inventory.IndentItem",
+        models.CASCADE,
+        db_column="indent_item_id",
+        related_name="po_links",
+    )
+    po_item = models.ForeignKey(
+        PurchaseOrderItem,
+        models.CASCADE,
+        db_column="po_item_id",
+        related_name="indent_links",
+    )
+    planned_qty = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        managed = True
+        db_table = "indent_po_links"
+
+
 class GoodsReceivedNote(models.Model):
     """Acknowledges receipt of goods for a purchase order."""
 
@@ -169,6 +192,7 @@ class GoodsReceivedNote(models.Model):
     supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     received_date = models.DateField()
     notes = models.TextField(blank=True, null=True, default="")
+    attachment = models.FileField(upload_to="grn_attachments/", blank=True, null=True)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"GRN {self.pk} for PO {self.purchase_order_id}"

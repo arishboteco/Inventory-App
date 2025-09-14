@@ -1,0 +1,52 @@
+{% extends "components/create_manage_layout.html" %}
+{% block page_title %}Consolidate Indents – Inventory App{% endblock %}
+{% block page_heading %}Consolidate Indents{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-gray-900">Approved Items Grouped by Supplier</h2>
+    <a href="{% url 'indents_list' %}" class="text-sm text-gray-600 hover:text-gray-800">Back to Indents</a>
+  </div>
+  <div class="p-4">
+    {% if total_groups == 0 %}
+      <p class="text-sm text-gray-600">No eligible items found for consolidation.</p>
+    {% else %}
+      <form method="post">
+        {% csrf_token %}
+        {% if ids_csv %}<input type="hidden" name="ids" value="{{ ids_csv }}">{% endif %}
+        <div class="space-y-6">
+          {% for group in groups %}
+            <div class="border border-gray-200 rounded-lg">
+              <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                <div class="font-medium">Supplier: {{ group.supplier.name|default:"(Unknown Supplier)" }}</div>
+                <div class="text-xs text-gray-500">{{ group.total_lines }} item{{ group.total_lines|pluralize }}</div>
+              </div>
+              <table class="min-w-full">
+                <thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <tr>
+                    <th class="px-3 py-2">Item</th>
+                    <th class="px-3 py-2">Pending Qty</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  {% for row in group.items %}
+                  <tr class="odd:bg-white even:bg-gray-50">
+                    <td class="px-3 py-2">{{ row.item.name }}</td>
+                    <td class="px-3 py-2 tabular-nums">{{ row.qty|floatformat:2 }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="mt-4 flex items-center justify-end gap-2">
+          <a href="{% url 'indents_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Cancel</a>
+          <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Create Purchase Orders</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

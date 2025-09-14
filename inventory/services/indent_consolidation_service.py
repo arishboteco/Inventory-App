@@ -7,7 +7,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 from django.db import transaction
 from django.utils import timezone
 
-from inventory.models import Indent, IndentItem, Item, PurchaseOrder
+from inventory.models import Indent, IndentItem, Item, PurchaseOrder, PurchaseOrderItem, IndentPOLink
 from . import purchase_order_service
 
 logger = logging.getLogger(__name__)
@@ -86,26 +86,58 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
         )
         created_po_ids.append(po_id)
 
+        # Create linkage rows: allocate each indent item's pending to newly created PO items by item
+        try:
+            with transaction.atomic():
+                po_items = list(
+                    PurchaseOrderItem.objects.filter(purchase_order_id=po_id).values("po_item_id", "item_id", "quantity_ordered")
+                )
+                # Map item_id -> remaining qty on the new PO to allocate to indent items
+                remaining_by_item: Dict[int, Decimal] = {
+                    int(poi["item_id"]): Decimal(str(poi["quantity_ordered"])) for poi in po_items
+                }
+                # For each indent item of this supplier's items, create links up to its pending qty
+                supplier_item_ids = set(item_map.keys())
+                source_indent_items = (
+                    IndentItem.objects.select_related("item")
+                    .filter(indent_id__in=[i.pk for i in indents], item_id__in=supplier_item_ids)
+                    .order_by("indent__date_required", "indent__created_at", "indent_item_id")
+                )
+                for ii in source_indent_items:
+                    item_id = int(ii.item_id)
+                    pending = _pending_qty(ii)
+                    if pending <= 0:
+                        continue
+                    rem = remaining_by_item.get(item_id, Decimal("0"))
+                    if rem <= 0:
+                        continue
+                    alloc = pending if pending <= rem else rem
+                    # Find the corresponding PO item row for this item_id
+                    poi_match = next((x for x in po_items if int(x["item_id"]) == item_id), None)
+                    if not poi_match:
+                        continue
+                    IndentPOLink.objects.create(
+                        indent_item_id=ii.pk,
+                        po_item_id=int(poi_match["po_item_id"]),
+                        planned_qty=alloc,
+                    )
+                    remaining_by_item[item_id] = rem - alloc
+        except Exception:
+            logger.warning("Failed to create IndentPOLink records for PO %s", po_id)
+
     # Mark consolidated indents as PROCESSING if any PO created
     if created_po_ids:
         with transaction.atomic():
             Indent.objects.filter(indent_id__in=[i.pk for i in indents], status="APPROVED").update(status="PROCESSING")
             # Best-effort traceability note on items
             note_suffix = ", ".join([f"PO#{pid}" for pid in created_po_ids])
-            try:
-                IndentItem.objects.filter(indent_id__in=[i.pk for i in indents]).update(
-                    notes=(
-                        ("" if IndentItem.notes.field.default is None else str(IndentItem.notes.field.default))
-                    )
-                )
-            except Exception:
-                # Fallback: append per-row to avoid clobbering existing notes
-                for ii in items:
-                    try:
-                        ii.notes = ((ii.notes or "").strip() + (f" | {note_suffix}" if note_suffix else "")).strip()
-                        ii.save(update_fields=["notes"])
-                    except Exception:
-                        logger.warning("Failed to annotate IndentItem %s with PO refs", ii.pk)
+            # Append per-row to avoid clobbering existing notes
+            for ii in items:
+                try:
+                    ii.notes = ((ii.notes or "").strip() + (f" | {note_suffix}" if note_suffix else "")).strip()
+                    ii.save(update_fields=["notes"])
+                except Exception:
+                    logger.warning("Failed to annotate IndentItem %s with PO refs", ii.pk)
 
     return ConsolidationResult(created_po_ids=created_po_ids, skipped_items=skipped, total_items=total)
 

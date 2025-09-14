@@ -7,9 +7,11 @@ from .views.indents import (
     IndentsListView,
     IndentsTableView,
     indent_detail,
+    issue_indent,
     indent_pdf,
     indent_update_status,
     indents_consolidate,
+    consolidate_indents,
 )
 from .views.items.detail import (
     ItemDeleteView,
@@ -39,6 +41,7 @@ from .views.purchase_orders import (
     purchase_order_create,
     purchase_order_detail,
     purchase_order_edit,
+    mark_ordered,
     purchase_order_receive,
     purchase_orders_list,
 )
@@ -123,6 +126,7 @@ urlpatterns = [
     path("indents/table/", IndentsTableView.as_view(), name="indents_table"),
     path("indents/create/", IndentCreateView.as_view(), name="indent_create"),
     path("indents/<int:pk>/", indent_detail, name="indent_detail"),
+    path("indents/<int:pk>/issue/", issue_indent, name="issue_indent"),
     path(
         "indents/<int:pk>/status/<str:status>/",
         indent_update_status,
@@ -130,6 +134,7 @@ urlpatterns = [
     ),
     path("indents/<int:pk>/pdf/", indent_pdf, name="indent_pdf"),
     path("indents/consolidate/", indents_consolidate, name="indents_consolidate"),
+    path("indents/consolidate/preview/", consolidate_indents, name="indents_consolidate_preview"),
     path("purchase-orders/", purchase_orders_list, name="purchase_orders_list"),
     path(
         "purchase-orders/create/", purchase_order_create, name="purchase_order_create"
@@ -138,6 +143,11 @@ urlpatterns = [
         "purchase-orders/<int:pk>/edit/",
         purchase_order_edit,
         name="purchase_order_edit",
+    ),
+    path(
+        "purchase-orders/<int:pk>/mark-ordered/",
+        mark_ordered,
+        name="purchase_order_mark_ordered",
     ),
     path(
         "purchase-orders/<int:pk>/", purchase_order_detail, name="purchase_order_detail"

@@ -21,6 +21,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-2 justify-end">
           <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'indent_create' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">New Indent</button>
+          <a href="{% url 'indents_consolidate_preview' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Consolidate Approved</a>
         </div>
       </div>
     </div>

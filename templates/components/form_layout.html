@@ -6,7 +6,7 @@
     {% block heading %}{% endblock %}
   </h1>
   {% if form %}
-  <form method="post" {% block form_attrs %}{% endblock %} class="grid grid-cols-1 gap-4">
+  <form method="post" enctype="multipart/form-data" {% block form_attrs %}{% endblock %} class="grid grid-cols-1 gap-4">
     {% csrf_token %}
     {% if form.non_field_errors %}
     <ul class="text-red-600 list-disc pl-5">

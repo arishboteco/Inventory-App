@@ -8,6 +8,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import PurchaseOrder, Supplier
@@ -188,6 +190,7 @@ def purchase_order_detail(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     items = (
         po.purchaseorderitem_set.select_related("item")
+        .prefetch_related("indent_links", "indent_links__indent_item", "indent_links__indent_item__indent")
         .annotate(_received_total=Sum("grnitem__quantity_received"))
         .all()
     )
@@ -256,6 +259,9 @@ def purchase_order_receive(request, pk: int):
                     "notes": form.cleaned_data.get("notes"),
                     "received_by_user_id": getattr(request.user, "username", "System"),
                 }
+                # Include attachment file if uploaded
+                if request.FILES.get("attachment"):
+                    grn_data["attachment"] = request.FILES["attachment"]
                 success, msg, _ = goods_receiving_service.create_grn(
                     grn_data, items_data
                 )
@@ -269,3 +275,27 @@ def purchase_order_receive(request, pk: int):
         "inventory/purchase_orders/receive.html",
         {"form": form, "po": po, "items": items},
     )
+
+
+@require_POST
+def mark_ordered(request, pk: int):
+    """Transition a PO from DRAFT to ORDERED, recording user and timestamp.
+
+    Adds a lightweight audit note to `notes` and redirects back to detail view.
+    """
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    if po.status != "DRAFT":
+        messages.info(request, "Only draft purchase orders can be marked as ordered.")
+        return redirect("purchase_order_detail", pk=pk)
+    po.status = "ORDERED"
+    # Append audit marker in notes (simple, non-invasive)
+    try:
+        username = getattr(request.user, "username", None) or getattr(request.user, "email", "user")
+    except Exception:
+        username = "user"
+    ts = timezone.now().strftime("%Y-%m-%d %H:%M")
+    suffix = f" | Ordered by {username} at {ts}"
+    po.notes = ((po.notes or "").strip() + suffix).strip()
+    po.save(update_fields=["status", "notes"])
+    messages.success(request, "Purchase order marked as ORDERED.")
+    return redirect("purchase_order_detail", pk=pk)

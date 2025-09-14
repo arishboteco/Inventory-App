@@ -52,6 +52,7 @@ def _create_grn_header(
         supplier=supplier,
         received_date=grn_data["received_date"],
         notes=grn_data.get("notes"),
+        attachment=grn_data.get("attachment"),
     )
     return grn, po
 

@@ -8,6 +8,7 @@ from .orders import (
     GRNItem,
     Indent,
     IndentItem,
+    IndentPOLink,
     PurchaseOrder,
     PurchaseOrderItem,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "Supplier",
     "Indent",
     "IndentItem",
+    "IndentPOLink",
     "PurchaseOrder",
     "PurchaseOrderItem",
     "GoodsReceivedNote",

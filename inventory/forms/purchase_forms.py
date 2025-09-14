@@ -34,6 +34,14 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
             )
         self.fields["supplier"].widget = forms.TextInput()
         self.fields["supplier"].widget.attrs.update(supplier_attrs)
+        # Prevent setting ORDERED directly in the form
+        try:
+            status_field = self.fields.get("status")
+            if status_field and getattr(status_field, "choices", None):
+                filtered = [(v, l) for v, l in status_field.choices if str(v).upper() != "ORDERED"]
+                status_field.choices = filtered
+        except Exception:
+            pass
         self.apply_styling()
 
 

@@ -11,6 +11,12 @@
   <a href="{% url 'purchase_order_edit' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Edit</a>
   <a href="{% url 'purchase_order_receive' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Receive Goods</a>
   <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">View GRNs</a>
+  {% if po.status == 'DRAFT' %}
+  <form action="{% url 'purchase_order_mark_ordered' po.pk %}" method="post" class="inline">
+    {% csrf_token %}
+    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Ordered</button>
+  </form>
+  {% endif %}
   <a href="{% url 'purchase_orders_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Back</a>
 {% endblock %}
 {% block detail_table %}
@@ -19,4 +25,50 @@
 {% block extra_tables %}
   <h2 class="text-h2 md:text-h2 mb-4 mt-8">Items</h2>
   {% include "inventory/purchase_orders/_items_table.html" with items=items %}
+  <h2 class="text-h2 md:text-h2 mb-4 mt-8">Linked Indent Lines</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">PO Item</th>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">Indent</th>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
+          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Planned Qty</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for it in items %}
+          {% for link in it.indent_links.all %}
+            <tr>
+              <td class="px-3 py-2 text-sm">{{ it.item.name }}</td>
+              <td class="px-3 py-2 text-sm">
+                <a href="{% url 'indent_detail' link.indent_item.indent_id %}" class="text-blue-600 hover:underline">Indent {{ link.indent_item.indent_id }}</a>
+              </td>
+              <td class="px-3 py-2 text-sm">{{ link.indent_item.item.name }}</td>
+              <td class="px-3 py-2 text-sm text-right">{{ link.planned_qty }}</td>
+            </tr>
+          {% endfor %}
+        {% empty %}
+          <tr><td class="px-3 py-2 text-sm text-gray-500" colspan="4">No linked indent lines.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <h2 class="text-h2 md:text-h2 mb-4 mt-8">GRN Attachments</h2>
+  {% with grns=po.goodsreceivednote_set.all %}
+    {% if grns %}
+      <ul class="list-disc pl-6 text-sm">
+        {% for g in grns %}
+          {% if g.attachment %}
+            <li>
+              <a href="{{ g.attachment.url }}" target="_blank" class="text-blue-600 hover:underline">GRN {{ g.pk }} Attachment</a>
+              <span class="text-gray-500">(received {{ g.received_date }})</span>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-gray-500">No attachments uploaded yet.</p>
+    {% endif %}
+  {% endwith %}
 {% endblock %}

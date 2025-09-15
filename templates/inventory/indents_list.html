@@ -3,6 +3,14 @@
 {% block page_title %}Indents – Inventory App{% endblock %}
 {% block page_heading %}Indents{% endblock %}
 
+{% block primary_actions %}
+  <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'indent_create' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">New Indent</button>
+{% endblock %}
+
+{% block secondary_actions %}
+  <a href="{% url 'indents_consolidate_preview' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Consolidate Approved</a>
+{% endblock %}
+
 {% block filters %}
   {% url 'indents_table' as indents_table_url %}
   <div class="mb-4">
@@ -14,17 +22,10 @@
 
 {% block data_container %}
   <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
-    <div id="indents-toolbar">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
-        <div class="flex items-center gap-2">
-          <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Indents</h2>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 justify-end">
-          <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'indent_create' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">New Indent</button>
-          <a href="{% url 'indents_consolidate_preview' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Consolidate Approved</a>
-        </div>
-      </div>
+    <div class="px-4 pt-4 pb-2 border-b border-gray-100">
+      <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Indents</h2>
     </div>
+    
     <div class="table-scroll group pt-2 md:pt-3">
    <div id="indents_table"
      hx-get="{% url 'indents_table' %}"

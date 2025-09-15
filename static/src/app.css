@@ -55,6 +55,10 @@
   .table-sticky thead th {
     @apply sticky top-0 bg-gray-50 z-20 border-b border-border;
   }
+  /* Subtle shadow when scrolled */
+  .group[data-shadow="true"] thead th {
+    @apply shadow-md;
+  }
 
   /* Spacing below the filter bar */
   #items-list {

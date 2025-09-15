@@ -312,3 +312,51 @@ window.showNotification = (message, type, duration) =>
 if (typeof module !== "undefined" && module.exports) {
   module.exports = NotificationManager;
 }
+
+// Bridge: detect server-sent markers and convert to toasts (e.g., <!-- toast: msg -->)
+function triggerToastsFromComments(root) {
+  try {
+    const walker = document.createTreeWalker(
+      root || document.body,
+      NodeFilter.SHOW_COMMENT,
+      null,
+    );
+    let node;
+    while ((node = walker.nextNode())) {
+      const val = (node.nodeValue || "").trim();
+      const m = val.match(/^toast:\s*([\s\S]*)$/i);
+      if (m) {
+        const msg = (m[1] || "").trim();
+        if (msg) window.notifications.showToast(msg, "success");
+      }
+    }
+  } catch (_) {
+    // no-op
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  triggerToastsFromComments(document.body);
+});
+
+document.addEventListener("htmx:afterSwap", (e) => {
+  // Prefer DOM walk over regex on response text for robustness
+  const target = (e && e.detail && e.detail.target) || null;
+  if (target instanceof Element) {
+    triggerToastsFromComments(target);
+    return;
+  }
+  // Fallback: parse responseText when target not available
+  try {
+    const frag = e.detail && e.detail.xhr ? e.detail.xhr.responseText || "" : "";
+    if (!frag) return;
+    const re = /<!--\s*toast:\s*([^]+?)\s*-->/gi;
+    let m;
+    while ((m = re.exec(frag)) !== null) {
+      const msg = (m[1] || "").trim();
+      if (msg) window.notifications.showToast(msg, "success");
+    }
+  } catch (_) {
+    // no-op
+  }
+});

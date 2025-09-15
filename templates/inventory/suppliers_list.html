@@ -5,7 +5,15 @@
 {% block page_title %}Suppliers – Inventory App{% endblock %}
 {% block page_heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 
-{% block primary_actions %}{% endblock %}
+{% block primary_actions %}
+  <button type="button"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary"
+          data-modal-url="{% url 'supplier_create' %}"
+          data-modal-type="drawer"
+          data-modal-prefetch="idle">
+    New Supplier
+  </button>
+{% endblock %}
 
 {% block secondary_actions %}
   {% url 'suppliers_bulk_delete' as suppliers_bulk_delete_url %}
@@ -14,6 +22,13 @@
   {% with export_url=suppliers_table_url|add:'?export=1' %}
     {% include "components/button.html" with href=export_url variant='secondary' label='Export CSV' %}
   {% endwith %}
+  <button type="button"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary"
+          data-modal-url="{% url 'suppliers_bulk_upload_partial' %}"
+          data-modal-type="drawer"
+          data-modal-prefetch="idle">
+    Bulk Upload
+  </button>
   {% url 'suppliers_list' as suppliers_list_url %}
   {% if view == 'cards' %}
     {% include "components/button.html" with href=suppliers_list_url variant='secondary' label='Table View' %}
@@ -29,12 +44,10 @@
   {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target='#'|add:container_id filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
 {% endblock %}
 
-{% block extra_top %}
-  {% include "inventory/_supplier_form_collapsible.html" with form=form %}
-  {% include "inventory/_supplier_bulk_upload_collapsible.html" with bulk_form=bulk_form %}
-{% endblock %}
+{% block extra_top %}{% endblock %}
 
 {% block data_container %}
+  <div class="table-scroll group">
   <div id="{{ container_id }}"
        hx-get="{% url hx_view_name %}"
        hx-trigger="load"
@@ -45,5 +58,6 @@
       {% url 'supplier_create' as supplier_create_url %}
       {% include "components/empty_state.html" with title="No Suppliers" message="Start by adding your first supplier." cta_label="New Supplier" cta_url=supplier_create_url img='img/no_suppliers.svg' %}
     {% endif %}
+  </div>
   </div>
 {% endblock %}

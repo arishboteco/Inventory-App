@@ -544,14 +544,26 @@ def indent_detail(request, pk: int):
     # Compute remaining quantity for display
     try:
         from decimal import Decimal
+        # Lazy import to avoid circulars at module import time
+        from ..services.units_service import UnitsService  # type: ignore
 
         for it in items:
             rq = Decimal(str(getattr(it, "requested_qty", 0) or 0))
             iq = Decimal(str(getattr(it, "issued_qty", 0) or 0))
-            it.remaining_qty = rq - iq
+            remaining = rq - iq
+            if remaining < 0:
+                remaining = Decimal("0")
+            it.remaining_qty = remaining
+            # Unit display for the linked item (purchase unit for UI)
+            try:
+                unit_id = getattr(getattr(it, "item", None), "unit_id", None)
+                it.unit_display = UnitsService.get_purchase_unit_display(int(unit_id)) if unit_id else ""
+            except Exception:
+                it.unit_display = ""
     except Exception:
         for it in items:
             it.remaining_qty = getattr(it, "requested_qty", 0)
+            it.unit_display = ""
     badge_class = INDENT_STATUS_BADGES.get(indent.status.upper(), "")
     rows = [
         (

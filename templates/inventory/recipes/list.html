@@ -6,7 +6,11 @@
 {% block page_heading %}Recipes{% endblock %}
 
 {% block primary_actions %}
-  <a class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" href="{% url 'recipe_create' %}">New Recipe</a>
+  <button type="button"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary"
+          data-modal-url="{% url 'recipe_create_partial' %}"
+          data-modal-type="drawer"
+          data-modal-prefetch="idle">New Recipe</button>
 {% endblock %}
 
 {% block filters %}
@@ -14,9 +18,7 @@
   {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_list_url hx_target="#recipes_grid" q=q %}
 {% endblock %}
 
-{% block extra_top %}
-  {% include "inventory/recipes/_recipe_create_section.html" %}
-{% endblock %}
+{% block extra_top %}{% endblock %}
 
 {% block data_container %}
   <div id="recipes_grid"

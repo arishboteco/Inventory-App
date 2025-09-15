@@ -4,10 +4,12 @@ from typing import Any
 
 from django.contrib import messages
 from django.db.models import Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.generic import TemplateView
+from django.views import View
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
@@ -111,6 +113,153 @@ class PurchaseOrdersListView(TemplateView):
 purchase_orders_list = PurchaseOrdersListView.as_view()
 
 
+class PurchaseOrdersTableView(TemplateView):
+    """Render only the orders table (HTMX partial).
+
+    Template: inventory/purchase_orders/_table.html
+    """
+
+    template_name = "inventory/purchase_orders/_table.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        orders = PurchaseOrder.objects.select_related("supplier")
+        filters = {
+            "status": "status",
+            "supplier": "supplier_id",
+            "start_date": "order_date__gte",
+            "end_date": "order_date__lte",
+        }
+        allowed_sorts = {"order_date"}
+        orders, params = list_utils.apply_filters_sort(
+            self.request,
+            orders,
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="order_date",
+            default_direction="desc",
+        )
+        page_obj, _ = list_utils.paginate(self.request, orders, default_page_size=20)
+        progress_map = purchase_order_service.get_orders_progress([o.pk for o in page_obj])
+        for o in page_obj:
+            o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+            prog = progress_map.get(o.pk)
+            if prog:
+                o.ordered_total = prog["ordered_total"]
+                o.received_total = prog["received_total"]
+                o.progress_percent = prog["percent"]
+            else:
+                o.ordered_total = Decimal("0")
+                o.received_total = Decimal("0")
+                o.progress_percent = 0
+
+        querystring = list_utils.build_querystring(self.request)
+        ctx.update({
+            "orders": page_obj,
+            "page_obj": page_obj,
+            "querystring": querystring,
+            **params,
+        })
+        return ctx
+
+
+class PurchaseOrderQuickCreatePartialView(View):
+    """Render a drawer partial for quick PO creation and handle submissions.
+
+    GET renders `inventory/purchase_orders/_quick_form_partial.html` with a minimal
+    form (supplier + order_date). POST validates and creates a draft PO, returning
+    JSON suitable for `static/js/modal.js` to close the drawer and redirect.
+    """
+
+    template_name = "inventory/purchase_orders/_quick_form_partial.html"
+
+    def get(self, request):
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
+        ctx = {"form": form}
+        return render(request, self.template_name, ctx)
+
+    def post(self, request):
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
+        if form.is_valid():
+            po = form.save()
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "id": po.pk,
+                    "message": "Purchase order created",
+                    "redirect": reverse("purchase_order_edit", kwargs={"pk": po.pk}),
+                }
+            )
+        return render(request, self.template_name, {"form": form}, status=400)
+
+
+class PurchaseOrderCreatePartialView(View):
+    """Drawer partial for full PO creation with items formset."""
+
+    template_name = "inventory/purchase_orders/_form_partial.html"
+
+    def get(self, request):
+        item_url = reverse("item_search")
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            prefix="items", form_kwargs={"item_suggest_url": item_url}
+        )
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "is_edit": False},
+        )
+
+    def post(self, request):
+        item_url = reverse("item_search")
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            request.POST, prefix="items", form_kwargs={"item_suggest_url": item_url}
+        )
+        if form.is_valid() and formset.is_valid():
+            po_data: dict[str, Any] = {
+                "supplier_id": form.cleaned_data["supplier"].pk,
+                "order_date": form.cleaned_data["order_date"],
+                "expected_delivery_date": form.cleaned_data.get(
+                    "expected_delivery_date"
+                ),
+                "status": form.cleaned_data.get("status"),
+                "notes": form.cleaned_data.get("notes"),
+            }
+            items_data: list[dict[str, Any]] = []
+            for item_form in formset.cleaned_data:
+                if item_form and not item_form.get("DELETE", False):
+                    items_data.append(
+                        {
+                            "item_id": item_form["item"].pk,
+                            "quantity_ordered": item_form["quantity_ordered"],
+                            "unit_price": item_form["unit_price"],
+                        }
+                    )
+            try:
+                po = purchase_order_service.create_po(po_data, items_data)
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "id": getattr(po, "pk", None),
+                        "message": "Purchase order created",
+                        "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
+                    }
+                )
+            except PurchaseOrderServiceError as exc:
+                return JsonResponse({"ok": False, "message": str(exc)}, status=400)
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "is_edit": False},
+            status=400,
+        )
+
+
 def purchase_order_create(request):
     item_url = reverse("item_search")
     supplier_url = reverse("supplier_search")
@@ -184,6 +333,55 @@ def purchase_order_edit(request, pk: int):
         "inventory/purchase_orders/form.html",
         {"form": form, "formset": formset, "is_edit": True, "po": po},
     )
+
+
+class PurchaseOrderEditPartialView(View):
+    """Drawer partial for editing a PO with items formset."""
+
+    template_name = "inventory/purchase_orders/_form_partial.html"
+
+    def get(self, request, pk: int):
+        po = get_object_or_404(PurchaseOrder, pk=pk)
+        item_url = reverse("item_search")
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            instance=po, prefix="items", form_kwargs={"item_suggest_url": item_url}
+        )
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "is_edit": True, "po": po},
+        )
+
+    def post(self, request, pk: int):
+        po = get_object_or_404(PurchaseOrder, pk=pk)
+        item_url = reverse("item_search")
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(request.POST, instance=po, supplier_suggest_url=supplier_url)
+        formset = PurchaseOrderItemFormSet(
+            request.POST,
+            instance=po,
+            prefix="items",
+            form_kwargs={"item_suggest_url": item_url},
+        )
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "id": po.pk,
+                    "message": "Purchase order updated",
+                    "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
+                }
+            )
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "is_edit": True, "po": po},
+            status=400,
+        )
 
 
 def purchase_order_detail(request, pk: int):
@@ -275,6 +473,92 @@ def purchase_order_receive(request, pk: int):
         "inventory/purchase_orders/receive.html",
         {"form": form, "po": po, "items": items},
     )
+
+
+class PurchaseOrderReceivePartialView(View):
+    """Drawer partial for receiving goods against a PO.
+
+    GET renders `inventory/purchase_orders/_receive_partial.html` with GRN form
+    and the items receive table. POST validates and creates a GRN via the
+    goods_receiving_service, returning JSON for modal.js to handle.
+    """
+
+    template_name = "inventory/purchase_orders/_receive_partial.html"
+
+    def get(self, request, pk: int):
+        po = get_object_or_404(PurchaseOrder, pk=pk)
+        items = (
+            po.purchaseorderitem_set.select_related("item")
+            .annotate(_received_total=Sum("grnitem__quantity_received"))
+            .all()
+        )
+        form = GRNForm()
+        ctx = {"form": form, "po": po, "items": items}
+        return render(request, self.template_name, ctx)
+
+    def post(self, request, pk: int):
+        po = get_object_or_404(PurchaseOrder, pk=pk)
+        items = (
+            po.purchaseorderitem_set.select_related("item")
+            .annotate(_received_total=Sum("grnitem__quantity_received"))
+            .all()
+        )
+        form = GRNForm(request.POST)
+        if form.is_valid():
+            any_received = False
+            items_data: list[dict[str, Any]] = []
+            for item in items:
+                qty_field = f"item_{item.pk}"
+                try:
+                    qty = Decimal(request.POST.get(qty_field, 0) or 0)
+                except Exception:
+                    qty = Decimal("0")
+                if qty < 0:
+                    qty = Decimal("0")
+                if qty:
+                    any_received = True
+                    remaining = item.quantity_ordered - item.received_total
+                    if qty > remaining:
+                        form.add_error(
+                            None,
+                            f"Received quantity for {item.item.name} exceeds remaining",
+                        )
+                        continue
+                    items_data.append(
+                        {
+                            "item_id": item.item_id,
+                            "po_item_id": item.pk,
+                            "quantity_ordered_on_po": item.quantity_ordered,
+                            "quantity_received": qty,
+                            "unit_price_at_receipt": item.unit_price,
+                        }
+                    )
+            if not any_received:
+                form.add_error(None, "No quantities received")
+            elif not form.errors:
+                grn_data = {
+                    "po_id": po.pk,
+                    "supplier_id": po.supplier_id,
+                    "received_date": form.cleaned_data["received_date"],
+                    "notes": form.cleaned_data.get("notes"),
+                    "received_by_user_id": getattr(request.user, "username", "System"),
+                }
+                if request.FILES.get("attachment"):
+                    grn_data["attachment"] = request.FILES["attachment"]
+                success, msg, _ = goods_receiving_service.create_grn(grn_data, items_data)
+                if success:
+                    return JsonResponse(
+                        {
+                            "ok": True,
+                            "message": "Goods received recorded",
+                            "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
+                        }
+                    )
+                return JsonResponse({"ok": False, "message": msg}, status=400)
+
+        # If we reach here, show the partial again with errors
+        ctx = {"form": form, "po": po, "items": items}
+        return render(request, self.template_name, ctx, status=400)
 
 
 @require_POST

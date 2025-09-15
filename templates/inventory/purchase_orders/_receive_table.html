@@ -1,21 +1,28 @@
 {% extends "components/responsive_table.html" %}
 
 {% block caption %}<caption>Receive Items</caption>{% endblock %}
+{% block thead_class %}
+<thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+{% endblock %}
 
 {% block headers %}
-  <th scope="col">Item</th>
-  <th scope="col">Ordered</th>
-  <th scope="col">Received</th>
-  <th scope="col">Receive Now</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Item</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Ordered</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Received</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Receive Now</th>
 {% endblock %}
 
 {% block rows %}
   {% for item in items %}
+  <tr class="odd:bg-gray-50 hover:bg-gray-100">
+    <td class="px-4 py-2">{{ item.item.name }}</td>
+    <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.quantity_ordered|floatformat:2 }}</span></td>
+    <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.received_total|floatformat:2 }}</span></td>
+    <td class="px-4 py-2 text-right"><input type="number" step="any" name="item_{{ item.pk }}" class="inline-block w-28 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-right tabular-nums" /></td>
+  </tr>
+  {% empty %}
   <tr>
-    <td>{{ item.item.name }}</td>
-    <td>{{ item.quantity_ordered }}</td>
-    <td>{{ item.received_total }}</td>
-    <td><input type="number" step="any" name="item_{{ item.pk }}" class="block w-24 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" /></td>
+    <td colspan="4" class="px-4 py-2 text-center text-gray-500">No items to receive.</td>
   </tr>
   {% endfor %}
 {% endblock %}

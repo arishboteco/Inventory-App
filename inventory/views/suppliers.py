@@ -430,3 +430,23 @@ class SupplierSearchView(TemplateView):
         suppliers = Supplier.objects.filter(name__icontains=query)[:20]
         ctx["suppliers"] = suppliers
         return ctx
+
+
+class SuppliersBulkUploadPartialView(View):
+    """Return the bulk upload drawer partial for Suppliers.
+
+    Renders `inventory/_bulk_upload_partial.html` with the upload_url pointing
+    to the suppliers list endpoint, so the form posts to the existing handler
+    that supports `bulk_upload=1` and redirects/messages accordingly.
+    """
+
+    def get(self, request):
+        form = BulkUploadForm()
+        ctx = {
+            "form": form,
+            "upload_url": reverse("suppliers_list"),
+            "title": "Bulk Upload Suppliers",
+            "bulk_upload": 1,
+            "help_text": "CSV must include headers compatible with the supplier form fields.",
+        }
+        return render(request, "inventory/_bulk_upload_partial.html", ctx)

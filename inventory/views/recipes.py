@@ -4,6 +4,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.generic import TemplateView
+from django.views import View
+from django.http import JsonResponse
 
 from ..forms.recipe_forms import RecipeComponentFormSet, RecipeForm
 from ..models import Recipe
@@ -126,3 +128,78 @@ def recipe_detail(request, pk: int):
         "inventory/recipes/detail.html",
         {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
     )
+
+
+class RecipeCreatePartialView(View):
+    """Drawer partial for creating a recipe with components."""
+
+    template_name = "inventory/recipes/_form_partial.html"
+
+    def get(self, request):
+        form = RecipeForm()
+        formset = RecipeComponentFormSet(prefix="components")
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "recipe": None, "is_edit": False},
+        )
+
+    def post(self, request):
+        form = RecipeForm(request.POST)
+        formset = RecipeComponentFormSet(request.POST, prefix="components")
+        if form.is_valid() and formset.is_valid():
+            recipe = form.save()
+            formset.instance = recipe
+            formset.save()
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "id": recipe.pk,
+                    "message": "Recipe created",
+                    "redirect": reverse("recipe_detail", kwargs={"pk": recipe.pk}),
+                }
+            )
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "recipe": None, "is_edit": False},
+            status=400,
+        )
+
+
+class RecipeEditPartialView(View):
+    """Drawer partial for editing a recipe with components."""
+
+    template_name = "inventory/recipes/_form_partial.html"
+
+    def get(self, request, pk: int):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        form = RecipeForm(instance=recipe)
+        formset = RecipeComponentFormSet(instance=recipe, prefix="components")
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
+        )
+
+    def post(self, request, pk: int):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        form = RecipeForm(request.POST, instance=recipe)
+        formset = RecipeComponentFormSet(request.POST, instance=recipe, prefix="components")
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "id": recipe.pk,
+                    "message": "Recipe updated",
+                    "redirect": reverse("recipe_detail", kwargs={"pk": recipe.pk}),
+                }
+            )
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
+            status=400,
+        )

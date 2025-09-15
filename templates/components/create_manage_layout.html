@@ -6,6 +6,14 @@
 
 {% block content %}
   {% block page_subtitle %}{% endblock %}
+  <div class="mb-4 flex items-center justify-between gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      {% block secondary_actions %}{% endblock %}
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      {% block primary_actions %}{% endblock %}
+    </div>
+  </div>
   {% block filter_bar %}
     {% block filters %}{% endblock %}
   {% endblock %}

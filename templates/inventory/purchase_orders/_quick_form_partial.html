@@ -1,0 +1,21 @@
+<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-sm">
+  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+    <h3 class="text-lg font-semibold">Quick Purchase Order</h3>
+    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+  </div>
+  <div class="p-4">
+    <form method="post" data-modal-form action="{% url 'purchase_order_quick_create_partial' %}">
+      {% csrf_token %}
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+        {% include "components/form_field.html" with field=form.supplier %}
+        {% include "components/form_field.html" with field=form.order_date %}
+        <input type="hidden" name="status" value="DRAFT" />
+      </div>
+      <div class="col-span-2 flex justify-between items-center gap-2 mt-4">
+        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Create</button>
+      </div>
+      <datalist id="supplier-options"></datalist>
+    </form>
+  </div>
+</div>

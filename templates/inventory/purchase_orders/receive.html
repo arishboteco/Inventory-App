@@ -12,7 +12,9 @@
       <p class="mt-1 text-xs text-gray-500">Optional: upload the scanned GRN or invoice.</p>
     </div>
   </div>
-  {% include "inventory/purchase_orders/_receive_table.html" with items=items %}
+  <div class="table-scroll group pt-2 md:pt-3">
+    {% include "inventory/purchase_orders/_receive_table.html" with items=items %}
+  </div>
 {% endblock %}
 {% block submit_text %}Submit GRN{% endblock %}
 {% block back_url %}{% url 'purchase_orders_list' %}{% endblock %}

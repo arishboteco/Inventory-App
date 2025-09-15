@@ -1,11 +1,17 @@
 {% comment %}
-Responsive table component with sticky headers and row hover states.
+Responsive table base: add sticky header container, aria-live announcer,
+and data hooks for sort and column toggles. Consumers can override blocks.
 {% endcomment %}
-<div{% if container_id %} id="{{ container_id }}"{% endif %} class="max-md:overflow-x-auto">
+<div{% if container_id %} id="{{ container_id }}"{% endif %}
+     class="max-md:overflow-x-auto table-sticky group"
+     data-table-container
+  data-optimistic-sort="true"
+     data-table-key="{% if table_id %}{{ table_id }}{% else %}default{% endif %}">
   {% block actions %}{% endblock %}
+  <div class="sr-only" aria-live="polite" data-table-announcer></div>
   <table class="min-w-full w-full table-auto text-label"{% if table_id %} id="{{ table_id }}"{% endif %}>
-    {% block caption %}{% endblock %}
-    {% block thead_class %}<thead class="sticky top-0 bg-primary text-white z-10">{% endblock %}
+    {% block caption %}<caption class="sr-only">List</caption>{% endblock %}
+    {% block thead_class %}<thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% endblock %}
       <tr>
         {% block headers %}{% endblock %}
       </tr>

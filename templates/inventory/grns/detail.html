@@ -8,5 +8,7 @@
   {% include "components/detail_table.html" with rows=rows %}
 {% endblock %}
 {% block extra_tables %}
-  {% include "inventory/grns/_items_table.html" with items=items %}
+  <div class="table-scroll group pt-2 md:pt-3">
+    {% include "inventory/grns/_items_table.html" with items=items %}
+  </div>
 {% endblock %}

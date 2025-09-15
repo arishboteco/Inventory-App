@@ -538,9 +538,9 @@
             if (window.notifications)
               window.notifications.showToast(data.message || "Saved", "success");
             closeModal();
-            // Navigate to the newly created indent so user sees it immediately, avoiding filtered list cases
-            if (data && data.id) {
-              try { window.location.href = `/indents/${data.id}/`; return; } catch(_) {}
+            // Success navigation: prefer explicit redirect if provided; otherwise reload
+            if (data && data.redirect) {
+              try { window.location.href = data.redirect; return; } catch(_) {}
             }
             window.location.reload();
           } else {

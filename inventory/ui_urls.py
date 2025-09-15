@@ -44,14 +44,26 @@ from .views.purchase_orders import (
     mark_ordered,
     purchase_order_receive,
     purchase_orders_list,
+    PurchaseOrdersTableView,
+    PurchaseOrderQuickCreatePartialView,
+    PurchaseOrderCreatePartialView,
+    PurchaseOrderEditPartialView,
+    PurchaseOrderReceivePartialView,
 )
-from .views.recipes import RecipesListView, recipe_create, recipe_detail
+from .views.recipes import (
+    RecipesListView,
+    recipe_create,
+    recipe_detail,
+    RecipeCreatePartialView,
+    RecipeEditPartialView,
+)
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.suppliers import (
     SupplierCreateView,
     SupplierEditView,
     SuppliersBulkDeleteView,
     SuppliersBulkUploadView,
+    SuppliersBulkUploadPartialView,
     SuppliersCardView,
     SupplierSearchView,
     SuppliersListView,
@@ -112,6 +124,11 @@ urlpatterns = [
         name="suppliers_bulk_upload",
     ),
     path(
+        "suppliers/bulk-upload/partial/",
+        SuppliersBulkUploadPartialView.as_view(),
+        name="suppliers_bulk_upload_partial",
+    ),
+    path(
         "suppliers/bulk-delete/",
         SuppliersBulkDeleteView.as_view(),
         name="suppliers_bulk_delete",
@@ -136,13 +153,29 @@ urlpatterns = [
     path("indents/consolidate/", indents_consolidate, name="indents_consolidate"),
     path("indents/consolidate/preview/", consolidate_indents, name="indents_consolidate_preview"),
     path("purchase-orders/", purchase_orders_list, name="purchase_orders_list"),
+    path("purchase-orders/table/", PurchaseOrdersTableView.as_view(), name="purchase_orders_table"),
+    path(
+        "purchase-orders/quick-create/partial/",
+        PurchaseOrderQuickCreatePartialView.as_view(),
+        name="purchase_order_quick_create_partial",
+    ),
     path(
         "purchase-orders/create/", purchase_order_create, name="purchase_order_create"
+    ),
+    path(
+        "purchase-orders/create/partial/",
+        PurchaseOrderCreatePartialView.as_view(),
+        name="purchase_order_create_partial",
     ),
     path(
         "purchase-orders/<int:pk>/edit/",
         purchase_order_edit,
         name="purchase_order_edit",
+    ),
+    path(
+        "purchase-orders/<int:pk>/edit/partial/",
+        PurchaseOrderEditPartialView.as_view(),
+        name="purchase_order_edit_partial",
     ),
     path(
         "purchase-orders/<int:pk>/mark-ordered/",
@@ -157,11 +190,26 @@ urlpatterns = [
         purchase_order_receive,
         name="purchase_order_receive",
     ),
+    path(
+        "purchase-orders/<int:pk>/receive/partial/",
+        PurchaseOrderReceivePartialView.as_view(),
+        name="purchase_order_receive_partial",
+    ),
     path("grns/", GRNListView.as_view(), name="grn_list"),
     path("grns/<int:pk>/export/", grn_export, name="grn_export"),
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
     path("recipes/create/", recipe_create, name="recipe_create"),
+    path(
+        "recipes/create/partial/",
+        RecipeCreatePartialView.as_view(),
+        name="recipe_create_partial",
+    ),
     path("ml-dashboard/", ml_dashboard, name="ml_dashboard"),
+    path(
+        "recipes/<int:pk>/edit/partial/",
+        RecipeEditPartialView.as_view(),
+        name="recipe_edit_partial",
+    ),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
 ]

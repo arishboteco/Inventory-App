@@ -1,19 +1,26 @@
 {% extends "components/responsive_table.html" %}
 
 {% block caption %}<caption>GRN Items</caption>{% endblock %}
+{% block thead_class %}
+<thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+{% endblock %}
 
 {% block headers %}
-  <th scope="col" class="px-4 py-2">Item</th>
-  <th scope="col" class="px-4 py-2">Ordered</th>
-  <th scope="col" class="px-4 py-2">Received</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Item</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Ordered</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Received</th>
 {% endblock %}
 
 {% block rows %}
   {% for item in items %}
     <tr class="odd:bg-gray-50 hover:bg-gray-100">
       <td class="px-4 py-2">{{ item.po_item.item.name }}</td>
-      <td class="px-4 py-2">{{ item.po_item.quantity_ordered }}</td>
-      <td class="px-4 py-2">{{ item.quantity_received }}</td>
+      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.po_item.quantity_ordered|floatformat:2 }}</span></td>
+      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.quantity_received|floatformat:2 }}</span></td>
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="3" class="px-4 py-2 text-center text-gray-500">No items received yet.</td>
     </tr>
   {% endfor %}
 {% endblock %}

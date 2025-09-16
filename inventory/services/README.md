@@ -1,6 +1,6 @@
 # Service Layer Overview
 
-This package contains all business logic for the Inventory App. Views should be HTTP-only
+This package contains all business logic for the Inventory Pro. Views should be HTTP-only
 and delegate business rules, formatting, and data access to services in this folder.
 
 Key points:

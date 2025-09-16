@@ -19,35 +19,85 @@ logger = logging.getLogger(__name__)
 # by logical section.  Grouping navigation in a single location keeps the
 # structure consistent across templates and makes it easy to add additional
 # sections in the future.
-NAVIGATION_GROUPS: List[tuple[str, List[tuple[str, str]]]] = [
+NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
     (
-        "Operations",
+        "Plan & Request",
         [
-            ("Items & Stock (Inventory)", "items_list"),
-            ("Transactions (Stock Movements)", "stock_movements"),
-            ("Requests (Indents / Requisitions)", "indents_list"),
-            ("Receipts (GRNs)", "grn_list"),
-            ("Purchase Orders (Orders)", "purchase_orders_list"),
+            {
+                "title": "Item Catalog",
+                "description": "Maintain products, variants, and stock policies.",
+                "url_name": "items_list",
+            },
+            {
+                "title": "Recipes & BOMs",
+                "description": "Build formulations and production yields.",
+                "url_name": "recipes_list",
+            },
+            {
+                "title": "Indent Requests",
+                "description": "Capture and prioritise internal demand.",
+                "url_name": "indents_list",
+            },
         ],
     ),
     (
-        "Reference",
+        "Buy & Receive",
         [
-            ("Recipes / BOMs", "recipes_list"),
-            ("Vendors (Suppliers)", "suppliers_list"),
+            {
+                "title": "Purchase Orders",
+                "description": "Plan sourcing and track order progress.",
+                "url_name": "purchase_orders_list",
+            },
+            {
+                "title": "Goods Received Notes",
+                "description": "Verify deliveries and attach supporting docs.",
+                "url_name": "grn_list",
+            },
+            {
+                "title": "Supplier Directory",
+                "description": "Manage vendor contacts and statuses.",
+                "url_name": "suppliers_list",
+            },
         ],
     ),
     (
-        "Analysis",
+        "Fulfill & Track",
         [
-            ("Reports", "history_reports"),
-            ("Dashboards (Visualizations)", "visualizations"),
+            {
+                "title": "Stock Movements",
+                "description": "Review adjustments and inter-store transfers.",
+                "url_name": "stock_movements",
+            },
+            {
+                "title": "Consolidation Planner",
+                "description": "Bundle approved indents into supplier orders.",
+                "url_name": "indents_consolidate_preview",
+            },
+            {
+                "title": "Inventory Explorer",
+                "description": "Search items, batches, and availability.",
+                "url_name": "explore",
+            },
         ],
     ),
     (
-        "Other",
+        "Insights & Settings",
         [
-            ("More / Explore", "explore"),
+            {
+                "title": "Operational Reports",
+                "description": "Analyse trends and audit activity.",
+                "url_name": "history_reports",
+            },
+            {
+                "title": "Visual Dashboards",
+                "description": "Track KPIs and live performance.",
+                "url_name": "visualizations",
+            },
+            {
+                "title": "ML Planner",
+                "description": "Run scenarios and predictive insights.",
+                "url_name": "ml_dashboard",
+            },
         ],
     ),
 ]
@@ -55,9 +105,9 @@ NAVIGATION_GROUPS: List[tuple[str, List[tuple[str, str]]]] = [
 # Flattened list of links is still exposed for convenience in tests and any
 # legacy code that expects a simple sequence of links.
 NAVIGATION_LINKS = [
-    {"title": title, "url_name": url_name}
+    {"title": link["title"], "url_name": link["url_name"], "description": link.get("description", "")}
     for _, links in NAVIGATION_GROUPS
-    for title, url_name in links
+    for link in links
 ]
 
 
@@ -75,7 +125,11 @@ def _resolve_link(link: Mapping[str, str]) -> Mapping[str, str]:
     except NoReverseMatch:
         logger.error("Navigation link '%s' could not be reversed", link["url_name"])
         raise
-    return {"title": link["title"], "url": url, "url_name": link["url_name"]}
+    resolved = {"title": link["title"], "url": url, "url_name": link["url_name"]}
+    description = link.get("description")
+    if description:
+        resolved["description"] = description
+    return resolved
 
 
 def get_navigation_links(
@@ -111,10 +165,11 @@ def get_navigation_groups(
     groups = NAVIGATION_GROUPS if groups is None else list(groups)
     resolved = []
     for category, links in groups:
-        link_dicts = [{"title": t, "url_name": u} for t, u in links]
-        resolved.append(
-            {"category": category, "links": get_navigation_links(link_dicts)}
-        )
+        link_dicts = [
+            {"title": link["title"], "url_name": link["url_name"], "description": link.get("description", "")}
+            for link in links
+        ]
+        resolved.append({"category": category, "links": get_navigation_links(link_dicts)})
     return resolved
 
 

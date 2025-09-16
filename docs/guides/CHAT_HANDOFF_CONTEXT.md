@@ -1,4 +1,4 @@
-# Django Inventory App - Chat Handoff Context
+# Django Inventory Pro - Chat Handoff Context
 
 ## 🚀 **Current Status (August 26, 2025)**
 

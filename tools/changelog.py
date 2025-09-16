@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Changelog maintenance utility for Inventory App development.
+Changelog maintenance utility for Inventory Pro development.
 
 Usage:
     python tools/changelog.py add "feat: new feature description"

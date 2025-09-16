@@ -34,7 +34,40 @@
 
 @layer base {
   :root {
+    /* Primary & links */
     --color-primary: theme("colors.primary");
+    --color-primary-hover: theme("colors.primaryHover");
+    --color-link-hover: theme("colors.linkHover");
+
+    /* Accent */
+    --color-accent: theme("colors.accent");
+    --color-accent-soft: theme("colors.accent.soft");
+    --color-accent-strong: theme("colors.accent.strong");
+    --color-accent-text: theme("colors.accent.text");
+
+    /* Neutrals */
+    --color-body-bg: theme("colors.body");
+    --color-body-text: theme("colors.bodyText");
+    --color-surface: theme("colors.surface");
+    --color-surface-subtle: theme("colors.surfaceSubtle");
+    --color-border: theme("colors.border");
+    --color-form-bg: theme("colors.form.bg");
+    --color-form-text: theme("colors.form.text");
+    --color-form-border: theme("colors.form.border");
+
+    /* Semantic */
+    --success-text: theme("colors.success.text");
+    --success-soft: theme("colors.success.soft");
+    --success-strong: theme("colors.success.strong");
+    --warning-text: theme("colors.warning.text");
+    --warning-soft: theme("colors.warning.soft");
+    --warning-strong: theme("colors.warning.strong");
+    --danger-text: theme("colors.danger.text");
+    --danger-soft: theme("colors.danger.soft");
+    --danger-strong: theme("colors.danger.strong");
+    --info-text: theme("colors.info.text");
+    --info-soft: theme("colors.info.soft");
+    --info-strong: theme("colors.info.strong");
   }
   body {
     @apply bg-body text-bodyText font-sans;
@@ -48,16 +81,42 @@
 }
 
 @layer components {
+  /* Tokens as utility aliases */
+  .card {
+    @apply bg-surface border border-border rounded-xl shadow-card;
+  }
+  .drawer-panel {
+    @apply bg-surface border border-border rounded-xl max-w-drawer-md shadow-overlay;
+  }
+  .modal-panel {
+    @apply bg-surface border border-border rounded-xl shadow-overlay;
+  }
+
+  /* Badges & chips */
+  .badge { @apply inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium; }
+  .badge-success { @apply text-success-text bg-success-soft; }
+  .badge-warning { @apply text-warning-text bg-warning-soft; }
+  .badge-danger { @apply text-danger-text bg-danger-soft; }
+  .badge-info { @apply text-info-text bg-info-soft; }
+
+  .chip { @apply inline-flex items-center gap-2 px-3 py-1 rounded-md text-label bg-surfaceSubtle border border-border; }
+
+  /* Density controls: add one of these to the table container */
+  [data-density="comfortable"] table { @apply text-base; }
+  [data-density="compact"] table { @apply text-sm; }
+  [data-density="comfortable"] td, [data-density="comfortable"] th { @apply px-4 py-3; }
+  [data-density="compact"] td, [data-density="compact"] th { @apply px-3 py-2; }
+
   /* Sticky headers */
   .table-scroll {
     /* Removed fixed height and scroll behavior to allow full-page scrolling */
   }
   .table-sticky thead th {
-    @apply sticky top-0 bg-gray-50 z-20 border-b border-border;
+    @apply sticky top-0 bg-gray-50 z-20 border-b border-border shadow-none;
   }
   /* Subtle shadow when scrolled */
   .group[data-shadow="true"] thead th {
-    @apply shadow-md;
+    @apply shadow-sticky-header;
   }
 
   /* Spacing below the filter bar */

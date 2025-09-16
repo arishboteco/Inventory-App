@@ -232,7 +232,7 @@ tail -f logs/django.log | grep "Performance:"
 
 ## 🎊 **CONGRATULATIONS!**
 
-Your Django Inventory Application now has **professional-grade performance** at **ZERO additional cost**!
+Your Django Inventory Prolication now has **professional-grade performance** at **ZERO additional cost**!
 
 **You're getting**:
 

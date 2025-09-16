@@ -247,7 +247,7 @@ When you're ready to add Redis for maximum performance:
 
 ## 🎊 **CONGRATULATIONS!**
 
-Your Django Inventory Application now has **enterprise-grade performance** with:
+Your Django Inventory Prolication now has **enterprise-grade performance** with:
 
 - ⚡ **Lightning-fast response times**
 - 📈 **Horizontal scaling capability**

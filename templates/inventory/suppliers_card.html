@@ -4,7 +4,7 @@
 {% block content %}
 <div id="suppliers_cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
   {% for row in page_obj %}
-  <div class="bg-white rounded shadow p-4 flex justify-between items-start">
+  <div class="bg-surface border border-border rounded-xl shadow-card p-4 flex justify-between items-start">
     <div>
       <h3 class="text-lg font-semibold">{{ row.name }}</h3>
       <p class="text-sm text-gray-600">{{ row.contact_person }}</p>
@@ -33,12 +33,12 @@
         <input type="hidden" name="sort" value="{{ sort }}" />
         <input type="hidden" name="direction" value="{{ direction }}" />
         <input type="hidden" name="view" value="cards" />
-        <button type="submit" title="Toggle">
+        <button type="submit" title="Toggle" class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-surfaceSubtle hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
           {% if row.is_active %}
           {% icon 'check' 'w-5 h-5 text-success' %}
           <span class="sr-only">Deactivate</span>
           {% else %}
-          {% icon 'x-mark' 'w-5 h-5 text-red-600' %}
+          {% icon 'x-mark' 'w-5 h-5 text-danger' %}
           <span class="sr-only">Activate</span>
           {% endif %}
         </button>
@@ -46,7 +46,7 @@
     </div>
   </div>
   {% empty %}
-  <p class="col-span-full text-center text-form-text">No suppliers found.</p>
+  <p class="col-span-full text-center text-gray-600">No suppliers found.</p>
   {% endfor %}
 </div>
 {% url 'suppliers_cards' as cards_url %}

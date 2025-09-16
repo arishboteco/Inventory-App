@@ -2,44 +2,53 @@
 
 {% block caption %}<caption>Transaction History</caption>{% endblock %}
 
+{% block actions %}
+  <div class="flex items-center justify-end px-3 py-2 bg-gray-50 border-b border-gray-200">
+    <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
+      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
+      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
+    </div>
+  </div>
+{% endblock %}
+
 {% block headers %}
 <th scope="col" class="px-4 py-2 text-right">
-  <a hx-get="{% url 'history_reports' %}?sort=id&direction={% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a data-sort-link href="{% url 'history_reports' %}?sort=id&direction={% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'history_reports' %}?sort=id&direction={% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
      hx-on:click="document.querySelector('#filters input[name=sort]').value='id';document.querySelector('#filters input[name=direction]').value='{% if sort == 'id' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
     ID{% if sort == 'id' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
 </th>
 <th scope="col" class="px-4 py-2">
-  <a hx-get="{% url 'history_reports' %}?sort=item&direction={% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a data-sort-link href="{% url 'history_reports' %}?sort=item&direction={% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'history_reports' %}?sort=item&direction={% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
      hx-on:click="document.querySelector('#filters input[name=sort]').value='item';document.querySelector('#filters input[name=direction]').value='{% if sort == 'item' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
     Item{% if sort == 'item' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
 </th>
 <th scope="col" class="px-4 py-2">
-  <a hx-get="{% url 'history_reports' %}?sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a data-sort-link href="{% url 'history_reports' %}?sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'history_reports' %}?sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
      hx-on:click="document.querySelector('#filters input[name=sort]').value='type';document.querySelector('#filters input[name=direction]').value='{% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
     Type{% if sort == 'type' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
 </th>
 <th scope="col" class="px-4 py-2 text-right">
-  <a hx-get="{% url 'history_reports' %}?sort=qty&direction={% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a data-sort-link href="{% url 'history_reports' %}?sort=qty&direction={% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'history_reports' %}?sort=qty&direction={% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
      hx-on:click="document.querySelector('#filters input[name=sort]').value='qty';document.querySelector('#filters input[name=direction]').value='{% if sort == 'qty' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
     Qty{% if sort == 'qty' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
 </th>
   <th scope="col" class="px-4 py-2 text-right">
-  <a hx-get="{% url 'history_reports' %}?sort=user&direction={% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a data-sort-link href="{% url 'history_reports' %}?sort=user&direction={% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'history_reports' %}?sort=user&direction={% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
      hx-on:click="document.querySelector('#filters input[name=sort]').value='user';document.querySelector('#filters input[name=direction]').value='{% if sort == 'user' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
     User{% if sort == 'user' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}
   </a>
 </th>
   <th scope="col" class="px-4 py-2">
-  <a hx-get="{% url 'history_reports' %}?sort=date&direction={% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+  <a data-sort-link href="{% url 'history_reports' %}?sort=date&direction={% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}" hx-get="{% url 'history_reports' %}?sort=date&direction={% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-target="#history_table" hx-include="#filters" hx-indicator="#htmx-spinner"
      hx-on:click="document.querySelector('#filters input[name=sort]').value='date';document.querySelector('#filters input[name=direction]').value='{% if sort == 'date' and direction == 'asc' %}desc{% else %}asc{% endif %}'">
     Date{% if sort == 'date' %}{% if direction == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}

@@ -1,5 +1,5 @@
 {% extends "components/collapsible.html" %}
 {% block title %}Recent Transactions{% endblock %}
 {% block content %}
-  {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string %}
+  {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string table_id="recent-transactions" %}
 {% endblock %}

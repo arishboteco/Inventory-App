@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order – Inventory App{% endblock %}
+{% block title %}{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order – Inventory Pro{% endblock %}
 {% block heading %}{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Capture supplier, dates, and line items to kick off sourcing.</p>
+{% endblock %}
 {% block form_attrs %}id="po-form"{% endblock %}
 {% block fields %}
   <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">

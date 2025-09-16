@@ -1,16 +1,16 @@
 {% for message in messages %}
   {# Preserve visible alert for non-JS and a11y #}
   {% if 'error' in message.tags %}
-    <div class="p-4 mb-4 border-l-4 rounded-md bg-red-100 text-red-700 border-red-500" role="alert">{{ message }}</div>
+    <div class="p-4 mb-4 border-l-4 rounded-md bg-danger-soft text-danger border-danger-strong" role="alert">{{ message }}</div>
     <!-- toast: {{ message|escape }} -->
   {% elif 'warning' in message.tags %}
-    <div class="p-4 mb-4 border-l-4 rounded-md bg-warning-light text-warning border-warning-border" role="alert">{{ message }}</div>
+    <div class="p-4 mb-4 border-l-4 rounded-md bg-warning-soft text-warning border-warning-strong" role="alert">{{ message }}</div>
     <!-- toast: {{ message|escape }} -->
   {% elif 'success' in message.tags %}
-    <div class="p-4 mb-4 border-l-4 rounded-md bg-success-light text-success border-success-border" role="alert">{{ message }}</div>
+    <div class="p-4 mb-4 border-l-4 rounded-md bg-success-soft text-success border-success-strong" role="alert">{{ message }}</div>
     <!-- toast: {{ message|escape }} -->
   {% else %}
-    <div class="p-4 mb-4 border-l-4 rounded-md bg-blue-100 text-blue-700 border-blue-500" role="alert">{{ message }}</div>
+    <div class="p-4 mb-4 border-l-4 rounded-md bg-accent-soft text-accent-text border-accent-strong" role="alert">{{ message }}</div>
     <!-- toast: {{ message|escape }} -->
   {% endif %}
 {% endfor %}

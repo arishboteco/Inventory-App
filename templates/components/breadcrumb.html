@@ -1,3 +1,36 @@
-{% comment %}
-  Breadcrumbs removed globally. This component intentionally renders nothing.
-{% endcomment %}
+{% load static %}
+{% load icon_tags %}
+{% with list_url=list_url|default:'' list_title=list_title|default:'' current_title=current_title|default:'' %}
+  {% if list_title or current_title %}
+    <nav aria-label="Breadcrumb" class="mb-4">
+      <ol class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+        <li>
+          <a href="{% url 'root' %}" class="inline-flex items-center gap-1 text-primary hover:text-linkHover focus:outline-none focus:ring-2 focus:ring-primary rounded-md px-1 py-0.5">
+            {% icon 'home' 'h-4 w-4' aria_label='' %}
+            <span>Home</span>
+          </a>
+        </li>
+        {% if list_title %}
+          <li class="text-gray-400">
+            {% icon 'chevron-right' 'h-4 w-4' aria_label='' %}
+          </li>
+          <li>
+            {% if list_url %}
+              <a href="{{ list_url }}" class="inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-gray-700 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary">{{ list_title }}</a>
+            {% else %}
+              <span class="inline-flex items-center gap-1 px-1 py-0.5 text-gray-700">{{ list_title }}</span>
+            {% endif %}
+          </li>
+        {% endif %}
+        {% if current_title %}
+          <li class="text-gray-400">
+            {% icon 'chevron-right' 'h-4 w-4' aria_label='' %}
+          </li>
+          <li class="px-1 py-0.5 font-medium rounded-md bg-[var(--color-accent-soft)] text-[var(--color-accent-text)]" aria-current="page">
+            {{ current_title }}
+          </li>
+        {% endif %}
+      </ol>
+    </nav>
+  {% endif %}
+{% endwith %}

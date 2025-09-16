@@ -12,7 +12,7 @@
       {% endif %}
     </div>
     <h4 class="text-sm font-semibold text-gray-800">Items</h4>
-    {% include "inventory/_indent_items_table.html" with items=items %}
+  {% include "inventory/_indent_items_table.html" with items=items table_id="indent-items-{{ indent.indent_id }}" %}
     <div class="mt-2 flex gap-2">
       <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Processing</button></form>
       <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Completed</button></form>

@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}Delete Item – Inventory App{% endblock %}
+{% block title %}Delete Item – Inventory Pro{% endblock %}
 {% block heading %}Delete/Deactivate Item{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Confirm whether to remove this item or simply deactivate it for future use.</p>
+{% endblock %}
 {% block fields %}
   <p class="mb-4">Are you sure you want to delete or deactivate "{{ item.name }}"?</p>
 {% endblock %}

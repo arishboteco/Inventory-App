@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}Receive Purchase Order – Inventory App{% endblock %}
+{% block title %}Receive Purchase Order – Inventory Pro{% endblock %}
 {% block heading %}Receive Goods for PO {{ po.pk }}{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Record quantities received and attach supporting documents.</p>
+{% endblock %}
 {% block fields %}
   <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
     {% for field in form %}
@@ -13,7 +16,7 @@
     </div>
   </div>
   <div class="table-scroll group pt-2 md:pt-3">
-    {% include "inventory/purchase_orders/_receive_table.html" with items=items %}
+    {% include "inventory/purchase_orders/_receive_table.html" with items=items table_id="po-receive-items-{{ po.pk }}" %}
   </div>
 {% endblock %}
 {% block submit_text %}Submit GRN{% endblock %}

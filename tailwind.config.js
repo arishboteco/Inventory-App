@@ -11,8 +11,11 @@ module.exports = {
         xl: "1280px",
         "2xl": "1536px",
       },
+      // Page gutters: 16→24→32 by breakpoint
       padding: {
-        DEFAULT: "2rem",
+        DEFAULT: "1rem",
+        md: "1.5rem",
+        lg: "2rem",
       },
     },
     screens: {
@@ -29,53 +32,71 @@ module.exports = {
     },
     extend: {
       colors: {
-        body: "#ffffff",
-        bodyText: "#111827",
+        // Neutrals & surfaces (warmer feel)
+        body: "#f8f5f0",
+        bodyText: "#1f2937",
+        surface: "#ffffff",
+        surfaceSubtle: "#f3ebe2",
+        border: "#e3d5c8",
+        form: { bg: "#fffaf3", border: "#e8dcca", text: "#1f2937" },
+
+        // Primary brand
         primary: "#2563eb",
         primaryHover: "#1d4ed8",
-        secondary: "#15803d",
-        secondaryHover: "#f9fafb",
-        accent: "#b45309",
-        danger: "#dc2626",
-        dangerHover: "#b91c1c",
+        linkHover: "#1e3a8a",
+
+        // Warm accent for highlights
+        accent: {
+          text: "#92400e",
+          soft: "#fdf2d0",
+          strong: "#f4b740",
+          DEFAULT: "#f59f25",
+        },
+
+        // Semantic palettes
         success: {
-          light: "#dcfce7",
-          soft: "#bbf7d0",
-          border: "#22c55e",
+          text: "#166534",
+          soft: "#dcfce7",
+          strong: "#22c55e",
           DEFAULT: "#15803d",
-          dark: "#166534",
         },
         warning: {
-          lightest: "#fefce8",
-          light: "#fef9c3",
-          soft: "#fef08a",
-          border: "#eab308",
-          medium: "#ca8a04",
+          text: "#854d0e",
+          soft: "#fef3c7",
+          strong: "#f59e0b",
           DEFAULT: "#a16207",
-          dark: "#854d0e",
         },
-        border: "#9ca3af",
-        linkHover: "#1e3a8a",
-        nav: "#ffffff",
-        form: {
-          bg: "#ffffff",
-          border: "#9ca3af",
-          text: "#111827",
+        danger: {
+          text: "#7f1d1d",
+          soft: "#fee2e2",
+          strong: "#ef4444",
+          DEFAULT: "#dc2626",
         },
+        info: {
+          text: "#1e3a8a",
+          soft: "#dbeafe",
+          strong: "#3b82f6",
+          DEFAULT: "#2563eb",
+        },
+
         table: {
-          border: "#9ca3af",
-          headerBg: "#2563eb",
-          headerText: "#ffffff",
+          border: "#e5e7eb",
+          headerBg: "#f9fafb",
+          headerText: "#374151",
           hoverBg: "#f3f4f6",
         },
       },
       spacing: {
-        0.5: "0.125rem",
+        // 4/8/12/16/24 px increments
         1: "0.25rem",
         2: "0.5rem",
+        3: "0.75rem",
         4: "1rem",
         6: "1.5rem",
         8: "2rem",
+        12: "3rem",
+        16: "4rem",
+        24: "6rem",
         9.5: "2.375rem",
         30: "7.5rem",
       },
@@ -88,6 +109,13 @@ module.exports = {
       maxHeight: {
         "screen-90": "90vh",
       },
+      borderRadius: {
+        // Radius tokens
+        sm: "4px",
+        md: "6px",
+        lg: "8px",
+        xl: "12px",
+      },
       fontSize: {
         badge: ["clamp(0.8rem, 0.3vw + 0.7rem, 1rem)", { lineHeight: "1" }],
       },
@@ -95,6 +123,10 @@ module.exports = {
         sans: ["Roboto", "sans-serif"],
       },
       boxShadow: {
+        // Elevation tokens
+        card: "0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)",
+        "sticky-header": "0 2px 4px rgba(0,0,0,0.06)",
+        overlay: "0 10px 25px rgba(0,0,0,0.25)",
         btn: "0 2px 4px rgba(0, 0, 0, 0.25)",
         "form-focus": "0 0 0 2px rgba(29, 78, 216, 0.4)",
       },

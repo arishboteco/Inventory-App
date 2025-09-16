@@ -23,6 +23,15 @@
     }
   }
 
+  function applyDensity(container, key) {
+    try {
+      const val = localStorage.getItem("tableDensity:" + key);
+      if (val === "compact" || val === "comfortable") {
+        container.setAttribute("data-density", val);
+      }
+    } catch (_) {}
+  }
+
   function bindToggles(container, key) {
     container.querySelectorAll("[data-col-toggle]").forEach((ctl) => {
       if (ctl._boundToggle) return;
@@ -149,6 +158,35 @@
     update();
   }
 
+  function bindDensityControls(container, key) {
+    if (container._densityBound) return;
+    container._densityBound = true;
+    const sync = () => {
+      const val = container.getAttribute("data-density") || "";
+      container.querySelectorAll("[data-density-btn]").forEach((b) => {
+        const v = b.getAttribute("data-value") || b.getAttribute("data-density");
+        const on = v === val;
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.classList.toggle("bg-primary", on);
+        b.classList.toggle("text-white", on);
+      });
+    };
+    container.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-density-btn]");
+      if (!btn || !container.contains(btn)) return;
+      const val = btn.getAttribute("data-value") || btn.getAttribute("data-density") || "";
+      if (val === "compact" || val === "comfortable") {
+        container.setAttribute("data-density", val);
+        try {
+          localStorage.setItem("tableDensity:" + key, val);
+        } catch (_) {}
+        sync();
+      }
+    });
+    // Initial sync
+    sync();
+  }
+
   function initTable(root) {
     const containers = (root || document).querySelectorAll(
       "[data-table-container]"
@@ -156,11 +194,13 @@
     containers.forEach((container) => {
       const key = getKey(container);
       applyHidden(container, key);
+      applyDensity(container, key);
       bindToggles(container, key);
       bindStickyShadow(container);
       bindOptimisticSort(container);
       updateAnnouncer(container);
       initBulk(container);
+      bindDensityControls(container, key);
     });
   }
 

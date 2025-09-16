@@ -8,27 +8,32 @@
 {% endblock %}
 
 {% block actions %}
-  <div class="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+  <div class="flex items-center justify-between px-4 py-3 bg-surfaceSubtle border-b border-border rounded-t-xl">
     <div id="bulk-actions-top" class="hidden">
       <div class="flex items-center gap-3">
-        <div id="bulk-count-top" class="text-sm text-gray-700">0 selected</div>
+        <div id="bulk-count-top" class="text-sm text-bodyText">0 selected</div>
         {# Placeholder bulk actions; wire to an endpoint if/when available #}
         <form id="suppliers-bulk-actions-top" class="flex items-center gap-2"
               method="get" action="{% url 'suppliers_table' %}">
           <input type="hidden" name="export" value="1" />
-          <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary"
+          <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary"
                   title="Export selected suppliers">
             Export Selected
           </button>
         </form>
       </div>
     </div>
-    <div class="relative" data-col-menu-container x-data="{open:false}" @click.outside="open=false">
-      <button type="button" data-col-menu-button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">
+    <div class="flex items-center gap-2">
+      <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
+        <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
+        <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
+      </div>
+      <div class="relative" data-col-menu-container x-data="{open:false}" @click.outside="open=false">
+      <button type="button" data-col-menu-button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">
         Columns
         <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
-      <div data-col-menu x-cloak x-show="open" class="absolute right-0 mt-2 z-20 w-56 rounded-md border border-gray-200 bg-white shadow-lg p-2 space-y-1">
+      <div data-col-menu x-cloak x-show="open" class="absolute right-0 mt-2 z-20 w-56 rounded-md border border-border bg-surface shadow-lg p-2 space-y-1">
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="id" checked /> ID</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="name" checked /> Name</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="contact" checked /> Contact</label>
@@ -36,6 +41,7 @@
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="phone" checked /> Phone</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="active" checked /> Active</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="actions" checked /> Actions</label>
+      </div>
       </div>
     </div>
   </div>
@@ -80,7 +86,7 @@
 
 {% block rows %}
   {% for row in page_obj %}
-  <tr class="odd:bg-gray-50 hover:bg-gray-100">
+  <tr class="odd:bg-surfaceSubtle hover:bg-gray-100">
     <td class="px-4 py-2">
       <input type="checkbox" name="supplier_id" value="{{ row.supplier_id }}" aria-label="Select supplier {{ row.name }}" data-bulk-checkbox />
     </td>

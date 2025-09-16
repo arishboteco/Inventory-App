@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}Bulk Delete – Inventory App{% endblock %}
+{% block title %}Bulk Delete – Inventory Pro{% endblock %}
 {% block heading %}{{ title }}{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Upload an identifier list to remove the selected records.</p>
+{% endblock %}
 {% block form_attrs %}enctype="multipart/form-data"{% endblock %}
 {% block fields %}
   {% for field in form %}

@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Inventory App{% endblock %}</title>
+    <title>{% block title %}Inventory Pro{% endblock %}</title>
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml" />
   <link rel="alternate icon" href="{% static 'img/favicon.svg' %}" />
     <link href="{% static 'css/app.css' %}?v={{ STATIC_VERSION }}" rel="stylesheet">
@@ -48,7 +48,7 @@
   <script src="{% static 'js/tables.js' %}?v={{ STATIC_VERSION }}" defer></script>
     {% block extra_css %}{% endblock %}
   </head>
-  <body class="min-h-screen bg-gray-50">
+  <body class="min-h-screen">
     <!-- Top Navigation -->
     {% include "components/top_nav.html" with nav_heading=block.nav_heading %}
 
@@ -71,7 +71,7 @@
       </div>
 
         <!-- Page Content -->
-        <main class="flex-1 p-6 bg-gray-50">
+        <main class="flex-1 p-6 bg-surfaceSubtle">
         {% block breadcrumbs %}{% endblock %}
         {% if messages %}
           {% include "components/alert.html" %}

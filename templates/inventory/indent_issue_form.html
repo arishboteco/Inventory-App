@@ -1,39 +1,42 @@
-{% extends "_base.html" %}
+{% extends "components/form_layout.html" %}
 {% block title %}Fulfill Indent – {{ indent.mrn|default:indent.indent_id }}{% endblock %}
-{% block content %}
-<div class="max-w-3xl mx-auto bg-white rounded-xl shadow border border-gray-200 p-6">
-  <h1 class="text-h1 mb-4">Fulfill Indent {{ indent.mrn|default:indent.indent_id }}</h1>
+{% block heading %}Fulfill Indent {{ indent.mrn|default:indent.indent_id }}{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Review pending quantities and confirm what you are issuing right now.</p>
+{% endblock %}
+{% block form_body %}
   <form method="post" class="space-y-4">
     {% csrf_token %}
-  {{ formset.management_form }}
-    <table class="min-w-full border divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Requested</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Issued</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Pending</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Issue Now</th>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">Source</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for row, form in pairs %}
+    {{ formset.management_form }}
+    <div class="bg-surface border border-border rounded-xl shadow-card">
+      <table class="min-w-full divide-y divide-border">
+        <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
           <tr>
-            <td class="px-3 py-2 text-sm">{{ row.item.name }}</td>
-            <td class="px-3 py-2 text-sm text-right">{{ row.requested_qty }}</td>
-            <td class="px-3 py-2 text-sm text-right">{{ row.issued_qty|default:0 }}</td>
-            <td class="px-3 py-2 text-sm text-right">{{ row.remaining_qty }}</td>
-            <td class="px-3 py-2 text-sm">{{ form.issue_qty }}{{ form.indent_item_id }}</td>
-            <td class="px-3 py-2 text-sm">{{ form.source_location }}</td>
+            <th class="px-3 py-2">Item</th>
+            <th class="px-3 py-2 text-right">Requested</th>
+            <th class="px-3 py-2 text-right">Issued</th>
+            <th class="px-3 py-2 text-right">Pending</th>
+            <th class="px-3 py-2 text-right">Issue Now</th>
+            <th class="px-3 py-2">Source</th>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <div class="mt-4 flex gap-2 justify-end">
-      <a href="{% url 'indent_detail' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-white text-gray-700 border border-gray-300 hover:bg-gray-50">Cancel</a>
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover">Issue Selected</button>
+        </thead>
+        <tbody class="divide-y divide-border text-sm">
+          {% for row, form in pairs %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle">
+              <td class="px-3 py-2 align-top">{{ row.item.name }}</td>
+              <td class="px-3 py-2 text-right align-top">{{ row.requested_qty }}</td>
+              <td class="px-3 py-2 text-right align-top">{{ row.issued_qty|default:0 }}</td>
+              <td class="px-3 py-2 text-right align-top">{{ row.remaining_qty }}</td>
+              <td class="px-3 py-2 text-right align-top">{{ form.issue_qty }}{{ form.indent_item_id }}</td>
+              <td class="px-3 py-2 align-top">{{ form.source_location }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2">
+      <a href="{% url 'indent_detail' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-gray-700 border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Cancel</a>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Issue Selected</button>
     </div>
   </form>
-</div>
 {% endblock %}

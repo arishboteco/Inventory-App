@@ -1,31 +1,50 @@
 {% extends "components/detail_layout.html" %}
-{% block title %}Indent Detail – Inventory App{% endblock %}
+{% block title %}Indent Detail – Inventory Pro{% endblock %}
 {% block heading %}Indent {{ indent.mrn|default:indent.indent_id }}{% endblock %}
+{% block status_badge %}
+  <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-surfaceSubtle text-bodyText">
+    Status:
+    <span class="text-accent-text">{{ indent.get_status_display }}</span>
+  </span>
+{% endblock %}
+{% block heading_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">
+      MRN: <span class="text-bodyText">{{ indent.mrn|default:'—' }}</span>
+    </span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">
+      Department: <span class="text-bodyText">{{ indent.department|default:'—' }}</span>
+    </span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">
+      Needed by: <span class="text-bodyText">{{ indent.date_required|default:'—' }}</span>
+    </span>
+  </div>
+{% endblock %}
 {% block actions %}
-  <a href="{% url 'indent_pdf' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Download PDF</a>
-  <a href="{% url 'issue_indent' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Fulfill Indent</a>
+  <a href="{% url 'indent_pdf' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Download PDF</a>
+  <a href="{% url 'issue_indent' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Fulfill Indent</a>
   {% if wa_url %}
-  <a href="{{ wa_url }}" target="_blank" rel="noopener" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Prepare WhatsApp Message</a>
+  <a href="{{ wa_url }}" target="_blank" rel="noopener" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Prepare WhatsApp</a>
   {% endif %}
-  <a href="{% url 'indents_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Back</a>
+  <a href="{% url 'indents_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Back</a>
 {% endblock %}
 {% block detail_table %}
   {% include "components/detail_table.html" with rows=rows %}
 {% endblock %}
 {% block extra_tables %}
   <h2 class="text-h2 md:text-h2 mb-4 mt-8">Items</h2>
-  {% include "inventory/_indent_items_table.html" with items=items %}
+  {% include "inventory/_indent_items_table.html" with items=items table_id="indent-items-{{ indent.indent_id }}" %}
   <h2 class="text-h2 md:text-h2 mb-2 mt-6">Linked Purchase Orders</h2>
   <div class="overflow-x-auto">
-    <table class="min-w-full border divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+    <table class="min-w-full border border-border divide-y divide-border">
+      <thead class="bg-surfaceSubtle">
         <tr>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-gray-700">PO</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-gray-700">Planned Qty</th>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">Item</th>
+          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">PO</th>
+          <th class="px-3 py-2 text-right text-sm font-semibold text-bodyText">Planned Qty</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-border">
         {% for ii in items %}
           {% for link in ii.po_links.all %}
             <tr>
@@ -49,20 +68,20 @@
     {% if request.user.is_staff or request.user.is_superuser or perms.inventory.change_indent %}
     <form action="{% url 'indent_update_status' indent.indent_id 'APPROVED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Approve</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-bodyText border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Approve</button>
     </form>
     {% endif %}
     {% endif %}
     {% if indent.status|upper == 'APPROVED' %}
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Processing</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-bodyText border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Processing</button>
     </form>
     {% endif %}
     {% if indent.status|upper == 'PROCESSING' %}
     <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Completed</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-bodyText border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Completed</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
       {% csrf_token %}

@@ -1,4 +1,4 @@
-# CHANGELOG - Inventory App Development
+# CHANGELOG - Inventory Pro Development
 
 All notable changes to this project will be documented in this file.
 

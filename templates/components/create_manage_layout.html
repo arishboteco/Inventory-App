@@ -1,34 +1,57 @@
 {% extends "_base.html" %}
 {% load static %}
+{% comment %}
+Layout for list/overview pages. Exposes optional slots:
+- page_subtitle: short descriptive sentence below the heading.
+- page_meta: wrap filter chips or summary stats (rendered under subtitle).
+- page_status: deprecated; prefer page_meta.
+- page_eyebrow / hero_extra: additional labels or calls to action.
+{% endcomment %}
 
 {% block title %}{% block page_title %}Manage{% endblock %}{% endblock %}
-{% block nav_heading %}{% block page_heading %}{% endblock %}{% endblock %}
+{% block nav_heading %}{% endblock %}
 
 {% block content %}
-  {% block page_subtitle %}{% endblock %}
-  <div class="mb-4 flex items-center justify-between gap-2">
-    <div class="flex flex-wrap items-center gap-2">
-      {% block secondary_actions %}{% endblock %}
+  <section class="space-y-6">
+    <div class="bg-surface border border-border rounded-2xl shadow-card p-6">
+      <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div class="space-y-2">
+          {% block page_eyebrow %}{% endblock %}
+          <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-2xl md:text-3xl font-semibold text-bodyText">{% block page_heading %}{% endblock %}</h1>
+            {% block page_status %}{% endblock %}
+          </div>
+          {% block page_subtitle %}{% endblock %}
+          {% block page_meta %}{% endblock %}
+        </div>
+        <div class="flex flex-col gap-2 w-full md:w-auto md:items-end">
+          <div class="flex flex-wrap items-center gap-2 justify-start md:justify-end">
+            {% block secondary_actions %}{% endblock %}
+          </div>
+          <div class="flex flex-wrap items-center gap-2 justify-start md:justify-end">
+            {% block primary_actions %}{% endblock %}
+          </div>
+        </div>
+      </div>
+      {% block hero_extra %}{% endblock %}
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-      {% block primary_actions %}{% endblock %}
-    </div>
-  </div>
-  {% block filter_bar %}
-    {% block filters %}{% endblock %}
-  {% endblock %}
 
-  {% block description %}{% endblock %}
-  {% block kpis %}{% endblock %}
-  {% block extra_top %}{% endblock %}
+    {% block filter_bar %}
+      {% block filters %}{% endblock %}
+    {% endblock %}
 
-  {% block table_container %}
-  <div id="{% block table_id %}{% endblock %}">
-    {% block data_container %}{% endblock %}
-  </div>
-  {% block bulk_actions %}{% endblock %}
-  {% block pagination %}{% endblock %}
-  {% endblock %}
+    {% block description %}{% endblock %}
+    {% block kpis %}{% endblock %}
+    {% block extra_top %}{% endblock %}
+
+    {% block table_container %}
+      <div id="{% block table_id %}{% endblock %}">
+        {% block data_container %}{% endblock %}
+      </div>
+      {% block bulk_actions %}{% endblock %}
+      {% block pagination %}{% endblock %}
+    {% endblock %}
+  </section>
 {% endblock %}
 
 {% block extra_js %}

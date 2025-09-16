@@ -1,27 +1,45 @@
 {% extends "_base.html" %}
-{% block title %}Form – Inventory App{% endblock %}
+{% comment %}
+Form layout exposes hooks for header_prefix, heading_badge, form_summary, and form_body.
+Override `form_body` when rendering custom markup instead of the default table of fields.
+{% endcomment %}
+{% block title %}Form – Inventory Pro{% endblock %}
 {% block content %}
-<div class="{% block form_container_class %}w-full max-w-4xl max-md:max-w-xl max-sm:max-w-md mx-auto max-h-screen overflow-y-auto p-8 max-sm:p-4{% endblock %}">
-  <h1 class="text-xl md:text-h2 font-semibold mb-4">
-    {% block heading %}{% endblock %}
-  </h1>
-  {% if form %}
-  <form method="post" enctype="multipart/form-data" {% block form_attrs %}{% endblock %} class="grid grid-cols-1 gap-4">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <ul class="text-red-600 list-disc pl-5">
-      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-    </ul>
-    {% endif %}
-    {% block fields %}{% endblock %}
-    <div class="flex gap-2">
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">{% block submit_text %}Save{% endblock %}</button>
-      <a href="{% block back_url %}{% endblock %}" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">{% block back_text %}Cancel{% endblock %}</a>
+<div class="w-full max-w-4xl mx-auto space-y-6 px-4 md:px-0">
+  <div class="bg-surface border border-border rounded-2xl shadow-card p-6">
+    <div class="space-y-2">
+      {% block header_prefix %}{% endblock %}
+      <div class="flex flex-wrap items-center gap-3">
+        {% block heading_wrapper %}
+          <h1 class="text-2xl md:text-3xl font-semibold text-bodyText">{% block heading %}{% endblock %}</h1>
+        {% endblock %}
+        {% block heading_badge %}{% endblock %}
+      </div>
+      {% block form_summary %}{% endblock %}
     </div>
-  </form>
-  {% block extra %}{% endblock %}
-  {% else %}
-    {% block no_form %}<p>Unable to load form.</p>{% endblock %}
-  {% endif %}
+    {% block header_extra %}{% endblock %}
+  </div>
+  <div class="{% block form_container_class %}bg-surface border border-border rounded-2xl shadow-card p-6 space-y-4 max-h-screen overflow-y-auto{% endblock %}">
+    {% block form_body %}
+      {% if form %}
+        <form method="post" enctype="multipart/form-data" {% block form_attrs %}{% endblock %} class="grid grid-cols-1 gap-4">
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <ul class="text-danger-soft text-sm border border-danger-soft rounded-md bg-white/40 px-3 py-2">
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+          {% block fields %}{% endblock %}
+          <div class="flex flex-wrap gap-2 justify-end">
+            <button type="submit" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">{% block submit_text %}Save{% endblock %}</button>
+            <a href="{% block back_url %}{% endblock %}" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-gray-700 border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">{% block back_text %}Cancel{% endblock %}</a>
+          </div>
+        </form>
+        {% block extra %}{% endblock %}
+      {% else %}
+        {% block no_form %}<p>Unable to load form.</p>{% endblock %}
+      {% endif %}
+    {% endblock %}
+  </div>
 </div>
 {% endblock %}

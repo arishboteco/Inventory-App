@@ -2,11 +2,20 @@
 
 {% block caption %}<caption>Recent Transactions</caption>{% endblock %}
 
+{% block actions %}
+  <div class="flex items-center justify-end px-3 py-2 bg-gray-50 border-b border-gray-200">
+    <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
+      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
+      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
+    </div>
+  </div>
+{% endblock %}
+
 {% block headers %}
-  <th scope="col">ID</th>
+  <th scope="col" class="text-right">ID</th>
   <th scope="col">Item</th>
   <th scope="col">Type</th>
-  <th scope="col">Qty</th>
+  <th scope="col" class="text-right">Qty</th>
   <th scope="col">User</th>
   <th scope="col">Date</th>
   <th scope="col">Notes</th>
@@ -15,7 +24,7 @@
 {% block rows %}
   {% for tx in page_obj %}
   <tr>
-    <td>{{ tx.transaction_id }}</td>
+    <td class="text-right"><span class="tabular-nums">{{ tx.transaction_id }}</span></td>
     <td>{{ tx.item.name }}</td>
     <td>
       {% if tx.direction == 'in' %}
@@ -24,7 +33,7 @@
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">OUT</span>
       {% endif %}
     </td>
-    <td>{{ tx.quantity_change }}</td>
+  <td class="text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
     <td>{{ tx.user_id }}</td>
     <td>{{ tx.transaction_date }}</td>
     <td>{{ tx.notes }}</td>

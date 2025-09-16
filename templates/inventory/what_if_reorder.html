@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}What-if Reorder – Inventory App{% endblock %}
+{% block title %}What-if Reorder – Inventory Pro{% endblock %}
 {% block heading %}What-if Reorder{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Run reorder simulations to anticipate purchase and production needs.</p>
+{% endblock %}
 {% block fields %}
   {% include "components/form_field.html" with field=form.items %}
   {% include "components/form_field.html" with field=form.reorder_point %}

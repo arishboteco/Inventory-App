@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}{{ title }} – Inventory App{% endblock %}
+{% block title %}{{ title }} – Inventory Pro{% endblock %}
 {% block heading %}{{ title }}{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Download the template, fill in the details, and upload to create or update records in bulk.</p>
+{% endblock %}
 {% block form_attrs %}enctype="multipart/form-data"{% endblock %}
 {% block fields %}
   {% for field in form %}

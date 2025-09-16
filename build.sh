@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 🚀 Render.com build script for Django Inventory App - FIXED THREADING
+# 🚀 Render.com build script for Django Inventory Pro - FIXED THREADING
 # 🔧 Updated: 2025-08-27 - Using sync workers to prevent threading errors
 
 set -o errexit  # exit on error

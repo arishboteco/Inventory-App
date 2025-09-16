@@ -21,9 +21,10 @@
           <button type="button" data-nav-trigger aria-haspopup="true" aria-expanded="false"
                   class="nav-link flex items-center gap-1 {% if is_active %}nav-link--active text-label{% else %}nav-link--inactive text-label{% endif %}">
             <span class="flex items-center gap-1">
-              {% if 'Operations' in group.category %}{% icon 'wrench' 'h-4 w-4 text-gray-500' aria_label='' %}
-              {% elif 'Reference' in group.category %}{% icon 'book-open' 'h-4 w-4 text-gray-500' aria_label='' %}
-              {% elif 'Analysis' in group.category %}{% icon 'chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% if 'Plan' in group.category %}{% icon 'clipboard-document-list' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% elif 'Buy' in group.category %}{% icon 'truck' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% elif 'Fulfill' in group.category %}{% icon 'arrows-right-left' 'h-4 w-4 text-gray-500' aria_label='' %}
+              {% elif 'Insights' in group.category %}{% icon 'chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
               {% else %}{% icon 'ellipsis-horizontal' 'h-4 w-4 text-gray-500' aria_label='' %}{% endif %}
               <span>{{ group.category|safe }}</span>
             </span>
@@ -34,7 +35,7 @@
               {% for link in group.links %}
                 <li role="none">
                   {% if request.resolver_match.url_name == link.url_name %}
-                    <a role="menuitem" href="{{ link.url }}" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50" data-nav-link>
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50" data-nav-link>
                       {% if link.url_name == 'items_list' %}{% icon 'cube' 'h-4 w-4 text-blue-600' aria_label='' %}
                       {% elif link.url_name == 'stock_movements' %}{% icon 'arrows-right-left' 'h-4 w-4 text-blue-600' aria_label='' %}
                       {% elif link.url_name == 'indents_list' %}{% icon 'clipboard-document-list' 'h-4 w-4 text-blue-600' aria_label='' %}
@@ -44,12 +45,18 @@
                       {% elif link.url_name == 'suppliers_list' %}{% icon 'truck' 'h-4 w-4 text-blue-600' aria_label='' %}
                       {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-blue-600' aria_label='' %}
                       {% elif link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-blue-600' aria_label='' %}
+                      {% elif link.url_name == 'ml_dashboard' %}{% icon 'sparkles' 'h-4 w-4 text-blue-600' aria_label='' %}
                       {% elif link.url_name == 'explore' %}{% icon 'magnifying-glass-plus' 'h-4 w-4 text-blue-600' aria_label='' %}
                       {% else %}{% icon 'square-2-stack' 'h-4 w-4 text-blue-600' aria_label='' %}{% endif %}
-                      <span class="truncate">{{ link.title|safe }}</span>
+                      <span class="flex flex-col text-left">
+                        <span class="truncate">{{ link.title|safe }}</span>
+                        {% if link.description %}
+                          <span class="text-xs font-normal text-blue-900/70 leading-tight">{{ link.description }}</span>
+                        {% endif %}
+                      </span>
                     </a>
                   {% else %}
-                    <a role="menuitem" href="{{ link.url }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-nav-link>
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-nav-link>
                       {% if link.url_name == 'items_list' %}{% icon 'cube' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'stock_movements' %}{% icon 'arrows-right-left' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'indents_list' %}{% icon 'clipboard-document-list' 'h-4 w-4 text-gray-500' aria_label='' %}
@@ -59,9 +66,15 @@
                       {% elif link.url_name == 'suppliers_list' %}{% icon 'truck' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
+                      {% elif link.url_name == 'ml_dashboard' %}{% icon 'sparkles' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'explore' %}{% icon 'magnifying-glass-plus' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% else %}{% icon 'square-2-stack' 'h-4 w-4 text-gray-500' aria_label='' %}{% endif %}
-                      <span class="truncate">{{ link.title|safe }}</span>
+                      <span class="flex flex-col text-left">
+                        <span class="truncate">{{ link.title|safe }}</span>
+                        {% if link.description %}
+                          <span class="text-xs font-normal text-gray-500 leading-tight">{{ link.description }}</span>
+                        {% endif %}
+                      </span>
                     </a>
                   {% endif %}
                 </li>

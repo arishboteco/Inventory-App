@@ -3,20 +3,20 @@ Responsive table base: add sticky header container, aria-live announcer,
 and data hooks for sort and column toggles. Consumers can override blocks.
 {% endcomment %}
 <div{% if container_id %} id="{{ container_id }}"{% endif %}
-     class="max-md:overflow-x-auto table-sticky group"
-     data-table-container
+  class="max-md:overflow-x-auto table-scroll table-sticky group bg-surface"
+  data-table-container
   data-optimistic-sort="true"
-     data-table-key="{% if table_id %}{{ table_id }}{% else %}default{% endif %}">
+  data-table-key="{% if table_id %}{{ table_id }}{% elif container_id %}{{ container_id }}{% else %}{{ request.path|default:'default' }}{% endif %}">
   {% block actions %}{% endblock %}
   <div class="sr-only" aria-live="polite" data-table-announcer></div>
   <table class="min-w-full w-full table-auto text-label"{% if table_id %} id="{{ table_id }}"{% endif %}>
     {% block caption %}<caption class="sr-only">List</caption>{% endblock %}
-    {% block thead_class %}<thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% endblock %}
+    {% block thead_class %}<thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">{% endblock %}
       <tr>
         {% block headers %}{% endblock %}
       </tr>
     </thead>
-    <tbody class="bg-white divide-y divide-border">
+    <tbody class="bg-surface divide-y divide-border">
       {% block rows %}{% endblock %}
     </tbody>
   </table>

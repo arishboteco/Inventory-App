@@ -1,6 +1,9 @@
 {% extends "components/form_layout.html" %}
-{% block title %}Recipe Detail – Inventory App{% endblock %}
+{% block title %}Recipe Detail – Inventory Pro{% endblock %}
 {% block heading %}{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600">Capture ingredients and yields to keep production aligned.</p>
+{% endblock %}
 {% block form_attrs %}id="recipe-form"{% endblock %}
 {% block fields %}
   {% include "inventory/recipes/_form_fields.html" with form=form %}

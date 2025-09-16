@@ -1,8 +1,32 @@
 {% extends "_base.html" %}
-{% block title %}Detail – Inventory App{% endblock %}
+{% comment %}
+Detail layout supports optional heading_prefix, status_badge, heading_meta, hero_extra, and detail_body blocks.
+Use these to add status chips, summary info, and supporting tables.
+{% endcomment %}
+{% block title %}Detail – Inventory Pro{% endblock %}
 {% block content %}
-  <h1 class="text-xl md:text-h2 font-semibold mb-4">{% block heading %}{% endblock %}</h1>
-  <div class="mb-4 flex justify-end gap-2">{% block actions %}{% endblock %}</div>
-  {% block detail_table %}{% endblock %}
-  {% block extra_tables %}{% endblock %}
+  <section class="space-y-6">
+    <div class="bg-surface border border-border rounded-2xl shadow-card p-6">
+      <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div class="space-y-2">
+          {% block heading_prefix %}{% endblock %}
+          <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-2xl md:text-3xl font-semibold text-bodyText">{% block heading %}{% endblock %}</h1>
+            {% block status_badge %}{% endblock %}
+          </div>
+          {% block heading_subtitle %}{% endblock %}
+          {% block heading_meta %}{% endblock %}
+        </div>
+        <div class="flex flex-wrap justify-end gap-2">
+          {% block actions %}{% endblock %}
+        </div>
+      </div>
+      {% block hero_extra %}{% endblock %}
+    </div>
+
+    {% block detail_body %}
+      {% block detail_table %}{% endblock %}
+      {% block extra_tables %}{% endblock %}
+    {% endblock %}
+  </section>
 {% endblock %}

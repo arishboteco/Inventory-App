@@ -89,28 +89,60 @@ def build_filters(request) -> List[Dict[str, Any]]:
         {
             "name": "category",
             "label": "Category",
-            "value": [v for v in (resolved["category"].split(",") if isinstance(resolved["category"], str) else (resolved["category"] or [])) if v],
+            "value": [
+                v
+                for v in (
+                    resolved["category"].split(",")
+                    if isinstance(resolved["category"], str)
+                    else (resolved["category"] or [])
+                )
+                if v
+            ],
             "options": category_options,
             "multiple": True,
         },
         {
             "name": "subcategory",
             "label": "Subcategory",
-            "value": [v for v in (resolved["subcategory"].split(",") if isinstance(resolved["subcategory"], str) else (resolved["subcategory"] or [])) if v],
+            "value": [
+                v
+                for v in (
+                    resolved["subcategory"].split(",")
+                    if isinstance(resolved["subcategory"], str)
+                    else (resolved["subcategory"] or [])
+                )
+                if v
+            ],
             "options": subcategory_options,
             "multiple": True,
         },
         {
             "name": "base_unit",
             "label": "Unit",
-            "value": [v for v in (resolved["base_unit"].split(",") if isinstance(resolved["base_unit"], str) else (resolved["base_unit"] or [])) if v],
+            "value": [
+                v
+                for v in (
+                    resolved["base_unit"].split(",")
+                    if isinstance(resolved["base_unit"], str)
+                    else (resolved["base_unit"] or [])
+                )
+                if v
+            ],
             "options": base_unit_options,
             "multiple": True,
         },
         {
             "name": "supplier",
             "label": "Supplier",
-            "value": [v for v in (resolved["supplier"].split(",") if isinstance(resolved["supplier"], str) else (resolved["supplier"] or [])) if v],
+            "value": [
+                v
+                for v in (
+                    resolved["supplier"].split(",")
+                    if isinstance(resolved["supplier"], str)
+                    else (resolved["supplier"] or [])
+                )
+                if v
+            ],
             "options": supplier_options,
             "multiple": True,
         },

@@ -99,9 +99,9 @@ class GRNListView(TemplateView):
                     grn_data, items_data
                 )
                 if success:
-                    messages.success(request, "GRN created")
+                    messages.success(request, "GRN created", extra_tags="toast")
                     return redirect("grn_list")
-                messages.error(request, msg)
+                messages.error(request, msg, extra_tags="toast")
         ctx = self.get_context_data(quick_form=form)
         return self.render_to_response(ctx)
 
@@ -130,7 +130,16 @@ class GRNDetailView(TemplateView):
             ("Supplier", grn.supplier.name),
             ("Date", grn.received_date),
         ]
-        ctx.update({"grn": grn, "items": items, "rows": rows})
+        ctx.update(
+            {
+                "grn": grn,
+                "items": items,
+                "rows": rows,
+                "list_url": reverse("grn_list"),
+                "list_title": "GRNs",
+                "current_title": f"GRN {grn.pk}",
+            }
+        )
         return ctx
 
 

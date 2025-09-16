@@ -1,20 +1,20 @@
 {% load form_tags %}
-<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl">
-  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+<div class="bg-surface border border-border rounded-2xl shadow-overlay overflow-hidden drawer-panel max-w-drawer-xl">
+  <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <div class="flex items-baseline gap-3">
-      <h3 class="text-base font-semibold">New Indent</h3>
+      <h3 class="text-base font-semibold text-bodyText">New Indent</h3>
       <span class="text-xs text-gray-500">Requested by: {{ requested_by_display|default:form.requested_by.value|default:'-' }}</span>
     </div>
-    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <div class="p-4">
-    <form method="post" data-modal-form action="{% url 'indent_create' %}" id="indent-form">
+  <form method="post" data-modal-form data-requires-line-items action="{% url 'indent_create' %}" id="indent-form">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1" />
       {{ form.requested_by }} {# keep hidden; shown in header #}
       <div class="grid grid-cols-1 md:grid-cols-12 md:gap-3 gap-2 items-end">
         <div class="md:col-span-4">
-          <label for="department-ui" class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Department</label>
+          <label for="department-ui" class="block mb-0.5 text-xs uppercase tracking-wide text-gray-500">Department</label>
           {{ form.department }} {# hidden field #}
           <select id="department-ui" name="department-ui" class="block w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" data-placeholder="Select Department" data-overlay="native">
             <option value="">Select Department</option>
@@ -24,11 +24,11 @@
           </select>
         </div>
         <div class="md:col-span-3">
-          <label class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Date required</label>
+          <label class="block mb-0.5 text-xs uppercase tracking-wide text-gray-500">Date required</label>
           {{ form.date_required|add_class:"px-2 py-1.5 text-sm h-9" }}
         </div>
         <div class="md:col-span-5">
-          <label class="block mb-0.5 text-xs uppercase tracking-wide text-gray-600">Notes</label>
+          <label class="block mb-0.5 text-xs uppercase tracking-wide text-gray-500">Notes</label>
           {{ form.notes|add_class:"px-2 py-1.5 text-sm h-9 resize-y md:resize-none" }}
         </div>
       </div>
@@ -50,13 +50,13 @@
   {% include "inventory/_indent_items_form_table.html" with formset=formset table_id="items-table" %}
       <datalist id="item-options"></datalist>
       <div class="mt-3 flex flex-wrap justify-end gap-2 items-center">
-        <button type="button" class="inline-flex items-center px-4 h-9 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <button type="button" class="inline-flex items-center px-4 h-9 text-sm font-medium rounded-md transition focus:outline-none bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
         <!-- Keep add button for JS, but hide it visually to have a single visible control -->
         <button type="button" id="add-row" hidden aria-hidden="true" tabindex="-1">Add item</button>
         <!-- Compact input group for Rows + Add rows -->
         <div class="flex items-center gap-2">
           <span class="text-xs text-gray-600 leading-none">Rows</span>
-          <div class="inline-flex items-stretch rounded-md border border-border overflow-hidden bg-white shadow-sm">
+          <div class="inline-flex items-stretch rounded-md border border-border overflow-hidden bg-surface shadow-sm">
             <label for="add-rows-count" class="sr-only">Rows</label>
             <select id="add-rows-count" class="pl-2 pr-8 h-9 text-sm focus:outline-none focus:ring-0 border-0 min-w-[3.5rem]">
               <option value="2">2</option>
@@ -64,10 +64,10 @@
               <option value="10">10</option>
               <option value="20">20</option>
             </select>
-            <button type="button" id="add-rows-btn" class="inline-flex items-center px-3 h-9 text-sm font-medium bg-white text-gray-700 hover:bg-secondaryHover focus:outline-none focus:ring-2 focus:ring-primary border-l border-border whitespace-nowrap">Add rows</button>
+            <button type="button" id="add-rows-btn" class="inline-flex items-center px-3 h-9 text-sm font-medium bg-surface text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary border-l border-border whitespace-nowrap">Add rows</button>
           </div>
         </div>
-        <button type="submit" class="inline-flex items-center px-4 h-9 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary shadow-sm">Submit</button>
+        <button type="submit" class="inline-flex items-center px-4 h-9 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong shadow-sm">Submit</button>
       </div>
     </form>
   </div>
@@ -112,12 +112,22 @@
     (function(){
       // Helpers used by both direct-binding and delegated listeners
       function ensureInfoBlocks(itemInput){
-        const wrap = itemInput.closest('div') || itemInput.parentElement;
-        if (!wrap) return {info: null, err: null};
-        let info = wrap.querySelector('[data-item-meta]');
-        if (!info){ info = document.createElement('div'); info.className = 'mt-1 text-xs text-gray-500'; info.setAttribute('data-item-meta',''); wrap.appendChild(info); }
-        let err = wrap.querySelector('[data-item-error]');
-        if (!err){ err = document.createElement('div'); err.className = 'mt-1 text-xs text-red-600 hidden'; err.setAttribute('data-item-error',''); wrap.appendChild(err); }
+        const cell = itemInput.closest('td') || itemInput.parentElement;
+        if (!cell) return {info: null, err: null};
+        let info = cell.querySelector('[data-item-meta]');
+        if (!info){
+          info = document.createElement('div');
+          info.className = 'mt-1 text-xs text-gray-500';
+          info.setAttribute('data-item-meta','');
+          cell.appendChild(info);
+        }
+        let err = cell.querySelector('[data-item-error]');
+        if (!err){
+          err = document.createElement('div');
+          err.className = 'mt-1 text-xs text-red-600 hidden';
+          err.setAttribute('data-item-error','');
+          cell.appendChild(err);
+        }
         return {info, err};
       }
       function setInvalidFor(itemInput, message){ const {err} = ensureInfoBlocks(itemInput); if (!err) return; if (message){ err.textContent = message; err.classList.remove('hidden'); } else { err.textContent=''; err.classList.add('hidden'); } }
@@ -128,18 +138,25 @@
       }
       function bindItemInputs(scope){
         const root = scope || document;
-        const inputs = root.querySelectorAll('input[list="#item-options"], input[list="item-options"], input[name^="items-"][name$="-item"]');
+        const inputs = root.querySelectorAll('#items-table input[list="item-options"], #items-table input[name$="-item"]');
         inputs.forEach((itemInput)=>{
           if (itemInput._boundIndentMeta) return;
           itemInput._boundIndentMeta = true;
           // Keep predictive overlay enabled for richer search UX
-          const wrapper = itemInput.closest('div') || itemInput.parentElement;
           ensureInfoBlocks(itemInput);
           let debounceTimer=null;
           function debounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>refreshFor(itemInput),250); }
           itemInput.addEventListener('input', debounced);
+          itemInput.addEventListener('keyup', debounced);
           itemInput.addEventListener('change', ()=>refreshFor(itemInput));
           itemInput.addEventListener('blur', ()=>refreshFor(itemInput));
+        });
+      }
+      function refreshAll(scope){
+        const root = scope || document;
+        root.querySelectorAll('#items-table input[name$="-item"]').forEach((inp)=>{
+          try { ensureInfoBlocks(inp); } catch(_) {}
+          if ((inp.value||'').trim()) { refreshFor(inp); }
         });
       }
       function checkDuplicates(){
@@ -163,21 +180,25 @@
   }); if(invalid){ ev.preventDefault(); }
         }); }
   bindItemInputs(); ensureHiddenIdsOnSubmit();
+  // Pre-create meta/error placeholders for all existing rows to avoid layout shift
+  document.querySelectorAll("#items-table input[name$='-item']").forEach(inp=>{
+    try { ensureInfoBlocks(inp); } catch(_) {}
+  });
   // Initial pass: if any inputs already have a value, render their meta now
-  document.querySelectorAll("#items-table input[name^='items-'][name$='-item']").forEach(inp=>{ if ((inp.value||'').trim()) { const ev=new Event('change', {bubbles:true}); inp.dispatchEvent(ev); } });
+  refreshAll();
       // Delegated safety net: ensure meta renders even if a row was added after bind
       const formEl = document.getElementById('indent-form');
       if (formEl && !formEl._delegatedMeta){
         formEl._delegatedMeta = true;
         let t = null;
-        formEl.addEventListener('input', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')){ if (t) clearTimeout(t); const target=e.target; t=setTimeout(()=>{ refreshFor(target); }, 250); } });
-        formEl.addEventListener('change', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')){ refreshFor(e.target); } });
-        formEl.addEventListener('blur', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')){ refreshFor(e.target); } }, true);
+        formEl.addEventListener('input', function(e){ if (e.target && e.target.matches('#items-table input[name$="-item"]')){ if (t) clearTimeout(t); const target=e.target; t=setTimeout(()=>{ refreshFor(target); }, 200); } });
+        formEl.addEventListener('change', function(e){ if (e.target && e.target.matches('#items-table input[name$="-item"]')){ refreshFor(e.target); } });
+        formEl.addEventListener('blur', function(e){ if (e.target && e.target.matches('#items-table input[name$="-item"]')){ refreshFor(e.target); } }, true);
       }
       const addBtn=document.getElementById('add-row'); if(addBtn) addBtn.addEventListener('click', function(){ setTimeout(()=>{ bindItemInputs(); checkDuplicates(); if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(document.getElementById('items-table')); // Preemptively create info blocks for new inputs
           document.querySelectorAll("#items-table input[name^='items-'][name$='-item']").forEach(inp=>ensureInfoBlocks(inp));
         }, 50); });
-      document.getElementById('indent-form')?.addEventListener('input', function(e){ if (e.target && e.target.matches('input[name^="items-"][name$="-item"]')) { checkDuplicates(); } });
+      document.getElementById('indent-form')?.addEventListener('input', function(e){ if (e.target && e.target.matches('#items-table input[name$="-item"]')) { checkDuplicates(); } });
       checkDuplicates();
 
       // Multi-add selector: add N rows quickly
@@ -193,6 +214,9 @@
           const last = rows[rows.length-1];
           const inp = last ? last.querySelector("input[name$='-item']") : null;
           if (inp) inp.focus();
+          // Bind and ensure placeholders for any newly added inputs
+          bindItemInputs(table);
+          refreshAll(table);
         }, 0);
       }
       if (addRowsBtn && !addRowsBtn._bound){
@@ -202,6 +226,31 @@
           if (Number.isFinite(n) && n>0) clickAdd(n);
         });
       }
+
+      // Observe new rows inserted into the table and bind metadata handlers
+      const tbody = document.querySelector('#items-table tbody');
+      if (tbody && !tbody._observing){
+        tbody._observing = true;
+        const mo = new MutationObserver((mutations)=>{
+          for (const m of mutations){
+            if (m.type === 'childList' && (m.addedNodes?.length || 0) > 0){
+              bindItemInputs(tbody);
+              refreshAll(tbody);
+            }
+          }
+        });
+        mo.observe(tbody, { childList: true, subtree: true });
+      }
+
+      // When HTMX updates the datalist with suggestions, re-run meta resolution
+      document.addEventListener('htmx:afterSwap', function(e){
+        try {
+          const tgt = e && e.target;
+          if (tgt && tgt.id === 'item-options') {
+            refreshAll();
+          }
+        } catch(_) {}
+      });
     })();
   })();
 </script>

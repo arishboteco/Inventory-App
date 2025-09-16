@@ -80,32 +80,41 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
             },
         ],
     ),
-    (
-        "Insights & Settings",
-        [
-            {
-                "title": "Operational Reports",
-                "description": "Analyse trends and audit activity.",
-                "url_name": "history_reports",
-            },
-            {
-                "title": "Visual Dashboards",
-                "description": "Track KPIs and live performance.",
-                "url_name": "visualizations",
-            },
-            {
-                "title": "ML Planner",
-                "description": "Run scenarios and predictive insights.",
-                "url_name": "ml_dashboard",
-            },
-        ],
-    ),
+        (
+            "Insights & Settings",
+            [
+                {
+                    "title": "Operational Reports",
+                    "description": "Analyse trends and audit activity.",
+                    "url_name": "history_reports",
+                },
+                {
+                    "title": "Visual Dashboards",
+                    "description": "Track KPIs and live performance.",
+                    "url_name": "visualizations",
+                },
+                {
+                    "title": "ML Planner",
+                    "description": "Run scenarios and predictive insights.",
+                    "url_name": "ml_dashboard",
+                },
+                {
+                    "title": "Workflow Handbook",
+                    "description": "Follow the end-to-end Inventory Pro process.",
+                    "url_name": "workflow_guide",
+                },
+            ],
+        ),
 ]
 
 # Flattened list of links is still exposed for convenience in tests and any
 # legacy code that expects a simple sequence of links.
 NAVIGATION_LINKS = [
-    {"title": link["title"], "url_name": link["url_name"], "description": link.get("description", "")}
+    {
+        "title": link["title"],
+        "url_name": link["url_name"],
+        "description": link.get("description", ""),
+    }
     for _, links in NAVIGATION_GROUPS
     for link in links
 ]
@@ -166,10 +175,16 @@ def get_navigation_groups(
     resolved = []
     for category, links in groups:
         link_dicts = [
-            {"title": link["title"], "url_name": link["url_name"], "description": link.get("description", "")}
+            {
+                "title": link["title"],
+                "url_name": link["url_name"],
+                "description": link.get("description", ""),
+            }
             for link in links
         ]
-        resolved.append({"category": category, "links": get_navigation_links(link_dicts)})
+        resolved.append(
+            {"category": category, "links": get_navigation_links(link_dicts)}
+        )
     return resolved
 
 

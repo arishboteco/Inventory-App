@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Iterable
 
 from fpdf import FPDF
-from fpdf.enums import XPos, YPos
 
 from .models import Indent, IndentItem
 from .services.units_service import UnitsService
@@ -20,11 +19,15 @@ class IndentPDF(FPDF):
         self.set_y(-15)
         self.set_font("Helvetica", size=9)
         self.set_text_color(120, 120, 120)
-        page_str = f"Page {self.page_no()}/{getattr(self, 'alias_nb_pages_str', '{nb}')}"
+        page_str = (
+            f"Page {self.page_no()}/{getattr(self, 'alias_nb_pages_str', '{nb}')}"
+        )
         self.cell(0, 10, page_str, align="R")
 
 
-def _text(pdf: FPDF, label: str, value: str, w_label=40, w_value=None, ln=1, align_value="L"):
+def _text(
+    pdf: FPDF, label: str, value: str, w_label=40, w_value=None, ln=1, align_value="L"
+):
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(w_label, 7, f"{label}:")
     pdf.set_font("Helvetica", size=11)
@@ -48,7 +51,8 @@ def _table_row(pdf: FPDF, name: str, qty: str, unit: str, note: str, col_widths)
     pdf.set_font("Helvetica", size=11)
     pdf.set_draw_color(200, 200, 200)
     # Item name (may wrap)
-    x0 = pdf.get_x(); y0 = pdf.get_y()
+    x0 = pdf.get_x()
+    y0 = pdf.get_y()
     pdf.multi_cell(col_widths[0], 8, name, border=1)
     h = pdf.get_y() - y0
     pdf.set_xy(x0 + col_widths[0], y0)
@@ -65,7 +69,17 @@ def _section_row(pdf: FPDF, text: str, page_width: float, bold: bool = True):
     # Use multi_cell to avoid clipping long labels
     pdf.multi_cell(page_width, 9, text, border=1)
 
-def _kv_at(pdf: FPDF, x: float, y: float, label: str, value: str, w_label: float, w_value: float, h: float = 7):
+
+def _kv_at(
+    pdf: FPDF,
+    x: float,
+    y: float,
+    label: str,
+    value: str,
+    w_label: float,
+    w_value: float,
+    h: float = 7,
+):
     pdf.set_xy(x, y)
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(w_label, h, f"{label}:")
@@ -96,10 +110,30 @@ def generate_indent_pdf(indent: Indent, items: Iterable[IndentItem]) -> bytes:
     row_h = 8
     # Left column rows
     _kv_at(pdf, left_x, y_start, "MRN", str(mrn), 30, col_width - 30, h=row_h)
-    _kv_at(pdf, left_x, y_start + row_h, "Department", str(dept), 30, col_width - 30, h=row_h)
+    _kv_at(
+        pdf,
+        left_x,
+        y_start + row_h,
+        "Department",
+        str(dept),
+        30,
+        col_width - 30,
+        h=row_h,
+    )
     # Right column rows
-    _kv_at(pdf, right_x, y_start, "Requested By", str(req_by), 35, col_width - 35, h=row_h)
-    _kv_at(pdf, right_x, y_start + row_h, "Date Required", str(date_required), 35, col_width - 35, h=row_h)
+    _kv_at(
+        pdf, right_x, y_start, "Requested By", str(req_by), 35, col_width - 35, h=row_h
+    )
+    _kv_at(
+        pdf,
+        right_x,
+        y_start + row_h,
+        "Date Required",
+        str(date_required),
+        35,
+        col_width - 35,
+        h=row_h,
+    )
     # Advance below the tallest row-block
     pdf.set_y(y_start + (row_h * 2))
     if notes:
@@ -111,7 +145,12 @@ def generate_indent_pdf(indent: Indent, items: Iterable[IndentItem]) -> bytes:
 
     # Items table (Item, Qty, Unit, Note) with category grouping
     page_width = pdf.w - pdf.l_margin - pdf.r_margin
-    col_widths = [page_width * 0.53, page_width * 0.12, page_width * 0.12, page_width * 0.23]
+    col_widths = [
+        page_width * 0.53,
+        page_width * 0.12,
+        page_width * 0.12,
+        page_width * 0.23,
+    ]
     _table_header(pdf, col_widths)
 
     if not items:
@@ -159,7 +198,10 @@ def generate_indent_pdf(indent: Indent, items: Iterable[IndentItem]) -> bytes:
                     try:
                         unit_id = getattr(getattr(line, "item", None), "unit_id", None)
                         if unit_id:
-                            unit_display = UnitsService.get_purchase_unit_display(int(unit_id)) or ""
+                            unit_display = (
+                                UnitsService.get_purchase_unit_display(int(unit_id))
+                                or ""
+                            )
                     except Exception:
                         unit_display = ""
                     note = getattr(line, "notes", "") or "-"

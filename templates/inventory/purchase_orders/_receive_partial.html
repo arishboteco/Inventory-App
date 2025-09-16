@@ -1,19 +1,19 @@
 {% load form_tags %}
-<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl">
-  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-    <h3 class="text-base font-semibold">Receive Goods for PO {{ po.pk }}</h3>
-    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+<div class="bg-surface border border-border rounded-2xl shadow-overlay overflow-hidden drawer-panel max-w-drawer-xl">
+  <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
+    <h3 class="text-base font-semibold text-bodyText">Receive Goods for PO {{ po.pk }}</h3>
+    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <div class="p-4">
-    <form method="post" enctype="multipart/form-data" data-modal-form action="{% url 'purchase_order_receive_partial' po.pk %}">
+  <form method="post" enctype="multipart/form-data" data-modal-form data-requires-line-items action="{% url 'purchase_order_receive_partial' po.pk %}">
       {% csrf_token %}
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         {% for field in form %}
           {% include "components/form_field.html" with field=field %}
         {% endfor %}
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Attachment (PDF/Image)</label>
-          <input type="file" name="attachment" accept="application/pdf,image/*" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none" />
+          <label class="block text-sm font-medium text-bodyText mb-1">Attachment (PDF/Image)</label>
+          <input type="file" name="attachment" accept="application/pdf,image/*" class="block w-full text-sm text-bodyText border border-gray-300 rounded-lg cursor-pointer bg-surface focus:outline-none" />
           <p class="mt-1 text-xs text-gray-500">Optional: upload the scanned GRN or invoice.</p>
         </div>
       </div>
@@ -21,8 +21,8 @@
         {% include "inventory/purchase_orders/_receive_table.html" with items=items table_id="po-receive-items-{{ po.pk }}" %}
       </div>
       <div class="mt-4 flex items-center justify-end gap-2">
-        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Submit GRN</button>
+        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Submit GRN</button>
       </div>
     </form>
   </div>

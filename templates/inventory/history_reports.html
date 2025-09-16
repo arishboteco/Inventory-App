@@ -1,40 +1,52 @@
 {% extends "components/create_manage_layout.html" %}
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
 {% block page_title %}History Reports – Inventory Pro{% endblock %}
 {% block page_heading %}History Reports{% endblock %}
+
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Audit stock movements and download filtered history.</p>
+{% endblock %}
+{% block page_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Records: <span class="text-bodyText">{{ page_obj.paginator.count|default:0 }}</span></span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Total Qty: <span class="text-bodyText">{{ total_quantity }}</span></span>
+  </div>
+{% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    <span class="font-medium text-bodyText">Tip:</span> Use the date range picker and filters to hone reports before exporting to CSV or PDF.
+  </div>
+{% endblock %}
 
 {% block filters %}
   {% url 'history_reports' as history_url %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <div class="flex flex-col gap-2 mb-4">
-    <label for="date-range" class="text-sm font-medium">Date Range</label>
-    <input
-      id="date-range"
-      name="date_range"
-      type="text"
-      class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary md:w-64"
-      placeholder="Select Date Range"
-      value="{% if start_date and end_date %}{{ start_date }} to {{ end_date }}{% endif %}"
-      autocomplete="off"
-    />
-    <div class="flex flex-col md:flex-row md:items-end gap-2">
+  <div class="bg-surface border border-border rounded-2xl shadow-card p-4 space-y-3 mb-4">
+    <div class="flex flex-col gap-2 md:flex-row md:items-end">
+      <div class="flex flex-col w-full md:w-64">
+        <label for="date-range" class="text-sm font-medium text-bodyText">Date Range</label>
+        <input
+          id="date-range"
+          name="date_range"
+          type="text"
+          class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Select Date Range"
+          value="{% if start_date and end_date %}{{ start_date }} to {{ end_date }}{% endif %}"
+          autocomplete="off"
+        />
+      </div>
       <div class="flex-1">
         {% include "components/filter_bar.html" with hx_get=history_url hx_target="#history_table" hx_indicator="#htmx-spinner" filters=filters sort=sort direction=direction q=item search_placeholder="Item ID" %}
       </div>
       <div class="flex gap-2">
         <a
           href="{{ history_url }}{% if query_string %}?{{ query_string }}&{% else %}?{% endif %}export=csv"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary"
-          >Download CSV</a
-        >
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+          >Download CSV</a>
         <a
           href="{{ history_url }}{% if query_string %}?{{ query_string }}&{% else %}?{% endif %}export=pdf"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary"
-          >Download PDF</a
-        >
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+          >Download PDF</a>
       </div>
     </div>
   </div>
@@ -68,11 +80,13 @@
 {% endblock %}
 
 {% block data_container %}
-  <div id="history_table"
-       hx-get="{% url 'history_reports' %}"
-       hx-trigger="load"
-       hx-include="#filters"
-       hx-indicator="#htmx-spinner">
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div id="history_table"
+         hx-get="{% url 'history_reports' %}"
+         hx-trigger="load"
+         hx-include="#filters"
+         hx-indicator="#htmx-spinner">
     {% include "inventory/_history_tabs.html" %}
+    </div>
   </div>
 {% endblock %}

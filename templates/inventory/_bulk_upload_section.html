@@ -23,7 +23,7 @@
     <p class="mt-2">{{ bulk_success_count }} transaction(s) recorded successfully.</p>
   {% endif %}
   {% if bulk_errors %}
-    <ul class="text-red-700 mt-2">
+    <ul class="text-danger mt-2">
       {% for e in bulk_errors %}
         <li>{{ e }}</li>
       {% endfor %}

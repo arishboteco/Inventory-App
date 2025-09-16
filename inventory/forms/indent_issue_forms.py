@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Iterable
 
 from django import forms
 
-from .base import INPUT_CLASS, StyledFormMixin
 from ..models import IndentItem
+from .base import INPUT_CLASS, StyledFormMixin
 
 
 class IndentItemIssueForm(StyledFormMixin, forms.Form):

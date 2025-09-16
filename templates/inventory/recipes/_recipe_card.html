@@ -1,4 +1,4 @@
-<a href="{% url 'recipe_detail' recipe.recipe_id %}" class="block bg-white rounded-lg shadow hover:shadow-xl transition-transform transform hover:-translate-y-1">
+<a href="{% url 'recipe_detail' recipe.recipe_id %}" class="block bg-surface rounded-lg shadow hover:shadow-xl transition-transform transform hover:-translate-y-1">
   <div class="flex items-start gap-4 overflow-hidden p-4">
     {% if recipe.image %}
       <img src="{{ recipe.image }}" alt="{{ recipe.name }}" class="w-24 max-w-full h-auto object-contain rounded flex-shrink-0" />

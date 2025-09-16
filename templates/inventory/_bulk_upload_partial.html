@@ -1,7 +1,7 @@
-<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-md">
-  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+<div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-md">
+  <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <h3 class="text-lg font-semibold">{{ title|default:"Bulk Upload Items" }}</h3>
-    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <div class="p-4">
     {% if upload_url %}
@@ -13,13 +13,13 @@
       <input type="hidden" name="partial" value="1"/>
       {% if bulk_upload %}<input type="hidden" name="bulk_upload" value="1" />{% endif %}
       <div class="mb-3">
-        <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Select CSV File</label>
+        <label for="{{ form.file.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Select CSV File</label>
         {{ form.file }}
         {% include "forms/feedback.html" %}
       </div>
       <div class="flex items-center justify-end gap-2">
-        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Upload</button>
+        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Upload</button>
       </div>
     </form>
     <p class="text-sm text-gray-600 mt-3">{{ help_text|default:"CSV must include headers compatible with the item form fields." }}</p>

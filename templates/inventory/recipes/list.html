@@ -1,13 +1,26 @@
 {% extends "components/create_manage_layout.html" %}
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
 {% block page_title %}Recipes – Inventory Pro{% endblock %}
 {% block page_heading %}Recipes{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Keep production formulas and BOMs in one place.</p>
+{% endblock %}
+{% block page_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Total: <span class="text-bodyText">{{ recipe_count|default:0 }}</span></span>
+    {% if q %}
+      <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Filtered by: <span class="text-bodyText">“{{ q }}”</span></span>
+    {% endif %}
+  </div>
+{% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    <span class="font-medium text-bodyText">Tip:</span> Use the drawer to add a new recipe while keeping this list in view.
+  </div>
+{% endblock %}
 
 {% block primary_actions %}
   <button type="button"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong"
           data-modal-url="{% url 'recipe_create_partial' %}"
           data-modal-type="drawer"
           data-modal-prefetch="idle">New Recipe</button>

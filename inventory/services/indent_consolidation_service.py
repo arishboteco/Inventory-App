@@ -2,12 +2,19 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List
 
 from django.db import transaction
 from django.utils import timezone
 
-from inventory.models import Indent, IndentItem, Item, PurchaseOrder, PurchaseOrderItem, IndentPOLink
+from inventory.models import (
+    Indent,
+    IndentItem,
+    IndentPOLink,
+    Item,
+    PurchaseOrderItem,
+)
+
 from . import purchase_order_service
 
 logger = logging.getLogger(__name__)
@@ -38,14 +45,23 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
     if not indent_ids:
         return ConsolidationResult(created_po_ids=[], skipped_items=0, total_items=0)
 
-    indents = (
-        Indent.objects.filter(indent_id__in=indent_ids, status__in=["APPROVED", "PROCESSING"])  # type: ignore
-        .only("indent_id", "status", "date_required")
+    indents = Indent.objects.filter(
+        indent_id__in=indent_ids, status__in=["APPROVED", "PROCESSING"]
+    ).only(  # type: ignore
+        "indent_id", "status", "date_required"
     )
     items = (
         IndentItem.objects.select_related("item")
         .filter(indent_id__in=[i.pk for i in indents])
-        .only("indent_id", "indent_item_id", "item_id", "requested_qty", "issued_qty", "item_status", "notes")
+        .only(
+            "indent_id",
+            "indent_item_id",
+            "item_id",
+            "requested_qty",
+            "issued_qty",
+            "item_status",
+            "notes",
+        )
     )
     # Build supplier -> item -> total pending
     supplier_items: Dict[int, Dict[int, Dict[str, Decimal]]] = defaultdict(dict)
@@ -61,7 +77,10 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
         if not supplier_id:
             skipped += 1
             continue
-        entry = supplier_items.setdefault(supplier_id, {}).setdefault(itm.pk, {"qty": Decimal("0"), "price": Decimal(str(itm.last_purchase_price or 0))})
+        entry = supplier_items.setdefault(supplier_id, {}).setdefault(
+            itm.pk,
+            {"qty": Decimal("0"), "price": Decimal(str(itm.last_purchase_price or 0))},
+        )
         entry["qty"] += pending
 
     created_po_ids: List[int] = []
@@ -90,18 +109,26 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
         try:
             with transaction.atomic():
                 po_items = list(
-                    PurchaseOrderItem.objects.filter(purchase_order_id=po_id).values("po_item_id", "item_id", "quantity_ordered")
+                    PurchaseOrderItem.objects.filter(purchase_order_id=po_id).values(
+                        "po_item_id", "item_id", "quantity_ordered"
+                    )
                 )
                 # Map item_id -> remaining qty on the new PO to allocate to indent items
                 remaining_by_item: Dict[int, Decimal] = {
-                    int(poi["item_id"]): Decimal(str(poi["quantity_ordered"])) for poi in po_items
+                    int(poi["item_id"]): Decimal(str(poi["quantity_ordered"]))
+                    for poi in po_items
                 }
                 # For each indent item of this supplier's items, create links up to its pending qty
                 supplier_item_ids = set(item_map.keys())
                 source_indent_items = (
                     IndentItem.objects.select_related("item")
-                    .filter(indent_id__in=[i.pk for i in indents], item_id__in=supplier_item_ids)
-                    .order_by("indent__date_required", "indent__created_at", "indent_item_id")
+                    .filter(
+                        indent_id__in=[i.pk for i in indents],
+                        item_id__in=supplier_item_ids,
+                    )
+                    .order_by(
+                        "indent__date_required", "indent__created_at", "indent_item_id"
+                    )
                 )
                 for ii in source_indent_items:
                     item_id = int(ii.item_id)
@@ -113,7 +140,9 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
                         continue
                     alloc = pending if pending <= rem else rem
                     # Find the corresponding PO item row for this item_id
-                    poi_match = next((x for x in po_items if int(x["item_id"]) == item_id), None)
+                    poi_match = next(
+                        (x for x in po_items if int(x["item_id"]) == item_id), None
+                    )
                     if not poi_match:
                         continue
                     IndentPOLink.objects.create(
@@ -128,18 +157,27 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
     # Mark consolidated indents as PROCESSING if any PO created
     if created_po_ids:
         with transaction.atomic():
-            Indent.objects.filter(indent_id__in=[i.pk for i in indents], status="APPROVED").update(status="PROCESSING")
+            Indent.objects.filter(
+                indent_id__in=[i.pk for i in indents], status="APPROVED"
+            ).update(status="PROCESSING")
             # Best-effort traceability note on items
             note_suffix = ", ".join([f"PO#{pid}" for pid in created_po_ids])
             # Append per-row to avoid clobbering existing notes
             for ii in items:
                 try:
-                    ii.notes = ((ii.notes or "").strip() + (f" | {note_suffix}" if note_suffix else "")).strip()
+                    ii.notes = (
+                        (ii.notes or "").strip()
+                        + (f" | {note_suffix}" if note_suffix else "")
+                    ).strip()
                     ii.save(update_fields=["notes"])
                 except Exception:
-                    logger.warning("Failed to annotate IndentItem %s with PO refs", ii.pk)
+                    logger.warning(
+                        "Failed to annotate IndentItem %s with PO refs", ii.pk
+                    )
 
-    return ConsolidationResult(created_po_ids=created_po_ids, skipped_items=skipped, total_items=total)
+    return ConsolidationResult(
+        created_po_ids=created_po_ids, skipped_items=skipped, total_items=total
+    )
 
 
 def apply_receipts_to_indents(receipts: List[Dict[str, Decimal]]) -> None:
@@ -167,7 +205,9 @@ def apply_receipts_to_indents(receipts: List[Dict[str, Decimal]]) -> None:
             outstanding = (
                 IndentItem.objects.select_related("indent")
                 .filter(item_id=item_id, indent__status__in=["APPROVED", "PROCESSING"])  # type: ignore
-                .order_by("indent__date_required", "indent__created_at", "indent_item_id")
+                .order_by(
+                    "indent__date_required", "indent__created_at", "indent_item_id"
+                )
             )
             for ii in outstanding:
                 if qty <= 0:
@@ -176,7 +216,7 @@ def apply_receipts_to_indents(receipts: List[Dict[str, Decimal]]) -> None:
                 if pending <= 0:
                     continue
                 alloc = qty if qty <= pending else pending
-                ii.issued_qty = (Decimal(str(ii.issued_qty or 0)) + alloc)
+                ii.issued_qty = Decimal(str(ii.issued_qty or 0)) + alloc
                 # If fully allocated, mark item as ISSUED
                 try:
                     from inventory.models.enums import ItemStatus
@@ -189,7 +229,11 @@ def apply_receipts_to_indents(receipts: List[Dict[str, Decimal]]) -> None:
                 qty -= alloc
             # Roll up indent statuses for any impacted indents
             affected_indent_ids = (
-                IndentItem.objects.filter(item_id=item_id, indent__status__in=["APPROVED", "PROCESSING"]).values_list("indent_id", flat=True).distinct()
+                IndentItem.objects.filter(
+                    item_id=item_id, indent__status__in=["APPROVED", "PROCESSING"]
+                )
+                .values_list("indent_id", flat=True)
+                .distinct()
             )
             for indent_id in affected_indent_ids:
                 all_items = list(IndentItem.objects.filter(indent_id=indent_id))

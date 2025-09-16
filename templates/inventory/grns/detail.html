@@ -12,6 +12,11 @@
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">PO #: <span class="text-bodyText">{{ grn.purchase_order_id|default:'—' }}</span></span>
   </div>
 {% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    <span class="font-medium text-bodyText">Next step:</span> Notify the purchase team if discrepancies exist or link this GRN to additional documents.
+  </div>
+{% endblock %}
 {% block actions %}
   <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Back</a>
 {% endblock %}

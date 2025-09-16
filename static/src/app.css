@@ -134,6 +134,12 @@
     @apply font-bold underline;
   }
 
+  /* Indent items: reserve space for meta/errors to keep row height stable */
+  [data-indent-table] td [data-item-meta],
+  [data-indent-table] td [data-item-error] {
+    min-height: 0.9rem; /* ~14px to hold one line without shifting layout */
+  }
+
   /* Form component styles */
   /* Form label styles */
   form label {

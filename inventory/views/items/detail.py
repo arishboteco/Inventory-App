@@ -215,9 +215,9 @@ class ItemDeleteView(View):
             if is_fetch:
                 return JsonResponse({"ok": ok})
             if ok:
-                messages.success(request, "Item deactivated")
+                messages.success(request, "Item deactivated", extra_tags="toast")
             else:  # pragma: no cover - defensive
-                messages.error(request, "Unable to delete item")
+                messages.error(request, "Unable to delete item", extra_tags="toast")
             return redirect("items_list")
         try:
             item.delete()
@@ -225,20 +225,20 @@ class ItemDeleteView(View):
             item_service.get_distinct_departments_from_items.clear()
             if is_fetch:
                 return JsonResponse({"ok": True})
-            messages.success(request, "Item deleted")
+            messages.success(request, "Item deleted", extra_tags="toast")
         except IntegrityError:
             ok, _ = item_service.deactivate_item(item.pk)
             if is_fetch:
                 return JsonResponse({"ok": ok})
             if ok:
-                messages.success(request, "Item deactivated")
+                messages.success(request, "Item deactivated", extra_tags="toast")
             else:  # pragma: no cover - defensive
-                messages.error(request, "Unable to delete item")
+                messages.error(request, "Unable to delete item", extra_tags="toast")
         except DatabaseError:  # pragma: no cover - defensive
             logger.exception("Error deleting item %s", pk)
             if is_fetch:
                 return JsonResponse({"ok": False}, status=400)
-            messages.error(request, "Unable to delete item")
+            messages.error(request, "Unable to delete item", extra_tags="toast")
         return redirect("items_list")
 
 

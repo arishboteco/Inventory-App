@@ -7,11 +7,11 @@ from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
-from django.views.generic import TemplateView
 from django.views import View
 from django.views.decorators.http import require_POST
-from django.utils import timezone
+from django.views.generic import TemplateView
 
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import PurchaseOrder, Supplier
@@ -75,6 +75,9 @@ class PurchaseOrdersListView(TemplateView):
         quick_form = PurchaseOrderForm(
             prefix="quick", supplier_suggest_url=supplier_url
         )
+        pending_receipts = PurchaseOrder.objects.filter(
+            status__in=["ORDERED", "PARTIAL"]
+        ).count()
 
         ctx.update(
             {
@@ -88,6 +91,7 @@ class PurchaseOrdersListView(TemplateView):
                 "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Orders",
+                "pending_receipts": pending_receipts,
             }
         )
         ctx.update(params)
@@ -102,7 +106,7 @@ class PurchaseOrdersListView(TemplateView):
         )
         if form.is_valid():
             po = form.save()
-            messages.success(request, "Purchase order created")
+            messages.success(request, "Purchase order created", extra_tags="toast")
             return redirect("purchase_order_edit", pk=po.pk)
 
         ctx = self.get_context_data()
@@ -140,7 +144,9 @@ class PurchaseOrdersTableView(TemplateView):
             default_direction="desc",
         )
         page_obj, _ = list_utils.paginate(self.request, orders, default_page_size=20)
-        progress_map = purchase_order_service.get_orders_progress([o.pk for o in page_obj])
+        progress_map = purchase_order_service.get_orders_progress(
+            [o.pk for o in page_obj]
+        )
         for o in page_obj:
             o.badge_class = PO_STATUS_BADGES.get(o.status, "")
             prog = progress_map.get(o.pk)
@@ -154,12 +160,14 @@ class PurchaseOrdersTableView(TemplateView):
                 o.progress_percent = 0
 
         querystring = list_utils.build_querystring(self.request)
-        ctx.update({
-            "orders": page_obj,
-            "page_obj": page_obj,
-            "querystring": querystring,
-            **params,
-        })
+        ctx.update(
+            {
+                "orders": page_obj,
+                "page_obj": page_obj,
+                "querystring": querystring,
+                **params,
+            }
+        )
         return ctx
 
 
@@ -247,7 +255,9 @@ class PurchaseOrderCreatePartialView(View):
                         "ok": True,
                         "id": getattr(po, "pk", None),
                         "message": "Purchase order created",
-                        "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
+                        "redirect": reverse(
+                            "purchase_order_detail", kwargs={"pk": po.pk}
+                        ),
                     }
                 )
             except PurchaseOrderServiceError as exc:
@@ -292,7 +302,7 @@ def purchase_order_create(request):
                 purchase_order_service.create_po(po_data, items_data)
                 return redirect("purchase_orders_list")
             except PurchaseOrderServiceError as exc:
-                messages.error(request, str(exc))
+                messages.error(request, str(exc, extra_tags="toast"))
     else:
         form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(
@@ -358,7 +368,9 @@ class PurchaseOrderEditPartialView(View):
         po = get_object_or_404(PurchaseOrder, pk=pk)
         item_url = reverse("item_search")
         supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(request.POST, instance=po, supplier_suggest_url=supplier_url)
+        form = PurchaseOrderForm(
+            request.POST, instance=po, supplier_suggest_url=supplier_url
+        )
         formset = PurchaseOrderItemFormSet(
             request.POST,
             instance=po,
@@ -388,7 +400,11 @@ def purchase_order_detail(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
     items = (
         po.purchaseorderitem_set.select_related("item")
-        .prefetch_related("indent_links", "indent_links__indent_item", "indent_links__indent_item__indent")
+        .prefetch_related(
+            "indent_links",
+            "indent_links__indent_item",
+            "indent_links__indent_item__indent",
+        )
         .annotate(_received_total=Sum("grnitem__quantity_received"))
         .all()
     )
@@ -405,7 +421,15 @@ def purchase_order_detail(request, pk: int):
             ),
         ),
     ]
-    ctx = {"po": po, "items": items, "badge_class": badge_class, "rows": rows}
+    ctx = {
+        "po": po,
+        "items": items,
+        "badge_class": badge_class,
+        "rows": rows,
+        "list_url": reverse("purchase_orders_list"),
+        "list_title": "Purchase Orders",
+        "current_title": f"Purchase Order {po.pk}",
+    }
     return render(request, "inventory/purchase_orders/detail.html", ctx)
 
 
@@ -465,7 +489,7 @@ def purchase_order_receive(request, pk: int):
                 )
                 if success:
                     return redirect("purchase_order_detail", pk=pk)
-                messages.error(request, msg)
+                messages.error(request, msg, extra_tags="toast")
     else:
         form = GRNForm()
     return render(
@@ -545,13 +569,17 @@ class PurchaseOrderReceivePartialView(View):
                 }
                 if request.FILES.get("attachment"):
                     grn_data["attachment"] = request.FILES["attachment"]
-                success, msg, _ = goods_receiving_service.create_grn(grn_data, items_data)
+                success, msg, _ = goods_receiving_service.create_grn(
+                    grn_data, items_data
+                )
                 if success:
                     return JsonResponse(
                         {
                             "ok": True,
                             "message": "Goods received recorded",
-                            "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
+                            "redirect": reverse(
+                                "purchase_order_detail", kwargs={"pk": po.pk}
+                            ),
                         }
                     )
                 return JsonResponse({"ok": False, "message": msg}, status=400)
@@ -569,17 +597,19 @@ def mark_ordered(request, pk: int):
     """
     po = get_object_or_404(PurchaseOrder, pk=pk)
     if po.status != "DRAFT":
-        messages.info(request, "Only draft purchase orders can be marked as ordered.")
+        messages.info(request, "Only draft purchase orders can be marked as ordered.", extra_tags="toast")
         return redirect("purchase_order_detail", pk=pk)
     po.status = "ORDERED"
     # Append audit marker in notes (simple, non-invasive)
     try:
-        username = getattr(request.user, "username", None) or getattr(request.user, "email", "user")
+        username = getattr(request.user, "username", None) or getattr(
+            request.user, "email", "user"
+        )
     except Exception:
         username = "user"
     ts = timezone.now().strftime("%Y-%m-%d %H:%M")
     suffix = f" | Ordered by {username} at {ts}"
     po.notes = ((po.notes or "").strip() + suffix).strip()
     po.save(update_fields=["status", "notes"])
-    messages.success(request, "Purchase order marked as ORDERED.")
+    messages.success(request, "Purchase order marked as ORDERED.", extra_tags="toast")
     return redirect("purchase_order_detail", pk=pk)

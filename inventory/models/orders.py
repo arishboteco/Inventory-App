@@ -33,11 +33,11 @@ class Indent(models.Model):
     )
     date_submitted = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     processed_by = models.ForeignKey(
-        'auth.User',
+        "auth.User",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
-        db_column='processed_by_id',
+        db_column="processed_by_id",
     )
     date_processed = models.DateTimeField(auto_now=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

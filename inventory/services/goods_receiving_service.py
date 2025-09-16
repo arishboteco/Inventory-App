@@ -14,9 +14,8 @@ from inventory.models import (
     Supplier,
 )
 
-from . import stock_service
+from . import indent_consolidation_service, stock_service
 from .exceptions import StockServiceError
-from . import indent_consolidation_service
 
 logger = logging.getLogger(__name__)
 

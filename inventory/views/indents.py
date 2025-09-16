@@ -1,10 +1,10 @@
 import logging
 
-from django.contrib import messages
 from django import forms
+from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db import DatabaseError, transaction, connection, IntegrityError
-from django.db.models import BooleanField, Case, Q, Value, When, Sum, DecimalField
+from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.db.models import BooleanField, Case, DecimalField, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,14 +17,12 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
-from ..forms.indent_issue_forms import IndentItemIssueForm, IndentIssueFormset
-from ..services import list_utils
-from ..services import indent_issue_service
-from ..services import indent_consolidation_service
+from ..forms.indent_issue_forms import IndentIssueFormset, IndentItemIssueForm
 from ..indent_pdf import generate_indent_pdf
 from ..models import Department, Indent
 from ..models import IndentItem as IndentItemModel
 from ..models import Supplier as SupplierModel
+from ..services import indent_consolidation_service, indent_issue_service, list_utils
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +58,7 @@ class IndentsListView(TemplateView):
         end_date = (self.request.GET.get("end") or "").strip()
         q = (self.request.GET.get("q") or "").strip()
         total_indents = Indent.objects.count()
+        approved_count = Indent.objects.filter(status__iexact="APPROVED").count()
         # Build filter options for the filter bar
         dept_options = (
             Department.objects.only("department_id", "name")
@@ -83,9 +82,10 @@ class IndentsListView(TemplateView):
                 "name": "department",
                 "label": "Department",
                 "value": dept,
-                "options": ([{"value": "", "label": "All Departments"}] + [
-                    {"value": str(did), "label": name} for did, name in dept_options
-                ]),
+                "options": (
+                    [{"value": "", "label": "All Departments"}]
+                    + [{"value": str(did), "label": name} for did, name in dept_options]
+                ),
             },
             {
                 "name": "requested_by",
@@ -107,6 +107,7 @@ class IndentsListView(TemplateView):
                 "end": end_date,
                 "q": q,
                 "total_indents": total_indents,
+                "approved_count": approved_count,
                 "filters": filters,
                 "quick_form": IndentForm(),
                 "list_url": reverse("root"),
@@ -122,7 +123,7 @@ class IndentsListView(TemplateView):
         form = IndentForm(request.POST)
         if form.is_valid():
             indent = form.save()
-            messages.success(request, "Indent submitted")
+            messages.success(request, "Indent submitted", extra_tags="toast")
             return redirect("indent_detail", pk=indent.pk)
 
         ctx = self.get_context_data(**kwargs)
@@ -163,7 +164,9 @@ class IndentsTableView(TemplateView):
                 iss_total=Coalesce(Sum("indentitem__issued_qty"), zero),
             )
         except Exception:
-            logger.exception("Failed to annotate indent totals; continuing without totals")
+            logger.exception(
+                "Failed to annotate indent totals; continuing without totals"
+            )
 
         # Apply search, filters, and sorting using shared utils
         qs, params = list_utils.apply_filters_sort(
@@ -196,12 +199,14 @@ class IndentsTableView(TemplateView):
             querystring = list_utils.build_querystring(self.request)
         except Exception:
             querystring = ""
-        ctx.update({
-            "page_obj": page_obj,
-            "badges": INDENT_STATUS_BADGES,
-            "querystring": querystring,
-            **params,
-        })
+        ctx.update(
+            {
+                "page_obj": page_obj,
+                "badges": INDENT_STATUS_BADGES,
+                "querystring": querystring,
+                **params,
+            }
+        )
         return ctx
 
 
@@ -219,7 +224,9 @@ class IndentCreateView(View):
     def get(self, request):
         form = IndentForm()
         suggest_url = reverse("item_search")
-        formset = IndentItemFormSet(prefix="items", form_kwargs={"item_suggest_url": suggest_url})
+        formset = IndentItemFormSet(
+            prefix="items", form_kwargs={"item_suggest_url": suggest_url}
+        )
         # Pre-fill requested_by from logged-in user; keep hidden in form
         try:
             rb = (
@@ -234,11 +241,18 @@ class IndentCreateView(View):
         # Provide department options for datalist
         try:
             dept_options = list(
-                Department.objects.only("department_id", "name").order_by("name").values_list("department_id", "name")
+                Department.objects.only("department_id", "name")
+                .order_by("name")
+                .values_list("department_id", "name")
             )
         except Exception:
             dept_options = []
-        ctx = {"form": form, "formset": formset, "department_options": dept_options, "requested_by_display": rb}
+        ctx = {
+            "form": form,
+            "formset": formset,
+            "department_options": dept_options,
+            "requested_by_display": rb,
+        }
         if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
             return render(request, self.partial_template, ctx)
         # No full-page create form; surface only via modal/drawer
@@ -247,7 +261,9 @@ class IndentCreateView(View):
     def post(self, request):
         form = IndentForm(request.POST)
         suggest_url = reverse("item_search")
-        formset = IndentItemFormSet(request.POST, prefix="items", form_kwargs={"item_suggest_url": suggest_url})
+        formset = IndentItemFormSet(
+            request.POST, prefix="items", form_kwargs={"item_suggest_url": suggest_url}
+        )
         is_partial = (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}
         if form.is_valid() and formset.is_valid():
             stage = "pre"
@@ -267,45 +283,88 @@ class IndentCreateView(View):
                     if not str(dep_raw).strip():
                         if is_partial:
                             from django.http import JsonResponse
-                            return JsonResponse({"ok": False, "message": "Please select a department"}, status=400)
-                        messages.error(request, "Please select a department")
-                        return render(request, self.template_name, {"form": form, "formset": formset})
+
+                            return JsonResponse(
+                                {"ok": False, "message": "Please select a department"},
+                                status=400,
+                            )
+                        messages.error(
+                            request, "Please select a department", extra_tags="toast"
+                        )
+                        return render(
+                            request,
+                            self.template_name,
+                            {"form": form, "formset": formset},
+                        )
                     if str(dep_raw).isdigit():
                         # Validate that department exists to avoid FK DB errors later
                         try:
                             dep_id = int(dep_raw)
                         except Exception:
                             dep_id = None
-                        if dep_id is not None and Department.objects.filter(pk=dep_id).exists():
+                        if (
+                            dep_id is not None
+                            and Department.objects.filter(pk=dep_id).exists()
+                        ):
                             indent.department_id = dep_id
                         else:
                             if is_partial:
                                 from django.http import JsonResponse
 
-                                return JsonResponse({
-                                    "ok": False,
-                                    "message": "Please select a valid department",
-                                }, status=400)
-                            messages.error(request, "Please select a valid department")
-                            return render(request, self.template_name, {"form": form, "formset": formset})
+                                return JsonResponse(
+                                    {
+                                        "ok": False,
+                                        "message": "Please select a valid department",
+                                    },
+                                    status=400,
+                                )
+                            messages.error(
+                                request,
+                                "Please select a valid department",
+                                extra_tags="toast",
+                            )
+                            return render(
+                                request,
+                                self.template_name,
+                                {"form": form, "formset": formset},
+                            )
                     elif dep_raw:
                         try:
                             indent.department = Department.objects.get(name=dep_raw)
                         except Department.DoesNotExist:
                             indent.department = None
                     # After normalization, ensure we have a department set prior to saving
-                    if not getattr(indent, "department_id", None) and not getattr(indent, "department", None):
+                    if not getattr(indent, "department_id", None) and not getattr(
+                        indent, "department", None
+                    ):
                         if is_partial:
                             from django.http import JsonResponse
 
-                            return JsonResponse({"ok": False, "message": "Please select a valid department"}, status=400)
-                        messages.error(request, "Please select a valid department")
-                        return render(request, self.template_name, {"form": form, "formset": formset})
+                            return JsonResponse(
+                                {
+                                    "ok": False,
+                                    "message": "Please select a valid department",
+                                },
+                                status=400,
+                            )
+                        messages.error(
+                            request,
+                            "Please select a valid department",
+                            extra_tags="toast",
+                        )
+                        return render(
+                            request,
+                            self.template_name,
+                            {"form": form, "formset": formset},
+                        )
                     # Fill requested_by if not provided
                     if not indent.requested_by:
                         try:
                             rb = (
-                                (getattr(request.user, "get_full_name", lambda: "")() or None)
+                                (
+                                    getattr(request.user, "get_full_name", lambda: "")()
+                                    or None
+                                )
                                 or getattr(request.user, "username", None)
                                 or getattr(request.user, "email", None)
                             )
@@ -334,7 +393,11 @@ class IndentCreateView(View):
                     from django.http import JsonResponse
 
                     return JsonResponse(
-                        {"ok": True, "message": f"Indent {getattr(indent, 'mrn', '')} created", "id": indent.pk}
+                        {
+                            "ok": True,
+                            "message": f"Indent {getattr(indent, 'mrn', '')} created",
+                            "id": indent.pk,
+                        }
                     )
                 return redirect("indent_detail", pk=indent.pk)
             except DatabaseError as db_ex:
@@ -345,12 +408,23 @@ class IndentCreateView(View):
                     msg_text = str(db_ex) if db_ex else ""
                     if is_partial and (
                         "department" in msg_text.lower()
-                        and ("null" in msg_text.lower() or "foreign key" in msg_text.lower() or "invalid" in msg_text.lower())
+                        and (
+                            "null" in msg_text.lower()
+                            or "foreign key" in msg_text.lower()
+                            or "invalid" in msg_text.lower()
+                        )
                     ):
                         from django.http import JsonResponse
-                        return JsonResponse({"ok": False, "message": "Please select a valid department"}, status=400)
+
+                        return JsonResponse(
+                            {
+                                "ok": False,
+                                "message": "Please select a valid department",
+                            },
+                            status=400,
+                        )
                     # If failure happened during line items save, do NOT fallback insert; ensure atomicity
-                    if 'stage' in locals() and stage == "formset_save":
+                    if "stage" in locals() and stage == "formset_save":
                         raise
                     # Gather raw values we can use for a manual insert
                     dep_raw = (
@@ -376,7 +450,10 @@ class IndentCreateView(View):
                         dept_name = str(dep_raw)
 
                     # If we still don't have any department info, abort with a friendly message
-                    if not dept_name and not (str(dep_raw).isdigit() and Department.objects.filter(pk=int(dep_raw)).exists()):
+                    if not dept_name and not (
+                        str(dep_raw).isdigit()
+                        and Department.objects.filter(pk=int(dep_raw)).exists()
+                    ):
                         raise ValueError("Invalid department")
 
                     # One atomic block to ensure all-or-nothing
@@ -384,9 +461,18 @@ class IndentCreateView(View):
                         with connection.cursor() as cur:
                             # Discover actual columns present
                             table = "indents"
-                            cols = {c.name for c in connection.introspection.get_table_description(cur, table)}
+                            cols = {
+                                c.name
+                                for c in connection.introspection.get_table_description(
+                                    cur, table
+                                )
+                            }
                             # Determine primary key column name if possible
-                            pk_col = "indent_id" if "indent_id" in cols else ("id" if "id" in cols else None)
+                            pk_col = (
+                                "indent_id"
+                                if "indent_id" in cols
+                                else ("id" if "id" in cols else None)
+                            )
                             insert_cols = []
                             params = []
                             # Portable timestamps
@@ -403,7 +489,9 @@ class IndentCreateView(View):
                                 params.append(getattr(obj, "date_required", None))
                             if "status" in cols:
                                 insert_cols.append("status")
-                                params.append(getattr(obj, "status", "SUBMITTED") or "SUBMITTED")
+                                params.append(
+                                    getattr(obj, "status", "SUBMITTED") or "SUBMITTED"
+                                )
                             if "notes" in cols:
                                 insert_cols.append("notes")
                                 params.append(getattr(obj, "notes", "") or "")
@@ -413,7 +501,9 @@ class IndentCreateView(View):
                                 if str(dep_raw).isdigit():
                                     dept_id_val = int(dep_raw)
                                 elif dep_raw:
-                                    d = Department.objects.only("department_id").get(name=str(dep_raw))
+                                    d = Department.objects.only("department_id").get(
+                                        name=str(dep_raw)
+                                    )
                                     dept_id_val = d.pk
                             except Exception:
                                 dept_id_val = None
@@ -458,7 +548,9 @@ class IndentCreateView(View):
                                         raise
                                     cur2 = connection.cursor()
                                     try:
-                                        cur2.execute(f"SELECT MAX({pk_col}) FROM {table}")
+                                        cur2.execute(
+                                            f"SELECT MAX({pk_col}) FROM {table}"
+                                        )
                                         new_id = cur2.fetchone()[0]
                                     finally:
                                         cur2.close()
@@ -472,7 +564,11 @@ class IndentCreateView(View):
                         from django.http import JsonResponse
 
                         return JsonResponse(
-                            {"ok": True, "message": f"Indent {getattr(obj, 'mrn', '')} created", "id": new_id}
+                            {
+                                "ok": True,
+                                "message": f"Indent {getattr(obj, 'mrn', '')} created",
+                                "id": new_id,
+                            }
                         )
                     return redirect("indent_detail", pk=new_id)
                 except Exception as ex:
@@ -480,18 +576,28 @@ class IndentCreateView(View):
                     logger.exception("Database error while creating indent")
                     if is_partial:
                         from django.http import JsonResponse
+
                         # Map common DB errors to actionable messages; include raw text only in DEBUG
                         raw = str(ex) if ex else ""
                         friendly = None
                         low = raw.lower()
-                        if "foreign key" in low or ("department" in low and ("null" in low or "invalid" in low)):
+                        if "foreign key" in low or (
+                            "department" in low and ("null" in low or "invalid" in low)
+                        ):
                             friendly = "Please select a valid department"
                         elif "unique" in low and "mrn" in low:
                             friendly = "MRN already exists. Please try again."
                         from django.conf import settings
-                        message = friendly or (raw if getattr(settings, 'DEBUG', False) else "Unable to save indent due to a database error. Please try again.")
-                        return JsonResponse({"ok": False, "message": message}, status=400)
-                    messages.error(request, "Unable to save indent")
+
+                        message = friendly or (
+                            raw
+                            if getattr(settings, "DEBUG", False)
+                            else "Unable to save indent due to a database error. Please try again."
+                        )
+                        return JsonResponse(
+                            {"ok": False, "message": message}, status=400
+                        )
+                    messages.error(request, "Unable to save indent", extra_tags="toast")
         if is_partial:
             from django.http import JsonResponse
 
@@ -518,7 +624,9 @@ class IndentCreateView(View):
         # Provide department options again on normal render
         try:
             dept_options = list(
-                Department.objects.only("department_id", "name").order_by("name").values_list("department_id", "name")
+                Department.objects.only("department_id", "name")
+                .order_by("name")
+                .values_list("department_id", "name")
             )
         except Exception:
             dept_options = []
@@ -538,12 +646,15 @@ def indent_detail(request, pk: int):
     indent = get_object_or_404(Indent, pk=pk)
     items = (
         indent.indentitem_set.select_related("item")
-        .prefetch_related("po_links", "po_links__po_item", "po_links__po_item__purchase_order")
+        .prefetch_related(
+            "po_links", "po_links__po_item", "po_links__po_item__purchase_order"
+        )
         .all()
     )
     # Compute remaining quantity for display
     try:
         from decimal import Decimal
+
         # Lazy import to avoid circulars at module import time
         from ..services.units_service import UnitsService  # type: ignore
 
@@ -557,7 +668,11 @@ def indent_detail(request, pk: int):
             # Unit display for the linked item (purchase unit for UI)
             try:
                 unit_id = getattr(getattr(it, "item", None), "unit_id", None)
-                it.unit_display = UnitsService.get_purchase_unit_display(int(unit_id)) if unit_id else ""
+                it.unit_display = (
+                    UnitsService.get_purchase_unit_display(int(unit_id))
+                    if unit_id
+                    else ""
+                )
             except Exception:
                 it.unit_display = ""
     except Exception:
@@ -590,7 +705,15 @@ def indent_detail(request, pk: int):
         wa_url = f"https://wa.me/?text={quote_plus(wa_text)}"
     except Exception:
         wa_url = None
-    ctx = {"indent": indent, "items": items, "rows": rows, "wa_url": wa_url}
+    ctx = {
+        "indent": indent,
+        "items": items,
+        "rows": rows,
+        "wa_url": wa_url,
+        "list_url": reverse("indents_list"),
+        "list_title": "Indents",
+        "current_title": f"Indent {indent.mrn or indent.pk}",
+    }
     # Support modal/drawer partial render
     if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
         return render(request, "inventory/_indent_detail_partial.html", ctx)
@@ -611,7 +734,11 @@ def indent_update_status(request, pk: int, status: str):
     # Permission: approval restricted to staff/superuser or explicit permission
     if target == "APPROVED":
         user = getattr(request, "user", None)
-        if not (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False) or user.has_perm("inventory.change_indent")):
+        if not (
+            getattr(user, "is_staff", False)
+            or getattr(user, "is_superuser", False)
+            or user.has_perm("inventory.change_indent")
+        ):
             from django.http import HttpResponse
 
             return HttpResponse("Forbidden", status=403)
@@ -663,12 +790,18 @@ def indents_consolidate(request):
     ids: list[int] = []
     if request.POST.getlist("indent_id"):
         try:
-            ids = [int(x) for x in request.POST.getlist("indent_id") if str(x).isdigit()]
+            ids = [
+                int(x) for x in request.POST.getlist("indent_id") if str(x).isdigit()
+            ]
         except Exception:
             ids = []
     elif request.POST.get("ids"):
         try:
-            ids = [int(x.strip()) for x in request.POST.get("ids", "").split(",") if x.strip().isdigit()]
+            ids = [
+                int(x.strip())
+                for x in request.POST.get("ids", "").split(",")
+                if x.strip().isdigit()
+            ]
         except Exception:
             ids = []
     result = indent_consolidation_service.consolidate_approved_indents(ids)
@@ -693,23 +826,26 @@ def consolidate_indents(request):
     ids: list[int] = []
     if request.GET.get("ids"):
         try:
-            ids = [int(x.strip()) for x in request.GET.get("ids", "").split(",") if x.strip().isdigit()]
+            ids = [
+                int(x.strip())
+                for x in request.GET.get("ids", "").split(",")
+                if x.strip().isdigit()
+            ]
         except Exception:
             ids = []
     base_filter = {"indent__status": "APPROVED"}
     if ids:
         base_filter["indent_id__in"] = ids
     # Gather approved indent items with pending quantities and a preferred supplier
-    qs = (
-        IndentItemModel.objects.select_related("item", "indent", "item__preferred_supplier")
-        .filter(**base_filter)
-    )
+    qs = IndentItemModel.objects.select_related(
+        "item", "indent", "item__preferred_supplier"
+    ).filter(**base_filter)
     groups: dict[int, dict] = {}
     total_items = 0
     for ii in qs:
         req = (ii.requested_qty or 0) or 0
         iss = (ii.issued_qty or 0) or 0
-        pending = (req - iss)
+        pending = req - iss
         if pending <= 0:
             continue
         item = ii.item  # type: ignore
@@ -719,7 +855,9 @@ def consolidate_indents(request):
         g = groups.setdefault(supplier_id, {"items": {}, "supplier": None})
         if g["supplier"] is None:
             try:
-                g["supplier"] = SupplierModel.objects.only("supplier_id", "name").get(pk=supplier_id)
+                g["supplier"] = SupplierModel.objects.only("supplier_id", "name").get(
+                    pk=supplier_id
+                )
             except Exception:
                 g["supplier"] = None
         entry = g["items"].setdefault(item.pk, {"item": item, "qty": 0})
@@ -728,13 +866,17 @@ def consolidate_indents(request):
     # Transform to template-friendly structure
     grouped = []
     for supplier_id, data in groups.items():
-        items_list = sorted(data["items"].values(), key=lambda x: getattr(x["item"], "name", ""))
-        grouped.append({
-            "supplier": data["supplier"],
-            "supplier_id": supplier_id,
-            "items": items_list,
-            "total_lines": len(items_list),
-        })
+        items_list = sorted(
+            data["items"].values(), key=lambda x: getattr(x["item"], "name", "")
+        )
+        grouped.append(
+            {
+                "supplier": data["supplier"],
+                "supplier_id": supplier_id,
+                "items": items_list,
+                "total_lines": len(items_list),
+            }
+        )
     # Sort suppliers by name
     grouped.sort(key=lambda g: (getattr(g["supplier"], "name", "") or "").lower())
 
@@ -742,9 +884,15 @@ def consolidate_indents(request):
         # Perform consolidation for the same scope
         result = indent_consolidation_service.consolidate_approved_indents(ids)
         if result.created_po_ids:
-            messages.success(request, f"Created {len(result.created_po_ids)} purchase order(s)")
+            messages.success(
+                request,
+                f"Created {len(result.created_po_ids)} purchase order(s)",
+                extra_tags="toast",
+            )
             return redirect("purchase_orders_list")
-        messages.info(request, "No eligible items found to consolidate")
+        messages.info(
+            request, "No eligible items found to consolidate", extra_tags="toast"
+        )
         return redirect("indents_list")
 
     return render(
@@ -761,7 +909,9 @@ def consolidate_indents(request):
 
 def issue_indent(request, pk: int):
     indent = get_object_or_404(Indent, pk=pk)
-    items = list(indent.indentitem_set.select_related("item").order_by("indent_item_id").all())
+    items = list(
+        indent.indentitem_set.select_related("item").order_by("indent_item_id").all()
+    )
     # Build formset for all items in this indent
     if request.method == "POST":
         Formset = forms.formset_factory(IndentItemIssueForm, formset=IndentIssueFormset, extra=0)  # type: ignore
@@ -777,11 +927,13 @@ def issue_indent(request, pk: int):
                         source_location=(data.get("source_location") or ""),
                     )
                 )
-            result = indent_issue_service.issue_indent(indent.indent_id, lines, request.user)
+            result = indent_issue_service.issue_indent(
+                indent.indent_id, lines, request.user
+            )
             if result.ok:
-                messages.success(request, result.message)
+                messages.success(request, result.message, extra_tags="toast")
                 return redirect("indent_detail", pk=indent.pk)
-            messages.info(request, result.message)
+            messages.info(request, result.message, extra_tags="toast")
             return redirect("indent_detail", pk=indent.pk)
     else:
         Formset = forms.formset_factory(IndentItemIssueForm, formset=IndentIssueFormset, extra=0)  # type: ignore

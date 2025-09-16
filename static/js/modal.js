@@ -488,21 +488,24 @@
         if (window.notifications) window.notifications.showToast('Please select a department', 'error');
         return;
       }
-      // Ensure at least one valid line (item id + positive qty)
-      let hasValidLine = false;
+      // Ensure at least one valid line (item id + positive qty) only when form opts in
+      const requiresLineItems = form.hasAttribute('data-requires-line-items');
       const hiddenItems = Array.from(form.querySelectorAll('input[type="hidden"][data-item-hidden-for]'));
-      for (const h of hiddenItems){
-        const name = h.getAttribute('data-item-hidden-for') || h.name || '';
-        if (!name) continue;
-        const qtyName = name.replace(/-item$/, '-requested_qty');
-        const qty = form.querySelector(`input[name="${cssEscape(qtyName)}"]`);
-        const qtyVal = qty ? parseFloat(qty.value) : NaN;
-        if ((h.value || '').trim() && !Number.isNaN(qtyVal) && qtyVal > 0) { hasValidLine = true; break; }
-      }
-      if (!hasValidLine) {
-        showInlineError('Add at least one item with a positive quantity');
-        if (window.notifications) window.notifications.showToast('Add at least one item with a positive quantity', 'error');
-        return;
+      if (requiresLineItems) {
+        let hasValidLine = false;
+        for (const h of hiddenItems) {
+          const name = h.getAttribute('data-item-hidden-for') || h.name || '';
+          if (!name) continue;
+          const qtyName = name.replace(/-item$/, '-requested_qty');
+          const qty = form.querySelector(`input[name="${cssEscape(qtyName)}"]`);
+          const qtyVal = qty ? parseFloat(qty.value) : NaN;
+          if ((h.value || '').trim() && !Number.isNaN(qtyVal) && qtyVal > 0) { hasValidLine = true; break; }
+        }
+        if (!hasValidLine) {
+          showInlineError('Add at least one item with a positive quantity');
+          if (window.notifications) window.notifications.showToast('Add at least one item with a positive quantity', 'error');
+          return;
+        }
       }
 
       const fd = new FormData(form);
@@ -535,8 +538,11 @@
             }
           }
           if (r.ok && data && data.ok) {
-            if (window.notifications)
-              window.notifications.showToast(data.message || "Saved", "success");
+            const shouldToast = data.toast !== false;
+            const toastMsg = data.toast_message || data.message || "Saved";
+            const toastType = data.toast_type || "success";
+            if (shouldToast && window.notifications)
+              window.notifications.showToast(toastMsg, toastType);
             closeModal();
             // Success navigation: prefer explicit redirect if provided; otherwise reload
             if (data && data.redirect) {
@@ -548,8 +554,10 @@
             const msg = (data && data.message) || `${r.status} ${r.statusText || 'Save failed'}`;
             showInlineError(msg);
             if (window.console) console.debug('[modal] submit failed', { status: r.status, statusText: r.statusText, data });
-            if (window.notifications)
-              window.notifications.showToast(msg, "error");
+            const toastType = (data && data.toast_type) || 'error';
+            if (window.notifications && data && data.toast !== false)
+              window.notifications.showToast(msg, toastType);
+
           }
         })
         .catch(() => {

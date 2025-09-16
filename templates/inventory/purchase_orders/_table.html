@@ -64,7 +64,7 @@
 
 {% block rows %}
 {% for po in orders %}
-<tr class="odd:bg-surfaceSubtle hover:bg-gray-100">
+<tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle">
   <td class="px-4 py-2">
     <input type="checkbox" name="po_id" value="{{ po.pk }}" aria-label="Select PO {{ po.pk }}" data-bulk-checkbox />
   </td>
@@ -74,7 +74,7 @@
   <td class="px-4 py-2" data-col="status"><span class="px-2 py-1 rounded-full text-badge {{ po.badge_class }}">{{ po.get_status_display }}</span></td>
   <td class="px-4 py-2" data-col="progress">
     <div
-      class="w-full bg-gray-200 rounded-full h-2"
+      class="w-full bg-surfaceSubtle rounded-full h-2"
       role="progressbar"
       aria-valuenow="{{ po.progress_percent }}"
       aria-valuemin="0"

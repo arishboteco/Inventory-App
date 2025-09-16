@@ -181,10 +181,12 @@ def apply_filters_sort(
     qs = qs.order_by(*ordering_fields)
 
     # Backward compatible single sort/direction for templates (primary sort)
-    params.update({
-        "sort": ordered_unique[0][0],
-        "direction": ordered_unique[0][1],
-    })
+    params.update(
+        {
+            "sort": ordered_unique[0][0],
+            "direction": ordered_unique[0][1],
+        }
+    )
     return qs, params
 
 

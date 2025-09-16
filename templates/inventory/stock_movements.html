@@ -3,6 +3,21 @@
 
 {% block page_title %}Transactions – Stock Movements{% endblock %}
 {% block page_heading %}Stock Movements{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Record receipts, adjustments, and wastage in one place.</p>
+{% endblock %}
+{% block page_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Total records: <span class="text-bodyText">{{ total_transactions|default:0 }}</span></span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Active form: <span class="text-bodyText">{{ active_section }}</span></span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Pending PO receipts: <span class="text-bodyText">{{ pending_orders|default:0 }}</span></span>
+  </div>
+{% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    <span class="font-medium text-bodyText">Tip:</span> Use Quick Movement for one-off adjustments or the bulk uploader for large imports.
+  </div>
+{% endblock %}
 
 {% block extra_top %}
   <datalist id="item-options"></datalist>
@@ -12,18 +27,18 @@
 {% block table_id %}transactions-container{% endblock %}
 
 {% block data_container %}
-  <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+  <div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden">
     <div id="transactions-toolbar">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-border">
         <div class="flex items-center gap-2">
-          <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Recent Transactions</h2>
+          <h2 class="text-h2 md:text-lg font-semibold text-bodyText">Recent Transactions</h2>
         </div>
         <div class="flex flex-wrap items-center gap-2 justify-end">
-          <button id="receive-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Receive Stock</button>
-          <button id="adjust-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Adjust Stock</button>
-          <button id="waste-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Record Wastage</button>
-          <button id="bulk-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Bulk Upload</button>
-          <a href="{% url 'history_reports' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">View Reports</a>
+          <button id="receive-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Receive Stock</button>
+          <button id="adjust-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Adjust Stock</button>
+          <button id="waste-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Record Wastage</button>
+          <button id="bulk-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Bulk Upload</button>
+          <a href="{% url 'history_reports' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">View Reports</a>
         </div>
       </div>
     </div>

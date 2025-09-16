@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, Optional
 
 from django.db import transaction
 from django.utils import timezone
@@ -37,7 +37,9 @@ def _as_decimal(val: Any) -> Decimal:
 
 def _user_ident(user) -> tuple[str, Optional[int]]:
     try:
-        uname = getattr(user, "username", None) or getattr(user, "email", None) or "System"
+        uname = (
+            getattr(user, "username", None) or getattr(user, "email", None) or "System"
+        )
     except Exception:
         uname = "System"
     try:
@@ -136,4 +138,6 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
 
     if updated == 0:
         return IssueResult(ok=False, message="No items issued", updated_items=0)
-    return IssueResult(ok=True, message=f"Issued {updated} line(s)", updated_items=updated)
+    return IssueResult(
+        ok=True, message=f"Issued {updated} line(s)", updated_items=updated
+    )

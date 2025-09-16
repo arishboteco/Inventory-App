@@ -73,9 +73,7 @@ class IndentForm(StyledFormMixin, forms.ModelForm):
                 from ..models import Indent as IndentModel
 
                 last = (
-                    IndentModel.objects.only("indent_id")
-                    .order_by("-indent_id")
-                    .first()
+                    IndentModel.objects.only("indent_id").order_by("-indent_id").first()
                 )
                 next_num = (last.indent_id + 1) if last and last.indent_id else 1
                 obj.mrn = f"MRN-{str(next_num).zfill(3)}"
@@ -98,7 +96,13 @@ class IndentItemForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
         model = IndentItem
         fields = ["item", "requested_qty", "notes"]
 
-    def __init__(self, *args, item_suggest_url: str | None = None, item_list_id: str | None = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        item_suggest_url: str | None = None,
+        item_list_id: str | None = None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         item_attrs = {
             "class": INPUT_CLASS,
@@ -161,6 +165,7 @@ class _IndentItemFormSetBase(forms.BaseInlineFormSet):
         if commit:
             self.save_m2m()
         return instances
+
 
 IndentItemFormSet = forms.inlineformset_factory(
     Indent,

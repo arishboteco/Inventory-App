@@ -1,49 +1,55 @@
 {% extends "components/create_manage_layout.html" %}
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
 {% block page_title %}Explore Items – Inventory Pro{% endblock %}
 {% block page_heading %}Explore Items{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Quickly browse the catalogue with lightweight filters and exports.</p>
+{% endblock %}
+{% block page_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Results: <span class="text-bodyText">{{ page_obj.paginator.count|default:0 }}</span></span>
+  </div>
+{% endblock %}
 
 {% block filters %}
-<form method="get" class="flex flex-col gap-2 sm:flex-row sm:items-end">
-  <div class="flex flex-col">
-    <label for="q" class="text-sm font-medium">Search</label>
-    <input id="q" type="text" name="q" value="{{ q }}" placeholder="Search" autocomplete="off" />
+  <div class="bg-surface border border-border rounded-2xl shadow-card p-4 space-y-3">
+    <form method="get" class="grid gap-4 grid-cols-1 md:grid-cols-3 items-end">
+      <div class="flex flex-col">
+        <label for="q" class="text-sm font-medium text-bodyText">Search</label>
+        <input id="q" type="text" name="q" value="{{ q }}" placeholder="Item name" autocomplete="off" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" />
+      </div>
+      <div class="flex flex-col">
+        <label for="active" class="text-sm font-medium text-bodyText">Status</label>
+        <select id="active" name="active" autocomplete="off" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary">
+          <option value="" {% if not active %}selected{% endif %}>All</option>
+          <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
+          <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Filter</button>
+        <a href="{{ export_url }}?{{ querystring }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Export CSV</a>
+      </div>
+    </form>
   </div>
-  <div class="flex flex-col">
-    <label for="active" class="text-sm font-medium">Status</label>
-    <select id="active" name="active" autocomplete="off">
-      <option value="" {% if not active %}selected{% endif %}>All</option>
-      <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
-      <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
-    </select>
-  </div>
-  <div>
-    <button type="submit">Filter</button>
-  </div>
-</form>
-<a href="{{ export_url }}?{{ querystring }}">Export CSV</a>
 {% endblock %}
 
 {% block data_container %}
-<ul>
-{% for item in page_obj.object_list %}
-  <li>{{ item.name }}</li>
-{% empty %}
-  <li>No results</li>
-{% endfor %}
-</ul>
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <ul class="divide-y divide-border">
+    {% for item in page_obj.object_list %}
+      <li class="px-4 py-3 text-bodyText flex justify-between items-center">
+        <span>{{ item.name }}</span>
+        <span class="text-xs text-gray-500">{% if item.is_active %}Active{% else %}Inactive{% endif %}</span>
+      </li>
+    {% empty %}
+      <li class="px-4 py-6 text-center text-gray-600">No results</li>
+    {% endfor %}
+    </ul>
+  </div>
 {% endblock %}
 
 {% block pagination %}
-<div class="pagination">
-  {% if page_obj.has_previous %}
-    <a href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">Prev</a>
-  {% endif %}
-  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-  {% if page_obj.has_next %}
-    <a href="?{{ querystring }}&page={{ page_obj.next_page_number }}">Next</a>
-  {% endif %}
-</div>
+  <div class="mt-4">
+    {% include "components/pagination.html" with page_obj=page_obj base_url=request.path extra_query=querystring %}
+  </div>
 {% endblock %}

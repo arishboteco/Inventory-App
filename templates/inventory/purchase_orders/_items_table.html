@@ -3,23 +3,23 @@
 {% block caption %}<caption>Purchase Order Items</caption>{% endblock %}
 
 {% block actions %}
-  <div class="flex items-center justify-end px-3 py-2 bg-gray-50 border-b border-gray-200">
+  <div class="flex items-center justify-end px-4 py-3 bg-surfaceSubtle border-b border-border">
     <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
-      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
-      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
+      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
+      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
     </div>
   </div>
 {% endblock %}
 
 {% block headers %}
-  <th scope="col" class="px-4 py-2">Item</th>
-  <th scope="col" class="px-4 py-2">Ordered</th>
-  <th scope="col" class="px-4 py-2">Received</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Item</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Ordered</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Received</th>
 {% endblock %}
 
 {% block rows %}
   {% for item in items %}
-    <tr class="odd:bg-gray-50 hover:bg-gray-100">
+    <tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle">
       <td class="px-4 py-2">{{ item.item.name }}</td>
       <td class="px-4 py-2">{{ item.quantity_ordered }}</td>
       <td class="px-4 py-2">{{ item.received_total }}</td>

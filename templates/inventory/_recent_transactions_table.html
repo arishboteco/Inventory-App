@@ -3,44 +3,44 @@
 {% block caption %}<caption>Recent Transactions</caption>{% endblock %}
 
 {% block actions %}
-  <div class="flex items-center justify-end px-3 py-2 bg-gray-50 border-b border-gray-200">
+  <div class="flex items-center justify-end px-4 py-3 bg-surfaceSubtle border-b border-border">
     <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
-      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
-      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
+      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
+      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
     </div>
   </div>
 {% endblock %}
 
 {% block headers %}
-  <th scope="col" class="text-right">ID</th>
-  <th scope="col">Item</th>
-  <th scope="col">Type</th>
-  <th scope="col" class="text-right">Qty</th>
-  <th scope="col">User</th>
-  <th scope="col">Date</th>
-  <th scope="col">Notes</th>
+  <th scope="col" class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border">ID</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Item</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Type</th>
+  <th scope="col" class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border">Qty</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">User</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Date</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border">Notes</th>
 {% endblock %}
 
 {% block rows %}
   {% for tx in page_obj %}
-  <tr>
-    <td class="text-right"><span class="tabular-nums">{{ tx.transaction_id }}</span></td>
-    <td>{{ tx.item.name }}</td>
-    <td>
+  <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
+    <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.transaction_id }}</span></td>
+    <td class="px-4 py-2">{{ tx.item.name }}</td>
+    <td class="px-4 py-2">
       {% if tx.direction == 'in' %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-light text-success">IN</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">IN</span>
       {% else %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">OUT</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">OUT</span>
       {% endif %}
     </td>
-  <td class="text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
-    <td>{{ tx.user_id }}</td>
-    <td>{{ tx.transaction_date }}</td>
-    <td>{{ tx.notes }}</td>
+  <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
+    <td class="px-4 py-2">{{ tx.user_id }}</td>
+    <td class="px-4 py-2">{{ tx.transaction_date }}</td>
+    <td class="px-4 py-2">{{ tx.notes }}</td>
   </tr>
   {% empty %}
-  <tr>
-    <td colspan="7" class="p-2">No transactions found.</td>
+  <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
+    <td colspan="7" class="px-4 py-2 text-center text-gray-600">No transactions found.</td>
   </tr>
   {% endfor %}
 {% endblock %}

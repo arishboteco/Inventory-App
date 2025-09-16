@@ -1,11 +1,11 @@
 from django.contrib import messages
 from django.db.models import Count
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.views.generic import TemplateView
 from django.views import View
-from django.http import JsonResponse
+from django.views.generic import TemplateView
 
 from ..forms.recipe_forms import RecipeComponentFormSet, RecipeForm
 from ..models import Recipe
@@ -59,6 +59,7 @@ class RecipesListView(TemplateView):
         ctx = {
             "recipes_grid": grid_html,
             "q": q,
+            "recipe_count": len(recipes),
             "form": RecipeForm(),
             "list_url": reverse("root"),
             "list_title": "Dashboard",
@@ -70,7 +71,7 @@ class RecipesListView(TemplateView):
         form = RecipeForm(request.POST)
         if form.is_valid():
             recipe = form.save()
-            messages.success(request, "Recipe created")
+            messages.success(request, "Recipe created", extra_tags="toast")
             return redirect("recipe_detail", pk=recipe.pk)
 
         recipes, q = self._get_recipes()
@@ -80,6 +81,7 @@ class RecipesListView(TemplateView):
         ctx = {
             "recipes_grid": grid_html,
             "q": q,
+            "recipe_count": len(recipes),
             "form": form,
             "list_url": reverse("root"),
             "list_title": "Dashboard",
@@ -96,7 +98,7 @@ def recipe_create(request):
             recipe = form.save()
             formset.instance = recipe
             formset.save()
-            messages.success(request, "Recipe created")
+            messages.success(request, "Recipe created", extra_tags="toast")
             return redirect("recipe_detail", pk=recipe.pk)
     else:
         form = RecipeForm()
@@ -104,7 +106,15 @@ def recipe_create(request):
     return render(
         request,
         "inventory/recipes/detail.html",
-        {"form": form, "formset": formset, "recipe": None, "is_edit": False},
+        {
+            "form": form,
+            "formset": formset,
+            "recipe": None,
+            "is_edit": False,
+            "list_url": reverse("recipes_list"),
+            "list_title": "Recipes",
+            "current_title": "New Recipe",
+        },
     )
 
 
@@ -118,7 +128,7 @@ def recipe_detail(request, pk: int):
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
-            messages.success(request, "Recipe updated")
+            messages.success(request, "Recipe updated", extra_tags="toast")
             return redirect("recipe_detail", pk=recipe.pk)
     else:
         form = RecipeForm(instance=recipe)
@@ -126,7 +136,15 @@ def recipe_detail(request, pk: int):
     return render(
         request,
         "inventory/recipes/detail.html",
-        {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
+        {
+            "form": form,
+            "formset": formset,
+            "recipe": recipe,
+            "is_edit": True,
+            "list_url": reverse("recipes_list"),
+            "list_title": "Recipes",
+            "current_title": recipe.name,
+        },
     )
 
 
@@ -157,6 +175,7 @@ class RecipeCreatePartialView(View):
                     "id": recipe.pk,
                     "message": "Recipe created",
                     "redirect": reverse("recipe_detail", kwargs={"pk": recipe.pk}),
+                    "toast": True,
                 }
             )
         return render(
@@ -185,7 +204,9 @@ class RecipeEditPartialView(View):
     def post(self, request, pk: int):
         recipe = get_object_or_404(Recipe, pk=pk)
         form = RecipeForm(request.POST, instance=recipe)
-        formset = RecipeComponentFormSet(request.POST, instance=recipe, prefix="components")
+        formset = RecipeComponentFormSet(
+            request.POST, instance=recipe, prefix="components"
+        )
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
@@ -195,6 +216,7 @@ class RecipeEditPartialView(View):
                     "id": recipe.pk,
                     "message": "Recipe updated",
                     "redirect": reverse("recipe_detail", kwargs={"pk": recipe.pk}),
+                    "toast": True,
                 }
             )
         return render(

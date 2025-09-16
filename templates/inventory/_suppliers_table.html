@@ -4,7 +4,7 @@
 {% block caption %}<caption>Suppliers</caption>{% endblock %}
 
 {% block thead_class %}
-<thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+<thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-surfaceSubtle">
 {% endblock %}
 
 {% block actions %}
@@ -48,54 +48,54 @@
 {% endblock %}
 
 {% block headers %}
-  <th scope="col" class="px-4 py-2 w-10">
+  <th scope="col" class="px-4 py-2 w-10 bg-surfaceSubtle border-b border-border">
     <input type="checkbox" aria-label="Select all" data-bulk-select-all />
   </th>
-  <th scope="col" class="px-4 py-2 text-right" data-col="id">
+  <th scope="col" class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="id">
     <a data-sort-link data-sort-key="supplier_id" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=supplier_id&direction={% if sort == 'supplier_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=supplier_id&direction={% if sort == 'supplier_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-target="#suppliers_table" class="flex items-center justify-end gap-1">ID {% if sort == 'supplier_id' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="px-4 py-2" data-col="name">
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="name">
     <a data-sort-link data-sort-key="name" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1">Name {% if sort == 'name' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Name {% if sort == 'name' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="px-4 py-2" data-col="contact">
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="contact">
     <a data-sort-link data-sort-key="contact_person" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=contact_person&direction={% if sort == 'contact_person' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=contact_person&direction={% if sort == 'contact_person' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1">Contact {% if sort == 'contact_person' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Contact {% if sort == 'contact_person' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="px-4 py-2" data-col="email">
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="email">
     <a data-sort-link data-sort-key="email" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=email&direction={% if sort == 'email' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=email&direction={% if sort == 'email' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1">Email {% if sort == 'email' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Email {% if sort == 'email' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="px-4 py-2 text-right" data-col="phone">
+  <th scope="col" class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="phone">
     <a data-sort-link data-sort-key="phone" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=phone&direction={% if sort == 'phone' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=phone&direction={% if sort == 'phone' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-target="#suppliers_table" class="flex items-center justify-end gap-1">Phone {% if sort == 'phone' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="px-4 py-2" data-col="active">
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="active">
     <a data-sort-link data-sort-key="is_active" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1">Active {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Active {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="px-4 py-2" data-col="actions">Actions</th>
+  <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="actions">Actions</th>
 {% endblock %}
 
 {% block rows %}
   {% for row in page_obj %}
-  <tr class="odd:bg-surfaceSubtle hover:bg-gray-100">
-    <td class="px-4 py-2">
+  <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
+    <td class="px-4 py-2 bg-surfaceSubtle border-b border-border">
       <input type="checkbox" name="supplier_id" value="{{ row.supplier_id }}" aria-label="Select supplier {{ row.name }}" data-bulk-checkbox />
     </td>
-    <td class="px-4 py-2 text-right" data-col="id"><span class="tabular-nums">{{ row.supplier_id }}</span></td>
+    <td class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="id"><span class="tabular-nums">{{ row.supplier_id }}</span></td>
     <td class="px-4 py-2 whitespace-normal break-words" data-col="name">{{ row.name }}</td>
     <td class="px-4 py-2 whitespace-normal break-words" data-col="contact">{{ row.contact_person }}</td>
     <td class="px-4 py-2 whitespace-normal break-words" data-col="email">{{ row.email }}</td>
-    <td class="px-4 py-2 text-right" data-col="phone"><span class="tabular-nums">{{ row.phone }}</span></td>
-    <td class="px-4 py-2 text-center" data-col="active">
+    <td class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="phone"><span class="tabular-nums">{{ row.phone }}</span></td>
+    <td class="px-4 py-2 text-center text-gray-600" data-col="active">
       <form
         hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
         hx-target="#suppliers_table"
@@ -121,7 +121,7 @@
         </button>
       </form>
     </td>
-    <td class="px-4 py-2" data-col="actions">
+    <td class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="actions">
       <div class="flex gap-2">
         <a
           href="{% url 'supplier_edit' row.supplier_id %}"
@@ -139,7 +139,7 @@
   </tr>
   {% empty %}
   <tr>
-    <td colspan="7" class="px-4 py-2 text-center">
+    <td colspan="7" class="px-4 py-2 text-center text-gray-600">
       0 suppliers yet.
       {% url 'supplier_create' as supplier_create_url %}
       {% include "components/button.html" with href=supplier_create_url variant='primary' label='New Supplier' extra_classes='ml-2' %}

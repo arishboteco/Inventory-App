@@ -7,14 +7,22 @@
 {% block page_title %}Item Master Management{% endblock %}
 {% block page_heading %}Item Master Management{% endblock %}
 {% block page_subtitle %}
-  <div class="flex items-center gap-2 text-sm text-gray-600 mt-1">
-    {% icon 'cube' 'w-4 h-4' %}
-    <span>Manage your inventory items</span>
+  <p class="text-sm text-gray-600">Manage catalogue details, stock levels, and supplier assignments.</p>
+{% endblock %}
+{% block page_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Items: <span class="text-bodyText">{{ page_obj.paginator.count|default:0 }}</span></span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Page Size: <span class="text-bodyText">{{ page_size|default:25 }}</span></span>
+  </div>
+{% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    <span class="font-medium text-bodyText">Tip:</span> Use the filters to narrow by category or supplier; actions update instantly via the new responsive table.
   </div>
 {% endblock %}
 
 {% block kpis %}
-<div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden mb-6">
+<div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden mb-6">
   <div class="p-4">
     {% url 'items_list' as items_list_url %}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -30,7 +38,7 @@
     {% if stats.fastest_movers %}
     <div class="mt-6">
       <h3 class="text-sm font-medium text-gray-500 mb-2">Top Fastest Movers (7d)</h3>
-      <ul class="text-sm text-gray-700 space-y-1">
+      <ul class="text-sm text-bodyText space-y-1">
         {% for name, qty in stats.fastest_movers %}
           <li>{{ name }} - {{ qty|floatformat:0 }}</li>
         {% endfor %}
@@ -46,28 +54,28 @@
     <div class="mb-4">
   {% include "components/filter_bar.html" with filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" hide_labels=True search_placeholder='Search items by name or category' %}
     </div>
-    <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
+    <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
       <div id="items-toolbar">
         <!-- Actions bar -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-gray-100">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 px-4 pt-4 pb-2 border-b border-border">
           <div class="flex items-center gap-2">
-            <h2 class="text-h2 md:text-lg font-semibold text-gray-900">Inventory Items</h2>
+            <h2 class="text-h2 md:text-lg font-semibold text-bodyText">Inventory Items</h2>
           </div>
           <div class="flex flex-wrap items-center gap-2 justify-end">
-            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer" data-modal-prefetch="eager" data-modal-inline-template="inline-item-create-drawer">Add Item</button>
-            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" data-modal-url="{% url 'items_bulk_upload' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">Bulk Upload</button>
-            <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Export</button>
-                <div id="bulk-actions-top" class="hidden border border-gray-200 bg-gray-50 px-3 py-2 rounded-lg flex items-center gap-2" role="region" aria-label="Bulk actions">
-                  <span id="bulk-count-top" class="text-sm text-gray-700">0 selected</span>
+            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer" data-modal-prefetch="eager" data-modal-inline-template="inline-item-create-drawer">Add Item</button>
+            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-url="{% url 'items_bulk_upload' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">Bulk Upload</button>
+            <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Export</button>
+                <div id="bulk-actions-top" class="hidden border border-border bg-surfaceSubtle px-3 py-2 rounded-lg flex items-center gap-2" role="region" aria-label="Bulk actions">
+                  <span id="bulk-count-top" class="text-sm text-bodyText">0 selected</span>
                   <div class="flex items-center gap-2">
-                    <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Deactivate</button>
-                    <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Assign Dept</button>
+                    <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Deactivate</button>
+                    <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Assign Dept</button>
                   </div>
                 </div>
             <div class="relative" data-col-menu-container>
-              <button type="button" class="inline-flex items-center justify-center w-8 h-8 p-0 text-sm font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" aria-label="Show/Hide Columns" title="Show/Hide Columns" aria-haspopup="true" aria-expanded="false" aria-controls="columns-menu" data-col-menu-button>{% icon 'cog-6-tooth' 'w-4 h-4' %}</button>
+              <button type="button" class="inline-flex items-center justify-center w-8 h-8 p-0 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Show/Hide Columns" title="Show/Hide Columns" aria-haspopup="true" aria-expanded="false" aria-controls="columns-menu" data-col-menu-button>{% icon 'cog-6-tooth' 'w-4 h-4' %}</button>
               <!-- Column visibility dropdown -->
-              <div id="columns-menu" data-col-menu class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 p-3 z-40">
+              <div id="columns-menu" data-col-menu class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 p-3 z-40">
                 <p class="text-xs font-medium text-gray-500 mb-2">Toggle Columns</p>
                 <ul class="space-y-1 text-sm">
                   <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="category" checked> <span>Category</span></label></li>
@@ -88,9 +96,9 @@
         </div>
       </div>
       <div id="items-loading" class="hidden p-4">
-        <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
-        <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
-        <div class="h-11 w-full rounded-lg mb-2 bg-gray-200 animate-pulse"></div>
+        <div class="h-11 w-full rounded-lg mb-2 bg-surfaceSubtle animate-pulse"></div>
+        <div class="h-11 w-full rounded-lg mb-2 bg-surfaceSubtle animate-pulse"></div>
+        <div class="h-11 w-full rounded-lg mb-2 bg-surfaceSubtle animate-pulse"></div>
       </div>
       <!-- Inline hidden drawer content for Add Item to ensure zero-latency open.
            JS will prefer cached fetch response; if not present yet, it can
@@ -99,11 +107,11 @@
         {% include 'inventory/_item_create_bare.html' %}
       </template>
       <!-- Bulk Actions Bar -->
-      <div id="bulk-actions" class="hidden border-t border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between" role="region" aria-label="Bulk actions bar">
-        <span id="bulk-count" class="text-sm text-gray-700">0 selected</span>
+  <div id="bulk-actions" class="hidden border-t border-border bg-surfaceSubtle px-4 py-3 flex items-center justify-between" role="region" aria-label="Bulk actions bar">
+        <span id="bulk-count" class="text-sm text-bodyText">0 selected</span>
         <div class="flex items-center gap-2">
-          <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Deactivate</button>
-          <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Assign Dept</button>
+          <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Deactivate</button>
+          <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Assign Dept</button>
           
         </div>
       </div>

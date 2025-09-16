@@ -1,20 +1,23 @@
 {% extends "components/detail_layout.html" %}
 
-{% block breadcrumbs %}
-  {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-{% endblock %}
-
 {% block heading %}{{ item.name }}{% endblock %}
 {% block status_badge %}
-  <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-surfaceSubtle {{ '' if item.is_active else 'text-danger' }}">
-    {{ item.is_active|yesno:"Active,Inactive" }}
-  </span>
+  {% if item.is_active %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-success-soft text-success">Active</span>
+  {% else %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-danger-soft text-danger">Inactive</span>
+  {% endif %}
 {% endblock %}
 {% block heading_meta %}
   <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">SKU: <span class="text-bodyText">{{ item.sku|default:'—' }}</span></span>
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Category: <span class="text-bodyText">{{ item.category|default:'—' }}</span></span>
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">UOM: <span class="text-bodyText">{{ item.unit_of_measure|default:'—' }}</span></span>
+  </div>
+{% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    <span class="font-medium text-bodyText">Tip:</span> Review supplier history and recent movements below to decide on replenishment or archival.
   </div>
 {% endblock %}
 
@@ -26,7 +29,7 @@
       {% if item.is_active %}Archive{% else %}Activate{% endif %}
     </button>
   </form>
-  <a href="{% url 'item_delete' item.item_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-danger text-white hover:bg-danger-strong focus:outline-none focus:ring-2 focus:ring-danger-soft">Delete</a>
+  <a href="{% url 'item_delete' item.item_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-danger text-white hover:bg-danger-strong focus:outline-none focus:ring-2 focus:ring-danger-strong">Delete</a>
 {% endblock %}
 
 {% block detail_table %}

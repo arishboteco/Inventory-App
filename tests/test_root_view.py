@@ -20,7 +20,9 @@ def test_login_route_redirects_to_root(client):
 
 
 @pytest.mark.django_db
-def test_root_view_includes_kpis_for_authenticated_user(client, django_user_model, monkeypatch):
+def test_root_view_includes_kpis_for_authenticated_user(
+    client, django_user_model, monkeypatch
+):
     user = django_user_model.objects.create_user(username="u", password="p")
     client.force_login(user)
 

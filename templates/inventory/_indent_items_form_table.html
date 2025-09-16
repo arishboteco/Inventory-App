@@ -11,11 +11,15 @@
 
 {% block rows %}
   {% for item_form in formset %}
-  <tr class="form-row">
-    <td>{% include "components/form_field.html" with field=item_form.item %}</td>
+    <tr class="form-row" data-indent-table>
+      <td>
+        {% include "components/form_field.html" with field=item_form.item %}
+        <div data-item-meta class="mt-1 text-xs text-gray-500"></div>
+        <div data-item-error class="mt-1 text-xs text-red-600 hidden"></div>
+      </td>
     <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
     <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-    <td><button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Remove</button></td>
+    <td><button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-danger-strong focus:ring-2 focus:ring-danger-soft">Remove</button></td>
   </tr>
   {% endfor %}
 {% endblock %}

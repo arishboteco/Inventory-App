@@ -38,7 +38,11 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
         try:
             status_field = self.fields.get("status")
             if status_field and getattr(status_field, "choices", None):
-                filtered = [(v, l) for v, l in status_field.choices if str(v).upper() != "ORDERED"]
+                filtered = [
+                    (v, l)
+                    for v, l in status_field.choices
+                    if str(v).upper() != "ORDERED"
+                ]
                 status_field.choices = filtered
         except Exception:
             pass

@@ -96,14 +96,20 @@ class SuppliersListView(TemplateView):
                             supplier_service.add_supplier(form_row.cleaned_data)
                             inserted += 1
                         except SupplierServiceError as exc:
-                            messages.error(request, str(exc))
+                            messages.error(request, str(exc), extra_tags="toast")
                     else:
-                        messages.error(request, str(form_row.errors))
+                        messages.error(
+                            request, str(form_row.errors), extra_tags="toast"
+                        )
                 messages.success(
-                    request, f"{inserted} supplier(s) uploaded successfully."
+                    request,
+                    f"{inserted} supplier(s) uploaded successfully.",
+                    extra_tags="toast",
                 )
             else:
-                messages.error(request, "Please upload a valid CSV file.")
+                messages.error(
+                    request, "Please upload a valid CSV file.", extra_tags="toast"
+                )
             return redirect("suppliers_list")
 
         form = SupplierForm(request.POST)
@@ -113,14 +119,15 @@ class SuppliersListView(TemplateView):
                 messages.success(
                     request,
                     f'Supplier "{form.cleaned_data.get("name")}" created successfully!',
+                    extra_tags="toast",
                 )
                 return redirect("suppliers_list")
             except SupplierServiceError as exc:
-                messages.error(request, str(exc))
+                messages.error(request, str(exc), extra_tags="toast")
         else:
             for field, errors in form.errors.items():
                 for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                    messages.error(request, f"{field}: {error}", extra_tags="toast")
         return self.get(request, *args, **kwargs)
 
 

@@ -1,11 +1,5 @@
 {% extends "components/detail_layout.html" %}
 {% block title %}Purchase Order Detail – Inventory Pro{% endblock %}
-{% block breadcrumbs %}
-  {% url 'purchase_orders_list' as list_url %}
-  {% with current_title="Purchase Order "|add:po.pk %}
-    {% include "components/breadcrumb.html" with list_url=list_url list_title="Purchase Orders" current_title=current_title %}
-  {% endwith %}
-{% endblock %}
 {% block heading %}Purchase Order {{ po.pk }}{% endblock %}
 {% block status_badge %}
   <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-surfaceSubtle text-bodyText">
@@ -18,6 +12,21 @@
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Ordered: <span class="text-bodyText">{{ po.order_date|default:'—' }}</span></span>
     {% if po.expected_delivery_date %}
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Expected: <span class="text-bodyText">{{ po.expected_delivery_date }}</span></span>
+    {% endif %}
+  </div>
+{% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    {% if po.status == 'DRAFT' %}
+      <span class="font-medium text-bodyText">Next step:</span> Finalise supplier details and mark the order as ordered when ready.
+    {% elif po.status == 'ORDERED' %}
+      <span class="font-medium text-bodyText">Next step:</span> Receive goods as they arrive to keep progress updated.
+    {% elif po.status == 'PARTIAL' %}
+      <span class="font-medium text-bodyText">Next step:</span> Continue recording receipts until the order is complete.
+    {% elif po.status == 'COMPLETE' %}
+      <span class="font-medium text-bodyText">All done:</span> Use the GRN attachments section to review supporting documents.
+    {% else %}
+      <span class="font-medium text-bodyText">Tip:</span> Use Edit to reopen this order if additional changes are required.
     {% endif %}
   </div>
 {% endblock %}

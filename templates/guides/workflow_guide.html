@@ -1,0 +1,59 @@
+{% extends "_base.html" %}
+{% block title %}Workflow Handbook – Inventory Pro{% endblock %}
+{% block content %}
+<section class="max-w-4xl mx-auto space-y-8 px-4 md:px-0">
+  <header class="bg-surface border border-border rounded-2xl shadow-card p-6">
+    <h1 class="text-3xl font-semibold text-bodyText">Inventory Pro Workflow Handbook</h1>
+    <p class="mt-2 text-sm text-gray-600">Use this guide to move a requisition from request to fulfilment using the warm UI cues introduced with the common design language.</p>
+  </header>
+
+  <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-4">
+    <h2 class="text-xl font-semibold text-bodyText">Flow Overview</h2>
+    <p class="text-sm text-gray-600">Each stage below corresponds to a hero banner or toast inside the application.</p>
+    <div class="bg-surfaceSubtle border border-border rounded-xl p-4 overflow-x-auto">
+      <div class="mermaid">flowchart LR
+    A[Department raises Indent] --> B[Indent Review &amp; Approval]
+    B --> C{Need PO?}
+    C -- Yes --> D[Consolidate Approved Indents]
+    D --> E[Generate Purchase Orders]
+    C -- No --> F[Issue From Stock]
+    E --> G[Receive Goods (GRN)]
+    G --> H[Fulfil Indent]
+    H --> I[Update Stock Movements]
+    F --> I</div>
+    </div>
+  </article>
+
+  <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-3">
+    <h2 class="text-xl font-semibold text-bodyText">Stage Details</h2>
+    <ol class="list-decimal pl-5 text-sm text-gray-700 space-y-2">
+      <li><strong>Raise Indent</strong> &mdash; Use <code>New Indent</code> to submit the request. A toast confirms creation and the detail hero explains the next step.</li>
+      <li><strong>Review &amp; Approval</strong> &mdash; Approvers change status from <em>Submitted</em> to <em>Approved</em>. The list hero surfaces how many indents are ready for consolidation.</li>
+      <li><strong>Consolidate Approved Indents</strong> &mdash; Preview the grouped lines. Submitting creates purchase orders and fires a success toast; an info toast explains when nothing can be consolidated.</li>
+      <li><strong>Generate Purchase Orders</strong> &mdash; Quick create or edit orders. The list hero highlights orders awaiting receipts and the detail hero shows supplier/dates.</li>
+      <li><strong>Receive Goods (GRN)</strong> &mdash; Record deliveries from the PO detail (<code>Receive Goods</code>) or GRN list. Toasts confirm receipt and the GRN hero records supplier and PO details.</li>
+      <li><strong>Fulfil Indent</strong> &mdash; Issue goods from stock. The banner guides you to complete or cancel the indent and a toast confirms fulfilment.</li>
+      <li><strong>Update Stock Movements</strong> &mdash; Record quick adjustments, bulk uploads, or wastage. Each modal submits with toast feedback and the hero shows overall metrics.</li>
+    </ol>
+  </article>
+
+  <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-3">
+    <h2 class="text-xl font-semibold text-bodyText">Verification Checklist</h2>
+    <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
+      <li>Indent creation emits a toast and displays the “Next step” banner.</li>
+      <li>Consolidation creates purchase orders and shows a success toast.</li>
+      <li>Purchase order heroes display supplier/date chips and list banners mention pending receipts.</li>
+      <li>GRN creation redirects to the GRN hero with receipt metadata and toast.</li>
+      <li>Indent fulfilment updates status and emits a toast.</li>
+      <li>Stock movement modals (receive, adjust, waste, quick move, bulk import) trigger toast feedback.</li>
+    </ul>
+    <p class="text-sm text-gray-600">When each box above is checked, the application logic matches the design language applied across the UI.</p>
+  </article>
+</section>
+{% endblock %}
+{% block extra_js %}
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+  </script>
+{% endblock %}

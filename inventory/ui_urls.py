@@ -6,12 +6,12 @@ from .views.indents import (
     IndentCreateView,
     IndentsListView,
     IndentsTableView,
+    consolidate_indents,
     indent_detail,
-    issue_indent,
     indent_pdf,
     indent_update_status,
     indents_consolidate,
-    consolidate_indents,
+    issue_indent,
 )
 from .views.items.detail import (
     ItemDeleteView,
@@ -38,32 +38,32 @@ from .views.items.stock import (
 )
 from .views.ml import ml_dashboard
 from .views.purchase_orders import (
+    PurchaseOrderCreatePartialView,
+    PurchaseOrderEditPartialView,
+    PurchaseOrderQuickCreatePartialView,
+    PurchaseOrderReceivePartialView,
+    PurchaseOrdersTableView,
+    mark_ordered,
     purchase_order_create,
     purchase_order_detail,
     purchase_order_edit,
-    mark_ordered,
     purchase_order_receive,
     purchase_orders_list,
-    PurchaseOrdersTableView,
-    PurchaseOrderQuickCreatePartialView,
-    PurchaseOrderCreatePartialView,
-    PurchaseOrderEditPartialView,
-    PurchaseOrderReceivePartialView,
 )
 from .views.recipes import (
+    RecipeCreatePartialView,
+    RecipeEditPartialView,
     RecipesListView,
     recipe_create,
     recipe_detail,
-    RecipeCreatePartialView,
-    RecipeEditPartialView,
 )
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.suppliers import (
     SupplierCreateView,
     SupplierEditView,
     SuppliersBulkDeleteView,
-    SuppliersBulkUploadView,
     SuppliersBulkUploadPartialView,
+    SuppliersBulkUploadView,
     SuppliersCardView,
     SupplierSearchView,
     SuppliersListView,
@@ -71,6 +71,7 @@ from .views.suppliers import (
     SupplierToggleActiveView,
 )
 from .views.visualizations import visualizations
+from .views.guides import WorkflowGuideView
 
 urlpatterns = [
     path("explore/", explore, name="explore"),
@@ -102,7 +103,7 @@ urlpatterns = [
     ),
     path("items/<int:pk>/", ItemDetailView.as_view(), name="item_detail"),
     path("items/search/", ItemSearchView.as_view(), name="item_search"),
-        path("items/meta/<int:item_id>/", item_meta, name="item_meta"),
+    path("items/meta/<int:item_id>/", item_meta, name="item_meta"),
     path(
         "items/purchase-units/", PurchaseUnitsView.as_view(), name="get_purchase_units"
     ),
@@ -151,9 +152,17 @@ urlpatterns = [
     ),
     path("indents/<int:pk>/pdf/", indent_pdf, name="indent_pdf"),
     path("indents/consolidate/", indents_consolidate, name="indents_consolidate"),
-    path("indents/consolidate/preview/", consolidate_indents, name="indents_consolidate_preview"),
+    path(
+        "indents/consolidate/preview/",
+        consolidate_indents,
+        name="indents_consolidate_preview",
+    ),
     path("purchase-orders/", purchase_orders_list, name="purchase_orders_list"),
-    path("purchase-orders/table/", PurchaseOrdersTableView.as_view(), name="purchase_orders_table"),
+    path(
+        "purchase-orders/table/",
+        PurchaseOrdersTableView.as_view(),
+        name="purchase_orders_table",
+    ),
     path(
         "purchase-orders/quick-create/partial/",
         PurchaseOrderQuickCreatePartialView.as_view(),
@@ -212,4 +221,5 @@ urlpatterns = [
         name="recipe_edit_partial",
     ),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
+    path("guides/workflow/", WorkflowGuideView.as_view(), name="workflow_guide"),
 ]

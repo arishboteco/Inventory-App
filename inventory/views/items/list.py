@@ -136,9 +136,7 @@ def _filter_and_sort_items(request, qs=None):
     qs = qs.prefetch_related(
         Prefetch(
             "departments",
-            queryset=Department.objects.only("department_id", "name").order_by(
-                "name"
-            ),
+            queryset=Department.objects.only("department_id", "name").order_by("name"),
         )
     )
     allowed_sorts = {
@@ -256,18 +254,22 @@ class ItemsListView(TemplateView):
                     return JsonResponse(
                         {"ok": True, "message": "Item created", "id": item.item_id}
                     )
-                messages.success(request, f'Item "{item.name}" created successfully!')
+                messages.success(
+                    request,
+                    f'Item "{item.name}" created successfully!',
+                    extra_tags="toast",
+                )
                 return redirect("items_list")
             except (DatabaseError, IntegrityError) as e:
                 logger.error("Database error creating item: %s", e)
                 if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                     return JsonResponse({"ok": False, "message": str(e)}, status=400)
-                messages.error(request, f"Error creating item: {e}")
+                messages.error(request, f"Error creating item: {e}", extra_tags="toast")
             except Exception as e:  # pragma: no cover - defensive
                 logger.error("Unexpected error creating item: %s", e)
                 if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                     return JsonResponse({"ok": False, "message": str(e)}, status=400)
-                messages.error(request, f"Unexpected error: {e}")
+                messages.error(request, f"Unexpected error: {e}", extra_tags="toast")
         else:
             if (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}:
                 return JsonResponse(
@@ -275,7 +277,7 @@ class ItemsListView(TemplateView):
                 )
             for field, errors in form.errors.items():
                 for error in errors:
-                    messages.error(request, f"{field}: {error}")
+                    messages.error(request, f"{field}: {error}", extra_tags="toast")
 
         return self.get(request, *args, **kwargs)
 
@@ -302,9 +304,9 @@ class ItemsListView(TemplateView):
             .only("supplier_id", "name")
             .order_by("name")
         )
-        departments_for_form = (
-            Department.objects.only("department_id", "name").order_by("name")
-        )
+        departments_for_form = Department.objects.only(
+            "department_id", "name"
+        ).order_by("name")
         inline_units = UnitsService.get_unit_choices_for_forms()
         inline_categories = CategoriesService.get_category_choices_for_forms()
 

@@ -20,6 +20,21 @@
     </span>
   </div>
 {% endblock %}
+{% block hero_extra %}
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+    {% if indent.status|upper == 'SUBMITTED' %}
+      <span class="font-medium text-bodyText">Next step:</span> Review and approve this indent or cancel it before consolidation.
+    {% elif indent.status|upper == 'APPROVED' %}
+      <span class="font-medium text-bodyText">Next step:</span> Consolidate with other approved indents or mark as processing when work begins.
+    {% elif indent.status|upper == 'PROCESSING' %}
+      <span class="font-medium text-bodyText">Next step:</span> Issue the requested goods and mark this indent completed once fulfilled.
+    {% elif indent.status|upper == 'COMPLETED' %}
+      <span class="font-medium text-bodyText">All done:</span> Review linked purchase orders or download the PDF for records.
+    {% else %}
+      <span class="font-medium text-bodyText">Tip:</span> Use the WhatsApp action to keep requesters updated instantly.
+    {% endif %}
+  </div>
+{% endblock %}
 {% block actions %}
   <a href="{% url 'indent_pdf' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Download PDF</a>
   <a href="{% url 'issue_indent' indent.indent_id %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Fulfill Indent</a>
@@ -68,20 +83,20 @@
     {% if request.user.is_staff or request.user.is_superuser or perms.inventory.change_indent %}
     <form action="{% url 'indent_update_status' indent.indent_id 'APPROVED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-bodyText border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Approve</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Approve</button>
     </form>
     {% endif %}
     {% endif %}
     {% if indent.status|upper == 'APPROVED' %}
     <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-bodyText border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Processing</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Mark Processing</button>
     </form>
     {% endif %}
     {% if indent.status|upper == 'PROCESSING' %}
     <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">
       {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-bodyText border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary">Mark Completed</button>
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Mark Completed</button>
     </form>
     <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">
       {% csrf_token %}

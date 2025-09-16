@@ -20,6 +20,7 @@ class ItemNameResolutionMixin:
 
         # Support combined patterns like "123 - Name" or "Name (ID: 123)"
         import re
+
         m = re.match(r"^(\d+)\s*[-–]\s*(.+)$", raw)
         if m:
             try:
@@ -56,7 +57,9 @@ class ItemNameResolutionMixin:
             return matches[0]
         elif len(matches) > 1:
             # Ambiguous name: force the user to pick one from the dropdown
-            raise forms.ValidationError("Multiple items match. Please choose from the list.")
+            raise forms.ValidationError(
+                "Multiple items match. Please choose from the list."
+            )
 
         # Nothing matched
         raise forms.ValidationError("Choose a valid item from the list.")
@@ -96,7 +99,9 @@ class StockReceivingForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelFo
                 }
             )
         # Accept name-first: override ModelChoiceField with CharField, resolve in clean_item()
-        self.fields["item"] = forms.CharField(label="Item", required=True, widget=forms.TextInput(attrs=item_attrs))
+        self.fields["item"] = forms.CharField(
+            label="Item", required=True, widget=forms.TextInput(attrs=item_attrs)
+        )
         # Predictive PO only (user is auto-populated from request)
         if "related_po" in self.fields:
             self.fields["related_po"].required = False
@@ -160,7 +165,9 @@ class StockAdjustmentForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelF
                     "list": "item-options",
                 }
             )
-        self.fields["item"] = forms.CharField(label="Item", required=True, widget=forms.TextInput(attrs=item_attrs))
+        self.fields["item"] = forms.CharField(
+            label="Item", required=True, widget=forms.TextInput(attrs=item_attrs)
+        )
         self.apply_styling()
 
     def save(self, commit: bool = True):
@@ -201,7 +208,9 @@ class StockWastageForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm
                     "list": "item-options",
                 }
             )
-        self.fields["item"] = forms.CharField(label="Item", required=True, widget=forms.TextInput(attrs=item_attrs))
+        self.fields["item"] = forms.CharField(
+            label="Item", required=True, widget=forms.TextInput(attrs=item_attrs)
+        )
         self.apply_styling()
 
     def clean_quantity_change(self):

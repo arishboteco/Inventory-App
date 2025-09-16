@@ -26,7 +26,6 @@ from ..services.exceptions import StockServiceError
 
 def stock_movements(request):
 
-
     sections = {
         "receive": "Goods Received",
         "adjust": "Stock Adjustment",
@@ -89,24 +88,36 @@ def stock_movements(request):
         data = payload.get("data") or {}
         errors = payload.get("errors") or {}
         if which == "receive":
-            receive_form = StockReceivingForm(data, prefix="receive", item_suggest_url=item_url)
+            receive_form = StockReceivingForm(
+                data, prefix="receive", item_suggest_url=item_url
+            )
             for field, items in errors.items():
                 for e in items:
-                    receive_form.add_error(None if field == "__all__" else field, e.get("message"))
+                    receive_form.add_error(
+                        None if field == "__all__" else field, e.get("message")
+                    )
             _display_item_name(receive_form)
             reopen_modal = "receive"
         elif which == "adjust":
-            adjust_form = StockAdjustmentForm(data, prefix="adjust", item_suggest_url=item_url)
+            adjust_form = StockAdjustmentForm(
+                data, prefix="adjust", item_suggest_url=item_url
+            )
             for field, items in errors.items():
                 for e in items:
-                    adjust_form.add_error(None if field == "__all__" else field, e.get("message"))
+                    adjust_form.add_error(
+                        None if field == "__all__" else field, e.get("message")
+                    )
             _display_item_name(adjust_form)
             reopen_modal = "adjust"
         elif which == "waste":
-            waste_form = StockWastageForm(data, prefix="waste", item_suggest_url=item_url)
+            waste_form = StockWastageForm(
+                data, prefix="waste", item_suggest_url=item_url
+            )
             for field, items in errors.items():
                 for e in items:
-                    waste_form.add_error(None if field == "__all__" else field, e.get("message"))
+                    waste_form.add_error(
+                        None if field == "__all__" else field, e.get("message")
+                    )
             _display_item_name(waste_form)
             reopen_modal = "waste"
 
@@ -129,12 +140,16 @@ def stock_movements(request):
                         ),
                         notes=cd.get("notes"),
                     )
-                    messages.success(request, "Receiving transaction recorded")
+                    messages.success(
+                        request, "Receiving transaction recorded", extra_tags="toast"
+                    )
                     return redirect("stock_movements")
                 except StockServiceError as exc:
                     msg = str(exc)
                     if "not found" in msg.lower():
-                        receive_form.add_error("item", "Choose a valid item from the list.")
+                        receive_form.add_error(
+                            "item", "Choose a valid item from the list."
+                        )
                     else:
                         receive_form.add_error(None, msg)
                     _flash_form("receive", receive_form)
@@ -157,12 +172,16 @@ def stock_movements(request):
                         user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
                     )
-                    messages.success(request, "Adjustment transaction recorded")
+                    messages.success(
+                        request, "Adjustment transaction recorded", extra_tags="toast"
+                    )
                     return redirect(reverse("stock_movements") + "?section=adjust")
                 except StockServiceError as exc:
                     msg = str(exc)
                     if "not found" in msg.lower():
-                        adjust_form.add_error("item", "Choose a valid item from the list.")
+                        adjust_form.add_error(
+                            "item", "Choose a valid item from the list."
+                        )
                     else:
                         adjust_form.add_error(None, msg)
                     _flash_form("adjust", adjust_form)
@@ -186,12 +205,16 @@ def stock_movements(request):
                         user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
                     )
-                    messages.success(request, "Wastage transaction recorded")
+                    messages.success(
+                        request, "Wastage transaction recorded", extra_tags="toast"
+                    )
                     return redirect(reverse("stock_movements") + "?section=waste")
                 except StockServiceError as exc:
                     msg = str(exc)
                     if "not found" in msg.lower():
-                        waste_form.add_error("item", "Choose a valid item from the list.")
+                        waste_form.add_error(
+                            "item", "Choose a valid item from the list."
+                        )
                     else:
                         waste_form.add_error(None, msg)
                     _flash_form("waste", waste_form)
@@ -213,10 +236,12 @@ def stock_movements(request):
                         user_id=cd.get("user_id"),
                         notes=cd.get("notes"),
                     )
-                    messages.success(request, "Quick movement recorded")
+                    messages.success(
+                        request, "Quick movement recorded", extra_tags="toast"
+                    )
                     return redirect("stock_movements")
                 except StockServiceError as exc:
-                    messages.error(request, str(exc))
+                    messages.error(request, str(exc), extra_tags="toast")
             active = "receive"
         elif "bulk_upload" in request.POST:
             bulk_form = StockBulkUploadForm(request.POST, request.FILES)
@@ -300,6 +325,11 @@ def stock_movements(request):
     params.pop("page", None)
     query_string = params.urlencode()
 
+    total_transactions = qs.count()
+    pending_orders = PurchaseOrder.objects.filter(
+        status__in=["ORDERED", "PARTIAL"]
+    ).count()
+
     tabs = [
         {
             "id": "receive",
@@ -331,6 +361,9 @@ def stock_movements(request):
         "page_obj": page_obj,
         "query_string": query_string,
         "open_modal": reopen_modal,
+        "active_section": sections.get(active, sections["receive"]),
+        "total_transactions": total_transactions,
+        "pending_orders": pending_orders,
     }
     return render(request, "inventory/stock_movements.html", ctx)
 

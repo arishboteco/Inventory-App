@@ -123,7 +123,9 @@ def test_item_edit_partial_departments_multiselect_container():
     form = ItemForm(instance=item)
     request = RequestFactory().get("/")
     content = render_to_string(
-        "inventory/_item_form_partial.html", {"form": form, "item": item}, request=request
+        "inventory/_item_form_partial.html",
+        {"form": form, "item": item},
+        request=request,
     )
     soup = BeautifulSoup(content, "html.parser")
     container = soup.find("div", {"data-multiselect": "chips"})

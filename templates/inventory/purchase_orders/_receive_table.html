@@ -6,32 +6,32 @@
 {% endblock %}
 
 {% block actions %}
-  <div class="flex items-center justify-end px-3 py-2 bg-gray-50 border-b border-gray-200">
+  <div class="flex items-center justify-end px-4 py-3 bg-surfaceSubtle border-b border-border">
     <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
-      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
-      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
+      <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
+      <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
     </div>
   </div>
 {% endblock %}
 
 {% block headers %}
-  <th scope="col" class="sticky z-10 px-4 py-2 bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Item</th>
-  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Ordered</th>
-  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Received</th>
-  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-gray-50 border-b border-gray-200 group-data-[shadow=true]:shadow-md">Receive Now</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Item</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Ordered</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Received</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Receive Now</th>
 {% endblock %}
 
 {% block rows %}
   {% for item in items %}
-  <tr class="odd:bg-gray-50 hover:bg-gray-100">
+  <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
     <td class="px-4 py-2">{{ item.item.name }}</td>
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.quantity_ordered|floatformat:2 }}</span></td>
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.received_total|floatformat:2 }}</span></td>
-    <td class="px-4 py-2 text-right"><input type="number" step="any" name="item_{{ item.pk }}" class="inline-block w-28 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-right tabular-nums" /></td>
+    <td class="px-4 py-2 text-right"><input type="number" step="any" name="item_{{ item.pk }}" class="inline-block w-28 p-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary text-right tabular-nums" /></td>
   </tr>
   {% empty %}
   <tr>
-    <td colspan="4" class="px-4 py-2 text-center text-gray-500">No items to receive.</td>
+    <td colspan="4" class="px-4 py-2 text-center text-gray-600">No items to receive.</td>
   </tr>
   {% endfor %}
 {% endblock %}

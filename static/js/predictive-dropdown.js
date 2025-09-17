@@ -208,9 +208,12 @@
 
   window.initPredictiveDropdowns = function (root) {
     const scope = root || document;
-    scope
-      .querySelectorAll("select.predictive")
-      .forEach((sel) => upgradeSelect(sel));
+    scope.querySelectorAll("select.predictive").forEach((sel) => {
+      // Skip hidden template rows like the empty form row used for cloning
+      const row = sel.closest("tr");
+      if (row && (row.id === "items-empty-row" || /empty-row$/.test(row.id))) return;
+      upgradeSelect(sel);
+    });
   };
 
   document.addEventListener("DOMContentLoaded", function () {

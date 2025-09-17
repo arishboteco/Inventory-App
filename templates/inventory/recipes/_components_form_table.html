@@ -58,10 +58,20 @@
 // Simple initialization call - the main logic is in recipe-components.js
 (function() {
   var tableId = '{{ table_id|default:"items-table" }}';
+  // Use the closest drawer/modal container as root scope for JS
+  var tableEl = document.getElementById(tableId);
+  var rootScope = tableEl ? (tableEl.closest('.drawer-panel') || tableEl.closest('[data-modal-root]') || document) : document;
   console.log('🎯 Table footer script running for table:', tableId);
   
   var initializeTable = function() {
     console.log('🚀 Trying to initialize recipe items table...');
+    
+    // Check if already initialized by the main script
+    var initKey = 'recipeComponentsInitialized_' + tableId;
+    if (window[initKey]) {
+      console.log('✅ Recipe components already initialized by main script');
+      return;
+    }
     
     // Simple manual setup if the main function isn't working
     var table = document.getElementById(tableId);
@@ -78,14 +88,15 @@
     
     if (window.initRecipeComponentsTable) {
       console.log('✅ Found initRecipeComponentsTable function');
-      window.initRecipeComponentsTable(document, tableId);
+      window.initRecipeComponentsTable(rootScope, tableId);
     } else {
       console.log('❌ initRecipeComponentsTable not available, trying manual setup');
       
       // Manual setup if main function not available
-      if (addBtn && table && totalForms && emptyRow) {
+      if (addBtn && table && totalForms && emptyRow && !addBtn.dataset.recipeHandlerAttached) {
         console.log('🔧 Setting up manual event listener...');
         addBtn.style.border = '2px solid red';
+        addBtn.dataset.recipeHandlerAttached = 'true';
         addBtn.addEventListener('click', function(e) {
           e.preventDefault();
           console.log('🔥 Manual add button clicked!');
@@ -105,7 +116,8 @@
   
   // Single retry if not available (instead of multiple retries)
   setTimeout(function() {
-    if (!window.recipeComponentsInitialized) {
+    var initKey = 'recipeComponentsInitialized_' + tableId;
+    if (!window[initKey]) {
       console.log('🔄 Retrying recipe initialization...');
       initializeTable();
     }

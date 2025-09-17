@@ -30,10 +30,12 @@
     root = root || document;
     tableId = tableId || 'items-table';
     
-    // Find the table - try multiple methods
-    var table = document.getElementById(tableId);
+    // No global/window flags; guard per-table only
+    
+    // Find the table - scope to root to avoid collisions with background pages
+    var table = (root && root.querySelector) ? root.querySelector('#' + tableId) : null;
     if (!table) {
-      console.log('⚠️ Table not found with getElementById, trying querySelector...');
+      console.log('⚠️ Table not found in root, trying document...');
       table = document.querySelector('#' + tableId);
     }
     if (!table) {
@@ -63,6 +65,11 @@
     }
     
     console.log('✅ Found table:', table.id);
+    // If table is already fully initialized, bail out
+    if (table.dataset.recipeInitialized === '1') {
+      console.log('⚠️ Table already marked initialized via dataset, skipping');
+      return;
+    }
     
     var tbody = table.querySelector('tbody');
     if (!tbody) {
@@ -71,8 +78,8 @@
     }
     
     // Find form management elements
-    var totalForms = document.getElementById('id_items-TOTAL_FORMS');
-    var emptyRow = document.getElementById('items-empty-row');
+  var totalForms = (root && root.querySelector) ? root.querySelector('#id_items-TOTAL_FORMS') : null;
+  var emptyRow = (root && root.querySelector) ? root.querySelector('#items-empty-row') : null;
     
     console.log('Form elements:', {
       totalForms: !!totalForms,
@@ -104,53 +111,104 @@
     });
     
     // Find and setup add button
-    var addBtn = document.getElementById('add-row');
+    var addBtn = (root && root.querySelector) ? root.querySelector('#add-row') : null;
     if (!addBtn) {
-      console.log('⚠️ Add button not found with getElementById, searching...');
+      console.log('⚠️ Add button not found in scoped root, trying document...');
       addBtn = document.querySelector('#add-row');
     }
     if (!addBtn) {
-      addBtn = document.querySelector('button[id*="add"]');
-      if (addBtn) console.log('Found alternative add button:', addBtn.id);
+      console.log('⏳ Add button not yet in DOM; attaching observer to wait...');
+      if (!table._addBtnObserverAttached) {
+        table._addBtnObserverAttached = true;
+        var observer = new MutationObserver(function() {
+          var btnCandidate = (root && root.querySelector) ? root.querySelector('#add-row') : document.querySelector('#add-row');
+          if (btnCandidate) {
+            observer.disconnect();
+            table._addBtnObserverAttached = false;
+            // Bind and finish init now that the button exists
+            setupAddButton(btnCandidate);
+            finalizeInit();
+          }
+        });
+        observer.observe(root || document, { childList: true, subtree: true });
+      }
     }
-    
-    if (addBtn) {
+    function setupAddButton(btn) {
       console.log('✅ Setting up Add Item button');
-      
-      // Clear any existing event listeners
-      var newBtn = addBtn.cloneNode(true);
-      addBtn.parentNode.replaceChild(newBtn, addBtn);
-      addBtn = newBtn;
-      
-      // Visual debugging
-      addBtn.style.backgroundColor = 'green';
-      addBtn.style.color = 'white';
-      addBtn.title = 'Ready to add items!';
-      
-      addBtn.onclick = function(e) {
+      if (btn.dataset.recipeHandlerAttached) {
+        console.log('⚠️ Add button already has recipe handler attached, skipping...');
+        return;
+      }
+      var newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      btn = newBtn;
+      btn.dataset.recipeHandlerAttached = 'true';
+      btn.title = 'Add a recipe item';
+      btn.onclick = function(e) {
         e.preventDefault();
-        e.stopPropagation();
+        // Prevent any other handlers on this button from acting on this event
+        if (typeof e.stopImmediatePropagation === 'function') {
+          e.stopImmediatePropagation();
+        } else {
+          e.stopPropagation();
+        }
+        // Event-level guard: only handle the first listener for this click
+        if (btn._lastRecipeClickStamp === e.timeStamp) {
+          console.log('🛑 Duplicate add-row handler suppressed for this click');
+          return;
+        }
+        btn._lastRecipeClickStamp = e.timeStamp;
         console.log('🔥 === ADD ITEM CLICKED === 🔥');
-        
         try {
           addNewRow(table, tbody, totalForms, emptyRow);
         } catch (error) {
           console.error('❌ Error adding row:', error);
         }
       };
-      
       console.log('✅ Add button setup complete');
-    } else {
-      console.error('❌ Add Item button not found!');
+    }
+
+    function finalizeInit() {
+      table.dataset.recipeInitialized = '1';
+      console.log('✅ Recipe components table initialized for', tableId);
+    }
+
+    if (addBtn) {
+      setupAddButton(addBtn);
+      finalizeInit();
+    }
+
+    // If inside a modal/drawer, reset init on close so re-open re-initializes
+    var modalRoot = table.closest('[data-modal-root], .drawer-panel');
+    if (modalRoot) {
+      var resetInit = function() {
+        // Also clear handler flag to allow rebind on next open
+        var btn = modalRoot.querySelector('#add-row');
+        if (btn) delete btn.dataset.recipeHandlerAttached;
+        if (table) delete table.dataset.recipeInitialized;
+        console.log('♻️ Recipe components init reset for', tableId);
+      };
+      // Common close triggers
+      modalRoot.addEventListener('modal:close', resetInit, { once: true });
+      var closeBtn = modalRoot.querySelector('[data-modal-close]');
+      if (closeBtn) closeBtn.addEventListener('click', resetInit, { once: true });
     }
   }
   
   function addNewRow(table, tbody, totalForms, emptyRow) {
     console.log('🔧 Adding new row...');
-    
+    // Prevent concurrent adds creating duplicate indices
+    if (totalForms.dataset.addLock === '1') {
+      console.warn('🛑 Add row currently locked; skipping duplicate call');
+      return;
+    }
+    totalForms.dataset.addLock = '1';
+
     var index = parseInt(totalForms.value, 10) || 0;
     console.log('Current form count:', index);
-    
+    // Increment immediately to reserve index even if another call slips in
+    totalForms.value = index + 1;
+
     // Clone the empty row
     var newRow = emptyRow.cloneNode(true);
     
@@ -192,8 +250,7 @@
     // Clear the ID and make visible
     newRow.id = '';
     newRow.classList.remove('hidden');
-    tbody.appendChild(newRow);
-    totalForms.value = index + 1;
+  tbody.appendChild(newRow);
     
     console.log('🔧 Initializing new row...');
     
@@ -211,10 +268,14 @@
           itemSelect.classList.add('predictive');
           console.log('✅ Added predictive class');
         }
-        
-        // Remove any existing upgrade flag to force re-initialization
-        delete itemSelect.dataset.predictiveUpgraded;
-        
+        // Dedupe any stray predictive inputs with the same id (defensive)
+        var textId = itemSelect.id + '_text';
+        var textInputs = document.querySelectorAll('#' + CSS.escape(textId));
+        if (textInputs.length > 1) {
+          console.warn('⚠️ Duplicate predictive inputs found, removing extras for', textId);
+          textInputs.forEach(function(inp, idx) { if (idx > 0) inp.remove(); });
+        }
+
         console.log('🔍 Item select state before initialization:', {
           id: itemSelect.id,
           hasPredictiveClass: itemSelect.classList.contains('predictive'),
@@ -228,32 +289,24 @@
       
       // Initialize predictive dropdowns for the new row
       if (window.initPredictiveDropdowns) {
-        console.log('🔍 Calling initPredictiveDropdowns for new row...');
-        try {
-          window.initPredictiveDropdowns(newRow);
-          console.log('✅ initPredictiveDropdowns called successfully for new row');
-        } catch (error) {
-          console.error('❌ Error calling initPredictiveDropdowns:', error);
-        }
-        
-        // Wait a bit then check if it worked
-        setTimeout(function() {
-          if (itemSelect) {
-            console.log('🔍 Item select state after initialization:', {
-              id: itemSelect.id,
-              isUpgraded: itemSelect.dataset.predictiveUpgraded,
-              hasTextInput: !!document.getElementById(itemSelect.id + '_text'),
-              isVisible: itemSelect.offsetParent !== null
-            });
-            
-            // If still not upgraded, try global initialization
-            if (!itemSelect.dataset.predictiveUpgraded) {
-              console.log('� Trying global initialization...');
-              window.initPredictiveDropdowns(document);
-            }
+        // Only initialize if not already upgraded
+        var shouldInit = true;
+        if (itemSelect) {
+          if (itemSelect.dataset.predictiveUpgraded === '1' || document.getElementById(itemSelect.id + '_text')) {
+            shouldInit = false;
           }
-        }, 50);
-        
+        }
+        if (shouldInit) {
+          console.log('🔍 Calling initPredictiveDropdowns for new row...');
+          try {
+            window.initPredictiveDropdowns(newRow);
+            console.log('✅ initPredictiveDropdowns called successfully for new row');
+          } catch (error) {
+            console.error('❌ Error calling initPredictiveDropdowns:', error);
+          }
+        } else {
+          console.log('ℹ️ Predictive already initialized for this select; skipping re-init');
+        }
       } else {
         console.warn('⚠️ initPredictiveDropdowns not available');
       }
@@ -261,10 +314,28 @@
       // Bind events for the new row
       setTimeout(function() {
         bindRowEvents(newRow);
+        // Run a dedupe pass across the table to ensure no duplicate _text inputs exist
+        try { dedupePredictiveInputs(table); } catch (e) { console.warn('Dedupe failed:', e); }
       }, 200);
     }, 10);
     
+    // Release lock in next tick to allow another add
+    setTimeout(function(){ delete totalForms.dataset.addLock; }, 0);
     console.log('✅ Row added and scheduled for initialization! New count:', totalForms.value);
+  }
+
+  // Remove duplicate predictive text inputs for a given table
+  function dedupePredictiveInputs(table) {
+    var selects = table.querySelectorAll('select[id$="-item"]');
+    selects.forEach(function(sel) {
+      var textId = sel.id + '_text';
+      var texts = table.querySelectorAll('#' + CSS.escape(textId));
+      if (texts.length > 1) {
+        // Keep the first visible one, remove the rest
+        texts.forEach(function(inp, idx) { if (idx > 0) inp.remove(); });
+        console.log('🧹 Removed duplicate predictive inputs for', textId);
+      }
+    });
   }
   
   function bindRowEvents(row) {
@@ -507,9 +578,10 @@
   // Add a function to manually trigger adding a row
   window.manualAddRow = function() {
     console.log('🔧 Manual add row triggered...');
-    var totalForms = document.getElementById('id_items-TOTAL_FORMS');
-    var emptyRow = document.getElementById('items-empty-row');
-    var table = document.getElementById('items-table');
+    var table = document.querySelector('#items-table');
+    var root = table ? (table.closest('.drawer-panel') || table.closest('[data-modal-root]') || document) : document;
+    var totalForms = root.querySelector('#id_items-TOTAL_FORMS');
+    var emptyRow = root.querySelector('#items-empty-row');
     
     if (!totalForms || !emptyRow || !table) {
       console.error('Missing required elements:', {
@@ -524,42 +596,6 @@
     addNewRow(table, tbody, totalForms, emptyRow);
   };
   
-  // Auto-initialize
-  console.log('🎯 Recipe items module: setting up auto-initialization...');
-  
-  function tryAutoInit() {
-    console.log('🔄 Attempting auto-initialization...');
-    
-    // Debug current DOM state
-    console.log('Current DOM state:', {
-      readyState: document.readyState,
-      tablesFound: document.querySelectorAll('table').length,
-      itemsTable: !!document.getElementById('items-table'),
-      addButton: !!document.getElementById('add-row'),
-      totalForms: !!document.getElementById('id_items-TOTAL_FORMS'),
-      emptyRow: !!document.getElementById('items-empty-row')
-    });
-    
-    if (document.getElementById('items-table') || document.querySelector('[id$="items-table"]')) {
-      console.log('🎯 Found items table, initializing...');
-      initRecipeComponentsTable(document);
-    } else if (document.querySelectorAll('table').length > 0) {
-      console.log('⚠️ No items-table found, but other tables exist. Attempting init anyway...');
-      initRecipeComponentsTable(document);
-    } else {
-      console.log('⏳ No tables found yet, DOM may still be loading...');
-    }
-  }
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', tryAutoInit);
-  } else {
-    tryAutoInit();
-  }
-  
-  // Also try after a delay for dynamically loaded content
-  setTimeout(tryAutoInit, 500);
-  setTimeout(tryAutoInit, 1500);
-  
-  console.log('🎉 Recipe items module loaded');
+  // No global auto-init; templates call init with a proper root.
+  console.log('� recipe-components.js loaded (manual init only)');
 })();

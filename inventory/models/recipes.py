@@ -30,6 +30,7 @@ class Recipe(models.Model):
 
 
 class RecipeComponent(models.Model):
+    """DEPRECATED: Use RecipeItem instead. Keeping for migration."""
     id = models.AutoField(primary_key=True, db_column="recipe_item_id")
     parent_recipe = models.ForeignKey(
         Recipe,
@@ -47,13 +48,44 @@ class RecipeComponent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"{self.parent_recipe} component #{self.pk}"
-
     class Meta:
         managed = True
         db_table = "recipe_items"
-        unique_together = ("parent_recipe", "component_kind", "component_id")
+
+
+class RecipeItem(models.Model):
+    """
+    Direct relationship between Recipe and Item.
+    Simplified model - no component_kind needed, direct item_id FK.
+    """
+    id = models.AutoField(primary_key=True, db_column="recipe_item_id")
+    recipe = models.ForeignKey(
+        Recipe,
+        models.CASCADE,
+        db_column="recipe_id",
+        related_name="items",
+    )
+    item = models.ForeignKey(
+        "Item",
+        models.CASCADE,
+        db_column="item_id",
+        related_name="recipe_usages",
+    )
+    quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
+    unit = models.CharField(max_length=50, blank=True, null=True)
+    loss_pct = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
+    sort_order = models.IntegerField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.recipe} - {self.item.name} ({self.quantity} {self.unit})"
+
+    class Meta:
+        managed = True
+        db_table = "recipe_items_new"  # Use a new table to avoid conflicts
+        unique_together = ("recipe", "item")
 
 
 class SaleTransaction(models.Model):

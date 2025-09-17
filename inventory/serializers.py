@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import (
+    Category,
     GoodsReceivedNote,
     GRNItem,
     Indent,
@@ -9,9 +10,10 @@ from .models import (
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
-    RecipeComponent,
+    RecipeItem,
     SaleTransaction,
     StockTransaction,
+    SubCategory,
     Supplier,
 )
 
@@ -233,20 +235,19 @@ class SaleTransactionSerializer(serializers.ModelSerializer):
         ]
 
 
-class RecipeComponentSerializer(serializers.ModelSerializer):
-    """Serialize components that make up a recipe."""
+class RecipeItemSerializer(serializers.ModelSerializer):
+    """Serialize items that make up a recipe."""
 
     notes = serializers.CharField(
         allow_blank=True, allow_null=True, required=False, default=""
     )
 
     class Meta:
-        model = RecipeComponent
+        model = RecipeItem
         fields = [
             "id",
-            "parent_recipe",
-            "component_kind",
-            "component_id",
+            "recipe",
+            "item",
             "quantity",
             "unit",
             "loss_pct",
@@ -260,7 +261,7 @@ class RecipeComponentSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Represent a recipe and its component breakdown."""
 
-    components = RecipeComponentSerializer(many=True, read_only=True)
+    items = RecipeItemSerializer(many=True, read_only=True)
     plating_notes = serializers.CharField(
         allow_blank=True, allow_null=True, required=False, default=""
     )

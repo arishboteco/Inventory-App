@@ -11,7 +11,7 @@ from ..models import (
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
-    RecipeComponent,
+    RecipeItem,
     SaleTransaction,
     StockTransaction,
     Supplier,
@@ -24,7 +24,7 @@ from ..serializers import (
     ItemSerializer,
     PurchaseOrderItemSerializer,
     PurchaseOrderSerializer,
-    RecipeComponentSerializer,
+    RecipeItemSerializer,
     RecipeSerializer,
     SaleTransactionSerializer,
     StockTransactionSerializer,
@@ -161,11 +161,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_fields = "__all__"
 
 
-class RecipeComponentViewSet(viewsets.ModelViewSet):
-    """CRUD API for components that make up a recipe."""
+class RecipeItemViewSet(viewsets.ModelViewSet):
+    """ViewSet for recipe items (simplified components)."""
 
-    queryset = RecipeComponent.objects.all().select_related("parent_recipe")
-    serializer_class = RecipeComponentSerializer
+    queryset = RecipeItem.objects.all().select_related("recipe", "item")
+    serializer_class = RecipeItemSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = DefaultPagination
     filter_backends = [DjangoFilterBackend]

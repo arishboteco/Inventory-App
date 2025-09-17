@@ -1,0 +1,24 @@
+{% load form_tags %}
+{# Table form field - no label since table headers provide context #}
+<div class="{% if container_class %}{{ container_class }} {% endif %}">
+  {% if field.field.widget.attrs.class %}
+    {{ field|add_class:"leading-normal" }}
+  {% elif field.field.widget.input_type == "checkbox" %}
+    {{ field|add_class:"h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" }}
+  {% elif field.field.widget.input_type == "radio" %}
+    {{ field|add_class:"h-4 w-4 rounded-full border-gray-300 text-primary focus:ring-primary" }}
+  {% else %}
+    {{ field|add_class:"block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" }}
+  {% endif %}
+  {% include "forms/feedback.html" %}
+  {% if field.help_text %}
+    <p class="text-sm text-gray-500 leading-normal">{{ field.help_text }}</p>
+  {% endif %}
+  {% if field.errors %}
+    <ul class="text-sm text-danger list-disc pl-5 leading-normal">
+      {% for error in field.errors %}
+        <li class="leading-normal">{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>

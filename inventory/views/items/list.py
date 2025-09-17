@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView
 
 from inventory.services.item_service import get_unit_display_name
+from inventory.services.units_service import UnitsService
 
 from ...forms.bulk_forms import BulkUploadForm
 from ...forms.item_forms import ItemForm
@@ -493,12 +494,26 @@ def item_meta(request, item_id: int):
     try:
         item = (
             Item.objects.select_related("unit", "category")
-            .only("item_id", "name", "unit", "category")
+            .only(
+                "item_id",
+                "name",
+                "unit",
+                "category",
+                "last_purchase_price",
+                "initial_purchase_price",
+            )
             .get(pk=item_id)
         )
     except Item.DoesNotExist:
         return JsonResponse({"ok": False, "error": "not_found"}, status=404)
     unit_display = get_unit_display_name(item.unit_id) if item.unit_id else ""
+    base_unit_display = (
+        UnitsService.get_base_unit_display(item.unit_id) if item.unit_id else ""
+    )
+    uinfo = UnitsService.get_unit_info(item.unit_id) if item.unit_id else {"conversion_factor": 1.0}
+    conv = float(uinfo.get("conversion_factor") or 1.0)
+    last_price = float(item.last_purchase_price or 0)
+    cost_per_base = (last_price / conv) if conv else 0.0
     cat = getattr(item, "category", None)
     category = getattr(cat, "category", "")
     subcategory = getattr(cat, "sub_category", "")
@@ -523,5 +538,9 @@ def item_meta(request, item_id: int):
         "category": category,
         "subcategory": subcategory,
         "po_suggestion": po_suggestion,
+        "base_unit": base_unit_display,
+        "last_purchase_price": last_price,
+        "conversion_factor": conv,
+        "cost_per_base_unit": cost_per_base,
     }
     return JsonResponse(data)

@@ -1,27 +1,112 @@
 {% extends "components/responsive_table.html" %}
 
-{% block caption %}<caption>Recipe Components</caption>{% endblock %}
+{% block caption %}<caption>Recipe Items</caption>{% endblock %}
 
 {% block headers %}
-  <th scope="col">Kind</th>
-  <th scope="col">ID</th>
+  <th scope="col">Item</th>
   <th scope="col">Qty</th>
   <th scope="col">Unit</th>
   <th scope="col">Loss %</th>
+  <th scope="col">Cost</th>
   <th scope="col"></th>
 {% endblock %}
 
 {% block rows %}
-  {% for cform in formset %}
-  <tr class="form-row">
-    <td>{% include "components/form_field.html" with field=cform.component_kind %}</td>
-    <td>{% include "components/form_field.html" with field=cform.component_id %}</td>
-    <td>{% include "components/form_field.html" with field=cform.quantity %}</td>
-    <td>{% include "components/form_field.html" with field=cform.unit %}</td>
-    <td>{% include "components/form_field.html" with field=cform.loss_pct %}</td>
+  {% for cform in formset.forms %}
+  <tr class="form-row" data-form-index="{{ forloop.counter0 }}">
     <td>
-      {{ cform.DELETE }}<button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Remove</button>
+      {% include "components/form_field_table.html" with field=cform.item %}
+    </td>
+    <td>{% include "components/form_field_table.html" with field=cform.quantity %}</td>
+    <td>
+      {{ cform.unit }}
+      {% include "components/form_field_table.html" with field=cform.unit_display %}
+    </td>
+    <td>{% include "components/form_field_table.html" with field=cform.loss_pct %}</td>
+    <td class="align-middle">
+      <div class="text-sm" data-line-cost>0.00</div>
+    </td>
+    <td>
+      <div style="display: none;">{{ cform.DELETE }}</div>
+      <button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Remove</button>
     </td>
   </tr>
   {% endfor %}
+  {# empty form template row #}
+  <tr class="form-row hidden" id="items-empty-row">
+    <td>
+      {% include "components/form_field_table.html" with field=formset.empty_form.item %}
+    </td>
+    <td>{% include "components/form_field_table.html" with field=formset.empty_form.quantity %}</td>
+    <td>
+      {{ formset.empty_form.unit }}
+      {% include "components/form_field_table.html" with field=formset.empty_form.unit_display %}
+    </td>
+    <td>{% include "components/form_field_table.html" with field=formset.empty_form.loss_pct %}</td>
+    <td class="align-middle">
+      <div class="text-sm" data-line-cost>0.00</div>
+    </td>
+    <td>
+      <div style="display: none;">{{ formset.empty_form.DELETE }}</div>
+      <button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Remove</button>
+    </td>
+  </tr>
+{% endblock %}
+
+{% block footer_extra %}
+<script>
+// Simple initialization call - the main logic is in recipe-components.js
+(function() {
+  var tableId = '{{ table_id|default:"items-table" }}';
+  console.log('🎯 Table footer script running for table:', tableId);
+  
+  var initializeTable = function() {
+    console.log('🚀 Trying to initialize recipe items table...');
+    
+    // Simple manual setup if the main function isn't working
+    var table = document.getElementById(tableId);
+    var addBtn = document.getElementById('add-row');
+    var totalForms = document.getElementById('id_items-TOTAL_FORMS');
+    var emptyRow = document.getElementById('items-empty-row');
+    
+    console.log('Elements found:', {
+      table: !!table,
+      addBtn: !!addBtn,
+      totalForms: !!totalForms,
+      emptyRow: !!emptyRow
+    });
+    
+    if (window.initRecipeItemsTable) {
+      console.log('✅ Found initRecipeItemsTable function');
+      window.initRecipeItemsTable(document, tableId);
+    } else {
+      console.log('❌ initRecipeItemsTable not available, trying manual setup');
+      
+      // Manual setup if main function not available
+      if (addBtn && table && totalForms && emptyRow) {
+        console.log('🔧 Setting up manual event listener...');
+        addBtn.style.border = '2px solid red';
+        addBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('🔥 Manual add button clicked!');
+          if (window.manualAddRow) {
+            window.manualAddRow();
+          } else {
+            alert('Manual add function not available');
+          }
+        });
+        console.log('✅ Manual event listener attached');
+      }
+    }
+  };
+  
+  // Try immediately
+  initializeTable();
+  
+  // Retry if not available
+  setTimeout(initializeTable, 100);
+  setTimeout(initializeTable, 500);
+  setTimeout(initializeTable, 1000);
+})();
+</script>
 {% endblock %}

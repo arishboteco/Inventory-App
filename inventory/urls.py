@@ -11,7 +11,7 @@ from .views import (
     ItemViewSet,
     PurchaseOrderItemViewSet,
     PurchaseOrderViewSet,
-    RecipeComponentViewSet,
+    RecipeItemViewSet,
     RecipeViewSet,
     SaleTransactionViewSet,
     StockTransactionViewSet,
@@ -32,7 +32,7 @@ router.register(r"stock-transactions", StockTransactionViewSet)
 router.register(r"indents", IndentViewSet)
 router.register(r"indent-items", IndentItemViewSet)
 router.register(r"recipes", RecipeViewSet)
-router.register(r"recipe-components", RecipeComponentViewSet)
+router.register(r"recipe-items", RecipeItemViewSet)
 router.register(r"purchase-orders", PurchaseOrderViewSet)
 router.register(r"purchase-order-items", PurchaseOrderItemViewSet)
 router.register(r"goods-received-notes", GoodsReceivedNoteViewSet)

@@ -12,7 +12,7 @@ from .orders import (
     PurchaseOrder,
     PurchaseOrderItem,
 )
-from .recipes import Recipe, RecipeComponent, SaleTransaction
+from .recipes import Recipe, RecipeComponent, RecipeItem, SaleTransaction
 from .subcategory import SubCategory
 from .suppliers import Supplier
 from .unit import Unit
@@ -34,6 +34,7 @@ __all__ = [
     "PurchaseOrderStatus",
     "Recipe",
     "RecipeComponent",
+    "RecipeItem",
     "SaleTransaction",
     "Department",
     "ItemDepartment",

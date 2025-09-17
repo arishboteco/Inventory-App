@@ -9,7 +9,7 @@ from django.db import IntegrityError, transaction
 
 from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
 
-from ..models import Item, Recipe, RecipeComponent, SaleTransaction, StockTransaction
+from ..models import Item, Recipe, RecipeItem, SaleTransaction, StockTransaction
 from .item_service import get_unit_display_name
 from .stock_utils import get_low_stock_items
 
@@ -51,43 +51,13 @@ def _parse_tags(tags: Any) -> List[str]:
     return [str(tags).strip()]
 
 
-def _component_unit(kind: str, cid: int, unit: Optional[str]) -> Optional[str]:
-    """Validate and resolve a component's unit.
-
-    For ``ITEM`` components the unit must match the item's unit.
-    For ``RECIPE`` components the unit must match the child recipe's
-    ``default_yield_unit``.
-    """
-
-    if kind == "ITEM":
-        item = Item.objects.filter(pk=cid).values("unit_id").first()
-        if not item:
-            raise ValueError(f"Item {cid} not found")
-        base = get_unit_display_name(item["unit_id"])
-        if unit is None:
-            return base
-        if unit != base:
-            raise ValueError("Unit mismatch for item component")
-        return unit
-    if kind == "RECIPE":
-        rec = Recipe.objects.filter(pk=cid).values("default_yield_unit").first()
-        db_unit = rec["default_yield_unit"] if rec else None
-        if unit is not None and db_unit and unit != db_unit:
-            raise ValueError("Unit mismatch for recipe component")
-        return unit if unit is not None else db_unit
-    raise ValueError("Invalid component_kind")
-
 
 def _has_path(start: int, target: int) -> bool:
     """Return True if ``start`` recipe references ``target`` recursively."""
     if start == target:
         return True
-    children = RecipeComponent.objects.filter(
-        parent_recipe_id=start, component_kind="RECIPE"
-    ).values_list("component_id", flat=True)
-    for cid in children:
-        if _has_path(cid, target):
-            return True
+    # For now, simplified model doesn't support sub-recipes
+    # This function can be enhanced later if sub-recipe functionality is needed
     return False
 
 
@@ -115,22 +85,22 @@ def _row_to_dict(obj: Any) -> Dict[str, Any]:
     return {k: getattr(obj, k) for k in dir(obj) if not k.startswith("_")}
 
 
-def build_components_from_editor(
+def build_items_from_editor(
     rows: Iterable[Any],
     choice_map: Dict[str, Dict[str, Any]],
 ) -> Tuple[List[Dict[str, Any]], List[str]]:
-    """Convert an iterable of editor rows into component payload.
+    """Convert an iterable of editor rows into item payload.
 
     ``choice_map`` is expected to map the label from the UI to metadata about
-    the component (kind, id, unit information etc.). ``rows`` may contain
+    the item (id, unit information etc.). ``rows`` may contain
     dictionaries, Pydantic models or similar objects.
     """
 
-    components: List[Dict[str, Any]] = []
+    items: List[Dict[str, Any]] = []
     errors: List[str] = []
     for idx, row in enumerate(rows):
         row = _row_to_dict(row)
-        label = row.get("component")
+        label = row.get("item")
         if not label or label == PLACEHOLDER_SELECT_COMPONENT:
             continue
         meta = choice_map.get(label)
@@ -141,30 +111,19 @@ def build_components_from_editor(
             errors.append(f"Quantity must be greater than 0 for {label}.")
             continue
         unit = row.get("unit")
-        if meta["kind"] == "ITEM":
-            # For items, use the item's unit
-            allowed_unit = get_unit_display_name(meta.get("unit_id"))
-            if unit is None:
-                unit = allowed_unit  # Autofill
-            elif unit != allowed_unit:
-                errors.append(
-                    f"Unit mismatch for {meta.get('name')}. Use {allowed_unit}."
-                )
-                continue
-        elif meta["kind"] == "RECIPE":
-            # For recipes, use the default yield unit
-            recipe_unit = meta.get("unit")
-            if unit is None:
-                unit = recipe_unit  # Autofill
-            elif unit != recipe_unit:
-                errors.append(
-                    f"Unit mismatch for {meta.get('name')}. Use {recipe_unit}."
-                )
-                continue
-        components.append(
+        # For items, use the item's unit
+        allowed_unit = get_unit_display_name(meta.get("unit_id"))
+        if unit is None:
+            unit = allowed_unit  # Autofill
+        elif unit != allowed_unit:
+            # For now, no sub-recipe support, so just check basic unit matching
+            errors.append(
+                f"Unit mismatch for {meta.get('name')}. Use {allowed_unit}."
+            )
+            continue
+        items.append(
             {
-                "component_kind": meta["kind"],
-                "component_id": meta["id"],
+                "item_id": meta["id"],
                 "quantity": float(qty),
                 "unit": unit,
                 "loss_pct": float(row.get("loss_pct") or 0),
@@ -172,12 +131,12 @@ def build_components_from_editor(
                 "notes": row.get("notes") or None,
             }
         )
-    return components, errors
+    return items, errors
 
 
-def get_recipe_components(recipe_id: int):
-    """Return queryset of components for a recipe ordered by sort order."""
-    return RecipeComponent.objects.filter(parent_recipe_id=recipe_id).order_by(
+def get_recipe_items(recipe_id: int):
+    """Return queryset of items for a recipe ordered by sort order."""
+    return RecipeItem.objects.filter(recipe_id=recipe_id).order_by(
         "sort_order", "id"
     )
 
@@ -188,9 +147,9 @@ def get_recipe_components(recipe_id: int):
 
 
 def create_recipe(
-    data: Dict[str, Any], components: List[Dict[str, Any]]
+    data: Dict[str, Any], items: List[Dict[str, Any]]
 ) -> Tuple[bool, str, Optional[int]]:
-    """Create a recipe and associated components."""
+    """Create a recipe and associated items."""
     try:
         with transaction.atomic():
             fields = {
@@ -204,26 +163,17 @@ def create_recipe(
                 "tags": _parse_tags(data.get("tags")),
             }
             recipe = Recipe.objects.create(**fields)
-            for comp in components:
-                unit = _component_unit(
-                    comp["component_kind"],
-                    comp["component_id"],
-                    comp.get("unit"),
-                )
-                if comp["component_kind"] == "RECIPE" and _creates_cycle(
-                    recipe.recipe_id, comp["component_id"]
-                ):
-                    raise ValueError("Adding this component creates a cycle")
-
-                RecipeComponent.objects.create(
-                    parent_recipe=recipe,
-                    component_kind=comp["component_kind"],
-                    component_id=comp["component_id"],
-                    quantity=comp["quantity"],
-                    unit=unit,
-                    loss_pct=comp.get("loss_pct") or 0,
-                    sort_order=comp.get("sort_order") or 0,
-                    notes=_strip_or_none(comp.get("notes")),
+            for item_data in items:
+                # For now, just create the item without cycle checking
+                # Cycle checking would be complex with the item-based approach
+                RecipeItem.objects.create(
+                    recipe=recipe,
+                    item_id=item_data["item_id"],
+                    quantity=item_data["quantity"],
+                    unit=item_data["unit"],
+                    loss_pct=item_data.get("loss_pct") or 0,
+                    sort_order=item_data.get("sort_order") or 0,
+                    notes=_strip_or_none(item_data.get("notes")),
                 )
         return True, "Recipe created.", recipe.recipe_id
     except (IntegrityError, ValueError) as exc:
@@ -232,9 +182,9 @@ def create_recipe(
 
 
 def update_recipe(
-    recipe_id: int, data: Dict[str, Any], components: List[Dict[str, Any]]
+    recipe_id: int, data: Dict[str, Any], items: List[Dict[str, Any]]
 ) -> Tuple[bool, str]:
-    """Update a recipe and replace its components."""
+    """Update a recipe and replace its items."""
     try:
         with transaction.atomic():
             recipe = Recipe.objects.get(pk=recipe_id)
@@ -244,27 +194,18 @@ def update_recipe(
                 else:
                     setattr(recipe, k, v)
             recipe.save()
-            RecipeComponent.objects.filter(parent_recipe=recipe).delete()
-            for comp in components:
-                unit = _component_unit(
-                    comp["component_kind"],
-                    comp["component_id"],
-                    comp.get("unit"),
-                )
-                if comp["component_kind"] == "RECIPE" and _creates_cycle(
-                    recipe_id, comp["component_id"]
-                ):
-                    raise ValueError("Adding this component creates a cycle")
-
-                RecipeComponent.objects.create(
-                    parent_recipe=recipe,
-                    component_kind=comp["component_kind"],
-                    component_id=comp["component_id"],
-                    quantity=comp["quantity"],
-                    unit=unit,
-                    loss_pct=comp.get("loss_pct") or 0,
-                    sort_order=comp.get("sort_order") or 0,
-                    notes=_strip_or_none(comp.get("notes")),
+            RecipeItem.objects.filter(recipe=recipe).delete()
+            for item_data in items:
+                # For now, just create the item without cycle checking
+                # Cycle checking would be complex with the item-based approach
+                RecipeItem.objects.create(
+                    recipe=recipe,
+                    item_id=item_data["item_id"],
+                    quantity=item_data["quantity"],
+                    unit=item_data["unit"],
+                    loss_pct=item_data.get("loss_pct") or 0,
+                    sort_order=item_data.get("sort_order") or 0,
+                    notes=_strip_or_none(item_data.get("notes")),
                 )
         return True, "Recipe updated."
     except Recipe.DoesNotExist:
@@ -275,14 +216,14 @@ def update_recipe(
 
 
 def delete_recipe(recipe_id: int) -> Tuple[bool, str]:
-    """Delete a recipe and its components."""
+    """Delete a recipe and its items."""
     try:
         with transaction.atomic():
             try:
                 recipe = Recipe.objects.get(pk=recipe_id)
             except Recipe.DoesNotExist:
                 return False, "Recipe not found."
-            RecipeComponent.objects.filter(parent_recipe=recipe).delete()
+            RecipeItem.objects.filter(recipe=recipe).delete()
             recipe.delete()
         return True, "Recipe deleted."
     except Exception as exc:  # pragma: no cover - defensive
@@ -304,8 +245,8 @@ def _expand_requirements(
     if recipe_id in visited:
         raise ValueError("Circular reference detected during expansion")
     visited.add(recipe_id)
-    rows = RecipeComponent.objects.filter(parent_recipe_id=recipe_id).values(
-        "component_kind", "component_id", "quantity", "unit", "loss_pct"
+    rows = RecipeItem.objects.filter(recipe_id=recipe_id).select_related('item').values(
+        "item_id", "item__unit_id", "item__is_active", "quantity", "unit", "loss_pct"
     )
     for row in rows:
         qty = (
@@ -313,37 +254,15 @@ def _expand_requirements(
             * float(row["quantity"])
             / (1 - float(row.get("loss_pct") or 0) / 100.0)
         )
-        if row["component_kind"] == "ITEM":
-            item = (
-                Item.objects.filter(pk=row["component_id"])
-                .values("unit_id", "is_active")
-                .first()
-            )
-            if not item:
-                raise ValueError(f"Item {row['component_id']} not found")
-            if not item["is_active"]:
-                raise ValueError("Inactive item component encountered")
-            item_unit = get_unit_display_name(item["unit_id"])
-            if item_unit != row["unit"]:
-                raise ValueError("Unit mismatch for item component")
-            totals[row["component_id"]] = totals.get(row["component_id"], 0) + qty
-        elif row["component_kind"] == "RECIPE":
-            sub = (
-                Recipe.objects.filter(pk=row["component_id"])
-                .values("default_yield_unit", "is_active")
-                .first()
-            )
-            if not sub:
-                raise ValueError(f"Recipe {row['component_id']} not found")
-            if not sub["is_active"]:
-                raise ValueError("Inactive sub-recipe encountered")
-            if not sub["default_yield_unit"]:
-                raise ValueError("Missing unit for recipe component")
-            if sub["default_yield_unit"] != row["unit"]:
-                raise ValueError("Unit mismatch for recipe component")
-            _expand_requirements(row["component_id"], qty, totals, visited)
-        else:
-            raise ValueError("Invalid component_kind")
+        
+        # For now, treat all items as direct items (no sub-recipes)
+        # Sub-recipe functionality can be added later if needed
+        if not row["item__is_active"]:
+            raise ValueError("Inactive item component encountered")
+        item_unit = get_unit_display_name(row["item__unit_id"])
+        if item_unit != row["unit"]:
+            raise ValueError("Unit mismatch for item component")
+        totals[row["item_id"]] = totals.get(row["item_id"], 0) + qty
     visited.remove(recipe_id)
 
 

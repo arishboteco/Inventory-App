@@ -16,37 +16,28 @@
         {% endfor %}
       </ul>
       {% endif %}
-      {% include "inventory/recipes/_components_form_table.html" with formset=formset table_id="components-table" %}
+      {% include "inventory/recipes/_components_form_table.html" with formset=formset table_id="items-table" %}
       <div class="mt-3 flex items-center justify-between">
         <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
         <div class="flex items-center gap-2">
-          <button type="button" id="add-row" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Add Component</button>
+          <button type="button" id="add-row" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Add Item</button>
           <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Save</button>
+        </div>
+      </div>
+      <div class="mt-4 p-3 border border-border rounded-lg bg-surfaceSubtle" id="recipe-cost-panel">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="font-semibold">Cost Breakdown</h4>
+          <label class="text-sm">Margin %
+            <input type="number" id="recipe-margin" class="ml-2 w-20 border rounded p-1" value="60" min="0" max="95" step="1" />
+          </label>
+        </div>
+        <div id="cost-by-category" class="text-sm space-y-1"></div>
+        <div class="mt-2 text-sm">
+          <div>Total Cost: <span id="recipe-total-cost">0.00</span></div>
+          <div class="font-semibold">Suggested Price: <span id="recipe-suggested-price">0.00</span></div>
         </div>
       </div>
     </form>
   </div>
 </div>
-<script>
-(function(){
-  const addBtn = document.getElementById('add-row');
-  const table = document.getElementById('components-table')?.getElementsByTagName('tbody')[0];
-  const totalForms = document.getElementById('id_components-TOTAL_FORMS');
-  if (addBtn && table && totalForms){
-    addBtn.addEventListener('click', function() {
-      const rows = table.querySelectorAll('.form-row');
-      const newIndex = parseInt(totalForms.value, 10);
-      const empty = rows[rows.length-1]?.cloneNode(true) || document.createElement('tr');
-      empty.querySelectorAll('input, select, textarea').forEach(function(el) {
-        const name = el.getAttribute('name')?.replace(/-\d+-/, '-' + newIndex + '-') || '';
-        const id = name ? 'id_' + name : '';
-        if (name){ el.setAttribute('name', name); el.setAttribute('id', id); }
-        if (el.type !== 'hidden') { el.value = ''; }
-      });
-      if (empty.classList && !empty.classList.contains('form-row')) empty.classList.add('form-row');
-      table.appendChild(empty);
-      totalForms.value = newIndex + 1;
-    });
-  }
-})();
-</script>
+<script>(function(){ if(window.updateRecipeCosts) window.updateRecipeCosts(); })();</script>

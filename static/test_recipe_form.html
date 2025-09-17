@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Form Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .hidden { display: none; }
+        .predictive { background-color: #fff; border: 1px solid #ccc; padding: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Recipe Form Test</h1>
+    
+    <form>
+        <input type="hidden" id="id_items-TOTAL_FORMS" name="items-TOTAL_FORMS" value="1">
+        <input type="hidden" id="id_items-INITIAL_FORMS" name="items-INITIAL_FORMS" value="0">
+        <input type="hidden" id="id_items-MIN_NUM_FORMS" name="items-MIN_NUM_FORMS" value="0">
+        <input type="hidden" id="id_items-MAX_NUM_FORMS" name="items-MAX_NUM_FORMS" value="1000">
+        
+        <table id="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Unit</th>
+                    <th>Loss %</th>
+                    <th>Cost</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="form-row" data-form-index="0">
+                    <td>
+                        <select id="id_items-0-item" name="items-0-item" class="predictive">
+                            <option value="">Select an item</option>
+                            <option value="1">TEST VALIDATION</option>
+                            <option value="2">Flour</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" id="id_items-0-quantity" name="items-0-quantity" step="0.001" min="0.001" placeholder="0.000">
+                    </td>
+                    <td>
+                        <input type="hidden" id="id_items-0-unit" name="items-0-unit">
+                        <input type="text" id="id_items-0-unit_display" name="items-0-unit_display" readonly placeholder="Unit">
+                    </td>
+                    <td>
+                        <input type="number" id="id_items-0-loss_pct" name="items-0-loss_pct" step="0.01" min="0" max="100" placeholder="0.00">
+                    </td>
+                    <td>
+                        <div data-line-cost>0.00</div>
+                    </td>
+                    <td>
+                        <button type="button" class="remove-row">Remove</button>
+                    </td>
+                </tr>
+                
+                <!-- Empty row template -->
+                <tr class="form-row hidden" id="items-empty-row">
+                    <td>
+                        <select id="id_items-__prefix__-item" name="items-__prefix__-item" class="predictive">
+                            <option value="">Select an item</option>
+                            <option value="1">TEST VALIDATION</option>
+                            <option value="2">Flour</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" id="id_items-__prefix__-quantity" name="items-__prefix__-quantity" step="0.001" min="0.001" placeholder="0.000">
+                    </td>
+                    <td>
+                        <input type="hidden" id="id_items-__prefix__-unit" name="items-__prefix__-unit">
+                        <input type="text" id="id_items-__prefix__-unit_display" name="items-__prefix__-unit_display" readonly placeholder="Unit">
+                    </td>
+                    <td>
+                        <input type="number" id="id_items-__prefix__-loss_pct" name="items-__prefix__-loss_pct" step="0.01" min="0" max="100" placeholder="0.00">
+                    </td>
+                    <td>
+                        <div data-line-cost>0.00</div>
+                    </td>
+                    <td>
+                        <button type="button" class="remove-row">Remove</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 20px;">
+            <button type="button" id="add-row">Add Item</button>
+            <button type="submit">Save Recipe</button>
+        </div>
+    </form>
+
+    <div style="margin-top: 20px; padding: 20px; background-color: #f0f0f0;">
+        <h3>Debug Controls</h3>
+        <button onclick="window.testRecipeJS()">Test Recipe JS</button>
+        <button onclick="window.manualAddRow()">Manual Add Row</button>
+        <button onclick="window.debugRecipeDropdowns()">Debug Dropdowns</button>
+        <button onclick="console.log('Available functions:', Object.keys(window).filter(k => k.includes('Recipe') || k.includes('recipe')))">List Recipe Functions</button>
+    </div>
+
+    <script>
+    // Mock the item meta endpoint for testing
+    window.fetch = function(url) {
+        console.log('Mock fetch called for:', url);
+        if (url.includes('/items/meta/1/')) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    ok: true,
+                    unit: 'Unit',
+                    base_unit: 'Unit',
+                    last_purchase_price: 10.00
+                })
+            });
+        }
+        if (url.includes('/items/meta/2/')) {
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({
+                    ok: true,
+                    unit: 'kg',
+                    base_unit: 'kg',
+                    last_purchase_price: 5.50
+                })
+            });
+        }
+        return Promise.reject(new Error('Not found'));
+    };
+    
+    // Add console logging for debugging
+    console.log = function(...args) {
+        var consoleDiv = document.getElementById('console-output');
+        if (!consoleDiv) {
+            consoleDiv = document.createElement('div');
+            consoleDiv.id = 'console-output';
+            consoleDiv.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: black; color: lime; font-family: monospace; font-size: 12px; padding: 10px; z-index: 9999;';
+            document.body.appendChild(consoleDiv);
+        }
+        var message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+        consoleDiv.innerHTML += '<div>' + new Date().toISOString().substr(11, 8) + ' ' + message + '</div>';
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        
+        // Also log to real console
+        if (window.originalConsoleLog) {
+            window.originalConsoleLog.apply(console, args);
+        }
+    };
+    window.originalConsoleLog = console.log;
+    </script>
+    
+    <script src="js/recipe-components.js"></script>
+</body>
+</html>

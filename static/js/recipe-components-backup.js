@@ -127,17 +127,17 @@
       addBtn.style.color = 'white';
       addBtn.title = 'Ready to add items!';
       
-      addBtn.onclick = function(e) {
+      addBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('🔥 === ADD ITEM CLICKED === 🔥');
+        console.log('� === ADD ITEM CLICKED === 🔥');
         
         try {
           addNewRow(table, tbody, totalForms, emptyRow);
         } catch (error) {
           console.error('❌ Error adding row:', error);
         }
-      };
+      });
       
       console.log('✅ Add button setup complete');
     } else {

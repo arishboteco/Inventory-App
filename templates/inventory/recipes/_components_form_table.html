@@ -76,11 +76,11 @@
       emptyRow: !!emptyRow
     });
     
-    if (window.initRecipeItemsTable) {
-      console.log('✅ Found initRecipeItemsTable function');
-      window.initRecipeItemsTable(document, tableId);
+    if (window.initRecipeComponentsTable) {
+      console.log('✅ Found initRecipeComponentsTable function');
+      window.initRecipeComponentsTable(document, tableId);
     } else {
-      console.log('❌ initRecipeItemsTable not available, trying manual setup');
+      console.log('❌ initRecipeComponentsTable not available, trying manual setup');
       
       // Manual setup if main function not available
       if (addBtn && table && totalForms && emptyRow) {
@@ -103,10 +103,13 @@
   // Try immediately
   initializeTable();
   
-  // Retry if not available
-  setTimeout(initializeTable, 100);
-  setTimeout(initializeTable, 500);
-  setTimeout(initializeTable, 1000);
+  // Single retry if not available (instead of multiple retries)
+  setTimeout(function() {
+    if (!window.recipeComponentsInitialized) {
+      console.log('🔄 Retrying recipe initialization...');
+      initializeTable();
+    }
+  }, 500);
 })();
 </script>
 {% endblock %}

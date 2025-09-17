@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Predictive Dropdown Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-container { border: 1px solid #ccc; padding: 20px; margin: 10px 0; }
+        select { padding: 8px; margin: 10px; }
+        button { padding: 10px; margin: 10px; background: #007cba; color: white; border: none; cursor: pointer; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Predictive Dropdown Test</h1>
+    
+    <div class="test-container">
+        <h3>Test 1: Static Dropdown (Should Work)</h3>
+        <select class="predictive" id="test-select-1">
+            <option value="">Choose item...</option>
+            <option value="1">Apple</option>
+            <option value="2">Banana</option>
+            <option value="3">Cherry</option>
+        </select>
+    </div>
+    
+    <div class="test-container">
+        <h3>Test 2: Dynamic Dropdown (Recipe Test)</h3>
+        <div id="dynamic-container">
+            <!-- This will be populated dynamically -->
+        </div>
+        <button onclick="addDynamicDropdown()">Add Dynamic Dropdown</button>
+    </div>
+    
+    <div class="log" id="log">
+        Log will appear here...
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            console.log(message);
+        }
+        
+        let counter = 0;
+        
+        function addDynamicDropdown() {
+            counter++;
+            log('Adding dynamic dropdown #' + counter);
+            
+            const container = document.getElementById('dynamic-container');
+            const select = document.createElement('select');
+            select.className = 'predictive';
+            select.id = 'dynamic-select-' + counter;
+            
+            // Add options
+            select.innerHTML = `
+                <option value="">Choose item...</option>
+                <option value="1">Dynamic Apple ${counter}</option>
+                <option value="2">Dynamic Banana ${counter}</option>
+                <option value="3">Dynamic Cherry ${counter}</option>
+            `;
+            
+            container.appendChild(select);
+            log('Select element created: ' + select.id);
+            
+            // Try to initialize
+            if (window.initPredictiveDropdowns) {
+                log('Calling initPredictiveDropdowns...');
+                delete select.dataset.predictiveUpgraded; // Clear any existing state
+                window.initPredictiveDropdowns(container);
+                
+                setTimeout(function() {
+                    const isUpgraded = select.dataset.predictiveUpgraded === '1';
+                    const textInput = document.getElementById(select.id + '_text');
+                    log('Result: upgraded=' + isUpgraded + ', textInput=' + !!textInput);
+                    
+                    if (!isUpgraded) {
+                        log('Trying global initialization...');
+                        window.initPredictiveDropdowns(document);
+                        
+                        setTimeout(function() {
+                            const isUpgradedNow = select.dataset.predictiveUpgraded === '1';
+                            const textInputNow = document.getElementById(select.id + '_text');
+                            log('Global result: upgraded=' + isUpgradedNow + ', textInput=' + !!textInputNow);
+                        }, 100);
+                    }
+                }, 100);
+            } else {
+                log('ERROR: initPredictiveDropdowns not available!');
+            }
+        }
+        
+        // Test the static dropdown on load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Page loaded');
+            
+            setTimeout(function() {
+                const staticSelect = document.getElementById('test-select-1');
+                if (staticSelect) {
+                    const isUpgraded = staticSelect.dataset.predictiveUpgraded === '1';
+                    log('Static dropdown upgraded: ' + isUpgraded);
+                }
+            }, 1000);
+        });
+    </script>
+    
+    <!-- Load the predictive dropdown script -->
+    <script src="/static/js/predictive-dropdown.js"></script>
+</body>
+</html>

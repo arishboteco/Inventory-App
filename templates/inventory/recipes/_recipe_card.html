@@ -1,11 +1,23 @@
-<a href="{% url 'recipe_detail' recipe.recipe_id %}" class="block bg-surface rounded-lg shadow hover:shadow-xl transition-transform transform hover:-translate-y-1">
-  <div class="flex items-start gap-4 overflow-hidden p-4">
-    {% if recipe.image %}
-      <img src="{{ recipe.image }}" alt="{{ recipe.name }}" class="w-24 max-w-full h-auto object-contain rounded flex-shrink-0" />
-    {% endif %}
-    <div class="flex-1 overflow-hidden">
-      <h3 class="text-lg font-semibold mb-2 truncate">{{ recipe.name }}</h3>
-      <p class="text-sm text-gray-600 truncate">{{ recipe.component_count }} ingredients</p>
+<div class="bg-surface rounded-lg shadow hover:shadow-xl transition-transform transform hover:-translate-y-1">
+  <a href="{% url 'recipe_detail' recipe.recipe_id %}" class="block">
+    <div class="flex items-start gap-4 overflow-hidden p-4">
+      {% if recipe.image %}
+        <img src="{{ recipe.image }}" alt="{{ recipe.name }}" class="w-24 max-w-full h-auto object-contain rounded flex-shrink-0"/>
+      {% endif %}
+      <div class="flex-1 overflow-hidden">
+        <h3 class="text-lg font-semibold mb-2 truncate">{{ recipe.name }}</h3>
+        <p class="text-sm text-gray-600 truncate">{{ recipe.component_count|default:recipe.item_count|default:0 }} ingredients</p>
+      </div>
     </div>
+  </a>
+  <div class="px-4 pb-4 flex items-center justify-end border-t border-border bg-surfaceSubtle/40">
+    <button type="button"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary"
+            data-modal-url="{% url 'recipe_edit_partial' recipe.recipe_id %}"
+            data-modal-type="drawer"
+            data-modal-prefetch="hover"
+            aria-label="Edit {{ recipe.name }}">
+      Edit
+    </button>
   </div>
-</a>
+</div>

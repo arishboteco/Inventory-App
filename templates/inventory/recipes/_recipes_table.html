@@ -1,0 +1,143 @@
+{% load icon_tags %}
+<div id="recipes-meta-summary" class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600" hx-swap-oob="outerHTML">
+  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Total:
+    <span class="text-bodyText">{{ recipe_count|default:0 }}</span>
+  </span>
+  {% if q %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Filtered by:
+      <span class="text-bodyText">“{{ q }}”</span>
+    </span>
+  {% endif %}
+</div>
+<div class="table-scroll group bg-surface border border-border rounded-2xl shadow-card" data-table-container data-optimistic-sort="true" data-table-key="recipes-table">
+  <div class="sr-only" aria-live="polite" data-table-announcer></div>
+  <table id="recipes-table" class="min-w-full w-full table-auto text-label">
+    <caption class="sr-only">Recipes</caption>
+    <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+      <tr>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="name" aria-sort="{% if sort == 'name' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+          <a data-sort-link data-sort-key="name"
+             href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#recipes-table-container"
+             hx-indicator="#recipes-table-loading"
+             hx-include="#filters"
+             class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+            Name
+            {% if sort == 'name' %}
+              <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+            {% else %}
+              <span class="text-xs text-gray-400">⇅</span>
+            {% endif %}
+          </a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="category" aria-sort="{% if sort == 'type' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+          <a data-sort-link data-sort-key="type"
+             href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#recipes-table-container"
+             hx-indicator="#recipes-table-loading"
+             hx-include="#filters"
+             class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+            Category
+            {% if sort == 'type' %}
+              <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+            {% else %}
+              <span class="text-xs text-gray-400">⇅</span>
+            {% endif %}
+          </a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="yield" aria-sort="{% if sort == 'default_yield_unit' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+          <a data-sort-link data-sort-key="default_yield_unit"
+             href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=default_yield_unit&direction={% if sort == 'default_yield_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=default_yield_unit&direction={% if sort == 'default_yield_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#recipes-table-container"
+             hx-indicator="#recipes-table-loading"
+             hx-include="#filters"
+             class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+            Yield Unit
+            {% if sort == 'default_yield_unit' %}
+              <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+            {% else %}
+              <span class="text-xs text-gray-400">⇅</span>
+            {% endif %}
+          </a>
+        </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="active" aria-sort="{% if sort == 'is_active' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+          <a data-sort-link data-sort-key="is_active"
+             href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+             hx-target="#recipes-table-container"
+             hx-indicator="#recipes-table-loading"
+             hx-include="#filters"
+             class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+            Active
+            {% if sort == 'is_active' %}
+              <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+            {% else %}
+              <span class="text-xs text-gray-400">⇅</span>
+            {% endif %}
+          </a>
+        </th>
+        <th scope="col" class="sticky z-10 w-32 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="bg-surface divide-y divide-border">
+      {% for recipe in page_obj.object_list %}
+        <tr class="hover:bg-surfaceSubtle focus-within:bg-surfaceSubtle" data-recipe-id="{{ recipe.recipe_id }}">
+          <td class="px-4 py-2 align-top">
+            <div class="font-medium text-bodyText">{{ recipe.name }}</div>
+            <div class="text-xs text-gray-500">{{ recipe.item_count|default:0 }} ingredients</div>
+          </td>
+          <td class="px-4 py-2 align-top">
+            {% if recipe.type %}
+              {{ recipe.type }}
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 align-top">
+            {% if recipe.default_yield_unit %}
+              {{ recipe.default_yield_unit }}
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 align-top">
+            {% if recipe.is_active %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Active</span>
+            {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 align-top">
+            <div class="flex items-center gap-2">
+              <button type="button"
+                      class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+                      data-modal-url="{% url 'recipe_edit_partial' recipe.recipe_id %}"
+                      data-modal-type="drawer"
+                      data-modal-prefetch="hover"
+                      aria-label="Edit {{ recipe.name }}">
+                {% icon 'pencil-square' 'w-4 h-4' %}
+              </button>
+              <a href="{% url 'recipe_detail' recipe.recipe_id %}"
+                 class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+                 aria-label="Open {{ recipe.name }} details">
+                {% icon 'arrow-top-right-on-square' 'w-4 h-4' %}
+              </a>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-6 text-center text-gray-500">No recipes found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if page_obj %}
+  <div class="mt-4">
+    {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=querystring hx_target="#recipes-table-container" hx_include="#filters" hx_indicator="#recipes-table-loading" %}
+  </div>
+{% endif %}

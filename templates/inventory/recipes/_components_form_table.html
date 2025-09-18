@@ -13,7 +13,7 @@
 
 {% block rows %}
   {% for cform in formset.forms %}
-  <tr class="form-row" data-form-index="{{ forloop.counter0 }}">
+  <tr class="form-row" data-form-index="{{ forloop.counter0 }}" data-recipe-row="true">
     <td>
       {% include "components/form_field_table.html" with field=cform.item %}
     </td>
@@ -33,7 +33,7 @@
   </tr>
   {% endfor %}
   {# empty form template row #}
-  <tr class="form-row hidden" id="items-empty-row">
+  <tr class="form-row hidden" id="items-empty-row" data-recipe-row="true">
     <td>
       {% include "components/form_field_table.html" with field=formset.empty_form.item %}
     </td>
@@ -60,6 +60,9 @@
   var tableId = '{{ table_id|default:"items-table" }}';
   // Use the closest drawer/modal container as root scope for JS
   var tableEl = document.getElementById(tableId);
+  if (tableEl) {
+    tableEl.dataset.recipeGrouping = '1';
+  }
   var rootScope = tableEl ? (tableEl.closest('.drawer-panel') || tableEl.closest('[data-modal-root]') || document) : document;
   console.log('🎯 Table footer script running for table:', tableId);
   
@@ -89,6 +92,9 @@
     if (window.initRecipeComponentsTable) {
       console.log('✅ Found initRecipeComponentsTable function');
       window.initRecipeComponentsTable(rootScope, tableId);
+      if (window.updateRecipeCosts) {
+        window.updateRecipeCosts();
+      }
     } else {
       console.log('❌ initRecipeComponentsTable not available, trying manual setup');
       
@@ -107,6 +113,9 @@
           }
         });
         console.log('✅ Manual event listener attached');
+      }
+      if (window.updateRecipeCosts) {
+        window.updateRecipeCosts();
       }
     }
   };

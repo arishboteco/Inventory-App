@@ -157,3 +157,45 @@ def test_recipe_edit_partial_invalid_non_ajax_returns_html(client, item_factory)
     assert response.status_code == 400
     assert response["Content-Type"].startswith("text/html")
     assert b"<form" in response.content
+
+
+@pytest.mark.django_db
+def test_recipe_create_partial_success_returns_close_only_payload(client, item_factory):
+    item = item_factory(name="Flour")
+    url = reverse("recipe_create_partial")
+    data = {
+        "name": "Test Bread",
+        "description": "",
+        "is_active": "on",
+        "type": "",
+        "default_yield_qty": "1",
+        "default_yield_unit": "loaf",
+        "plating_notes": "",
+        "items-TOTAL_FORMS": "1",
+        "items-INITIAL_FORMS": "0",
+        "items-MIN_NUM_FORMS": "0",
+        "items-MAX_NUM_FORMS": "1000",
+        "items-0-item": str(item.pk),
+        "items-0-quantity": "2.5",
+        "items-0-unit": "kg",
+        "items-0-unit_display": "kg",
+        "items-0-loss_pct": "0",
+        "items-0-DELETE": "",
+    }
+
+    response = client.post(
+        url,
+        data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True
+    assert "redirect" not in payload
+    assert payload.get("close_only") is True
+    assert payload.get("reload") not in (True, "true")
+    assert payload["recipe"]["name"] == "Test Bread"
+    assert Recipe.objects.filter(name="Test Bread").exists()
+    assert payload.get("htmx", {}).get("event") == "recipes:refresh"
+    assert payload.get("htmx", {}).get("detail", {}).get("action") == "created"

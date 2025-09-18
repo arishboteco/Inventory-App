@@ -77,7 +77,7 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
 
 class RecipeItemForm(StyledFormMixin, forms.ModelForm):
     """Form for Recipe Items - simplified from RecipeComponent."""
-    
+
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True),
         widget=forms.Select(
@@ -138,10 +138,27 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
         model = RecipeItem
         fields = [
             "item",
-            "quantity", 
+            "quantity",
             "unit",
             "loss_pct",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = getattr(self, "instance", None)
+        has_instance = getattr(instance, "pk", None) is not None
+        unit_value = ""
+        if has_instance:
+            unit_value = instance.unit or ""
+            if unit_value:
+                self.initial.setdefault("unit", unit_value)
+                self.initial.setdefault("unit_display", unit_value)
+        # Keep the form fields in sync with the initial data so the template
+        # renders the stored unit immediately while the JS metadata loads.
+        self.fields["unit"].initial = self.initial.get("unit", unit_value)
+        self.fields["unit_display"].initial = self.initial.get(
+            "unit_display", unit_value
+        )
 
 
 RecipeItemFormSet = forms.inlineformset_factory(

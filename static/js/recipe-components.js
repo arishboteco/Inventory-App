@@ -108,6 +108,7 @@
     
     existingRows.forEach(function(row) {
       bindRowEvents(row);
+      try { bootstrapExistingRow(row); } catch (err) { console.warn('bootstrapExistingRow failed', err); }
     });
     try { debugFormsetState(table, 'after-init-existing-binds'); } catch(e) {}
     
@@ -511,10 +512,40 @@
       });
     }
   }
-  
-  function handleItemChange(itemSelect, val) {
+
+  function bootstrapExistingRow(row) {
+    if (!row || row.dataset.recipeBootstrapped === '1') {
+      return;
+    }
+    var itemSelect = row.querySelector('select[id$="-item"]');
+    if (!itemSelect || !itemSelect.value) {
+      return;
+    }
+    row.dataset.recipeBootstrapped = '1';
+
+    if (!row.dataset.costPerBaseUnit) {
+      var attrCost = row.getAttribute('data-cost-per-base-unit');
+      if (attrCost) {
+        row.dataset.costPerBaseUnit = attrCost;
+      }
+    }
+
+    if (row.dataset.recipeMetaReady === '1' || row.dataset.costPerBaseUnit) {
+      try { updateRowCost(itemSelect, null); } catch (_) {}
+      return;
+    }
+
+    if (itemSelect.dataset.recipeFetching === '1') {
+      return;
+    }
+
+    handleItemChange(itemSelect, itemSelect.value, { bootstrap: true });
+  }
+
+  function handleItemChange(itemSelect, val, options) {
+    options = options || {};
     console.log('🔄 Handling item change for:', itemSelect.id, 'value:', val);
-    
+
     // Find unit fields for this row - the formset uses patterns like id_items-0-item, id_items-0-unit, etc.
     var baseId = itemSelect.id.replace('-item', '');
     var unitHidden = document.getElementById(baseId + '-unit');
@@ -538,7 +569,15 @@
         return { id: inp.id, name: inp.name, type: inp.type };
       }));
     }
-    
+
+    if (options.bootstrap && row && row.dataset.recipeMetaReady === '1') {
+      try { updateRowCost(itemSelect, null); } catch (_) {}
+      if (window.updateRecipeCosts) {
+        window.updateRecipeCosts();
+      }
+      return;
+    }
+
     // If no item selected, clear unit fields
     if (!val) {
       if (unitHidden) {
@@ -549,11 +588,12 @@
         unitDisplay.value = '';
         console.log('✅ Cleared unit display field');
       }
-      var clearRow = itemSelect.closest('tr');
-      if (clearRow) {
-        clearRow.dataset.category = '';
-        clearRow.dataset.subcategory = '';
-        clearRow.dataset.itemName = '';
+      if (row) {
+        row.dataset.category = '';
+        row.dataset.subcategory = '';
+        row.dataset.itemName = '';
+        delete row.dataset.costPerBaseUnit;
+        delete row.dataset.recipeMetaReady;
       }
       updateRowCost(itemSelect, null);
       if (window.updateRecipeCosts) {
@@ -561,11 +601,17 @@
       }
       return;
     }
-    
+
+    if (itemSelect.dataset.recipeFetching === '1') {
+      console.log('⏳ Skipping duplicate fetch for', itemSelect.id);
+      return;
+    }
+
     // Fetch item metadata using the item's primary key
     console.log('🌐 Fetching item meta for ID:', val);
+    itemSelect.dataset.recipeFetching = '1';
     fetch('/items/meta/' + val + '/')
-      .then(function(r) { 
+      .then(function(r) {
         console.log('📡 Item meta fetch status:', r.status);
         if (!r.ok) {
           throw new Error('Failed to fetch item meta: ' + r.status);
@@ -586,12 +632,12 @@
           }
           // Cache cost per base unit on the row for quick recompute
           try {
-            var r = itemSelect.closest('tr');
-            if (r) {
-              r.dataset.costPerBaseUnit = String(data.cost_per_base_unit || 0);
-              r.dataset.category = (data.category || '').trim();
-              r.dataset.subcategory = (data.subcategory || '').trim();
-              r.dataset.itemName = (data.name || '').trim();
+            if (row) {
+              row.dataset.costPerBaseUnit = String(data.cost_per_base_unit || 0);
+              row.dataset.category = (data.category || '').trim();
+              row.dataset.subcategory = (data.subcategory || '').trim();
+              row.dataset.itemName = (data.name || '').trim();
+              row.dataset.recipeMetaReady = '1';
             }
           } catch (_) {}
 
@@ -607,6 +653,9 @@
       })
       .catch(function(err) {
         console.error('❌ Failed to fetch item meta:', err);
+      })
+      .finally(function() {
+        delete itemSelect.dataset.recipeFetching;
       });
   }
   
@@ -695,6 +744,29 @@
       var tbody = table.querySelector('tbody');
       if (!tbody) {
         return;
+      }
+
+      var activeElement = document.activeElement;
+      var shouldRestoreFocus = Boolean(activeElement && table.contains(activeElement));
+      var selectionStart = null;
+      var selectionEnd = null;
+      var selectionDirection = null;
+      var hasSelection = false;
+      if (shouldRestoreFocus) {
+        try {
+          var start = activeElement.selectionStart;
+          var end = activeElement.selectionEnd;
+          if (typeof start === 'number' && typeof end === 'number') {
+            selectionStart = start;
+            selectionEnd = end;
+            selectionDirection = activeElement.selectionDirection || null;
+            hasSelection = true;
+          }
+        } catch (_) {
+          selectionStart = null;
+          selectionEnd = null;
+          selectionDirection = null;
+        }
       }
 
       var hiddenTemplate = table.querySelector('#items-empty-row');
@@ -842,6 +914,26 @@
         suggestedEl.textContent = Number.isFinite(suggested)
           ? suggested.toFixed(2)
           : totalCost.toFixed(2);
+      }
+
+      if (shouldRestoreFocus && activeElement) {
+        var isConnected = typeof activeElement.isConnected === 'boolean'
+          ? activeElement.isConnected
+          : document.contains(activeElement);
+        if (isConnected) {
+          if (document.activeElement !== activeElement) {
+            try { activeElement.focus({ preventScroll: true }); } catch (_) {}
+          }
+          if (hasSelection && typeof activeElement.setSelectionRange === 'function') {
+            try {
+              if (selectionDirection) {
+                activeElement.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
+              } else {
+                activeElement.setSelectionRange(selectionStart, selectionEnd);
+              }
+            } catch (_) {}
+          }
+        }
       }
 
       table.dataset.recipeGroupingApplied = groups.length ? '1' : '0';

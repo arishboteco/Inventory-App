@@ -146,6 +146,35 @@
     return entry.html;
   }
 
+  function triggerHtmxEvents(config, fallbackDetail) {
+    if (!config) return;
+    const entries = Array.isArray(config)
+      ? config
+      : Array.isArray(config.events)
+        ? config.events
+        : [config];
+    entries.forEach((entry) => {
+      if (!entry) return;
+      const name = entry.event || entry.name;
+      if (!name) return;
+      const target = entry.target
+        ? document.querySelector(entry.target)
+        : document.body;
+      if (!target) return;
+      let detail;
+      if (entry.detail !== undefined) detail = entry.detail;
+      else if (fallbackDetail !== undefined) detail = fallbackDetail;
+      else detail = null;
+      if (window.htmx && typeof window.htmx.trigger === "function") {
+        window.htmx.trigger(target, name, detail);
+      } else {
+        target.dispatchEvent(
+          new CustomEvent(name, { detail, bubbles: true }),
+        );
+      }
+    });
+  }
+
   // Prefetch helper
   function prefetch(url) {
     if (!url) return;
@@ -189,6 +218,9 @@
     root.classList.add("hidden");
     root.removeAttribute("aria-labelledby");
     content.innerHTML = "";
+    try {
+      root.dispatchEvent(new CustomEvent("modal:close", { bubbles: true }));
+    } catch (_) {}
     if (lastFocused && typeof lastFocused.focus === "function") {
       lastFocused.focus();
       lastFocused = null;
@@ -579,10 +611,46 @@
             if (shouldToast && window.notifications)
               window.notifications.showToast(toastMsg, toastType);
             closeModal();
-            // Success navigation: prefer explicit redirect if provided; otherwise reload
+            try {
+              document.body.dispatchEvent(
+                new CustomEvent('modal:success', { detail: data, bubbles: true }),
+              );
+            } catch (_) {}
+            // Success navigation: prefer explicit redirect if provided; otherwise
+            // defer to flags returned by the server response.
             if (data && data.redirect) {
               try { window.location.href = data.redirect; return; } catch(_) {}
             }
+            const reloadInstruction = data ? data.reload : undefined;
+            const closeOnly = Boolean(data && data.close_only);
+            const fallbackDetail = (data && data.recipe) || data;
+            if (reloadInstruction && typeof reloadInstruction === 'object') {
+              const reloadUrl = reloadInstruction.url;
+              const reloadTarget = reloadInstruction.target;
+              if (reloadUrl && reloadTarget && window.htmx && window.htmx.ajax) {
+                window.htmx.ajax('GET', reloadUrl, { target: reloadTarget });
+                return;
+              }
+              if (reloadUrl) {
+                window.location.href = reloadUrl;
+                return;
+              }
+            }
+            if (typeof reloadInstruction === 'string') {
+              window.location.href = reloadInstruction;
+              return;
+            }
+            if (reloadInstruction === true) {
+              window.location.reload();
+              return;
+            }
+            if (closeOnly || reloadInstruction === false) {
+              triggerHtmxEvents(data && data.htmx, fallbackDetail);
+              triggerHtmxEvents(data && data.events, fallbackDetail);
+              triggerHtmxEvents(data && data.trigger, fallbackDetail);
+              return;
+            }
+            // Legacy fallback for endpoints that have not been updated yet.
             window.location.reload();
           } else {
             // Show inline error inside the modal form for better visibility

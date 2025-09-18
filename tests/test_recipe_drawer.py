@@ -1,6 +1,9 @@
-"""Tests for the recipe drawer create/edit partial views."""
+"""Tests for the recipe drawer partial views."""
+
+from decimal import Decimal
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from inventory.models import Recipe, RecipeItem
@@ -40,7 +43,10 @@ def test_recipe_create_partial_invalid_ajax_returns_json(client):
     assert payload["message"]
     assert "<" not in payload["message"]
     assert payload["errors"]["form"]["name"][0] == "This field is required."
-    assert payload["errors"]["formset"][0]["errors"]["item"][0] == "This field is required."
+    assert (
+        payload["errors"]["formset"][0]["errors"]["item"][0]
+        == "This field is required."
+    )
 
 
 @pytest.mark.django_db
@@ -199,3 +205,57 @@ def test_recipe_create_partial_success_returns_close_only_payload(client, item_f
     assert Recipe.objects.filter(name="Test Bread").exists()
     assert payload.get("htmx", {}).get("event") == "recipes:refresh"
     assert payload.get("htmx", {}).get("detail", {}).get("action") == "created"
+
+
+@pytest.mark.django_db
+def test_recipe_view_partial_renders_table_and_totals(client, item_factory):
+    item = item_factory(name="Flour", initial_purchase_price=Decimal("6.00"))
+    recipe = Recipe.objects.create(
+        name="Bread", description="Classic loaf", is_active=True
+    )
+    RecipeItem.objects.create(
+        recipe=recipe,
+        item=item,
+        quantity=Decimal("2"),
+        unit="kg",
+        loss_pct=Decimal("0"),
+    )
+
+    resp = client.get(reverse("recipe_view_partial", args=[recipe.pk]))
+
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    header = soup.find("h3")
+    assert header and recipe.name in header.text
+    plating_header = soup.select_one("#items-table thead th")
+    assert plating_header and "Plating" in plating_header.text
+    first_row = soup.select_one("#items-table tbody tr")
+    assert first_row and "Flour" in first_row.get_text()
+    zero_notice = soup.select_one("#recipe-zero-cost-notice")
+    assert zero_notice is not None
+    assert "hidden" in zero_notice.get("class", [])
+
+
+@pytest.mark.django_db
+def test_recipe_view_partial_highlights_zero_cost_items(client, item_factory):
+    item = item_factory(
+        name="Free Garnish",
+        last_purchase_price=Decimal("0"),
+        initial_purchase_price=Decimal("0"),
+    )
+    recipe = Recipe.objects.create(name="Sample Dish", is_active=True)
+    RecipeItem.objects.create(
+        recipe=recipe,
+        item=item,
+        quantity=Decimal("1"),
+        unit="pc",
+        loss_pct=Decimal("0"),
+    )
+
+    resp = client.get(reverse("recipe_view_partial", args=[recipe.pk]))
+
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content, "html.parser")
+    zero_notice = soup.select_one("#recipe-zero-cost-notice")
+    assert zero_notice is not None
+    assert "hidden" not in zero_notice.get("class", [])

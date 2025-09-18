@@ -1,11 +1,25 @@
-<div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
-  {% include "components/form_field.html" with field=form.name %}
-  {% include "components/form_field.html" with field=form.type %}
-  {% include "components/form_field.html" with field=form.description %}
-  {% include "components/form_field.html" with field=form.is_active %}
-</div>
-<div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-  {% include "components/form_field.html" with field=form.default_yield_qty %}
-  {% include "components/form_field.html" with field=form.default_yield_unit %}
-  {% include "components/form_field.html" with field=form.plating_notes container_class="sm:col-span-2" %}
+{% load form_tags %}
+<div class="grid gap-4 md:grid-cols-3">
+  {% include "components/form_field.html" with field=form.name container_class="md:col-span-2" help_text_class="text-xs text-gray-500 leading-snug" %}
+  {% include "components/form_field.html" with field=form.type help_text_class="text-xs text-gray-500 leading-snug" %}
+  {% include "components/form_field.html" with field=form.default_yield_qty help_text_class="text-xs text-gray-500 leading-snug" %}
+  {% include "components/form_field.html" with field=form.default_yield_unit help_text_class="text-xs text-gray-500 leading-snug" %}
+  <div class="md:col-span-1 md:col-start-3 flex flex-col gap-1 pt-2">
+    <label for="{{ form.is_active.id_for_label }}" class="inline-flex items-center gap-2 text-bodyText text-sm font-medium">
+      {{ form.is_active|add_class:"h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" }}
+      <span class="leading-none">Active</span>
+    </label>
+    {% if form.is_active.help_text %}
+      <p class="text-xs text-gray-500 leading-snug">{{ form.is_active.help_text }}</p>
+    {% endif %}
+    {% if form.is_active.errors %}
+      <ul class="text-xs text-danger list-disc pl-5 leading-snug">
+        {% for error in form.is_active.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+  {% include "components/form_field.html" with field=form.description container_class="md:col-span-3" help_text_class="text-xs text-gray-500 leading-snug" %}
+  {% include "components/form_field.html" with field=form.plating_notes container_class="md:col-span-3" help_text_class="text-xs text-gray-500 leading-snug" %}
 </div>

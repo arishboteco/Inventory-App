@@ -1,0 +1,105 @@
+{% load icon_tags %}
+<div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-xl">
+  <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
+    <h3 class="text-base font-semibold">{{ recipe.name }}</h3>
+    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+  </div>
+  <div class="p-4 space-y-6">
+    <section class="grid gap-4 md:grid-cols-3 text-sm">
+      <div class="md:col-span-2 space-y-1">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Description</h4>
+        <p class="text-bodyText leading-snug">{{ recipe.description|default:"No description provided." }}</p>
+      </div>
+      <div class="space-y-1">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Type</h4>
+        <p class="text-bodyText leading-snug">{{ recipe.type|default:"—" }}</p>
+      </div>
+      <div class="space-y-1">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Default Yield</h4>
+        <p class="text-bodyText leading-snug">
+          {% if recipe.default_yield_qty %}{{ recipe.default_yield_qty|floatformat:-2 }}{% else %}—{% endif %}
+          {% if recipe.default_yield_unit %}<span class="uppercase">{{ recipe.default_yield_unit }}</span>{% endif %}
+        </p>
+      </div>
+      <div class="space-y-1">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</h4>
+        {% if recipe.is_active %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Active</span>
+        {% else %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Inactive</span>
+        {% endif %}
+      </div>
+      <div class="md:col-span-3 space-y-1">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Plating Notes</h4>
+        <p class="text-bodyText leading-snug">{{ recipe.plating_notes|default:"No plating notes yet." }}</p>
+      </div>
+    </section>
+
+    <section class="space-y-3">
+      <h4 class="text-sm font-semibold">Ingredients</h4>
+      <div class="table-scroll bg-surface border border-border rounded-2xl shadow-sm" data-table-container>
+        <table id="items-table" class="min-w-full w-full table-auto text-label">
+          <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+            <tr>
+              <th scope="col" class="w-16">Plating</th>
+              <th scope="col">Item</th>
+              <th scope="col">Qty</th>
+              <th scope="col">Unit</th>
+              <th scope="col">Loss %</th>
+              <th scope="col">Cost</th>
+              <th scope="col" class="w-8"></th>
+            </tr>
+          </thead>
+          <tbody class="bg-surface divide-y divide-border">
+            {% for item in items %}
+            <tr class="form-row" data-recipe-row="true" data-category="{{ item.category }}" data-subcategory="{{ item.subcategory }}" data-cost-per-base-unit="{{ item.cost_per_base_unit_str }}" data-quantity="{{ item.quantity_str }}" data-has-item="{% if item.has_item %}1{% else %}0{% endif %}" {% if item.has_zero_price %}data-has-zero-price="1"{% endif %}>
+              <td class="px-3 py-2 align-middle">
+                <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400">
+                  {% icon 'photo' 'w-5 h-5' %}
+                </div>
+              </td>
+              <td class="px-3 py-2 align-top">
+                <div class="font-medium text-bodyText">{{ item.name }}</div>
+                <div class="text-xs text-gray-500">{{ item.category }}</div>
+              </td>
+              <td class="px-3 py-2 align-middle">{{ item.quantity|floatformat:-2 }}</td>
+              <td class="px-3 py-2 align-middle">{{ item.unit|default:"—" }}</td>
+              <td class="px-3 py-2 align-middle">{{ item.loss_pct|floatformat:-2 }}</td>
+              <td class="px-3 py-2 align-middle">
+                <div class="text-sm" data-line-cost>{{ item.line_cost_str }}</div>
+              </td>
+              <td class="px-3 py-2"></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="px-4 py-6 text-center text-gray-500">No items added yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="p-3 border border-border rounded-lg bg-surfaceSubtle space-y-2" id="recipe-cost-panel">
+      <h4 class="font-semibold text-sm">Cost Breakdown</h4>
+      <div id="cost-by-category" class="text-sm space-y-1"></div>
+      <p id="recipe-zero-cost-notice" class="text-xs text-amber-600 {% if not zero_cost %}hidden{% endif %}">Some items are missing purchase costs, so their line totals show as 0. Add a price to the item to update this summary.</p>
+      <div class="text-sm">
+        <div>Total Cost: <span id="recipe-total-cost">{{ total_cost|floatformat:2 }}</span></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(function() {
+  var tableEl = document.getElementById('items-table');
+  if (!tableEl) {
+    return;
+  }
+  tableEl.dataset.recipeGrouping = '1';
+  var rootScope = tableEl.closest('.drawer-panel') || tableEl.closest('[data-modal-root]') || document;
+  if (window.updateRecipeCosts) {
+    window.updateRecipeCosts(rootScope);
+  }
+})();
+</script>

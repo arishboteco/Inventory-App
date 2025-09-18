@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 from django.contrib import messages
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -7,9 +9,10 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..forms.recipe_forms import RecipeItemFormSet, RecipeForm
-from ..models import Recipe
+from ..forms.recipe_forms import RecipeForm, RecipeItemFormSet
+from ..models import Recipe, RecipeItem
 from ..services import list_utils, recipe_service
+from ..services.units_service import UnitsService
 
 
 def _filtered_recipes_queryset(request):
@@ -117,40 +120,24 @@ def _serialize_recipe(recipe):
     }
 
 
-class RecipesListView(TemplateView):
-    """Display all recipes with search and card grid.
+TWOPLACES = Decimal("0.01")
 
-    Template: inventory/recipes/list.html.
-    """
+
+def _to_decimal(value):
+    if isinstance(value, Decimal):
+        return value
+    if value in (None, "", False):
+        return Decimal("0")
+    try:
+        return Decimal(str(value))
+    except (ValueError, TypeError, ArithmeticError):  # pragma: no cover - defensive
+        return Decimal("0")
+
+
+class RecipesListView(TemplateView):
+    """Display all recipes with search and a refreshed table layout."""
 
     template_name = "inventory/recipes/list.html"
-    grid_template = "inventory/recipes/_recipes_cards.html"
-
-    def _get_recipes(self):
-        """Return recipes annotated with item counts and optional images."""
-
-        qs, params = _filtered_recipes_queryset(self.request)
-
-        recipes = []
-        for r in qs:
-            image = (
-                getattr(r, "image", None)
-                or getattr(r, "image_url", None)
-                or "https://via.placeholder.com/400x300?text=Recipe"
-            )
-            recipes.append(
-                {
-                    "recipe_id": r.recipe_id,
-                    "name": r.name,
-                    "image": image,
-                    "item_count": r.item_count,
-                    "component_count": r.item_count,
-                    "category": getattr(r, "type", "") or "",
-                    "default_yield_unit": getattr(r, "default_yield_unit", "") or "",
-                    "is_active": r.is_active,
-                }
-            )
-        return recipes, params
 
     def _render_table_partial(self):
         """Render the recipes table once so the list page has initial HTML."""
@@ -165,34 +152,26 @@ class RecipesListView(TemplateView):
         )
         return table_html, table_context
 
-    def get(self, request, *args, **kwargs):
-        recipes, params = self._get_recipes()
-        if request.headers.get("HX-Request"):
-            return render(request, self.grid_template, {"recipes": recipes})
-
+    def _build_page_context(self, form):
         table_html, table_ctx = self._render_table_partial()
-        grid_html = render_to_string(
-            self.grid_template, {"recipes": recipes}, request=request
-        )
         ctx = {
-            "recipes_grid": grid_html,
             "recipes_table": table_html,
-            "recipe_count": params.get("recipe_count", len(recipes)),
-            "form": RecipeForm(),
+            "form": form,
             "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Recipes",
         }
-        ctx.update(params)
-        ctx.update(
-            {
-                "page_size": table_ctx.get("page_size"),
-                "sort": table_ctx.get("sort"),
-                "direction": table_ctx.get("direction"),
-                "querystring": table_ctx.get("querystring"),
-            }
-        )
-        return render(request, self.template_name, ctx)
+        ctx.update(table_ctx)
+        if "recipe_count" not in ctx:
+            page_obj = table_ctx.get("page_obj")
+            ctx["recipe_count"] = (
+                page_obj.paginator.count if page_obj and page_obj.paginator else 0
+            )
+        return ctx
+
+    def get(self, request, *args, **kwargs):
+        context = self._build_page_context(RecipeForm())
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         form = RecipeForm(request.POST)
@@ -200,31 +179,8 @@ class RecipesListView(TemplateView):
             recipe = form.save()
             messages.success(request, "Recipe created", extra_tags="toast")
             return redirect("recipe_detail", pk=recipe.pk)
-
-        recipes, params = self._get_recipes()
-        table_html, table_ctx = self._render_table_partial()
-        grid_html = render_to_string(
-            self.grid_template, {"recipes": recipes}, request=request
-        )
-        ctx = {
-            "recipes_grid": grid_html,
-            "recipes_table": table_html,
-            "recipe_count": params.get("recipe_count", len(recipes)),
-            "form": form,
-            "list_url": reverse("root"),
-            "list_title": "Dashboard",
-            "current_title": "Recipes",
-        }
-        ctx.update(params)
-        ctx.update(
-            {
-                "page_size": table_ctx.get("page_size"),
-                "sort": table_ctx.get("sort"),
-                "direction": table_ctx.get("direction"),
-                "querystring": table_ctx.get("querystring"),
-            }
-        )
-        return render(request, self.template_name, ctx)
+        context = self._build_page_context(form)
+        return render(request, self.template_name, context)
 
 
 class RecipesTableView(TemplateView):
@@ -310,9 +266,7 @@ def recipe_detail(request, pk: int):
     recipe = get_object_or_404(Recipe, pk=pk)
     if request.method == "POST":
         form = RecipeForm(request.POST, instance=recipe)
-        formset = RecipeItemFormSet(
-            request.POST, instance=recipe, prefix="items"
-        )
+        formset = RecipeItemFormSet(request.POST, instance=recipe, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
             items = []
@@ -411,7 +365,9 @@ class RecipeCreatePartialView(View):
                         },
                     }
                 )
-            return JsonResponse({"ok": False, "message": msg or "Error creating recipe"}, status=400)
+            return JsonResponse(
+                {"ok": False, "message": msg or "Error creating recipe"}, status=400
+            )
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(_build_form_error_payload(form, formset), status=400)
         return render(
@@ -440,9 +396,7 @@ class RecipeEditPartialView(View):
     def post(self, request, pk: int):
         recipe = get_object_or_404(Recipe, pk=pk)
         form = RecipeForm(request.POST, instance=recipe)
-        formset = RecipeItemFormSet(
-            request.POST, instance=recipe, prefix="items"
-        )
+        formset = RecipeItemFormSet(request.POST, instance=recipe, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
             items = []
@@ -483,7 +437,9 @@ class RecipeEditPartialView(View):
                         },
                     }
                 )
-            return JsonResponse({"ok": False, "message": msg or "Error updating recipe"}, status=400)
+            return JsonResponse(
+                {"ok": False, "message": msg or "Error updating recipe"}, status=400
+            )
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(_build_form_error_payload(form, formset), status=400)
         return render(
@@ -491,4 +447,113 @@ class RecipeEditPartialView(View):
             self.template_name,
             {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
             status=400,
+        )
+
+
+class RecipeViewPartialView(View):
+    """Drawer partial for viewing a recipe with grouped items."""
+
+    template_name = "inventory/recipes/_view_partial.html"
+
+    def get(self, request, pk: int):
+        recipe = get_object_or_404(
+            Recipe.objects.prefetch_related(
+                Prefetch(
+                    "items",
+                    queryset=RecipeItem.objects.select_related(
+                        "item__category"
+                    ).order_by("sort_order", "id"),
+                )
+            ),
+            pk=pk,
+        )
+
+        items = []
+        total_cost = Decimal("0.00")
+        zero_cost = False
+
+        for row in recipe.items.all():
+            item = getattr(row, "item", None)
+            qty = _to_decimal(getattr(row, "quantity", None))
+            loss_pct = _to_decimal(getattr(row, "loss_pct", None))
+            unit_label = getattr(row, "unit", "") or ""
+            category = ""
+            subcategory = ""
+            base_unit_display = ""
+
+            conversion = Decimal("1")
+            last_price = Decimal("0")
+
+            if item:
+                category_obj = getattr(item, "category", None)
+                category = getattr(category_obj, "category", "") or ""
+                subcategory = getattr(category_obj, "sub_category", "") or ""
+                unit_id = getattr(item, "unit_id", None)
+                if unit_id:
+                    try:
+                        unit_info = UnitsService.get_unit_info(unit_id) or {}
+                    except Exception:  # pragma: no cover - defensive
+                        unit_info = {}
+                    conversion = _to_decimal(unit_info.get("conversion_factor") or 1)
+                    if not conversion:
+                        conversion = Decimal("1")
+                    base_unit_display = (
+                        UnitsService.get_base_unit_display(unit_id) or ""
+                    )
+                last_price = _to_decimal(getattr(item, "last_purchase_price", None))
+                if not last_price:
+                    last_price = _to_decimal(
+                        getattr(item, "initial_purchase_price", None)
+                    )
+
+            if not unit_label:
+                unit_label = base_unit_display
+
+            cost_per_base = Decimal("0")
+            if conversion:
+                try:
+                    cost_per_base = last_price / conversion
+                except ArithmeticError:  # pragma: no cover - defensive
+                    cost_per_base = Decimal("0")
+
+            cost_per_base = (
+                cost_per_base.quantize(TWOPLACES) if cost_per_base else Decimal("0.00")
+            )
+            line_cost = (
+                (cost_per_base * qty).quantize(TWOPLACES) if qty else Decimal("0.00")
+            )
+            has_zero_price = bool(qty and item and cost_per_base == Decimal("0.00"))
+            zero_cost = zero_cost or has_zero_price
+            total_cost += line_cost
+
+            items.append(
+                {
+                    "id": row.pk,
+                    "name": getattr(item, "name", "Unknown item"),
+                    "quantity": qty,
+                    "quantity_str": format(qty.normalize(), "f") if qty else "0",
+                    "unit": unit_label,
+                    "loss_pct": loss_pct,
+                    "category": category or "Uncategorized",
+                    "subcategory": subcategory,
+                    "cost_per_base_unit": cost_per_base,
+                    "cost_per_base_unit_str": format(cost_per_base, ".2f"),
+                    "line_cost": line_cost,
+                    "line_cost_str": format(line_cost, ".2f"),
+                    "has_item": bool(item),
+                    "has_zero_price": has_zero_price,
+                }
+            )
+
+        total_cost = total_cost.quantize(TWOPLACES) if total_cost else Decimal("0.00")
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "recipe": recipe,
+                "items": items,
+                "total_cost": total_cost,
+                "zero_cost": zero_cost,
+            },
         )

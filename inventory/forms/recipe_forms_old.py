@@ -2,7 +2,7 @@ import json
 
 from django import forms
 
-from ..models import Item, Recipe, RecipeItem
+from ..models import Item, Recipe
 from ..services.form_service import FormService
 from .base import INPUT_CLASS, StyledFormMixin
 

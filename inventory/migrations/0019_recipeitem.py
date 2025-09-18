@@ -1,9 +1,11 @@
 # Custom migration for RecipeItem
-import django.db.models.deletion
-import inventory.models.fields
 from decimal import Decimal
+
+import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+
+import inventory.models.fields
 
 
 class Migration(migrations.Migration):

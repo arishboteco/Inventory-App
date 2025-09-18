@@ -716,7 +716,7 @@
           return;
         }
         var deleteField = row.querySelector('input[id$="-DELETE"]');
-        if (deleteField && (deleteField.checked || deleteField.value === 'on')) {
+        if (deleteField && deleteField.checked) {
           return;
         }
 

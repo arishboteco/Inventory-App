@@ -96,6 +96,27 @@ def _build_form_error_payload(form, formset):
     }
 
 
+def _serialize_recipe(recipe):
+    """Return a lightweight payload describing a recipe."""
+
+    if recipe is None:
+        return {}
+    item_count = getattr(recipe, "item_count", None)
+    if item_count is None:
+        item_count = recipe.items.count()
+    qty = getattr(recipe, "default_yield_qty", None)
+    return {
+        "id": recipe.pk,
+        "name": recipe.name,
+        "url": reverse("recipe_detail", kwargs={"pk": recipe.pk}),
+        "is_active": recipe.is_active,
+        "type": recipe.type or "",
+        "default_yield_qty": float(qty) if qty is not None else None,
+        "default_yield_unit": recipe.default_yield_unit or "",
+        "item_count": item_count,
+    }
+
+
 class RecipesListView(TemplateView):
     """Display all recipes with search and card grid.
 
@@ -369,13 +390,25 @@ class RecipeCreatePartialView(View):
                 )
             ok, msg, rid = recipe_service.create_recipe(data, items)
             if ok and rid:
+                recipe = Recipe.objects.filter(pk=rid).first()
+                recipe_payload = _serialize_recipe(recipe)
                 return JsonResponse(
                     {
                         "ok": True,
                         "id": rid,
                         "message": "Recipe created",
-                        "redirect": reverse("recipe_detail", kwargs={"pk": rid}),
                         "toast": True,
+                        "toast_message": "Recipe created",
+                        "toast_type": "success",
+                        "close_only": True,
+                        "recipe": recipe_payload,
+                        "htmx": {
+                            "event": "recipes:refresh",
+                            "detail": {
+                                "recipe": recipe_payload,
+                                "action": "created",
+                            },
+                        },
                     }
                 )
             return JsonResponse({"ok": False, "message": msg or "Error creating recipe"}, status=400)
@@ -429,13 +462,25 @@ class RecipeEditPartialView(View):
                 )
             ok, msg = recipe_service.update_recipe(recipe.pk, data, items)
             if ok:
+                recipe.refresh_from_db()
+                recipe_payload = _serialize_recipe(recipe)
                 return JsonResponse(
                     {
                         "ok": True,
                         "id": recipe.pk,
                         "message": "Recipe updated",
-                        "redirect": reverse("recipe_detail", kwargs={"pk": recipe.pk}),
                         "toast": True,
+                        "toast_message": "Recipe updated",
+                        "toast_type": "success",
+                        "close_only": True,
+                        "recipe": recipe_payload,
+                        "htmx": {
+                            "event": "recipes:refresh",
+                            "detail": {
+                                "recipe": recipe_payload,
+                                "action": "updated",
+                            },
+                        },
                     }
                 )
             return JsonResponse({"ok": False, "message": msg or "Error updating recipe"}, status=400)

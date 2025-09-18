@@ -24,7 +24,6 @@
       </div>
     </div>
   {% else %}
-    {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
     {% include "core/_kpi_cards.html" with items=item_count low_stock=low_stock suppliers=supplier_count pending_indents=pending_indents %}
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-8">

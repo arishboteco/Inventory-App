@@ -73,29 +73,23 @@
 
         <!-- Page Content -->
         <main class="flex-1 p-6 bg-surfaceSubtle">
-        {% block breadcrumbs %}
-          {% if show_breadcrumbs|default:True %}
-            {% if list_title or current_title %}
-              {% include "components/breadcrumb.html" with list_url=list_url list_title=list_title current_title=current_title %}
-            {% endif %}
+          {% block breadcrumbs %}{% endblock %}
+          {% if messages %}
+            {% include "components/alert.html" %}
+            <script>
+              document.addEventListener('DOMContentLoaded', function () {
+                if (window.notificationManager) {
+                  {% for message in messages %}
+                    {% if 'toast' in message.tags %}
+                      window.notificationManager.showToast("{{ message|escapejs }}", "{{ message.level_tag }}");
+                    {% endif %}
+                  {% endfor %}
+                }
+              });
+            </script>
           {% endif %}
-        {% endblock %}
-        {% if messages %}
-          {% include "components/alert.html" %}
-          <script>
-            document.addEventListener('DOMContentLoaded', function () {
-              if (window.notificationManager) {
-                {% for message in messages %}
-                  {% if 'toast' in message.tags %}
-                    window.notificationManager.showToast("{{ message|escapejs }}", "{{ message.level_tag }}");
-                  {% endif %}
-                {% endfor %}
-              }
-            });
-          </script>
-        {% endif %}
-        {% block content %}{% endblock %}
-      </main>
+          {% block content %}{% endblock %}
+        </main>
 
       <!-- Modal Root -->
       <div

@@ -109,6 +109,7 @@
     existingRows.forEach(function(row) {
       bindRowEvents(row);
     });
+    try { debugFormsetState(table, 'after-init-existing-binds'); } catch(e) {}
     
     // Find and setup add button
     var addBtn = (root && root.querySelector) ? root.querySelector('#add-row') : null;
@@ -171,6 +172,52 @@
     function finalizeInit() {
       table.dataset.recipeInitialized = '1';
       console.log('✅ Recipe components table initialized for', tableId);
+      try { debugFormsetState(table, 'finalize-init'); } catch(e) {}
+
+      // Attach submit guard: require at least one positive quantity
+      try {
+        var formEl = (root && root.querySelector) ? root.querySelector('form[data-modal-form]') : document.querySelector('form[data-modal-form]');
+        if (formEl && !formEl.dataset.recipeSubmitGuardAttached) {
+          formEl.dataset.recipeSubmitGuardAttached = '1';
+          formEl.addEventListener('submit', function(e) {
+            var rows = table.querySelectorAll('tr.form-row:not(.hidden)');
+            var hasPositive = false;
+            var firstQtyToFocus = null;
+            var rowsSummary = [];
+            rows.forEach(function(r){
+              var itemSel = r.querySelector('select[id$="-item"]');
+              var qtyInp = r.querySelector('input[id$="-quantity"]');
+              var qty = qtyInp ? parseFloat(qtyInp.value || '0') : 0;
+              if (itemSel && itemSel.value && qty > 0) hasPositive = true;
+              if (!firstQtyToFocus && itemSel && itemSel.value && qtyInp && (!qty || qty <= 0)) firstQtyToFocus = qtyInp;
+              rowsSummary.push({
+                rowIndex: r.getAttribute('data-form-index'),
+                item: itemSel ? itemSel.value : '',
+                quantity: qtyInp ? qtyInp.value : '',
+                quantityNum: qty,
+                delete: (r.querySelector('input[id$="-DELETE"]')||{}).checked || false
+              });
+            });
+            try { console.group('🧾 Submit Check: Recipe Items'); } catch(_) {}
+            try {
+              var rootScope = table.closest('.drawer-panel') || table.closest('[data-modal-root]') || document;
+              var tf = rootScope.querySelector('#id_items-TOTAL_FORMS');
+              var inf = rootScope.querySelector('#id_items-INITIAL_FORMS');
+              console.log('Mgmt counts → TOTAL_FORMS:', tf?tf.value:'n/a', 'INITIAL_FORMS:', inf?inf.value:'n/a');
+              console.table(rowsSummary);
+              debugFormsetState(table, 'before-submit');
+            } catch(_) {}
+            try { console.groupEnd(); } catch(_) {}
+            if (!hasPositive) {
+              e.preventDefault();
+              if (firstQtyToFocus) firstQtyToFocus.focus();
+              console.warn('🛑 Prevented submit: need at least one positive quantity');
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Submit guard attach failed:', err);
+      }
     }
 
     if (addBtn) {
@@ -247,10 +294,11 @@
       }
     });
     
-    // Clear the ID and make visible
+    // Clear the ID, stamp index, and make visible
     newRow.id = '';
+    try { newRow.setAttribute('data-form-index', String(index)); } catch (e) {}
     newRow.classList.remove('hidden');
-  tbody.appendChild(newRow);
+    tbody.appendChild(newRow);
     
     console.log('🔧 Initializing new row...');
     
@@ -337,6 +385,38 @@
       }
     });
   }
+
+  // Collect and print current formset state for debugging
+  function debugFormsetState(table, label) {
+    try {
+      var root = table.closest('.drawer-panel') || table.closest('[data-modal-root]') || document;
+      var totalForms = root.querySelector('#id_items-TOTAL_FORMS');
+      var initialForms = root.querySelector('#id_items-INITIAL_FORMS');
+      var rows = Array.from(table.querySelectorAll('tr.form-row:not(.hidden)'));
+      var dump = rows.map(function(r){
+        var item = r.querySelector('select[id$="-item"]');
+        var qty = r.querySelector('input[id$="-quantity"]');
+        var unit = r.querySelector('input[id$="-unit"]');
+        var unitDisplay = r.querySelector('input[id$="-unit_display"]');
+        var del = r.querySelector('input[id$="-DELETE"]');
+        return {
+          rowIndex: r.getAttribute('data-form-index'),
+          itemId: item ? item.value : '',
+          itemText: (item && document.getElementById(item.id + '_text')) ? document.getElementById(item.id + '_text').value : '',
+          quantity: qty ? qty.value : '',
+          unit: unit ? unit.value : '',
+          unitDisplay: unitDisplay ? unitDisplay.value : '',
+          markedDelete: del ? (del.checked || del.value === 'on' || del.value === '1') : false
+        };
+      });
+      console.group('🧭 Recipe Formset Debug [' + (label||'') + ']');
+      console.log('TOTAL_FORMS:', totalForms ? totalForms.value : 'n/a', 'INITIAL_FORMS:', initialForms ? initialForms.value : 'n/a');
+      console.table(dump);
+      console.groupEnd();
+    } catch (e) {
+      console.warn('debugFormsetState error:', e);
+    }
+  }
   
   function bindRowEvents(row) {
     console.log('🔗 Binding events for row:', row);
@@ -393,6 +473,20 @@
       console.error('❌ Item select not found in row');
     }
     
+    // Bind quantity input change to debug values
+    var qtyInput = row.querySelector('input[id$="-quantity"]');
+    if (qtyInput) {
+      ['input','change','blur'].forEach(function(ev){
+        qtyInput.addEventListener(ev, function(){
+          console.log('🧮 Quantity', ev, '→', qtyInput.value, 'for', qtyInput.id);
+          var itemSel = row.querySelector('select[id$="-item"]');
+          if (itemSel) {
+            try { updateRowCost(itemSel, null); } catch(_) {}
+          }
+        });
+      });
+    }
+
     // Also bind to remove button
     var removeBtn = row.querySelector('.remove-row');
     if (removeBtn) {
@@ -459,18 +553,21 @@
       .then(function(data) {
         console.log('📦 Item data received:', data);
         if (data && data.ok) {
-          // Update unit fields - the hidden field stores the purchase unit, display shows the base unit
+          // Update unit fields to BASE unit for recipes
           if (unitHidden) {
-            unitHidden.value = data.unit || '';
-            console.log('✅ Set unit hidden field to:', data.unit);
+            unitHidden.value = data.base_unit || '';
+            console.log('✅ Set unit hidden (BASE) to:', data.base_unit);
           }
           if (unitDisplay) {
-            unitDisplay.value = data.base_unit || data.unit || '';
-            console.log('✅ Set unit display field to:', data.base_unit || data.unit);
+            unitDisplay.value = data.base_unit || '';
+            console.log('✅ Set unit display (BASE) to:', data.base_unit);
           }
-          
+          // Cache cost per base unit on the row for quick recompute
+          try { var r = itemSelect.closest('tr'); if (r) r.dataset.costPerBaseUnit = String(data.cost_per_base_unit || 0); } catch (_) {}
+
           // Update cost
           updateRowCost(itemSelect, data);
+          try { var table = itemSelect.closest('table'); if (table) debugFormsetState(table, 'after-item-change'); } catch(e) {}
         } else {
           console.error('❌ Invalid item data received:', data);
         }
@@ -482,28 +579,44 @@
   
   function updateRowCost(itemSelect, itemData) {
     console.log('💰 Updating row cost...');
-    
-    if (!itemData || !itemData.last_purchase_price) {
+
+    // Prefer cost per base unit from API; fall back to last_price/conversion
+    var costPerBase = null;
+    if (itemData) {
+      if (typeof itemData.cost_per_base_unit !== 'undefined') {
+        costPerBase = parseFloat(itemData.cost_per_base_unit);
+      }
+      if (!costPerBase || isNaN(costPerBase)) {
+        var conv = parseFloat(itemData.conversion_factor || '0');
+        var lastP = parseFloat(itemData.last_purchase_price || '0');
+        costPerBase = conv ? (lastP / conv) : null;
+      }
+    } else {
+      var rowCached = itemSelect.closest('tr');
+      if (rowCached && rowCached.dataset.costPerBaseUnit) {
+        costPerBase = parseFloat(rowCached.dataset.costPerBaseUnit);
+      }
+    }
+    if (!costPerBase || isNaN(costPerBase)) {
       console.log('⚠️ No cost data available');
       return;
     }
-    
+
     // Find the cost display element for this row
     var row = itemSelect.closest('tr');
     var costElement = row ? row.querySelector('[data-line-cost]') : null;
-    
+
     if (costElement) {
       // Get quantity to calculate line cost - use the same base ID pattern
       var baseId = itemSelect.id.replace('-item', '');
       var quantityInput = document.getElementById(baseId + '-quantity');
       var quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
-      
-      var unitCost = parseFloat(itemData.last_purchase_price) || 0;
-      var lineCost = quantity * unitCost;
-      
+
+      var lineCost = quantity * costPerBase;
+
       costElement.textContent = lineCost.toFixed(2);
       console.log('✅ Updated line cost to:', lineCost.toFixed(2));
-      
+
       // Trigger recipe cost recalculation if available
       if (window.updateRecipeCosts) {
         setTimeout(window.updateRecipeCosts, 100);

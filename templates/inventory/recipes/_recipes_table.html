@@ -15,7 +15,7 @@
     <caption class="sr-only">Recipes</caption>
     <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
       <tr>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="name" aria-sort="{% if sort == 'name' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="name" aria-sort="{% if sort == 'name' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
           <a data-sort-link data-sort-key="name"
              href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
              hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
@@ -31,7 +31,7 @@
             {% endif %}
           </a>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="category" aria-sort="{% if sort == 'type' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="category" aria-sort="{% if sort == 'type' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
           <a data-sort-link data-sort-key="type"
              href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
              hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=type&direction={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}"
@@ -47,7 +47,7 @@
             {% endif %}
           </a>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="yield" aria-sort="{% if sort == 'default_yield_unit' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="yield" aria-sort="{% if sort == 'default_yield_unit' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
           <a data-sort-link data-sort-key="default_yield_unit"
              href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=default_yield_unit&direction={% if sort == 'default_yield_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
              hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=default_yield_unit&direction={% if sort == 'default_yield_unit' and direction == 'asc' %}desc{% else %}asc{% endif %}"
@@ -63,7 +63,7 @@
             {% endif %}
           </a>
         </th>
-        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="active" aria-sort="{% if sort == 'is_active' %}{{ 'ascending' if direction == 'asc' else 'descending' }}{% else %}none{% endif %}">
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="active" aria-sort="{% if sort == 'is_active' %}{% if direction == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}">
           <a data-sort-link data-sort-key="is_active"
              href="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
              hx-get="{{ table_url }}?{% if querystring %}{{ querystring }}&{% endif %}sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"

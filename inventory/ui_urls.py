@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views.explore import explore, explore_export
 from .views.goods_received import GRNDetailView, GRNListView, grn_export
+from .views.guides import WorkflowGuideView
 from .views.indents import (
     IndentCreateView,
     IndentsListView,
@@ -55,6 +56,7 @@ from .views.recipes import (
     RecipeEditPartialView,
     RecipesListView,
     RecipesTableView,
+    RecipeViewPartialView,
     recipe_create,
     recipe_detail,
 )
@@ -72,7 +74,6 @@ from .views.suppliers import (
     SupplierToggleActiveView,
 )
 from .views.visualizations import visualizations
-from .views.guides import WorkflowGuideView
 
 urlpatterns = [
     path("explore/", explore, name="explore"),
@@ -221,6 +222,11 @@ urlpatterns = [
         "recipes/<int:pk>/edit/partial/",
         RecipeEditPartialView.as_view(),
         name="recipe_edit_partial",
+    ),
+    path(
+        "recipes/<int:pk>/view/partial/",
+        RecipeViewPartialView.as_view(),
+        name="recipe_view_partial",
     ),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
     path("guides/workflow/", WorkflowGuideView.as_view(), name="workflow_guide"),

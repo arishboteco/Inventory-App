@@ -12,7 +12,11 @@
   {% endif %}
   {% include "forms/feedback.html" %}
   {% if field.help_text %}
-    <p class="text-sm text-gray-500 leading-normal">{{ field.help_text }}</p>
+    {% if help_text_class %}
+      <p class="{{ help_text_class }}">{{ field.help_text }}</p>
+    {% else %}
+      <p class="text-sm text-gray-500 leading-normal">{{ field.help_text }}</p>
+    {% endif %}
   {% endif %}
   {% if field.errors %}
     <ul class="text-sm text-danger list-disc pl-5 leading-normal">

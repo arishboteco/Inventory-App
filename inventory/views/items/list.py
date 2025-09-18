@@ -20,7 +20,6 @@ from ...models.departments import Department
 from ...models.orders import PurchaseOrderItem
 from ...services import category_filters, kpis, list_utils
 from ...services.categories_service import CategoriesService
-from ...services.units_service import UnitsService
 from .constants import EXCLUDED_FIELDS
 
 logger = logging.getLogger(__name__)
@@ -487,9 +486,10 @@ class ItemSearchView(TemplateView):
 
 @require_GET
 def item_meta(request, item_id: int):
-    """Return metadata for an item: name, unit display, category, subcategory, and a suggested PO id if any.
+    """Return item metadata for predictive widgets and recipe lookups.
 
-    The PO suggestion is the most recent purchase order that includes this item.
+    Includes the base-unit label, category info, and a suggested purchase
+    order id when available.
     """
     try:
         item = (
@@ -510,9 +510,14 @@ def item_meta(request, item_id: int):
     base_unit_display = (
         UnitsService.get_base_unit_display(item.unit_id) if item.unit_id else ""
     )
-    uinfo = UnitsService.get_unit_info(item.unit_id) if item.unit_id else {"conversion_factor": 1.0}
+    uinfo = (
+        UnitsService.get_unit_info(item.unit_id)
+        if item.unit_id
+        else {"conversion_factor": 1.0}
+    )
     conv = float(uinfo.get("conversion_factor") or 1.0)
-    last_price = float(item.last_purchase_price or 0)
+    price_source = item.last_purchase_price or item.initial_purchase_price or 0
+    last_price = float(price_source or 0)
     cost_per_base = (last_price / conv) if conv else 0.0
     cat = getattr(item, "category", None)
     category = getattr(cat, "category", "")

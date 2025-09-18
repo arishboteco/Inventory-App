@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from .models import (
-    Category,
     GoodsReceivedNote,
     GRNItem,
     Indent,
@@ -13,7 +12,6 @@ from .models import (
     RecipeItem,
     SaleTransaction,
     StockTransaction,
-    SubCategory,
     Supplier,
 )
 

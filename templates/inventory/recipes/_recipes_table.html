@@ -114,6 +114,14 @@
             <div class="flex items-center gap-2">
               <button type="button"
                       class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+                      data-modal-url="{% url 'recipe_view_partial' recipe.recipe_id %}"
+                      data-modal-type="drawer"
+                      data-modal-prefetch="hover"
+                      aria-label="View {{ recipe.name }}">
+                {% icon 'eye' 'w-4 h-4' %}
+              </button>
+              <button type="button"
+                      class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
                       data-modal-url="{% url 'recipe_edit_partial' recipe.recipe_id %}"
                       data-modal-type="drawer"
                       data-modal-prefetch="hover"

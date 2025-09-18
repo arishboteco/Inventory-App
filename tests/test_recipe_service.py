@@ -3,7 +3,7 @@
 import pytest
 from django.db import OperationalError, connection
 
-from inventory.models import Item, Recipe, RecipeComponent, RecipeItem, SaleTransaction
+from inventory.models import Item, Recipe, RecipeItem, SaleTransaction
 from inventory.services.recipe_service import create_recipe, record_sale, update_recipe
 
 pytestmark = pytest.mark.django_db
@@ -81,7 +81,7 @@ def test_create_and_update_items():
     assert row.quantity == 3 and row.loss_pct == 10
 
 
-@pytest.mark.django_db 
+@pytest.mark.django_db
 def test_cycle_prevention():
     """Cycles should be rejected when creating recipes."""
     item_id = _create_item()

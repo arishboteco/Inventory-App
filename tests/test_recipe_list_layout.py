@@ -6,19 +6,21 @@ from inventory.models import Recipe
 
 
 @pytest.mark.django_db
-def test_recipe_card_handles_long_text_without_overlap(client):
+def test_recipe_list_table_renders_drawer_view_button(client):
     long_name = "Long Recipe " * 20
-    recipe = Recipe.objects.create(name=long_name)
+    recipe = Recipe.objects.create(name=long_name, is_active=True)
+
     resp = client.get(reverse("recipes_list"))
+
     assert resp.status_code == 200
     soup = BeautifulSoup(resp.content, "html.parser")
-    card = soup.find("a", href=reverse("recipe_detail", args=[recipe.pk]))
-    wrapper = card.find("div", class_="flex")
-    assert wrapper is not None
-    classes = wrapper.get("class", [])
-    assert "overflow-hidden" in classes
-    assert "gap-4" in classes
-    img = wrapper.find("img")
-    img_classes = img.get("class", [])
-    for expected in ["max-w-full", "h-auto", "object-contain"]:
-        assert expected in img_classes
+    table = soup.select_one("#recipes-table")
+    assert table is not None
+    first_cell = table.select_one("tbody tr td")
+    assert first_cell is not None
+    assert long_name.strip() in first_cell.get_text()
+    view_button = soup.select_one(
+        'button[data-modal-type="drawer"][data-modal-url*="view/partial"]'
+    )
+    assert view_button is not None
+    assert str(recipe.pk) in view_button.get("data-modal-url", "")

@@ -254,7 +254,7 @@ def _expand_requirements(
             * float(row["quantity"])
             / (1 - float(row.get("loss_pct") or 0) / 100.0)
         )
-        
+
         # For now, treat all items as direct items (no sub-recipes)
         # Sub-recipe functionality can be added later if needed
         if not row["item__is_active"]:

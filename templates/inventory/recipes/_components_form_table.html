@@ -1,8 +1,10 @@
 {% extends "components/responsive_table.html" %}
+{% load icon_tags %}
 
 {% block caption %}<caption>Recipe Items</caption>{% endblock %}
 
 {% block headers %}
+  <th scope="col" class="w-16">Plating</th>
   <th scope="col">Item</th>
   <th scope="col">Qty</th>
   <th scope="col">Unit</th>
@@ -13,40 +15,50 @@
 
 {% block rows %}
   {% for cform in formset.forms %}
-  <tr class="form-row" data-form-index="{{ forloop.counter0 }}" data-recipe-row="true">
-    <td>
+  <tr class="form-row" data-form-index="{{ forloop.counter0 }}" data-recipe-row="true" data-has-item="0" data-quantity="0" data-cost-per-base-unit="0">
+    <td class="px-3 py-2 align-middle">
+      <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400">
+        {% icon 'photo' 'w-5 h-5' %}
+      </div>
+    </td>
+    <td class="px-3 py-2">
       {% include "components/form_field_table.html" with field=cform.item %}
     </td>
-    <td>{% include "components/form_field_table.html" with field=cform.quantity %}</td>
-    <td>
+    <td class="px-3 py-2">{% include "components/form_field_table.html" with field=cform.quantity %}</td>
+    <td class="px-3 py-2">
       {{ cform.unit }}
       {% include "components/form_field_table.html" with field=cform.unit_display %}
     </td>
-    <td>{% include "components/form_field_table.html" with field=cform.loss_pct %}</td>
-    <td class="align-middle">
+    <td class="px-3 py-2">{% include "components/form_field_table.html" with field=cform.loss_pct %}</td>
+    <td class="px-3 py-2 align-middle">
       <div class="text-sm" data-line-cost>0.00</div>
     </td>
-    <td>
+    <td class="px-3 py-2">
       <div style="display: none;">{{ cform.DELETE }}</div>
       <button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Remove</button>
     </td>
   </tr>
   {% endfor %}
   {# empty form template row #}
-  <tr class="form-row hidden" id="items-empty-row" data-recipe-row="true">
-    <td>
+  <tr class="form-row hidden" id="items-empty-row" data-recipe-row="true" data-has-item="0" data-quantity="0" data-cost-per-base-unit="0">
+    <td class="px-3 py-2 align-middle">
+      <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400">
+        {% icon 'photo' 'w-5 h-5' %}
+      </div>
+    </td>
+    <td class="px-3 py-2">
       {% include "components/form_field_table.html" with field=formset.empty_form.item %}
     </td>
-    <td>{% include "components/form_field_table.html" with field=formset.empty_form.quantity %}</td>
-    <td>
+    <td class="px-3 py-2">{% include "components/form_field_table.html" with field=formset.empty_form.quantity %}</td>
+    <td class="px-3 py-2">
       {{ formset.empty_form.unit }}
       {% include "components/form_field_table.html" with field=formset.empty_form.unit_display %}
     </td>
-    <td>{% include "components/form_field_table.html" with field=formset.empty_form.loss_pct %}</td>
-    <td class="align-middle">
+    <td class="px-3 py-2">{% include "components/form_field_table.html" with field=formset.empty_form.loss_pct %}</td>
+    <td class="px-3 py-2 align-middle">
       <div class="text-sm" data-line-cost>0.00</div>
     </td>
-    <td>
+    <td class="px-3 py-2">
       <div style="display: none;">{{ formset.empty_form.DELETE }}</div>
       <button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-dangerHover focus:ring-2 focus:ring-primary">Remove</button>
     </td>
@@ -55,82 +67,20 @@
 
 {% block footer_extra %}
 <script>
-// Simple initialization call - the main logic is in recipe-components.js
 (function() {
   var tableId = '{{ table_id|default:"items-table" }}';
-  // Use the closest drawer/modal container as root scope for JS
   var tableEl = document.getElementById(tableId);
-  if (tableEl) {
-    tableEl.dataset.recipeGrouping = '1';
+  if (!tableEl) {
+    return;
   }
-  var rootScope = tableEl ? (tableEl.closest('.drawer-panel') || tableEl.closest('[data-modal-root]') || document) : document;
-  console.log('🎯 Table footer script running for table:', tableId);
-  
-  var initializeTable = function() {
-    console.log('🚀 Trying to initialize recipe items table...');
-    
-    // Check if already initialized by the main script
-    var initKey = 'recipeComponentsInitialized_' + tableId;
-    if (window[initKey]) {
-      console.log('✅ Recipe components already initialized by main script');
-      return;
-    }
-    
-    // Simple manual setup if the main function isn't working
-    var table = document.getElementById(tableId);
-    var addBtn = document.getElementById('add-row');
-    var totalForms = document.getElementById('id_items-TOTAL_FORMS');
-    var emptyRow = document.getElementById('items-empty-row');
-    
-    console.log('Elements found:', {
-      table: !!table,
-      addBtn: !!addBtn,
-      totalForms: !!totalForms,
-      emptyRow: !!emptyRow
-    });
-    
-    if (window.initRecipeComponentsTable) {
-      console.log('✅ Found initRecipeComponentsTable function');
-      window.initRecipeComponentsTable(rootScope, tableId);
-      if (window.updateRecipeCosts) {
-        window.updateRecipeCosts();
-      }
-    } else {
-      console.log('❌ initRecipeComponentsTable not available, trying manual setup');
-      
-      // Manual setup if main function not available
-      if (addBtn && table && totalForms && emptyRow && !addBtn.dataset.recipeHandlerAttached) {
-        console.log('🔧 Setting up manual event listener...');
-        addBtn.style.border = '2px solid red';
-        addBtn.dataset.recipeHandlerAttached = 'true';
-        addBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          console.log('🔥 Manual add button clicked!');
-          if (window.manualAddRow) {
-            window.manualAddRow();
-          } else {
-            alert('Manual add function not available');
-          }
-        });
-        console.log('✅ Manual event listener attached');
-      }
-      if (window.updateRecipeCosts) {
-        window.updateRecipeCosts();
-      }
-    }
-  };
-  
-  // Try immediately
-  initializeTable();
-  
-  // Single retry if not available (instead of multiple retries)
-  setTimeout(function() {
-    var initKey = 'recipeComponentsInitialized_' + tableId;
-    if (!window[initKey]) {
-      console.log('🔄 Retrying recipe initialization...');
-      initializeTable();
-    }
-  }, 500);
+  tableEl.dataset.recipeGrouping = '1';
+  var rootScope = tableEl.closest('.drawer-panel') || tableEl.closest('[data-modal-root]') || document;
+  if (window.initRecipeComponentsTable) {
+    window.initRecipeComponentsTable(rootScope, tableId);
+  }
+  if (window.updateRecipeCosts) {
+    window.updateRecipeCosts(rootScope);
+  }
 })();
 </script>
 {% endblock %}

@@ -258,7 +258,14 @@
 
     // Clone the empty row
     var newRow = emptyRow.cloneNode(true);
-    
+    try {
+      newRow.dataset.category = (newRow.dataset.category || '').trim();
+      newRow.dataset.subcategory = (newRow.dataset.subcategory || '').trim();
+      newRow.dataset.itemName = (newRow.dataset.itemName || '').trim();
+    } catch (err) {
+      console.warn('Dataset init failed for new row:', err);
+    }
+
     // Replace the prefix in all form elements
     var inputs = newRow.querySelectorAll('input, select, textarea');
     inputs.forEach(function(input) {
@@ -299,7 +306,7 @@
     try { newRow.setAttribute('data-form-index', String(index)); } catch (e) {}
     newRow.classList.remove('hidden');
     tbody.appendChild(newRow);
-    
+
     console.log('🔧 Initializing new row...');
     
     // Use setTimeout to ensure DOM is updated before initializing dropdowns
@@ -364,9 +371,12 @@
         bindRowEvents(newRow);
         // Run a dedupe pass across the table to ensure no duplicate _text inputs exist
         try { dedupePredictiveInputs(table); } catch (e) { console.warn('Dedupe failed:', e); }
+        if (window.updateRecipeCosts) {
+          window.updateRecipeCosts();
+        }
       }, 200);
     }, 10);
-    
+
     // Release lock in next tick to allow another add
     setTimeout(function(){ delete totalForms.dataset.addLock; }, 0);
     console.log('✅ Row added and scheduled for initialization! New count:', totalForms.value);
@@ -494,6 +504,9 @@
         e.preventDefault();
         console.log('🗑️ Remove button clicked');
         row.remove();
+        if (window.updateRecipeCosts) {
+          window.updateRecipeCosts();
+        }
         // Note: In a real formset, you'd need to handle the DELETE field properly
       });
     }
@@ -536,7 +549,16 @@
         unitDisplay.value = '';
         console.log('✅ Cleared unit display field');
       }
+      var clearRow = itemSelect.closest('tr');
+      if (clearRow) {
+        clearRow.dataset.category = '';
+        clearRow.dataset.subcategory = '';
+        clearRow.dataset.itemName = '';
+      }
       updateRowCost(itemSelect, null);
+      if (window.updateRecipeCosts) {
+        window.updateRecipeCosts();
+      }
       return;
     }
     
@@ -563,10 +585,21 @@
             console.log('✅ Set unit display (BASE) to:', data.base_unit);
           }
           // Cache cost per base unit on the row for quick recompute
-          try { var r = itemSelect.closest('tr'); if (r) r.dataset.costPerBaseUnit = String(data.cost_per_base_unit || 0); } catch (_) {}
+          try {
+            var r = itemSelect.closest('tr');
+            if (r) {
+              r.dataset.costPerBaseUnit = String(data.cost_per_base_unit || 0);
+              r.dataset.category = (data.category || '').trim();
+              r.dataset.subcategory = (data.subcategory || '').trim();
+              r.dataset.itemName = (data.name || '').trim();
+            }
+          } catch (_) {}
 
           // Update cost
           updateRowCost(itemSelect, data);
+          if (window.updateRecipeCosts) {
+            window.updateRecipeCosts();
+          }
           try { var table = itemSelect.closest('table'); if (table) debugFormsetState(table, 'after-item-change'); } catch(e) {}
         } else {
           console.error('❌ Invalid item data received:', data);
@@ -597,9 +630,8 @@
         costPerBase = parseFloat(rowCached.dataset.costPerBaseUnit);
       }
     }
-    if (!costPerBase || isNaN(costPerBase)) {
-      console.log('⚠️ No cost data available');
-      return;
+    if (costPerBase === null || typeof costPerBase === 'undefined' || isNaN(costPerBase)) {
+      costPerBase = 0;
     }
 
     // Find the cost display element for this row
@@ -623,6 +655,200 @@
       }
     }
   }
+
+  function slugifyCategoryLabel(label) {
+    return String(label || 'uncategorized')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'uncategorized';
+  }
+
+  function parseLineCost(el) {
+    if (!el) {
+      return 0;
+    }
+    var text = String(el.textContent || '').replace(/[^0-9.-]/g, '');
+    var value = parseFloat(text);
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function clampMarginValue(raw) {
+    if (!Number.isFinite(raw)) {
+      return 0;
+    }
+    if (raw < 0) {
+      return 0;
+    }
+    if (raw > 95) {
+      return 95;
+    }
+    return raw;
+  }
+
+  window.updateRecipeCosts = function(root) {
+    try {
+      var scope = root || document;
+      var table = scope.querySelector('#items-table');
+      if (!table) {
+        return;
+      }
+      var tbody = table.querySelector('tbody');
+      if (!tbody) {
+        return;
+      }
+
+      var hiddenTemplate = table.querySelector('#items-empty-row');
+      if (hiddenTemplate && hiddenTemplate.parentNode === tbody) {
+        tbody.removeChild(hiddenTemplate);
+      }
+
+      Array.from(tbody.querySelectorAll('tr[data-category-heading]')).forEach(function(row) {
+        row.remove();
+      });
+
+      var visibleRows = Array.from(tbody.querySelectorAll('tr.form-row'));
+      var groups = [];
+      var groupMap = Object.create(null);
+      var totalCost = 0;
+
+      visibleRows.forEach(function(row, index) {
+        if (row.classList.contains('hidden')) {
+          return;
+        }
+        var deleteField = row.querySelector('input[id$="-DELETE"]');
+        if (deleteField && (deleteField.checked || deleteField.value === 'on')) {
+          return;
+        }
+
+        var category = (row.dataset.category || '').trim();
+        if (!category) {
+          category = 'Uncategorized';
+        }
+        var key = category.toLowerCase() || 'uncategorized';
+        var group = groupMap[key];
+        if (!group) {
+          group = { key: key, label: category, rows: [], total: 0 };
+          groupMap[key] = group;
+          groups.push(group);
+        }
+
+        var lineCost = parseLineCost(row.querySelector('[data-line-cost]'));
+        totalCost += lineCost;
+        group.total += lineCost;
+        group.rows.push({ row: row, index: index });
+      });
+
+      groups.sort(function(a, b) {
+        if (a.label === b.label) {
+          return 0;
+        }
+        if (a.label === 'Uncategorized') {
+          return 1;
+        }
+        if (b.label === 'Uncategorized') {
+          return -1;
+        }
+        return a.label.localeCompare(b.label);
+      });
+
+      var fragment = document.createDocumentFragment();
+      groups.forEach(function(group, idx) {
+        var headingId = 'recipe-category-' + slugifyCategoryLabel(group.label) + '-' + idx;
+        var headingRow = document.createElement('tr');
+        headingRow.setAttribute('data-category-heading', '1');
+        headingRow.setAttribute('data-category-key', group.key);
+        headingRow.setAttribute('role', 'row');
+        var headingCell = document.createElement('th');
+        headingCell.setAttribute('scope', 'colgroup');
+        headingCell.setAttribute('colspan', '6');
+        headingCell.id = headingId;
+        headingCell.className = 'px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 bg-surfaceSubtle';
+        headingCell.textContent = group.label;
+        headingRow.appendChild(headingCell);
+        fragment.appendChild(headingRow);
+        group.headingId = headingId;
+        group.rows.forEach(function(entry) {
+          entry.row.setAttribute('aria-labelledby', headingId);
+          fragment.appendChild(entry.row);
+        });
+      });
+
+      if (fragment.childNodes.length) {
+        tbody.appendChild(fragment);
+      }
+
+      if (hiddenTemplate) {
+        tbody.appendChild(hiddenTemplate);
+      }
+
+      var costContainer = scope.querySelector('#cost-by-category');
+      if (costContainer) {
+        while (costContainer.firstChild) {
+          costContainer.removeChild(costContainer.firstChild);
+        }
+        if (!groups.length) {
+          var emptyMessage = document.createElement('p');
+          emptyMessage.className = 'text-sm text-gray-500';
+          emptyMessage.textContent = 'Add items to see category totals.';
+          costContainer.appendChild(emptyMessage);
+        } else {
+          groups.forEach(function(group) {
+            var item = document.createElement('div');
+            item.className = 'flex items-center justify-between gap-2';
+            item.setAttribute('role', 'group');
+            if (group.headingId) {
+              item.setAttribute('aria-labelledby', group.headingId);
+            }
+            var label = document.createElement('span');
+            label.className = 'text-gray-600';
+            label.textContent = group.label;
+            var value = document.createElement('span');
+            value.className = 'font-medium text-bodyText';
+            value.textContent = group.total.toFixed(2);
+            item.appendChild(label);
+            item.appendChild(value);
+            costContainer.appendChild(item);
+          });
+        }
+      }
+
+      var totalCostEl = scope.querySelector('#recipe-total-cost');
+      if (totalCostEl) {
+        totalCostEl.textContent = totalCost.toFixed(2);
+      }
+
+      var marginInput = scope.querySelector('#recipe-margin');
+      if (marginInput && !marginInput.dataset.recipeMarginBound) {
+        var marginHandler = function() {
+          window.updateRecipeCosts(scope);
+        };
+        marginInput.addEventListener('input', marginHandler);
+        marginInput.addEventListener('change', marginHandler);
+        marginInput.dataset.recipeMarginBound = '1';
+      }
+
+      var suggestedEl = scope.querySelector('#recipe-suggested-price');
+      var marginValue = marginInput ? parseFloat(marginInput.value || '0') : 0;
+      var clampedMargin = clampMarginValue(marginValue);
+      if (marginInput && marginValue !== clampedMargin) {
+        marginInput.value = clampedMargin;
+      }
+      var marginDecimal = clampedMargin / 100;
+      var suggested = totalCost;
+      if (marginDecimal > 0 && marginDecimal < 0.999) {
+        suggested = totalCost / (1 - marginDecimal);
+      }
+      if (suggestedEl) {
+        suggestedEl.textContent = Number.isFinite(suggested)
+          ? suggested.toFixed(2)
+          : totalCost.toFixed(2);
+      }
+
+      table.dataset.recipeGroupingApplied = groups.length ? '1' : '0';
+    } catch (err) {
+      console.error('updateRecipeCosts failed:', err);
+    }
+  };
   
   // Expose globally with the correct name for modal.js
   window.initRecipeComponentsTable = initRecipeComponentsTable;

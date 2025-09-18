@@ -9,7 +9,24 @@ from django.views.generic import TemplateView
 
 from ..forms.recipe_forms import RecipeItemFormSet, RecipeForm
 from ..models import Recipe
-from ..services import recipe_service
+from ..services import list_utils, recipe_service
+
+
+def _filtered_recipes_queryset(request):
+    """Return the recipe queryset filtered, searched and sorted for tables/cards."""
+
+    qs = Recipe.objects.annotate(item_count=Count("items"))
+    qs, params = list_utils.apply_filters_sort(
+        request,
+        qs,
+        search_fields=["name", "description"],
+        filter_fields={"active": "is_active"},
+        allowed_sorts=["name", "type", "default_yield_unit", "is_active"],
+        default_sort="name",
+    )
+    params.setdefault("q", "")
+    params["recipe_count"] = qs.count()
+    return qs, params
 
 
 class RecipesListView(TemplateView):
@@ -23,14 +40,8 @@ class RecipesListView(TemplateView):
 
     def _get_recipes(self):
         """Return recipes annotated with item counts and optional images."""
-        q = (self.request.GET.get("q") or "").strip()
-        qs = (
-            Recipe.objects.all()
-            .annotate(item_count=Count("items"))
-            .order_by("name")
-        )
-        if q:
-            qs = qs.filter(name__icontains=q)
+
+        qs, params = _filtered_recipes_queryset(self.request)
 
         recipes = []
         for r in qs:
@@ -45,27 +56,54 @@ class RecipesListView(TemplateView):
                     "name": r.name,
                     "image": image,
                     "item_count": r.item_count,
+                    "component_count": r.item_count,
+                    "category": getattr(r, "type", "") or "",
+                    "default_yield_unit": getattr(r, "default_yield_unit", "") or "",
+                    "is_active": r.is_active,
                 }
             )
-        return recipes, q
+        return recipes, params
+
+    def _render_table_partial(self):
+        """Render the recipes table once so the list page has initial HTML."""
+
+        table_view = RecipesTableView()
+        table_view.setup(self.request, *self.args, **self.kwargs)
+        table_context = table_view.get_context_data()
+        table_html = render_to_string(
+            table_view.get_template_names()[0],
+            table_context,
+            request=self.request,
+        )
+        return table_html, table_context
 
     def get(self, request, *args, **kwargs):
-        recipes, q = self._get_recipes()
+        recipes, params = self._get_recipes()
         if request.headers.get("HX-Request"):
             return render(request, self.grid_template, {"recipes": recipes})
 
+        table_html, table_ctx = self._render_table_partial()
         grid_html = render_to_string(
             self.grid_template, {"recipes": recipes}, request=request
         )
         ctx = {
             "recipes_grid": grid_html,
-            "q": q,
-            "recipe_count": len(recipes),
+            "recipes_table": table_html,
+            "recipe_count": params.get("recipe_count", len(recipes)),
             "form": RecipeForm(),
             "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Recipes",
         }
+        ctx.update(params)
+        ctx.update(
+            {
+                "page_size": table_ctx.get("page_size"),
+                "sort": table_ctx.get("sort"),
+                "direction": table_ctx.get("direction"),
+                "querystring": table_ctx.get("querystring"),
+            }
+        )
         return render(request, self.template_name, ctx)
 
     def post(self, request, *args, **kwargs):
@@ -75,20 +113,64 @@ class RecipesListView(TemplateView):
             messages.success(request, "Recipe created", extra_tags="toast")
             return redirect("recipe_detail", pk=recipe.pk)
 
-        recipes, q = self._get_recipes()
+        recipes, params = self._get_recipes()
+        table_html, table_ctx = self._render_table_partial()
         grid_html = render_to_string(
             self.grid_template, {"recipes": recipes}, request=request
         )
         ctx = {
             "recipes_grid": grid_html,
-            "q": q,
-            "recipe_count": len(recipes),
+            "recipes_table": table_html,
+            "recipe_count": params.get("recipe_count", len(recipes)),
             "form": form,
             "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Recipes",
         }
+        ctx.update(params)
+        ctx.update(
+            {
+                "page_size": table_ctx.get("page_size"),
+                "sort": table_ctx.get("sort"),
+                "direction": table_ctx.get("direction"),
+                "querystring": table_ctx.get("querystring"),
+            }
+        )
         return render(request, self.template_name, ctx)
+
+
+class RecipesTableView(TemplateView):
+    """Render the paginated table view of recipes for HTMX swaps."""
+
+    template_name = "inventory/recipes/_recipes_table.html"
+
+    def _get_queryset(self):
+        qs, params = _filtered_recipes_queryset(self.request)
+        self._filter_params = params
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs = self._get_queryset()
+        page_obj, per_page = list_utils.paginate(self.request, qs)
+        params = getattr(self, "_filter_params", {})
+        ctx.update(params)
+        try:
+            querystring = list_utils.build_querystring(self.request)
+        except Exception:  # pragma: no cover - defensive
+            querystring = ""
+        ctx.update(
+            {
+                "page_obj": page_obj,
+                "page_size": per_page,
+                "querystring": querystring,
+                "recipes": page_obj.object_list,
+                "table_url": reverse("recipes_table"),
+            }
+        )
+        if "recipe_count" not in ctx:
+            ctx["recipe_count"] = qs.count()
+        return ctx
 
 
 def recipe_create(request):

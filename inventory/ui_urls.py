@@ -54,6 +54,7 @@ from .views.recipes import (
     RecipeCreatePartialView,
     RecipeEditPartialView,
     RecipesListView,
+    RecipesTableView,
     recipe_create,
     recipe_detail,
 )
@@ -208,6 +209,7 @@ urlpatterns = [
     path("grns/<int:pk>/export/", grn_export, name="grn_export"),
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
+    path("recipes/table/", RecipesTableView.as_view(), name="recipes_table"),
     path("recipes/create/", recipe_create, name="recipe_create"),
     path(
         "recipes/create/partial/",

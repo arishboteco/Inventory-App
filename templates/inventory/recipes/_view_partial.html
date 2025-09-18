@@ -29,9 +29,16 @@
           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Inactive</span>
         {% endif %}
       </div>
-      <div class="md:col-span-3 space-y-1">
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Plating Notes</h4>
-        <p class="text-bodyText leading-snug">{{ recipe.plating_notes|default:"No plating notes yet." }}</p>
+      <div class="md:col-span-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+          <div class="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400 sm:h-24 sm:w-24">
+            {% icon 'photo' 'w-6 h-6' %}
+          </div>
+          <div class="space-y-1 flex-1">
+            <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Plating Notes</h4>
+            <p class="text-bodyText leading-snug">{{ recipe.plating_notes|default:"No plating notes yet." }}</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -41,7 +48,6 @@
         <table id="items-table" class="min-w-full w-full table-auto text-label">
           <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
             <tr>
-              <th scope="col" class="w-16">Plating</th>
               <th scope="col">Item</th>
               <th scope="col">Qty</th>
               <th scope="col">Unit</th>
@@ -53,11 +59,6 @@
           <tbody class="bg-surface divide-y divide-border">
             {% for item in items %}
             <tr class="form-row" data-recipe-row="true" data-category="{{ item.category }}" data-subcategory="{{ item.subcategory }}" data-cost-per-base-unit="{{ item.cost_per_base_unit_str }}" data-quantity="{{ item.quantity_str }}" data-has-item="{% if item.has_item %}1{% else %}0{% endif %}" {% if item.has_zero_price %}data-has-zero-price="1"{% endif %}>
-              <td class="px-3 py-2 align-middle">
-                <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400">
-                  {% icon 'photo' 'w-5 h-5' %}
-                </div>
-              </td>
               <td class="px-3 py-2 align-top">
                 <div class="font-medium text-bodyText">{{ item.name }}</div>
                 <div class="text-xs text-gray-500">{{ item.category }}</div>
@@ -72,7 +73,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="7" class="px-4 py-6 text-center text-gray-500">No items added yet.</td>
+              <td colspan="6" class="px-4 py-6 text-center text-gray-500">No items added yet.</td>
             </tr>
             {% endfor %}
           </tbody>

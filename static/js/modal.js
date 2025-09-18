@@ -494,18 +494,49 @@
       }
       // Ensure at least one valid line (item id + positive qty) only when form opts in
       const requiresLineItems = form.hasAttribute('data-requires-line-items');
-      const hiddenItems = Array.from(form.querySelectorAll('input[type="hidden"][data-item-hidden-for]'));
       if (requiresLineItems) {
         let hasValidLine = false;
-        for (const h of hiddenItems) {
-          const name = h.getAttribute('data-item-hidden-for') || h.name || '';
-          if (!name) continue;
-          const qtyName = name.replace(/-item$/, '-requested_qty');
-          const qty = form.querySelector(`input[name="${cssEscape(qtyName)}"]`);
-          const qtyVal = qty ? parseFloat(qty.value) : NaN;
-          if ((h.value || '').trim() && !Number.isNaN(qtyVal) && qtyVal > 0) { hasValidLine = true; break; }
+        let checkedSources = false;
+        const hiddenItems = Array.from(
+          form.querySelectorAll('input[type="hidden"][data-item-hidden-for]'),
+        );
+        if (hiddenItems.length) {
+          checkedSources = true;
+          for (const h of hiddenItems) {
+            const name = h.getAttribute('data-item-hidden-for') || h.name || '';
+            if (!name) continue;
+            const qtyName = name.replace(/-item$/, '-requested_qty');
+            const qty = form.querySelector(`input[name="${cssEscape(qtyName)}"]`);
+            const qtyVal = qty ? parseFloat(qty.value) : NaN;
+            if ((h.value || '').trim() && !Number.isNaN(qtyVal) && qtyVal > 0) {
+              hasValidLine = true;
+              break;
+            }
+          }
         }
         if (!hasValidLine) {
+          const inlineItems = Array.from(
+            form.querySelectorAll('select[name^="items-"][name$="-item"]'),
+          );
+          if (inlineItems.length) {
+            checkedSources = true;
+            for (const select of inlineItems) {
+              const value = (select.value || '').trim();
+              if (!value) continue;
+              const baseName = (select.name || '').replace(/-item$/, '');
+              if (!baseName) continue;
+              const qtyField =
+                form.querySelector(`input[name="${cssEscape(`${baseName}-quantity`)}"]`) ||
+                form.querySelector(`input[name="${cssEscape(`${baseName}-quantity_ordered`)}"]`);
+              const qtyVal = qtyField ? parseFloat(qtyField.value) : NaN;
+              if (!Number.isNaN(qtyVal) && qtyVal > 0) {
+                hasValidLine = true;
+                break;
+              }
+            }
+          }
+        }
+        if (checkedSources && !hasValidLine) {
           showInlineError('Add at least one item with a positive quantity');
           if (window.notifications) window.notifications.showToast('Add at least one item with a positive quantity', 'error');
           return;

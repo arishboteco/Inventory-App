@@ -31,8 +31,13 @@
       </div>
       <div class="md:col-span-3">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-          <div class="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400 sm:h-24 sm:w-24">
-            {% icon 'photo' 'w-6 h-6' %}
+          <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-surfaceSubtle sm:h-24 sm:w-24">
+            <img src="{{ plating_image_url|default:recipe.plating_image_url|default:plating_placeholder_url }}"
+                 alt="{{ recipe.name }} plating"
+                 class="h-full w-full object-cover"
+                 loading="lazy"
+                 data-role="recipe-view-plating-image"
+                 onerror="this.onerror=null;this.src='{{ plating_placeholder_url }}';" />
           </div>
           <div class="space-y-1 flex-1">
             <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Plating Notes</h4>

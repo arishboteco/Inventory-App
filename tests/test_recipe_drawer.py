@@ -7,6 +7,10 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from inventory.models import Recipe, RecipeItem
+from inventory.services.recipe_service import (
+    get_plating_image_url,
+    get_plating_placeholder_url,
+)
 
 
 @pytest.mark.django_db
@@ -14,12 +18,11 @@ def test_recipe_create_partial_invalid_ajax_returns_json(client):
     url = reverse("recipe_create_partial")
     data = {
         "name": "",
-        "description": "",
+        "description_and_plating": "",
         "is_active": "on",
         "type": "",
         "default_yield_qty": "",
         "default_yield_unit": "",
-        "plating_notes": "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
         "items-MIN_NUM_FORMS": "0",
@@ -54,12 +57,11 @@ def test_recipe_create_partial_invalid_non_ajax_returns_html(client):
     url = reverse("recipe_create_partial")
     data = {
         "name": "",
-        "description": "",
+        "description_and_plating": "",
         "is_active": "on",
         "type": "",
         "default_yield_qty": "",
         "default_yield_unit": "",
-        "plating_notes": "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
         "items-MIN_NUM_FORMS": "0",
@@ -93,12 +95,11 @@ def test_recipe_edit_partial_invalid_ajax_returns_json(client, item_factory):
     url = reverse("recipe_edit_partial", args=[recipe.pk])
     data = {
         "name": "",
-        "description": recipe.description or "",
+        "description_and_plating": (recipe.description or recipe.plating_notes or ""),
         "is_active": "on",
         "type": recipe.type or "",
         "default_yield_qty": recipe.default_yield_qty or "",
         "default_yield_unit": recipe.default_yield_unit or "",
-        "plating_notes": recipe.plating_notes or "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "1",
         "items-MIN_NUM_FORMS": "0",
@@ -140,12 +141,11 @@ def test_recipe_edit_partial_invalid_non_ajax_returns_html(client, item_factory)
     url = reverse("recipe_edit_partial", args=[recipe.pk])
     data = {
         "name": "",
-        "description": recipe.description or "",
+        "description_and_plating": (recipe.description or recipe.plating_notes or ""),
         "is_active": "on",
         "type": recipe.type or "",
         "default_yield_qty": recipe.default_yield_qty or "",
         "default_yield_unit": recipe.default_yield_unit or "",
-        "plating_notes": recipe.plating_notes or "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "1",
         "items-MIN_NUM_FORMS": "0",
@@ -171,12 +171,11 @@ def test_recipe_create_partial_success_returns_close_only_payload(client, item_f
     url = reverse("recipe_create_partial")
     data = {
         "name": "Test Bread",
-        "description": "",
+        "description_and_plating": "",
         "is_active": "on",
         "type": "",
         "default_yield_qty": "1",
         "default_yield_unit": "loaf",
-        "plating_notes": "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
         "items-MIN_NUM_FORMS": "0",
@@ -208,6 +207,63 @@ def test_recipe_create_partial_success_returns_close_only_payload(client, item_f
 
 
 @pytest.mark.django_db
+def test_recipe_create_partial_drawer_header_has_thumbnail_and_toggle(client):
+    response = client.get(reverse("recipe_create_partial"))
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, "html.parser")
+    thumb = soup.select_one("[data-role='drawer-plating-image']")
+    assert thumb is not None
+    assert thumb["src"] == get_plating_placeholder_url()
+    toggle = soup.select_one("[data-role='drawer-active-toggle'] input[type='checkbox']")
+    assert toggle is not None
+    notes = soup.find("textarea", {"name": "description_and_plating"})
+    assert notes is not None
+
+
+@pytest.mark.django_db
+def test_recipe_edit_partial_drawer_header_prefills_thumbnail_and_notes(client):
+    recipe = Recipe.objects.create(
+        name="House Salad",
+        description="Light and fresh",
+        plating_notes="Serve chilled",
+        is_active=False,
+    )
+    response = client.get(reverse("recipe_edit_partial", args=[recipe.pk]))
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, "html.parser")
+    thumb = soup.select_one("[data-role='drawer-plating-image']")
+    assert thumb is not None
+    assert thumb["src"] == get_plating_image_url(recipe.pk)
+    textarea = soup.find("textarea", {"name": "description_and_plating"})
+    assert textarea is not None
+    combined_text = "\n\n".join(
+        part
+        for part in [recipe.description.strip(), recipe.plating_notes.strip()]
+        if part
+    )
+    assert textarea.text.strip() == combined_text.strip()
+    toggle = soup.select_one("[data-role='drawer-active-toggle'] input[type='checkbox']")
+    assert toggle is not None
+    assert not toggle.has_attr("checked")
+
+
+@pytest.mark.django_db
+def test_recipes_table_includes_plating_thumbnail(client):
+    recipe = Recipe.objects.create(name="Chocolate Tart", is_active=True)
+
+    response = client.get(reverse("recipes_table"))
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, "html.parser")
+    thumb = soup.select_one("[data-role='recipe-thumbnail']")
+    assert thumb is not None
+    assert thumb["src"] == get_plating_image_url(recipe.pk)
+    assert get_plating_placeholder_url() in (thumb.get("onerror") or "")
+
+
+@pytest.mark.django_db
 def test_recipe_view_partial_renders_table_and_totals(client, item_factory):
     item = item_factory(name="Flour", initial_purchase_price=Decimal("6.00"))
     recipe = Recipe.objects.create(
@@ -227,8 +283,10 @@ def test_recipe_view_partial_renders_table_and_totals(client, item_factory):
     soup = BeautifulSoup(resp.content, "html.parser")
     header = soup.find("h3")
     assert header and recipe.name in header.text
-    plating_header = soup.select_one("#items-table thead th")
-    assert plating_header and "Plating" in plating_header.text
+    plating_thumb = soup.select_one("[data-role='recipe-view-plating-image']")
+    assert plating_thumb is not None
+    assert plating_thumb["src"] == get_plating_image_url(recipe.pk)
+    assert plating_thumb.get("onerror")
     first_row = soup.select_one("#items-table tbody tr")
     assert first_row and "Flour" in first_row.get_text()
     zero_notice = soup.select_one("#recipe-zero-cost-notice")

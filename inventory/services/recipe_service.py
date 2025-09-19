@@ -3,9 +3,12 @@ from __future__ import annotations
 import json
 import logging
 from decimal import Decimal
+from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.db import IntegrityError, transaction
+from django.templatetags.static import static
 
 from inventory.constants import PLACEHOLDER_SELECT_COMPONENT
 
@@ -17,10 +20,47 @@ logger = logging.getLogger(__name__)
 
 TX_SALE = "SALE"
 
+PLATING_IMAGE_BASE_PATH = "img/plating"
+PLATING_IMAGE_EXTENSIONS = (".webp", ".jpg", ".jpeg", ".png", ".svg")
+PLATING_PLACEHOLDER_PATH = "img/recipe-placeholder.svg"
+
 
 # ---------------------------------------------------------------------------
 # Helper utilities
 # ---------------------------------------------------------------------------
+
+
+@lru_cache(maxsize=256)
+def get_plating_image_url(recipe_id: Optional[int]) -> str:
+    """Return the best-guess plating image URL for ``recipe_id``.
+
+    The helper attempts to locate a static asset matching the recipe id using a
+    handful of common image extensions. When no dedicated thumbnail exists (or
+    ``recipe_id`` is ``None``) the shared placeholder thumbnail is returned
+    instead so the UI never renders a broken image.
+    """
+
+    placeholder_url = get_plating_placeholder_url()
+    if not recipe_id:
+        return placeholder_url
+
+    base_path = f"{PLATING_IMAGE_BASE_PATH}/{recipe_id}"
+    for extension in PLATING_IMAGE_EXTENSIONS:
+        candidate = f"{base_path}{extension}"
+        try:
+            if staticfiles_storage.exists(candidate):
+                return static(candidate)
+        except Exception:  # pragma: no cover - defensive
+            logger.debug("Unable to resolve plating image for %s", candidate)
+            continue
+    return placeholder_url
+
+
+@lru_cache(maxsize=1)
+def get_plating_placeholder_url() -> str:
+    """Return the shared placeholder thumbnail URL."""
+
+    return static(PLATING_PLACEHOLDER_PATH)
 
 
 def _strip_or_none(val: Any) -> Optional[str]:

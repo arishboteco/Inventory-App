@@ -108,6 +108,7 @@ def _serialize_recipe(recipe):
     if item_count is None:
         item_count = recipe.items.count()
     qty = getattr(recipe, "default_yield_qty", None)
+    image_url = recipe_service.get_plating_image_url(getattr(recipe, "pk", None))
     return {
         "id": recipe.pk,
         "name": recipe.name,
@@ -117,6 +118,7 @@ def _serialize_recipe(recipe):
         "default_yield_qty": float(qty) if qty is not None else None,
         "default_yield_unit": recipe.default_yield_unit or "",
         "item_count": item_count,
+        "plating_image_url": image_url,
     }
 
 
@@ -132,6 +134,17 @@ def _to_decimal(value):
         return Decimal(str(value))
     except (ValueError, TypeError, ArithmeticError):  # pragma: no cover - defensive
         return Decimal("0")
+
+
+def _get_plating_urls(recipe):
+    """Return (image_url, placeholder_url) for ``recipe``."""
+
+    recipe_id = None
+    if recipe is not None:
+        recipe_id = getattr(recipe, "pk", None) or getattr(recipe, "recipe_id", None)
+    image_url = recipe_service.get_plating_image_url(recipe_id)
+    placeholder_url = recipe_service.get_plating_placeholder_url()
+    return image_url, placeholder_url
 
 
 class RecipesListView(TemplateView):
@@ -167,6 +180,8 @@ class RecipesListView(TemplateView):
             ctx["recipe_count"] = (
                 page_obj.paginator.count if page_obj and page_obj.paginator else 0
             )
+        _, placeholder = _get_plating_urls(None)
+        ctx.setdefault("plating_placeholder_url", placeholder)
         return ctx
 
     def get(self, request, *args, **kwargs):
@@ -203,13 +218,22 @@ class RecipesTableView(TemplateView):
             querystring = list_utils.build_querystring(self.request)
         except Exception:  # pragma: no cover - defensive
             querystring = ""
+        placeholder_url = recipe_service.get_plating_placeholder_url()
+        recipes = list(page_obj.object_list)
+        for recipe in recipes:
+            rid = getattr(recipe, "pk", None)
+            image_url = recipe_service.get_plating_image_url(rid)
+            setattr(recipe, "plating_image_url", image_url)
+            setattr(recipe, "plating_placeholder_url", placeholder_url)
+        page_obj.object_list = recipes
         ctx.update(
             {
                 "page_obj": page_obj,
                 "page_size": per_page,
                 "querystring": querystring,
-                "recipes": page_obj.object_list,
+                "recipes": recipes,
                 "table_url": reverse("recipes_table"),
+                "plating_placeholder_url": placeholder_url,
             }
         )
         if "recipe_count" not in ctx:
@@ -247,6 +271,7 @@ def recipe_create(request):
     else:
         form = RecipeForm()
         formset = RecipeItemFormSet(prefix="items")
+    plating_image_url, plating_placeholder_url = _get_plating_urls(None)
     return render(
         request,
         "inventory/recipes/detail.html",
@@ -258,6 +283,8 @@ def recipe_create(request):
             "list_url": reverse("recipes_list"),
             "list_title": "Recipes",
             "current_title": "New Recipe",
+            "plating_image_url": plating_image_url,
+            "plating_placeholder_url": plating_placeholder_url,
         },
     )
 
@@ -293,6 +320,8 @@ def recipe_detail(request, pk: int):
     else:
         form = RecipeForm(instance=recipe)
         formset = RecipeItemFormSet(instance=recipe, prefix="items")
+    plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
+    setattr(recipe, "plating_image_url", plating_image_url)
     return render(
         request,
         "inventory/recipes/detail.html",
@@ -304,6 +333,8 @@ def recipe_detail(request, pk: int):
             "list_url": reverse("recipes_list"),
             "list_title": "Recipes",
             "current_title": recipe.name,
+            "plating_image_url": plating_image_url,
+            "plating_placeholder_url": plating_placeholder_url,
         },
     )
 
@@ -316,10 +347,18 @@ class RecipeCreatePartialView(View):
     def get(self, request):
         form = RecipeForm()
         formset = RecipeItemFormSet(prefix="items")
+        plating_image_url, plating_placeholder_url = _get_plating_urls(None)
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "recipe": None, "is_edit": False},
+            {
+                "form": form,
+                "formset": formset,
+                "recipe": None,
+                "is_edit": False,
+                "plating_image_url": plating_image_url,
+                "plating_placeholder_url": plating_placeholder_url,
+            },
         )
 
     def post(self, request):
@@ -370,10 +409,18 @@ class RecipeCreatePartialView(View):
             )
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(_build_form_error_payload(form, formset), status=400)
+        plating_image_url, plating_placeholder_url = _get_plating_urls(None)
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "recipe": None, "is_edit": False},
+            {
+                "form": form,
+                "formset": formset,
+                "recipe": None,
+                "is_edit": False,
+                "plating_image_url": plating_image_url,
+                "plating_placeholder_url": plating_placeholder_url,
+            },
             status=400,
         )
 
@@ -387,10 +434,19 @@ class RecipeEditPartialView(View):
         recipe = get_object_or_404(Recipe, pk=pk)
         form = RecipeForm(instance=recipe)
         formset = RecipeItemFormSet(instance=recipe, prefix="items")
+        plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
+        setattr(recipe, "plating_image_url", plating_image_url)
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
+            {
+                "form": form,
+                "formset": formset,
+                "recipe": recipe,
+                "is_edit": True,
+                "plating_image_url": plating_image_url,
+                "plating_placeholder_url": plating_placeholder_url,
+            },
         )
 
     def post(self, request, pk: int):
@@ -442,10 +498,19 @@ class RecipeEditPartialView(View):
             )
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(_build_form_error_payload(form, formset), status=400)
+        plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
+        setattr(recipe, "plating_image_url", plating_image_url)
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "recipe": recipe, "is_edit": True},
+            {
+                "form": form,
+                "formset": formset,
+                "recipe": recipe,
+                "is_edit": True,
+                "plating_image_url": plating_image_url,
+                "plating_placeholder_url": plating_placeholder_url,
+            },
             status=400,
         )
 
@@ -547,6 +612,8 @@ class RecipeViewPartialView(View):
 
         total_cost = total_cost.quantize(TWOPLACES) if total_cost else Decimal("0.00")
 
+        plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
+        setattr(recipe, "plating_image_url", plating_image_url)
         return render(
             request,
             self.template_name,
@@ -555,5 +622,7 @@ class RecipeViewPartialView(View):
                 "items": items,
                 "total_cost": total_cost,
                 "zero_cost": zero_cost,
+                "plating_image_url": plating_image_url,
+                "plating_placeholder_url": plating_placeholder_url,
             },
         )

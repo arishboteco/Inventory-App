@@ -271,6 +271,13 @@
       tbody.appendChild(clone);
     }
 
+    clone.removeAttribute('data-recipe-events-bound');
+    clone.removeAttribute('data-recipe-bootstrapped');
+    clone.removeAttribute('data-predictive-init');
+    delete clone.dataset.recipeEventsBound;
+    delete clone.dataset.recipeBootstrapped;
+    delete clone.dataset.predictiveInit;
+
     bindRowEvents(clone, scope);
     updateRowCost(clone, { scope: scope });
   }
@@ -523,10 +530,19 @@
     var emptyRow = scope.querySelector('#items-empty-row');
 
     var existingRows = Array.from(tbody.querySelectorAll('tr.form-row'));
-    existingRows.forEach(function(row) {
+    var rowsToInitialize = existingRows.filter(function(row) {
+      if (row === emptyRow) {
+        return false;
+      }
+      if (row && row.id === 'items-empty-row') {
+        return false;
+      }
+      return true;
+    });
+    rowsToInitialize.forEach(function(row) {
       bindRowEvents(row, scope);
     });
-    existingRows.forEach(function(row) {
+    rowsToInitialize.forEach(function(row) {
       bootstrapRow(row, scope);
     });
 

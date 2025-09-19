@@ -125,11 +125,16 @@
         if (!data || !data.ok) {
           return;
         }
+        var baseUnitValue = data.base_unit;
+        if (!baseUnitValue || !String(baseUnitValue).trim()) {
+          baseUnitValue = data.unit;
+        }
+        var resolvedUnit = baseUnitValue ? String(baseUnitValue).trim() : '';
         if (unitHidden) {
-          unitHidden.value = data.base_unit || '';
+          unitHidden.value = resolvedUnit;
         }
         if (unitDisplay) {
-          unitDisplay.value = data.base_unit || '';
+          unitDisplay.value = resolvedUnit;
         }
         row.dataset.category = (data.category || '').trim();
         row.dataset.subcategory = (data.subcategory || '').trim();

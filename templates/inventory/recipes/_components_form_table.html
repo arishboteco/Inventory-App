@@ -1,10 +1,7 @@
 {% extends "components/responsive_table.html" %}
-{% load icon_tags %}
-
 {% block caption %}<caption>Recipe Items</caption>{% endblock %}
 
 {% block headers %}
-  <th scope="col" class="w-16">Plating</th>
   <th scope="col">Item</th>
   <th scope="col">Qty</th>
   <th scope="col">Unit</th>
@@ -16,11 +13,6 @@
 {% block rows %}
   {% for cform in formset.forms %}
   <tr class="form-row" data-form-index="{{ forloop.counter0 }}" data-recipe-row="true" data-has-item="0" data-quantity="0" data-cost-per-base-unit="0">
-    <td class="px-3 py-2 align-middle">
-      <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400">
-        {% icon 'photo' 'w-5 h-5' %}
-      </div>
-    </td>
     <td class="px-3 py-2">
       {% include "components/form_field_table.html" with field=cform.item %}
     </td>
@@ -41,11 +33,6 @@
   {% endfor %}
   {# empty form template row #}
   <tr class="form-row hidden" id="items-empty-row" data-recipe-row="true" data-has-item="0" data-quantity="0" data-cost-per-base-unit="0">
-    <td class="px-3 py-2 align-middle">
-      <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border bg-surfaceSubtle text-gray-400">
-        {% icon 'photo' 'w-5 h-5' %}
-      </div>
-    </td>
     <td class="px-3 py-2">
       {% include "components/form_field_table.html" with field=formset.empty_form.item %}
     </td>

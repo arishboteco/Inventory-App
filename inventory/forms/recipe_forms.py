@@ -5,7 +5,10 @@ from django import forms
 from ..models import Item, Recipe, RecipeItem
 from .base import StyledFormMixin
 
-INPUT_CLASS = "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+INPUT_CLASS = (
+    "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg "
+    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+)
 
 
 class RecipeForm(StyledFormMixin, forms.ModelForm):
@@ -17,19 +20,18 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
     )
     description = forms.CharField(
         required=False,
-        widget=forms.Textarea(
-            attrs={
-                "class": INPUT_CLASS,
-                "rows": 2,
-                "placeholder": "Brief recipe description...",
-            }
-        ),
+        widget=forms.HiddenInput(),
     )
     is_active = forms.BooleanField(
         required=False,
         initial=True,
         widget=forms.CheckboxInput(
-            attrs={"class": "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"}
+            attrs={
+                "class": (
+                    "h-4 w-4 text-blue-600 focus:ring-blue-500 "
+                    "border-gray-300 rounded"
+                )
+            }
         ),
     )
     type = forms.CharField(
@@ -53,12 +55,21 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
     )
     plating_notes = forms.CharField(
         required=False,
+        widget=forms.HiddenInput(),
+    )
+    description_and_plating = forms.CharField(
+        required=False,
+        label="Description & Plating Notes",
         widget=forms.Textarea(
             attrs={
                 "class": INPUT_CLASS,
-                "rows": 2,
-                "placeholder": "Plating and presentation notes...",
+                "rows": 4,
+                "placeholder": "Capture the story and plating cues for this recipe...",
             }
+        ),
+        help_text=(
+            "Share the overview and plating details together so the team has a "
+            "single reference."
         ),
     )
 
@@ -73,6 +84,34 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
             "default_yield_unit",
             "plating_notes",
         ]
+
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        description = self.initial.get("description") or getattr(
+            self.instance, "description", ""
+        )
+        plating_notes = self.initial.get("plating_notes") or getattr(
+            self.instance, "plating_notes", ""
+        )
+        if not self.is_bound:
+            parts = [
+                str(part).strip()
+                for part in (description, plating_notes)
+                if part and str(part).strip()
+            ]
+            combined = "\n\n".join(parts) if parts else ""
+            if combined:
+                self.initial.setdefault("description_and_plating", combined)
+                self.fields["description_and_plating"].initial = combined
+
+    def clean(self):
+        cleaned_data = super().clean()
+        combined = cleaned_data.get("description_and_plating", "")
+        combined_text = str(combined).strip()
+        cleaned_data["description"] = combined_text
+        cleaned_data["plating_notes"] = combined_text
+        return cleaned_data
 
 
 class RecipeItemForm(StyledFormMixin, forms.ModelForm):

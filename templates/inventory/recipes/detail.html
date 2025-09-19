@@ -6,7 +6,41 @@
 {% endblock %}
 {% block form_attrs %}id="recipe-form"{% endblock %}
 {% block fields %}
-  {% include "inventory/recipes/_form_fields.html" with form=form %}
+  <div class="space-y-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border bg-surfaceSubtle px-4 py-3">
+      <div class="flex items-center gap-3">
+        <div class="h-16 w-16 overflow-hidden rounded-lg border border-border bg-surfaceSubtle">
+          <img src="{{ plating_image_url|default:plating_placeholder_url }}"
+               alt="{% if recipe %}{{ recipe.name }} plating{% else %}Recipe plating placeholder{% endif %}"
+               class="h-full w-full object-cover"
+               loading="lazy"
+               data-role="detail-plating-image"
+               onerror="this.onerror=null;this.src='{{ plating_placeholder_url }}';" />
+        </div>
+        <div class="text-sm text-gray-600">
+          <p class="font-medium text-bodyText">{% if recipe and recipe.type %}{{ recipe.type }}{% else %}No category yet{% endif %}</p>
+          <p>{% if recipe and recipe.default_yield_qty %}Yield: {{ recipe.default_yield_qty|floatformat:-2 }}{% if recipe.default_yield_unit %} <span class="uppercase">{{ recipe.default_yield_unit }}</span>{% endif %}{% else %}Set a default yield{% endif %}</p>
+        </div>
+      </div>
+      <div class="flex flex-col items-start gap-1 sm:items-end" data-role="detail-active-toggle">
+        <label for="{{ form.is_active.id_for_label }}" class="inline-flex items-center gap-2 text-sm font-medium text-bodyText">
+          {{ form.is_active|add_class:"h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" }}
+          <span class="leading-none">Active</span>
+        </label>
+        {% if form.is_active.help_text %}
+          <p class="text-xs text-gray-500 leading-snug text-left sm:text-right">{{ form.is_active.help_text }}</p>
+        {% endif %}
+        {% if form.is_active.errors %}
+          <ul class="text-xs text-danger list-disc pl-5 leading-snug text-left sm:text-right">
+            {% for error in form.is_active.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+    {% include "inventory/recipes/_form_fields.html" with form=form %}
+  </div>
   {{ formset.management_form }}
   {% if formset.non_form_errors %}
   <ul class="text-red-600 list-disc pl-5">

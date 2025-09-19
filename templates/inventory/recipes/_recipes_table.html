@@ -86,8 +86,20 @@
       {% for recipe in page_obj.object_list %}
         <tr class="hover:bg-surfaceSubtle focus-within:bg-surfaceSubtle" data-recipe-id="{{ recipe.recipe_id }}">
           <td class="px-4 py-2 align-top">
-            <div class="font-medium text-bodyText">{{ recipe.name }}</div>
-            <div class="text-xs text-gray-500">{{ recipe.item_count|default:0 }} ingredients</div>
+            <div class="flex items-start gap-3">
+              <div class="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border border-border bg-surfaceSubtle">
+                <img src="{{ recipe.plating_image_url }}"
+                     alt="{{ recipe.name }} plating"
+                     class="h-full w-full object-cover"
+                     loading="lazy"
+                     data-role="recipe-thumbnail"
+                     onerror="this.onerror=null;this.src='{{ recipe.plating_placeholder_url|default:plating_placeholder_url }}';" />
+              </div>
+              <div>
+                <div class="font-medium text-bodyText">{{ recipe.name }}</div>
+                <div class="text-xs text-gray-500">{{ recipe.item_count|default:0 }} ingredients</div>
+              </div>
+            </div>
           </td>
           <td class="px-4 py-2 align-top">
             {% if recipe.type %}

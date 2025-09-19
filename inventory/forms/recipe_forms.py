@@ -62,8 +62,9 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
         label="Description & Plating Notes",
         widget=forms.Textarea(
             attrs={
-                "class": INPUT_CLASS,
-                "rows": 4,
+                "class": INPUT_CLASS + " resize-y",
+                "rows": 2,
+                "style": "min-height: 2.75rem;",
                 "placeholder": "Capture the story and plating cues for this recipe...",
             }
         ),

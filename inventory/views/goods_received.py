@@ -32,7 +32,10 @@ class GRNListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         request = self.request
-        grns = GoodsReceivedNote.objects.select_related("purchase_order", "supplier")
+        grns = (
+            GoodsReceivedNote.objects.select_related("purchase_order", "supplier")
+            .prefetch_related("grnitem_set__po_item__item")
+        )
         filters = {
             "supplier": "supplier_id",
             "start_date": "received_date__gte",

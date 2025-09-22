@@ -144,18 +144,21 @@ class IndentsTableView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # Base queryset with overdue annotation
+        # Base queryset with related data and overdue annotation
         today = timezone.now().date()
-        qs = Indent.objects.all().annotate(
-            is_overdue=Case(
-                When(
-                    Q(date_required__lt=today)
-                    & ~Q(status__in=["COMPLETED", "APPROVED"]),
-                    then=Value(True),
+        qs = (
+            Indent.objects.select_related("department")
+            .annotate(
+                is_overdue=Case(
+                    When(
+                        Q(date_required__lt=today)
+                        & ~Q(status__in=["COMPLETED", "APPROVED"]),
+                        then=Value(True),
+                    ),
+                    default=Value(False),
+                    output_field=BooleanField(),
                 ),
-                default=Value(False),
-                output_field=BooleanField(),
-            ),
+            )
         )
         try:
             zero = Value(0, output_field=DecimalField(max_digits=12, decimal_places=2))

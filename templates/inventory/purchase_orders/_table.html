@@ -40,10 +40,35 @@
 <th scope="col" class="px-4 py-2 w-10">
   <input type="checkbox" aria-label="Select all" data-bulk-select-all />
 </th>
-<th scope="col" class="px-4 py-2 text-right" data-col="id">PO #</th>
-<th scope="col" class="px-4 py-2" data-col="supplier">Supplier</th>
+<th scope="col" class="px-4 py-2 text-right" data-col="id">
+  <a data-sort-link data-sort-key="po_id"
+     href="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=po_id&direction={% if sort == 'po_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+     hx-get="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=po_id&direction={% if sort == 'po_id' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+     hx-target="#purchase_orders_table"
+     class="flex items-center gap-1 justify-end focus:outline-none focus:ring-2 focus:ring-primary">
+    PO #
+    {% if sort == 'po_id' %}
+      <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+    {% else %}
+      <span class="text-xs text-gray-400">⇅</span>
+    {% endif %}
+  </a>
+</th>
+<th scope="col" class="px-4 py-2" data-col="supplier">
+  <a data-sort-link data-sort-key="supplier__name"
+     href="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=supplier__name&direction={% if sort == 'supplier__name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+     hx-get="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=supplier__name&direction={% if sort == 'supplier__name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+     hx-target="#purchase_orders_table"
+     class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+    Supplier
+    {% if sort == 'supplier__name' %}
+      <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+    {% else %}
+      <span class="text-xs text-gray-400">⇅</span>
+    {% endif %}
+  </a>
+</th>
 <th scope="col" class="px-4 py-2" data-col="order_date">
-  {# Sorting supported on order_date via HTMX partial endpoint #}
   <a data-sort-link data-sort-key="order_date"
      href="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=order_date&direction={% if sort == 'order_date' and direction == 'asc' %}desc{% else %}asc{% endif %}"
      hx-get="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=order_date&direction={% if sort == 'order_date' and direction == 'asc' %}desc{% else %}asc{% endif %}"
@@ -57,7 +82,20 @@
     {% endif %}
   </a>
 </th>
-<th scope="col" class="px-4 py-2" data-col="status">Status</th>
+<th scope="col" class="px-4 py-2" data-col="status">
+  <a data-sort-link data-sort-key="status"
+     href="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=status&direction={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+     hx-get="{% url 'purchase_orders_table' %}?{{ querystring|default:'' }}&sort=status&direction={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+     hx-target="#purchase_orders_table"
+     class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">
+    Status
+    {% if sort == 'status' %}
+      <span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>
+    {% else %}
+      <span class="text-xs text-gray-400">⇅</span>
+    {% endif %}
+  </a>
+</th>
 <th scope="col" class="px-4 py-2" data-col="progress">Progress</th>
 <th scope="col" class="px-4 py-2 text-right" data-col="actions">Actions</th>
 {% endblock %}

@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
+from django.core.cache import cache
 from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -16,6 +17,7 @@ from django.views.generic import TemplateView
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import PurchaseOrder, Supplier
 from ..services import goods_receiving_service, list_utils, purchase_order_service
+from ..services import purchase_order_kpis
 from ..services.exceptions import PurchaseOrderServiceError
 
 logger = logging.getLogger(__name__)
@@ -37,22 +39,40 @@ class PurchaseOrdersListView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         orders = PurchaseOrder.objects.select_related("supplier")
+
+        # Enhanced filters with search capability
         filters = {
             "status": "status",
             "supplier": "supplier_id",
             "start_date": "order_date__gte",
             "end_date": "order_date__lte",
         }
-        allowed_sorts = {"order_date"}
+
+        # Expanded sorting options
+        allowed_sorts = {
+            "order_date",
+            "po_id",
+            "supplier__name",
+            "status",
+            "expected_delivery_date",
+        }
+
+        # Apply filters, search, and sorting
         orders, params = list_utils.apply_filters_sort(
             self.request,
             orders,
+            search_fields=["po_id", "supplier__name", "notes"],  # NEW: Search support
             filter_fields=filters,
             allowed_sorts=allowed_sorts,
             default_sort="order_date",
             default_direction="desc",
         )
-        page_obj, _ = list_utils.paginate(self.request, orders, default_page_size=20)
+
+        # Adjustable page size
+        page_obj, per_page = list_utils.paginate(
+            self.request, orders, default_page_size=20
+        )
+
         progress_map = purchase_order_service.get_orders_progress(
             [o.pk for o in page_obj]
         )
@@ -69,20 +89,40 @@ class PurchaseOrdersListView(TemplateView):
                 o.progress_percent = 0
 
         statuses = PurchaseOrder._meta.get_field("status").choices
-        suppliers = Supplier.objects.all()
+        suppliers = Supplier.objects.filter(is_active=True).only("supplier_id", "name").order_by("name")
         querystring = list_utils.build_querystring(self.request)
         supplier_url = reverse("supplier_search")
         quick_form = PurchaseOrderForm(
             prefix="quick", supplier_suggest_url=supplier_url
         )
-        pending_receipts = PurchaseOrder.objects.filter(
-            status__in=["ORDERED", "PARTIAL"]
-        ).count()
+
+        # Get KPIs with caching
+        try:
+            kpis = cache.get_or_set(
+                "kpi:purchase_orders:summary",
+                purchase_order_kpis.get_po_summary_kpis,
+                120  # 2 minute cache
+            )
+        except Exception as e:  # pragma: no cover - defensive
+            logger.exception("Failed to load PO KPIs: %s", e)
+            kpis = {
+                "total_pos": 0,
+                "pending_count": 0,
+                "completed_count": 0,
+                "total_value": Decimal("0"),
+                "pending_value": Decimal("0"),
+                "overdue_count": 0,
+                "avg_lead_time": 0,
+            }
+
+        # View mode (table or cards)
+        view_mode = self.request.GET.get("view", "table")
 
         ctx.update(
             {
                 "orders": page_obj,
                 "page_obj": page_obj,
+                "page_size": per_page,  # NEW: Pass page size
                 "statuses": statuses,
                 "suppliers": suppliers,
                 "querystring": querystring,
@@ -91,7 +131,9 @@ class PurchaseOrdersListView(TemplateView):
                 "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Orders",
-                "pending_receipts": pending_receipts,
+                "kpis": kpis,  # NEW: KPIs data
+                "view": view_mode,  # NEW: View mode
+                "export_url": reverse("purchase_orders_export"),  # NEW: Export URL
             }
         )
         ctx.update(params)
@@ -128,22 +170,37 @@ class PurchaseOrdersTableView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         orders = PurchaseOrder.objects.select_related("supplier")
+
         filters = {
             "status": "status",
             "supplier": "supplier_id",
             "start_date": "order_date__gte",
             "end_date": "order_date__lte",
         }
-        allowed_sorts = {"order_date"}
+
+        # Expanded sorting options to match list view
+        allowed_sorts = {
+            "order_date",
+            "po_id",
+            "supplier__name",
+            "status",
+            "expected_delivery_date",
+        }
+
         orders, params = list_utils.apply_filters_sort(
             self.request,
             orders,
+            search_fields=["po_id", "supplier__name", "notes"],  # NEW: Search support
             filter_fields=filters,
             allowed_sorts=allowed_sorts,
             default_sort="order_date",
             default_direction="desc",
         )
-        page_obj, _ = list_utils.paginate(self.request, orders, default_page_size=20)
+
+        page_obj, per_page = list_utils.paginate(
+            self.request, orders, default_page_size=20
+        )
+
         progress_map = purchase_order_service.get_orders_progress(
             [o.pk for o in page_obj]
         )
@@ -164,7 +221,141 @@ class PurchaseOrdersTableView(TemplateView):
             {
                 "orders": page_obj,
                 "page_obj": page_obj,
+                "page_size": per_page,  # NEW: Pass page size
                 "querystring": querystring,
+                **params,
+            }
+        )
+        return ctx
+
+
+class PurchaseOrdersExportView(TemplateView):
+    """Export the filtered purchase orders as CSV."""
+
+    def get(self, request):
+        orders = PurchaseOrder.objects.select_related("supplier")
+        filters = {
+            "status": "status",
+            "supplier": "supplier_id",
+            "start_date": "order_date__gte",
+            "end_date": "order_date__lte",
+        }
+        allowed_sorts = {
+            "order_date",
+            "po_id",
+            "supplier__name",
+            "status",
+            "expected_delivery_date",
+        }
+        orders, _ = list_utils.apply_filters_sort(
+            request,
+            orders,
+            search_fields=["po_id", "supplier__name", "notes"],
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="order_date",
+            default_direction="desc",
+        )
+
+        # Annotate with progress for export
+        progress_map = purchase_order_service.get_orders_progress(
+            [o.pk for o in orders]
+        )
+
+        headers = [
+            "PO #",
+            "Supplier",
+            "Order Date",
+            "Expected Delivery",
+            "Status",
+            "Items Ordered",
+            "Items Received",
+            "Progress %",
+        ]
+
+        def row(po):
+            prog = progress_map.get(po.pk, {})
+            ordered = prog.get("ordered_total", Decimal("0"))
+            received = prog.get("received_total", Decimal("0"))
+            percent = prog.get("percent", 0)
+
+            return [
+                po.po_id,
+                po.supplier.name if po.supplier else "",
+                po.order_date.strftime("%Y-%m-%d") if po.order_date else "",
+                po.expected_delivery_date.strftime("%Y-%m-%d")
+                if po.expected_delivery_date
+                else "",
+                po.get_status_display(),
+                float(ordered),
+                float(received),
+                percent,
+            ]
+
+        return list_utils.export_as_csv(orders, headers, row, "purchase_orders.csv")
+
+
+class PurchaseOrdersCardsView(TemplateView):
+    """Render the paginated card grid of purchase orders."""
+
+    template_name = "inventory/purchase_orders/_cards.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        orders = PurchaseOrder.objects.select_related("supplier")
+
+        filters = {
+            "status": "status",
+            "supplier": "supplier_id",
+            "start_date": "order_date__gte",
+            "end_date": "order_date__lte",
+        }
+
+        allowed_sorts = {
+            "order_date",
+            "po_id",
+            "supplier__name",
+            "status",
+            "expected_delivery_date",
+        }
+
+        orders, params = list_utils.apply_filters_sort(
+            self.request,
+            orders,
+            search_fields=["po_id", "supplier__name", "notes"],
+            filter_fields=filters,
+            allowed_sorts=allowed_sorts,
+            default_sort="order_date",
+            default_direction="desc",
+        )
+
+        page_obj, per_page = list_utils.paginate(
+            self.request, orders, default_page_size=20
+        )
+
+        progress_map = purchase_order_service.get_orders_progress(
+            [o.pk for o in page_obj]
+        )
+        for o in page_obj:
+            o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+            prog = progress_map.get(o.pk)
+            if prog:
+                o.ordered_total = prog["ordered_total"]
+                o.received_total = prog["received_total"]
+                o.progress_percent = prog["percent"]
+            else:
+                o.ordered_total = Decimal("0")
+                o.received_total = Decimal("0")
+                o.progress_percent = 0
+
+        querystring = list_utils.build_querystring(self.request)
+        ctx.update(
+            {
+                "orders": page_obj,
+                "page_obj": page_obj,
+                "page_size": per_page,
+                "querystring": querystring,
+                "container_id": "purchase_orders_cards",
                 **params,
             }
         )

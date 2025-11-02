@@ -1,13 +1,31 @@
+from datetime import date, timedelta
+
 from django import forms
 
-from ..models import GoodsReceivedNote, GRNItem, PurchaseOrder, PurchaseOrderItem
+from ..models import GoodsReceivedNote, GRNItem, Item, PurchaseOrder, PurchaseOrderItem, Supplier
 from .base import INPUT_CLASS, StyledFormMixin
 
 
 class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
+    """Enhanced Purchase Order form with proper widgets and smart defaults."""
+
+    # Override supplier to use proper select dropdown
+    supplier = forms.ModelChoiceField(
+        queryset=Supplier.objects.filter(is_active=True).order_by('name'),
+        empty_label="Select Supplier",
+        required=True,
+        help_text="Choose the supplier for this purchase order",
+        widget=forms.Select(attrs={"class": INPUT_CLASS + " predictive"}),
+    )
+
     notes = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+        widget=forms.Textarea(attrs={
+            "class": INPUT_CLASS,
+            "rows": 3,
+            "placeholder": "Add notes about this purchase order..."
+        }),
+        help_text="Optional notes or special instructions",
     )
 
     class Meta:
@@ -19,22 +37,43 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
             "status",
             "notes",
         ]
+        widgets = {
+            "order_date": forms.DateInput(attrs={
+                "type": "date",
+                "class": INPUT_CLASS,
+            }),
+            "expected_delivery_date": forms.DateInput(attrs={
+                "type": "date",
+                "class": INPUT_CLASS,
+            }),
+        }
+        help_texts = {
+            "order_date": "Date when the order was placed",
+            "expected_delivery_date": "Estimated delivery date from supplier",
+            "status": "Current status of this purchase order",
+        }
 
     def __init__(self, *args, supplier_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        supplier_attrs = {"class": INPUT_CLASS}
-        if supplier_suggest_url:
-            supplier_attrs.update(
-                {
-                    "hx-get": supplier_suggest_url,
-                    "hx-trigger": "keyup changed delay:500ms",
-                    "hx-target": "#supplier-options",
-                    "list": "supplier-options",
-                }
-            )
-        self.fields["supplier"].widget = forms.TextInput()
-        self.fields["supplier"].widget.attrs.update(supplier_attrs)
+
+        # Set smart defaults for new forms
+        if not self.instance.pk:
+            today = date.today()
+            self.fields["order_date"].initial = today
+            # Default expected delivery to 7 days from now
+            self.fields["expected_delivery_date"].initial = today + timedelta(days=7)
+
+        # Configure date field constraints
+        today = date.today()
+        self.fields["order_date"].widget.attrs.update({
+            "max": today.strftime("%Y-%m-%d"),  # Can't order in future
+        })
+        self.fields["expected_delivery_date"].widget.attrs.update({
+            "min": today.strftime("%Y-%m-%d"),  # Delivery must be future
+        })
+
         # Prevent setting ORDERED directly in the form
+        # (Use "Mark as Ordered" button instead)
         try:
             status_field = self.fields.get("status")
             if status_field and getattr(status_field, "choices", None):
@@ -46,28 +85,25 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
                 status_field.choices = filtered
         except Exception:
             pass
+
         self.apply_styling()
 
 
 class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
-    """Enhanced purchase order item form with price history and validation."""
+    """Enhanced purchase order item form with proper item selection and validation."""
 
-    # Add a display field for last purchase price
-    last_purchase_price = forms.DecimalField(
-        required=False,
-        widget=forms.NumberInput(
-            attrs={
-                "class": INPUT_CLASS + " bg-gray-100",
-                "readonly": True,
-                "placeholder": "N/A",
-            }
-        ),
-        help_text="Last purchase price for reference",
+    # Override item to use proper select dropdown
+    item = forms.ModelChoiceField(
+        queryset=Item.objects.filter(is_active=True).order_by('name'),
+        empty_label="Select Item",
+        required=True,
+        help_text="Choose an item for this purchase order",
+        widget=forms.Select(attrs={"class": INPUT_CLASS + " predictive"}),
     )
 
     class Meta:
         model = PurchaseOrderItem
-        fields = ["item", "quantity_ordered", "unit_price", "last_purchase_price"]
+        fields = ["item", "quantity_ordered", "unit_price"]
         widgets = {
             "quantity_ordered": forms.NumberInput(
                 attrs={
@@ -86,28 +122,35 @@ class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
                 }
             ),
         }
+        help_texts = {
+            "quantity_ordered": "Quantity to order (in purchase units)",
+            "unit_price": "Price per unit",
+        }
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        item_attrs = {"class": INPUT_CLASS}
-        if item_suggest_url:
-            item_attrs.update(
-                {
-                    "hx-get": item_suggest_url,
-                    "hx-trigger": "keyup changed delay:500ms",
-                    "hx-target": "#item-options",
-                    "list": "item-options",
-                }
-            )
-        self.fields["item"].widget = forms.TextInput()
-        self.fields["item"].widget.attrs.update(item_attrs)
 
-        # If we have an instance with an item, populate last purchase price
+        # Add helpful context to unit_price field
         if self.instance and hasattr(self.instance, "item") and self.instance.item:
             try:
-                last_price = self.instance.item.last_purchase_price
-                if last_price:
-                    self.fields["last_purchase_price"].initial = last_price
+                item = self.instance.item
+                help_parts = []
+
+                # Show last purchase price if available
+                if item.last_purchase_price:
+                    help_parts.append(f"Last price: ${item.last_purchase_price:.2f}")
+
+                # Show item unit
+                if hasattr(item, 'unit') and item.unit:
+                    help_parts.append(f"Unit: {item.unit}")
+
+                if help_parts:
+                    self.fields["unit_price"].help_text = " | ".join(help_parts)
+
+                # Auto-populate unit price from last purchase price
+                if item.last_purchase_price and not self.instance.pk:
+                    self.fields["unit_price"].initial = item.last_purchase_price
+
             except AttributeError:
                 pass
 
@@ -178,14 +221,45 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
 
 
 class GRNForm(StyledFormMixin, forms.ModelForm):
+    """Goods Received Note form with proper date widget."""
+
     notes = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
+        widget=forms.Textarea(attrs={
+            "class": INPUT_CLASS,
+            "rows": 3,
+            "placeholder": "Add notes about this delivery..."
+        }),
+        help_text="Optional notes about the received goods",
     )
 
     class Meta:
         model = GoodsReceivedNote
         fields = ["received_date", "notes"]
+        widgets = {
+            "received_date": forms.DateInput(attrs={
+                "type": "date",
+                "class": INPUT_CLASS,
+            }),
+        }
+        help_texts = {
+            "received_date": "Date when goods were received",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Set default received date to today for new GRNs
+        if not self.instance.pk:
+            self.fields["received_date"].initial = date.today()
+
+        # Configure date constraints
+        today = date.today()
+        self.fields["received_date"].widget.attrs.update({
+            "max": today.strftime("%Y-%m-%d"),  # Can't receive in future
+        })
+
+        self.apply_styling()
 
 
 GRNItemFormSet = forms.inlineformset_factory(

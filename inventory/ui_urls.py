@@ -43,6 +43,8 @@ from .views.purchase_orders import (
     PurchaseOrderEditPartialView,
     PurchaseOrderQuickCreatePartialView,
     PurchaseOrderReceivePartialView,
+    PurchaseOrdersCardsView,
+    PurchaseOrdersExportView,
     PurchaseOrdersTableView,
     mark_ordered,
     purchase_order_create,
@@ -164,6 +166,16 @@ urlpatterns = [
         "purchase-orders/table/",
         PurchaseOrdersTableView.as_view(),
         name="purchase_orders_table",
+    ),
+    path(
+        "purchase-orders/cards/",
+        PurchaseOrdersCardsView.as_view(),
+        name="purchase_orders_cards",
+    ),
+    path(
+        "purchase-orders/export/",
+        PurchaseOrdersExportView.as_view(),
+        name="purchase_orders_export",
     ),
     path(
         "purchase-orders/quick-create/partial/",

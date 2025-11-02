@@ -1,0 +1,88 @@
+{% load icon_tags %}
+
+<div id="{{ container_id|default:'purchase_orders_cards' }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for po in orders %}
+  <div class="bg-surface border border-border rounded-xl shadow-card p-4 hover:shadow-lg transition-shadow">
+    <div class="flex justify-between items-start mb-3">
+      <div>
+        <h3 class="text-lg font-semibold text-bodyText">
+          <a href="{% url 'purchase_order_detail' po.pk %}" class="text-primary hover:underline">
+            PO #{{ po.pk }}
+          </a>
+        </h3>
+        <p class="text-sm text-gray-600">{{ po.supplier.name }}</p>
+      </div>
+      <span class="px-2 py-1 rounded-full text-xs font-medium {{ po.badge_class }}">
+        {{ po.get_status_display }}
+      </span>
+    </div>
+
+    <div class="space-y-2 mb-4">
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600">Order Date:</span>
+        <span class="font-medium text-bodyText tabular-nums">{{ po.order_date }}</span>
+      </div>
+      {% if po.expected_delivery_date %}
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600">Expected:</span>
+        <span class="font-medium text-bodyText tabular-nums">{{ po.expected_delivery_date }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <div class="flex justify-between text-xs text-gray-600 mb-1">
+        <span>Progress</span>
+        <span class="tabular-nums">{{ po.progress_percent }}%</span>
+      </div>
+      <div class="w-full bg-surfaceSubtle rounded-full h-2"
+           role="progressbar"
+           aria-valuenow="{{ po.progress_percent }}"
+           aria-valuemin="0"
+           aria-valuemax="100">
+        <div class="h-2 bg-primary rounded-full transition-all" style="width: {{ po.progress_percent }}%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-gray-600 mt-1">
+        <span>Received</span>
+        <span class="tabular-nums">{{ po.received_total }} / {{ po.ordered_total }}</span>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-3 border-t border-border">
+      <a href="{% url 'purchase_order_detail' po.pk %}"
+         class="text-primary hover:text-primary-dark"
+         title="View">
+        {% icon 'eye' 'w-5 h-5' %}
+        <span class="sr-only">View</span>
+      </a>
+      <a href="{% url 'purchase_order_edit' po.pk %}"
+         data-modal-url="{% url 'purchase_order_edit_partial' po.pk %}"
+         data-modal-type="drawer"
+         data-modal-prefetch="hover"
+         class="text-primary hover:text-primary-dark"
+         title="Edit">
+        {% icon 'pencil-square' 'w-5 h-5' %}
+        <span class="sr-only">Edit</span>
+      </a>
+      <a href="{% url 'purchase_order_receive' po.pk %}"
+         data-modal-url="{% url 'purchase_order_receive_partial' po.pk %}"
+         data-modal-type="drawer"
+         data-modal-prefetch="hover"
+         class="text-primary hover:text-primary-dark"
+         title="Receive Goods">
+        {% icon 'arrow-down-tray' 'w-5 h-5' %}
+        <span class="sr-only">Receive</span>
+      </a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-span-full">
+    {% url 'purchase_order_create' as po_create_url %}
+    {% include "components/empty_state.html" with title="No Purchase Orders" message="Create a new purchase order to get started." cta_label="New PO" cta_url=po_create_url %}
+  </div>
+  {% endfor %}
+</div>
+
+<div class="mt-4">
+  {% include "components/pagination.html" with page_obj=page_obj base_url="" extra_query=querystring hx_target="#purchase_orders_cards" %}
+</div>

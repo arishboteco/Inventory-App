@@ -37,7 +37,9 @@ def test_forecast_fallback_on_error(db, monkeypatch, caplog):
     def bad_fit(self, *args, **kwargs):
         raise ValueError("boom")
 
-    monkeypatch.setattr(ml.SimpleExpSmoothing, "fit", bad_fit)
+    from statsmodels.tsa.holtwinters import SimpleExpSmoothing
+
+    monkeypatch.setattr(SimpleExpSmoothing, "fit", bad_fit)
     with caplog.at_level("ERROR"):
         forecast = ml.forecast_item_demand(item, periods=3)
 

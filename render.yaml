@@ -45,12 +45,5 @@ services:
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: inventory-db
-          property: connectionString
+        sync: false
     healthCheckPath: /
-
-databases:
-  - name: inventory-db
-    databaseName: inventory_app
-    user: inventory_user

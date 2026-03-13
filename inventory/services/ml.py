@@ -7,7 +7,6 @@ from django.core.cache import cache
 from django.db.models import Sum
 from django.db.models.functions import Abs, TruncDate
 from django_q.tasks import async_task
-from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 
 from ..models import Item, StockTransaction
 
@@ -35,6 +34,12 @@ def forecast_item_demand(
         List of forecasted quantities for each future period. If fewer than two
         historical data points are available, returns zeros.
     """
+    try:
+        from statsmodels.tsa.holtwinters import SimpleExpSmoothing
+    except Exception:
+        logger.warning("statsmodels unavailable; returning zero forecasts")
+        return [0.0 for _ in range(periods)]
+
     if series is None:
         if item is None:
             raise ValueError("Either item or series must be provided")

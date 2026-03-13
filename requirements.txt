@@ -17,7 +17,7 @@ gunicorn==23.0.0              # WSGI server (sync workers)
 psycopg[binary]==3.2.9        # PostgreSQL driver v3
 fpdf2==2.8.4                  # PDF generation for GRNs / indents
 pydantic==2.11.7              # Data validation / view models
-statsmodels==0.14.5           # Forecasting (Holt-Winters)
+statsmodels==0.14.4           # Forecasting (Holt-Winters) — 0.14.5 incompatible with Python 3.13.4
 django-q2==1.8.0              # Background task queue
 
 # NOTE: Removed (previously present):

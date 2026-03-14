@@ -72,6 +72,7 @@ class IndentsListView(TemplateView):
                 "list_id": "indent-statuses",
                 "options": [
                     {"value": "", "label": "All Statuses"},
+                    {"value": "PENDING", "label": "Pending"},
                     {"value": "SUBMITTED", "label": "Submitted"},
                     {"value": "PROCESSING", "label": "Processing"},
                     {"value": "COMPLETED", "label": "Completed"},

@@ -75,6 +75,7 @@ from .views.suppliers import (
     SuppliersTableView,
     SupplierToggleActiveView,
 )
+from .views.settings import settings_view
 from .views.visualizations import visualizations
 
 urlpatterns = [
@@ -242,4 +243,5 @@ urlpatterns = [
     ),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
     path("guides/workflow/", WorkflowGuideView.as_view(), name="workflow_guide"),
+    path("settings/", settings_view, name="settings"),
 ]

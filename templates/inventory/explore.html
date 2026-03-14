@@ -35,16 +35,49 @@
 
 {% block data_container %}
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <ul class="divide-y divide-border">
-    {% for item in page_obj.object_list %}
-      <li class="px-4 py-3 text-bodyText flex justify-between items-center">
-        <span>{{ item.name }}</span>
-        <span class="text-xs text-gray-500">{% if item.is_active %}Active{% else %}Inactive{% endif %}</span>
-      </li>
-    {% empty %}
-      <li class="px-4 py-6 text-center text-gray-600">No results</li>
-    {% endfor %}
-    </ul>
+    <div class="overflow-x-auto">
+    <table class="min-w-full w-full table-auto text-sm">
+      <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+        <tr>
+          <th scope="col" class="px-4 py-2.5">Item Name</th>
+          <th scope="col" class="px-4 py-2.5">Category</th>
+          <th scope="col" class="px-4 py-2.5">Unit</th>
+          <th scope="col" class="px-4 py-2.5 text-right">Current Stock</th>
+          <th scope="col" class="px-4 py-2.5 text-right">Reorder Point</th>
+          <th scope="col" class="px-4 py-2.5">Stock Status</th>
+          <th scope="col" class="px-4 py-2.5">Active</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+      {% for item in page_obj.object_list %}
+        <tr class="hover:bg-surfaceSubtle {% if item.current_stock <= 0 %}bg-red-50{% elif item.current_stock < item.reorder_point %}bg-amber-50{% endif %}">
+          <td class="px-4 py-2 font-medium text-bodyText">
+            <a href="{% url 'item_detail' item.item_id %}" class="hover:text-primary hover:underline">{{ item.name }}</a>
+          </td>
+          <td class="px-4 py-2 text-gray-600">{{ item.category.category|default:'—' }}</td>
+          <td class="px-4 py-2 text-gray-600">{{ item.unit.base_unit|default:'—' }}</td>
+          <td class="px-4 py-2 text-right tabular-nums font-medium
+            {% if item.current_stock <= 0 %}text-red-700{% elif item.current_stock < item.reorder_point %}text-amber-700{% else %}text-green-700{% endif %}">
+            {{ item.current_stock|floatformat:2 }}
+          </td>
+          <td class="px-4 py-2 text-right tabular-nums text-gray-600">{{ item.reorder_point|floatformat:2 }}</td>
+          <td class="px-4 py-2">
+            {% if item.current_stock <= 0 %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-red-700 bg-red-100">Out of Stock</span>
+            {% elif item.current_stock < item.reorder_point %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-amber-700 bg-amber-100">Low Stock</span>
+            {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-green-700 bg-green-100">In Stock</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs text-gray-500">{% if item.is_active %}Active{% else %}Inactive{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-600">No results</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
   </div>
 {% endblock %}
 

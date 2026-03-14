@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
+from django.db.models.functions import TruncDate
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -554,9 +555,16 @@ def history_reports(request):
         },
     ]
 
-    chart_qs = qs.order_by("transaction_date")
-    chart_labels = [tx.transaction_date.strftime("%Y-%m-%d") for tx in chart_qs]
-    chart_data = [float(tx.quantity_change) for tx in chart_qs]
+    chart_by_date = (
+        qs.annotate(date=TruncDate("transaction_date"))
+        .values("date")
+        .annotate(total=Sum("quantity_change"))
+        .order_by("date")
+    )
+    chart_labels = [
+        row["date"].strftime("%Y-%m-%d") for row in chart_by_date if row["date"]
+    ]
+    chart_data = [float(row["total"] or 0) for row in chart_by_date if row["date"]]
 
     tabs = [
         {

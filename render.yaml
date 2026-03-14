@@ -1,6 +1,19 @@
-# 🚀 RENDER.COM CONFIGURATION - FIXED THREADING ISSUES
-# 🔧 Updated: 2025-08-27 - Using sync workers instead of gevent
-# 🎯 This configuration resolves database threading errors
+# RENDER.COM CONFIGURATION
+# Using sync workers (resolves database threading errors).
+#
+# Cold-start latency (free tier):
+#   Render free-tier web services sleep after 15 min of inactivity.
+#   Options to reduce cold starts:
+#     1. Upgrade to Starter plan ($7/mo) for always-on service.
+#     2. Use an external uptime monitor (e.g. UptimeRobot) to ping
+#        the healthCheckPath (/) every 10 min to prevent sleeping.
+#
+# Django Q worker:
+#   The worker service below runs qcluster to process async tasks
+#   (ML forecasting, ABC classification). Without it, async_task()
+#   calls queue jobs that are never executed.
+#   IMPORTANT: Render background workers require at least the Starter
+#   plan. Remove or comment out the worker service if on the free plan.
 
 services:
   - type: web
@@ -47,3 +60,25 @@ services:
       - key: DATABASE_URL
         sync: false
     healthCheckPath: /
+
+  # Django Q background worker — requires Starter plan or above.
+  # Comment out this service if running on the free plan.
+  - type: worker
+    name: inventory-app-worker
+    runtime: python3
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py qcluster
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: inventory_app.settings.prod
+      - key: DEBUG
+        value: False
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: inventory-app
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DATABASE_URL
+        sync: false

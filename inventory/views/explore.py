@@ -13,7 +13,7 @@ Item = models_items.Item
 
 def _filter_items(request):
     """Return filtered and sorted queryset of items."""
-    qs = Item.objects.all()
+    qs = Item.objects.select_related("unit", "category").all()
     qs, params = list_utils.apply_filters_sort(
         request,
         qs,

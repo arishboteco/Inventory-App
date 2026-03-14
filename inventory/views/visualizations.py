@@ -1,8 +1,13 @@
+import logging
+
+from django.db import OperationalError, ProgrammingError
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import render
 
 from ..models import SaleTransaction, StockTransaction
+
+logger = logging.getLogger(__name__)
 
 
 def visualizations(request):
@@ -10,31 +15,46 @@ def visualizations(request):
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
 
-    sales_qs = SaleTransaction.objects.all()
-    stock_qs = StockTransaction.objects.all()
+    sales_map = {}
+    stock_map = {}
 
-    if start_date:
-        sales_qs = sales_qs.filter(sale_date__date__gte=start_date)
-        stock_qs = stock_qs.filter(transaction_date__date__gte=start_date)
-    if end_date:
-        sales_qs = sales_qs.filter(sale_date__date__lte=end_date)
-        stock_qs = stock_qs.filter(transaction_date__date__lte=end_date)
+    try:
+        sales_qs = SaleTransaction.objects.all()
+        stock_qs = StockTransaction.objects.all()
 
-    sales_data = (
-        sales_qs.annotate(date=TruncDate("sale_date"))
-        .values("date")
-        .annotate(total=Sum("quantity"))
-        .order_by("date")
-    )
-    stock_data = (
-        stock_qs.annotate(date=TruncDate("transaction_date"))
-        .values("date")
-        .annotate(total=Sum("quantity_change"))
-        .order_by("date")
-    )
+        if start_date:
+            sales_qs = sales_qs.filter(sale_date__date__gte=start_date)
+            stock_qs = stock_qs.filter(transaction_date__date__gte=start_date)
+        if end_date:
+            sales_qs = sales_qs.filter(sale_date__date__lte=end_date)
+            stock_qs = stock_qs.filter(transaction_date__date__lte=end_date)
 
-    sales_map = {d["date"].isoformat(): float(d["total"]) for d in sales_data}
-    stock_map = {d["date"].isoformat(): float(d["total"]) for d in stock_data}
+        sales_data = (
+            sales_qs.annotate(date=TruncDate("sale_date"))
+            .values("date")
+            .annotate(total=Sum("quantity"))
+            .order_by("date")
+        )
+        stock_data = (
+            stock_qs.annotate(date=TruncDate("transaction_date"))
+            .values("date")
+            .annotate(total=Sum("quantity_change"))
+            .order_by("date")
+        )
+
+        sales_map = {
+            d["date"].isoformat(): float(d["total"] or 0)
+            for d in sales_data
+            if d["date"] is not None
+        }
+        stock_map = {
+            d["date"].isoformat(): float(d["total"] or 0)
+            for d in stock_data
+            if d["date"] is not None
+        }
+    except (OperationalError, ProgrammingError) as exc:
+        logger.warning("visualizations: DB query failed – %s", exc)
+
     dates = sorted(set(sales_map) | set(stock_map))
 
     heatmap_z = [

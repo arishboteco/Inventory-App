@@ -1,26 +1,39 @@
-<canvas id="history-chart" class="w-full h-64"></canvas>
+<div class="w-full h-64 p-4">
+  <canvas id="history-chart"></canvas>
+</div>
 {{ chart_labels|json_script:"history-chart-labels" }}
 {{ chart_data|json_script:"history-chart-data" }}
 <script>
-  const labels = JSON.parse(document.getElementById('history-chart-labels').textContent);
-  const data = JSON.parse(document.getElementById('history-chart-data').textContent);
-  const ctx = document.getElementById('history-chart').getContext('2d');
-  const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Stock Change',
-        data: data,
-        borderColor: primaryColor,
-        fill: false,
-        tension: 0.1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
+  (function () {
+    var labels = JSON.parse(document.getElementById('history-chart-labels').textContent);
+    var data = JSON.parse(document.getElementById('history-chart-data').textContent);
+    var canvas = document.getElementById('history-chart');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#2563eb';
+    if (window._historyChart) { window._historyChart.destroy(); }
+    window._historyChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Stock Change',
+          data: data,
+          backgroundColor: primaryColor + '99',
+          borderColor: primaryColor,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { ticks: { maxTicksLimit: 12 } }
+        }
+      }
+    });
+  })();
 </script>

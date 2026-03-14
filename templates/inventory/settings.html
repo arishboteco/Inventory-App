@@ -1,0 +1,199 @@
+{% extends "components/create_manage_layout.html" %}
+{% block page_title %}Settings – Inventory Pro{% endblock %}
+{% block page_heading %}Settings{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Manage reference data: units, categories, and departments.</p>
+{% endblock %}
+
+{% block data_container %}
+<div class="space-y-6">
+
+  {# ── Units ─────────────────────────────────────────────────────── #}
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-bodyText">Units of Measurement</h2>
+      <span class="text-xs text-gray-500">{{ units|length }} unit{{ units|length|pluralize }}</span>
+    </div>
+    <div class="p-4 space-y-4">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-bodyText">
+          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+            <tr>
+              <th class="px-3 py-2 text-left">Purchase Unit</th>
+              <th class="px-3 py-2 text-left">Base Unit</th>
+              <th class="px-3 py-2 text-right">Conversion Factor</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {% for unit in units %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle">
+              <td class="px-3 py-2">{{ unit.purchase_unit }}</td>
+              <td class="px-3 py-2">{{ unit.base_unit }}</td>
+              <td class="px-3 py-2 text-right tabular-nums">{{ unit.conversion_factor }}</td>
+              <td class="px-3 py-2 text-right">
+                <form method="post" class="inline" onsubmit="return confirm('Delete this unit?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_unit">
+                  <input type="hidden" name="unit_id" value="{{ unit.unit_id }}">
+                  <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="px-3 py-4 text-center text-gray-500">No units defined.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="flex flex-wrap gap-2 items-end border-t border-border pt-4">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_unit">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Purchase Unit</label>
+          <input type="text" name="purchase_unit" required placeholder="e.g. kg" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Base Unit</label>
+          <input type="text" name="base_unit" required placeholder="e.g. g" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Conversion Factor</label>
+          <input type="number" name="conversion_factor" value="1" step="any" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-32">
+        </div>
+        <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Add Unit</button>
+      </form>
+    </div>
+  </div>
+
+  {# ── Categories ───────────────────────────────────────────────── #}
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-bodyText">Categories</h2>
+      <span class="text-xs text-gray-500">{{ categories|length }} entr{{ categories|length|pluralize:"y,ies" }}</span>
+    </div>
+    <div class="p-4 space-y-4">
+      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+        <table class="min-w-full text-sm text-bodyText">
+          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600 sticky top-0">
+            <tr>
+              <th class="px-3 py-2 text-left">Category</th>
+              <th class="px-3 py-2 text-left">Subcategory</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {% for cat in categories %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle">
+              <td class="px-3 py-2">{{ cat.category }}</td>
+              <td class="px-3 py-2 text-gray-500">{{ cat.sub_category|default:'—' }}</td>
+              <td class="px-3 py-2 text-right">
+                <form method="post" class="inline" onsubmit="return confirm('Delete this category entry?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_category">
+                  <input type="hidden" name="category_id" value="{{ cat.category_id }}">
+                  <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="px-3 py-4 text-center text-gray-500">No categories defined.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="flex flex-wrap gap-2 items-end border-t border-border pt-4">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_category">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Category</label>
+          <input type="text" name="category" required placeholder="e.g. Dairy" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Subcategory <span class="text-gray-400">(optional)</span></label>
+          <input type="text" name="sub_category" placeholder="e.g. Cheese" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
+        </div>
+        <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Add Category</button>
+      </form>
+    </div>
+  </div>
+
+  {# ── Departments ──────────────────────────────────────────────── #}
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-bodyText">Departments</h2>
+      <span class="text-xs text-gray-500">{{ departments|length }} department{{ departments|length|pluralize }}</span>
+    </div>
+    <div class="p-4 space-y-4">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-bodyText">
+          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+            <tr>
+              <th class="px-3 py-2 text-left">Name</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {% for dept in departments %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle">
+              <td class="px-3 py-2">{{ dept.name }}</td>
+              <td class="px-3 py-2 text-right">
+                <form method="post" class="inline" onsubmit="return confirm('Delete this department?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_department">
+                  <input type="hidden" name="department_id" value="{{ dept.department_id }}">
+                  <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="px-3 py-4 text-center text-gray-500">No departments defined.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <form method="post" class="flex flex-wrap gap-2 items-end border-t border-border pt-4">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_department">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-medium text-gray-700">Department Name</label>
+          <input type="text" name="name" required placeholder="e.g. Kitchen" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-48">
+        </div>
+        <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Add Department</button>
+      </form>
+    </div>
+  </div>
+
+  {# ── User Profile ─────────────────────────────────────────────── #}
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-4 pt-4 pb-2 border-b border-border">
+      <h2 class="text-lg font-semibold text-bodyText">User Profile</h2>
+    </div>
+    <div class="p-4">
+      <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Username</dt>
+          <dd class="mt-1 text-bodyText">{{ request.user.username }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Name</dt>
+          <dd class="mt-1 text-bodyText">{{ request.user.get_full_name|default:'—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</dt>
+          <dd class="mt-1 text-bodyText">{{ request.user.email|default:'—' }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Role</dt>
+          <dd class="mt-1 text-bodyText">{% if request.user.is_superuser %}Administrator{% elif request.user.is_staff %}Staff{% else %}User{% endif %}</dd>
+        </div>
+      </dl>
+      <div class="mt-4 flex gap-2">
+        <a href="/admin/password_change/" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Change Password</a>
+        <a href="/admin/auth/user/{{ request.user.pk }}/change/" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Edit Profile</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

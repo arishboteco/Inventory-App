@@ -65,6 +65,7 @@
         input.setAttribute('hx-indicator', '#htmx-spinner');
         form.appendChild(input);
       });
+      htmx.process(form);
       flatpickr('#date-range', {
         mode: 'range',
         dateFormat: 'Y-m-d',
@@ -81,11 +82,7 @@
 
 {% block data_container %}
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div id="history_table"
-         hx-get="{% url 'history_reports' %}"
-         hx-trigger="load"
-         hx-include="#filters"
-         hx-indicator="#htmx-spinner">
+    <div id="history_table">
     {% include "inventory/_history_tabs.html" %}
     </div>
   </div>

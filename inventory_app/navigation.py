@@ -38,6 +38,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "description": "Capture and prioritise internal demand.",
                 "url_name": "indents_list",
             },
+            {
+                "title": "Consolidation Planner",
+                "description": "Bundle approved indents into supplier orders.",
+                "url_name": "indents_consolidate_preview",
+            },
         ],
     ),
     (
@@ -69,11 +74,6 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "url_name": "stock_movements",
             },
             {
-                "title": "Consolidation Planner",
-                "description": "Bundle approved indents into supplier orders.",
-                "url_name": "indents_consolidate_preview",
-            },
-            {
                 "title": "Inventory Explorer",
                 "description": "Search items, batches, and availability.",
                 "url_name": "explore",
@@ -95,7 +95,7 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 },
                 {
                     "title": "ML Planner",
-                    "description": "Run scenarios and predictive insights.",
+                    "description": "View ABC classification and demand forecasts.",
                     "url_name": "ml_dashboard",
                 },
                 {

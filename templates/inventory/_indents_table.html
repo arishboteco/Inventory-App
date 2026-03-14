@@ -93,7 +93,7 @@
     <td class="px-3 py-2 align-middle">
       <input type="checkbox" name="indent_id" value="{{ row.indent_id }}" class="form-checkbox h-4 w-4 text-primary" aria-label="Select indent {{ row.mrn }}" data-bulk-checkbox />
     </td>
-    <td class="px-4 py-2" data-col="mrn"><span class="tabular-nums">{{ row.mrn }}</span></td>
+    <td class="px-4 py-2" data-col="mrn"><span class="tabular-nums">{{ row.mrn|default:'Auto-assigned' }}</span></td>
     <td class="px-4 py-2 whitespace-normal break-words" data-col="requested_by">{{ row.requested_by }}</td>
     <td class="px-4 py-2 whitespace-normal break-words" data-col="department">{{ row.department }}</td>
     <td class="px-4 py-2" data-col="status">

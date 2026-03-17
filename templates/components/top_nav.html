@@ -123,14 +123,16 @@
         <div class="relative" x-data="{open:false}" @keydown.escape.window="open=false">
           <button @click="open=!open" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 relative focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()" aria-label="View notifications">
             {% icon 'bell' 'h-6 w-6' aria_label='' %}
-            <span class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-caption rounded-full flex items-center justify-center">3</span>
+            {% if notification_count %}<span class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-caption rounded-full flex items-center justify-center">{{ notification_count }}</span>{% endif %}
           </button>
           <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
             <div class="py-2">
               <div class="px-4 py-2 text-sm text-gray-700 font-medium border-b border-gray-100">Notifications</div>
-              <a href="{% url 'history_reports' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">View history reports</a>
-              <a href="{% url 'purchase_orders_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recent purchase orders</a>
-              <div class="px-4 py-2 text-sm text-gray-500">No new notifications</div>
+              {% for notif in notifications %}
+                <a href="{{ notif.url }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ notif.text }}</a>
+              {% empty %}
+                <div class="px-4 py-2 text-sm text-gray-500">No new notifications</div>
+              {% endfor %}
             </div>
           </div>
         </div>

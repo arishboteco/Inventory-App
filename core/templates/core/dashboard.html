@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<div class="container mx-auto px-8 max-md:px-6 max-sm:px-4 py-8 space-y-8">
+<div class="container mx-auto px-8 max-md:px-6 max-sm:px-4 py-8 space-y-8 min-h-[calc(100vh-8rem)]">
   {% if not user.is_authenticated %}
     <div class="bg-primary text-white rounded p-8 text-center">
       <h1 class="text-h1 font-bold">Welcome to Inventory Pro</h1>
@@ -26,7 +26,23 @@
   {% else %}
     {% include "core/_kpi_cards.html" with items=item_count low_stock=low_stock suppliers=supplier_count pending_indents=pending_indents %}
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-8">
+    <!-- Quick Actions -->
+    <div class="flex flex-wrap gap-3">
+      <a href="{% url 'indent_create' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-primary">
+        <span aria-hidden="true">+</span> New Indent
+      </a>
+      <a href="{% url 'grn_list' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-primary">
+        <span aria-hidden="true">&#8595;</span> Record Delivery
+      </a>
+      <a href="{% url 'stock_movements' %}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-primary">
+        <span aria-hidden="true">&#177;</span> Adjust Stock
+      </a>
+      <a href="{% url 'items_list' %}?stock_status=low" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border border-amber-400 rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition focus:outline-none focus:ring-2 focus:ring-amber-400">
+        <span aria-hidden="true">&#9888;</span> View Low Stock
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div class="card">
         <div class="card-header"><h3 class="text-lg font-semibold">Filters</h3></div>
         <div class="card-body">
@@ -64,11 +80,15 @@
           </form>
         </div>
       </div>
-      <div class="card lg:col-span-2">
+      <div class="card lg:col-span-3">
         <div class="card-header"><h3 class="text-lg font-semibold">Stock Trend</h3></div>
         <div class="card-body">
-          <div id="stock-trend-placeholder" class="h-64 flex items-center justify-center text-gray-500 hidden">
-            No data available for the selected filters.
+          <div id="stock-trend-placeholder" class="h-64 flex flex-col items-center justify-center text-gray-500 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+            </svg>
+            <p class="text-sm font-medium">No data for the selected filters</p>
+            <p class="text-xs text-gray-400 mt-1">Stock movement data will appear here once transactions are recorded.</p>
           </div>
           <div class="h-64"><canvas id="stock-trend-chart" class="w-full h-full"></canvas></div>
         </div>

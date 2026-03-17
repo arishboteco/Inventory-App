@@ -103,6 +103,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                     "description": "Follow the end-to-end Inventory Pro process.",
                     "url_name": "workflow_guide",
                 },
+                {
+                    "title": "Settings",
+                    "description": "Manage reference data: units, categories, departments.",
+                    "url_name": "settings",
+                },
             ],
         ),
 ]
@@ -189,5 +194,31 @@ def get_navigation_groups(
 
 
 def primary_navigation(request):
-    """Provide grouped navigation data for the top navigation bar."""
-    return {"navigation_groups": get_navigation_groups()}
+    """Provide grouped navigation data and notification counts for the top nav."""
+    ctx = {"navigation_groups": get_navigation_groups()}
+    if hasattr(request, "user") and request.user.is_authenticated:
+        try:
+            from inventory.services import kpis
+
+            low = kpis.low_stock_count()
+            pending = sum(kpis.pending_indent_counts().values())
+            notifications = []
+            if pending > 0:
+                noun = "indent" if pending == 1 else "indents"
+                notifications.append(
+                    {"text": f"{pending} {noun} awaiting approval", "url": "/indents/?status=PENDING"}
+                )
+            if low > 0:
+                noun = "item" if low == 1 else "items"
+                notifications.append(
+                    {"text": f"{low} {noun} below reorder level", "url": "/items/?stock_status=low"}
+                )
+            ctx["notification_count"] = low + pending
+            ctx["notifications"] = notifications
+        except Exception:
+            ctx["notification_count"] = 0
+            ctx["notifications"] = []
+    else:
+        ctx["notification_count"] = 0
+        ctx["notifications"] = []
+    return ctx

@@ -22,7 +22,7 @@ from django.templatetags.static import static
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
-from core.views import dashboard_kpis, health_check, root_view
+from core.views import dashboard_kpis, health_check, password_reset_info_view, root_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -36,13 +36,14 @@ urlpatterns = [
     ),
     path(
         "login/",
-        RedirectView.as_view(pattern_name="root", permanent=False),
+        RedirectView.as_view(url="/accounts/login/", permanent=False),
         name="login",
     ),
     path("", root_view, name="root"),
     path("kpis/", dashboard_kpis, name="dashboard-kpis"),
     path("healthz", health_check, name="health-check"),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("accounts/password-reset-info/", password_reset_info_view, name="password-reset-info"),
     path("", include("core.urls")),
     path("api/", include("inventory.urls")),  # DRF API
     path("", include("inventory.ui_urls")),  # HTML UI routes

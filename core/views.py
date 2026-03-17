@@ -41,11 +41,12 @@ def root_view(request):
         }
         return render(request, "core/dashboard.html", context)
 
-    form = AuthenticationForm(request, data=request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        login(request, form.get_user())
-        return redirect("root")
-    return render(request, "core/dashboard.html", {"form": form})
+    return redirect("/accounts/login/")
+
+
+def password_reset_info_view(request):
+    """Inform users to contact admin to reset their password."""
+    return render(request, "registration/password_reset_info.html")
 
 
 def health_check(request):

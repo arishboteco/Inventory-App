@@ -11,7 +11,6 @@
       <section class="bg-surface rounded-md border border-border p-4">
         <h3 class="text-sm font-semibold text-bodyText mb-3">Basic Information</h3>
         <dl class="grid grid-cols-1 gap-2 text-sm">
-          <div><dt class="text-gray-500">Item ID</dt><dd class="text-bodyText">{{ item.item_id }}</dd></div>
           <div><dt class="text-gray-500">Category</dt><dd class="text-bodyText">{{ item.category|default:"Not set" }}</dd></div>
           <div><dt class="text-gray-500">Sub Category</dt><dd class="text-bodyText">{{ item.sub_category|default:"Not set" }}</dd></div>
           <div><dt class="text-gray-500">Base Unit</dt><dd class="text-bodyText">{{ item.base_unit|default:"Not set" }}</dd></div>
@@ -22,18 +21,18 @@
       <section class="bg-surface rounded-md border border-border p-4">
         <h3 class="text-sm font-semibold text-bodyText mb-3">Stock Information</h3>
         <dl class="grid grid-cols-1 gap-2 text-sm">
-          <div><dt class="text-gray-500">Current Stock</dt><dd class="text-bodyText">{{ item.current_stock|default:"Not set" }}</dd></div>
-          <div><dt class="text-gray-500">Reorder Point</dt><dd class="text-bodyText">{{ item.reorder_point|default:"Not set" }}</dd></div>
-          <div><dt class="text-gray-500">Initial Purchase Price</dt><dd class="text-bodyText">{{ item.initial_purchase_price|default:"Not set" }}</dd></div>
-          <div><dt class="text-gray-500">Last Purchase Price</dt><dd class="text-bodyText">{{ item.last_purchase_price|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Current Stock</dt><dd class="text-bodyText">{% if item.current_stock is not None %}{{ item.current_stock }}{% else %}Not set{% endif %}</dd></div>
+          <div><dt class="text-gray-500">Reorder Point</dt><dd class="text-bodyText">{% if item.reorder_point is not None %}{{ item.reorder_point }}{% else %}Not set{% endif %}</dd></div>
+          <div><dt class="text-gray-500">Initial Purchase Price</dt><dd class="text-bodyText">{% if item.initial_purchase_price is not None %}{{ item.initial_purchase_price }}{% else %}Not set{% endif %}</dd></div>
+          <div><dt class="text-gray-500">Last Purchase Price</dt><dd class="text-bodyText">{% if item.last_purchase_price is not None %}{{ item.last_purchase_price }}{% else %}Not set{% endif %}</dd></div>
         </dl>
       </section>
       <section class="bg-surface rounded-md border border-border p-4">
         <h3 class="text-sm font-semibold text-bodyText mb-3">Additional Details</h3>
         <dl class="grid grid-cols-1 gap-2 text-sm">
           <div><dt class="text-gray-500">Preferred Supplier</dt><dd class="text-bodyText">{{ item.preferred_supplier|default:"Not set" }}</dd></div>
-          <div><dt class="text-gray-500">Minimum Order Qty</dt><dd class="text-bodyText">{{ item.minimum_order_qty|default:"Not set" }}</dd></div>
-          <div><dt class="text-gray-500">Lead Time (Days)</dt><dd class="text-bodyText">{{ item.lead_time_days|default:"Not set" }}</dd></div>
+          <div><dt class="text-gray-500">Minimum Order Qty</dt><dd class="text-bodyText">{% if item.minimum_order_qty is not None %}{{ item.minimum_order_qty }}{% else %}Not set{% endif %}</dd></div>
+          <div><dt class="text-gray-500">Lead Time (Days)</dt><dd class="text-bodyText">{% if item.lead_time_days is not None %}{{ item.lead_time_days }}{% else %}Not set{% endif %}</dd></div>
           <div><dt class="text-gray-500">Notes</dt><dd class="text-bodyText">{{ item.notes|default:"None" }}</dd></div>
           <div><dt class="text-gray-500">Active</dt><dd class="text-bodyText">{% if item.is_active %}Yes{% else %}No{% endif %}</dd></div>
           <div><dt class="text-gray-500">Last Updated</dt><dd class="text-bodyText">{{ item.updated_at|date:"Y-m-d H:i" }}</dd></div>
@@ -52,6 +51,11 @@
         <li class="text-gray-500">No recent activity.</li>
         {% endfor %}
       </ul>
+    </div>
+    <div class="flex flex-wrap gap-2 pt-2 border-t border-border">
+      <a href="/stock-movements/?item={{ item.item_id }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-surface border border-border hover:bg-surfaceSubtle text-bodyText transition">Stock Movements</a>
+      <a href="{% url 'item_edit' item.item_id %}?partial=1" data-modal-url="{% url 'item_edit' item.item_id %}?partial=1" data-modal-type="drawer" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-surface border border-border hover:bg-surfaceSubtle text-bodyText transition">Edit Item →</a>
+      <a href="{% url 'indent_create' %}?item={{ item.item_id }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-surface border border-border hover:bg-surfaceSubtle text-bodyText transition">Raise Indent</a>
     </div>
   </div>
 </div>

@@ -3,7 +3,8 @@ import logging
 from django.contrib import messages
 from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError
-from django.db.models import BooleanField, Case, F, Prefetch, Q, Value, When
+from django.db.models import BooleanField, Case, DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum, Value, When
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -313,20 +314,43 @@ class ItemsListView(TemplateView):
         ctx.update(params)
         ctx.update(category_ctx)
         ctx.update(table_ctx)
+        # Filter-aware KPI stats computed from the filtered queryset
+        kpi_qs, _ = _basic_item_filters(request)
         stats = {}
-        # Cache expensive KPI computations to avoid recomputing per request
         try:
-            stats["total_active"] = cache.get_or_set(
-                "kpi:items:total_active", kpis.total_active_items, 120
-            )
+            active_qs = kpi_qs.filter(is_active=True)
+            stats["total_active"] = active_qs.count()
         except Exception:  # pragma: no cover - defensive
+            active_qs = kpi_qs.none()
             stats["total_active"] = 0
         try:
-            stats["low_stock_percentage"] = cache.get_or_set(
-                "kpi:items:low_stock_pct", kpis.low_stock_percentage, 120
-            )
+            total_active = stats.get("total_active", 0)
+            if total_active:
+                low_stock_count = active_qs.filter(
+                    current_stock__isnull=False,
+                    reorder_point__isnull=False,
+                    current_stock__lte=F("reorder_point"),
+                ).count()
+                stats["low_stock_percentage"] = low_stock_count / total_active * 100
+            else:
+                stats["low_stock_percentage"] = 0
         except Exception:  # pragma: no cover - defensive
             stats["low_stock_percentage"] = 0
+        try:
+            stats["stock_value_on_hand"] = active_qs.aggregate(
+                total=Coalesce(
+                    Sum(
+                        ExpressionWrapper(
+                            F("current_stock") * F("last_purchase_price"),
+                            output_field=DecimalField(),
+                        )
+                    ),
+                    0,
+                    output_field=DecimalField(),
+                )
+            )["total"] or 0
+        except Exception:  # pragma: no cover - defensive
+            stats["stock_value_on_hand"] = 0
         try:
             stats["avg_days_since_last_purchase"] = cache.get_or_set(
                 "kpi:items:avg_days_since_last_purchase",
@@ -335,12 +359,6 @@ class ItemsListView(TemplateView):
             )
         except Exception:  # pragma: no cover - defensive
             stats["avg_days_since_last_purchase"] = 0
-        try:
-            stats["stock_value_on_hand"] = cache.get_or_set(
-                "kpi:items:stock_value_on_hand", kpis.stock_value_on_hand, 120
-            )
-        except Exception:  # pragma: no cover - defensive
-            stats["stock_value_on_hand"] = 0
         try:
             stats["fastest_movers"] = cache.get_or_set(
                 "kpi:items:fastest_movers_7d",

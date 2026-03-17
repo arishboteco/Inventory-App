@@ -28,9 +28,11 @@
               {% include "forms/feedback.html" %}
             </div>
             <div class="space-y-1">
-              <label for="{{ form.current_stock.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Current Stock</label>
-              {{ form.current_stock }}
-              {% include "forms/feedback.html" %}
+              <label class="block text-sm font-medium text-bodyText mb-1">Current Stock</label>
+              <div class="flex items-center gap-3 h-9">
+                <span class="text-bodyText font-medium">{% if item.current_stock is not None %}{{ item.current_stock|floatformat:2 }}{% else %}—{% endif %}</span>
+                <a href="/stock-movements/?item={{ item.item_id }}" class="text-xs text-accent hover:underline">Adjust Stock →</a>
+              </div>
             </div>
             <div class="space-y-1">
               <label for="{{ form.reorder_point.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Reorder Point</label>

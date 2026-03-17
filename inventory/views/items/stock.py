@@ -103,6 +103,10 @@ class ItemsBulkUpdateView(View):
                     it.departments.add(dept)
                 return JsonResponse({"ok": True, "updated": items.count()})
 
+            if action == "delete":
+                deleted_count, _ = Item.objects.filter(pk__in=ids).delete()
+                return JsonResponse({"ok": True, "deleted": deleted_count})
+
             return JsonResponse({"ok": False, "message": "Unknown action"}, status=400)
         except Exception as e:  # pragma: no cover - defensive
             logger.exception("Bulk update failed: %s", e)

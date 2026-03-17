@@ -34,14 +34,26 @@ def _pending_qty(ii: IndentItem) -> Decimal:
     return pending if pending > 0 else Decimal("0")
 
 
-def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResult:
+def consolidate_approved_indents(
+    indent_ids: Iterable[int],
+    qty_overrides: Dict[int, Decimal] | None = None,
+    excluded_item_ids: set | None = None,
+) -> ConsolidationResult:
     """Group approved indent items by preferred supplier and create POs.
+
+    Args:
+        indent_ids: Indent PKs to consolidate (empty = all approved).
+        qty_overrides: Optional mapping of item_id -> override qty. Overrides
+            the aggregated pending qty for that item across all indents.
+        excluded_item_ids: Optional set of item PKs to skip entirely.
 
     Constraints: no schema changes, so we do not create explicit linkage rows.
     We annotate `IndentItem.notes` with simple references for traceability.
     """
 
     indent_ids = list(indent_ids or [])
+    qty_overrides = qty_overrides or {}
+    excluded_item_ids = excluded_item_ids or set()
     if not indent_ids:
         return ConsolidationResult(created_po_ids=[], skipped_items=0, total_items=0)
 
@@ -73,6 +85,10 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
             continue
         total += 1
         itm: Item = ii.item  # type: ignore
+        # Skip excluded items (Fix 4 — per-item exclusion checkboxes)
+        if itm.pk in excluded_item_ids:
+            skipped += 1
+            continue
         supplier_id = getattr(itm, "preferred_supplier_id", None)
         if not supplier_id:
             skipped += 1
@@ -82,6 +98,13 @@ def consolidate_approved_indents(indent_ids: Iterable[int]) -> ConsolidationResu
             {"qty": Decimal("0"), "price": Decimal(str(itm.last_purchase_price or 0))},
         )
         entry["qty"] += pending
+
+    # Apply qty overrides (Fix 3 — editable qty inputs replace aggregated pending)
+    for item_id, override_qty in qty_overrides.items():
+        for sup_map in supplier_items.values():
+            if item_id in sup_map:
+                sup_map[item_id]["qty"] = Decimal(str(override_qty))
+                break
 
     created_po_ids: List[int] = []
     order_date = timezone.now().date()

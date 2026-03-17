@@ -1,52 +1,175 @@
 {% extends "components/create_manage_layout.html" %}
-{% block page_title %}Consolidate Indents – Inventory Pro{% endblock %}
-{% block page_heading %}Consolidate Indents{% endblock %}
+{% block page_title %}Consolidation Preview – Inventory Pro{% endblock %}
+{% block page_heading %}Consolidation Preview{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Review and confirm the Purchase Orders that will be created.</p>
+{% endblock %}
 
 {% block content %}
-<div class="bg-surface rounded-xl shadow border border-border overflow-hidden">
-  <div class="px-4 py-3 border-b border-border flex items-center justify-between">
-    <h2 class="text-lg font-semibold text-bodyText">Approved Items Grouped by Supplier</h2>
-    <a href="{% url 'indents_list' %}" class="text-sm text-gray-600 hover:text-gray-800">Back to Indents</a>
-  </div>
-  <div class="p-4">
-    {% if total_groups == 0 %}
-      <p class="text-sm text-gray-600">No eligible items found for consolidation.</p>
-    {% else %}
-      <form method="post">
-        {% csrf_token %}
-        {% if ids_csv %}<input type="hidden" name="ids" value="{{ ids_csv }}">{% endif %}
-        <div class="space-y-6">
-          {% for group in groups %}
-            <div class="border border-border rounded-lg">
-              <div class="px-3 py-2 bg-surfaceSubtle border-b border-border flex items-center justify-between">
-                <div class="font-medium">Supplier: {{ group.supplier.name|default:"(Unknown Supplier)" }}</div>
-                <div class="text-xs text-gray-500">{{ group.total_lines }} item{{ group.total_lines|pluralize }}</div>
+<div style="display:flex;flex-direction:column;min-height:calc(100vh - 120px)">
+  <div class="bg-surface rounded-xl shadow border border-border overflow-hidden flex-1">
+    <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-bodyText">Approved Items Grouped by Supplier</h2>
+      <a href="{% url 'indents_list' %}" class="text-sm text-gray-600 hover:text-gray-800">Back to Indents</a>
+    </div>
+    <div class="p-4">
+      {% if total_groups == 0 %}
+        {# Fix 9: Empty state #}
+        <div class="text-center py-16 text-gray-400">
+          <svg class="mx-auto mb-3 w-12 h-12 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+          <p class="text-lg font-medium text-gray-500">Nothing to consolidate yet</p>
+          <p class="text-sm mt-1">Approve some indents first, then return here to create Purchase Orders.</p>
+          <a href="{% url 'indents_list' %}" class="inline-flex items-center mt-4 px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Go to Indents</a>
+        </div>
+      {% else %}
+        <form method="post" id="consolidate-form">
+          {% csrf_token %}
+          {% if ids_csv %}<input type="hidden" name="ids" value="{{ ids_csv }}">{% endif %}
+          <div class="space-y-6">
+            {% for group in groups %}
+              <div class="border border-border rounded-lg overflow-hidden">
+                {# Fix 8: Supplier header — darker bg + bold + left accent border #}
+                <div class="px-3 py-2 border-b border-border flex items-center justify-between" style="background-color:#E5E7EB;border-left:3px solid #2563EB">
+                  <div class="font-semibold text-gray-800">{{ group.supplier.name|default:"(Unknown Supplier)" }}</div>
+                  <div class="flex items-center gap-3">
+                    {# Select-all / deselect-all per group (Fix 4) #}
+                    <button type="button" class="text-xs text-blue-600 hover:underline" data-select-all="group-{{ forloop.counter }}">Select all</button>
+                    <span class="text-gray-300">|</span>
+                    <button type="button" class="text-xs text-blue-600 hover:underline" data-deselect-all="group-{{ forloop.counter }}">Deselect all</button>
+                    <span class="text-xs text-gray-500 ml-2">{{ group.total_lines }} item{{ group.total_lines|pluralize }}</span>
+                  </div>
+                </div>
+                <table class="min-w-full">
+                  <thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-surfaceSubtle">
+                    <tr>
+                      <th class="px-3 py-2 w-8">{# checkbox #}</th>
+                      <th class="px-3 py-2">Item</th>
+                      <th class="px-3 py-2 text-right">Pending Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    {% for row in group.items %}
+                    <tr class="odd:bg-surface even:bg-surfaceSubtle" data-group-id="group-{{ forloop.parentloop.counter }}">
+                      {# Fix 4: Per-item exclusion checkbox #}
+                      <td class="px-3 py-2">
+                        <input type="checkbox"
+                               name="include_item_{{ row.item.pk }}"
+                               id="include_item_{{ row.item.pk }}"
+                               class="group-checkbox group-{{ forloop.parentloop.counter }}"
+                               checked
+                               aria-label="Include {{ row.item.name }}">
+                      </td>
+                      <td class="px-3 py-2">
+                        <label for="include_item_{{ row.item.pk }}" class="font-medium cursor-pointer">{{ row.item.name }}</label>
+                        {# Fix 5: Source MRN traceability #}
+                        {% if row.mrn_lines %}
+                        <div class="text-xs text-gray-400 mt-0.5">
+                          From:
+                          {% for src in row.mrn_lines %}{{ src.mrn }} (<span class="tabular-nums">{{ src.qty|floatformat:2 }}</span>){% if not forloop.last %}, {% endif %}{% endfor %}
+                        </div>
+                        {% endif %}
+                      </td>
+                      {# Fix 3: Editable qty override + Fix 2: Unit display #}
+                      <td class="px-3 py-2 text-right">
+                        <div class="inline-flex items-center gap-1.5 justify-end">
+                          <input type="number"
+                                 name="qty_override_{{ row.item.pk }}"
+                                 value="{{ row.qty|floatformat:2 }}"
+                                 min="0.01" step="0.01"
+                                 class="w-24 border border-border rounded px-2 py-1 text-sm tabular-nums text-right bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                                 aria-label="Quantity for {{ row.item.name }}">
+                          {% if row.unit_display %}
+                          <span class="text-gray-500 text-sm whitespace-nowrap">{{ row.unit_display }}</span>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
               </div>
-              <table class="min-w-full">
-                <thead class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <tr>
-                    <th class="px-3 py-2">Item</th>
-                    <th class="px-3 py-2">Pending Qty</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                  {% for row in group.items %}
-                  <tr class="odd:bg-surface even:bg-surfaceSubtle">
-                    <td class="px-3 py-2">{{ row.item.name }}</td>
-                    <td class="px-3 py-2 tabular-nums">{{ row.qty|floatformat:2 }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% endfor %}
-        </div>
-        <div class="mt-4 flex items-center justify-end gap-2">
-          <a href="{% url 'indents_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Cancel</a>
-          <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Create Purchase Orders</button>
-        </div>
-      </form>
-    {% endif %}
+            {% endfor %}
+          </div>
+
+          {# Fix 11: Buttons pushed to bottom via margin-top:auto #}
+          <div class="mt-6 flex items-center justify-end gap-3" style="margin-top:auto">
+            {# Fix 7: Cancel as outlined button #}
+            <a href="{% url 'indents_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Cancel</a>
+            {# Fix 1: Button triggers confirmation modal instead of direct submit #}
+            <button type="button" id="open-confirm-modal" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Create Purchase Orders</button>
+          </div>
+        </form>
+      {% endif %}
+    </div>
   </div>
 </div>
+
+{# Fix 1: Confirmation modal #}
+{% if total_groups > 0 %}
+<div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title"
+     style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:460px;width:100%;margin:0 16px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+    <h2 id="confirm-modal-title" style="font-size:1.125rem;font-weight:700;margin:0 0 12px">Confirm Purchase Order Creation</h2>
+    <p id="confirm-modal-body" style="color:#374151;margin:0 0 24px;line-height:1.6">
+      You are about to create <strong id="confirm-po-count">{{ total_supplier_count }}</strong> Purchase Order{{ total_supplier_count|pluralize }}
+      covering <strong id="confirm-item-count">{{ total_item_count }}</strong> item{{ total_item_count|pluralize }}
+      across <strong>{{ total_supplier_count }}</strong> supplier{{ total_supplier_count|pluralize }}.
+      This action cannot be undone.
+    </p>
+    <div style="display:flex;justify-content:flex-end;gap:12px">
+      <button type="button" id="cancel-confirm-modal"
+              style="padding:8px 18px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;font-size:.875rem;font-weight:500;cursor:pointer">
+        Cancel
+      </button>
+      <button type="button" id="confirm-submit"
+              style="padding:8px 18px;border-radius:6px;border:none;background:#1D4ED8;color:#fff;font-size:.875rem;font-weight:500;cursor:pointer">
+        Confirm &amp; Create
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var modal = document.getElementById('confirm-modal');
+  var openBtn = document.getElementById('open-confirm-modal');
+  var cancelBtn = document.getElementById('cancel-confirm-modal');
+  var confirmBtn = document.getElementById('confirm-submit');
+  var form = document.getElementById('consolidate-form');
+
+  openBtn.addEventListener('click', function () {
+    // Update counts based on currently checked items
+    var checked = document.querySelectorAll('.group-checkbox:checked').length;
+    document.getElementById('confirm-item-count').textContent = checked;
+    modal.style.display = 'flex';
+    confirmBtn.focus();
+  });
+  cancelBtn.addEventListener('click', function () { modal.style.display = 'none'; });
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') modal.style.display = 'none';
+  });
+  confirmBtn.addEventListener('click', function () {
+    modal.style.display = 'none';
+    form.submit();
+  });
+
+  // Select-all / deselect-all per group (Fix 4)
+  document.querySelectorAll('[data-select-all]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var grp = btn.getAttribute('data-select-all');
+      document.querySelectorAll('.' + grp).forEach(function (cb) { cb.checked = true; });
+    });
+  });
+  document.querySelectorAll('[data-deselect-all]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var grp = btn.getAttribute('data-deselect-all');
+      document.querySelectorAll('.' + grp).forEach(function (cb) { cb.checked = false; });
+    });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}

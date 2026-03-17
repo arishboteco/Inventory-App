@@ -283,9 +283,11 @@
   function deleteItem(row) {
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
+    const nameEl = row.querySelector('[id^="item-title-"]');
+    const itemName = nameEl ? nameEl.textContent.trim() : "this item";
     if (
       !confirm(
-        "Are you sure you want to delete this item? This action cannot be undone.",
+        `Delete "${itemName}"?\n\nThis will permanently remove the item. Any linked Recipes or Purchase Orders may be affected.\n\nThis action cannot be undone.`,
       )
     )
       return;
@@ -1016,6 +1018,9 @@
         : '<input id=\"bulk-dept-select\" placeholder=\"Dept ID\">';
       const html = `
           <div class=\"card\" style=\"max-width:480px\">\n          <div class=\"card-header\"><strong>Assign Department</strong></div>\n          <div class=\"card-body\">\n            <label class=\"block text-sm font-medium text-gray-700 mb-1\">Department</label>\n            ${selectHtml}\n            <div class=\"mt-3 flex\" style=\"gap:.5rem; justify-content:flex-end\">\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-700 border border-border hover:bg-secondaryHover focus:ring-2 focus:ring-primary\" data-modal-close>Cancel</button>\n              <button type=\"button\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary\" data-action=\"confirm-bulk\" data-action-type=\"assign_dept\">Assign</button>\n            </div>\n          </div>\n        </div>`;
+      if (window.modal) window.modal.open(html);
+    } else if (action === "delete") {
+      const html = `<div class="card" style="max-width:420px"><div class="card-header"><strong>Delete ${ids.length} item(s)?</strong></div><div class="card-body"><p class="mb-3" style="color:#991b1b">This will permanently delete the selected items. Any linked Recipes or Purchase Orders may be affected. This cannot be undone.</p><div class="flex" style="gap:.5rem;justify-content:flex-end"><button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle" data-modal-close>Cancel</button><button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-red-600 text-white hover:bg-red-700" data-action="confirm-bulk" data-action-type="delete">Delete</button></div></div></div>`;
       if (window.modal) window.modal.open(html);
     }
   });

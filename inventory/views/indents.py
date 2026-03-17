@@ -865,7 +865,7 @@ def consolidate_indents(request):
         base_filter["indent_id__in"] = ids
     # Gather approved indent items with pending quantities and a preferred supplier
     qs = IndentItemModel.objects.select_related(
-        "item", "indent", "item__preferred_supplier"
+        "item", "indent", "item__preferred_supplier", "item__unit"
     ).filter(**base_filter)
     groups: dict[int, dict] = {}
     total_items = 0
@@ -887,8 +887,19 @@ def consolidate_indents(request):
                 )
             except Exception:
                 g["supplier"] = None
-        entry = g["items"].setdefault(item.pk, {"item": item, "qty": 0})
+        # Build unit display from the related unit FK
+        try:
+            unit_display = str(item.unit) if item.unit_id else ""
+        except Exception:
+            unit_display = ""
+        entry = g["items"].setdefault(
+            item.pk,
+            {"item": item, "qty": 0, "unit_display": unit_display, "mrn_lines": []},
+        )
         entry["qty"] += pending
+        # Track which MRN contributed and how much (Fix 5)
+        mrn_label = getattr(ii.indent, "mrn", None) or f"Indent {ii.indent_id}"
+        entry["mrn_lines"].append({"mrn": mrn_label, "qty": pending})
         total_items += 1
     # Transform to template-friendly structure
     grouped = []
@@ -908,8 +919,41 @@ def consolidate_indents(request):
     grouped.sort(key=lambda g: (getattr(g["supplier"], "name", "") or "").lower())
 
     if request.method == "POST":
-        # Perform consolidation for the same scope
-        result = indent_consolidation_service.consolidate_approved_indents(ids)
+        # Read per-item qty overrides and exclusions from POST data (Fixes 3+4)
+        from decimal import Decimal as _Decimal
+
+        qty_overrides: dict[int, _Decimal] = {}
+        excluded_item_ids: set[int] = set()
+        # Collect all known item IDs from the consolidated groups to check exclusions
+        all_item_ids: set[int] = set()
+        for grp in grouped:
+            for row in grp["items"]:
+                iid = row["item"].pk
+                all_item_ids.add(iid)
+                # Checkbox: present in POST means included, absent means excluded
+                if f"include_item_{iid}" not in request.POST:
+                    excluded_item_ids.add(iid)
+                # Qty override
+                raw = request.POST.get(f"qty_override_{iid}", "")
+                if raw:
+                    try:
+                        val = _Decimal(str(raw))
+                        if val > 0:
+                            qty_overrides[iid] = val
+                    except Exception:
+                        pass
+        # If no specific IDs were requested, resolve all currently-approved indent IDs
+        consolidate_ids = ids
+        if not consolidate_ids:
+            from ..models import Indent as _Indent
+            consolidate_ids = list(
+                _Indent.objects.filter(status="APPROVED").values_list("indent_id", flat=True)
+            )
+        result = indent_consolidation_service.consolidate_approved_indents(
+            consolidate_ids,
+            qty_overrides=qty_overrides,
+            excluded_item_ids=excluded_item_ids,
+        )
         if result.created_po_ids:
             messages.success(
                 request,
@@ -922,6 +966,8 @@ def consolidate_indents(request):
         )
         return redirect("indents_list")
 
+    total_supplier_count = len(grouped)
+    total_item_count = sum(grp["total_lines"] for grp in grouped)
     return render(
         request,
         "inventory/indents_consolidate_preview.html",
@@ -929,6 +975,8 @@ def consolidate_indents(request):
             "groups": grouped,
             "total_groups": len(grouped),
             "total_items": total_items,
+            "total_supplier_count": total_supplier_count,
+            "total_item_count": total_item_count,
             "ids_csv": ",".join(str(x) for x in ids) if ids else "",
         },
     )

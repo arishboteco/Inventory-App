@@ -204,7 +204,8 @@ Q_CLUSTER = {
 }
 
 # Login URL
-LOGIN_URL = "/login/"
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
 
 # Expanded URLs exempt from login requirement
 LOGIN_EXEMPT_URLS = [
@@ -212,6 +213,7 @@ LOGIN_EXEMPT_URLS = [
     r"^login/$",
     r"^accounts/login/$",
     r"^accounts/logout/$",
+    r"^accounts/password-reset-info/$",
     r"^healthz$",
     r"^static/.*$",
     r"^api/.*$",  # Exempt API endpoints

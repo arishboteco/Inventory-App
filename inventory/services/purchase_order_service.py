@@ -38,6 +38,7 @@ def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:
         with transaction.atomic():
             supplier = Supplier.objects.get(pk=po_data["supplier_id"])
             po = PurchaseOrder.objects.create(
+                po_number=po_data.get("po_number") or generate_po_number(),
                 supplier=supplier,
                 order_date=po_data["order_date"],
                 expected_delivery_date=po_data.get("expected_delivery_date"),

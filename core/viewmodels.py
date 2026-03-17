@@ -36,8 +36,14 @@ class DashboardContext:
 
     def as_dict(self) -> dict:
         """Return the assembled context as a dictionary."""
+        from inventory.services import counts, kpis
+
+        low_stock = len(get_low_stock_items())
         context = {
-            "low_stock": get_low_stock_items(),
+            "item_count": counts.item_count(),
+            "low_stock": low_stock,
+            "supplier_count": counts.supplier_count(),
+            "pending_indents": sum(kpis.pending_indent_counts().values()),
             "trend_labels": json.dumps(self.labels),
             "trend_values": json.dumps(self.values),
             "list_url": reverse("root"),

@@ -1,10 +1,15 @@
 from django import forms
 
-from ..models import GoodsReceivedNote, GRNItem, PurchaseOrder, PurchaseOrderItem
+from ..models import GoodsReceivedNote, GRNItem, Item, PurchaseOrder, PurchaseOrderItem, Supplier
 from .base import INPUT_CLASS, StyledFormMixin
 
 
 class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
+    supplier = forms.ModelChoiceField(
+        queryset=Supplier.objects.filter(is_active=True).order_by("name"),
+        widget=forms.Select(attrs={"class": INPUT_CLASS}),
+        empty_label="Select a supplier...",
+    )
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS}),
@@ -22,18 +27,6 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, supplier_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        supplier_attrs = {"class": INPUT_CLASS}
-        if supplier_suggest_url:
-            supplier_attrs.update(
-                {
-                    "hx-get": supplier_suggest_url,
-                    "hx-trigger": "keyup changed delay:500ms",
-                    "hx-target": "#supplier-options",
-                    "list": "supplier-options",
-                }
-            )
-        self.fields["supplier"].widget = forms.TextInput()
-        self.fields["supplier"].widget.attrs.update(supplier_attrs)
         # Prevent setting ORDERED directly in the form
         try:
             status_field = self.fields.get("status")
@@ -52,22 +45,15 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
 class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
     """Enhanced purchase order item form with price history and validation."""
 
-    # Add a display field for last purchase price
-    last_purchase_price = forms.DecimalField(
-        required=False,
-        widget=forms.NumberInput(
-            attrs={
-                "class": INPUT_CLASS + " bg-gray-100",
-                "readonly": True,
-                "placeholder": "N/A",
-            }
-        ),
-        help_text="Last purchase price for reference",
+    item = forms.ModelChoiceField(
+        queryset=Item.objects.filter(is_active=True).order_by("name"),
+        widget=forms.Select(attrs={"class": INPUT_CLASS + " item-select"}),
+        empty_label="Select an item...",
     )
 
     class Meta:
         model = PurchaseOrderItem
-        fields = ["item", "quantity_ordered", "unit_price", "last_purchase_price"]
+        fields = ["item", "quantity_ordered", "unit_price"]
         widgets = {
             "quantity_ordered": forms.NumberInput(
                 attrs={
@@ -89,28 +75,6 @@ class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        item_attrs = {"class": INPUT_CLASS}
-        if item_suggest_url:
-            item_attrs.update(
-                {
-                    "hx-get": item_suggest_url,
-                    "hx-trigger": "keyup changed delay:500ms",
-                    "hx-target": "#item-options",
-                    "list": "item-options",
-                }
-            )
-        self.fields["item"].widget = forms.TextInput()
-        self.fields["item"].widget.attrs.update(item_attrs)
-
-        # If we have an instance with an item, populate last purchase price
-        if self.instance and hasattr(self.instance, "item") and self.instance.item:
-            try:
-                last_price = self.instance.item.last_purchase_price
-                if last_price:
-                    self.fields["last_purchase_price"].initial = last_price
-            except AttributeError:
-                pass
-
         self.apply_styling()
 
     def clean_quantity_ordered(self):
@@ -171,7 +135,6 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
     PurchaseOrder,
     PurchaseOrderItem,
     form=PurchaseOrderItemForm,
-    fields=["item", "quantity_ordered", "unit_price"],
     extra=1,
     can_delete=True,
 )

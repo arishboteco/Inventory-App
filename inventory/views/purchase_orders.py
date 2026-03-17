@@ -1,10 +1,11 @@
+import json
 import logging
 from decimal import Decimal
 from typing import Any
 
 from django.contrib import messages
 from django.core.cache import cache
-from django.db.models import Sum
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -15,7 +16,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
-from ..models import PurchaseOrder, Supplier
+from ..models import Item, PurchaseOrder, Supplier
 from ..services import goods_receiving_service, list_utils, purchase_order_service
 from ..services import purchase_order_kpis
 from ..services.exceptions import PurchaseOrderServiceError
@@ -30,6 +31,32 @@ PO_STATUS_BADGES = {
     "CANCELLED": "bg-red-200 text-red-800",
 }
 
+# Statuses where a PO can still receive goods
+RECEIVABLE_STATUSES = {"ORDERED", "PARTIAL"}
+
+
+def _build_item_prices_json() -> str:
+    """Return JSON mapping item pk → last_purchase_price for auto-fill in forms."""
+    prices = {
+        str(item.pk): float(item.last_purchase_price or item.initial_purchase_price or 0)
+        for item in Item.objects.filter(is_active=True).only(
+            "item_id", "last_purchase_price", "initial_purchase_price"
+        )
+    }
+    return json.dumps(prices)
+
+
+def _annotate_total_value(qs):
+    """Annotate a PurchaseOrder queryset with total_value (sum of qty * price)."""
+    return qs.annotate(
+        total_value=Sum(
+            ExpressionWrapper(
+                F("purchaseorderitem__quantity_ordered") * F("purchaseorderitem__unit_price"),
+                output_field=DecimalField(),
+            )
+        )
+    )
+
 
 class PurchaseOrdersListView(TemplateView):
     """Display purchase orders with quick creation form."""
@@ -38,7 +65,7 @@ class PurchaseOrdersListView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        orders = PurchaseOrder.objects.select_related("supplier")
+        orders = _annotate_total_value(PurchaseOrder.objects.select_related("supplier"))
 
         # Enhanced filters with search capability
         filters = {
@@ -78,6 +105,7 @@ class PurchaseOrdersListView(TemplateView):
         )
         for o in page_obj:
             o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+            o.is_receivable = o.status in RECEIVABLE_STATUSES
             prog = progress_map.get(o.pk)
             if prog:
                 o.ordered_total = prog["ordered_total"]
@@ -169,7 +197,7 @@ class PurchaseOrdersTableView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        orders = PurchaseOrder.objects.select_related("supplier")
+        orders = _annotate_total_value(PurchaseOrder.objects.select_related("supplier"))
 
         filters = {
             "status": "status",
@@ -206,6 +234,7 @@ class PurchaseOrdersTableView(TemplateView):
         )
         for o in page_obj:
             o.badge_class = PO_STATUS_BADGES.get(o.status, "")
+            o.is_receivable = o.status in RECEIVABLE_STATUSES
             prog = progress_map.get(o.pk)
             if prog:
                 o.ordered_total = prog["ordered_total"]
@@ -221,7 +250,7 @@ class PurchaseOrdersTableView(TemplateView):
             {
                 "orders": page_obj,
                 "page_obj": page_obj,
-                "page_size": per_page,  # NEW: Pass page size
+                "page_size": per_page,
                 "querystring": querystring,
                 **params,
             }
@@ -400,25 +429,22 @@ class PurchaseOrderCreatePartialView(View):
     template_name = "inventory/purchase_orders/_form_partial.html"
 
     def get(self, request):
-        item_url = reverse("item_search")
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(
-            prefix="items", form_kwargs={"item_suggest_url": item_url}
-        )
+        form = PurchaseOrderForm()
+        formset = PurchaseOrderItemFormSet(prefix="items")
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "is_edit": False},
+            {
+                "form": form,
+                "formset": formset,
+                "is_edit": False,
+                "item_prices_json": _build_item_prices_json(),
+            },
         )
 
     def post(self, request):
-        item_url = reverse("item_search")
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(
-            request.POST, prefix="items", form_kwargs={"item_suggest_url": item_url}
-        )
+        form = PurchaseOrderForm(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             po_data: dict[str, Any] = {
                 "supplier_id": form.cleaned_data["supplier"].pk,
@@ -456,19 +482,20 @@ class PurchaseOrderCreatePartialView(View):
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "is_edit": False},
+            {
+                "form": form,
+                "formset": formset,
+                "is_edit": False,
+                "item_prices_json": _build_item_prices_json(),
+            },
             status=400,
         )
 
 
 def purchase_order_create(request):
-    item_url = reverse("item_search")
-    supplier_url = reverse("supplier_search")
     if request.method == "POST":
-        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(
-            request.POST, prefix="items", form_kwargs={"item_suggest_url": item_url}
-        )
+        form = PurchaseOrderForm(request.POST)
+        formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             po_data = {
                 "supplier_id": form.cleaned_data["supplier"].pk,
@@ -493,46 +520,44 @@ def purchase_order_create(request):
                 purchase_order_service.create_po(po_data, items_data)
                 return redirect("purchase_orders_list")
             except PurchaseOrderServiceError as exc:
-                messages.error(request, str(exc, extra_tags="toast"))
+                messages.error(request, str(exc), extra_tags="toast")
     else:
-        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(
-            prefix="items", form_kwargs={"item_suggest_url": item_url}
-        )
+        form = PurchaseOrderForm()
+        formset = PurchaseOrderItemFormSet(prefix="items")
     return render(
         request,
         "inventory/purchase_orders/form.html",
-        {"form": form, "formset": formset, "is_edit": False},
+        {
+            "form": form,
+            "formset": formset,
+            "is_edit": False,
+            "item_prices_json": _build_item_prices_json(),
+        },
     )
 
 
 def purchase_order_edit(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
-    item_url = reverse("item_search")
-    supplier_url = reverse("supplier_search")
     if request.method == "POST":
-        form = PurchaseOrderForm(
-            request.POST, instance=po, supplier_suggest_url=supplier_url
-        )
-        formset = PurchaseOrderItemFormSet(
-            request.POST,
-            instance=po,
-            prefix="items",
-            form_kwargs={"item_suggest_url": item_url},
-        )
+        form = PurchaseOrderForm(request.POST, instance=po)
+        formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             return redirect("purchase_order_detail", pk=pk)
     else:
-        form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(
-            instance=po, prefix="items", form_kwargs={"item_suggest_url": item_url}
-        )
+        form = PurchaseOrderForm(instance=po)
+        formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
     return render(
         request,
         "inventory/purchase_orders/form.html",
-        {"form": form, "formset": formset, "is_edit": True, "po": po},
+        {
+            "form": form,
+            "formset": formset,
+            "is_edit": True,
+            "po": po,
+            "item_prices_json": _build_item_prices_json(),
+        },
     )
 
 
@@ -543,31 +568,24 @@ class PurchaseOrderEditPartialView(View):
 
     def get(self, request, pk: int):
         po = get_object_or_404(PurchaseOrder, pk=pk)
-        item_url = reverse("item_search")
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(
-            instance=po, prefix="items", form_kwargs={"item_suggest_url": item_url}
-        )
+        form = PurchaseOrderForm(instance=po)
+        formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "is_edit": True, "po": po},
+            {
+                "form": form,
+                "formset": formset,
+                "is_edit": True,
+                "po": po,
+                "item_prices_json": _build_item_prices_json(),
+            },
         )
 
     def post(self, request, pk: int):
         po = get_object_or_404(PurchaseOrder, pk=pk)
-        item_url = reverse("item_search")
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(
-            request.POST, instance=po, supplier_suggest_url=supplier_url
-        )
-        formset = PurchaseOrderItemFormSet(
-            request.POST,
-            instance=po,
-            prefix="items",
-            form_kwargs={"item_suggest_url": item_url},
-        )
+        form = PurchaseOrderForm(request.POST, instance=po)
+        formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
@@ -582,7 +600,13 @@ class PurchaseOrderEditPartialView(View):
         return render(
             request,
             self.template_name,
-            {"form": form, "formset": formset, "is_edit": True, "po": po},
+            {
+                "form": form,
+                "formset": formset,
+                "is_edit": True,
+                "po": po,
+                "item_prices_json": _build_item_prices_json(),
+            },
             status=400,
         )
 

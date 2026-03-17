@@ -11,8 +11,7 @@
       {% include "components/form_field.html" with field=field %}
     {% endfor %}
   </div>
-  <datalist id="supplier-options"></datalist>
-  <div id="items-formset">
+  <div id="items-formset" class="mt-4 space-y-3">
     {{ formset.management_form }}
     {% if formset.non_form_errors %}
       <ul class="text-red-600 list-disc pl-5">
@@ -22,20 +21,28 @@
       </ul>
     {% endif %}
     {% for f in formset %}
-    <div class="border p-2 item-form">
+    <div class="border rounded p-3 item-form relative">
+      {{ f.id }}
       {% if f.non_field_errors %}
-        <ul class="text-red-600 list-disc pl-5">
+        <ul class="text-red-600 list-disc pl-5 mb-2">
           {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         </ul>
       {% endif %}
-      {% for field in f %}
-        {% include "components/form_field.html" with field=field %}
-      {% endfor %}
+      <div class="grid grid-cols-1 gap-3">
+        {% include "components/form_field.html" with field=f.item %}
+        <div class="grid grid-cols-2 gap-3">
+          {% include "components/form_field.html" with field=f.quantity_ordered %}
+          {% include "components/form_field.html" with field=f.unit_price %}
+        </div>
+      </div>
+      <div class="flex justify-end mt-2">
+        <button type="button" class="remove-item text-xs text-red-600 hover:text-red-800 hover:underline">Remove</button>
+      </div>
+      <div class="hidden">{{ f.DELETE }}</div>
     </div>
     {% endfor %}
   </div>
-  <datalist id="item-options"></datalist>
-  <div>
+  <div class="mt-3">
     <button type="button" id="add-item" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Add Item</button>
   </div>
 {% endblock %}
@@ -44,28 +51,66 @@
 {% block back_text %}Cancel{% endblock %}
 {% block extra %}
   <template id="item-empty-form">
-    <div class="border p-2 item-form">
+    <div class="border rounded p-3 item-form relative">
       {% for field in formset.empty_form %}
-        {% include "components/form_field.html" with field=field %}
+        {% if field.name == 'id' or field.name == 'DELETE' %}
+          <div class="hidden">{{ field }}</div>
+        {% elif field.name == 'item' %}
+          {% include "components/form_field.html" with field=field %}
+        {% elif field.name == 'quantity_ordered' or field.name == 'unit_price' %}
+          {% include "components/form_field.html" with field=field %}
+        {% endif %}
       {% endfor %}
+      <div class="flex justify-end mt-2">
+        <button type="button" class="remove-item text-xs text-red-600 hover:text-red-800 hover:underline">Remove</button>
+      </div>
     </div>
   </template>
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      initFormset({
-        formsetPrefix: '{{ formset.prefix }}',
-        addButtonId: 'add-item',
-        formContainer: '#items-formset',
-        formClass: 'item-form',
-        templateId: 'item-empty-form'
+    (function () {
+      var itemPrices = {{ item_prices_json|safe }};
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var formsetEl = document.getElementById('items-formset');
+
+        formsetEl.addEventListener('click', function (e) {
+          if (!e.target.classList.contains('remove-item')) return;
+          var row = e.target.closest('.item-form');
+          var deleteInput = row ? row.querySelector('input[type="checkbox"][name$="-DELETE"]') : null;
+          if (deleteInput) {
+            deleteInput.checked = true;
+            row.style.display = 'none';
+          } else if (row) {
+            row.remove();
+          }
+        });
+
+        formsetEl.addEventListener('change', function (e) {
+          if (!e.target.classList.contains('item-select')) return;
+          var row = e.target.closest('.item-form');
+          if (!row) return;
+          var priceInput = row.querySelector('input[name$="-unit_price"]');
+          if (priceInput && itemPrices[e.target.value] !== undefined) {
+            priceInput.value = parseFloat(itemPrices[e.target.value]).toFixed(2);
+          }
+        });
+
+        initFormset({
+          formsetPrefix: '{{ formset.prefix }}',
+          addButtonId: 'add-item',
+          formContainer: '#items-formset',
+          formClass: 'item-form',
+          templateId: 'item-empty-form'
+        });
+
+        document.getElementById('po-form').addEventListener('submit', function (e) {
+          if (!this.checkValidity()) {
+            e.preventDefault();
+            this.reportValidity();
+          }
+        });
       });
-      document.getElementById('po-form').addEventListener('submit', function (e) {
-        if (!this.checkValidity()) {
-          e.preventDefault();
-          this.reportValidity();
-        }
-      });
-    });
+    })();
   </script>
 {% endblock %}
 {% block no_form %}<p>Unable to load form.</p>{% endblock %}

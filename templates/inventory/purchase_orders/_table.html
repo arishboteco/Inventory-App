@@ -29,6 +29,7 @@
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="order_date" checked /> Order Date</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="status" checked /> Status</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="progress" checked /> Progress</label>
+        <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="total_value" checked /> Total Value</label>
         <label class="flex items-center gap-2 text-sm px-2 py-1"><input type="checkbox" data-col-toggle value="actions" checked /> Actions</label>
       </div>
       </div>
@@ -97,6 +98,7 @@
   </a>
 </th>
 <th scope="col" class="px-4 py-2" data-col="progress">Progress</th>
+<th scope="col" class="px-4 py-2 text-right" data-col="total_value">Total Value</th>
 <th scope="col" class="px-4 py-2 text-right" data-col="actions">Actions</th>
 {% endblock %}
 
@@ -123,6 +125,9 @@
     </div>
     <div class="text-xs text-right mt-1"><span class="tabular-nums">{{ po.received_total }} / {{ po.ordered_total }}</span></div>
   </td>
+  <td class="px-4 py-2 text-right tabular-nums" data-col="total_value">
+    {% if po.total_value %}${{ po.total_value|floatformat:2 }}{% else %}—{% endif %}
+  </td>
   <td class="px-4 py-2" data-col="actions">
     <div class="flex justify-end gap-2">
       <a href="{% url 'purchase_order_detail' po.pk %}" class="text-primary" title="View">
@@ -137,6 +142,7 @@
         {% icon 'pencil-square' 'w-5 h-5' %}
         <span class="sr-only">Edit</span>
       </a>
+      {% if po.is_receivable %}
       <a href="{% url 'purchase_order_receive' po.pk %}"
          data-modal-url="{% url 'purchase_order_receive_partial' po.pk %}"
          data-modal-type="drawer"
@@ -145,12 +151,13 @@
         {% icon 'arrow-down-tray' 'w-5 h-5' %}
         <span class="sr-only">Receive</span>
       </a>
+      {% endif %}
     </div>
   </td>
 </tr>
 {% empty %}
 <tr>
-  <td colspan="6" class="px-4 py-2">
+  <td colspan="7" class="px-4 py-2">
     {% url 'purchase_order_create' as po_create_url %}
     {% include "components/empty_state.html" with title="No Purchase Orders" message="Create a new purchase order to get started." cta_label="New PO" cta_url=po_create_url %}
   </td>

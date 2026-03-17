@@ -889,7 +889,7 @@ def consolidate_indents(request):
                 g["supplier"] = None
         # Build unit display from the related unit FK
         try:
-            unit_display = str(item.unit) if item.unit_id else ""
+            unit_display = (item.unit.purchase_unit or str(item.unit)) if item.unit_id else ""
         except Exception:
             unit_display = ""
         entry = g["items"].setdefault(

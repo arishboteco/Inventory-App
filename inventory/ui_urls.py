@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views.explore import explore, explore_export
-from .views.goods_received import GRNDetailView, GRNListView, grn_export
+from .views.goods_received import GRNCreateView, GRNDetailView, GRNListView, grn_export
 from .views.guides import WorkflowGuideView
 from .views.indents import (
     IndentCreateView,
@@ -221,6 +221,7 @@ urlpatterns = [
         name="purchase_order_receive_partial",
     ),
     path("grns/", GRNListView.as_view(), name="grn_list"),
+    path("grns/create/", GRNCreateView.as_view(), name="grn_create"),
     path("grns/<int:pk>/export/", grn_export, name="grn_export"),
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),

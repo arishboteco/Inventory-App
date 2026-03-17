@@ -1,4 +1,5 @@
 {% extends "components/responsive_table.html" %}
+{% load icon_tags %}
 
 {% block caption %}<caption>GRN Items</caption>{% endblock %}
 {% block thead_class %}
@@ -18,18 +19,45 @@
   <th scope="col" class="sticky z-10 px-4 py-2 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Item</th>
   <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Ordered</th>
   <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Received</th>
+  {% if show_variance %}
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Variance</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Unit Price</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Line Total</th>
+  {% endif %}
 {% endblock %}
 
 {% block rows %}
   {% for item in items %}
+    {% if show_variance %}
+      {% with variance=item.variance %}
+      <tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle {% if item.has_discrepancy %}!bg-amber-50{% endif %}">
+        <td class="px-4 py-2">
+          {{ item.po_item.item.name }}
+          {% if item.has_discrepancy %}
+            <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-warning-light text-warning-dark">
+              {% icon 'exclamation-triangle' 'w-3 h-3 mr-0.5 inline' %} Short
+            </span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ item.quantity_ordered_on_po|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ item.quantity_received|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right tabular-nums {% if item.has_discrepancy %}text-red-600 font-medium{% else %}text-success-dark{% endif %}">
+          {% if variance >= 0 %}+{% endif %}{{ variance|floatformat:2 }}
+        </td>
+        <td class="px-4 py-2 text-right tabular-nums">${{ item.unit_price_at_receipt|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">${{ item.quantity_received|floatformat:2 }}</td>
+      </tr>
+      {% endwith %}
+    {% else %}
     <tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle">
       <td class="px-4 py-2">{{ item.po_item.item.name }}</td>
-      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.po_item.quantity_ordered|floatformat:2 }}</span></td>
+      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.quantity_ordered_on_po|floatformat:2 }}</span></td>
       <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.quantity_received|floatformat:2 }}</span></td>
     </tr>
+    {% endif %}
   {% empty %}
     <tr>
-      <td colspan="3" class="px-4 py-2 text-center text-gray-600">No items received yet.</td>
+      <td colspan="{% if show_variance %}6{% else %}3{% endif %}" class="px-4 py-2 text-center text-gray-600">No items received yet.</td>
     </tr>
   {% endfor %}
 {% endblock %}

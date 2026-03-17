@@ -4,10 +4,20 @@
 {% block content %}
 <div id="suppliers_cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
   {% for row in page_obj %}
-  <div class="bg-surface border border-border rounded-xl shadow-card p-4 flex justify-between items-start">
+  <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex justify-between items-start">
     <div>
       <h3 class="text-lg font-semibold">{{ row.name }}</h3>
-      <p class="text-sm text-gray-600">{{ row.contact_person }}</p>
+      {% if row.contact_person %}<p class="text-sm text-gray-600">{{ row.contact_person }}</p>{% endif %}
+      {% if row.phone %}
+      <p class="text-sm text-gray-500 mt-1">
+        <a href="tel:{{ row.phone }}" class="hover:text-primary">{{ row.phone }}</a>
+      </p>
+      {% endif %}
+      {% if row.email %}
+      <p class="text-sm text-gray-500">
+        <a href="mailto:{{ row.email }}" class="hover:text-primary">{{ row.email }}</a>
+      </p>
+      {% endif %}
     </div>
     <div class="flex gap-2">
       <a
@@ -21,9 +31,11 @@
       <form
         hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
         hx-target="#suppliers_cards"
-        hx-confirm="Are you sure you want to toggle this supplier?"
         method="post"
-        class="inline"
+        class="inline deactivate-form"
+        data-open-pos="{{ row.open_po_count }}"
+        data-is-active="{% if row.is_active %}true{% else %}false{% endif %}"
+        data-supplier-name="{{ row.name }}"
       >
         {% csrf_token %}
         <input type="hidden" name="q" value="{{ q }}" />
@@ -56,3 +68,21 @@
 </div>
 {% endwith %}
 {% endblock %}
+<script>
+(function () {
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form.classList.contains('deactivate-form')) return;
+    var openPos = parseInt(form.dataset.openPos || '0', 10);
+    var isActive = form.dataset.isActive === 'true';
+    var name = form.dataset.supplierName || 'this supplier';
+    var msg = (isActive && openPos > 0)
+      ? name + ' has ' + openPos + ' open PO(s). Deactivate anyway?'
+      : 'Toggle active status for ' + name + '?';
+    if (!confirm(msg)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+})();
+</script>

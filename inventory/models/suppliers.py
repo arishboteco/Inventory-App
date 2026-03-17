@@ -1,4 +1,14 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
+PAYMENT_TERMS_CHOICES = [
+    ("Net 30", "Net 30"),
+    ("Net 60", "Net 60"),
+    ("Net 90", "Net 90"),
+    ("COD", "COD (Cash on Delivery)"),
+    ("Prepaid", "Prepaid"),
+    ("Other", "Other (specify in Notes)"),
+]
 
 
 class Supplier(models.Model):
@@ -19,17 +29,22 @@ class Supplier(models.Model):
         max_length=100,
         blank=True,
         null=True,
-        help_text="Standard payment terms (e.g., Net 30)",
+        choices=PAYMENT_TERMS_CHOICES,
+        help_text="Standard payment terms",
     )
     credit_limit = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        default=0,
         blank=True,
         null=True,
         help_text="Credit limit amount",
     )
     supplier_rating = models.IntegerField(
-        blank=True, null=True, help_text="Supplier rating (1-5 stars)"
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Supplier rating (1-5 stars)",
     )
 
     notes = models.TextField(blank=True, null=True, default="")

@@ -3,6 +3,7 @@ import io
 import logging
 
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -13,7 +14,7 @@ from django.views.generic import TemplateView
 
 from ..forms.bulk_forms import BulkDeleteForm, BulkUploadForm
 from ..forms.supplier_forms import SupplierForm
-from ..models import Supplier
+from ..models import PurchaseOrder, Supplier
 from ..services import list_utils, supplier_service
 from ..services.exceptions import SupplierServiceError
 
@@ -131,6 +132,16 @@ class SuppliersListView(TemplateView):
         return self.get(request, *args, **kwargs)
 
 
+def _annotate_open_po_count(qs):
+    """Annotate suppliers with count of open (non-received) purchase orders."""
+    return qs.annotate(
+        open_po_count=Count(
+            "purchaseorder",
+            filter=Q(purchaseorder__status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"]),
+        )
+    )
+
+
 class SuppliersTableView(TemplateView):
     """Render the paginated table of suppliers or export as CSV.
 
@@ -160,6 +171,7 @@ class SuppliersTableView(TemplateView):
             allowed_sorts=allowed_sorts,
             default_sort="name",
         )
+        qs = _annotate_open_po_count(qs)
         self._filter_params = params
         return qs
 
@@ -220,6 +232,7 @@ class SuppliersCardView(TemplateView):
             allowed_sorts=allowed_sorts,
             default_sort="name",
         )
+        qs = _annotate_open_po_count(qs)
         self._filter_params = params
         return qs
 

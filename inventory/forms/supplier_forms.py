@@ -1,10 +1,26 @@
 from django import forms
+from django.core.validators import MaxValueValidator, MinValueValidator
 
-from ..models import Supplier
+from ..models import PAYMENT_TERMS_CHOICES, Supplier
 from .base import INPUT_CLASS, StyledFormMixin
 
 
 class SupplierForm(StyledFormMixin, forms.ModelForm):
+    supplier_rating = forms.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "min": "1",
+                "max": "5",
+                "placeholder": "1–5",
+                "aria-label": "Supplier rating",
+            }
+        ),
+        help_text="Rate 1 (poor) to 5 (excellent)",
+    )
+
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(
@@ -76,10 +92,10 @@ class SupplierForm(StyledFormMixin, forms.ModelForm):
                     "aria-label": "Tax ID",
                 }
             ),
-            "payment_terms": forms.TextInput(
+            "payment_terms": forms.Select(
+                choices=[("", "— Select —")] + PAYMENT_TERMS_CHOICES,
                 attrs={
                     "class": INPUT_CLASS,
-                    "placeholder": "e.g., Net 30, COD, etc.",
                     "aria-label": "Payment terms",
                 }
             ),
@@ -88,17 +104,8 @@ class SupplierForm(StyledFormMixin, forms.ModelForm):
                     "class": INPUT_CLASS,
                     "step": "0.01",
                     "min": "0",
-                    "placeholder": "10000.00",
+                    "placeholder": "0.00",
                     "aria-label": "Credit limit",
-                }
-            ),
-            "supplier_rating": forms.NumberInput(
-                attrs={
-                    "class": INPUT_CLASS,
-                    "min": "1",
-                    "max": "5",
-                    "placeholder": "5",
-                    "aria-label": "Supplier rating",
                 }
             ),
             # Let StyledFormMixin add checkbox classes

@@ -32,7 +32,12 @@
 
 {% block secondary_actions %}
   {% url 'suppliers_bulk_delete' as suppliers_bulk_delete_url %}
-  {% include "components/button.html" with href=suppliers_bulk_delete_url variant='danger' label='Bulk Delete' %}
+  <button id="bulk-delete-btn"
+          disabled
+          onclick="window.location='{{ suppliers_bulk_delete_url }}'"
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500">
+    Bulk Delete
+  </button>
   {% url 'suppliers_table' as suppliers_table_url %}
   {% with export_url=suppliers_table_url|add:'?export=1' %}
     {% include "components/button.html" with href=export_url variant='secondary' label='Export CSV' %}

@@ -14,7 +14,7 @@ from .orders import (
 )
 from .recipes import Recipe, RecipeComponent, RecipeItem, SaleTransaction
 from .subcategory import SubCategory
-from .suppliers import Supplier
+from .suppliers import PAYMENT_TERMS_CHOICES, Supplier
 from .unit import Unit
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "Item",
     "StockTransaction",
     "Supplier",
+    "PAYMENT_TERMS_CHOICES",
     "Indent",
     "IndentItem",
     "IndentPOLink",

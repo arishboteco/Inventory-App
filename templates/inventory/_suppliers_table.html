@@ -59,17 +59,17 @@
   <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="name">
     <a data-sort-link data-sort-key="name" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Name {% if sort == 'name' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText">Name {% if sort == 'name' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
   <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="contact">
     <a data-sort-link data-sort-key="contact_person" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=contact_person&direction={% if sort == 'contact_person' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=contact_person&direction={% if sort == 'contact_person' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Contact {% if sort == 'contact_person' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText">Contact Person {% if sort == 'contact_person' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
   <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="email">
     <a data-sort-link data-sort-key="email" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=email&direction={% if sort == 'email' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=email&direction={% if sort == 'email' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Email {% if sort == 'email' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText">Email {% if sort == 'email' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
   <th scope="col" class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="phone">
     <a data-sort-link data-sort-key="phone" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=phone&direction={% if sort == 'phone' and direction == 'asc' %}desc{% else %}asc{% endif %}"
@@ -79,7 +79,7 @@
   <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="active">
     <a data-sort-link data-sort-key="is_active" href="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
        hx-get="{% url 'suppliers_table' %}?q={{ q }}&active={{ active }}&page_size={{ page_size }}&sort=is_active&direction={% if sort == 'is_active' and direction == 'asc' %}desc{% else %}asc{% endif %}"
-       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText"Active {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
+       hx-target="#suppliers_table" class="flex items-center gap-1 text-bodyText">Active {% if sort == 'is_active' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-gray-400">⇅</span>{% endif %}</a>
   </th>
   <th scope="col" class="px-4 py-2 bg-surfaceSubtle border-b border-border" data-col="actions">Actions</th>
 {% endblock %}
@@ -92,16 +92,18 @@
     </td>
     <td class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="id"><span class="tabular-nums">{{ row.supplier_id }}</span></td>
     <td class="px-4 py-2 whitespace-normal break-words" data-col="name">{{ row.name }}</td>
-    <td class="px-4 py-2 whitespace-normal break-words" data-col="contact">{{ row.contact_person }}</td>
-    <td class="px-4 py-2 whitespace-normal break-words" data-col="email">{{ row.email }}</td>
-    <td class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="phone"><span class="tabular-nums">{{ row.phone }}</span></td>
+    <td class="px-4 py-2 whitespace-normal break-words" data-col="contact">{{ row.contact_person|default:"—" }}</td>
+    <td class="px-4 py-2 whitespace-normal break-words" data-col="email">{{ row.email|default:"—" }}</td>
+    <td class="px-4 py-2 text-right bg-surfaceSubtle border-b border-border" data-col="phone"><span class="tabular-nums">{{ row.phone|default:"—" }}</span></td>
     <td class="px-4 py-2 text-center text-gray-600" data-col="active">
       <form
         hx-post="{% url 'supplier_toggle_active' row.supplier_id %}"
         hx-target="#suppliers_table"
-        hx-confirm="Are you sure you want to toggle this supplier?"
         method="post"
-        class="inline"
+        class="inline deactivate-form"
+        data-open-pos="{{ row.open_po_count }}"
+        data-is-active="{% if row.is_active %}true{% else %}false{% endif %}"
+        data-supplier-name="{{ row.name }}"
       >
         {% csrf_token %}
         <input type="hidden" name="q" value="{{ q }}" />
@@ -155,4 +157,40 @@
     {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#suppliers_table" %}
   </div>
   {% endwith %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // Deactivation confirmation with open-PO warning
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form.classList.contains('deactivate-form')) return;
+    var openPos = parseInt(form.dataset.openPos || '0', 10);
+    var isActive = form.dataset.isActive === 'true';
+    var name = form.dataset.supplierName || 'this supplier';
+    var msg = (isActive && openPos > 0)
+      ? name + ' has ' + openPos + ' open PO(s). Deactivate anyway?'
+      : 'Toggle active status for ' + name + '?';
+    if (!confirm(msg)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  // Enable Bulk Delete button only when at least one row is checked
+  function syncBulkDeleteBtn() {
+    var btn = document.getElementById('bulk-delete-btn');
+    if (!btn) return;
+    var checked = document.querySelectorAll('[data-bulk-checkbox]:checked').length;
+    btn.disabled = checked === 0;
+  }
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-bulk-checkbox], [data-bulk-select-all]')) {
+      syncBulkDeleteBtn();
+    }
+  });
+  syncBulkDeleteBtn();
+})();
+</script>
 {% endblock %}

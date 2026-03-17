@@ -1,4 +1,5 @@
 {% extends "components/form_layout.html" %}
+{% load form_tags %}
 {% block title %}Recipe Detail – Inventory Pro{% endblock %}
 {% block heading %}{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}{% endblock %}
 {% block form_summary %}

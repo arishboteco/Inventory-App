@@ -6,11 +6,12 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
 from ..forms.recipe_forms import RecipeForm, RecipeItemFormSet
-from ..models import Recipe, RecipeItem
+from ..models import Indent, IndentItem, Recipe, RecipeItem
 from ..services import list_utils, recipe_service
 from ..services.units_service import UnitsService
 
@@ -584,8 +585,15 @@ class RecipeViewPartialView(View):
             cost_per_base = (
                 cost_per_base.quantize(TWOPLACES) if cost_per_base else Decimal("0.00")
             )
+            # Apply loss %: effective_qty = qty / (1 - loss_pct/100)
+            effective_qty = qty
+            if qty and loss_pct and loss_pct < 100:
+                try:
+                    effective_qty = qty / (1 - loss_pct / 100)
+                except (ArithmeticError, ZeroDivisionError):
+                    effective_qty = qty
             line_cost = (
-                (cost_per_base * qty).quantize(TWOPLACES) if qty else Decimal("0.00")
+                (cost_per_base * effective_qty).quantize(TWOPLACES) if effective_qty else Decimal("0.00")
             )
             has_zero_price = bool(qty and item and cost_per_base == Decimal("0.00"))
             zero_cost = zero_cost or has_zero_price
@@ -626,3 +634,60 @@ class RecipeViewPartialView(View):
                 "plating_placeholder_url": plating_placeholder_url,
             },
         )
+
+
+def recipe_create_indent(request, pk: int):
+    """Create a DRAFT indent from a recipe's ingredient list.
+
+    POST params:
+        yield_qty  – target yield quantity (defaults to recipe.default_yield_qty)
+    """
+    if request.method != "POST":
+        return redirect("recipe_view_partial", pk=pk)
+
+    recipe = get_object_or_404(
+        Recipe.objects.prefetch_related(
+            Prefetch("items", queryset=RecipeItem.objects.select_related("item"))
+        ),
+        pk=pk,
+    )
+
+    try:
+        yield_qty = Decimal(str(request.POST.get("yield_qty") or recipe.default_yield_qty or 1))
+    except (ValueError, ArithmeticError):
+        yield_qty = _to_decimal(recipe.default_yield_qty) or Decimal("1")
+
+    base_yield = _to_decimal(recipe.default_yield_qty) or Decimal("1")
+    scale = yield_qty / base_yield if base_yield else Decimal("1")
+
+    ts = timezone.now().strftime("%Y%m%d%H%M%S%f")
+    mrn = f"MRN-{ts}"
+
+    indent = Indent.objects.create(
+        mrn=mrn,
+        notes=f"Recipe: {recipe.name}",
+        status="DRAFT",
+        date_required=None,
+    )
+
+    for row in recipe.items.all():
+        item = getattr(row, "item", None)
+        if not item:
+            continue
+        qty = _to_decimal(getattr(row, "quantity", None))
+        loss_pct = _to_decimal(getattr(row, "loss_pct", None))
+        effective_qty = qty * scale
+        if loss_pct and loss_pct < 100:
+            try:
+                effective_qty = effective_qty / (1 - loss_pct / 100)
+            except (ArithmeticError, ZeroDivisionError):
+                pass
+        effective_qty = effective_qty.quantize(TWOPLACES)
+        IndentItem.objects.create(
+            indent=indent,
+            item=item,
+            requested_qty=effective_qty,
+        )
+
+    messages.success(request, f"Indent {mrn} created from recipe", extra_tags="toast")
+    return redirect("indent_detail", pk=indent.pk)

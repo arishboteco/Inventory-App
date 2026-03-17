@@ -68,7 +68,14 @@
 
     var costElement = row.querySelector('[data-line-cost]');
     if (costElement) {
-      var lineCost = quantity * costPerBase;
+      // Apply loss %: effective_qty = qty / (1 - loss_pct/100)
+      var lossPctInput = row.querySelector('input[id$="-loss_pct"]');
+      var lossPct = lossPctInput ? toNumber(lossPctInput.value) : 0;
+      var effectiveQty = quantity;
+      if (lossPct > 0 && lossPct < 100) {
+        effectiveQty = quantity / (1 - lossPct / 100);
+      }
+      var lineCost = effectiveQty * costPerBase;
       costElement.textContent = lineCost.toFixed(2);
     }
 

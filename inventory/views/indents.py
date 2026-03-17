@@ -696,24 +696,47 @@ def indent_detail(request, pk: int):
         ("Requested By", indent.requested_by),
         ("Department", indent.department),
     ]
-    # Prepare WhatsApp message URL with basic details
+    # Prepare WhatsApp message URL with status and item details
     try:
         from urllib.parse import quote_plus
 
+        status_label = indent.get_status_display()
+        items_lines = "\n".join(
+            "- {}: {} {}".format(
+                ii.item.name if ii.item else "?",
+                ii.requested_qty,
+                ii.unit_display or "",
+            ).rstrip()
+            for ii in items
+        )
         wa_text = (
-            f"Indent Submitted:\nMRN: {indent.mrn or indent.pk}\n"
-            f"Requested By: {indent.requested_by or ''}\n"
+            f"Indent: {indent.mrn or indent.pk}\n"
+            f"Status: {status_label}\n"
             f"Department: {indent.department or ''}\n"
-            f"Date Required: {getattr(indent, 'date_required', '')}"
+            f"Date Required: {getattr(indent, 'date_required', '')}\n"
+            f"Requested By: {indent.requested_by or ''}\n"
+            f"\nItems:\n{items_lines or '(none)'}"
         )
         wa_url = f"https://wa.me/?text={quote_plus(wa_text)}"
     except Exception:
         wa_url = None
+    # Compute overdue flag for the detail template
+    try:
+        _today = timezone.now().date()
+        is_overdue = (
+            getattr(indent, "date_required", None) is not None
+            and indent.date_required < _today
+            and indent.status.upper() not in ("COMPLETED", "CANCELLED")
+        )
+    except Exception:
+        is_overdue = False
     ctx = {
         "indent": indent,
         "items": items,
         "rows": rows,
         "wa_url": wa_url,
+        "is_overdue": is_overdue,
+        "has_po_links": any(ii.po_links.exists() for ii in items),
         "list_url": reverse("indents_list"),
         "list_title": "Indents",
         "current_title": f"Indent {indent.mrn or indent.pk}",

@@ -25,9 +25,9 @@
   {% for row in items %}
     <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
       <td class="px-4 py-2">{{ row.item.name }}</td>
-      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ row.requested_qty|default:0|floatformat:2 }}</span> <span class="text-gray-500">{{ row.unit_display }}</span></td>
-      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ row.issued_qty|default:0|floatformat:2 }}</span> <span class="text-gray-500">{{ row.unit_display }}</span></td>
-      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ row.remaining_qty|default:0|floatformat:2 }}</span> <span class="text-gray-500">{{ row.unit_display }}</span></td>
+      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ row.requested_qty|default:0|floatformat:2 }}</span>{% if row.unit_display %} <span class="text-gray-400 text-sm ml-1">({{ row.unit_display }})</span>{% endif %}</td>
+      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ row.issued_qty|default:0|floatformat:2 }}</span>{% if row.unit_display %} <span class="text-gray-400 text-sm ml-1">({{ row.unit_display }})</span>{% endif %}</td>
+      <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ row.remaining_qty|default:0|floatformat:2 }}</span>{% if row.unit_display %} <span class="text-gray-400 text-sm ml-1">({{ row.unit_display }})</span>{% endif %}</td>
     </tr>
   {% empty %}
     <tr>

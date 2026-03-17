@@ -19,7 +19,9 @@
       </td>
     <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
     <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-    <td><button type="button" class="remove-row inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-danger text-white hover:bg-danger-strong focus:ring-2 focus:ring-danger-soft">Remove</button></td>
+    <td><button type="button" class="remove-row p-1.5 text-gray-400 hover:text-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-300 transition" title="Remove row" aria-label="Remove row">
+      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button></td>
   </tr>
   {% endfor %}
 {% endblock %}

@@ -83,7 +83,7 @@
     hx-get="{% url 'indents_table' %}?{{ querystring|default:'' }}&sort=status&direction={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}"
     hx-target="#indents_table" hx-indicator="#indents-loading" class="flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-primary">Status {% if sort == 'status' %}<span class="text-xs">{% if direction == 'asc' %}▲{% else %}▼{% endif %}</span>{% else %}<span class="text-xs text-bodyText">⇅</span>{% endif %}</a>
   </th>
-  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="fulfillment">Fulfillment</th>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="fulfillment" title="Items issued vs total items requested">Fulfilled / Requested</th>
   <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="actions">Actions</th>
 {% endblock %}
 
@@ -99,6 +99,9 @@
     <td class="px-4 py-2" data-col="status">
       {% with status_upper=row.status|upper %}
         <span class="{{ badges|get_item:status_upper|default:'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning' }}">{{ row.status }}</span>
+        {% if row.is_overdue %}
+        <span class="inline-flex items-center gap-1 ml-1 px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50 border border-red-200" title="Overdue — needed by {{ row.date_required|date:'d-m-Y' }}">⚠ Overdue</span>
+        {% endif %}
       {% endwith %}
     </td>
     <td class="px-4 py-2 whitespace-nowrap" data-col="fulfillment">
@@ -110,17 +113,17 @@
       {% load icon_tags %}
       <div class="flex items-center gap-2">
         {% url 'indent_detail' row.indent_id as view_url %}
-        <a href="{{ view_url }}" data-modal-url="{{ view_url }}?partial=1" data-modal-type="drawer" data-modal-prefetch="hover" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary hover:text-accent" title="View">
+        <a href="{{ view_url }}" data-modal-url="{{ view_url }}?partial=1" data-modal-type="drawer" data-modal-prefetch="hover" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary hover:text-accent" title="View indent" aria-label="View indent">
           {% icon 'eye' 'w-4 h-4' %}
-          <span class="sr-only">View</span>
+          <span class="sr-only">View indent</span>
         </a>
-        <a href="{{ view_url }}?edit=1" data-modal-url="{{ view_url }}?edit=1&partial=1" data-modal-type="drawer" data-modal-prefetch="hover" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Edit">
+        <a href="{{ view_url }}?edit=1" data-modal-url="{{ view_url }}?edit=1&partial=1" data-modal-type="drawer" data-modal-prefetch="hover" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Edit indent" aria-label="Edit indent">
           {% icon 'pencil' 'w-4 h-4' %}
-          <span class="sr-only">Edit</span>
+          <span class="sr-only">Edit indent</span>
         </a>
-        <a href="{% url 'indent_pdf' row.indent_id %}" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Print / PDF">
+        <a href="{% url 'indent_pdf' row.indent_id %}" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Download PDF" aria-label="Download PDF">
           {% icon 'printer' 'w-4 h-4' %}
-          <span class="sr-only">Print / PDF</span>
+          <span class="sr-only">Download PDF</span>
         </a>
   {% if row.status|upper == 'SUBMITTED' %}
   {% if request.user.is_staff or request.user.is_superuser or perms.inventory.change_indent %}
@@ -132,9 +135,9 @@
               hx-include="#filters"
               hx-indicator="#indents-loading">
           {% csrf_token %}
-          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Approve">
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Approve indent" aria-label="Approve indent">
             {% icon 'check' 'w-4 h-4' %}
-            <span class="sr-only">Approve</span>
+            <span class="sr-only">Approve indent</span>
           </button>
         </form>
         {% endif %}
@@ -148,9 +151,9 @@
               hx-include="#filters"
               hx-indicator="#indents-loading">
           {% csrf_token %}
-          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Mark Processing">
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Consolidate to PO" aria-label="Consolidate to PO">
             {% icon 'play' 'w-4 h-4' %}
-            <span class="sr-only">Mark Processing</span>
+            <span class="sr-only">Consolidate to PO</span>
           </button>
         </form>
         {% endif %}
@@ -163,9 +166,9 @@
               hx-include="#filters"
               hx-indicator="#indents-loading">
           {% csrf_token %}
-          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Complete">
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Mark Completed" aria-label="Mark Completed">
             {% icon 'check-circle' 'w-4 h-4' %}
-            <span class="sr-only">Complete</span>
+            <span class="sr-only">Mark Completed</span>
           </button>
         </form>
     <form action="{% url 'indent_update_status' row.indent_id 'CANCELLED' %}"
@@ -176,9 +179,9 @@
       hx-include="#filters"
       hx-indicator="#indents-loading">
           {% csrf_token %}
-          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Cancel">
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Cancel indent" aria-label="Cancel indent">
             {% icon 'x-mark' 'w-4 h-4' %}
-            <span class="sr-only">Cancel</span>
+            <span class="sr-only">Cancel indent</span>
           </button>
         </form>
         {% endif %}

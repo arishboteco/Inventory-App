@@ -46,13 +46,13 @@
 {% endblock %}
 
 {% block secondary_actions %}
-  <a href="{% url 'indents_consolidate_preview' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Consolidate Approved</a>
+  <a href="{% url 'indents_consolidate_preview' %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md transition focus:outline-none bg-surface text-primary border-2 border-primary hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Consolidate Approved</a>
 {% endblock %}
 
 {% block filters %}
   {% url 'indents_table' as indents_table_url %}
   <div class="mb-4">
-    {% include "components/filter_bar.html" with hide_labels=True search_placeholder="Search by MRN, requester or department" hx_get=indents_table_url hx_target="#indents_table" hx_indicator="#indents-loading" filters=filters search_delay="400ms" %}
+    {% include "components/filter_bar.html" with hide_labels=True search_placeholder="Search MRN, requester, department…" hx_get=indents_table_url hx_target="#indents_table" hx_indicator="#indents-loading" filters=filters search_delay="400ms" %}
   </div>
 {% endblock %}
 

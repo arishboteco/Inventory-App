@@ -2,8 +2,8 @@
 {% url 'suppliers_list' as suppliers_list_url %}
 {% url 'indents_list' as indents_list_url %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-  {% include "components/kpi_card.html" with icon='cube' color='blue' label='Items' value=items href=items_list_url %}
-  {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low-stock Items' value=low_stock href=items_list_url|add:'?stock_status=low' %}
-  {% include "components/kpi_card.html" with icon='truck' color='green' label='Suppliers' value=suppliers href=suppliers_list_url %}
-  {% include "components/kpi_card.html" with icon='clipboard-document-list' color='yellow' label='Pending Indents' value=pending_indents href=indents_list_url|add:'?status=PENDING' %}
+  {% include "components/kpi_card.html" with icon='cube' label='Items' value=items href=items_list_url %}
+  {% include "components/kpi_card.html" with icon='exclamation-triangle' label='Low-stock Items' value=low_stock href=items_list_url|add:'?stock_status=low' warning=low_stock %}
+  {% include "components/kpi_card.html" with icon='truck' label='Suppliers' value=suppliers href=suppliers_list_url %}
+  {% include "components/kpi_card.html" with icon='clipboard-document-list' label='Pending Indents' value=pending_indents href=indents_list_url|add:'?status=PENDING' info=pending_indents %}
 </div>

@@ -2,7 +2,13 @@
 <div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-xl">
   <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <h3 class="text-base font-semibold">{{ recipe.name }}</h3>
-    <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+    <div class="flex items-center gap-2">
+      <button type="button"
+              class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-primary border border-primary hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary"
+              data-modal-url="{% url 'recipe_edit_partial' recipe.pk %}"
+              data-modal-type="drawer">Edit Recipe</button>
+      <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
+    </div>
   </div>
   <div class="p-4 space-y-6">
     <section class="grid gap-4 md:grid-cols-3 text-sm">
@@ -48,37 +54,47 @@
     </section>
 
     <section class="space-y-3">
-      <h4 class="text-sm font-semibold">Ingredients</h4>
+      <div class="flex items-center justify-between">
+        <h4 class="text-sm font-semibold">Ingredients</h4>
+        <div class="flex items-center gap-2 text-sm">
+          <label class="text-xs text-gray-500 font-medium">Scale to yield:</label>
+          <input type="number" id="scale-qty" value="{{ recipe.default_yield_qty|floatformat:-2 }}" min="0.001" step="0.001"
+                 class="w-20 border border-border rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                 data-base-yield="{{ recipe.default_yield_qty|floatformat:-2 }}">
+          <button type="button" onclick="scaleRecipeView()"
+                  class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
+            Recalculate
+          </button>
+        </div>
+      </div>
       <div class="table-scroll bg-surface border border-border rounded-2xl shadow-sm" data-table-container>
         <table id="items-table" class="min-w-full w-full table-auto text-label">
           <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
             <tr>
-              <th scope="col">Item</th>
-              <th scope="col">Qty</th>
-              <th scope="col">Unit</th>
-              <th scope="col">Loss %</th>
-              <th scope="col">Cost</th>
-              <th scope="col" class="w-8"></th>
+              <th scope="col" class="px-3 py-2">Item</th>
+              <th scope="col" class="px-3 py-2">Qty</th>
+              <th scope="col" class="px-3 py-2">Unit</th>
+              <th scope="col" class="px-3 py-2">Loss %</th>
+              <th scope="col" class="px-3 py-2">Cost</th>
             </tr>
           </thead>
           <tbody class="bg-surface divide-y divide-border">
             {% for item in items %}
-            <tr class="form-row" data-recipe-row="true" data-category="{{ item.category }}" data-subcategory="{{ item.subcategory }}" data-cost-per-base-unit="{{ item.cost_per_base_unit_str }}" data-quantity="{{ item.quantity_str }}" data-has-item="{% if item.has_item %}1{% else %}0{% endif %}" {% if item.has_zero_price %}data-has-zero-price="1"{% endif %}>
+            <tr class="form-row {% if item.has_zero_price %}bg-amber-50{% endif %}" data-recipe-row="true" data-category="{{ item.category }}" data-subcategory="{{ item.subcategory }}" data-cost-per-base-unit="{{ item.cost_per_base_unit_str }}" data-quantity="{{ item.quantity_str }}" data-has-item="{% if item.has_item %}1{% else %}0{% endif %}" {% if item.has_zero_price %}data-has-zero-price="1"{% endif %}>
               <td class="px-3 py-2 align-top">
                 <div class="font-medium text-bodyText">{{ item.name }}</div>
                 <div class="text-xs text-gray-500">{{ item.category }}</div>
               </td>
-              <td class="px-3 py-2 align-middle">{{ item.quantity|floatformat:-2 }}</td>
+              <td class="px-3 py-2 align-middle"><span data-base-qty="{{ item.quantity_str }}">{{ item.quantity|floatformat:-2 }}</span></td>
               <td class="px-3 py-2 align-middle">{{ item.unit|default:"—" }}</td>
               <td class="px-3 py-2 align-middle">{{ item.loss_pct|floatformat:-2 }}</td>
               <td class="px-3 py-2 align-middle">
-                <div class="text-sm" data-line-cost>{{ item.line_cost_str }}</div>
+                <div class="text-sm {% if item.has_zero_price %}text-amber-600{% endif %}" data-line-cost data-base-cost="{{ item.line_cost_str }}">{{ item.line_cost_str }}</div>
               </td>
-              <td class="px-3 py-2"></td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="px-4 py-6 text-center text-gray-500">No items added yet.</td>
+              <td colspan="5" class="px-4 py-6 text-center text-gray-500">No items added yet.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -94,6 +110,24 @@
         <div>Total Cost: <span id="recipe-total-cost">{{ total_cost|floatformat:2 }}</span></div>
       </div>
     </section>
+
+    {% if recipe.pk %}
+    <section>
+      <form method="post" action="{% url 'recipe_create_indent' recipe.pk %}">
+        {% csrf_token %}
+        <div class="flex items-center gap-3">
+          <label class="text-sm text-gray-600">Yield qty:
+            <input type="number" name="yield_qty" value="{{ recipe.default_yield_qty|floatformat:-2 }}" min="0.001" step="0.001"
+                   class="ml-1 w-20 border border-border rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+          </label>
+          <button type="submit"
+                  class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">
+            Request Ingredients
+          </button>
+        </div>
+      </form>
+    </section>
+    {% endif %}
   </div>
 </div>
 <script>
@@ -108,4 +142,27 @@
     window.updateRecipeCosts(rootScope);
   }
 })();
+
+function scaleRecipeView() {
+  var input = document.getElementById('scale-qty');
+  if (!input) return;
+  var baseYield = parseFloat(input.getAttribute('data-base-yield')) || 1;
+  var newYield = parseFloat(input.value) || baseYield;
+  var factor = newYield / baseYield;
+  document.querySelectorAll('[data-base-qty]').forEach(function(el) {
+    var base = parseFloat(el.getAttribute('data-base-qty')) || 0;
+    el.textContent = (base * factor).toFixed(3);
+  });
+  document.querySelectorAll('[data-line-cost][data-base-cost]').forEach(function(el) {
+    var base = parseFloat(el.getAttribute('data-base-cost')) || 0;
+    el.textContent = (base * factor).toFixed(2);
+  });
+  // Update total
+  var total = 0;
+  document.querySelectorAll('[data-line-cost][data-base-cost]').forEach(function(el) {
+    total += parseFloat(el.getAttribute('data-base-cost')) || 0;
+  });
+  var totalEl = document.getElementById('recipe-total-cost');
+  if (totalEl) totalEl.textContent = (total * factor).toFixed(2);
+}
 </script>

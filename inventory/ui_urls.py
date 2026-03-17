@@ -60,6 +60,7 @@ from .views.recipes import (
     RecipesTableView,
     RecipeViewPartialView,
     recipe_create,
+    recipe_create_indent,
     recipe_detail,
 )
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
@@ -240,6 +241,11 @@ urlpatterns = [
         "recipes/<int:pk>/view/partial/",
         RecipeViewPartialView.as_view(),
         name="recipe_view_partial",
+    ),
+    path(
+        "recipes/<int:pk>/create-indent/",
+        recipe_create_indent,
+        name="recipe_create_indent",
     ),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
     path("guides/workflow/", WorkflowGuideView.as_view(), name="workflow_guide"),

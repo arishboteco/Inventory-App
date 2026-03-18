@@ -1,51 +1,130 @@
+import logging
+
+from django.contrib import messages
 from django.core.cache import cache
-from django.shortcuts import render
+from django.db.models import Count
+from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from ..models import Item
+from ..models import Item, StockTransaction
 from ..services import ml
+
+logger = logging.getLogger(__name__)
+
+_FORECASTS_KEY = "ml_train_models"
+_ABC_KEY = "ml_abc_classification"
+_RUNNING_KEY = "ml_forecast_running"
+_TIMESTAMP_KEY = "ml_last_run_ts"
+_CACHE_TTL = 300          # 5 min
+_MIN_DATA_POINTS = 2      # matches ml.forecast_item_demand threshold
+
+
+def _compute_and_cache() -> tuple:
+    """Run both ML computations synchronously and store results in cache."""
+    from django.utils import timezone
+    forecasts = ml.train_models(periods=1)
+    cache.set(_FORECASTS_KEY, forecasts, _CACHE_TTL)
+    classifications = ml.abc_classification()
+    cache.set(_ABC_KEY, classifications, _CACHE_TTL)
+    cache.set(_TIMESTAMP_KEY, timezone.now(), _CACHE_TTL)
+    return forecasts, classifications
 
 
 def ml_dashboard(request):
     """Display forecasting and ABC classification results.
 
-    The results of :func:`ml.train_models` and :func:`ml.abc_classification` are
-    cached for a short period to avoid repeatedly running relatively expensive
-    operations on every request. Results are recomputed only when the cache is
-    empty or expires.
+    GET:  serves cached results; computes synchronously on cache-miss so the
+          page always shows real data without needing a background worker.
+    POST: forces a fresh recompute, caches, then redirects.
     """
-    ttl = 300  # seconds
+    if request.method == "POST":
+        cache.set(_RUNNING_KEY, True, timeout=60)
+        cache.delete(_FORECASTS_KEY)
+        cache.delete(_ABC_KEY)
+        try:
+            _compute_and_cache()
+        except Exception as exc:
+            logger.exception("ML recompute failed")
+            messages.error(request, f"Forecast failed: {exc}")
+        else:
+            messages.success(request, "Forecasts and ABC classifications updated.")
+        finally:
+            cache.delete(_RUNNING_KEY)
+        return redirect("ml_dashboard")
 
-    forecasts = cache.get("ml_train_models")
-    if forecasts is None:
-        # Training can be expensive. Trigger it in the background and use any
-        # cached results available. The background task populates the cache when
-        # finished so subsequent requests receive data without blocking.
-        ml.queue_train_models(periods=1, ttl=ttl)
-        forecasts = {}
+    # ── GET ──────────────────────────────────────────────────────────────────
+    forecasts      = cache.get(_FORECASTS_KEY)
+    classifications = cache.get(_ABC_KEY)
 
-    classifications = cache.get("ml_abc_classification")
-    if classifications is None:
-        ml.queue_abc_classification(ttl=ttl)
-        classifications = {}
+    if forecasts is None or classifications is None:
+        try:
+            forecasts, classifications = _compute_and_cache()
+        except Exception as exc:
+            logger.warning("ML compute on page load failed: %s", exc)
+            forecasts       = forecasts or {}
+            classifications = classifications or {}
 
-    results = []
-    for item in Item.objects.all():
-        forecast = forecasts.get(item.pk, [0.0])[0] if forecasts.get(item.pk) else 0.0
-        results.append(
+    last_run = cache.get(_TIMESTAMP_KEY)
+
+    # Transaction count per active item — single query, used for has_data flag
+    tx_counts = dict(
+        StockTransaction.objects.filter(item__is_active=True)
+        .values("item_id")
+        .annotate(cnt=Count("transaction_id"))
+        .values_list("item_id", "cnt")
+    )
+
+    items = (
+        Item.objects.filter(is_active=True)
+        .select_related("unit", "category")
+        .order_by("name")
+    )
+
+    table_data = []
+    for item in items:
+        raw = forecasts.get(item.pk, [0.0])
+        forecast_qty = float((raw[0] if isinstance(raw, list) and raw else raw) or 0)
+        forecast_qty = max(0.0, forecast_qty)
+        current_stock = float(item.current_stock or 0)
+        days_cover = round(current_stock / forecast_qty, 1) if forecast_qty > 0 else None
+        tx_count = tx_counts.get(item.pk, 0)
+
+        table_data.append(
             {
-                "item": item,
-                "forecast": forecast,
-                "classification": classifications.get(item.pk, "C"),
+                "item":      item,
+                "abc":       classifications.get(item.pk, "C"),
+                "forecast":  forecast_qty,
+                "days_cover": days_cover,
+                "has_data":  tx_count >= _MIN_DATA_POINTS,
+                "tx_count":  tx_count,
             }
         )
+
+    # Sort: A → B → C; within each class, critical (low days_cover) first
+    _abc_order = {"A": 0, "B": 1, "C": 2}
+    table_data.sort(
+        key=lambda r: (
+            _abc_order.get(r["abc"], 2),
+            r["days_cover"] if r["days_cover"] is not None else 9999,
+            r["item"].name,
+        )
+    )
+
+    # ABC distribution for page_meta
+    abc_counts: dict = {"A": 0, "B": 0, "C": 0}
+    for r in table_data:
+        abc_counts[r["abc"]] = abc_counts.get(r["abc"], 0) + 1
+
     return render(
         request,
         "inventory/ml_dashboard.html",
         {
-            "results": results,
-            "list_url": reverse("root"),
-            "list_title": "Dashboard",
-            "current_title": "ML Dashboard",
+            "table_data":   table_data,
+            "abc_counts":   abc_counts,
+            "last_run":     last_run,
+            "task_running": cache.get(_RUNNING_KEY, False),
+            "list_url":     reverse("root"),
+            "list_title":   "Dashboard",
+            "current_title": "ML Planner",
         },
     )

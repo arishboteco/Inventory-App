@@ -2,7 +2,7 @@
 {% block page_title %}Visualizations – Inventory Pro{% endblock %}
 {% block page_heading %}Visualizations{% endblock %}
 {% block page_subtitle %}
-  <p class="text-sm text-gray-600">Run quick analytics on sales and stock performance.</p>
+  <p class="text-sm text-gray-600">Analyse stock receipts, wastage and adjustments over time.</p>
 {% endblock %}
 
 {% block filters %}
@@ -10,18 +10,21 @@
     <form method="get" class="grid gap-4 grid-cols-1 md:grid-cols-4">
       <div class="space-y-1">
         <label for="metric" class="text-sm font-medium text-bodyText">Metric</label>
-        <select id="metric" name="metric" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off">
-          <option value="sales" {% if metric == 'sales' %}selected{% endif %}>Sales</option>
-          <option value="stock" {% if metric == 'stock' %}selected{% endif %}>Stock</option>
+        <select id="metric" name="metric" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer" autocomplete="off">
+          <option value="receipts" {% if viz_metric == 'receipts' %}selected{% endif %}>Receipts (Stock In)</option>
+          <option value="wastage"  {% if viz_metric == 'wastage'  %}selected{% endif %}>Wastage (Stock Out)</option>
+          <option value="net"      {% if viz_metric == 'net'      %}selected{% endif %}>Net Movement</option>
         </select>
       </div>
       <div class="space-y-1">
         <label for="start-date" class="text-sm font-medium text-bodyText">Start Date</label>
-        <input id="start-date" type="date" name="start_date" value="{{ start_date }}" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off" />
+        <input id="start-date" type="date" name="start_date" value="{{ start_date }}" max="{{ end_date }}"
+               class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off" />
       </div>
       <div class="space-y-1">
         <label for="end-date" class="text-sm font-medium text-bodyText">End Date</label>
-        <input id="end-date" type="date" name="end_date" value="{{ end_date }}" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off" />
+        <input id="end-date" type="date" name="end_date" value="{{ end_date }}" min="{{ start_date }}"
+               class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off" />
       </div>
       <div class="flex items-end">
         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Apply</button>
@@ -31,35 +34,76 @@
 {% endblock %}
 
 {% block data_container %}
-  <div class="space-y-6">
-    <div id="heatmap" class="w-full h-64 bg-surface border border-border rounded-xl shadow-card"></div>
-    <div id="scatter" class="w-full h-64 bg-surface border border-border rounded-xl shadow-card"></div>
+  {% if not has_data %}
+  <div class="flex flex-col items-center justify-center py-16 text-gray-400 bg-surface border border-border rounded-xl shadow-card">
+    <svg class="w-12 h-12 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+    </svg>
+    <p class="text-sm font-medium">No stock movements in the selected period</p>
+    <p class="text-xs mt-1">
+      Try a wider date range or
+      <a href="/stock-movements/" class="text-primary underline">record some movements</a>
+    </p>
   </div>
+  {% else %}
+  <div class="space-y-6">
+    <div id="scatter" class="w-full bg-surface border border-border rounded-xl shadow-card" style="min-height: 300px;"></div>
+    <div id="heatmap" class="w-full bg-surface border border-border rounded-xl shadow-card" style="min-height: 300px;"></div>
+  </div>
+  {% endif %}
 {% endblock %}
 
 {% block page_scripts %}
-  {{ dates|json_script:"viz-dates" }}
-  {{ heatmap_z|json_script:"viz-heatmap" }}
-  {{ scatter_y|json_script:"viz-scatter-y" }}
+  <script id="viz-dates"     type="application/json">{{ viz_dates|safe }}</script>
+  <script id="viz-heatmap"   type="application/json">{{ viz_heatmap|safe }}</script>
+  <script id="viz-scatter-y" type="application/json">{{ viz_scatter_y|safe }}</script>
   <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+  {% if has_data %}
   <script>
-    const dates = JSON.parse(document.getElementById('viz-dates').textContent);
-    const heatmapZ = JSON.parse(document.getElementById('viz-heatmap').textContent);
-    const scatterY = JSON.parse(document.getElementById('viz-scatter-y').textContent);
+    (function () {
+      const dates    = JSON.parse(document.getElementById('viz-dates').textContent);
+      const scatterY = JSON.parse(document.getElementById('viz-scatter-y').textContent);
+      const heatmapZ = JSON.parse(document.getElementById('viz-heatmap').textContent);
+      const metric   = '{{ viz_metric }}';
 
-    Plotly.newPlot('heatmap', [{
-      z: heatmapZ,
-      x: dates,
-      y: ['Sales','Stock'],
-      type: 'heatmap',
-      colorscale: 'Viridis'
-    }], {margin: {t: 30}});
+      const metricLabels = { receipts: 'Receipts', wastage: 'Wastage', net: 'Net Movement' };
+      const metricColors = { receipts: '#22c55e', wastage: '#ef4444', net: '#3b82f6' };
+      const label = metricLabels[metric] || 'Receipts';
+      const color = metricColors[metric] || '#22c55e';
 
-    Plotly.newPlot('scatter', [{
-      x: dates,
-      y: scatterY,
-      mode: 'markers',
-      name: '{{ metric|capfirst }}'
-    }], {margin: {t: 30}, xaxis: {title: 'Date'}, yaxis: {title: '{{ metric|capfirst }}'}});
+      // Scatter: selected metric over time
+      Plotly.newPlot('scatter', [{
+        x: dates,
+        y: scatterY,
+        mode: 'lines+markers',
+        name: label,
+        line:   { color: color },
+        marker: { size: 6, color: color }
+      }], {
+        title: label + ' Over Time',
+        xaxis: { title: 'Date', type: 'date' },
+        yaxis: { title: 'Quantity', rangemode: 'tozero' },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor:  'transparent',
+        margin: { t: 40, r: 20, b: 50, l: 60 },
+      }, { responsive: true });
+
+      // Heatmap: Receipts / Wastage / Adjustments activity rows
+      Plotly.newPlot('heatmap', [{
+        z: heatmapZ,
+        x: dates,
+        y: ['Receipts', 'Wastage', 'Adjustments'],
+        type: 'heatmap',
+        colorscale: 'Viridis',
+        showscale: true
+      }], {
+        title: 'Stock Activity Heatmap',
+        xaxis: { title: 'Date', type: 'date' },
+        paper_bgcolor: 'transparent',
+        plot_bgcolor:  'transparent',
+        margin: { t: 40, r: 80, b: 50, l: 100 },
+      }, { responsive: true });
+    })();
   </script>
+  {% endif %}
 {% endblock %}

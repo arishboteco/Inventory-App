@@ -3,7 +3,26 @@
 {% block caption %}<caption>Recent Transactions</caption>{% endblock %}
 
 {% block actions %}
-  <div class="flex items-center justify-end px-4 py-3 bg-surfaceSubtle border-b border-border">
+  <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-surfaceSubtle border-b border-border">
+    <form method="get" action="" class="flex flex-wrap items-center gap-2">
+      <input type="text" name="item_q" value="{{ filter_item_q|default:'' }}" placeholder="Search item…"
+             class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary w-40" />
+      <select name="type" class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+        <option value="">All types</option>
+        <option value="RECEIVING" {% if filter_type == 'RECEIVING' %}selected{% endif %}>Receiving</option>
+        <option value="ADJUSTMENT" {% if filter_type == 'ADJUSTMENT' %}selected{% endif %}>Adjustment</option>
+        <option value="WASTAGE" {% if filter_type == 'WASTAGE' %}selected{% endif %}>Wastage</option>
+      </select>
+      <input type="date" name="date_from" value="{{ filter_date_from|default:'' }}"
+             class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary" />
+      <span class="text-xs text-gray-500">to</span>
+      <input type="date" name="date_to" value="{{ filter_date_to|default:'' }}"
+             class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary" />
+      <button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Filter</button>
+      {% if filter_item_q or filter_type or filter_date_from or filter_date_to %}
+      <a href="{% url 'stock_movements' %}" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Clear</a>
+      {% endif %}
+    </form>
     <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
       <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
       <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
@@ -25,18 +44,22 @@
   {% for tx in page_obj %}
   <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.transaction_id }}</span></td>
-    <td class="px-4 py-2">{{ tx.item.name }}</td>
+    <td class="px-4 py-2">{{ tx.item.name|default:"—" }}</td>
     <td class="px-4 py-2">
-      {% if tx.direction == 'in' %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">IN</span>
+      {% if tx.transaction_type == 'RECEIVING' %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Receiving</span>
+      {% elif tx.transaction_type == 'ADJUSTMENT' %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Adjustment</span>
+      {% elif tx.transaction_type == 'WASTAGE' %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Wastage</span>
       {% else %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">OUT</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText">{{ tx.transaction_type|default:"—" }}</span>
       {% endif %}
     </td>
-  <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
-    <td class="px-4 py-2">{{ tx.user_id }}</td>
-    <td class="px-4 py-2">{{ tx.transaction_date }}</td>
-    <td class="px-4 py-2">{{ tx.notes }}</td>
+    <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
+    <td class="px-4 py-2">{{ tx.user_id|default:"—" }}</td>
+    <td class="px-4 py-2 tabular-nums">{{ tx.transaction_date|date:"Y-m-d" }}</td>
+    <td class="px-4 py-2">{{ tx.notes|default:"—" }}</td>
   </tr>
   {% empty %}
   <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">

@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.functional import cached_property
 
 from .category import Category
@@ -138,7 +139,8 @@ class StockTransaction(models.Model):
         null=True,
     )
     notes = models.TextField(blank=True, null=True, default="")
-    transaction_date = models.DateTimeField(auto_now_add=True)
+    reason_category = models.CharField(max_length=20, blank=True, null=True)
+    transaction_date = models.DateTimeField(default=timezone.now)
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"Transaction {self.pk} for {self.item}"

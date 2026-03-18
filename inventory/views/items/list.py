@@ -519,6 +519,7 @@ def item_meta(request, item_id: int):
                 "category",
                 "last_purchase_price",
                 "initial_purchase_price",
+                "current_stock",
             )
             .get(pk=item_id)
         )
@@ -565,5 +566,6 @@ def item_meta(request, item_id: int):
         "last_purchase_price": last_price,
         "conversion_factor": conv,
         "cost_per_base_unit": cost_per_base,
+        "current_stock": float(item.current_stock or 0),
     }
     return JsonResponse(data)

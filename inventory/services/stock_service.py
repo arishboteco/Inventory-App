@@ -23,6 +23,8 @@ def record_stock_transaction(
     related_indent_id: Optional[int] = None,
     related_po_id: Optional[int] = None,
     notes: Optional[str] = None,
+    reason_category: Optional[str] = None,
+    transaction_date=None,
 ) -> None:
     """Record a single stock transaction.
 
@@ -40,7 +42,7 @@ def record_stock_transaction(
                 if not updated:
                     logger.warning("Item %s not found", item_id)
                     raise StockServiceError(f"Item {item_id} not found")
-                StockTransaction.objects.create(
+                create_kwargs = dict(
                     item_id=item_id,
                     quantity_change=quantity_change,
                     transaction_type=transaction_type,
@@ -49,7 +51,11 @@ def record_stock_transaction(
                     related_indent_id=related_indent_id,
                     related_po_id=related_po_id,
                     notes=notes,
+                    reason_category=reason_category,
                 )
+                if transaction_date is not None:
+                    create_kwargs["transaction_date"] = transaction_date
+                StockTransaction.objects.create(**create_kwargs)
             get_low_stock_items.cache_clear()
             return
         except OperationalError as exc:  # pragma: no cover - retry on lock

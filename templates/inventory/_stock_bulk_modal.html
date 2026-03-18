@@ -1,5 +1,5 @@
 {% load static %}
-<form method="post" action="{% url 'items_bulk_upload' %}" enctype="multipart/form-data" class="space-y-3">
+<form method="post" action="{% url 'stock_movements' %}" enctype="multipart/form-data" class="space-y-3">
   {% csrf_token %}
   <input type="hidden" name="bulk_upload" value="1" />
   {{ bulk_form.as_p }}

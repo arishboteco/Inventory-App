@@ -55,6 +55,7 @@ from .views.purchase_orders import (
 )
 from .views.recipes import (
     RecipeCreatePartialView,
+    RecipeDeleteView,
     RecipeEditPartialView,
     RecipesListView,
     RecipesTableView,
@@ -66,6 +67,8 @@ from .views.recipes import (
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.suppliers import (
     SupplierCreateView,
+    SupplierDeleteView,
+    SupplierDetailView,
     SupplierEditView,
     SuppliersBulkDeleteView,
     SuppliersBulkUploadPartialView,
@@ -76,7 +79,7 @@ from .views.suppliers import (
     SuppliersTableView,
     SupplierToggleActiveView,
 )
-from .views.settings import settings_view
+from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.visualizations import visualizations
 
 urlpatterns = [
@@ -141,6 +144,8 @@ urlpatterns = [
         name="suppliers_bulk_delete",
     ),
     path("suppliers/search/", SupplierSearchView.as_view(), name="supplier_search"),
+    path("suppliers/<int:pk>/", SupplierDetailView.as_view(), name="supplier_detail"),
+    path("suppliers/<int:pk>/delete/", SupplierDeleteView.as_view(), name="supplier_delete"),
     path("stock-movements/", stock_movements, name="stock_movements"),
     path("stock/users/search/", UserSearchView.as_view(), name="user_search"),
     path("stock/pos/search/", POSearchView.as_view(), name="po_search"),
@@ -248,7 +253,10 @@ urlpatterns = [
         recipe_create_indent,
         name="recipe_create_indent",
     ),
+    path("recipes/<int:pk>/delete/", RecipeDeleteView.as_view(), name="recipe_delete"),
     path("recipes/<int:pk>/", recipe_detail, name="recipe_detail"),
     path("guides/workflow/", WorkflowGuideView.as_view(), name="workflow_guide"),
     path("settings/", settings_view, name="settings"),
+    path("profile/edit/", profile_edit_view, name="profile-edit"),
+    path("profile/change-password/", change_password_view, name="change-password"),
 ]

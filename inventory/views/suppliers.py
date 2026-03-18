@@ -10,7 +10,8 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
-from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import DetailView, TemplateView
 
 from ..forms.bulk_forms import BulkDeleteForm, BulkUploadForm
 from ..forms.supplier_forms import SupplierForm
@@ -470,3 +471,46 @@ class SuppliersBulkUploadPartialView(View):
             "help_text": "CSV must include headers compatible with the supplier form fields.",
         }
         return render(request, "inventory/_bulk_upload_partial.html", ctx)
+
+
+class SupplierDetailView(LoginRequiredMixin, DetailView):
+    """Read-only supplier detail — renders as drawer partial."""
+
+    model = Supplier
+    template_name = "inventory/_supplier_detail_partial.html"
+    context_object_name = "supplier"
+
+    def get(self, request, *args, **kwargs):
+        supplier = get_object_or_404(Supplier, pk=kwargs["pk"])
+        open_pos = PurchaseOrder.objects.filter(
+            supplier=supplier,
+            status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"],
+        ).count()
+        return render(
+            request,
+            self.template_name,
+            {"supplier": supplier, "open_po_count": open_pos},
+        )
+
+
+class SupplierDeleteView(LoginRequiredMixin, View):
+    """Delete a supplier if it has no open POs; otherwise show an error."""
+
+    def post(self, request, pk: int):
+        supplier = get_object_or_404(Supplier, pk=pk)
+        open_pos = PurchaseOrder.objects.filter(
+            supplier=supplier,
+            status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"],
+        ).count()
+        if open_pos:
+            messages.error(
+                request,
+                f"Cannot delete '{supplier.name}' — it has {open_pos} open purchase order(s). "
+                "Deactivate instead or close the POs first.",
+                extra_tags="toast",
+            )
+            return redirect("suppliers_list")
+        name = supplier.name
+        supplier.delete()
+        messages.success(request, f"Supplier '{name}' deleted.", extra_tags="toast")
+        return redirect("suppliers_list")

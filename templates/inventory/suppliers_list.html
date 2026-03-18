@@ -66,6 +66,10 @@
 
 {% block extra_top %}{% endblock %}
 
+{% block page_scripts %}
+  {% include "components/_confirm_modal.html" %}
+{% endblock %}
+
 {% block data_container %}
   <div class="table-scroll group">
   <div id="{{ container_id }}"

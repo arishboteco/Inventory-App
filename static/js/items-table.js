@@ -280,17 +280,9 @@
       });
   }
 
-  function deleteItem(row) {
+  function _executeDeleteItem(row) {
     const itemId = row?.dataset.itemId;
     if (!itemId) return;
-    const nameEl = row.querySelector('[id^="item-title-"]');
-    const itemName = nameEl ? nameEl.textContent.trim() : "this item";
-    if (
-      !confirm(
-        `Delete "${itemName}"?\n\nThis will permanently remove the item. Any linked Recipes or Purchase Orders may be affected.\n\nThis action cannot be undone.`,
-      )
-    )
-      return;
     const csrf = getCsrfToken();
     // Optimistic: remove row immediately, allow undo for a few seconds
     const prev = { next: row.nextElementSibling, parent: row.parentNode };
@@ -341,6 +333,31 @@
           window.notifications.showToast("Unable to delete item.", "error");
         }
       });
+  }
+
+  function deleteItem(row) {
+    const itemId = row?.dataset.itemId;
+    if (!itemId) return;
+    const nameEl = row.querySelector('[id^="item-title-"]');
+    const itemName = nameEl ? nameEl.textContent.trim() : "this item";
+    if (typeof window.confirmDelete === "function") {
+      // Wire the shared confirm modal to run the actual fetch delete on confirm.
+      const confirmForm = document.getElementById("confirmModalForm");
+      if (confirmForm) {
+        confirmForm.onsubmit = function (e) {
+          e.preventDefault();
+          _executeDeleteItem(row);
+          // Close the modal
+          const modal = document.getElementById("confirmModal");
+          if (modal) modal.style.setProperty("display", "none", "important");
+        };
+      }
+      window.confirmDelete("/items/" + itemId + "/delete/", itemName, "Item");
+    } else {
+      // Fallback if modal not present
+      if (!confirm(`Delete "${itemName}"? This cannot be undone.`)) return;
+      _executeDeleteItem(row);
+    }
   }
 
   function archiveItem(row) {

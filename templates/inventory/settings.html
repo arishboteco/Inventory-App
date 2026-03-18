@@ -57,12 +57,9 @@
                 <button type="button"
                         class="text-xs text-primary hover:underline mr-2"
                         onclick="openEditUnit({{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}', '{{ unit.base_unit|escapejs }}', '{{ unit.conversion_factor }}')">Edit</button>
-                <form method="post" class="inline" onsubmit="return confirm('Delete \'{{ unit.purchase_unit|escapejs }}\'? This cannot be undone.');">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="delete_unit">
-                  <input type="hidden" name="unit_id" value="{{ unit.unit_id }}">
-                  <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
-                </form>
+                <button type="button"
+                        class="text-xs text-red-600 hover:underline"
+                        onclick="confirmSettingsDelete('delete_unit', 'unit_id', {{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}')">Delete</button>
               </td>
             </tr>
             {% empty %}
@@ -117,12 +114,9 @@
                 <button type="button"
                         class="text-xs text-primary hover:underline mr-2"
                         onclick="openEditCategory({{ cat.category_id }}, '{{ cat.category|escapejs }}', '{{ cat.sub_category|default:''|escapejs }}')">Edit</button>
-                <form method="post" class="inline" onsubmit="return confirm('Delete \'{{ cat.category|escapejs }}\'? This cannot be undone.');">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="delete_category">
-                  <input type="hidden" name="category_id" value="{{ cat.category_id }}">
-                  <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
-                </form>
+                <button type="button"
+                        class="text-xs text-red-600 hover:underline"
+                        onclick="confirmSettingsDelete('delete_category', 'category_id', {{ cat.category_id }}, '{{ cat.category|escapejs }}')">Delete</button>
               </td>
             </tr>
             {% empty %}
@@ -171,12 +165,9 @@
                 <button type="button"
                         class="text-xs text-primary hover:underline mr-2"
                         onclick="openEditDepartment({{ dept.department_id }}, '{{ dept.name|escapejs }}')">Edit</button>
-                <form method="post" class="inline" onsubmit="return confirm('Delete \'{{ dept.name|escapejs }}\'? This cannot be undone.');">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="delete_department">
-                  <input type="hidden" name="department_id" value="{{ dept.department_id }}">
-                  <button type="submit" class="text-xs text-red-600 hover:underline">Delete</button>
-                </form>
+                <button type="button"
+                        class="text-xs text-red-600 hover:underline"
+                        onclick="confirmSettingsDelete('delete_department', 'department_id', {{ dept.department_id }}, '{{ dept.name|escapejs }}')">Delete</button>
               </td>
             </tr>
             {% empty %}
@@ -213,8 +204,8 @@
         </div>
       </dl>
       <div class="mt-4 flex gap-2">
-        <a href="/admin/password_change/" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Change Password</a>
-        <a href="/admin/auth/user/{{ request.user.pk }}/change/" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Edit Profile</a>
+        <a href="{% url 'change-password' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Change Password</a>
+        <a href="{% url 'profile-edit' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Edit Profile</a>
       </div>
     </div>
   </div>
@@ -295,6 +286,18 @@
   </div>
 </dialog>
 
+{% include "components/_confirm_modal.html" %}
+
+{# Hidden form used by confirmSettingsDelete() to POST reference-data deletes #}
+<form id="settings-delete-form" method="post" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="action" id="settings-delete-action">
+  <input type="hidden" name="unit_id" id="settings-delete-unit-id">
+  <input type="hidden" name="category_id" id="settings-delete-category-id">
+  <input type="hidden" name="department_id" id="settings-delete-department-id">
+</form>
+
+
 {% endblock %}
 
 {% block extra_js %}
@@ -336,5 +339,30 @@
       });
     }
   });
+
+  // Wire settings reference-data deletes to the shared confirm modal.
+  // action: 'delete_unit'|'delete_category'|'delete_department'
+  // idField: the hidden input name, idValue: the record PK, label: display name
+  function confirmSettingsDelete(action, idField, idValue, label) {
+    var form = document.getElementById('settings-delete-form');
+    document.getElementById('settings-delete-action').value = action;
+    // Reset all id fields first, then set the relevant one
+    ['settings-delete-unit-id', 'settings-delete-category-id', 'settings-delete-department-id'].forEach(function(f) {
+      document.getElementById(f).value = '';
+    });
+    document.getElementById('settings-delete-' + idField.replace('_id', '') + '-id').value = idValue;
+    // Reuse the global confirmDelete modal but point it at the settings form submit
+    var entityMap = { delete_unit: 'Unit', delete_category: 'Category', delete_department: 'Department' };
+    var entityType = entityMap[action] || 'item';
+    // Temporarily override the confirmModalForm action to submit the settings form
+    var confirmForm = document.getElementById('confirmModalForm');
+    if (confirmForm) {
+      confirmForm.onsubmit = function(e) {
+        e.preventDefault();
+        form.submit();
+      };
+    }
+    window.confirmDelete('#', label, entityType);
+  }
 </script>
 {% endblock %}

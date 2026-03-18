@@ -10,8 +10,11 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
-from ..forms.recipe_forms import RecipeForm, RecipeItemFormSet
+from ..forms.recipe_forms import RecipeForm, RecipeItemEditFormSet, RecipeItemFormSet
 from ..models import Indent, IndentItem, Recipe, RecipeItem
+from django.views.generic import DeleteView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 from ..services import list_utils, recipe_service
 from ..services.units_service import UnitsService
 
@@ -294,7 +297,7 @@ def recipe_detail(request, pk: int):
     recipe = get_object_or_404(Recipe, pk=pk)
     if request.method == "POST":
         form = RecipeForm(request.POST, instance=recipe)
-        formset = RecipeItemFormSet(request.POST, instance=recipe, prefix="items")
+        formset = RecipeItemEditFormSet(request.POST, instance=recipe, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
             items = []
@@ -320,7 +323,7 @@ def recipe_detail(request, pk: int):
         # fallthrough on invalid
     else:
         form = RecipeForm(instance=recipe)
-        formset = RecipeItemFormSet(instance=recipe, prefix="items")
+        formset = RecipeItemEditFormSet(instance=recipe, prefix="items")
     plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
     setattr(recipe, "plating_image_url", plating_image_url)
     return render(
@@ -434,7 +437,7 @@ class RecipeEditPartialView(View):
     def get(self, request, pk: int):
         recipe = get_object_or_404(Recipe, pk=pk)
         form = RecipeForm(instance=recipe)
-        formset = RecipeItemFormSet(instance=recipe, prefix="items")
+        formset = RecipeItemEditFormSet(instance=recipe, prefix="items")
         plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
         setattr(recipe, "plating_image_url", plating_image_url)
         return render(
@@ -453,7 +456,7 @@ class RecipeEditPartialView(View):
     def post(self, request, pk: int):
         recipe = get_object_or_404(Recipe, pk=pk)
         form = RecipeForm(request.POST, instance=recipe)
-        formset = RecipeItemFormSet(request.POST, instance=recipe, prefix="items")
+        formset = RecipeItemEditFormSet(request.POST, instance=recipe, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
             items = []
@@ -691,3 +694,19 @@ def recipe_create_indent(request, pk: int):
 
     messages.success(request, f"Indent {mrn} created from recipe", extra_tags="toast")
     return redirect("indent_detail", pk=indent.pk)
+
+
+class RecipeDeleteView(LoginRequiredMixin, DeleteView):
+    model = Recipe
+    success_url = reverse_lazy("recipes_list")
+
+    def get(self, request, *args, **kwargs):
+        # No confirmation template — deletion is triggered via POST from the modal.
+        return redirect("recipes_list")
+
+    def post(self, request, *args, **kwargs):
+        recipe = self.get_object()
+        name = recipe.name
+        recipe.delete()
+        messages.success(request, f"Recipe '{name}' deleted.", extra_tags="toast")
+        return redirect(self.success_url)

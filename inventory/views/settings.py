@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -189,3 +191,54 @@ def settings_view(request):
         "current_title": "Settings",
     }
     return render(request, "inventory/settings.html", ctx)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def profile_edit_view(request):
+    """In-app profile edit — updates first/last name and email."""
+    user = request.user
+    if request.method == "POST":
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+        email = request.POST.get("email", "").strip()
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.save(update_fields=["first_name", "last_name", "email"])
+        messages.success(request, "Profile updated.", extra_tags="toast")
+        return redirect("settings")
+    return render(
+        request,
+        "inventory/user_profile_edit.html",
+        {
+            "list_url": "/settings/",
+            "list_title": "Settings",
+            "current_title": "Edit Profile",
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def change_password_view(request):
+    """In-app change-password form."""
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password changed successfully.", extra_tags="toast")
+            return redirect("settings")
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(
+        request,
+        "inventory/change_password.html",
+        {
+            "form": form,
+            "list_url": "/settings/",
+            "list_title": "Settings",
+            "current_title": "Change Password",
+        },
+    )

@@ -1,5 +1,6 @@
 import csv
 import io
+from collections import defaultdict
 from decimal import Decimal
 
 from django.contrib import messages
@@ -433,7 +434,7 @@ def history_reports(request):
 
     qs = StockTransaction.objects.select_related("item").all()
     if item:
-        qs = qs.filter(item_id=item)
+        qs = qs.filter(item__name__icontains=item)
     if tx_type:
         qs = qs.filter(transaction_type=tx_type)
     if user:
@@ -458,6 +459,13 @@ def history_reports(request):
     qs = qs.order_by(ordering)
 
     total_quantity = qs.aggregate(total=Sum("quantity_change"))["total"] or Decimal("0")
+
+    # Per-type totals (Bug 2)
+    totals_qs = qs.values("transaction_type").annotate(total=Sum("quantity_change"))
+    total_map = {t["transaction_type"]: float(t["total"] or 0) for t in totals_qs}
+    total_received = total_map.get("RECEIVING", 0)
+    total_adjusted = total_map.get("ADJUSTMENT", 0)
+    total_wastage_val = total_map.get("WASTAGE", 0)
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -576,16 +584,36 @@ def history_reports(request):
         },
     ]
 
-    chart_by_date = (
-        qs.annotate(date=TruncDate("transaction_date"))
-        .values("date")
-        .annotate(total=Sum("quantity_change"))
-        .order_by("date")
+    # 3-series chart data (Bug 1)
+    chart_rows = list(
+        qs.values("transaction_date", "transaction_type", "quantity_change")
     )
-    chart_labels = [
-        row["date"].strftime("%Y-%m-%d") for row in chart_by_date if row["date"]
-    ]
-    chart_data = [float(row["total"] or 0) for row in chart_by_date if row["date"]]
+    dates_set = sorted(
+        set(
+            r["transaction_date"].date().isoformat()
+            for r in chart_rows
+            if r["transaction_date"]
+        )
+    )
+    receiving_map: defaultdict = defaultdict(float)
+    adjust_map: defaultdict = defaultdict(float)
+    wastage_map: defaultdict = defaultdict(float)
+    for r in chart_rows:
+        if not r["transaction_date"]:
+            continue
+        d = r["transaction_date"].date().isoformat()
+        val = float(r["quantity_change"] or 0)
+        t = r["transaction_type"]
+        if t == "RECEIVING":
+            receiving_map[d] += val
+        elif t == "ADJUSTMENT":
+            adjust_map[d] += val
+        elif t == "WASTAGE":
+            wastage_map[d] += val
+    chart_labels = dates_set
+    chart_receiving = [receiving_map[d] for d in dates_set]
+    chart_adjust = [adjust_map[d] for d in dates_set]
+    chart_wastage = [wastage_map[d] for d in dates_set]
 
     tabs = [
         {
@@ -614,9 +642,14 @@ def history_reports(request):
         "sort": sort,
         "direction": direction,
         "total_quantity": total_quantity,
+        "total_received": total_received,
+        "total_adjusted": total_adjusted,
+        "total_wastage_val": total_wastage_val,
         "filters": filters,
         "chart_labels": chart_labels,
-        "chart_data": chart_data,
+        "chart_receiving": chart_receiving,
+        "chart_adjust": chart_adjust,
+        "chart_wastage": chart_wastage,
         "tabs": tabs,
         "list_url": reverse("root"),
         "list_title": "Dashboard",

@@ -43,7 +43,7 @@
       </div>
     </div>
     <div class="p-4">
-  {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string table_id="recent-transactions" %}
+  {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string table_id="recent-transactions" filter_item_q=filter_item_q filter_type=filter_type filter_date_from=filter_date_from filter_date_to=filter_date_to %}
     </div>
   </div>
 
@@ -56,112 +56,35 @@
           function setupItemMeta(modalId){
             const modal = document.getElementById(modalId);
             if (!modal) return;
-            // Text input for item with datalist
-            const itemInput = modal.querySelector('input[name$="-item"], input[name="item"]');
-            if (!itemInput) return;
+            // Item is now a <select> (ModelChoiceField); value is the item PK directly
+            const itemSelect = modal.querySelector('select[name$="-item"], select[name="item"]');
+            if (!itemSelect) return;
             let info = modal.querySelector('[data-item-meta]');
             if (!info) {
               info = document.createElement('div');
               info.setAttribute('data-item-meta','');
               info.className = 'mt-1 text-xs text-gray-500';
-              const wrap = itemInput.closest('p, .form-group, div') || itemInput.parentElement;
-              if (wrap) wrap.appendChild(info); else itemInput.insertAdjacentElement('afterend', info);
-            }
-            let err = modal.querySelector('[data-item-error]');
-            if (!err) {
-              err = document.createElement('div');
-              err.setAttribute('data-item-error','');
-              err.className = 'mt-1 text-xs text-red-600 hidden';
-              const wrap = itemInput.closest('p, .form-group, div') || itemInput.parentElement;
-              if (wrap) wrap.insertBefore(err, info); else itemInput.insertAdjacentElement('afterend', err);
+              const wrap = itemSelect.closest('p, .form-group, div') || itemSelect.parentElement;
+              if (wrap) wrap.appendChild(info); else itemSelect.insertAdjacentElement('afterend', info);
             }
             const poField = modal.querySelector('input[name$="-related_po"], input[name="related_po"]');
-            const form = itemInput.closest('form');
-            const submitBtn = form && form.querySelector('button[type="submit"]');
-            let debounceTimer = null;
-            function setInvalid(message){
-              if (message) { err.textContent = message; err.classList.remove('hidden'); }
-              else { err.textContent = ''; err.classList.add('hidden'); }
-              if (submitBtn) submitBtn.disabled = !!message;
-              // PO is optional; do not clear it automatically on invalid item
-            }
-            function getDatalistOption(input){
-              const listId = itemInput.getAttribute('list');
-              const list = listId ? document.getElementById(listId) : null;
-              if (!list) return null;
-              const typed = (itemInput.value || '').trim().toLowerCase();
-              // exact match on label or value
-              const opts = Array.from(list.querySelectorAll('option'));
-              return opts.find(o => (
-                (o.value || '').trim().toLowerCase() === typed ||
-                (o.textContent || '').trim().toLowerCase() === typed
-              )) || null;
-            }
-
-            function resolveItemId(){
-              const opt = getDatalistOption(itemInput);
-              if (opt && (opt.dataset.id || opt.getAttribute('data-id'))) {
-                return opt.dataset.id || opt.getAttribute('data-id');
-              }
-              // support merged patterns like "Name (ID: 123)"
-              const m = (itemInput.value || '').match(/\(\s*id\s*[:#-]?\s*(\d+)\s*\)$/i);
-              return m ? m[1] : '';
-            }
-
             function refresh(){
-              const id = resolveItemId();
-              const typed = (itemInput.value || '').trim();
-              if (!typed) { info.textContent = ''; setInvalid(''); return; }
-              if (!id) { info.textContent = ''; setInvalid('Choose a valid item from the list.'); return; }
+              const id = itemSelect.value;
+              if (!id) { info.textContent = ''; return; }
               fetch(`/items/meta/${id}/`).then(r=>r.ok?r.json():null).then(data=>{
-                if (!data || !data.ok) { info.textContent=''; setInvalid('Selected item not found.'); return; }
+                if (!data || !data.ok) { info.textContent=''; return; }
                 const parts = [];
                 if (data.unit) parts.push(data.unit);
                 if (data.category) parts.push(data.category);
-                if (data.subcategory) parts.push(data.subcategory);
+                if (data.current_stock !== undefined) parts.push('Stock: ' + data.current_stock);
                 info.textContent = parts.filter(Boolean).join(' • ');
-                setInvalid('');
                 if (poField && !poField.value && data.po_suggestion) {
                   poField.value = data.po_suggestion;
                 }
               }).catch(()=>{ info.textContent=''; });
             }
-            function debouncedRefresh(){
-              clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(refresh, 250);
-            }
-            itemInput.addEventListener('input', debouncedRefresh);
-            itemInput.addEventListener('change', refresh);
-            itemInput.addEventListener('blur', refresh);
-            // Initialize state
-            debouncedRefresh();
-
-            // On submit, post the ID in a hidden field and keep the visible name intact
-            if (form) {
-              form.addEventListener('submit', function(){
-                const id = resolveItemId();
-                if (!id) return;
-                let hidden = form.querySelector(`input[type="hidden"][data-item-hidden-for="${itemInput.name}"]`);
-                if (!hidden) {
-                  hidden = document.createElement('input');
-                  hidden.type = 'hidden';
-                  hidden.setAttribute('data-item-hidden-for', itemInput.name);
-                  form.appendChild(hidden);
-                }
-                // ensure backend receives the ID for the expected field name
-                hidden.name = itemInput.name;
-                hidden.value = id;
-                // rename the visible field so the server ignores it
-                if (!itemInput.dataset.originalName) {
-                  itemInput.dataset.originalName = itemInput.name;
-                }
-                itemInput.name = itemInput.dataset.originalName + '_display';
-                // After a tick (form submit), restore name so subsequent use is intact
-                setTimeout(()=>{
-                  itemInput.name = itemInput.dataset.originalName;
-                }, 0);
-              });
-            }
+            itemSelect.addEventListener('change', refresh);
+            refresh();
           }
           document.addEventListener('DOMContentLoaded', function(){
             setupItemMeta('receive-modal');

@@ -140,6 +140,7 @@ def stock_movements(request):
                             cd.get("related_po").pk if cd.get("related_po") else None
                         ),
                         notes=cd.get("notes"),
+                        transaction_date=cd.get("transaction_date") or None,
                     )
                     messages.success(
                         request, "Receiving transaction recorded", extra_tags="toast"
@@ -172,6 +173,8 @@ def stock_movements(request):
                         user_id=(getattr(request.user, "username", None) or "System"),
                         user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
+                        reason_category=cd.get("reason_category") or None,
+                        transaction_date=cd.get("transaction_date") or None,
                     )
                     messages.success(
                         request, "Adjustment transaction recorded", extra_tags="toast"
@@ -205,6 +208,8 @@ def stock_movements(request):
                         user_id=(getattr(request.user, "username", None) or "System"),
                         user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
+                        reason_category=cd.get("reason_category") or None,
+                        transaction_date=cd.get("transaction_date") or None,
                     )
                     messages.success(
                         request, "Wastage transaction recorded", extra_tags="toast"
@@ -315,12 +320,24 @@ def stock_movements(request):
     # Hydrate any flashed invalid form after PRG
     _hydrate_from_flash()
 
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    item_q = request.GET.get("item_q", "").strip()
+    tx_type_filter = request.GET.get("type", "").strip()
+
     qs = StockTransaction.objects.select_related("item").order_by("-transaction_date")
+    if date_from:
+        qs = qs.filter(transaction_date__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(transaction_date__date__lte=date_to)
+    if item_q:
+        qs = qs.filter(item__name__icontains=item_q)
+    if tx_type_filter:
+        qs = qs.filter(transaction_type=tx_type_filter)
+
     paginator = Paginator(qs, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    for tx in page_obj:
-        tx.direction = "in" if tx.quantity_change >= 0 else "out"
 
     params = request.GET.copy()
     params.pop("page", None)
@@ -365,6 +382,10 @@ def stock_movements(request):
         "active_section": sections.get(active, sections["receive"]),
         "total_transactions": total_transactions,
         "pending_orders": pending_orders,
+        "filter_date_from": date_from,
+        "filter_date_to": date_to,
+        "filter_item_q": item_q,
+        "filter_type": tx_type_filter,
     }
     return render(request, "inventory/stock_movements.html", ctx)
 

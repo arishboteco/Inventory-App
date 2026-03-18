@@ -33,6 +33,23 @@ def record_stock_transaction(
     """
 
     quantity_change = Decimal(str(quantity_change))
+
+    # Guard: prevent stock from going below zero
+    if quantity_change < 0:
+        current = (
+            Item.objects.filter(pk=item_id)
+            .values_list("current_stock", flat=True)
+            .first()
+        )
+        if current is not None:
+            new_stock = (current or Decimal("0")) + quantity_change
+            if new_stock < 0:
+                raise StockServiceError(
+                    f"This adjustment would bring stock to {float(new_stock):.2f} "
+                    f"(current: {float(current or 0):.2f}). "
+                    f"Stock cannot go negative. Use 'Record Wastage' or contact an admin."
+                )
+
     for attempt in range(5):
         try:
             with transaction.atomic():

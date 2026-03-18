@@ -2,7 +2,7 @@ from .category import Category
 from .departments import Department, ItemDepartment
 from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
 from .fields import CoerceFloatField
-from .items import Item, StockTransaction
+from .items import Item, StockSnapshot, StockTransaction
 from .orders import (
     GoodsReceivedNote,
     GRNItem,
@@ -20,6 +20,7 @@ from .unit import Unit
 __all__ = [
     "CoerceFloatField",
     "Item",
+    "StockSnapshot",
     "StockTransaction",
     "Supplier",
     "PAYMENT_TERMS_CHOICES",

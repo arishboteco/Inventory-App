@@ -1,0 +1,65 @@
+{% load icon_tags %}
+<div class="p-6 space-y-5">
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-semibold text-bodyText">{{ supplier.name }}</h2>
+    {% if supplier.is_active %}
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Active</span>
+    {% else %}
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Inactive</span>
+    {% endif %}
+  </div>
+
+  <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Person</dt>
+      <dd class="mt-1 text-bodyText">{{ supplier.contact_person|default:"—" }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</dt>
+      <dd class="mt-1 text-bodyText">{{ supplier.phone|default:"—" }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</dt>
+      <dd class="mt-1 text-bodyText">{{ supplier.email|default:"—" }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Tax ID</dt>
+      <dd class="mt-1 text-bodyText">{{ supplier.tax_id|default:"—" }}</dd>
+    </div>
+    <div class="sm:col-span-2">
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Address</dt>
+      <dd class="mt-1 text-bodyText whitespace-pre-line">{{ supplier.address|default:"—" }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Terms</dt>
+      <dd class="mt-1 text-bodyText">{{ supplier.get_payment_terms_display|default:"—" }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Credit Limit</dt>
+      <dd class="mt-1 text-bodyText">{% if supplier.credit_limit %}{{ supplier.credit_limit }}{% else %}—{% endif %}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</dt>
+      <dd class="mt-1 text-bodyText">{% if supplier.supplier_rating %}{{ supplier.supplier_rating }}{% else %}—{% endif %}</dd>
+    </div>
+    <div>
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Open POs</dt>
+      <dd class="mt-1 text-bodyText">{{ open_po_count }}</dd>
+    </div>
+    {% if supplier.notes %}
+    <div class="sm:col-span-2">
+      <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</dt>
+      <dd class="mt-1 text-bodyText whitespace-pre-line">{{ supplier.notes }}</dd>
+    </div>
+    {% endif %}
+  </dl>
+
+  <div class="flex gap-2 pt-2 border-t border-border">
+    <a href="{% url 'supplier_edit' supplier.pk %}"
+       data-modal-url="{% url 'supplier_edit' supplier.pk %}?partial=1"
+       data-modal-type="drawer"
+       class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
+      {% icon 'pencil-square' 'w-4 h-4' %} Edit
+    </a>
+  </div>
+</div>

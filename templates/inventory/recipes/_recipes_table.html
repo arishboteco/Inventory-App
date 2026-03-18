@@ -1,4 +1,5 @@
 {% load icon_tags %}
+{% include "components/_confirm_modal.html" %}
 <div id="recipes-meta-summary" class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600" hx-swap-oob="outerHTML">
   <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Total:
     <span class="text-bodyText">{{ recipe_count|default:0 }}</span>
@@ -145,6 +146,12 @@
                  aria-label="Open {{ recipe.name }} details">
                 {% icon 'arrow-top-right-on-square' 'w-4 h-4' %}
               </a>
+              <button type="button"
+                      onclick="confirmDelete('{% url 'recipe_delete' recipe.recipe_id %}', '{{ recipe.name|escapejs }}', 'Recipe')"
+                      class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-red-600 border border-border hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      aria-label="Delete {{ recipe.name }}">
+                {% icon 'trash' 'w-4 h-4' %}
+              </button>
             </div>
           </td>
         </tr>

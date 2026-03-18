@@ -130,14 +130,14 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
         empty_label="Select an item",
     )
     quantity = forms.DecimalField(
-        min_value=0.001,
-        decimal_places=3,
+        min_value=0.01,
+        decimal_places=2,
         widget=forms.NumberInput(
             attrs={
                 "class": INPUT_CLASS,
-                "step": "0.001",
-                "min": "0.001",
-                "placeholder": "0.000",
+                "step": "0.01",
+                "min": "0.01",
+                "placeholder": "0.00",
             }
         ),
         label="Quantity",
@@ -207,5 +207,15 @@ RecipeItemFormSet = forms.inlineformset_factory(
     form=RecipeItemForm,
     fields=["item", "quantity", "unit", "loss_pct"],
     extra=1,
+    can_delete=True,
+)
+
+# Edit views use extra=0 so no blank row is pre-appended when existing items load.
+RecipeItemEditFormSet = forms.inlineformset_factory(
+    Recipe,
+    RecipeItem,
+    form=RecipeItemForm,
+    fields=["item", "quantity", "unit", "loss_pct"],
+    extra=0,
     can_delete=True,
 )

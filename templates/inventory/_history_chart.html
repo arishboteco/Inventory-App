@@ -1,39 +1,46 @@
-<div class="w-full h-64 p-4">
+{{ chart_labels|json_script:"history-chart-labels" }}
+{{ chart_receiving|json_script:"history-chart-receiving-data" }}
+{{ chart_adjust|json_script:"history-chart-adjust-data" }}
+{{ chart_wastage|json_script:"history-chart-wastage-data" }}
+<div style="position: relative; height: 300px; width: 100%;" class="p-4">
   <canvas id="history-chart"></canvas>
 </div>
-{{ chart_labels|json_script:"history-chart-labels" }}
-{{ chart_data|json_script:"history-chart-data" }}
 <script>
   (function () {
-    var labels = JSON.parse(document.getElementById('history-chart-labels').textContent);
-    var data = JSON.parse(document.getElementById('history-chart-data').textContent);
-    var canvas = document.getElementById('history-chart');
-    if (!canvas) return;
-    var ctx = canvas.getContext('2d');
-    var primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#2563eb';
-    if (window._historyChart) { window._historyChart.destroy(); }
-    window._historyChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Stock Change',
-          data: data,
-          backgroundColor: primaryColor + '99',
-          borderColor: primaryColor,
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
+    function initHistoryChart() {
+      var canvas = document.getElementById('history-chart');
+      if (!canvas) return;
+      var labels    = JSON.parse(document.getElementById('history-chart-labels').textContent);
+      var receiving = JSON.parse(document.getElementById('history-chart-receiving-data').textContent);
+      var adjust    = JSON.parse(document.getElementById('history-chart-adjust-data').textContent);
+      var wastage   = JSON.parse(document.getElementById('history-chart-wastage-data').textContent);
+      var ctx = canvas.getContext('2d');
+      if (window.historyChartInstance) { window.historyChartInstance.destroy(); }
+      window.historyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'RECEIVING',  data: receiving, backgroundColor: 'rgba(34, 197, 94, 0.7)' },
+            { label: 'ADJUSTMENT', data: adjust,    backgroundColor: 'rgba(59, 130, 246, 0.7)' },
+            { label: 'WASTAGE',    data: wastage,   backgroundColor: 'rgba(239, 68, 68, 0.7)'  },
+          ]
         },
-        scales: {
-          x: { ticks: { maxTicksLimit: 12 } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true }, x: { ticks: { maxTicksLimit: 12 } } }
         }
-      }
-    });
+      });
+    }
+
+    // Chart.js is loaded with defer — wait for DOMContentLoaded on first page load.
+    // On HTMX swaps Chart is already defined, so run immediately.
+    if (typeof Chart !== 'undefined') {
+      initHistoryChart();
+    } else {
+      document.addEventListener('DOMContentLoaded', initHistoryChart);
+    }
   })();
 </script>

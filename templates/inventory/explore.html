@@ -11,23 +11,65 @@
 {% endblock %}
 
 {% block filters %}
+  {% if negative_stock_items %}
+  <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+    <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+    </svg>
+    <div>
+      <p class="text-sm font-semibold text-red-700">
+        {{ negative_stock_items|length }} item{{ negative_stock_items|length|pluralize }} with negative stock detected
+      </p>
+      <p class="text-sm text-red-600 mt-1">
+        Negative stock indicates a data error in Stock Movements.
+        <a href="/stock-movements/" class="underline">Review movements</a>
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="bg-surface border border-border rounded-2xl shadow-card p-4 space-y-3">
-    <form method="get" class="grid gap-4 grid-cols-1 md:grid-cols-3 items-end">
+    <form method="get" class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-5 items-end">
       <div class="flex flex-col">
         <label for="q" class="text-sm font-medium text-bodyText">Search</label>
-        <input id="q" type="text" name="q" value="{{ q }}" placeholder="Item name" autocomplete="off" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" />
+        <input id="q" type="text" name="q" value="{{ q }}" placeholder="Item name" autocomplete="off"
+               class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" />
       </div>
       <div class="flex flex-col">
-        <label for="active" class="text-sm font-medium text-bodyText">Status</label>
-        <select id="active" name="active" autocomplete="off" class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary">
+        <label for="active" class="text-sm font-medium text-bodyText">Active Status</label>
+        <select id="active" name="active" autocomplete="off"
+                class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
           <option value="" {% if not active %}selected{% endif %}>All</option>
           <option value="1" {% if active == '1' %}selected{% endif %}>Active</option>
           <option value="0" {% if active == '0' %}selected{% endif %}>Inactive</option>
         </select>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-col">
+        <label for="stock_status" class="text-sm font-medium text-bodyText">Stock Status</label>
+        <select id="stock_status" name="stock_status" autocomplete="off"
+                class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+          <option value="" {% if not stock_status %}selected{% endif %}>All</option>
+          <option value="out" {% if stock_status == 'out' %}selected{% endif %}>Out of Stock</option>
+          <option value="low" {% if stock_status == 'low' %}selected{% endif %}>Low Stock</option>
+          <option value="in" {% if stock_status == 'in' %}selected{% endif %}>In Stock</option>
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label for="category" class="text-sm font-medium text-bodyText">Category</label>
+        <select id="category" name="category" autocomplete="off"
+                class="block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+          <option value="" {% if not category %}selected{% endif %}>All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.pk }}" {% if category == cat.pk|stringformat:'s' %}selected{% endif %}>{{ cat.category }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex gap-2 flex-wrap">
         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Filter</button>
-        <a href="{{ export_url }}?{{ querystring }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Export CSV</a>
+        <a href="{% url 'explore_export' %}?{{ querystring }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Export CSV</a>
+        {% if q or active or stock_status or category %}
+        <a href="{% url 'explore' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Clear</a>
+        {% endif %}
       </div>
     </form>
   </div>
@@ -39,12 +81,33 @@
     <table class="min-w-full w-full table-auto text-sm">
       <thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
         <tr>
-          <th scope="col" class="px-4 py-2.5">Item Name</th>
-          <th scope="col" class="px-4 py-2.5">Category</th>
+          <th scope="col" class="px-4 py-2.5">
+            <a href="?{{ sort_query }}&sort=name&direction={% if sort == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+               class="flex items-center gap-1 hover:text-bodyText cursor-pointer">
+              Item Name{% if sort == 'name' %} {% if direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+            </a>
+          </th>
+          <th scope="col" class="px-4 py-2.5">
+            <a href="?{{ sort_query }}&sort=category__category&direction={% if sort == 'category__category' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+               class="flex items-center gap-1 hover:text-bodyText cursor-pointer">
+              Category{% if sort == 'category__category' %} {% if direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+            </a>
+          </th>
           <th scope="col" class="px-4 py-2.5">Unit</th>
-          <th scope="col" class="px-4 py-2.5 text-right">Current Stock</th>
-          <th scope="col" class="px-4 py-2.5 text-right">Reorder Point</th>
+          <th scope="col" class="px-4 py-2.5 text-right">
+            <a href="?{{ sort_query }}&sort=current_stock&direction={% if sort == 'current_stock' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+               class="flex items-center justify-end gap-1 hover:text-bodyText cursor-pointer">
+              Current Stock{% if sort == 'current_stock' %} {% if direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+            </a>
+          </th>
+          <th scope="col" class="px-4 py-2.5 text-right">
+            <a href="?{{ sort_query }}&sort=reorder_point&direction={% if sort == 'reorder_point' and direction == 'asc' %}desc{% else %}asc{% endif %}"
+               class="flex items-center justify-end gap-1 hover:text-bodyText cursor-pointer">
+              Reorder Point{% if sort == 'reorder_point' %} {% if direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}
+            </a>
+          </th>
           <th scope="col" class="px-4 py-2.5">Stock Status</th>
+          <th scope="col" class="px-4 py-2.5">ABC</th>
           <th scope="col" class="px-4 py-2.5">Active</th>
         </tr>
       </thead>
@@ -70,10 +133,21 @@
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-green-700 bg-green-100">In Stock</span>
             {% endif %}
           </td>
+          <td class="px-4 py-2">
+            {% if item.abc_class == 'A' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">A</span>
+            {% elif item.abc_class == 'B' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">B</span>
+            {% elif item.abc_class == 'C' %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">C</span>
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
           <td class="px-4 py-2 text-xs text-gray-500">{% if item.is_active %}Active{% else %}Inactive{% endif %}</td>
         </tr>
       {% empty %}
-        <tr><td colspan="7" class="px-4 py-6 text-center text-gray-600">No results</td></tr>
+        <tr><td colspan="8" class="px-4 py-6 text-center text-gray-600">No results</td></tr>
       {% endfor %}
       </tbody>
     </table>

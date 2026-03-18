@@ -192,7 +192,7 @@
         </div>
         <div>
           <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Name</dt>
-          <dd class="mt-1 text-bodyText">{{ request.user.get_full_name|default:'—' }}</dd>
+          <dd class="mt-1 text-bodyText">{{ request.user.get_full_name|default:'(not set)' }}</dd>
         </div>
         <div>
           <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</dt>
@@ -296,6 +296,7 @@
   <input type="hidden" name="category_id" id="settings-delete-category-id">
   <input type="hidden" name="department_id" id="settings-delete-department-id">
 </form>
+
 
 {% endblock %}
 

@@ -26,6 +26,10 @@
 
 {% block table_id %}recipes-table-wrapper{% endblock %}
 
+{% block page_scripts %}
+  {% include "components/_confirm_modal.html" %}
+{% endblock %}
+
 {% block data_container %}
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
     <div class="pt-2 md:pt-3">

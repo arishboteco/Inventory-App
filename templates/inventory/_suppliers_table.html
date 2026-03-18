@@ -173,41 +173,38 @@
     {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=extra_query hx_target="#suppliers_table" %}
   </div>
   {% endwith %}
-{% endblock %}
+  {% include "components/_confirm_modal.html" %}
+  <script>
+  (function () {
+    // Deactivation confirmation with open-PO warning
+    document.addEventListener('submit', function (e) {
+      var form = e.target;
+      if (!form.classList.contains('deactivate-form')) return;
+      var openPos = parseInt(form.dataset.openPos || '0', 10);
+      var isActive = form.dataset.isActive === 'true';
+      var name = form.dataset.supplierName || 'this supplier';
+      var msg = (isActive && openPos > 0)
+        ? name + ' has ' + openPos + ' open PO(s). Deactivate anyway?'
+        : 'Toggle active status for ' + name + '?';
+      if (!confirm(msg)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }, true);
 
-{% block extra_js %}
-{% include "components/_confirm_modal.html" %}
-<script>
-(function () {
-  // Deactivation confirmation with open-PO warning
-  document.addEventListener('submit', function (e) {
-    var form = e.target;
-    if (!form.classList.contains('deactivate-form')) return;
-    var openPos = parseInt(form.dataset.openPos || '0', 10);
-    var isActive = form.dataset.isActive === 'true';
-    var name = form.dataset.supplierName || 'this supplier';
-    var msg = (isActive && openPos > 0)
-      ? name + ' has ' + openPos + ' open PO(s). Deactivate anyway?'
-      : 'Toggle active status for ' + name + '?';
-    if (!confirm(msg)) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+    // Enable Bulk Delete button only when at least one row is checked
+    function syncBulkDeleteBtn() {
+      var btn = document.getElementById('bulk-delete-btn');
+      if (!btn) return;
+      var checked = document.querySelectorAll('[data-bulk-checkbox]:checked').length;
+      btn.disabled = checked === 0;
     }
-  }, true);
-
-  // Enable Bulk Delete button only when at least one row is checked
-  function syncBulkDeleteBtn() {
-    var btn = document.getElementById('bulk-delete-btn');
-    if (!btn) return;
-    var checked = document.querySelectorAll('[data-bulk-checkbox]:checked').length;
-    btn.disabled = checked === 0;
-  }
-  document.addEventListener('change', function (e) {
-    if (e.target.matches('[data-bulk-checkbox], [data-bulk-select-all]')) {
-      syncBulkDeleteBtn();
-    }
-  });
-  syncBulkDeleteBtn();
-})();
-</script>
+    document.addEventListener('change', function (e) {
+      if (e.target.matches('[data-bulk-checkbox], [data-bulk-select-all]')) {
+        syncBulkDeleteBtn();
+      }
+    });
+    syncBulkDeleteBtn();
+  })();
+  </script>
 {% endblock %}

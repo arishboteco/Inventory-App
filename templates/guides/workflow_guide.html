@@ -1,60 +1,190 @@
 {% extends "_base.html" %}
+{% load tz %}
 {% block title %}Workflow Handbook – Inventory Pro{% endblock %}
 {% block content %}
 <section class="max-w-4xl mx-auto space-y-8 px-4 md:px-0">
+
   <header class="bg-surface border border-border rounded-2xl shadow-card p-6">
     <h1 class="text-3xl font-semibold text-bodyText">Inventory Pro Workflow Handbook</h1>
-    <p class="mt-2 text-sm text-gray-600">Use this guide to move a requisition from request to fulfilment using the warm UI cues introduced with the common design language.</p>
+    <p class="mt-2 text-sm text-gray-600">Follow these 7 steps to raise a stock request, get it approved, create a purchase order, receive the goods, and issue them to your team.</p>
   </header>
 
   <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-4">
     <h2 class="text-xl font-semibold text-bodyText">Flow Overview</h2>
-    <p class="text-sm text-gray-600">Each stage below corresponds to a hero banner or toast inside the application.</p>
     <div class="bg-surfaceSubtle border border-border rounded-xl p-4 overflow-x-auto">
-      <div class="mermaid">flowchart LR
-    A[Department raises Indent] --> B[Indent Review &amp; Approval]
-    B --> C{Need PO?}
-    C -- Yes --> D[Consolidate Approved Indents]
-    D --> E[Generate Purchase Orders]
-    C -- No --> F[Issue From Stock]
-    E --> G[Receive Goods (GRN)]
-    G --> H[Fulfil Indent]
-    H --> I[Update Stock Movements]
-    F --> I</div>
+      <div class="mermaid">
+flowchart TD
+    A([🛒 Raise Indent]) --> B([✅ Review & Approve])
+    B --> C([📋 Consolidate Indents])
+    C --> D([📦 Generate Purchase Orders])
+    D --> E([🚚 Receive Goods - GRN])
+    E --> F([✔️ Fulfil Indent])
+    F --> G([📊 Update Stock Movements])
+    style A fill:#f97316,color:#fff
+    style B fill:#3b82f6,color:#fff
+    style C fill:#8b5cf6,color:#fff
+    style D fill:#10b981,color:#fff
+    style E fill:#f59e0b,color:#000
+    style F fill:#06b6d4,color:#fff
+    style G fill:#6b7280,color:#fff
+      </div>
     </div>
   </article>
 
-  <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-3">
+  <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-4">
     <h2 class="text-xl font-semibold text-bodyText">Stage Details</h2>
-    <ol class="list-decimal pl-5 text-sm text-gray-700 space-y-2">
-      <li><strong>Raise Indent</strong> &mdash; Use <code>New Indent</code> to submit the request. A toast confirms creation and the detail hero explains the next step.</li>
-      <li><strong>Review &amp; Approval</strong> &mdash; Approvers change status from <em>Submitted</em> to <em>Approved</em>. The list hero surfaces how many indents are ready for consolidation.</li>
-      <li><strong>Consolidate Approved Indents</strong> &mdash; Preview the grouped lines. Submitting creates purchase orders and fires a success toast; an info toast explains when nothing can be consolidated.</li>
-      <li><strong>Generate Purchase Orders</strong> &mdash; Quick create or edit orders. The list hero highlights orders awaiting receipts and the detail hero shows supplier/dates.</li>
-      <li><strong>Receive Goods (GRN)</strong> &mdash; Record deliveries from the PO detail (<code>Receive Goods</code>) or GRN list. Toasts confirm receipt and the GRN hero records supplier and PO details.</li>
-      <li><strong>Fulfil Indent</strong> &mdash; Issue goods from stock. The banner guides you to complete or cancel the indent and a toast confirms fulfilment.</li>
-      <li><strong>Update Stock Movements</strong> &mdash; Record quick adjustments, bulk uploads, or wastage. Each modal submits with toast feedback and the hero shows overall metrics.</li>
+    <ol class="space-y-4">
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-orange-100 text-orange-700">Requester</span>
+          <div>
+            <p class="font-semibold">
+              1. Raise Indent —
+              <a href="/indents/create/" class="text-primary underline">New Indent</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              Fill in the item, quantity, and required date. Click Submit —
+              a green confirmation message will appear at the top of the screen
+              and the indent status changes to "Submitted".
+            </p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 text-blue-700">Approver</span>
+          <div>
+            <p class="font-semibold">
+              2. Review &amp; Approve —
+              <a href="/indents/" class="text-primary underline">Indent Requests</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              Open the indent and change its status from "Submitted" to "Approved".
+              A blue banner shows how many indents are waiting for consolidation.
+            </p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-100 text-purple-700">Procurement</span>
+          <div>
+            <p class="font-semibold">
+              3. Consolidate Approved Indents —
+              <a href="/indents/consolidate/preview/" class="text-primary underline">Consolidation Planner</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              Preview all approved lines grouped by supplier. Click Submit to
+              automatically create draft Purchase Orders — one per supplier.
+            </p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-700">Procurement</span>
+          <div>
+            <p class="font-semibold">
+              4. Generate Purchase Orders —
+              <a href="/purchase-orders/" class="text-primary underline">Purchase Orders</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              Review each draft PO, confirm the supplier, quantities, and delivery
+              date, then mark it as Approved to send to the supplier.
+            </p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 text-amber-700">Warehouse</span>
+          <div>
+            <p class="font-semibold">
+              5. Receive Goods (GRN) —
+              <a href="/grns/" class="text-primary underline">Goods Received Notes</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              When the delivery arrives, open the PO and click "Receive Goods",
+              or create a new GRN from the GRN list. Stock levels update automatically.
+            </p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-cyan-100 text-cyan-700">Warehouse</span>
+          <div>
+            <p class="font-semibold">6. Fulfil Indent</p>
+            <p class="text-sm text-gray-600 mt-1">
+              Return to the original Indent and click "Fulfil" to issue the
+              goods from stock to the requesting team. The indent status
+              changes to "Completed".
+            </p>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-start gap-3">
+          <span class="badge inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700">Any Role</span>
+          <div>
+            <p class="font-semibold">
+              7. Update Stock Movements —
+              <a href="/stock-movements/" class="text-primary underline">Stock Movements</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              Use Receive Stock, Adjust Stock, or Record Wastage for any
+              ad-hoc stock changes outside the PO workflow.
+            </p>
+          </div>
+        </div>
+      </li>
     </ol>
   </article>
 
-  <article class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-3">
+  <section class="bg-surface border border-border rounded-2xl shadow-card p-6 space-y-3">
     <h2 class="text-xl font-semibold text-bodyText">Verification Checklist</h2>
-    <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1">
-      <li>Indent creation emits a toast and displays the “Next step” banner.</li>
-      <li>Consolidation creates purchase orders and shows a success toast.</li>
-      <li>Purchase order heroes display supplier/date chips and list banners mention pending receipts.</li>
-      <li>GRN creation redirects to the GRN hero with receipt metadata and toast.</li>
-      <li>Indent fulfilment updates status and emits a toast.</li>
-      <li>Stock movement modals (receive, adjust, waste, quick move, bulk import) trigger toast feedback.</li>
+    <p class="text-sm text-gray-500 mb-4">
+      Check each item as you test the workflow end-to-end.
+    </p>
+    <ul class="space-y-2" id="workflow-checklist">
+      {% for item in checklist_items %}
+      <li class="flex items-start gap-3">
+        <input type="checkbox" id="check-{{ forloop.counter }}"
+               class="mt-1 h-4 w-4 rounded border-gray-300"
+               onchange="saveChecklistState()">
+        <label for="check-{{ forloop.counter }}" class="text-sm text-gray-700">
+          {{ item }}
+        </label>
+      </li>
+      {% endfor %}
     </ul>
-    <p class="text-sm text-gray-600">When each box above is checked, the application logic matches the design language applied across the UI.</p>
-  </article>
+    <p class="text-xs text-gray-400 mt-4">
+      When all items are checked, the application workflow is verified.
+    </p>
+  </section>
+
+  <p class="text-xs text-gray-400 text-center mt-8">
+    Workflow Handbook &middot; Last reviewed: {% now "N j, Y" %}
+  </p>
+
 </section>
 {% endblock %}
+
 {% block extra_js %}
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-    await mermaid.run({ querySelector: '.mermaid' });
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+
+    function saveChecklistState() {
+      var checks = document.querySelectorAll('#workflow-checklist input[type="checkbox"]');
+      var state = Array.from(checks).map(function(c) { return c.checked; });
+      localStorage.setItem('workflow_checklist', JSON.stringify(state));
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var saved = JSON.parse(localStorage.getItem('workflow_checklist') || '[]');
+      var checks = document.querySelectorAll('#workflow-checklist input[type="checkbox"]');
+      checks.forEach(function(c, i) { if (saved[i]) c.checked = true; });
+    });
   </script>
 {% endblock %}

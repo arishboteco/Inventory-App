@@ -1,75 +1,81 @@
+import json
 import logging
+from collections import defaultdict
+from datetime import date, timedelta
 
 from django.db import OperationalError, ProgrammingError
-from django.db.models import Sum
-from django.db.models.functions import TruncDate
 from django.shortcuts import render
 
-from ..models import SaleTransaction, StockTransaction
+from ..models import StockTransaction
 
 logger = logging.getLogger(__name__)
 
 
 def visualizations(request):
-    metric = request.GET.get("metric", "sales")
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
+    metric    = request.GET.get("metric", "receipts")
+    start_raw = request.GET.get("start_date", "")
+    end_raw   = request.GET.get("end_date", "")
 
-    sales_map = {}
-    stock_map = {}
+    # Default to last 30 days when no dates are provided
+    end_date   = date.fromisoformat(end_raw)   if end_raw   else date.today()
+    start_date = date.fromisoformat(start_raw) if start_raw else end_date - timedelta(days=30)
+
+    daily_receiving: defaultdict = defaultdict(float)
+    daily_wastage:   defaultdict = defaultdict(float)
+    daily_adjust:    defaultdict = defaultdict(float)
 
     try:
-        sales_qs = SaleTransaction.objects.all()
-        stock_qs = StockTransaction.objects.all()
+        qs = StockTransaction.objects.filter(
+            transaction_date__date__gte=start_date,
+            transaction_date__date__lte=end_date,
+        ).values("transaction_date", "transaction_type", "quantity_change")
 
-        if start_date:
-            sales_qs = sales_qs.filter(sale_date__date__gte=start_date)
-            stock_qs = stock_qs.filter(transaction_date__date__gte=start_date)
-        if end_date:
-            sales_qs = sales_qs.filter(sale_date__date__lte=end_date)
-            stock_qs = stock_qs.filter(transaction_date__date__lte=end_date)
+        for row in qs:
+            if not row["transaction_date"]:
+                continue
+            d   = row["transaction_date"].date().isoformat()
+            val = float(row["quantity_change"] or 0)
+            t   = row["transaction_type"]
+            if t == "RECEIVING":
+                daily_receiving[d] += val
+            elif t == "WASTAGE":
+                daily_wastage[d] += abs(val)
+            elif t == "ADJUSTMENT":
+                daily_adjust[d] += val
 
-        sales_data = (
-            sales_qs.annotate(date=TruncDate("sale_date"))
-            .values("date")
-            .annotate(total=Sum("quantity"))
-            .order_by("date")
-        )
-        stock_data = (
-            stock_qs.annotate(date=TruncDate("transaction_date"))
-            .values("date")
-            .annotate(total=Sum("quantity_change"))
-            .order_by("date")
-        )
-
-        sales_map = {
-            d["date"].isoformat(): float(d["total"] or 0)
-            for d in sales_data
-            if d["date"] is not None
-        }
-        stock_map = {
-            d["date"].isoformat(): float(d["total"] or 0)
-            for d in stock_data
-            if d["date"] is not None
-        }
     except (OperationalError, ProgrammingError) as exc:
         logger.warning("visualizations: DB query failed – %s", exc)
 
-    dates = sorted(set(sales_map) | set(stock_map))
+    all_dates = sorted(
+        set(daily_receiving) | set(daily_wastage) | set(daily_adjust)
+    )
 
-    heatmap_z = [
-        [sales_map.get(d, 0) for d in dates],
-        [stock_map.get(d, 0) for d in dates],
+    # Heatmap: 3 rows — Receipts, Wastage, Adjustments
+    heatmap_data = [
+        [daily_receiving.get(d, 0) for d in all_dates],
+        [daily_wastage.get(d, 0)   for d in all_dates],
+        [daily_adjust.get(d, 0)    for d in all_dates],
     ]
-    selected_map = sales_map if metric == "sales" else stock_map
-    scatter_y = [selected_map.get(d, 0) for d in dates]
+
+    # Scatter Y varies by selected metric
+    if metric == "wastage":
+        scatter_y = [daily_wastage.get(d, 0) for d in all_dates]
+    elif metric == "net":
+        scatter_y = [
+            daily_receiving.get(d, 0) - daily_wastage.get(d, 0) + daily_adjust.get(d, 0)
+            for d in all_dates
+        ]
+    else:  # default: receipts
+        scatter_y = [daily_receiving.get(d, 0) for d in all_dates]
 
     context = {
-        "metric": metric,
-        "start_date": start_date,
-        "end_date": end_date,
-        "dates": dates,
-        "heatmap_z": heatmap_z,
-        "scatter_y": scatter_y,
+        "viz_metric":    metric,
+        "start_date":    start_date.isoformat(),
+        "end_date":      end_date.isoformat(),
+        "viz_dates":     json.dumps(all_dates),
+        "viz_heatmap":   json.dumps(heatmap_data),
+        "viz_scatter_y": json.dumps(scatter_y),
+        "has_data":      len(all_dates) > 0,
+        "metric":        metric,
     }
     return render(request, "inventory/visualizations.html", context)

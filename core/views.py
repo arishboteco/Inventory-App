@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
@@ -67,16 +67,46 @@ def dashboard_kpis(request):
 def _stock_trend_data(
     item_id=None, supplier_id=None, start=None, end=None, metric="quantity"
 ):
-    """Return stock transaction totals grouped by day.
+    """Return daily stock trend data.
+
+    Prefers StockSnapshot (absolute stock levels) when available, falling back
+    to StockTransaction daily aggregates when no snapshots exist.
 
     Args:
-        item_id: Optional item identifier to filter by item.
-        supplier_id: Optional supplier identifier to filter by supplier.
-        start: Start date for filtering (inclusive).
-        end: End date for filtering (inclusive).
-        metric: "quantity" to aggregate quantities or "value" for monetary value.
+        item_id: Optional item ID to filter.
+        supplier_id: Optional supplier ID to filter (via preferred_supplier FK on Item).
+        start: Start date (inclusive).
+        end: End date (inclusive).
+        metric: "quantity" or "value".
     """
+    # ── Try StockSnapshot first (absolute stock levels) ──────────────────
+    try:
+        from inventory.models.items import StockSnapshot
 
+        qs = StockSnapshot.objects.all()
+        if item_id:
+            qs = qs.filter(item_id=item_id)
+        if supplier_id:
+            qs = qs.filter(item__preferred_supplier_id=supplier_id)
+        if start:
+            qs = qs.filter(snapshot_date__gte=start)
+        if end:
+            qs = qs.filter(snapshot_date__lte=end)
+
+        if metric == "value":
+            agg = qs.values("snapshot_date").annotate(total=Sum("value")).order_by("snapshot_date")
+        else:
+            agg = qs.values("snapshot_date").annotate(total=Sum("quantity")).order_by("snapshot_date")
+
+        rows = list(agg)
+        if rows:
+            labels = [d["snapshot_date"].strftime("%Y-%m-%d") for d in rows]
+            values = [float(d["total"] or 0) for d in rows]
+            return labels, values
+    except Exception:
+        logger.debug("StockSnapshot unavailable, falling back to StockTransaction")
+
+    # ── Fall back to StockTransaction daily aggregates ───────────────────
     qs = StockTransaction.objects.all()
     if item_id:
         qs = qs.filter(item_id=item_id)
@@ -111,14 +141,43 @@ def _stock_trend_data(
     return labels, values
 
 
+def _parse_date_range(request):
+    """Extract and validate date range from request GET params.
+
+    Supports preset ranges (7/30/90 days) and custom date_from / date_to.
+    """
+    range_days = request.GET.get("range", "30")
+    date_from_raw = request.GET.get("date_from", "").strip()
+    date_to_raw = request.GET.get("date_to", "").strip()
+    today = timezone.now().date()
+
+    if range_days == "custom" and (date_from_raw or date_to_raw):
+        try:
+            end = date.fromisoformat(date_to_raw) if date_to_raw else today
+            start = date.fromisoformat(date_from_raw) if date_from_raw else end - timedelta(days=29)
+        except ValueError:
+            end = today
+            start = today - timedelta(days=29)
+    else:
+        try:
+            days = int(range_days)
+        except (ValueError, TypeError):
+            days = 30
+        end = today
+        start = end - timedelta(days=days - 1)
+
+    return start, end
+
+
 def interactive_dashboard(request):
-    """Render dashboard with filter controls for asynchronous charts."""
+    """Render interactive dashboard with filter controls for trend chart."""
     item_id = request.GET.get("item")
     supplier_id = request.GET.get("supplier")
     metric = request.GET.get("metric", "quantity")
-    days = int(request.GET.get("range", 30))
-    end = timezone.now().date()
-    start = end - timedelta(days=days - 1)
+    range_val = request.GET.get("range", "30")
+    date_from = request.GET.get("date_from", "")
+    date_to = request.GET.get("date_to", "")
+    start, end = _parse_date_range(request)
 
     labels, values = _stock_trend_data(item_id, supplier_id, start, end, metric)
     context = DashboardContext(
@@ -127,17 +186,26 @@ def interactive_dashboard(request):
         items=Item.objects.filter(is_active=True),
         suppliers=Supplier.objects.filter(is_active=True),
     ).as_dict()
+    context.update({
+        "is_interactive": True,
+        "page_title": "Interactive Dashboard – Inventory Pro",
+        "current_title": "Interactive Dashboard",
+        "selected_range": range_val,
+        "selected_item": item_id or "",
+        "selected_supplier": supplier_id or "",
+        "selected_metric": metric,
+        "date_from": date_from,
+        "date_to": date_to,
+    })
     return render(request, "core/dashboard.html", context)
 
 
 def ajax_dashboard_data(request):
-    """Return JSON data for dashboard charts based on filters."""
+    """Return JSON chart data for the given filters."""
     item_id = request.GET.get("item")
     supplier_id = request.GET.get("supplier")
     metric = request.GET.get("metric", "quantity")
-    days = int(request.GET.get("range", 30))
-    end = timezone.now().date()
-    start = end - timedelta(days=days - 1)
+    start, end = _parse_date_range(request)
 
     labels, values = _stock_trend_data(item_id, supplier_id, start, end, metric)
     return JsonResponse({"labels": labels, "values": values})

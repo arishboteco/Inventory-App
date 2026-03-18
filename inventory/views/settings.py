@@ -6,11 +6,12 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from ..models.category import Category
-from ..models.departments import Department
+from ..models.departments import Department, ItemDepartment
+from ..models.items import Item
 from ..models.unit import Unit
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ def settings_view(request):
     if request.method == "POST":
         action = request.POST.get("action", "")
 
+        # ── Units ────────────────────────────────────────────────────────────
         if action == "add_unit":
             purchase_unit = request.POST.get("purchase_unit", "").strip()
             base_unit = request.POST.get("base_unit", "").strip()
@@ -42,15 +44,43 @@ def settings_view(request):
             else:
                 messages.error(request, "Purchase unit and base unit are required.")
 
+        elif action == "edit_unit":
+            unit_id = request.POST.get("unit_id")
+            purchase_unit = request.POST.get("purchase_unit", "").strip()
+            base_unit = request.POST.get("base_unit", "").strip()
+            conversion_factor = request.POST.get("conversion_factor", "1").strip()
+            if purchase_unit and base_unit:
+                try:
+                    Unit.objects.filter(unit_id=unit_id).update(
+                        purchase_unit=purchase_unit,
+                        base_unit=base_unit,
+                        conversion_factor=conversion_factor or "1",
+                    )
+                    messages.success(request, f"Unit '{purchase_unit}' updated.")
+                except Exception as exc:
+                    logger.error("Failed to edit unit: %s", exc)
+                    messages.error(request, "Failed to update unit.")
+            else:
+                messages.error(request, "Purchase unit and base unit are required.")
+
         elif action == "delete_unit":
             unit_id = request.POST.get("unit_id")
-            try:
-                Unit.objects.filter(unit_id=unit_id).delete()
-                messages.success(request, "Unit deleted.")
-            except Exception as exc:
-                logger.error("Failed to delete unit: %s", exc)
-                messages.error(request, "Failed to delete unit.")
+            unit = get_object_or_404(Unit, unit_id=unit_id)
+            referencing = Item.objects.filter(unit=unit).count()
+            if referencing > 0:
+                messages.error(
+                    request,
+                    f"Cannot delete '{unit.purchase_unit}': {referencing} item(s) use this unit.",
+                )
+            else:
+                try:
+                    unit.delete()
+                    messages.success(request, "Unit deleted.")
+                except Exception as exc:
+                    logger.error("Failed to delete unit: %s", exc)
+                    messages.error(request, "Failed to delete unit.")
 
+        # ── Categories ───────────────────────────────────────────────────────
         elif action == "add_category":
             category = request.POST.get("category", "").strip()
             sub_category = request.POST.get("sub_category", "").strip()
@@ -67,15 +97,41 @@ def settings_view(request):
             else:
                 messages.error(request, "Category name is required.")
 
+        elif action == "edit_category":
+            category_id = request.POST.get("category_id")
+            category_name = request.POST.get("category", "").strip()
+            sub_category = request.POST.get("sub_category", "").strip()
+            if category_name:
+                try:
+                    Category.objects.filter(category_id=category_id).update(
+                        category=category_name,
+                        sub_category=sub_category or "",
+                    )
+                    messages.success(request, f"Category '{category_name}' updated.")
+                except Exception as exc:
+                    logger.error("Failed to edit category: %s", exc)
+                    messages.error(request, "Failed to update category.")
+            else:
+                messages.error(request, "Category name is required.")
+
         elif action == "delete_category":
             category_id = request.POST.get("category_id")
-            try:
-                Category.objects.filter(category_id=category_id).delete()
-                messages.success(request, "Category deleted.")
-            except Exception as exc:
-                logger.error("Failed to delete category: %s", exc)
-                messages.error(request, "Failed to delete category.")
+            cat = get_object_or_404(Category, category_id=category_id)
+            referencing = Item.objects.filter(category=cat).count()
+            if referencing > 0:
+                messages.error(
+                    request,
+                    f"Cannot delete '{cat.category}': {referencing} item(s) use this category.",
+                )
+            else:
+                try:
+                    cat.delete()
+                    messages.success(request, "Category deleted.")
+                except Exception as exc:
+                    logger.error("Failed to delete category: %s", exc)
+                    messages.error(request, "Failed to delete category.")
 
+        # ── Departments ──────────────────────────────────────────────────────
         elif action == "add_department":
             name = request.POST.get("name", "").strip()
             if name:
@@ -88,14 +144,35 @@ def settings_view(request):
             else:
                 messages.error(request, "Department name is required.")
 
+        elif action == "edit_department":
+            department_id = request.POST.get("department_id")
+            name = request.POST.get("name", "").strip()
+            if name:
+                try:
+                    Department.objects.filter(department_id=department_id).update(name=name)
+                    messages.success(request, f"Department '{name}' updated.")
+                except Exception as exc:
+                    logger.error("Failed to edit department: %s", exc)
+                    messages.error(request, "Failed to update department.")
+            else:
+                messages.error(request, "Department name is required.")
+
         elif action == "delete_department":
             department_id = request.POST.get("department_id")
-            try:
-                Department.objects.filter(department_id=department_id).delete()
-                messages.success(request, "Department deleted.")
-            except Exception as exc:
-                logger.error("Failed to delete department: %s", exc)
-                messages.error(request, "Failed to delete department.")
+            dept = get_object_or_404(Department, department_id=department_id)
+            referencing = ItemDepartment.objects.filter(department=dept).count()
+            if referencing > 0:
+                messages.error(
+                    request,
+                    f"Cannot delete '{dept.name}': {referencing} item(s) are assigned to this department.",
+                )
+            else:
+                try:
+                    dept.delete()
+                    messages.success(request, "Department deleted.")
+                except Exception as exc:
+                    logger.error("Failed to delete department: %s", exc)
+                    messages.error(request, "Failed to delete department.")
 
         return redirect("settings")
 

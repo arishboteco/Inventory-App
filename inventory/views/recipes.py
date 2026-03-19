@@ -1,20 +1,18 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
-from django.views.generic import TemplateView
+from django.views.generic import DeleteView, TemplateView
 
 from ..forms.recipe_forms import RecipeForm, RecipeItemEditFormSet, RecipeItemFormSet
 from ..models import Indent, IndentItem, Recipe, RecipeItem
-from django.views.generic import DeleteView
-from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
 from ..services import list_utils, recipe_service
 from ..services.units_service import UnitsService
 

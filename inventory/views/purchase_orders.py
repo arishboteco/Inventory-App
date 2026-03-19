@@ -17,8 +17,12 @@ from django.views.generic import TemplateView
 
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from ..models import Item, PurchaseOrder, Supplier
-from ..services import goods_receiving_service, list_utils, purchase_order_service
-from ..services import purchase_order_kpis
+from ..services import (
+    goods_receiving_service,
+    list_utils,
+    purchase_order_kpis,
+    purchase_order_service,
+)
 from ..services.exceptions import PurchaseOrderServiceError
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,13 @@
 from django import forms
 
-from ..models import GoodsReceivedNote, GRNItem, Item, PurchaseOrder, PurchaseOrderItem, Supplier
+from ..models import (
+    GoodsReceivedNote,
+    GRNItem,
+    Item,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Supplier,
+)
 from .base import INPUT_CLASS, StyledFormMixin
 
 
@@ -32,8 +39,8 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
             status_field = self.fields.get("status")
             if status_field and getattr(status_field, "choices", None):
                 filtered = [
-                    (v, l)
-                    for v, l in status_field.choices
+                    (v, lbl)
+                    for v, lbl in status_field.choices
                     if str(v).upper() != "ORDERED"
                 ]
                 status_field.choices = filtered

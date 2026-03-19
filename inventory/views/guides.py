@@ -1,6 +1,5 @@
 from django.views.generic import TemplateView
 
-
 WORKFLOW_CHECKLIST = [
     "Submit a new indent and verify its status changes to \"Submitted\".",
     "Approve the indent and verify the status changes to \"Approved\".",

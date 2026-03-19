@@ -2,7 +2,8 @@
   function getKey(container) {
     return (
       container.getAttribute("data-table-key") ||
-      (container.querySelector("table[id]")?.id || "default")
+      container.querySelector("table[id]")?.id ||
+      "default"
     );
   }
 
@@ -41,10 +42,14 @@
         const on = ctl.checked;
         container
           .querySelectorAll(`[data-col='${CSS.escape(col)}']`)
-          .forEach((el) => (on ? el.classList.remove("hidden") : el.classList.add("hidden")));
+          .forEach((el) =>
+            on ? el.classList.remove("hidden") : el.classList.add("hidden"),
+          );
         let hidden = [];
         try {
-          hidden = JSON.parse(localStorage.getItem("tableHidden:" + key) || "[]");
+          hidden = JSON.parse(
+            localStorage.getItem("tableHidden:" + key) || "[]",
+          );
         } catch (_) {}
         const idx = hidden.indexOf(col);
         if (!on && idx === -1) hidden.push(col);
@@ -164,7 +169,8 @@
     const sync = () => {
       const val = container.getAttribute("data-density") || "";
       container.querySelectorAll("[data-density-btn]").forEach((b) => {
-        const v = b.getAttribute("data-value") || b.getAttribute("data-density");
+        const v =
+          b.getAttribute("data-value") || b.getAttribute("data-density");
         const on = v === val;
         b.setAttribute("aria-pressed", on ? "true" : "false");
         b.classList.toggle("bg-primary", on);
@@ -174,7 +180,10 @@
     container.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-density-btn]");
       if (!btn || !container.contains(btn)) return;
-      const val = btn.getAttribute("data-value") || btn.getAttribute("data-density") || "";
+      const val =
+        btn.getAttribute("data-value") ||
+        btn.getAttribute("data-density") ||
+        "";
       if (val === "compact" || val === "comfortable") {
         container.setAttribute("data-density", val);
         try {
@@ -189,7 +198,7 @@
 
   function initTable(root) {
     const containers = (root || document).querySelectorAll(
-      "[data-table-container]"
+      "[data-table-container]",
     );
     containers.forEach((container) => {
       const key = getKey(container);

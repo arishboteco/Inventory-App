@@ -5,9 +5,9 @@ from .views.goods_received import GRNCreateView, GRNDetailView, GRNListView, grn
 from .views.guides import WorkflowGuideView
 from .views.indents import (
     IndentCreateView,
-    IndentUpdateView,
     IndentsListView,
     IndentsTableView,
+    IndentUpdateView,
     consolidate_indents,
     indent_detail,
     indent_pdf,
@@ -65,6 +65,7 @@ from .views.recipes import (
     recipe_create_indent,
     recipe_detail,
 )
+from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.suppliers import (
     SupplierCreateView,
@@ -80,7 +81,6 @@ from .views.suppliers import (
     SuppliersTableView,
     SupplierToggleActiveView,
 )
-from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.visualizations import visualizations
 
 urlpatterns = [

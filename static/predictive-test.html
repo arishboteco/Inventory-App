@@ -12,7 +12,7 @@
 </head>
 <body>
     <h1>Predictive Dropdown Test</h1>
-    
+
     <div class="test-container">
         <h3>Test 1: Static Dropdown (Should Work)</h3>
         <select class="predictive" id="test-select-1">
@@ -22,7 +22,7 @@
             <option value="3">Cherry</option>
         </select>
     </div>
-    
+
     <div class="test-container">
         <h3>Test 2: Dynamic Dropdown (Recipe Test)</h3>
         <div id="dynamic-container">
@@ -30,7 +30,7 @@
         </div>
         <button onclick="addDynamicDropdown()">Add Dynamic Dropdown</button>
     </div>
-    
+
     <div class="log" id="log">
         Log will appear here...
     </div>
@@ -41,18 +41,18 @@
             logDiv.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
             console.log(message);
         }
-        
+
         let counter = 0;
-        
+
         function addDynamicDropdown() {
             counter++;
             log('Adding dynamic dropdown #' + counter);
-            
+
             const container = document.getElementById('dynamic-container');
             const select = document.createElement('select');
             select.className = 'predictive';
             select.id = 'dynamic-select-' + counter;
-            
+
             // Add options
             select.innerHTML = `
                 <option value="">Choose item...</option>
@@ -60,25 +60,25 @@
                 <option value="2">Dynamic Banana ${counter}</option>
                 <option value="3">Dynamic Cherry ${counter}</option>
             `;
-            
+
             container.appendChild(select);
             log('Select element created: ' + select.id);
-            
+
             // Try to initialize
             if (window.initPredictiveDropdowns) {
                 log('Calling initPredictiveDropdowns...');
                 delete select.dataset.predictiveUpgraded; // Clear any existing state
                 window.initPredictiveDropdowns(container);
-                
+
                 setTimeout(function() {
                     const isUpgraded = select.dataset.predictiveUpgraded === '1';
                     const textInput = document.getElementById(select.id + '_text');
                     log('Result: upgraded=' + isUpgraded + ', textInput=' + !!textInput);
-                    
+
                     if (!isUpgraded) {
                         log('Trying global initialization...');
                         window.initPredictiveDropdowns(document);
-                        
+
                         setTimeout(function() {
                             const isUpgradedNow = select.dataset.predictiveUpgraded === '1';
                             const textInputNow = document.getElementById(select.id + '_text');
@@ -90,11 +90,11 @@
                 log('ERROR: initPredictiveDropdowns not available!');
             }
         }
-        
+
         // Test the static dropdown on load
         document.addEventListener('DOMContentLoaded', function() {
             log('Page loaded');
-            
+
             setTimeout(function() {
                 const staticSelect = document.getElementById('test-select-1');
                 if (staticSelect) {
@@ -104,7 +104,7 @@
             }, 1000);
         });
     </script>
-    
+
     <!-- Load the predictive dropdown script -->
     <script src="/static/js/predictive-dropdown.js"></script>
 </body>

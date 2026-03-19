@@ -116,7 +116,7 @@
           <button type="button" data-bulk-action="delete" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500">Delete Selected</button>
         </div>
       </div>
-      
+
     </div>
   <div id="items-aria-live" class="sr-only" aria-live="polite"></div>
   {% include "components/_confirm_modal.html" %}
@@ -124,7 +124,7 @@
 
 {% block page_scripts %}
   {# Predictive is skipped for multi-select; keep loaded for other pages if needed #}
-    
+
     {% if category_map %}
       {{ category_map|json_script:"category-map-data" }}
     {% endif %}

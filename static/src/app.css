@@ -4,8 +4,13 @@
 @tailwind utilities;
 
 /* Hide scrollbars for horizontally scrollable nav containers */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 /* Fluid nav link sizing that adapts to available width without wrapping */
 .nav-link {
@@ -16,7 +21,9 @@
   text-decoration: none;
   outline: none;
 }
-.nav-link:focus { box-shadow: 0 0 0 2px var(--color-primary, #3b82f6); }
+.nav-link:focus {
+  box-shadow: 0 0 0 2px var(--color-primary, #3b82f6);
+}
 .nav-link--active {
   color: #1d4ed8; /* text-blue-700 */
   background: #eff6ff; /* bg-blue-50 */
@@ -30,7 +37,9 @@
 }
 
 /* Fluid search width: keeps a reasonable min size and caps maximum */
-.search-fluid { width: clamp(14rem, 24vw, 28rem); }
+.search-fluid {
+  width: clamp(14rem, 24vw, 28rem);
+}
 
 @layer base {
   :root {
@@ -93,19 +102,41 @@
   }
 
   /* Badges & chips */
-  .badge { @apply inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium; }
-  .badge-success { @apply text-success-text bg-success-soft; }
-  .badge-warning { @apply text-warning-text bg-warning-soft; }
-  .badge-danger { @apply text-danger-text bg-danger-soft; }
-  .badge-info { @apply text-info-text bg-info-soft; }
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-caption font-medium;
+  }
+  .badge-success {
+    @apply text-success-text bg-success-soft;
+  }
+  .badge-warning {
+    @apply text-warning-text bg-warning-soft;
+  }
+  .badge-danger {
+    @apply text-danger-text bg-danger-soft;
+  }
+  .badge-info {
+    @apply text-info-text bg-info-soft;
+  }
 
-  .chip { @apply inline-flex items-center gap-2 px-3 py-1 rounded-md text-label bg-surfaceSubtle border border-border; }
+  .chip {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-md text-label bg-surfaceSubtle border border-border;
+  }
 
   /* Density controls: add one of these to the table container */
-  [data-density="comfortable"] table { @apply text-base; }
-  [data-density="compact"] table { @apply text-sm; }
-  [data-density="comfortable"] td, [data-density="comfortable"] th { @apply px-4 py-3; }
-  [data-density="compact"] td, [data-density="compact"] th { @apply px-3 py-2; }
+  [data-density="comfortable"] table {
+    @apply text-base;
+  }
+  [data-density="compact"] table {
+    @apply text-sm;
+  }
+  [data-density="comfortable"] td,
+  [data-density="comfortable"] th {
+    @apply px-4 py-3;
+  }
+  [data-density="compact"] td,
+  [data-density="compact"] th {
+    @apply px-3 py-2;
+  }
 
   /* Sticky headers */
   .table-scroll {

@@ -58,6 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderChart(
     window.initialTrendLabels || [],
     window.initialTrendValues || [],
-    "Stock Quantity"
+    "Stock Quantity",
   );
 });

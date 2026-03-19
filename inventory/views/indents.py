@@ -777,14 +777,13 @@ class IndentUpdateView(View):
     """Handle updates to an existing indent (department, date_required, notes)."""
 
     def post(self, request, pk: int):
-        from django.contrib.auth.decorators import login_required
         from datetime import date as date_type
 
         indent = get_object_or_404(Indent, pk=pk)
         if indent.status.upper() not in {"SUBMITTED", "APPROVED"}:
             messages.warning(
                 request,
-                f"Only submitted or approved indents can be edited.",
+                "Only submitted or approved indents can be edited.",
                 extra_tags="toast",
             )
             return redirect("indent_detail", pk=pk)

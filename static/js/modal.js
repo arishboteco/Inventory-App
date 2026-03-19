@@ -50,11 +50,9 @@
     if (!skipInit) {
       // Defer heavy enhancements to next frame to keep first paint snappy
       requestAnimationFrame(() => {
-        if (window.initMultiselectChips)
-          window.initMultiselectChips(content);
+        if (window.initMultiselectChips) window.initMultiselectChips(content);
         // Initialize indent form first so it can mark inputs to opt out of overlays
-        if (window.initIndentForm)
-          window.initIndentForm(content);
+        if (window.initIndentForm) window.initIndentForm(content);
         if (window.initPredictiveDropdowns)
           window.initPredictiveDropdowns(content);
         if (window.initPredictiveDatalistOverlay)
@@ -75,10 +73,8 @@
     content.innerHTML = `<div class="drawer ${side} wide">${html}</div>`;
     if (!skipInit) {
       requestAnimationFrame(() => {
-        if (window.initMultiselectChips)
-          window.initMultiselectChips(content);
-        if (window.initIndentForm)
-          window.initIndentForm(content);
+        if (window.initMultiselectChips) window.initMultiselectChips(content);
+        if (window.initIndentForm) window.initIndentForm(content);
         if (window.initPredictiveDropdowns)
           window.initPredictiveDropdowns(content);
         if (window.initPredictiveDatalistOverlay)
@@ -94,7 +90,11 @@
   function openLoading(type, url) {
     // Specialized skeleton for heavy drawers (create & edit item)
     let markup;
-    if (type === "drawer" && url && /(item_create_partial|\/items\/\d+\/edit\/)/.test(url)) {
+    if (
+      type === "drawer" &&
+      url &&
+      /(item_create_partial|\/items\/\d+\/edit\/)/.test(url)
+    ) {
       const isEdit = /\/items\/\d+\/edit\//.test(url);
       const heading = isEdit ? "Edit Item" : "Add New Item";
       markup = `
@@ -168,9 +168,7 @@
       if (window.htmx && typeof window.htmx.trigger === "function") {
         window.htmx.trigger(target, name, detail);
       } else {
-        target.dispatchEvent(
-          new CustomEvent(name, { detail, bubbles: true }),
-        );
+        target.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
       }
     });
   }
@@ -241,12 +239,12 @@
     const opener = tgt.closest("[data-modal-url]");
     if (opener) {
       e.preventDefault();
-  const url = opener.getAttribute("data-modal-url");
-  const type = opener.getAttribute("data-modal-type") || "modal";
-  const inlineTplId = opener.getAttribute("data-modal-inline-template");
-  const noFetch = opener.hasAttribute("data-modal-no-fetch");
+      const url = opener.getAttribute("data-modal-url");
+      const type = opener.getAttribute("data-modal-type") || "modal";
+      const inlineTplId = opener.getAttribute("data-modal-inline-template");
+      const noFetch = opener.hasAttribute("data-modal-no-fetch");
       const cached = cacheGet(url);
-  if (cached) {
+      if (cached) {
         // Open immediately with cached content
         if (type === "drawer") openDrawer(cached, "right");
         else openModal(cached);
@@ -257,10 +255,10 @@
           const tpl = inlineTplId
             ? document.getElementById(inlineTplId)
             : document.getElementById("inline-item-create-drawer");
-            if (tpl && tpl.innerHTML.trim()) {
-              openDrawer(tpl.innerHTML, "right");
-              openedFromInline = true;
-            }
+          if (tpl && tpl.innerHTML.trim()) {
+            openDrawer(tpl.innerHTML, "right");
+            openedFromInline = true;
+          }
         }
         // If configured to skip fetch (inline template is authoritative) stop here.
         if (openedFromInline && noFetch) {
@@ -271,15 +269,22 @@
         if (!openedFromInline && inlineTplId) {
           setTimeout(() => {
             if (cacheGet(url)) return; // content arrived
-            const root = document.getElementById('modal-root');
-            if (!root || root.classList.contains('hidden')) return;
-            const content = document.getElementById('modal-content');
+            const root = document.getElementById("modal-root");
+            if (!root || root.classList.contains("hidden")) return;
+            const content = document.getElementById("modal-content");
             if (!content) return;
-            if (content.textContent && content.textContent.includes('Loading')) {
+            if (
+              content.textContent &&
+              content.textContent.includes("Loading")
+            ) {
               const tpl = document.getElementById(inlineTplId);
               if (tpl && tpl.innerHTML.trim()) {
-                openDrawer(tpl.innerHTML, 'right');
-                if (window.console) console.debug('[modal] fallback inline drawer shown after timeout', url);
+                openDrawer(tpl.innerHTML, "right");
+                if (window.console)
+                  console.debug(
+                    "[modal] fallback inline drawer shown after timeout",
+                    url,
+                  );
               }
             }
           }, 1500);
@@ -307,7 +312,10 @@
                 else openModal(msg);
               }
               if (window.notifications)
-                window.notifications.showToast("Failed to load content", "error");
+                window.notifications.showToast(
+                  "Failed to load content",
+                  "error",
+                );
             });
         if (!noFetch) {
           if (INFLIGHT.has(url)) {
@@ -347,13 +355,18 @@
 
   // Idle prefetch for elements marked eager/idle
   function prefetchMarked() {
-    const eager = document.querySelectorAll('[data-modal-url][data-modal-prefetch="eager"]');
+    const eager = document.querySelectorAll(
+      '[data-modal-url][data-modal-prefetch="eager"]',
+    );
     eager.forEach((el) => prefetch(el.getAttribute("data-modal-url")));
     const idle = () => {
-      const els = document.querySelectorAll('[data-modal-url][data-modal-prefetch="idle"]');
+      const els = document.querySelectorAll(
+        '[data-modal-url][data-modal-prefetch="idle"]',
+      );
       els.forEach((el) => prefetch(el.getAttribute("data-modal-url")));
     };
-    if (window.requestIdleCallback) requestIdleCallback(idle, { timeout: 1200 });
+    if (window.requestIdleCallback)
+      requestIdleCallback(idle, { timeout: 1200 });
     else setTimeout(idle, 800);
   }
   if (document.readyState === "loading")
@@ -385,38 +398,57 @@
   // Eager prefetch for elements marked with data-modal-prefetch="eager"
   document.addEventListener("DOMContentLoaded", () => {
     // Use idle callback if available to reduce main-thread contention
-    const eager = Array.from(document.querySelectorAll('[data-modal-url][data-modal-prefetch="eager"]'));
+    const eager = Array.from(
+      document.querySelectorAll(
+        '[data-modal-url][data-modal-prefetch="eager"]',
+      ),
+    );
     const prefetchFn = () => {
       eager.forEach((el) => schedulePrefetch(el));
     };
     // Prime cache with any inline templates so first open is instant
-  document.querySelectorAll('[data-modal-inline-template]').forEach((btn) => {
-      const url = btn.getAttribute('data-modal-url');
-      const tplId = btn.getAttribute('data-modal-inline-template');
+    document.querySelectorAll("[data-modal-inline-template]").forEach((btn) => {
+      const url = btn.getAttribute("data-modal-url");
+      const tplId = btn.getAttribute("data-modal-inline-template");
       if (!url || !tplId || cacheGet(url)) return;
       const tpl = document.getElementById(tplId);
       if (tpl && tpl.innerHTML.trim()) {
         cacheSet(url, tpl.innerHTML);
-    if (window.console) console.debug('[modal] primed cache from inline template', url);
+        if (window.console)
+          console.debug("[modal] primed cache from inline template", url);
       }
     });
     // Idle prefetch for first visible edit item link to remove first-click delay
     const prefetchFirstEdit = () => {
       // Find first edit link with data-modal-url containing /items/<id>/edit/
-      const editLinks = Array.from(document.querySelectorAll('[data-modal-url]'))
-        .filter((el) => /\/items\/\d+\/edit\//.test(el.getAttribute('data-modal-url') || ''));
+      const editLinks = Array.from(
+        document.querySelectorAll("[data-modal-url]"),
+      ).filter((el) =>
+        /\/items\/\d+\/edit\//.test(el.getAttribute("data-modal-url") || ""),
+      );
       if (editLinks.length) {
         schedulePrefetch(editLinks[0]);
-        if (window.console) console.debug('[modal] idle prefetched first edit drawer', editLinks[0].getAttribute('data-modal-url'));
+        if (window.console)
+          console.debug(
+            "[modal] idle prefetched first edit drawer",
+            editLinks[0].getAttribute("data-modal-url"),
+          );
         // Staged prefetch of next few edit links (2-4) for likely early interactions
         const more = editLinks.slice(1, 4);
         more.forEach((el, idx) => {
-          setTimeout(() => {
-            if (!cacheGet(el.getAttribute('data-modal-url'))) {
-              schedulePrefetch(el);
-              if (window.console) console.debug('[modal] staged prefetched edit drawer', el.getAttribute('data-modal-url'));
-            }
-          }, 300 + idx * 180); // stagger to avoid burst
+          setTimeout(
+            () => {
+              if (!cacheGet(el.getAttribute("data-modal-url"))) {
+                schedulePrefetch(el);
+                if (window.console)
+                  console.debug(
+                    "[modal] staged prefetched edit drawer",
+                    el.getAttribute("data-modal-url"),
+                  );
+              }
+            },
+            300 + idx * 180,
+          ); // stagger to avoid burst
         });
       }
     };
@@ -427,21 +459,25 @@
     }
     // Idle prefetch for first few View Details modals as well
     const prefetchFirstView = () => {
-      const viewLinks = Array.from(document.querySelectorAll('[data-modal-url]'))
-        .filter((el) => {
-          const u = el.getAttribute('data-modal-url') || '';
-          // Match /items/<id>/ with optional ?partial=1, but exclude /edit/
-          return /\/items\/\d+\/?/.test(u) && !/\/edit\//.test(u);
-        });
+      const viewLinks = Array.from(
+        document.querySelectorAll("[data-modal-url]"),
+      ).filter((el) => {
+        const u = el.getAttribute("data-modal-url") || "";
+        // Match /items/<id>/ with optional ?partial=1, but exclude /edit/
+        return /\/items\/\d+\/?/.test(u) && !/\/edit\//.test(u);
+      });
       if (viewLinks.length) {
         schedulePrefetch(viewLinks[0]);
         const more = viewLinks.slice(1, 4);
         more.forEach((el, idx) => {
-          setTimeout(() => {
-            if (!cacheGet(el.getAttribute('data-modal-url'))) {
-              schedulePrefetch(el);
-            }
-          }, 300 + idx * 180);
+          setTimeout(
+            () => {
+              if (!cacheGet(el.getAttribute("data-modal-url"))) {
+                schedulePrefetch(el);
+              }
+            },
+            300 + idx * 180,
+          );
         });
       }
     };
@@ -458,27 +494,32 @@
 
     // Viewport-based prefetch: when edit drawers become visible, prefetch once.
     function primeViewportPrefetch(root = document) {
-      if (!('IntersectionObserver' in window)) return;
+      if (!("IntersectionObserver" in window)) return;
       const candidates = Array.from(
-        root.querySelectorAll('[data-modal-url]')
-      ).filter((el)=>/\/items\/\d+\/edit\//.test(el.getAttribute('data-modal-url')||''));
+        root.querySelectorAll("[data-modal-url]"),
+      ).filter((el) =>
+        /\/items\/\d+\/edit\//.test(el.getAttribute("data-modal-url") || ""),
+      );
       if (!candidates.length) return;
       let budget = 12; // safety cap per page view
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach((entry)=>{
-          if (budget <= 0) return;
-          if (entry.isIntersecting) {
-            const el = entry.target;
-            schedulePrefetch(el);
-            io.unobserve(el);
-            budget -= 1;
-          }
-        });
-      }, { rootMargin: '120px' });
-      candidates.forEach((el)=> io.observe(el));
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (budget <= 0) return;
+            if (entry.isIntersecting) {
+              const el = entry.target;
+              schedulePrefetch(el);
+              io.unobserve(el);
+              budget -= 1;
+            }
+          });
+        },
+        { rootMargin: "120px" },
+      );
+      candidates.forEach((el) => io.observe(el));
     }
     primeViewportPrefetch(document);
-    document.addEventListener('htmx:afterSwap', (e)=>{
+    document.addEventListener("htmx:afterSwap", (e) => {
       if (e && e.target) primeViewportPrefetch(e.target);
     });
   });
@@ -492,40 +533,52 @@
     try {
       // Pre-submit guard: sync department hidden field from UI select if present
       try {
-        const hiddenDept = form.querySelector('#id_department');
-        const uiDept = form.querySelector('#department-ui');
+        const hiddenDept = form.querySelector("#id_department");
+        const uiDept = form.querySelector("#department-ui");
         if (hiddenDept && uiDept) {
           hiddenDept.value = uiDept.value;
         }
-      } catch (err) { /* non-fatal */ }
-      const csrf = form.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+      } catch (err) {
+        /* non-fatal */
+      }
+      const csrf = form.querySelector(
+        'input[name="csrfmiddlewaretoken"]',
+      )?.value;
       // Client-side preflight validation for better UX
-      const showInlineError = (msg)=>{
+      const showInlineError = (msg) => {
         try {
-          let alert = form.querySelector('[data-modal-error]');
+          let alert = form.querySelector("[data-modal-error]");
           if (!alert) {
-            alert = document.createElement('div');
-            alert.setAttribute('data-modal-error', '');
-            alert.className = 'mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm';
+            alert = document.createElement("div");
+            alert.setAttribute("data-modal-error", "");
+            alert.className =
+              "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm";
             form.insertBefore(alert, form.firstElementChild);
           }
           alert.textContent = msg;
-          alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } catch(_) {}
+          alert.scrollIntoView({ behavior: "smooth", block: "center" });
+        } catch (_) {}
       };
-      const cssEscape = (s)=>{
-        try { return (window.CSS && window.CSS.escape) ? window.CSS.escape(String(s)) : String(s); } catch(_) { return String(s); }
+      const cssEscape = (s) => {
+        try {
+          return window.CSS && window.CSS.escape
+            ? window.CSS.escape(String(s))
+            : String(s);
+        } catch (_) {
+          return String(s);
+        }
       };
-      const hiddenDept = form.querySelector('#id_department');
-      const uiDept = form.querySelector('#department-ui');
+      const hiddenDept = form.querySelector("#id_department");
+      const uiDept = form.querySelector("#department-ui");
       if (hiddenDept && uiDept) hiddenDept.value = uiDept.value;
       if (hiddenDept && !hiddenDept.value) {
-        showInlineError('Please select a department');
-        if (window.notifications) window.notifications.showToast('Please select a department', 'error');
+        showInlineError("Please select a department");
+        if (window.notifications)
+          window.notifications.showToast("Please select a department", "error");
         return;
       }
       // Ensure at least one valid line (item id + positive qty) only when form opts in
-      const requiresLineItems = form.hasAttribute('data-requires-line-items');
+      const requiresLineItems = form.hasAttribute("data-requires-line-items");
       if (requiresLineItems) {
         let hasValidLine = false;
         let checkedSources = false;
@@ -535,12 +588,14 @@
         if (hiddenItems.length) {
           checkedSources = true;
           for (const h of hiddenItems) {
-            const name = h.getAttribute('data-item-hidden-for') || h.name || '';
+            const name = h.getAttribute("data-item-hidden-for") || h.name || "";
             if (!name) continue;
-            const qtyName = name.replace(/-item$/, '-requested_qty');
-            const qty = form.querySelector(`input[name="${cssEscape(qtyName)}"]`);
+            const qtyName = name.replace(/-item$/, "-requested_qty");
+            const qty = form.querySelector(
+              `input[name="${cssEscape(qtyName)}"]`,
+            );
             const qtyVal = qty ? parseFloat(qty.value) : NaN;
-            if ((h.value || '').trim() && !Number.isNaN(qtyVal) && qtyVal > 0) {
+            if ((h.value || "").trim() && !Number.isNaN(qtyVal) && qtyVal > 0) {
               hasValidLine = true;
               break;
             }
@@ -553,13 +608,17 @@
           if (inlineItems.length) {
             checkedSources = true;
             for (const select of inlineItems) {
-              const value = (select.value || '').trim();
+              const value = (select.value || "").trim();
               if (!value) continue;
-              const baseName = (select.name || '').replace(/-item$/, '');
+              const baseName = (select.name || "").replace(/-item$/, "");
               if (!baseName) continue;
               const qtyField =
-                form.querySelector(`input[name="${cssEscape(`${baseName}-quantity`)}"]`) ||
-                form.querySelector(`input[name="${cssEscape(`${baseName}-quantity_ordered`)}"]`);
+                form.querySelector(
+                  `input[name="${cssEscape(`${baseName}-quantity`)}"]`,
+                ) ||
+                form.querySelector(
+                  `input[name="${cssEscape(`${baseName}-quantity_ordered`)}"]`,
+                );
               const qtyVal = qtyField ? parseFloat(qtyField.value) : NaN;
               if (!Number.isNaN(qtyVal) && qtyVal > 0) {
                 hasValidLine = true;
@@ -569,8 +628,12 @@
           }
         }
         if (checkedSources && !hasValidLine) {
-          showInlineError('Add at least one item with a positive quantity');
-          if (window.notifications) window.notifications.showToast('Add at least one item with a positive quantity', 'error');
+          showInlineError("Add at least one item with a positive quantity");
+          if (window.notifications)
+            window.notifications.showToast(
+              "Add at least one item with a positive quantity",
+              "error",
+            );
           return;
         }
       }
@@ -579,29 +642,34 @@
       fd.set("partial", "1");
       const url = form.getAttribute("action") || window.location.href;
       const headers = Object.assign(
-        { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-        csrf ? { "X-CSRFToken": csrf } : {}
+        { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+        csrf ? { "X-CSRFToken": csrf } : {},
       );
       fetch(url, {
         method: "POST",
         headers,
         body: fd,
-        credentials: 'same-origin',
+        credentials: "same-origin",
       })
         .then(async (r) => {
-          const ct = r.headers.get('content-type') || '';
+          const ct = r.headers.get("content-type") || "";
           let data = null;
-          if (ct.includes('application/json')) {
-            try { data = await r.json(); } catch (_) { data = null; }
+          if (ct.includes("application/json")) {
+            try {
+              data = await r.json();
+            } catch (_) {
+              data = null;
+            }
           }
           if (!data) {
             try {
               const txt = await r.text();
               // Try to extract a meaningful message from HTML/text
-              const msg = (txt && txt.slice) ? txt.slice(0, 400) : 'Unexpected response';
+              const msg =
+                txt && txt.slice ? txt.slice(0, 400) : "Unexpected response";
               data = { ok: false, message: r.statusText || msg };
             } catch (_) {
-              data = { ok: false, message: r.statusText || 'Request failed' };
+              data = { ok: false, message: r.statusText || "Request failed" };
             }
           }
           if (r.ok && data && data.ok) {
@@ -613,22 +681,33 @@
             closeModal();
             try {
               document.body.dispatchEvent(
-                new CustomEvent('modal:success', { detail: data, bubbles: true }),
+                new CustomEvent("modal:success", {
+                  detail: data,
+                  bubbles: true,
+                }),
               );
             } catch (_) {}
             // Success navigation: prefer explicit redirect if provided; otherwise
             // defer to flags returned by the server response.
             if (data && data.redirect) {
-              try { window.location.href = data.redirect; return; } catch(_) {}
+              try {
+                window.location.href = data.redirect;
+                return;
+              } catch (_) {}
             }
             const reloadInstruction = data ? data.reload : undefined;
             const closeOnly = Boolean(data && data.close_only);
             const fallbackDetail = (data && data.recipe) || data;
-            if (reloadInstruction && typeof reloadInstruction === 'object') {
+            if (reloadInstruction && typeof reloadInstruction === "object") {
               const reloadUrl = reloadInstruction.url;
               const reloadTarget = reloadInstruction.target;
-              if (reloadUrl && reloadTarget && window.htmx && window.htmx.ajax) {
-                window.htmx.ajax('GET', reloadUrl, { target: reloadTarget });
+              if (
+                reloadUrl &&
+                reloadTarget &&
+                window.htmx &&
+                window.htmx.ajax
+              ) {
+                window.htmx.ajax("GET", reloadUrl, { target: reloadTarget });
                 return;
               }
               if (reloadUrl) {
@@ -636,7 +715,7 @@
                 return;
               }
             }
-            if (typeof reloadInstruction === 'string') {
+            if (typeof reloadInstruction === "string") {
               window.location.href = reloadInstruction;
               return;
             }
@@ -654,32 +733,46 @@
             window.location.reload();
           } else {
             // Show inline error inside the modal form for better visibility
-            const msg = (data && data.message) || `${r.status} ${r.statusText || 'Save failed'}`;
+            const msg =
+              (data && data.message) ||
+              `${r.status} ${r.statusText || "Save failed"}`;
             showInlineError(msg);
-            if (window.console) console.debug('[modal] submit failed', { status: r.status, statusText: r.statusText, data });
-            const toastType = (data && data.toast_type) || 'error';
+            if (window.console)
+              console.debug("[modal] submit failed", {
+                status: r.status,
+                statusText: r.statusText,
+                data,
+              });
+            const toastType = (data && data.toast_type) || "error";
             if (window.notifications && data && data.toast !== false)
               window.notifications.showToast(msg, toastType);
-
           }
         })
         .catch(() => {
-          const msg = 'Network error';
+          const msg = "Network error";
           showInlineError(msg);
-          if (window.notifications) window.notifications.showToast(msg, "error");
+          if (window.notifications)
+            window.notifications.showToast(msg, "error");
         });
     } catch (fatal) {
       // Surface any unexpected runtime error to the UI so it doesn't fail silently
-      const msg = (fatal && fatal.message) ? `Unexpected error: ${fatal.message}` : 'Unexpected error';
+      const msg =
+        fatal && fatal.message
+          ? `Unexpected error: ${fatal.message}`
+          : "Unexpected error";
       try {
-        let alert = form.querySelector('[data-modal-error]') || document.createElement('div');
-        alert.setAttribute('data-modal-error', '');
-        alert.className = 'mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm';
+        let alert =
+          form.querySelector("[data-modal-error]") ||
+          document.createElement("div");
+        alert.setAttribute("data-modal-error", "");
+        alert.className =
+          "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm";
         alert.textContent = msg;
-        if (!alert.parentElement) form.insertBefore(alert, form.firstElementChild);
-      } catch(_) {}
-      if (window.console) console.error('[modal] fatal submit error', fatal);
-      if (window.notifications) window.notifications.showToast(msg, 'error');
+        if (!alert.parentElement)
+          form.insertBefore(alert, form.firstElementChild);
+      } catch (_) {}
+      if (window.console) console.error("[modal] fatal submit error", fatal);
+      if (window.notifications) window.notifications.showToast(msg, "error");
     }
   });
 })();

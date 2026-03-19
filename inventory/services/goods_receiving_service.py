@@ -124,7 +124,7 @@ def _update_po_status(po: PurchaseOrder) -> None:
             _received_total=Sum("grnitem__quantity_received")
         )
     )
-    po.status = "COMPLETE" if fully_received else "PARTIAL"
+    po.status = "RECEIVED" if fully_received else "SENT"
     po.save()
 
 

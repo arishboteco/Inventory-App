@@ -29,14 +29,13 @@ logger = logging.getLogger(__name__)
 
 PO_STATUS_BADGES = {
     "DRAFT": "bg-gray-200 text-gray-800",
-    "ORDERED": "bg-blue-200 text-blue-800",
-    "PARTIAL": "bg-warning-soft text-warning-dark",
-    "COMPLETE": "bg-success-soft text-success-dark",
+    "SENT": "bg-blue-200 text-blue-800",
+    "RECEIVED": "bg-success-soft text-success-dark",
     "CANCELLED": "bg-red-200 text-red-800",
 }
 
 # Statuses where a PO can still receive goods
-RECEIVABLE_STATUSES = {"ORDERED", "PARTIAL"}
+RECEIVABLE_STATUSES = {"SENT", "RECEIVED"}
 
 
 def _build_item_prices_json() -> str:
@@ -819,7 +818,7 @@ class PurchaseOrderReceivePartialView(View):
 
 @require_POST
 def mark_ordered(request, pk: int):
-    """Transition a PO from DRAFT to ORDERED, recording user and timestamp.
+    """Transition a PO from DRAFT to SENT, recording user and timestamp.
 
     Adds a lightweight audit note to `notes` and redirects back to detail view.
     """
@@ -827,11 +826,11 @@ def mark_ordered(request, pk: int):
     if po.status != "DRAFT":
         messages.info(
             request,
-            "Only draft purchase orders can be marked as ordered.",
+            "Only draft purchase orders can be sent to supplier.",
             extra_tags="toast",
         )
         return redirect("purchase_order_detail", pk=pk)
-    po.status = "ORDERED"
+    po.status = "SENT"
     # Append audit marker in notes (simple, non-invasive)
     try:
         username = getattr(request.user, "username", None) or getattr(
@@ -840,8 +839,10 @@ def mark_ordered(request, pk: int):
     except Exception:
         username = "user"
     ts = timezone.now().strftime("%Y-%m-%d %H:%M")
-    suffix = f" | Ordered by {username} at {ts}"
+    suffix = f" | Sent to supplier by {username} at {ts}"
     po.notes = ((po.notes or "").strip() + suffix).strip()
     po.save(update_fields=["status", "notes"])
-    messages.success(request, "Purchase order marked as ORDERED.", extra_tags="toast")
+    messages.success(
+        request, "Purchase order marked as Sent to Supplier.", extra_tags="toast"
+    )
     return redirect("purchase_order_detail", pk=pk)

@@ -18,7 +18,6 @@ class ItemStatus(models.TextChoices):
 
 class PurchaseOrderStatus(models.TextChoices):
     DRAFT = "DRAFT", "Draft"
-    ORDERED = "ORDERED", "Ordered"
-    PARTIAL = "PARTIAL", "Partially Received"
-    COMPLETE = "COMPLETE", "Completed"
+    SENT = "SENT", "Sent to Supplier"
+    RECEIVED = "RECEIVED", "Received"
     CANCELLED = "CANCELLED", "Cancelled"

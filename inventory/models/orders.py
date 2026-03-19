@@ -22,6 +22,14 @@ class Indent(models.Model):
         blank=True,
         null=True,
     )
+    source_recipe = models.ForeignKey(
+        "inventory.Recipe",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        db_column="source_recipe_id",
+        related_name="indents",
+    )
     date_required = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True, default="")
     status = models.CharField(

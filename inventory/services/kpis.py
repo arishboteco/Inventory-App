@@ -158,8 +158,7 @@ def pending_po_status_counts() -> dict:
     """Return counts of purchase orders by pending status."""
     pending_statuses = [
         PurchaseOrderStatus.DRAFT,
-        PurchaseOrderStatus.ORDERED,
-        PurchaseOrderStatus.PARTIAL,
+        PurchaseOrderStatus.SENT,
     ]
     qs = PurchaseOrder.objects.filter(status__in=pending_statuses)
     counts = {

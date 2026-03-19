@@ -34,14 +34,14 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, supplier_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
-        # Prevent setting ORDERED directly in the form
+        # Prevent setting SENT directly in the form (use "Send to Supplier" button instead)
         try:
             status_field = self.fields.get("status")
             if status_field and getattr(status_field, "choices", None):
                 filtered = [
                     (v, lbl)
                     for v, lbl in status_field.choices
-                    if str(v).upper() != "ORDERED"
+                    if str(v).upper() != "SENT"
                 ]
                 status_field.choices = filtered
         except Exception:

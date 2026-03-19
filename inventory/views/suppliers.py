@@ -139,7 +139,7 @@ def _annotate_open_po_count(qs):
         open_po_count=Count(
             "purchaseorder",
             filter=Q(
-                purchaseorder__status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"]
+                purchaseorder__status__in=["DRAFT", "SENT"]
             ),
         )
     )
@@ -486,7 +486,7 @@ class SupplierDetailView(LoginRequiredMixin, DetailView):
         supplier = get_object_or_404(Supplier, pk=kwargs["pk"])
         open_pos = PurchaseOrder.objects.filter(
             supplier=supplier,
-            status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"],
+            status__in=["DRAFT", "SENT"],
         ).count()
         return render(
             request,
@@ -502,7 +502,7 @@ class SupplierDeleteView(LoginRequiredMixin, View):
         supplier = get_object_or_404(Supplier, pk=pk)
         open_pos = PurchaseOrder.objects.filter(
             supplier=supplier,
-            status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"],
+            status__in=["DRAFT", "SENT"],
         ).count()
         if open_pos:
             messages.error(

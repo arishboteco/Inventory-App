@@ -52,6 +52,7 @@ def explore(request):
     # ABC classification — annotate items on the current page only
     try:
         from ..services.ml import abc_classification
+
         abc_classes = abc_classification()
     except Exception:
         abc_classes = {}
@@ -93,13 +94,21 @@ def explore_export(request):
 
     try:
         from ..services.ml import abc_classification
+
         abc_classes = abc_classification()
     except Exception:
         abc_classes = {}
 
     headers = [
-        "ID", "Name", "Category", "Unit",
-        "Current Stock", "Reorder Point", "Stock Status", "ABC", "Active",
+        "ID",
+        "Name",
+        "Category",
+        "Unit",
+        "Current Stock",
+        "Reorder Point",
+        "Stock Status",
+        "ABC",
+        "Active",
     ]
 
     def row(item: Item):

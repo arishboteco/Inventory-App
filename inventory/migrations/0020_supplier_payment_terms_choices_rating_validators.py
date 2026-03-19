@@ -7,23 +7,51 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0019_recipeitem'),
+        ("inventory", "0019_recipeitem"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='supplier',
-            name='credit_limit',
-            field=models.DecimalField(blank=True, decimal_places=2, default=0, help_text='Credit limit amount', max_digits=12, null=True),
+            model_name="supplier",
+            name="credit_limit",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                default=0,
+                help_text="Credit limit amount",
+                max_digits=12,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='supplier',
-            name='payment_terms',
-            field=models.CharField(blank=True, choices=[('Net 30', 'Net 30'), ('Net 60', 'Net 60'), ('Net 90', 'Net 90'), ('COD', 'COD (Cash on Delivery)'), ('Prepaid', 'Prepaid'), ('Other', 'Other (specify in Notes)')], help_text='Standard payment terms', max_length=100, null=True),
+            model_name="supplier",
+            name="payment_terms",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("Net 30", "Net 30"),
+                    ("Net 60", "Net 60"),
+                    ("Net 90", "Net 90"),
+                    ("COD", "COD (Cash on Delivery)"),
+                    ("Prepaid", "Prepaid"),
+                    ("Other", "Other (specify in Notes)"),
+                ],
+                help_text="Standard payment terms",
+                max_length=100,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='supplier',
-            name='supplier_rating',
-            field=models.IntegerField(blank=True, help_text='Supplier rating (1-5 stars)', null=True, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)]),
+            model_name="supplier",
+            name="supplier_rating",
+            field=models.IntegerField(
+                blank=True,
+                help_text="Supplier rating (1-5 stars)",
+                null=True,
+                validators=[
+                    django.core.validators.MinValueValidator(1),
+                    django.core.validators.MaxValueValidator(5),
+                ],
+            ),
         ),
     ]

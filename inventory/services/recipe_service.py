@@ -91,7 +91,6 @@ def _parse_tags(tags: Any) -> List[str]:
     return [str(tags).strip()]
 
 
-
 def _has_path(start: int, target: int) -> bool:
     """Return True if ``start`` recipe references ``target`` recursively."""
     if start == target:
@@ -157,9 +156,7 @@ def build_items_from_editor(
             unit = allowed_unit  # Autofill
         elif unit != allowed_unit:
             # For now, no sub-recipe support, so just check basic unit matching
-            errors.append(
-                f"Unit mismatch for {meta.get('name')}. Use {allowed_unit}."
-            )
+            errors.append(f"Unit mismatch for {meta.get('name')}. Use {allowed_unit}.")
             continue
         items.append(
             {
@@ -176,9 +173,7 @@ def build_items_from_editor(
 
 def get_recipe_items(recipe_id: int):
     """Return queryset of items for a recipe ordered by sort order."""
-    return RecipeItem.objects.filter(recipe_id=recipe_id).order_by(
-        "sort_order", "id"
-    )
+    return RecipeItem.objects.filter(recipe_id=recipe_id).order_by("sort_order", "id")
 
 
 # ---------------------------------------------------------------------------
@@ -285,8 +280,17 @@ def _expand_requirements(
     if recipe_id in visited:
         raise ValueError("Circular reference detected during expansion")
     visited.add(recipe_id)
-    rows = RecipeItem.objects.filter(recipe_id=recipe_id).select_related('item').values(
-        "item_id", "item__unit_id", "item__is_active", "quantity", "unit", "loss_pct"
+    rows = (
+        RecipeItem.objects.filter(recipe_id=recipe_id)
+        .select_related("item")
+        .values(
+            "item_id",
+            "item__unit_id",
+            "item__is_active",
+            "quantity",
+            "unit",
+            "loss_pct",
+        )
     )
     for row in rows:
         qty = (

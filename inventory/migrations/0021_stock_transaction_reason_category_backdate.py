@@ -7,18 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0020_supplier_payment_terms_choices_rating_validators'),
+        ("inventory", "0020_supplier_payment_terms_choices_rating_validators"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='stocktransaction',
-            name='reason_category',
+            model_name="stocktransaction",
+            name="reason_category",
             field=models.CharField(blank=True, max_length=20, null=True),
         ),
         migrations.AlterField(
-            model_name='stocktransaction',
-            name='transaction_date',
+            model_name="stocktransaction",
+            name="transaction_date",
             field=models.DateTimeField(default=django.utils.timezone.now),
         ),
     ]

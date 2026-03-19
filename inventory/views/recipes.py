@@ -594,7 +594,9 @@ class RecipeViewPartialView(View):
                 except (ArithmeticError, ZeroDivisionError):
                     effective_qty = qty
             line_cost = (
-                (cost_per_base * effective_qty).quantize(TWOPLACES) if effective_qty else Decimal("0.00")
+                (cost_per_base * effective_qty).quantize(TWOPLACES)
+                if effective_qty
+                else Decimal("0.00")
             )
             has_zero_price = bool(qty and item and cost_per_base == Decimal("0.00"))
             zero_cost = zero_cost or has_zero_price
@@ -654,7 +656,9 @@ def recipe_create_indent(request, pk: int):
     )
 
     try:
-        yield_qty = Decimal(str(request.POST.get("yield_qty") or recipe.default_yield_qty or 1))
+        yield_qty = Decimal(
+            str(request.POST.get("yield_qty") or recipe.default_yield_qty or 1)
+        )
     except (ValueError, ArithmeticError):
         yield_qty = _to_decimal(recipe.default_yield_qty) or Decimal("1")
 

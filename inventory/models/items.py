@@ -158,14 +158,10 @@ class StockTransaction(models.Model):
 class StockSnapshot(models.Model):
     """Daily stock level snapshot for trend analysis and forecasting."""
 
-    item = models.ForeignKey(
-        Item, on_delete=models.CASCADE, related_name="snapshots"
-    )
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="snapshots")
     snapshot_date = models.DateField(db_index=True)
     quantity = models.DecimalField(max_digits=12, decimal_places=4)
-    value = models.DecimalField(
-        max_digits=14, decimal_places=2, null=True, blank=True
-    )
+    value = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
 
     class Meta:
         managed = True

@@ -348,18 +348,21 @@ class ItemsListView(TemplateView):
         except Exception:  # pragma: no cover - defensive
             stats["low_stock_percentage"] = 0
         try:
-            stats["stock_value_on_hand"] = active_qs.aggregate(
-                total=Coalesce(
-                    Sum(
-                        ExpressionWrapper(
-                            F("current_stock") * F("last_purchase_price"),
-                            output_field=DecimalField(),
-                        )
-                    ),
-                    0,
-                    output_field=DecimalField(),
-                )
-            )["total"] or 0
+            stats["stock_value_on_hand"] = (
+                active_qs.aggregate(
+                    total=Coalesce(
+                        Sum(
+                            ExpressionWrapper(
+                                F("current_stock") * F("last_purchase_price"),
+                                output_field=DecimalField(),
+                            )
+                        ),
+                        0,
+                        output_field=DecimalField(),
+                    )
+                )["total"]
+                or 0
+            )
         except Exception:  # pragma: no cover - defensive
             stats["stock_value_on_hand"] = 0
         try:

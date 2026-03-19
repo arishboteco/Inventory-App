@@ -7,6 +7,7 @@ authenticated user loads the main dashboard (/ or /interactive-dashboard/).
 The snapshot is taken in a try/except so that any DB errors never break the
 page render.
 """
+
 import logging
 import threading
 
@@ -44,6 +45,8 @@ class LazyStockSnapshotMiddleware:
                     finally:
                         _taking_snapshot.active = False
             except Exception:
-                logger.exception("LazyStockSnapshotMiddleware: snapshot failed silently")
+                logger.exception(
+                    "LazyStockSnapshotMiddleware: snapshot failed silently"
+                )
 
         return self.get_response(request)

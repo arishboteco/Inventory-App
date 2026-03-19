@@ -42,7 +42,9 @@ RECEIVABLE_STATUSES = {"ORDERED", "PARTIAL"}
 def _build_item_prices_json() -> str:
     """Return JSON mapping item pk → last_purchase_price for auto-fill in forms."""
     prices = {
-        str(item.pk): float(item.last_purchase_price or item.initial_purchase_price or 0)
+        str(item.pk): float(
+            item.last_purchase_price or item.initial_purchase_price or 0
+        )
         for item in Item.objects.filter(is_active=True).only(
             "item_id", "last_purchase_price", "initial_purchase_price"
         )
@@ -55,7 +57,8 @@ def _annotate_total_value(qs):
     return qs.annotate(
         total_value=Sum(
             ExpressionWrapper(
-                F("purchaseorderitem__quantity_ordered") * F("purchaseorderitem__unit_price"),
+                F("purchaseorderitem__quantity_ordered")
+                * F("purchaseorderitem__unit_price"),
                 output_field=DecimalField(),
             )
         )
@@ -121,7 +124,11 @@ class PurchaseOrdersListView(TemplateView):
                 o.progress_percent = 0
 
         statuses = PurchaseOrder._meta.get_field("status").choices
-        suppliers = Supplier.objects.filter(is_active=True).only("supplier_id", "name").order_by("name")
+        suppliers = (
+            Supplier.objects.filter(is_active=True)
+            .only("supplier_id", "name")
+            .order_by("name")
+        )
         querystring = list_utils.build_querystring(self.request)
         supplier_url = reverse("supplier_search")
         quick_form = PurchaseOrderForm(
@@ -133,7 +140,7 @@ class PurchaseOrdersListView(TemplateView):
             kpis = cache.get_or_set(
                 "kpi:purchase_orders:summary",
                 purchase_order_kpis.get_po_summary_kpis,
-                120  # 2 minute cache
+                120,  # 2 minute cache
             )
         except Exception as e:  # pragma: no cover - defensive
             logger.exception("Failed to load PO KPIs: %s", e)
@@ -316,9 +323,11 @@ class PurchaseOrdersExportView(TemplateView):
                 po.po_id,
                 po.supplier.name if po.supplier else "",
                 po.order_date.strftime("%Y-%m-%d") if po.order_date else "",
-                po.expected_delivery_date.strftime("%Y-%m-%d")
-                if po.expected_delivery_date
-                else "",
+                (
+                    po.expected_delivery_date.strftime("%Y-%m-%d")
+                    if po.expected_delivery_date
+                    else ""
+                ),
                 po.get_status_display(),
                 float(ordered),
                 float(received),
@@ -816,7 +825,11 @@ def mark_ordered(request, pk: int):
     """
     po = get_object_or_404(PurchaseOrder, pk=pk)
     if po.status != "DRAFT":
-        messages.info(request, "Only draft purchase orders can be marked as ordered.", extra_tags="toast")
+        messages.info(
+            request,
+            "Only draft purchase orders can be marked as ordered.",
+            extra_tags="toast",
+        )
         return redirect("purchase_order_detail", pk=pk)
     po.status = "ORDERED"
     # Append audit marker in notes (simple, non-invasive)

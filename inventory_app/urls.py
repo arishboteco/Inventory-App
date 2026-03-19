@@ -43,7 +43,11 @@ urlpatterns = [
     path("kpis/", dashboard_kpis, name="dashboard-kpis"),
     path("healthz", health_check, name="health-check"),
     path("accounts/", include("django.contrib.auth.urls")),
-    path("accounts/password-reset-info/", password_reset_info_view, name="password-reset-info"),
+    path(
+        "accounts/password-reset-info/",
+        password_reset_info_view,
+        name="password-reset-info",
+    ),
     path("", include("core.urls")),
     path("api/", include("inventory.urls")),  # DRF API
     path("", include("inventory.ui_urls")),  # HTML UI routes

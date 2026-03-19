@@ -47,18 +47,14 @@ def _grn_kpis():
             )
         )
     )
-    value_this_month = (
-        GRNItem.objects.filter(grn__in=month_qs)
-        .aggregate(
-            total=Sum(
-                ExpressionWrapper(
-                    F("quantity_received") * F("unit_price_at_receipt"),
-                    output_field=DecimalField(),
-                )
+    value_this_month = GRNItem.objects.filter(grn__in=month_qs).aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F("quantity_received") * F("unit_price_at_receipt"),
+                output_field=DecimalField(),
             )
-        )["total"]
-        or Decimal("0")
-    )
+        )
+    )["total"] or Decimal("0")
     return {
         "total_grns": GoodsReceivedNote.objects.count(),
         "grns_this_month": month_qs.count(),
@@ -182,6 +178,7 @@ class GRNCreateView(View):
 
     def _get_po_and_items(self, po_pk):
         from django.db.models import Sum as _Sum
+
         po = get_object_or_404(PurchaseOrder, pk=po_pk)
         items = (
             po.purchaseorderitem_set.select_related("item", "item__unit")
@@ -208,22 +205,30 @@ class GRNCreateView(View):
         )
 
         if not po_pk:
-            return render(request, self.template_name, {
-                "step": "select_po",
-                "open_pos": open_pos,
-                "today": date.today().strftime("%Y-%m-%d"),
-            })
+            return render(
+                request,
+                self.template_name,
+                {
+                    "step": "select_po",
+                    "open_pos": open_pos,
+                    "today": date.today().strftime("%Y-%m-%d"),
+                },
+            )
 
         po, items = self._get_po_and_items(po_pk)
         form = GRNForm(initial={"received_date": date.today()})
-        return render(request, self.template_name, {
-            "step": "enter_quantities",
-            "po": po,
-            "items": items,
-            "form": form,
-            "open_pos": open_pos,
-            "today": date.today().strftime("%Y-%m-%d"),
-        })
+        return render(
+            request,
+            self.template_name,
+            {
+                "step": "enter_quantities",
+                "po": po,
+                "items": items,
+                "form": form,
+                "open_pos": open_pos,
+                "today": date.today().strftime("%Y-%m-%d"),
+            },
+        )
 
     def post(self, request):
         po_pk = request.GET.get("po") or request.POST.get("po_id")
@@ -236,14 +241,19 @@ class GRNCreateView(View):
         )
 
         if not form.is_valid():
-            return render(request, self.template_name, {
-                "step": "enter_quantities",
-                "po": po,
-                "items": items,
-                "form": form,
-                "open_pos": open_pos,
-                "today": date.today().strftime("%Y-%m-%d"),
-            }, status=400)
+            return render(
+                request,
+                self.template_name,
+                {
+                    "step": "enter_quantities",
+                    "po": po,
+                    "items": items,
+                    "form": form,
+                    "open_pos": open_pos,
+                    "today": date.today().strftime("%Y-%m-%d"),
+                },
+                status=400,
+            )
 
         items_data: list[dict[str, Any]] = []
         errors = []
@@ -260,7 +270,10 @@ class GRNCreateView(View):
                 qty = Decimal("0")
 
             try:
-                price = Decimal(request.POST.get(price_key, str(item.unit_price)) or str(item.unit_price))
+                price = Decimal(
+                    request.POST.get(price_key, str(item.unit_price))
+                    or str(item.unit_price)
+                )
             except InvalidOperation:
                 price = item.unit_price
 
@@ -274,30 +287,39 @@ class GRNCreateView(View):
                 continue
             if qty > 0:
                 any_received = True
-                items_data.append({
-                    "item_id": item.item_id,
-                    "po_item_id": item.pk,
-                    "quantity_ordered_on_po": item.quantity_ordered,
-                    "quantity_received": qty,
-                    "unit_price_at_receipt": price,
-                    "item_notes": request.POST.get(notes_key, ""),
-                })
+                items_data.append(
+                    {
+                        "item_id": item.item_id,
+                        "po_item_id": item.pk,
+                        "quantity_ordered_on_po": item.quantity_ordered,
+                        "quantity_received": qty,
+                        "unit_price_at_receipt": price,
+                        "item_notes": request.POST.get(notes_key, ""),
+                    }
+                )
 
         if errors:
             for e in errors:
                 form.add_error(None, e)
         elif not any_received:
-            form.add_error(None, "Enter at least one received quantity greater than zero.")
+            form.add_error(
+                None, "Enter at least one received quantity greater than zero."
+            )
 
         if form.errors:
-            return render(request, self.template_name, {
-                "step": "enter_quantities",
-                "po": po,
-                "items": items,
-                "form": form,
-                "open_pos": open_pos,
-                "today": date.today().strftime("%Y-%m-%d"),
-            }, status=400)
+            return render(
+                request,
+                self.template_name,
+                {
+                    "step": "enter_quantities",
+                    "po": po,
+                    "items": items,
+                    "form": form,
+                    "open_pos": open_pos,
+                    "today": date.today().strftime("%Y-%m-%d"),
+                },
+                status=400,
+            )
 
         grn_data: dict[str, Any] = {
             "po_id": po.pk,
@@ -315,14 +337,19 @@ class GRNCreateView(View):
             return redirect("grn_detail", pk=grn_id)
 
         form.add_error(None, msg)
-        return render(request, self.template_name, {
-            "step": "enter_quantities",
-            "po": po,
-            "items": items,
-            "form": form,
-            "open_pos": open_pos,
-            "today": date.today().strftime("%Y-%m-%d"),
-        }, status=400)
+        return render(
+            request,
+            self.template_name,
+            {
+                "step": "enter_quantities",
+                "po": po,
+                "items": items,
+                "form": form,
+                "open_pos": open_pos,
+                "today": date.today().strftime("%Y-%m-%d"),
+            },
+            status=400,
+        )
 
 
 class GRNDetailView(TemplateView):
@@ -333,7 +360,9 @@ class GRNDetailView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         grn = get_object_or_404(GoodsReceivedNote, pk=self.kwargs["pk"])
-        items = grn.grnitem_set.select_related("po_item", "po_item__item", "po_item__item__unit")
+        items = grn.grnitem_set.select_related(
+            "po_item", "po_item__item", "po_item__item__unit"
+        )
         rows = [
             (
                 "PO",
@@ -349,10 +378,16 @@ class GRNDetailView(TemplateView):
         if grn.notes:
             rows.append(("Notes", grn.notes))
         if grn.attachment:
-            rows.append((
-                "Attachment",
-                format_html('<a class="text-primary underline" href="{}">{}</a>', grn.attachment.url, "Download"),
-            ))
+            rows.append(
+                (
+                    "Attachment",
+                    format_html(
+                        '<a class="text-primary underline" href="{}">{}</a>',
+                        grn.attachment.url,
+                        "Download",
+                    ),
+                )
+            )
 
         # Annotate variance on each item
         items_with_variance = []
@@ -386,7 +421,9 @@ def grn_export(request, pk: int):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f"attachment; filename=grn_{grn.pk}.csv"
         writer = csv.writer(response)
-        writer.writerow(["Item", "Ordered", "Received", "Variance", "Unit Price", "Line Total"])
+        writer.writerow(
+            ["Item", "Ordered", "Received", "Variance", "Unit Price", "Line Total"]
+        )
         for line in items:
             variance = line.quantity_received - line.quantity_ordered_on_po
             writer.writerow(

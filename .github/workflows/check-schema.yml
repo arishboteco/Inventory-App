@@ -26,15 +26,16 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      DATABASE_SSL_REQUIRE: "false"
+      DJANGO_SETTINGS_MODULE: inventory_app.settings.dev
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
@@ -47,23 +48,19 @@ jobs:
       - name: Detect unwanted migrations
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Cache PostgreSQL client packages
-        uses: actions/cache@v3
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-postgresql-client-15
-          restore-keys: |
-            ${{ runner.os }}-postgresql-client-
-
+      # ── Live schema comparison (optional, needs SUPABASE_URL secret) ──
       - name: Install PostgreSQL client 15
+        if: ${{ secrets.SUPABASE_URL != '' }}
         run: |
-          echo "Adding PostgreSQL APT repo..."
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo apt-get update
           sudo apt-get install -y postgresql-client-15
 
       - name: Dump live Supabase schema
+        if: ${{ secrets.SUPABASE_URL != '' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
           echo "🔎 Dumping live Supabase schema..."
           pg_dump --schema-only --no-owner --no-privileges "$SUPABASE_URL" \
@@ -73,6 +70,7 @@ jobs:
             > /tmp/live_schema.sql
 
       - name: Normalize repo schema
+        if: ${{ secrets.SUPABASE_URL != '' }}
         run: |
           grep -v '^\\restrict' db/schema.sql \
             | grep -v '^\\unrestrict' \
@@ -80,6 +78,7 @@ jobs:
             > /tmp/repo_schema.sql
 
       - name: Compare with repo schema.sql
+        if: ${{ secrets.SUPABASE_URL != '' }}
         run: |
           if ! diff -u /tmp/repo_schema.sql /tmp/live_schema.sql; then
             echo "❌ schema.sql is out of date with Supabase. Run pg_dump locally and commit."
@@ -87,3 +86,7 @@ jobs:
           else
             echo "✅ schema.sql matches Supabase."
           fi
+
+      - name: Schema comparison skipped
+        if: ${{ secrets.SUPABASE_URL == '' }}
+        run: echo "⚠️ SUPABASE_URL secret not configured — skipping live schema comparison."

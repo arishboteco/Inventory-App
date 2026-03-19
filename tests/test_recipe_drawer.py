@@ -215,7 +215,9 @@ def test_recipe_create_partial_drawer_header_has_thumbnail_and_toggle(client):
     thumb = soup.select_one("[data-role='drawer-plating-image']")
     assert thumb is not None
     assert thumb["src"] == get_plating_placeholder_url()
-    toggle = soup.select_one("[data-role='drawer-active-toggle'] input[type='checkbox']")
+    toggle = soup.select_one(
+        "[data-role='drawer-active-toggle'] input[type='checkbox']"
+    )
     assert toggle is not None
     notes = soup.find("textarea", {"name": "description_and_plating"})
     assert notes is not None
@@ -244,7 +246,9 @@ def test_recipe_edit_partial_drawer_header_prefills_thumbnail_and_notes(client):
         if part
     )
     assert textarea.text.strip() == combined_text.strip()
-    toggle = soup.select_one("[data-role='drawer-active-toggle'] input[type='checkbox']")
+    toggle = soup.select_one(
+        "[data-role='drawer-active-toggle'] input[type='checkbox']"
+    )
     assert toggle is not None
     assert not toggle.has_attr("checked")
 

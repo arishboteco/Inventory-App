@@ -137,12 +137,19 @@ def settings_view(request):
         elif action == "add_department":
             name = request.POST.get("name", "").strip()
             if name:
-                try:
-                    Department.objects.get_or_create(name=name)
-                    messages.success(request, f"Department '{name}' added.")
-                except Exception as exc:
-                    logger.error("Failed to add department: %s", exc)
-                    messages.error(request, "Failed to add department.")
+                existing = Department.objects.filter(name__iexact=name).first()
+                if existing:
+                    messages.warning(
+                        request,
+                        f"A department with a similar name already exists: '{existing.name}'.",
+                    )
+                else:
+                    try:
+                        Department.objects.create(name=name)
+                        messages.success(request, f"Department '{name}' added.")
+                    except Exception as exc:
+                        logger.error("Failed to add department: %s", exc)
+                        messages.error(request, "Failed to add department.")
             else:
                 messages.error(request, "Department name is required.")
 
@@ -150,14 +157,25 @@ def settings_view(request):
             department_id = request.POST.get("department_id")
             name = request.POST.get("name", "").strip()
             if name:
-                try:
-                    Department.objects.filter(department_id=department_id).update(
-                        name=name
+                dup = (
+                    Department.objects.filter(name__iexact=name)
+                    .exclude(department_id=department_id)
+                    .first()
+                )
+                if dup:
+                    messages.warning(
+                        request,
+                        f"A department with a similar name already exists: '{dup.name}'.",
                     )
-                    messages.success(request, f"Department '{name}' updated.")
-                except Exception as exc:
-                    logger.error("Failed to edit department: %s", exc)
-                    messages.error(request, "Failed to update department.")
+                else:
+                    try:
+                        Department.objects.filter(department_id=department_id).update(
+                            name=name
+                        )
+                        messages.success(request, f"Department '{name}' updated.")
+                    except Exception as exc:
+                        logger.error("Failed to edit department: %s", exc)
+                        messages.error(request, "Failed to update department.")
             else:
                 messages.error(request, "Department name is required.")
 

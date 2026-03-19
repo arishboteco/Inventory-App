@@ -3,6 +3,7 @@ from decimal import Decimal
 from django import forms
 
 from ..models import Item, Recipe, RecipeItem
+from ..models.recipes import RECIPE_TYPES
 from .base import StyledFormMixin
 
 INPUT_CLASS = (
@@ -34,11 +35,11 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
             }
         ),
     )
-    type = forms.CharField(
+    type = forms.ChoiceField(
         required=False,
-        max_length=50,
-        widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
-        help_text="e.g., Main Course, Appetizer, Dessert",
+        choices=RECIPE_TYPES,
+        widget=forms.Select(attrs={"class": INPUT_CLASS}),
+        help_text="Category of this recipe",
     )
     default_yield_qty = forms.DecimalField(
         required=False,

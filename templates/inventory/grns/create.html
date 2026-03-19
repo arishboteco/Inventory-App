@@ -44,6 +44,22 @@
           <a href="{% url 'purchase_orders_list' %}" class="mt-2 inline-block text-sm text-primary hover:underline">View all purchase orders →</a>
         </div>
       {% endif %}
+
+      {# Ad-hoc receipt without PO #}
+      <div class="mt-6 p-4 border border-dashed border-border rounded-xl bg-surfaceSubtle">
+        <div class="flex items-start gap-3">
+          {% icon 'inbox-arrow-down' 'w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0' %}
+          <div>
+            <h3 class="text-sm font-semibold text-bodyText">No Purchase Order?</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Record an ad-hoc receipt for emergency or walk-in purchases directly as a stock adjustment.</p>
+            <a href="{% url 'stock_movements' %}?type=RECEIVING"
+               class="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">
+              {% icon 'arrow-right' 'w-4 h-4' %}
+              Record Ad-hoc Receipt
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
 
     {% else %}

@@ -25,12 +25,26 @@ def _filtered_recipes_queryset(request):
         request,
         qs,
         search_fields=["name", "description"],
-        filter_fields={"active": "is_active"},
+        filter_fields={"active": "is_active", "type": "type"},
         allowed_sorts=["name", "type", "default_yield_unit", "is_active"],
         default_sort="name",
     )
     params.setdefault("q", "")
     params["recipe_count"] = qs.count()
+
+    # Build filter options for the template filter_bar
+    from inventory.models.recipes import RECIPE_TYPES
+
+    type_value = request.GET.get("type", "")
+    params["filters"] = [
+        {
+            "name": "type",
+            "label": "Type",
+            "value": type_value,
+            "options": [{"value": "", "label": "All Types"}]
+            + [{"value": v, "label": l} for v, l in RECIPE_TYPES if v],
+        },
+    ]
     return qs, params
 
 

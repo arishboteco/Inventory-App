@@ -71,7 +71,7 @@ def get_po_by_id(po_id: int) -> Optional[Dict[str, Any]]:
         return None
     header = {
         "po_id": po.po_id,
-        "po_number": generate_po_number() if po.po_id is None else f"PO-{po.po_id:04d}",
+        "po_number": po.po_number or f"PO-{po.po_id:04d}",
         "supplier_id": po.supplier_id,
         "supplier_name": po.supplier.name,
         "order_date": po.order_date,

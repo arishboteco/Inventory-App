@@ -122,6 +122,9 @@ class PurchaseOrderItem(models.Model):
     item = models.ForeignKey(Item, models.DO_NOTHING, db_column="item_id")
     quantity_ordered = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    line_total = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal("0")
+    )
 
     @property
     def received_total(self) -> Decimal:
@@ -133,16 +136,15 @@ class PurchaseOrderItem(models.Model):
         ] or Decimal("0")
         return total
 
-    @property
-    def line_total(self) -> Decimal:
-        """Calculate line total (quantity × unit price)."""
-        return self.quantity_ordered * self.unit_price
-
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.purchase_order} - {self.item}"
 
     def save(self, *args, **kwargs):
-        """Override save to update item purchase price history."""
+        """Auto-compute line_total and update item purchase price history."""
+        # Always compute line_total before saving
+        if self.quantity_ordered is not None and self.unit_price is not None:
+            self.line_total = self.quantity_ordered * self.unit_price
+
         is_new = self.pk is None
         super().save(*args, **kwargs)
 

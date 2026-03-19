@@ -828,8 +828,11 @@ class IndentUpdateView(View):
             return JsonResponse(
                 {
                     "ok": True,
-                    "message": f"Indent {indent.mrn} updated.",
-                    "redirect": reverse("indent_detail", kwargs={"pk": indent.pk}),
+                    "toast_message": f"Indent {indent.mrn} updated.",
+                    "reload": {
+                        "url": reverse("indents_table"),
+                        "target": "#indents_table",
+                    },
                 }
             )
         messages.success(request, f"Indent {indent.mrn} updated.", extra_tags="toast")

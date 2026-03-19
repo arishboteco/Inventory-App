@@ -54,7 +54,8 @@ describe("column-filters dropdown", () => {
   });
   test("rebinds after htmx swap", async () => {
     const container = document.createElement("div");
-    container.innerHTML = '<button data-filter-btn data-field="unit" data-param="base_unit"></button>';
+    container.innerHTML =
+      '<button data-filter-btn data-field="unit" data-param="base_unit"></button>';
     document.body.appendChild(container);
     document.body.dispatchEvent(new Event("htmx:afterSwap", { bubbles: true }));
     await flushPromises();

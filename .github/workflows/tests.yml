@@ -26,7 +26,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-      DJANGO_SETTINGS_MODULE: inventory_app.settings_test
+      DJANGO_SETTINGS_MODULE: inventory_app.settings.test
       PYTHONDONTWRITEBYTECODE: 1
 
     steps:

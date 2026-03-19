@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 
-describe('recipe cost helpers', () => {
+describe("recipe cost helpers", () => {
   beforeEach(() => {
     document.body.innerHTML = `
       <div>
@@ -20,31 +20,31 @@ describe('recipe cost helpers', () => {
       </div>`;
 
     jest.isolateModules(() => {
-      require('./recipe-components.js');
+      require("./recipe-components.js");
     });
   });
 
-  test('updateRecipeCosts keeps focus and recalculates totals', () => {
-    const quantityInput = document.getElementById('id_items-0-quantity');
-    const lineCost = document.querySelector('[data-line-cost]');
-    const total = document.getElementById('recipe-total-cost');
-    const summary = document.getElementById('cost-by-category');
+  test("updateRecipeCosts keeps focus and recalculates totals", () => {
+    const quantityInput = document.getElementById("id_items-0-quantity");
+    const lineCost = document.querySelector("[data-line-cost]");
+    const total = document.getElementById("recipe-total-cost");
+    const summary = document.getElementById("cost-by-category");
 
     quantityInput.focus();
     expect(document.activeElement).toBe(quantityInput);
 
-    lineCost.textContent = '12.34';
+    lineCost.textContent = "12.34";
     window.updateRecipeCosts();
 
     expect(document.activeElement).toBe(quantityInput);
-    expect(total.textContent).toBe('12.34');
-    expect(summary.textContent).toContain('Produce');
-    expect(summary.textContent).toContain('12.34');
+    expect(total.textContent).toBe("12.34");
+    expect(summary.textContent).toContain("Produce");
+    expect(summary.textContent).toContain("12.34");
 
-    lineCost.textContent = '15.50';
+    lineCost.textContent = "15.50";
     window.updateRecipeCosts();
 
     expect(document.activeElement).toBe(quantityInput);
-    expect(total.textContent).toBe('15.50');
+    expect(total.textContent).toBe("15.50");
   });
 });

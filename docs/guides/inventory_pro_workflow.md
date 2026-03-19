@@ -22,7 +22,7 @@ flowchart LR
    - Key data: department, required date, line items.
 
 2. **Review & Approval** (`/indents/<id>/` detail)
-   - Approvers use the hero status badge to move from *Submitted* to *Approved*.
+   - Approvers use the hero status badge to move from _Submitted_ to _Approved_.
    - The list hero now surfaces the count of approved indents waiting for consolidation.
 
 3. **Consolidate Approved Indents** (`/indents/consolidate/preview/`)
@@ -44,6 +44,7 @@ flowchart LR
    - Hero meta shows active form, total records, and pending PO receipts. Each modal submission (receive, adjust, wastage, quick move) now triggers toast feedback.
 
 ### Verification Checklist
+
 - Creating an indent surfaces the toast and “Next step” banner.
 - Consolidation produces purchase orders and corresponding toast.
 - Purchase order hero shows supplier/date meta and pending receipt banner on the list.

@@ -348,7 +348,8 @@ document.addEventListener("htmx:afterSwap", (e) => {
   }
   // Fallback: parse responseText when target not available
   try {
-    const frag = e.detail && e.detail.xhr ? e.detail.xhr.responseText || "" : "";
+    const frag =
+      e.detail && e.detail.xhr ? e.detail.xhr.responseText || "" : "";
     if (!frag) return;
     const re = /<!--\s*toast:\s*([^]+?)\s*-->/gi;
     let m;

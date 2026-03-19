@@ -16,13 +16,13 @@
 </head>
 <body>
     <h1>Recipe Form Test</h1>
-    
+
     <form>
         <input type="hidden" id="id_items-TOTAL_FORMS" name="items-TOTAL_FORMS" value="1">
         <input type="hidden" id="id_items-INITIAL_FORMS" name="items-INITIAL_FORMS" value="0">
         <input type="hidden" id="id_items-MIN_NUM_FORMS" name="items-MIN_NUM_FORMS" value="0">
         <input type="hidden" id="id_items-MAX_NUM_FORMS" name="items-MAX_NUM_FORMS" value="1000">
-        
+
         <table id="items-table">
             <thead>
                 <tr>
@@ -60,7 +60,7 @@
                         <button type="button" class="remove-row">Remove</button>
                     </td>
                 </tr>
-                
+
                 <!-- Empty row template -->
                 <tr class="form-row hidden" id="items-empty-row">
                     <td>
@@ -89,7 +89,7 @@
                 </tr>
             </tbody>
         </table>
-        
+
         <div style="margin-top: 20px;">
             <button type="button" id="add-row">Add Item</button>
             <button type="submit">Save Recipe</button>
@@ -132,7 +132,7 @@
         }
         return Promise.reject(new Error('Not found'));
     };
-    
+
     // Add console logging for debugging
     console.log = function(...args) {
         var consoleDiv = document.getElementById('console-output');
@@ -145,7 +145,7 @@
         var message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
         consoleDiv.innerHTML += '<div>' + new Date().toISOString().substr(11, 8) + ' ' + message + '</div>';
         consoleDiv.scrollTop = consoleDiv.scrollHeight;
-        
+
         // Also log to real console
         if (window.originalConsoleLog) {
             window.originalConsoleLog.apply(console, args);
@@ -153,7 +153,7 @@
     };
     window.originalConsoleLog = console.log;
     </script>
-    
+
     <script src="js/recipe-components.js"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 from django.db import connection
 from django.db.utils import OperationalError
 
-from inventory.models import Department, Supplier
+from inventory.models import Category, Department, Subcategory, Supplier
 
 from .units_service import UnitsService
 

@@ -51,8 +51,10 @@ function initFormset({
     totalForms.value = formCount + 1;
     try {
       // Re-bind enhanced behaviors for indent modal when new rows are added
-      if (window.initIndentForm) window.initIndentForm(container.closest('form') || document);
-      if (window.initPredictiveDatalistOverlay) window.initPredictiveDatalistOverlay(container);
+      if (window.initIndentForm)
+        window.initIndentForm(container.closest("form") || document);
+      if (window.initPredictiveDatalistOverlay)
+        window.initPredictiveDatalistOverlay(container);
     } catch (_) {}
   });
   if (removeButtonClass) {

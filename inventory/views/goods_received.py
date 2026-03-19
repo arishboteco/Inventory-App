@@ -5,11 +5,17 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from django.contrib import messages
-from django.db.models import DecimalField, ExpressionWrapper, Exists, F, OuterRef, Q, Sum
+from django.db.models import (
+    DecimalField,
+    Exists,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Sum,
+)
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.html import format_html
 from django.views import View
 from django.views.generic import TemplateView

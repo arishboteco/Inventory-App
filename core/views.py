@@ -2,8 +2,6 @@ import json
 import logging
 from datetime import date, timedelta
 
-from django.contrib.auth import login
-from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import DecimalField, ExpressionWrapper, F, Sum
 from django.db.models.functions import Coalesce, TruncDate
 from django.http import HttpResponse, JsonResponse

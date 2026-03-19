@@ -3,7 +3,18 @@ import logging
 from django.contrib import messages
 from django.core.cache import cache
 from django.db import DatabaseError, IntegrityError
-from django.db.models import BooleanField, Case, DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum, Value, When
+from django.db.models import (
+    BooleanField,
+    Case,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Prefetch,
+    Q,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import redirect

@@ -23,6 +23,8 @@ target-version = "py313"
 line-length = 88
 # Enforce errors, warnings, pyflakes, import sorting, and E402 (module level import not at top)
 extend-select = ["E", "F", "W", "I", "E402"]
+# E501 (line-too-long) is handled by black; suppress to avoid duplicate enforcement
+ignore = ["E501"]
 exclude = [
   ".git",
   ".mypy_cache",
@@ -42,3 +44,5 @@ exclude = [
 "tests/**" = ["E501", "E712"]
 "tools/changelog.py" = ["E501"]
 "inventory/views/stock.py" = ["E501"]
+"inventory/forms/recipe_forms_old.py" = ["F821"]
+"inventory/migrations/*.py" = ["E501"]

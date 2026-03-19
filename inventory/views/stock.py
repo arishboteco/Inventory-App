@@ -6,7 +6,6 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from django.db.models.functions import TruncDate
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse

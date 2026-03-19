@@ -2,7 +2,9 @@
   function normalizeLabel(txt) {
     if (!txt) return txt;
     // Handle tuple-like strings: ("Admin", "Admin") → Admin (second element)
-    const tuple = txt.match(/^\s*\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)\s*$/);
+    const tuple = txt.match(
+      /^\s*\(\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*\)\s*$/,
+    );
     if (tuple) return tuple[2];
     // Collapse duplicate labels joined by comma: "X,X" → "X"
     const parts = txt.split(",");
@@ -48,7 +50,9 @@
       originalSelect.getAttribute("placeholder") ||
       originalSelect.getAttribute("data-placeholder");
     const resolvedPlaceholder =
-      attrPlaceholder || (emptyOption && emptyOption.text) || "Type to search...";
+      attrPlaceholder ||
+      (emptyOption && emptyOption.text) ||
+      "Type to search...";
     textInput.placeholder = resolvedPlaceholder;
 
     // If original has an id, mirror it for the visible control
@@ -162,7 +166,8 @@
         window.removeEventListener("scroll", updateDropdownPosition, true);
         window.removeEventListener("resize", updateDropdownPosition);
         document.removeEventListener("mousedown", handleOutside);
-        if (dropdown.parentNode === document.body) document.body.removeChild(dropdown);
+        if (dropdown.parentNode === document.body)
+          document.body.removeChild(dropdown);
       };
     });
 
@@ -187,23 +192,23 @@
     container.appendChild(dropdown);
     container.appendChild(originalSelect);
 
-  // Visually hide original select while keeping it in DOM for events/HTMX
-  originalSelect.style.display = "none";
-  originalSelect.style.position = "absolute";
-  originalSelect.style.width = "1px";
-  originalSelect.style.height = "1px";
-  originalSelect.style.padding = "0";
-  originalSelect.style.margin = "-1px";
-  originalSelect.style.overflow = "hidden";
-  originalSelect.style.clip = "rect(0, 0, 0, 0)";
-  originalSelect.style.whiteSpace = "nowrap";
-  originalSelect.style.border = "0";
+    // Visually hide original select while keeping it in DOM for events/HTMX
+    originalSelect.style.display = "none";
+    originalSelect.style.position = "absolute";
+    originalSelect.style.width = "1px";
+    originalSelect.style.height = "1px";
+    originalSelect.style.padding = "0";
+    originalSelect.style.margin = "-1px";
+    originalSelect.style.overflow = "hidden";
+    originalSelect.style.clip = "rect(0, 0, 0, 0)";
+    originalSelect.style.whiteSpace = "nowrap";
+    originalSelect.style.border = "0";
     originalSelect.tabIndex = -1; // keep out of tab order
 
-  originalSelect.addEventListener("input", () => {
-    const match = options.find((o) => o.value === originalSelect.value);
-    textInput.value = match ? match.text : "";
-  });
+    originalSelect.addEventListener("input", () => {
+      const match = options.find((o) => o.value === originalSelect.value);
+      textInput.value = match ? match.text : "";
+    });
   }
 
   window.initPredictiveDropdowns = function (root) {
@@ -211,14 +216,15 @@
     scope.querySelectorAll("select.predictive").forEach((sel) => {
       // Skip hidden template rows like the empty form row used for cloning
       const row = sel.closest("tr");
-      if (row && (row.id === "items-empty-row" || /empty-row$/.test(row.id))) return;
+      if (row && (row.id === "items-empty-row" || /empty-row$/.test(row.id)))
+        return;
       upgradeSelect(sel);
     });
   };
 
   document.addEventListener("DOMContentLoaded", function () {
     window.initPredictiveDropdowns();
-  // No extra padding; dropdowns are absolute with high z-index and should overlay table headers
+    // No extra padding; dropdowns are absolute with high z-index and should overlay table headers
   });
 
   document.body.addEventListener("htmx:afterSwap", (e) => {

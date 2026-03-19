@@ -1,5 +1,4 @@
 (function () {
-
   function enhance(container) {
     if (!container || container.dataset.enhanced === "1") return;
     let list = container.querySelector("ul");
@@ -33,7 +32,7 @@
 
     // Ensure the list spans full width and lays out items responsively
     // This prevents the UL from squeezing into a single grid column when the container uses grid
-  list.classList.add(
+    list.classList.add(
       "col-span-full",
       "w-full",
       "flex",
@@ -48,7 +47,7 @@
     const chips = document.createElement("div");
     chips.className = "chips col-span-full w-full flex flex-wrap gap-2";
 
-  container.prepend(chips);
+    container.prepend(chips);
 
     function updateChips() {
       chips.innerHTML = "";
@@ -56,7 +55,11 @@
       checked.forEach((cb) => {
         const li = cb.closest("li");
         const labelNode = li ? li.querySelector("label") : null;
-        const label = labelNode ? labelNode.textContent.trim() : (li ? li.textContent.trim() : cb.value);
+        const label = labelNode
+          ? labelNode.textContent.trim()
+          : li
+            ? li.textContent.trim()
+            : cb.value;
         const chip = document.createElement("button");
         chip.type = "button";
         chip.className = [
@@ -81,7 +84,7 @@
         chip.setAttribute("aria-label", `Remove ${label}`);
 
         // Display label and an "×" icon that's hidden from assistive tech
-    chip.append(label + " ");
+        chip.append(label + " ");
         const removeIcon = document.createElement("span");
         removeIcon.setAttribute("aria-hidden", "true");
         removeIcon.textContent = "×";
@@ -100,7 +103,7 @@
       });
     }
 
-  // Search removed per design: all options remain visible
+    // Search removed per design: all options remain visible
 
     // Layout now uses Tailwind utility classes applied directly; no extra sizing here.
 
@@ -165,7 +168,7 @@
     styleOptions();
 
     // Hook events
-  list.addEventListener("change", () => {
+    list.addEventListener("change", () => {
       updateChips();
       styleOptions();
     });

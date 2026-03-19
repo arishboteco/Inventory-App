@@ -19,7 +19,6 @@ def pending_po_count() -> int:
     return PurchaseOrder.objects.filter(
         status__in=[
             PurchaseOrderStatus.DRAFT,
-            PurchaseOrderStatus.ORDERED,
-            PurchaseOrderStatus.PARTIAL,
+            PurchaseOrderStatus.SENT,
         ]
     ).count()

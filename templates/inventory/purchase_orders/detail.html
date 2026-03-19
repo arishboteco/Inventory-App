@@ -18,13 +18,11 @@
 {% block hero_extra %}
   <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
     {% if po.status == 'DRAFT' %}
-      <span class="font-medium text-bodyText">Next step:</span> Finalise supplier details and mark the order as ordered when ready.
-    {% elif po.status == 'ORDERED' %}
-      <span class="font-medium text-bodyText">Next step:</span> Receive goods as they arrive to keep progress updated.
-    {% elif po.status == 'PARTIAL' %}
-      <span class="font-medium text-bodyText">Next step:</span> Continue recording receipts until the order is complete.
-    {% elif po.status == 'COMPLETE' %}
-      <span class="font-medium text-bodyText">All done:</span> Use the GRN attachments section to review supporting documents.
+      <span class="font-medium text-bodyText">Next step:</span> Finalise supplier details and click <strong>Send to Supplier</strong> when the order is ready to dispatch.
+    {% elif po.status == 'SENT' %}
+      <span class="font-medium text-bodyText">Next step:</span> Record goods as they arrive using <strong>Receive Goods</strong>. The order moves to Received once fully delivered.
+    {% elif po.status == 'RECEIVED' %}
+      <span class="font-medium text-bodyText">All done:</span> All goods have been received. Use the GRN section below to review supporting documents.
     {% else %}
       <span class="font-medium text-bodyText">Tip:</span> Use Edit to reopen this order if additional changes are required.
     {% endif %}
@@ -37,7 +35,7 @@
   {% if po.status == 'DRAFT' %}
   <form action="{% url 'purchase_order_mark_ordered' po.pk %}" method="post" class="inline">
     {% csrf_token %}
-    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Mark Ordered</button>
+    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Send to Supplier</button>
   </form>
   {% endif %}
   <a href="{% url 'purchase_orders_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Back</a>

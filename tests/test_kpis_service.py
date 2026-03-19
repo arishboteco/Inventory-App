@@ -118,7 +118,7 @@ def test_high_price_purchase_detection(item_factory, django_assert_num_queries):
     po = PurchaseOrder.objects.create(
         supplier=supplier,
         order_date=timezone.now().date(),
-        status=PurchaseOrderStatus.ORDERED,
+        status=PurchaseOrderStatus.SENT,
     )
     poi = PurchaseOrderItem.objects.create(
         purchase_order=po, item=item, quantity_ordered=1, unit_price=Decimal("100")
@@ -170,12 +170,12 @@ def test_pending_po_and_indent_counts():
     PurchaseOrder.objects.create(
         supplier=supplier,
         order_date=timezone.now().date(),
-        status=PurchaseOrderStatus.ORDERED,
+        status=PurchaseOrderStatus.SENT,
     )
     PurchaseOrder.objects.create(
         supplier=supplier,
         order_date=timezone.now().date(),
-        status=PurchaseOrderStatus.PARTIAL,
+        status=PurchaseOrderStatus.SENT,
     )
     Indent.objects.create(mrn="1", status=IndentStatus.PENDING)
     Indent.objects.create(mrn="2", status=IndentStatus.SUBMITTED)
@@ -187,8 +187,7 @@ def test_pending_po_and_indent_counts():
 
     assert po_counts == {
         PurchaseOrderStatus.DRAFT: 1,
-        PurchaseOrderStatus.ORDERED: 1,
-        PurchaseOrderStatus.PARTIAL: 1,
+        PurchaseOrderStatus.SENT: 2,  # ORDERED + PARTIAL merged into SENT
     }
     assert indent_counts == {
         IndentStatus.PENDING: 1,

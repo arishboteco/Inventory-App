@@ -147,7 +147,7 @@ class IndentsTableView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         # Base queryset with related data and overdue annotation
         today = timezone.now().date()
-        qs = Indent.objects.select_related("department").annotate(
+        qs = Indent.objects.select_related("department", "source_recipe").annotate(
             is_overdue=Case(
                 When(
                     Q(date_required__lt=today)

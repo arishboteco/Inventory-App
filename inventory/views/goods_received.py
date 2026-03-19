@@ -29,7 +29,7 @@ from ..services import goods_receiving_service, list_utils
 logger = logging.getLogger(__name__)
 
 # Statuses that allow goods to be received
-RECEIVABLE_STATUSES = ["ORDERED", "PARTIAL"]
+RECEIVABLE_STATUSES = ["SENT", "RECEIVED"]
 
 
 def _grn_kpis():

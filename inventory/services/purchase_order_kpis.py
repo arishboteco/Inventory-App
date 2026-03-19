@@ -22,7 +22,7 @@ def get_po_summary_kpis() -> Dict[str, any]:
 
     Returns a dictionary with:
     - total_pos: Total count of all purchase orders
-    - pending_count: Count of orders awaiting receipt (ORDERED + PARTIAL)
+    - pending_count: Count of orders awaiting receipt (SENT)
     - completed_count: Count of completed orders
     - cancelled_count: Count of cancelled orders
     - total_value: Total monetary value of all PO items
@@ -35,9 +35,9 @@ def get_po_summary_kpis() -> Dict[str, any]:
     # Basic counts by status
     total_pos = PurchaseOrder.objects.count()
     pending_count = PurchaseOrder.objects.filter(
-        status__in=["ORDERED", "PARTIAL"]
+        status__in=["SENT"]
     ).count()
-    completed_count = PurchaseOrder.objects.filter(status="COMPLETE").count()
+    completed_count = PurchaseOrder.objects.filter(status="RECEIVED").count()
     cancelled_count = PurchaseOrder.objects.filter(status="CANCELLED").count()
     draft_count = PurchaseOrder.objects.filter(status="DRAFT").count()
 
@@ -52,7 +52,7 @@ def get_po_summary_kpis() -> Dict[str, any]:
     )["total"] or Decimal("0")
 
     pending_value = PurchaseOrderItem.objects.filter(
-        purchase_order__status__in=["DRAFT", "ORDERED", "PARTIAL"]
+        purchase_order__status__in=["DRAFT", "SENT"]
     ).aggregate(
         total=Sum(
             ExpressionWrapper(
@@ -68,7 +68,7 @@ def get_po_summary_kpis() -> Dict[str, any]:
 
     # Overdue orders (past expected delivery date and not complete)
     overdue_count = PurchaseOrder.objects.filter(
-        expected_delivery_date__lt=now, status__in=["ORDERED", "PARTIAL"]
+        expected_delivery_date__lt=now, status__in=["SENT"]
     ).count()
 
     # Average lead time (for completed orders with both dates)
@@ -76,7 +76,7 @@ def get_po_summary_kpis() -> Dict[str, any]:
     # Since we don't track completion date, use current date as approximation
     # for better accuracy, you'd need to add a completed_date field
     completed_pos = PurchaseOrder.objects.filter(
-        status="COMPLETE",
+        status="RECEIVED",
         order_date__isnull=False,
         expected_delivery_date__isnull=False,
     )
@@ -229,7 +229,7 @@ def get_fulfillment_rate() -> float:
     if total == 0:
         return 0.0
 
-    complete = PurchaseOrder.objects.filter(status="COMPLETE").count()
+    complete = PurchaseOrder.objects.filter(status="RECEIVED").count()
     return round((complete / total) * 100, 1)
 
 
@@ -246,7 +246,7 @@ def get_on_time_delivery_rate() -> float:
 
     # Completed orders with expected delivery dates
     completed_with_dates = PurchaseOrder.objects.filter(
-        status="COMPLETE", expected_delivery_date__isnull=False
+        status="RECEIVED", expected_delivery_date__isnull=False
     )
 
     total_count = completed_with_dates.count()

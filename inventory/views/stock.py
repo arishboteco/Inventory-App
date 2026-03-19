@@ -345,7 +345,7 @@ def stock_movements(request):
 
     total_transactions = qs.count()
     pending_orders = PurchaseOrder.objects.filter(
-        status__in=["ORDERED", "PARTIAL"]
+        status__in=["SENT"]
     ).count()
 
     tabs = [

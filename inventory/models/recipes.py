@@ -4,13 +4,26 @@ from django.db import models
 
 from .fields import CoerceFloatField
 
+RECIPE_TYPES = [
+    ("", "Select type..."),
+    ("MAIN", "Main Course"),
+    ("APPETIZER", "Appetizer / Starter"),
+    ("DESSERT", "Dessert"),
+    ("BEVERAGE", "Beverage"),
+    ("PREP", "Prep / Base Recipe"),
+    ("SAUCE", "Sauce / Dressing"),
+    ("SIDE", "Side Dish"),
+    ("BATCH", "Batch Production"),
+    ("OTHER", "Other"),
+]
+
 
 class Recipe(models.Model):
     recipe_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255, unique=True, null=False, blank=False)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=False, null=False)
-    type = models.CharField(max_length=50, blank=True, null=True)
+    type = models.CharField(max_length=50, blank=True, null=True, choices=RECIPE_TYPES)
     default_yield_qty = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     default_yield_unit = models.CharField(max_length=50, blank=True, null=True)
     plating_notes = models.TextField(blank=True, null=True, default="")

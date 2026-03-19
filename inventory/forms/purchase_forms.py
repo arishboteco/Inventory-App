@@ -113,8 +113,8 @@ class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
             if quantity < item.minimum_order_qty:
                 raise forms.ValidationError(
                     (
-                        f"Quantity ({quantity}) is below minimum order quantity "
-                        f"({item.minimum_order_qty}) for this item"
+                        f"Quantity ({quantity}) for '{item.name}' is below its "
+                        f"minimum order quantity ({item.minimum_order_qty})."
                     )
                 )
 

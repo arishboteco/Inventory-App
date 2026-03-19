@@ -479,14 +479,14 @@ class PurchaseOrderCreatePartialView(View):
                         }
                     )
             try:
-                po = purchase_order_service.create_po(po_data, items_data)
+                po_id = purchase_order_service.create_po(po_data, items_data)
                 return JsonResponse(
                     {
                         "ok": True,
-                        "id": getattr(po, "pk", None),
+                        "id": po_id,
                         "message": "Purchase order created",
                         "redirect": reverse(
-                            "purchase_order_detail", kwargs={"pk": po.pk}
+                            "purchase_order_detail", kwargs={"pk": po_id}
                         ),
                     }
                 )

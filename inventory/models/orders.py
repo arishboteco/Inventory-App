@@ -88,6 +88,7 @@ class PurchaseOrder(models.Model):
     """Orders items from a supplier based on approved indents."""
 
     po_id = models.AutoField(primary_key=True)
+    po_number = models.TextField(default="")
     supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     order_date = models.DateField()
     expected_delivery_date = models.DateField(blank=True, null=True)
@@ -98,8 +99,15 @@ class PurchaseOrder(models.Model):
     )
     notes = models.TextField(blank=True, null=True, default="")
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.po_number:
+            self.po_number = f"PO-{self.po_id:04d}"
+            super().save(update_fields=["po_number"])
+
     def __str__(self) -> str:  # pragma: no cover - simple representation
-        return f"PO {self.pk} to {self.supplier}"
+        label = self.po_number or f"PO {self.pk}"
+        return f"{label} to {self.supplier}"
 
     class Meta:
         managed = True

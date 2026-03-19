@@ -81,7 +81,7 @@
         marker: { size: 6, color: color }
       }], {
         title: label + ' Over Time',
-        xaxis: { title: 'Date', type: 'date' },
+        xaxis: { title: 'Date', type: 'date', tickformat: '%b %d, %Y', dtick: 86400000 },
         yaxis: { title: 'Quantity', rangemode: 'tozero' },
         paper_bgcolor: 'transparent',
         plot_bgcolor:  'transparent',
@@ -98,7 +98,7 @@
         showscale: true
       }], {
         title: 'Stock Activity Heatmap',
-        xaxis: { title: 'Date', type: 'date' },
+        xaxis: { title: 'Date', type: 'date', tickformat: '%b %d, %Y', dtick: 86400000 },
         paper_bgcolor: 'transparent',
         plot_bgcolor:  'transparent',
         margin: { t: 40, r: 80, b: 50, l: 100 },

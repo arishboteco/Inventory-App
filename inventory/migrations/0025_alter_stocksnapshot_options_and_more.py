@@ -17,9 +17,18 @@ class Migration(migrations.Migration):
             name='stocksnapshot',
             options={'managed': True, 'ordering': ['snapshot_date']},
         ),
-        migrations.AlterUniqueTogether(
-            name='recipecomponent',
-            unique_together=set(),
+        # The unique_together constraint on recipe_items was never applied
+        # to the live database, so we must update Django's migration state
+        # without issuing any DDL. SeparateDatabaseAndState keeps the state
+        # in sync while skipping the ALTER TABLE that would otherwise fail.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name='recipecomponent',
+                    unique_together=set(),
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.RemoveField(
             model_name='indent',

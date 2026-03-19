@@ -400,7 +400,12 @@ class IndentCreateView(View):
                         {
                             "ok": True,
                             "message": f"Indent {getattr(indent, 'mrn', '')} created",
+                            "toast_message": f"Indent {getattr(indent, 'mrn', '')} created",
                             "id": indent.pk,
+                            "reload": {
+                                "url": reverse("indents_table"),
+                                "target": "#indents_table",
+                            },
                         }
                     )
                 return redirect("indent_detail", pk=indent.pk)
@@ -571,7 +576,12 @@ class IndentCreateView(View):
                             {
                                 "ok": True,
                                 "message": f"Indent {getattr(obj, 'mrn', '')} created",
+                                "toast_message": f"Indent {getattr(obj, 'mrn', '')} created",
                                 "id": new_id,
+                                "reload": {
+                                    "url": reverse("indents_table"),
+                                    "target": "#indents_table",
+                                },
                             }
                         )
                     return redirect("indent_detail", pk=new_id)
@@ -730,6 +740,20 @@ def indent_detail(request, pk: int):
         )
     except Exception:
         is_overdue = False
+    edit_mode = request.GET.get("edit") == "1"
+    # Only SUBMITTED or APPROVED indents can be edited
+    if edit_mode and indent.status.upper() not in {"SUBMITTED", "APPROVED"}:
+        edit_mode = False
+    department_options = []
+    if edit_mode:
+        try:
+            department_options = list(
+                Department.objects.only("department_id", "name")
+                .order_by("name")
+                .values_list("department_id", "name")
+            )
+        except Exception:
+            department_options = []
     ctx = {
         "indent": indent,
         "items": items,
@@ -740,11 +764,77 @@ def indent_detail(request, pk: int):
         "list_url": reverse("indents_list"),
         "list_title": "Indents",
         "current_title": f"Indent {indent.mrn or indent.pk}",
+        "edit_mode": edit_mode,
+        "department_options": department_options,
     }
     # Support modal/drawer partial render
     if (request.GET.get("partial") or "").lower() in {"1", "true", "yes"}:
         return render(request, "inventory/_indent_detail_partial.html", ctx)
     return render(request, "inventory/indent_detail.html", ctx)
+
+
+class IndentUpdateView(View):
+    """Handle updates to an existing indent (department, date_required, notes)."""
+
+    def post(self, request, pk: int):
+        from django.contrib.auth.decorators import login_required
+        from datetime import date as date_type
+
+        indent = get_object_or_404(Indent, pk=pk)
+        if indent.status.upper() not in {"SUBMITTED", "APPROVED"}:
+            messages.warning(
+                request,
+                f"Only submitted or approved indents can be edited.",
+                extra_tags="toast",
+            )
+            return redirect("indent_detail", pk=pk)
+
+        update_fields = ["updated_at"]
+
+        # Department
+        dep_raw = request.POST.get("department", "").strip()
+        if dep_raw.isdigit():
+            try:
+                dept = Department.objects.get(pk=int(dep_raw))
+                indent.department = dept
+                update_fields.append("department_id")
+            except Department.DoesNotExist:
+                pass
+        elif dep_raw:
+            try:
+                indent.department = Department.objects.get(name=dep_raw)
+                update_fields.append("department_id")
+            except Department.DoesNotExist:
+                pass
+
+        # Date required
+        date_raw = request.POST.get("date_required", "").strip()
+        if date_raw:
+            try:
+                indent.date_required = date_type.fromisoformat(date_raw)
+                update_fields.append("date_required")
+            except (ValueError, TypeError):
+                pass
+        else:
+            indent.date_required = None
+            update_fields.append("date_required")
+
+        # Notes
+        indent.notes = request.POST.get("notes", "")
+        update_fields.append("notes")
+
+        indent.save(update_fields=list(set(update_fields)))
+
+        is_partial = request.POST.get("partial") == "1"
+        if is_partial:
+            from django.http import JsonResponse
+            return JsonResponse({
+                "ok": True,
+                "message": f"Indent {indent.mrn} updated.",
+                "redirect": reverse("indent_detail", kwargs={"pk": indent.pk}),
+            })
+        messages.success(request, f"Indent {indent.mrn} updated.", extra_tags="toast")
+        return redirect("indent_detail", pk=pk)
 
 
 @require_POST

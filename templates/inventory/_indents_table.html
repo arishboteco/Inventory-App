@@ -171,19 +171,14 @@
             <span class="sr-only">Mark Completed</span>
           </button>
         </form>
-    <form action="{% url 'indent_update_status' row.indent_id 'CANCELLED' %}"
-              method="post"
-              class="inline"
-              hx-post="{% url 'indent_update_status' row.indent_id 'CANCELLED' %}?{{ querystring|default:'' }}&page={{ page_obj.number }}"
-              hx-target="#indents_table"
-      hx-include="#filters"
-      hx-indicator="#indents-loading">
-          {% csrf_token %}
-          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Cancel indent" aria-label="Cancel indent">
-            {% icon 'x-mark' 'w-4 h-4' %}
-            <span class="sr-only">Cancel indent</span>
-          </button>
-        </form>
+        <button type="button"
+                class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary"
+                title="Cancel indent"
+                aria-label="Cancel indent"
+                onclick="confirmCancelIndent('{% url 'indent_update_status' row.indent_id 'CANCELLED' %}?{{ querystring|default:'' }}&page={{ page_obj.number }}', '{{ row.mrn|escapejs }}')">
+          {% icon 'x-mark' 'w-4 h-4' %}
+          <span class="sr-only">Cancel indent</span>
+        </button>
         {% endif %}
       </div>
     </td>

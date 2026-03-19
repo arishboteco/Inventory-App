@@ -5,6 +5,7 @@ from .views.goods_received import GRNCreateView, GRNDetailView, GRNListView, grn
 from .views.guides import WorkflowGuideView
 from .views.indents import (
     IndentCreateView,
+    IndentUpdateView,
     IndentsListView,
     IndentsTableView,
     consolidate_indents,
@@ -155,6 +156,7 @@ urlpatterns = [
     path("indents/table/", IndentsTableView.as_view(), name="indents_table"),
     path("indents/create/", IndentCreateView.as_view(), name="indent_create"),
     path("indents/<int:pk>/", indent_detail, name="indent_detail"),
+    path("indents/<int:pk>/update/", IndentUpdateView.as_view(), name="indent_update"),
     path("indents/<int:pk>/issue/", issue_indent, name="issue_indent"),
     path(
         "indents/<int:pk>/status/<str:status>/",

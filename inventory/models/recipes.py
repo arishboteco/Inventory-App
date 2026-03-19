@@ -31,6 +31,7 @@ class Recipe(models.Model):
 
 class RecipeComponent(models.Model):
     """DEPRECATED: Use RecipeItem instead. Keeping for migration."""
+
     id = models.AutoField(primary_key=True, db_column="recipe_item_id")
     parent_recipe = models.ForeignKey(
         Recipe,
@@ -58,6 +59,7 @@ class RecipeItem(models.Model):
     Direct relationship between Recipe and Item.
     Simplified model - no component_kind needed, direct item_id FK.
     """
+
     id = models.AutoField(primary_key=True, db_column="recipe_item_id")
     recipe = models.ForeignKey(
         Recipe,

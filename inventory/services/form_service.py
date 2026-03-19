@@ -23,13 +23,11 @@ class FormService:
         """Get base unit choices from database"""
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT DISTINCT base_unit FROM units
                     WHERE base_unit IS NOT NULL
                     ORDER BY base_unit
-                    """
-                )
+                    """)
                 units = cursor.fetchall()
                 return tuple((unit[0], unit[0]) for unit in units if unit[0])
         except OperationalError as e:
@@ -61,13 +59,11 @@ class FormService:
                     )
                 else:
                     # Get all purchase units
-                    cursor.execute(
-                        """
+                    cursor.execute("""
                         SELECT DISTINCT purchase_unit FROM units
                         WHERE purchase_unit IS NOT NULL
                         ORDER BY purchase_unit
-                        """
-                    )
+                        """)
                 units = cursor.fetchall()
                 return tuple((unit[0], unit[0]) for unit in units if unit[0])
         except OperationalError as e:

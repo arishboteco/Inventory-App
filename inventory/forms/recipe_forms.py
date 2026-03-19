@@ -86,7 +86,6 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
             "plating_notes",
         ]
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         description = self.initial.get("description") or getattr(

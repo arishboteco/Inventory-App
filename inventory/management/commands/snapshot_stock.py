@@ -10,6 +10,7 @@ Schedule daily at midnight via Django Q or cron:
         next_run=midnight_today,
     )
 """
+
 from django.core.management.base import BaseCommand
 
 

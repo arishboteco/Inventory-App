@@ -138,7 +138,9 @@ def _annotate_open_po_count(qs):
     return qs.annotate(
         open_po_count=Count(
             "purchaseorder",
-            filter=Q(purchaseorder__status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"]),
+            filter=Q(
+                purchaseorder__status__in=["DRAFT", "SUBMITTED", "APPROVED", "ORDERED"]
+            ),
         )
     )
 

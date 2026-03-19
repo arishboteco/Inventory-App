@@ -6,6 +6,8 @@ from core.error_logging_middleware import DetailedErrorLoggingMiddleware
 
 
 class DummyUser:
+    is_authenticated = True
+
     def __str__(self):
         return "dummyuser"
 

@@ -13,7 +13,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0024_fix_pk_sequences'),
+        ("inventory", "0024_fix_pk_sequences"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -21,29 +21,27 @@ class Migration(migrations.Migration):
         # ── 1. StockSnapshot Meta ─────────────────────────────────────
         # Pure state change – no DDL emitted by Django for AlterModelOptions.
         migrations.AlterModelOptions(
-            name='stocksnapshot',
-            options={'managed': True, 'ordering': ['snapshot_date']},
+            name="stocksnapshot",
+            options={"managed": True, "ordering": ["snapshot_date"]},
         ),
-
         # ── 2. RecipeComponent unique_together ────────────────────────
         # Constraint never existed in live DB → state-only.
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AlterUniqueTogether(
-                    name='recipecomponent',
+                    name="recipecomponent",
                     unique_together=set(),
                 ),
             ],
             database_operations=[],
         ),
-
         # ── 3. Remove old processed_by_user_id CharField ─────────────
         # Column may already have been dropped in the live DB.
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.RemoveField(
-                    model_name='indent',
-                    name='processed_by_user_id',
+                    model_name="indent",
+                    name="processed_by_user_id",
                 ),
             ],
             database_operations=[
@@ -53,17 +51,16 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-
         # ── 4. Add processed_by FK (db_column='processed_by_id') ─────
         # Column may already exist in the live DB.
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AddField(
-                    model_name='indent',
-                    name='processed_by',
+                    model_name="indent",
+                    name="processed_by",
                     field=models.ForeignKey(
                         blank=True,
-                        db_column='processed_by_id',
+                        db_column="processed_by_id",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         to=settings.AUTH_USER_MODEL,
@@ -92,19 +89,18 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-
         # ── 5. StockSnapshot id: AutoField → BigAutoField ────────────
         # Column may already be bigint in the live DB.
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AlterField(
-                    model_name='stocksnapshot',
-                    name='id',
+                    model_name="stocksnapshot",
+                    name="id",
                     field=models.BigAutoField(
                         auto_created=True,
                         primary_key=True,
                         serialize=False,
-                        verbose_name='ID',
+                        verbose_name="ID",
                     ),
                 ),
             ],

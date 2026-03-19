@@ -15,13 +15,14 @@ _FORECASTS_KEY = "ml_train_models"
 _ABC_KEY = "ml_abc_classification"
 _RUNNING_KEY = "ml_forecast_running"
 _TIMESTAMP_KEY = "ml_last_run_ts"
-_CACHE_TTL = 300          # 5 min
-_MIN_DATA_POINTS = 2      # matches ml.forecast_item_demand threshold
+_CACHE_TTL = 300  # 5 min
+_MIN_DATA_POINTS = 2  # matches ml.forecast_item_demand threshold
 
 
 def _compute_and_cache() -> tuple:
     """Run both ML computations synchronously and store results in cache."""
     from django.utils import timezone
+
     forecasts = ml.train_models(periods=1)
     cache.set(_FORECASTS_KEY, forecasts, _CACHE_TTL)
     classifications = ml.abc_classification()
@@ -53,7 +54,7 @@ def ml_dashboard(request):
         return redirect("ml_dashboard")
 
     # ── GET ──────────────────────────────────────────────────────────────────
-    forecasts      = cache.get(_FORECASTS_KEY)
+    forecasts = cache.get(_FORECASTS_KEY)
     classifications = cache.get(_ABC_KEY)
 
     if forecasts is None or classifications is None:
@@ -61,7 +62,7 @@ def ml_dashboard(request):
             forecasts, classifications = _compute_and_cache()
         except Exception as exc:
             logger.warning("ML compute on page load failed: %s", exc)
-            forecasts       = forecasts or {}
+            forecasts = forecasts or {}
             classifications = classifications or {}
 
     last_run = cache.get(_TIMESTAMP_KEY)
@@ -86,17 +87,19 @@ def ml_dashboard(request):
         forecast_qty = float((raw[0] if isinstance(raw, list) and raw else raw) or 0)
         forecast_qty = max(0.0, forecast_qty)
         current_stock = float(item.current_stock or 0)
-        days_cover = round(current_stock / forecast_qty, 1) if forecast_qty > 0 else None
+        days_cover = (
+            round(current_stock / forecast_qty, 1) if forecast_qty > 0 else None
+        )
         tx_count = tx_counts.get(item.pk, 0)
 
         table_data.append(
             {
-                "item":      item,
-                "abc":       classifications.get(item.pk, "C"),
-                "forecast":  forecast_qty,
+                "item": item,
+                "abc": classifications.get(item.pk, "C"),
+                "forecast": forecast_qty,
                 "days_cover": days_cover,
-                "has_data":  tx_count >= _MIN_DATA_POINTS,
-                "tx_count":  tx_count,
+                "has_data": tx_count >= _MIN_DATA_POINTS,
+                "tx_count": tx_count,
             }
         )
 
@@ -119,12 +122,12 @@ def ml_dashboard(request):
         request,
         "inventory/ml_dashboard.html",
         {
-            "table_data":   table_data,
-            "abc_counts":   abc_counts,
-            "last_run":     last_run,
+            "table_data": table_data,
+            "abc_counts": abc_counts,
+            "last_run": last_run,
             "task_running": cache.get(_RUNNING_KEY, False),
-            "list_url":     reverse("root"),
-            "list_title":   "Dashboard",
+            "list_url": reverse("root"),
+            "list_title": "Dashboard",
             "current_title": "ML Planner",
         },
     )

@@ -60,12 +60,15 @@ def get_po_summary_kpis() -> Dict[str, any]:
                 output_field=DecimalField(max_digits=19, decimal_places=2),
             )
         )
-    )["total"] or Decimal("0")
+    )[
+        "total"
+    ] or Decimal(
+        "0"
+    )
 
     # Overdue orders (past expected delivery date and not complete)
     overdue_count = PurchaseOrder.objects.filter(
-        expected_delivery_date__lt=now,
-        status__in=["ORDERED", "PARTIAL"]
+        expected_delivery_date__lt=now, status__in=["ORDERED", "PARTIAL"]
     ).count()
 
     # Average lead time (for completed orders with both dates)
@@ -75,7 +78,7 @@ def get_po_summary_kpis() -> Dict[str, any]:
     completed_pos = PurchaseOrder.objects.filter(
         status="COMPLETE",
         order_date__isnull=False,
-        expected_delivery_date__isnull=False
+        expected_delivery_date__isnull=False,
     )
     avg_lead_time = 0
     if completed_pos.exists():
@@ -110,13 +113,8 @@ def get_top_suppliers_by_value(limit: int = 5) -> List[Dict[str, any]]:
         List of dicts with supplier name, total value, and order count
     """
     suppliers = (
-        PurchaseOrderItem.objects.select_related(
-            "purchase_order__supplier"
-        )
-        .values(
-            "purchase_order__supplier__name",
-            "purchase_order__supplier_id"
-        )
+        PurchaseOrderItem.objects.select_related("purchase_order__supplier")
+        .values("purchase_order__supplier__name", "purchase_order__supplier_id")
         .annotate(
             total_value=Sum(
                 ExpressionWrapper(
@@ -124,7 +122,7 @@ def get_top_suppliers_by_value(limit: int = 5) -> List[Dict[str, any]]:
                     output_field=DecimalField(max_digits=19, decimal_places=2),
                 )
             ),
-            order_count=Count("purchase_order_id", distinct=True)
+            order_count=Count("purchase_order_id", distinct=True),
         )
         .order_by("-total_value")[:limit]
     )
@@ -164,7 +162,10 @@ def get_recent_po_trends(days: int = 30) -> Dict[str, any]:
                     output_field=DecimalField(max_digits=19, decimal_places=2),
                 )
             )
-        )["total"] or Decimal("0"),
+        )[
+            "total"
+        ]
+        or Decimal("0"),
         "avg_value": PurchaseOrderItem.objects.filter(
             purchase_order__order_date__gte=cutoff
         ).aggregate(
@@ -174,7 +175,10 @@ def get_recent_po_trends(days: int = 30) -> Dict[str, any]:
                     output_field=DecimalField(max_digits=19, decimal_places=2),
                 )
             )
-        )["avg"] or Decimal("0"),
+        )[
+            "avg"
+        ]
+        or Decimal("0"),
     }
 
 
@@ -242,8 +246,7 @@ def get_on_time_delivery_rate() -> float:
 
     # Completed orders with expected delivery dates
     completed_with_dates = PurchaseOrder.objects.filter(
-        status="COMPLETE",
-        expected_delivery_date__isnull=False
+        status="COMPLETE", expected_delivery_date__isnull=False
     )
 
     total_count = completed_with_dates.count()
@@ -252,8 +255,6 @@ def get_on_time_delivery_rate() -> float:
 
     # Assume orders completed before expected date were on time
     # This is a rough heuristic
-    on_time = completed_with_dates.filter(
-        expected_delivery_date__gte=today
-    ).count()
+    on_time = completed_with_dates.filter(expected_delivery_date__gte=today).count()
 
     return round((on_time / total_count) * 100, 1)

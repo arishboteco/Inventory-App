@@ -23,7 +23,12 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
     default_yield_unit = forms.ChoiceField(
         required=False,
         choices=FormService.get_base_unit_choices(),
-        widget=forms.Select(attrs={"class": INPUT_CLASS + " predictive", "data-placeholder": "Select base unit"}),
+        widget=forms.Select(
+            attrs={
+                "class": INPUT_CLASS + " predictive",
+                "data-placeholder": "Select base unit",
+            }
+        ),
         help_text="Base unit for the recipe yield",
     )
 
@@ -78,7 +83,9 @@ class RecipeComponentForm(StyledFormMixin, forms.ModelForm):
     quantity = forms.DecimalField(
         min_value=0.001,
         decimal_places=3,
-        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.001", "min": "0.001"}),
+        widget=forms.NumberInput(
+            attrs={"class": INPUT_CLASS, "step": "0.001", "min": "0.001"}
+        ),
     )
     # Hidden model-backed field to submit the item's purchase unit (for backend compatibility)
     unit = forms.CharField(
@@ -97,7 +104,9 @@ class RecipeComponentForm(StyledFormMixin, forms.ModelForm):
         min_value=0,
         max_value=100,
         decimal_places=2,
-        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.1", "min": "0", "max": "100"}),
+        widget=forms.NumberInput(
+            attrs={"class": INPUT_CLASS, "step": "0.1", "min": "0", "max": "100"}
+        ),
         label="Loss %",
     )
 
@@ -114,7 +123,9 @@ class RecipeComponentForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Populate component_id choices with all active items for predictive dropdown
-        items = Item.objects.filter(is_active=True).only("item_id", "name").order_by("name")
+        items = (
+            Item.objects.filter(is_active=True).only("item_id", "name").order_by("name")
+        )
         self.fields["component_id"].choices = [("", "Select an item")] + [
             (str(i.item_id), i.name) for i in items
         ]

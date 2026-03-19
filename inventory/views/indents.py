@@ -147,19 +147,16 @@ class IndentsTableView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         # Base queryset with related data and overdue annotation
         today = timezone.now().date()
-        qs = (
-            Indent.objects.select_related("department")
-            .annotate(
-                is_overdue=Case(
-                    When(
-                        Q(date_required__lt=today)
-                        & ~Q(status__in=["COMPLETED", "APPROVED"]),
-                        then=Value(True),
-                    ),
-                    default=Value(False),
-                    output_field=BooleanField(),
+        qs = Indent.objects.select_related("department").annotate(
+            is_overdue=Case(
+                When(
+                    Q(date_required__lt=today)
+                    & ~Q(status__in=["COMPLETED", "APPROVED"]),
+                    then=Value(True),
                 ),
-            )
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
         )
         try:
             zero = Value(0, output_field=DecimalField(max_digits=12, decimal_places=2))
@@ -827,11 +824,14 @@ class IndentUpdateView(View):
         is_partial = request.POST.get("partial") == "1"
         if is_partial:
             from django.http import JsonResponse
-            return JsonResponse({
-                "ok": True,
-                "message": f"Indent {indent.mrn} updated.",
-                "redirect": reverse("indent_detail", kwargs={"pk": indent.pk}),
-            })
+
+            return JsonResponse(
+                {
+                    "ok": True,
+                    "message": f"Indent {indent.mrn} updated.",
+                    "redirect": reverse("indent_detail", kwargs={"pk": indent.pk}),
+                }
+            )
         messages.success(request, f"Indent {indent.mrn} updated.", extra_tags="toast")
         return redirect("indent_detail", pk=pk)
 
@@ -978,7 +978,9 @@ def consolidate_indents(request):
                 g["supplier"] = None
         # Build unit display from the related unit FK
         try:
-            unit_display = (item.unit.purchase_unit or str(item.unit)) if item.unit_id else ""
+            unit_display = (
+                (item.unit.purchase_unit or str(item.unit)) if item.unit_id else ""
+            )
         except Exception:
             unit_display = ""
         entry = g["items"].setdefault(
@@ -1035,8 +1037,11 @@ def consolidate_indents(request):
         consolidate_ids = ids
         if not consolidate_ids:
             from ..models import Indent as _Indent
+
             consolidate_ids = list(
-                _Indent.objects.filter(status="APPROVED").values_list("indent_id", flat=True)
+                _Indent.objects.filter(status="APPROVED").values_list(
+                    "indent_id", flat=True
+                )
             )
         result = indent_consolidation_service.consolidate_approved_indents(
             consolidate_ids,

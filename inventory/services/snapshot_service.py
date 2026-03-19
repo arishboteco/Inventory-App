@@ -3,6 +3,7 @@
 Takes a point-in-time record of each active item's current stock level so that
 trend charts and ML forecasts have historical data to work with.
 """
+
 from __future__ import annotations
 
 import logging

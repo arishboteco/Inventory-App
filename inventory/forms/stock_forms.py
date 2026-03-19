@@ -59,6 +59,7 @@ class ItemNameResolutionMixin:
 
         raise forms.ValidationError("Choose a valid item from the list.")
 
+
 WASTAGE_CATEGORIES = [
     ("SPOILAGE", "Spoilage"),
     ("EXPIRY", "Expiry / Past Use-By"),
@@ -109,7 +110,12 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["quantity_change"].required = True
         self.fields["quantity_change"].widget = forms.NumberInput(
-            attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0.01", "placeholder": "e.g. 10.5"}
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "min": "0.01",
+                "placeholder": "e.g. 10.5",
+            }
         )
         if "related_po" in self.fields:
             self.fields["related_po"].required = False
@@ -166,14 +172,24 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = StockTransaction
-        fields = ["item", "quantity_change", "reason_category", "transaction_date", "notes"]
+        fields = [
+            "item",
+            "quantity_change",
+            "reason_category",
+            "transaction_date",
+            "notes",
+        ]
         labels = {"quantity_change": "Quantity Change (+/−)"}
 
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["quantity_change"].required = True
         self.fields["quantity_change"].widget = forms.NumberInput(
-            attrs={"class": INPUT_CLASS, "step": "0.01", "placeholder": "e.g. +10 or -5"}
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "placeholder": "e.g. +10 or -5",
+            }
         )
         self.apply_styling()
 
@@ -217,14 +233,25 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = StockTransaction
-        fields = ["item", "quantity_change", "reason_category", "transaction_date", "notes"]
+        fields = [
+            "item",
+            "quantity_change",
+            "reason_category",
+            "transaction_date",
+            "notes",
+        ]
         labels = {"quantity_change": "Quantity"}
 
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["quantity_change"].required = True
         self.fields["quantity_change"].widget = forms.NumberInput(
-            attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0.01", "placeholder": "e.g. 5"}
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "min": "0.01",
+                "placeholder": "e.g. 5",
+            }
         )
         self.apply_styling()
 

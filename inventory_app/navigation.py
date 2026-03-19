@@ -80,36 +80,36 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
             },
         ],
     ),
-        (
-            "Insights & Settings",
-            [
-                {
-                    "title": "Operational Reports",
-                    "description": "Analyse trends and audit activity.",
-                    "url_name": "history_reports",
-                },
-                {
-                    "title": "Visual Dashboards",
-                    "description": "Track KPIs and live performance.",
-                    "url_name": "visualizations",
-                },
-                {
-                    "title": "ML Planner",
-                    "description": "View ABC classification and demand forecasts.",
-                    "url_name": "ml_dashboard",
-                },
-                {
-                    "title": "Workflow Handbook",
-                    "description": "Follow the end-to-end Inventory Pro process.",
-                    "url_name": "workflow_guide",
-                },
-                {
-                    "title": "Settings",
-                    "description": "Manage reference data: units, categories, departments.",
-                    "url_name": "settings",
-                },
-            ],
-        ),
+    (
+        "Insights & Settings",
+        [
+            {
+                "title": "Operational Reports",
+                "description": "Analyse trends and audit activity.",
+                "url_name": "history_reports",
+            },
+            {
+                "title": "Visual Dashboards",
+                "description": "Track KPIs and live performance.",
+                "url_name": "visualizations",
+            },
+            {
+                "title": "ML Planner",
+                "description": "View ABC classification and demand forecasts.",
+                "url_name": "ml_dashboard",
+            },
+            {
+                "title": "Workflow Handbook",
+                "description": "Follow the end-to-end Inventory Pro process.",
+                "url_name": "workflow_guide",
+            },
+            {
+                "title": "Settings",
+                "description": "Manage reference data: units, categories, departments.",
+                "url_name": "settings",
+            },
+        ],
+    ),
 ]
 
 # Flattened list of links is still exposed for convenience in tests and any
@@ -206,12 +206,18 @@ def primary_navigation(request):
             if pending > 0:
                 noun = "indent" if pending == 1 else "indents"
                 notifications.append(
-                    {"text": f"{pending} {noun} awaiting approval", "url": "/indents/?status=PENDING"}
+                    {
+                        "text": f"{pending} {noun} awaiting approval",
+                        "url": "/indents/?status=PENDING",
+                    }
                 )
             if low > 0:
                 noun = "item" if low == 1 else "items"
                 notifications.append(
-                    {"text": f"{low} {noun} below reorder level", "url": "/items/?stock_status=low"}
+                    {
+                        "text": f"{low} {noun} below reorder level",
+                        "url": "/items/?stock_status=low",
+                    }
                 )
             ctx["notification_count"] = low + pending
             ctx["notifications"] = notifications

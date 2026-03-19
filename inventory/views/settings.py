@@ -151,7 +151,9 @@ def settings_view(request):
             name = request.POST.get("name", "").strip()
             if name:
                 try:
-                    Department.objects.filter(department_id=department_id).update(name=name)
+                    Department.objects.filter(department_id=department_id).update(
+                        name=name
+                    )
                     messages.success(request, f"Department '{name}' updated.")
                 except Exception as exc:
                     logger.error("Failed to edit department: %s", exc)
@@ -228,7 +230,9 @@ def change_password_view(request):
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)
-            messages.success(request, "Password changed successfully.", extra_tags="toast")
+            messages.success(
+                request, "Password changed successfully.", extra_tags="toast"
+            )
             return redirect("settings")
     else:
         form = PasswordChangeForm(request.user)

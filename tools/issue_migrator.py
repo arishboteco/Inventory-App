@@ -8,6 +8,7 @@ Example:
     python tools/issue_migrator.py --repo owner/repo --token $GITHUB_TOKEN \
         --milestone "Backlog" --dry-run
 """
+
 import argparse
 import json
 import re

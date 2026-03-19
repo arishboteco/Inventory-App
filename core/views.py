@@ -92,9 +92,17 @@ def _stock_trend_data(
             qs = qs.filter(snapshot_date__lte=end)
 
         if metric == "value":
-            agg = qs.values("snapshot_date").annotate(total=Sum("value")).order_by("snapshot_date")
+            agg = (
+                qs.values("snapshot_date")
+                .annotate(total=Sum("value"))
+                .order_by("snapshot_date")
+            )
         else:
-            agg = qs.values("snapshot_date").annotate(total=Sum("quantity")).order_by("snapshot_date")
+            agg = (
+                qs.values("snapshot_date")
+                .annotate(total=Sum("quantity"))
+                .order_by("snapshot_date")
+            )
 
         rows = list(agg)
         if rows:
@@ -152,7 +160,11 @@ def _parse_date_range(request):
     if range_days == "custom" and (date_from_raw or date_to_raw):
         try:
             end = date.fromisoformat(date_to_raw) if date_to_raw else today
-            start = date.fromisoformat(date_from_raw) if date_from_raw else end - timedelta(days=29)
+            start = (
+                date.fromisoformat(date_from_raw)
+                if date_from_raw
+                else end - timedelta(days=29)
+            )
         except ValueError:
             end = today
             start = today - timedelta(days=29)
@@ -184,17 +196,19 @@ def interactive_dashboard(request):
         items=Item.objects.filter(is_active=True),
         suppliers=Supplier.objects.filter(is_active=True),
     ).as_dict()
-    context.update({
-        "is_interactive": True,
-        "page_title": "Interactive Dashboard – Inventory Pro",
-        "current_title": "Interactive Dashboard",
-        "selected_range": range_val,
-        "selected_item": item_id or "",
-        "selected_supplier": supplier_id or "",
-        "selected_metric": metric,
-        "date_from": date_from,
-        "date_to": date_to,
-    })
+    context.update(
+        {
+            "is_interactive": True,
+            "page_title": "Interactive Dashboard – Inventory Pro",
+            "current_title": "Interactive Dashboard",
+            "selected_range": range_val,
+            "selected_item": item_id or "",
+            "selected_supplier": supplier_id or "",
+            "selected_metric": metric,
+            "date_from": date_from,
+            "date_to": date_to,
+        }
+    )
     return render(request, "core/dashboard.html", context)
 
 

@@ -146,7 +146,11 @@ urlpatterns = [
     ),
     path("suppliers/search/", SupplierSearchView.as_view(), name="supplier_search"),
     path("suppliers/<int:pk>/", SupplierDetailView.as_view(), name="supplier_detail"),
-    path("suppliers/<int:pk>/delete/", SupplierDeleteView.as_view(), name="supplier_delete"),
+    path(
+        "suppliers/<int:pk>/delete/",
+        SupplierDeleteView.as_view(),
+        name="supplier_delete",
+    ),
     path("stock-movements/", stock_movements, name="stock_movements"),
     path("stock/users/search/", UserSearchView.as_view(), name="user_search"),
     path("stock/pos/search/", POSearchView.as_view(), name="po_search"),

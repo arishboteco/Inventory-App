@@ -97,7 +97,7 @@ class SupplierForm(StyledFormMixin, forms.ModelForm):
                 attrs={
                     "class": INPUT_CLASS,
                     "aria-label": "Payment terms",
-                }
+                },
             ),
             "credit_limit": forms.NumberInput(
                 attrs={

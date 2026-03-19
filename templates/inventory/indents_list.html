@@ -89,7 +89,40 @@
 {% endblock %}
 
 {% block page_scripts %}
+{% include "components/_confirm_modal.html" %}
 <script>
+  // Confirm cancel for indents — shows modal then fires the cancel via HTMX so the table updates inline.
+  function confirmCancelIndent(cancelUrl, mrn) {
+    var title = document.getElementById('confirmModalTitle');
+    var msg = document.getElementById('confirmModalMessage');
+    var confirmForm = document.getElementById('confirmModalForm');
+    var modal = document.getElementById('confirmModal');
+    if (!modal || !confirmForm) return;
+    if (title) title.textContent = 'Cancel Indent';
+    if (msg) msg.textContent = 'Cancel ' + mrn + '? This cannot be undone.';
+    // Override submit to POST via HTMX and refresh the table
+    var submitBtn = confirmForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Cancel Indent';
+    confirmForm.onsubmit = function (e) {
+      e.preventDefault();
+      // Close modal first
+      modal.style.display = 'none';
+      modal.setAttribute('hidden', '');
+      // HTMX ajax POST to cancel URL
+      var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+      if (window.htmx) {
+        htmx.ajax('POST', cancelUrl, {
+          target: '#indents_table',
+          swap: 'outerHTML',
+          headers: { 'X-CSRFToken': csrf ? csrf.value : '' },
+        });
+      }
+    };
+    // Open the modal
+    modal.removeAttribute('hidden');
+    modal.style.removeProperty('display');
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.table-scroll').forEach(scroller => {
       function onScroll(){ scroller.toggleAttribute('data-shadow', scroller.scrollTop > 0); }

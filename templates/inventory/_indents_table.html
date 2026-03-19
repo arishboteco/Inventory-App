@@ -117,10 +117,12 @@
           {% icon 'eye' 'w-4 h-4' %}
           <span class="sr-only">View indent</span>
         </a>
+        {% if row.status|upper == 'SUBMITTED' or row.status|upper == 'APPROVED' %}
         <a href="{{ view_url }}?edit=1" data-modal-url="{{ view_url }}?edit=1&partial=1" data-modal-type="drawer" data-modal-prefetch="hover" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Edit indent" aria-label="Edit indent">
           {% icon 'pencil' 'w-4 h-4' %}
           <span class="sr-only">Edit indent</span>
         </a>
+        {% endif %}
         <a href="{% url 'indent_pdf' row.indent_id %}" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Download PDF" aria-label="Download PDF">
           {% icon 'printer' 'w-4 h-4' %}
           <span class="sr-only">Download PDF</span>

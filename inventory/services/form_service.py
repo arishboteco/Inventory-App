@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 from django.db import connection
 from django.db.utils import OperationalError
 
-from inventory.models import Category, Department, Subcategory, Supplier
+from inventory.models import Category, Department, SubCategory, Supplier
 
 from .units_service import UnitsService
 
@@ -245,7 +245,7 @@ def category_choices():
 
 
 def subcategory_choices(category_id=None):
-    qs = Subcategory.objects.all()
+    qs = SubCategory.objects.all()
     if category_id:
         qs = qs.filter(category_id=category_id)
     return [("", "All Subcategories")] + list(

@@ -101,19 +101,48 @@ URLs follow the pattern: `<module>-<action>` e.g.:
 
 Partial views (for drawers) typically have `-partial` suffix in the URL name.
 
-## Production Readiness Status
+## Development Workflow
 
-### Completed
-- **Phase A:** Core pipeline unblocked (PO creation, line_total fix, Quick PO)
-- **Phase B:** Known bugs fixed (Indent edit/submit/drawer buttons, MOQ message, department dedup)
-- **Phase C:** UX confusion removed (guidance text, auto-fulfill, naming, source column, PO status simplification, help panels)
-- **Phase D:** Critical missing features (sub-recipes, Food Cost %, stock transfers, stock-take, low-stock indent, ad-hoc GRN)
+### Standard Process (per task)
+1. Create a feature branch from `feature/django-refactor`:
+   `git checkout -b feature/<slug> origin/feature/django-refactor`
+2. Make changes
+3. Run `make ci` (formats with Black, lints with Ruff, runs pytest)
+4. Commit and push: `git push -u origin feature/<slug>`
+5. Claude opens a PR targeting `feature/django-refactor` with a clear description
+6. User tests in the live preview: https://inventory-app-kguo.onrender.com/
+7. User confirms → Claude merges the PR
 
-### Remaining
-- **Phase E:** Data Quality & Reporting — Food cost reports, merge duplicate pages, allergens, prep instructions, wastage reason codes
-- **Phase F:** Scale & Compliance — Batch/lot tracking, consumption tracking, multi-outlet, role-based access, mobile views, scheduled reports
+### Tooling (via Makefile)
+| Command | Purpose |
+|---|---|
+| `make fmt` | Format with Black |
+| `make lint` | Lint with Ruff (auto-fix) |
+| `make test` | Run pytest |
+| `make ci` | fmt + lint + test (run before every commit) |
+| `make precommit` | Run all pre-commit hooks |
+| `make coverage` | Tests with coverage report |
 
-See `/outputs/inventory-pro-production-roadmap.md` for the full phased plan.
+### Python Environment Detection
+At the start of each session, detect the active Python env in order:
+1. `.venv/bin/python` (local venv)
+2. `venv/bin/python`
+3. `which python` (system or active virtualenv)
+
+All `make` commands invoke the environment-appropriate Python automatically.
+
+### Environment Variables / Secrets
+- Ask the user for any required secret (DATABASE_URL, SECRET_KEY, etc.) on first need
+- Store in a `.env` file at the project root (gitignored)
+- Tests use `env/test.example` — no real secrets needed for `make test`
+
+### PR Naming Convention
+- Branch: `feature/<short-task-slug>`
+- PR title: `<verb>: <what changed>` e.g. `fix: indent drawer submit`, `feat: food cost report`
+- Target branch: `feature/django-refactor`
+
+### Task Planning
+Tasks are discussed and planned collaboratively at the start of each session. There is no fixed phased roadmap — the user directs priorities.
 
 ## Common Gotchas
 

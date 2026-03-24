@@ -42,7 +42,7 @@ def _filtered_recipes_queryset(request):
             "label": "Type",
             "value": type_value,
             "options": [{"value": "", "label": "All Types"}]
-            + [{"value": v, "label": l} for v, l in RECIPE_TYPES if v],
+            + [{"value": v, "label": label} for v, label in RECIPE_TYPES if v],
         },
     ]
     return qs, params

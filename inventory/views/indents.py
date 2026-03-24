@@ -530,20 +530,22 @@ class IndentCreateView(View):
                             if not insert_cols:
                                 raise
 
-                            # Build portable INSERT
-                            col_sql = ", ".join(insert_cols)
+                            # Build portable INSERT — quote all identifiers
+                            q_table = f'"{table}"'
+                            q_cols = ", ".join(f'"{c}"' for c in insert_cols)
                             placeholders = ", ".join(["%s"] * len(insert_cols))
                             vendor = connection.vendor
 
                             if vendor == "postgresql" and pk_col:
+                                q_pk = f'"{pk_col}"'
                                 cur.execute(
-                                    f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders}) RETURNING {pk_col}",
+                                    f"INSERT INTO {q_table} ({q_cols}) VALUES ({placeholders}) RETURNING {q_pk}",
                                     params,
                                 )
                                 new_id = cur.fetchone()[0]
                             else:
                                 cur.execute(
-                                    f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders})",
+                                    f"INSERT INTO {q_table} ({q_cols}) VALUES ({placeholders})",
                                     params,
                                 )
                                 try:
@@ -552,10 +554,11 @@ class IndentCreateView(View):
                                     # Fallback best-effort: last inserted PK
                                     if not pk_col:
                                         raise
+                                    q_pk = f'"{pk_col}"'
                                     cur2 = connection.cursor()
                                     try:
                                         cur2.execute(
-                                            f"SELECT MAX({pk_col}) FROM {table}"
+                                            f"SELECT MAX({q_pk}) FROM {q_table}"
                                         )
                                         new_id = cur2.fetchone()[0]
                                     finally:

@@ -34,8 +34,8 @@
       </div>
       {% if department_options %}
       <datalist id="department-options">
-        {% for name in department_options %}
-          <option value="{{ name }}"></option>
+        {% for did, dname in department_options %}
+          <option value="{{ dname }}"></option>
         {% endfor %}
       </datalist>
       {% endif %}

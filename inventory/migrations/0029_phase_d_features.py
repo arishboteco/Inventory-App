@@ -2,19 +2,12 @@
 # 0025_phase_d_features.py (0025 was already occupied by
 # 0025_alter_stocksnapshot_options_and_more which is applied on production).
 #
-# This migration depends on 0028 and only contains operations NOT already
-# covered by 0025–0028:
-#   - Removes recipeitem unique_together (state + defensive DDL)
-#   - Adds delivery_note_number to GoodsReceivedNote
-#   - Adds direct item FK to GRNItem (ad-hoc GRN support)
-#   - Adds selling_price + target_food_cost_pct to Recipe
-#   - Adds sub_recipe FK to RecipeItem
-#   - Adds from_department + to_department to StockTransaction
-#   - Makes GoodsReceivedNote.purchase_order nullable (ad-hoc GRN)
-#   - Makes GRNItem.po_item nullable
-#   - Adds default=0 to GRNItem.quantity_ordered_on_po
-#   - Makes RecipeItem.item nullable (sub-recipe support)
-#   - Creates StockTake + StockTakeItem models
+# All DDL operations are written defensively (ADD COLUMN IF NOT EXISTS,
+# CREATE TABLE IF NOT EXISTS, etc.) because the original 0025_phase_d_features
+# was applied to the production database before it was deleted and renumbered.
+# This allows the migration to run on both:
+#   - Production DB (columns already exist → no-op)
+#   - Fresh DB (columns don't exist → creates them)
 
 import django.db.models.deletion
 from django.conf import settings
@@ -61,253 +54,458 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-
         # ── 2. GoodsReceivedNote: add delivery_note_number ────────────────
-        migrations.AddField(
-            model_name="goodsreceivednote",
-            name="delivery_note_number",
-            field=models.CharField(
-                blank=True,
-                help_text="Delivery note or invoice number",
-                max_length=100,
-                null=True,
-            ),
-        ),
-
-        # ── 3. GRNItem: add direct item FK (ad-hoc GRNs without a PO) ────
-        migrations.AddField(
-            model_name="grnitem",
-            name="item",
-            field=models.ForeignKey(
-                blank=True,
-                db_column="direct_item_id",
-                help_text="Direct item reference (for ad-hoc GRNs without a PO)",
-                null=True,
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="grn_items",
-                to="inventory.item",
-            ),
-        ),
-
-        # ── 4. Recipe: selling_price + target_food_cost_pct ──────────────
-        migrations.AddField(
-            model_name="recipe",
-            name="selling_price",
-            field=models.DecimalField(
-                blank=True,
-                decimal_places=2,
-                help_text="Menu selling price (ex. tax)",
-                max_digits=10,
-                null=True,
-            ),
-        ),
-        migrations.AddField(
-            model_name="recipe",
-            name="target_food_cost_pct",
-            field=models.DecimalField(
-                blank=True,
-                decimal_places=2,
-                default=30.0,
-                help_text="Target food cost percentage for this item type",
-                max_digits=5,
-                null=True,
-            ),
-        ),
-
-        # ── 5. RecipeItem: sub_recipe FK ──────────────────────────────────
-        migrations.AddField(
-            model_name="recipeitem",
-            name="sub_recipe",
-            field=models.ForeignKey(
-                blank=True,
-                db_column="sub_recipe_id",
-                help_text="Sub-recipe used as an ingredient",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="used_in",
-                to="inventory.recipe",
-            ),
-        ),
-
-        # ── 6. StockTransaction: from/to department FKs ──────────────────
-        migrations.AddField(
-            model_name="stocktransaction",
-            name="from_department",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Source department (for TRANSFER type only)",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="transfers_out",
-                to="inventory.department",
-            ),
-        ),
-        migrations.AddField(
-            model_name="stocktransaction",
-            name="to_department",
-            field=models.ForeignKey(
-                blank=True,
-                help_text="Destination department (for TRANSFER type only)",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="transfers_in",
-                to="inventory.department",
-            ),
-        ),
-
-        # ── 7. GoodsReceivedNote.purchase_order → nullable ────────────────
-        migrations.AlterField(
-            model_name="goodsreceivednote",
-            name="purchase_order",
-            field=models.ForeignKey(
-                blank=True,
-                db_column="po_id",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="inventory.purchaseorder",
-            ),
-        ),
-
-        # ── 8. GRNItem.po_item → nullable ────────────────────────────────
-        migrations.AlterField(
-            model_name="grnitem",
-            name="po_item",
-            field=models.ForeignKey(
-                blank=True,
-                db_column="po_item_id",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                to="inventory.purchaseorderitem",
-            ),
-        ),
-
-        # ── 9. GRNItem.quantity_ordered_on_po → default=0 ────────────────
-        migrations.AlterField(
-            model_name="grnitem",
-            name="quantity_ordered_on_po",
-            field=models.DecimalField(decimal_places=2, default=0, max_digits=10),
-        ),
-
-        # ── 10. RecipeItem.item → nullable (required for sub-recipes) ─────
-        migrations.AlterField(
-            model_name="recipeitem",
-            name="item",
-            field=models.ForeignKey(
-                blank=True,
-                db_column="item_id",
-                null=True,
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="recipe_usages",
-                to="inventory.item",
-            ),
-        ),
-
-        # ── 11. Create StockTake model ────────────────────────────────────
-        migrations.CreateModel(
-            name="StockTake",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                ("date", models.DateField()),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("DRAFT", "Draft"),
-                            ("IN_PROGRESS", "In Progress"),
-                            ("COMPLETED", "Completed"),
-                        ],
-                        default="DRAFT",
-                        max_length=20,
-                    ),
-                ),
-                ("notes", models.TextField(blank=True)),
-                ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("completed_at", models.DateTimeField(blank=True, null=True)),
-                (
-                    "created_by",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "department",
-                    models.ForeignKey(
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="goodsreceivednote",
+                    name="delivery_note_number",
+                    field=models.CharField(
                         blank=True,
-                        help_text="Leave blank for a full stock-take across all departments",
+                        help_text="Delivery note or invoice number",
+                        max_length=100,
+                        null=True,
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE goods_received_notes ADD COLUMN IF NOT EXISTS delivery_note_number VARCHAR(100);",
+                    reverse_sql="ALTER TABLE goods_received_notes DROP COLUMN IF EXISTS delivery_note_number;",
+                ),
+            ],
+        ),
+        # ── 3. GRNItem: add direct item FK (ad-hoc GRNs without a PO) ────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="grnitem",
+                    name="item",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="direct_item_id",
+                        help_text="Direct item reference (for ad-hoc GRNs without a PO)",
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="grn_items",
+                        to="inventory.item",
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                    ALTER TABLE grn_items ADD COLUMN IF NOT EXISTS direct_item_id BIGINT;
+                    DO $$ BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.table_constraints
+                            WHERE constraint_type = 'FOREIGN KEY'
+                              AND table_name = 'grn_items'
+                              AND constraint_name LIKE '%direct_item_id%'
+                        ) THEN
+                            ALTER TABLE grn_items
+                                ADD CONSTRAINT grn_items_direct_item_id_items_fk
+                                FOREIGN KEY (direct_item_id) REFERENCES items(id)
+                                DEFERRABLE INITIALLY DEFERRED;
+                        END IF;
+                    END $$;
+                    """,
+                    reverse_sql="ALTER TABLE grn_items DROP COLUMN IF EXISTS direct_item_id;",
+                ),
+            ],
+        ),
+        # ── 4. Recipe: selling_price ──────────────────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="recipe",
+                    name="selling_price",
+                    field=models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text="Menu selling price (ex. tax)",
+                        max_digits=10,
+                        null=True,
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE recipes ADD COLUMN IF NOT EXISTS selling_price NUMERIC(10, 2);",
+                    reverse_sql="ALTER TABLE recipes DROP COLUMN IF EXISTS selling_price;",
+                ),
+            ],
+        ),
+        # ── 5. Recipe: target_food_cost_pct ──────────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="recipe",
+                    name="target_food_cost_pct",
+                    field=models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        default=30.0,
+                        help_text="Target food cost percentage for this item type",
+                        max_digits=5,
+                        null=True,
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE recipes ADD COLUMN IF NOT EXISTS target_food_cost_pct NUMERIC(5, 2) DEFAULT 30.0;",
+                    reverse_sql="ALTER TABLE recipes DROP COLUMN IF EXISTS target_food_cost_pct;",
+                ),
+            ],
+        ),
+        # ── 6. RecipeItem: sub_recipe FK ──────────────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="recipeitem",
+                    name="sub_recipe",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="sub_recipe_id",
+                        help_text="Sub-recipe used as an ingredient",
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="used_in",
+                        to="inventory.recipe",
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                    ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS sub_recipe_id BIGINT;
+                    DO $$ BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.table_constraints
+                            WHERE constraint_type = 'FOREIGN KEY'
+                              AND table_name = 'recipe_items'
+                              AND constraint_name LIKE '%sub_recipe_id%'
+                        ) THEN
+                            ALTER TABLE recipe_items
+                                ADD CONSTRAINT recipe_items_sub_recipe_id_recipes_fk
+                                FOREIGN KEY (sub_recipe_id) REFERENCES recipes(id)
+                                DEFERRABLE INITIALLY DEFERRED;
+                        END IF;
+                    END $$;
+                    """,
+                    reverse_sql="ALTER TABLE recipe_items DROP COLUMN IF EXISTS sub_recipe_id;",
+                ),
+            ],
+        ),
+        # ── 7. StockTransaction: from_department FK ───────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="stocktransaction",
+                    name="from_department",
+                    field=models.ForeignKey(
+                        blank=True,
+                        help_text="Source department (for TRANSFER type only)",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="transfers_out",
                         to="inventory.department",
                     ),
                 ),
             ],
-            options={
-                "db_table": "stock_takes",
-                "ordering": ["-date", "-created_at"],
-                "managed": True,
-            },
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                    ALTER TABLE stock_transactions ADD COLUMN IF NOT EXISTS from_department_id BIGINT;
+                    DO $$ BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.table_constraints
+                            WHERE constraint_type = 'FOREIGN KEY'
+                              AND table_name = 'stock_transactions'
+                              AND constraint_name LIKE '%from_department_id%'
+                        ) THEN
+                            ALTER TABLE stock_transactions
+                                ADD CONSTRAINT stock_transactions_from_department_id_fk
+                                FOREIGN KEY (from_department_id) REFERENCES departments(id)
+                                DEFERRABLE INITIALLY DEFERRED;
+                        END IF;
+                    END $$;
+                    """,
+                    reverse_sql="ALTER TABLE stock_transactions DROP COLUMN IF EXISTS from_department_id;",
+                ),
+            ],
         ),
-
-        # ── 12. Create StockTakeItem model ────────────────────────────────
-        migrations.CreateModel(
-            name="StockTakeItem",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "system_qty",
-                    models.DecimalField(
-                        decimal_places=3,
-                        help_text="Auto-populated from current stock at time of stock-take creation",
-                        max_digits=10,
-                    ),
-                ),
-                (
-                    "physical_qty",
-                    models.DecimalField(
+        # ── 8. StockTransaction: to_department FK ─────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="stocktransaction",
+                    name="to_department",
+                    field=models.ForeignKey(
                         blank=True,
-                        decimal_places=3,
-                        help_text="Actual counted quantity entered by staff",
-                        max_digits=10,
+                        help_text="Destination department (for TRANSFER type only)",
                         null=True,
-                    ),
-                ),
-                ("notes", models.TextField(blank=True)),
-                (
-                    "item",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="inventory.item",
-                    ),
-                ),
-                (
-                    "stock_take",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="items",
-                        to="inventory.stocktake",
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="transfers_in",
+                        to="inventory.department",
                     ),
                 ),
             ],
-            options={
-                "db_table": "stock_take_items",
-                "ordering": ["item__name"],
-                "managed": True,
-            },
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                    ALTER TABLE stock_transactions ADD COLUMN IF NOT EXISTS to_department_id BIGINT;
+                    DO $$ BEGIN
+                        IF NOT EXISTS (
+                            SELECT 1 FROM information_schema.table_constraints
+                            WHERE constraint_type = 'FOREIGN KEY'
+                              AND table_name = 'stock_transactions'
+                              AND constraint_name LIKE '%to_department_id%'
+                        ) THEN
+                            ALTER TABLE stock_transactions
+                                ADD CONSTRAINT stock_transactions_to_department_id_fk
+                                FOREIGN KEY (to_department_id) REFERENCES departments(id)
+                                DEFERRABLE INITIALLY DEFERRED;
+                        END IF;
+                    END $$;
+                    """,
+                    reverse_sql="ALTER TABLE stock_transactions DROP COLUMN IF EXISTS to_department_id;",
+                ),
+            ],
+        ),
+        # ── 9. GoodsReceivedNote.purchase_order → nullable ────────────────
+        # AlterField is idempotent in PostgreSQL (DROP NOT NULL on already-nullable
+        # column is a no-op).
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterField(
+                    model_name="goodsreceivednote",
+                    name="purchase_order",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="po_id",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="inventory.purchaseorder",
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE goods_received_notes ALTER COLUMN po_id DROP NOT NULL;",
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+        ),
+        # ── 10. GRNItem.po_item → nullable ────────────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterField(
+                    model_name="grnitem",
+                    name="po_item",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="po_item_id",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="inventory.purchaseorderitem",
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE grn_items ALTER COLUMN po_item_id DROP NOT NULL;",
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+        ),
+        # ── 11. GRNItem.quantity_ordered_on_po → default=0 ───────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterField(
+                    model_name="grnitem",
+                    name="quantity_ordered_on_po",
+                    field=models.DecimalField(
+                        decimal_places=2, default=0, max_digits=10
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE grn_items ALTER COLUMN quantity_ordered_on_po SET DEFAULT 0;",
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+        ),
+        # ── 12. RecipeItem.item → nullable (required for sub-recipes) ─────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterField(
+                    model_name="recipeitem",
+                    name="item",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="item_id",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recipe_usages",
+                        to="inventory.item",
+                    ),
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE recipe_items ALTER COLUMN item_id DROP NOT NULL;",
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+        ),
+        # ── 13. Create StockTake model ────────────────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.CreateModel(
+                    name="StockTake",
+                    fields=[
+                        (
+                            "id",
+                            models.BigAutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        ("date", models.DateField()),
+                        (
+                            "status",
+                            models.CharField(
+                                choices=[
+                                    ("DRAFT", "Draft"),
+                                    ("IN_PROGRESS", "In Progress"),
+                                    ("COMPLETED", "Completed"),
+                                ],
+                                default="DRAFT",
+                                max_length=20,
+                            ),
+                        ),
+                        ("notes", models.TextField(blank=True)),
+                        ("created_at", models.DateTimeField(auto_now_add=True)),
+                        ("completed_at", models.DateTimeField(blank=True, null=True)),
+                        (
+                            "created_by",
+                            models.ForeignKey(
+                                on_delete=django.db.models.deletion.CASCADE,
+                                to=settings.AUTH_USER_MODEL,
+                            ),
+                        ),
+                        (
+                            "department",
+                            models.ForeignKey(
+                                blank=True,
+                                help_text="Leave blank for a full stock-take across all departments",
+                                null=True,
+                                on_delete=django.db.models.deletion.SET_NULL,
+                                to="inventory.department",
+                            ),
+                        ),
+                    ],
+                    options={
+                        "db_table": "stock_takes",
+                        "ordering": ["-date", "-created_at"],
+                        "managed": True,
+                    },
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                    CREATE TABLE IF NOT EXISTS stock_takes (
+                        id BIGSERIAL PRIMARY KEY,
+                        date DATE NOT NULL,
+                        status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+                        notes TEXT NOT NULL DEFAULT '',
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        completed_at TIMESTAMPTZ,
+                        created_by_id INTEGER NOT NULL REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED,
+                        department_id BIGINT REFERENCES departments(id) DEFERRABLE INITIALLY DEFERRED
+                    );
+                    """,
+                    reverse_sql="DROP TABLE IF EXISTS stock_takes;",
+                ),
+            ],
+        ),
+        # ── 14. Create StockTakeItem model ────────────────────────────────
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.CreateModel(
+                    name="StockTakeItem",
+                    fields=[
+                        (
+                            "id",
+                            models.BigAutoField(
+                                auto_created=True,
+                                primary_key=True,
+                                serialize=False,
+                                verbose_name="ID",
+                            ),
+                        ),
+                        (
+                            "system_qty",
+                            models.DecimalField(
+                                decimal_places=3,
+                                help_text="Auto-populated from current stock at time of stock-take creation",
+                                max_digits=10,
+                            ),
+                        ),
+                        (
+                            "physical_qty",
+                            models.DecimalField(
+                                blank=True,
+                                decimal_places=3,
+                                help_text="Actual counted quantity entered by staff",
+                                max_digits=10,
+                                null=True,
+                            ),
+                        ),
+                        ("notes", models.TextField(blank=True)),
+                        (
+                            "item",
+                            models.ForeignKey(
+                                on_delete=django.db.models.deletion.CASCADE,
+                                to="inventory.item",
+                            ),
+                        ),
+                        (
+                            "stock_take",
+                            models.ForeignKey(
+                                on_delete=django.db.models.deletion.CASCADE,
+                                related_name="items",
+                                to="inventory.stocktake",
+                            ),
+                        ),
+                    ],
+                    options={
+                        "db_table": "stock_take_items",
+                        "ordering": ["item__name"],
+                        "managed": True,
+                    },
+                ),
+            ],
+            database_operations=[
+                migrations.RunSQL(
+                    sql="""
+                    CREATE TABLE IF NOT EXISTS stock_take_items (
+                        id BIGSERIAL PRIMARY KEY,
+                        system_qty NUMERIC(10, 3) NOT NULL,
+                        physical_qty NUMERIC(10, 3),
+                        notes TEXT NOT NULL DEFAULT '',
+                        item_id BIGINT NOT NULL REFERENCES items(id) DEFERRABLE INITIALLY DEFERRED,
+                        stock_take_id BIGINT NOT NULL REFERENCES stock_takes(id) DEFERRABLE INITIALLY DEFERRED
+                    );
+                    """,
+                    reverse_sql="DROP TABLE IF EXISTS stock_take_items;",
+                ),
+            ],
         ),
     ]

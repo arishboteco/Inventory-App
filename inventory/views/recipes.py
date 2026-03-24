@@ -267,12 +267,14 @@ def recipe_create(request):
             for f in formset.forms:
                 if f.cleaned_data.get("DELETE"):
                     continue
-                item_id = f.cleaned_data.get("item")
-                if not item_id:
+                item_obj = f.cleaned_data.get("item")
+                sub_recipe_obj = f.cleaned_data.get("sub_recipe")
+                if not item_obj and not sub_recipe_obj:
                     continue
                 items.append(
                     {
-                        "item_id": int(item_id.pk),
+                        "item_id": int(item_obj.pk) if item_obj else None,
+                        "sub_recipe_id": int(sub_recipe_obj.pk) if sub_recipe_obj else None,
                         "quantity": float(f.cleaned_data.get("quantity") or 0),
                         "unit": f.cleaned_data.get("unit"),
                         "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
@@ -316,12 +318,14 @@ def recipe_detail(request, pk: int):
             for f in formset.forms:
                 if f.cleaned_data.get("DELETE"):
                     continue
-                item_id = f.cleaned_data.get("item")
-                if not item_id:
+                item_obj = f.cleaned_data.get("item")
+                sub_recipe_obj = f.cleaned_data.get("sub_recipe")
+                if not item_obj and not sub_recipe_obj:
                     continue
                 items.append(
                     {
-                        "item_id": int(item_id.pk),
+                        "item_id": int(item_obj.pk) if item_obj else None,
+                        "sub_recipe_id": int(sub_recipe_obj.pk) if sub_recipe_obj else None,
                         "quantity": float(f.cleaned_data.get("quantity") or 0),
                         "unit": f.cleaned_data.get("unit"),
                         "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
@@ -542,7 +546,7 @@ class RecipeViewPartialView(View):
                 Prefetch(
                     "items",
                     queryset=RecipeItem.objects.select_related(
-                        "item__category"
+                        "item__category", "sub_recipe"
                     ).order_by("sort_order", "id"),
                 )
             ),
@@ -555,6 +559,7 @@ class RecipeViewPartialView(View):
 
         for row in recipe.items.all():
             item = getattr(row, "item", None)
+            sub_recipe_obj = getattr(row, "sub_recipe", None)
             qty = _to_decimal(getattr(row, "quantity", None))
             loss_pct = _to_decimal(getattr(row, "loss_pct", None))
             unit_label = getattr(row, "unit", "") or ""
@@ -612,6 +617,39 @@ class RecipeViewPartialView(View):
                 if effective_qty
                 else Decimal("0.00")
             )
+            # D1: For sub-recipe rows, compute cost from the sub-recipe
+            if sub_recipe_obj and not item:
+                try:
+                    sub_cost = sub_recipe_obj.get_total_cost()
+                    sub_yield = _to_decimal(getattr(sub_recipe_obj, "default_yield_qty", None)) or Decimal("1")
+                    cost_per_base = (sub_cost / sub_yield).quantize(TWOPLACES) if sub_yield else Decimal("0.00")
+                except Exception:
+                    cost_per_base = Decimal("0.00")
+                loss_mult = Decimal("1") + (loss_pct / Decimal("100"))
+                line_cost = (cost_per_base * qty * loss_mult).quantize(TWOPLACES) if qty else Decimal("0.00")
+                total_cost += line_cost
+                items.append(
+                    {
+                        "id": row.pk,
+                        "name": sub_recipe_obj.name,
+                        "quantity": qty,
+                        "quantity_str": format(qty.normalize(), "f") if qty else "0",
+                        "unit": unit_label,
+                        "loss_pct": loss_pct,
+                        "category": "Sub-Recipe",
+                        "subcategory": "",
+                        "cost_per_base_unit": cost_per_base,
+                        "cost_per_base_unit_str": format(cost_per_base, ".2f"),
+                        "line_cost": line_cost,
+                        "line_cost_str": format(line_cost, ".2f"),
+                        "has_item": True,
+                        "has_zero_price": False,
+                        "is_sub_recipe": True,
+                        "sub_recipe_id": sub_recipe_obj.pk,
+                    }
+                )
+                continue
+
             has_zero_price = bool(qty and item and cost_per_base == Decimal("0.00"))
             zero_cost = zero_cost or has_zero_price
             total_cost += line_cost
@@ -632,6 +670,7 @@ class RecipeViewPartialView(View):
                     "line_cost_str": format(line_cost, ".2f"),
                     "has_item": bool(item),
                     "has_zero_price": has_zero_price,
+                    "is_sub_recipe": False,
                 }
             )
 

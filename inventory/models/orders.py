@@ -206,14 +206,25 @@ class GoodsReceivedNote(models.Model):
     """Acknowledges receipt of goods for a purchase order."""
 
     grn_id = models.AutoField(primary_key=True)
-    purchase_order = models.ForeignKey(PurchaseOrder, models.CASCADE, db_column="po_id")
+    # D6: Made nullable to support ad-hoc GRNs without a PO
+    purchase_order = models.ForeignKey(
+        PurchaseOrder, models.SET_NULL, db_column="po_id",
+        null=True, blank=True,
+    )
     supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     received_date = models.DateField()
     notes = models.TextField(blank=True, null=True, default="")
     attachment = models.FileField(upload_to="grn_attachments/", blank=True, null=True)
+    # D6: Delivery note / invoice number for ad-hoc GRNs
+    delivery_note_number = models.CharField(
+        max_length=100, blank=True, null=True,
+        help_text="Delivery note or invoice number"
+    )
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
-        return f"GRN {self.pk} for PO {self.purchase_order_id}"
+        if self.purchase_order_id:
+            return f"GRN {self.pk} for PO {self.purchase_order_id}"
+        return f"GRN {self.pk} (Ad-hoc)"
 
     class Meta:
         managed = True
@@ -225,16 +236,34 @@ class GRNItem(models.Model):
 
     grn_item_id = models.AutoField(primary_key=True)
     grn = models.ForeignKey(GoodsReceivedNote, models.CASCADE, db_column="grn_id")
+    # D6: Made nullable to support ad-hoc GRNs without a PO
     po_item = models.ForeignKey(
-        PurchaseOrderItem, models.CASCADE, db_column="po_item_id"
+        PurchaseOrderItem, models.SET_NULL, db_column="po_item_id",
+        null=True, blank=True,
     )
-    quantity_ordered_on_po = models.DecimalField(max_digits=10, decimal_places=2)
+    # D6: Direct item FK for ad-hoc GRNs (null when linked via po_item)
+    item = models.ForeignKey(
+        Item, models.PROTECT, db_column="direct_item_id",
+        null=True, blank=True,
+        related_name="grn_items",
+        help_text="Direct item reference (for ad-hoc GRNs without a PO)",
+    )
+    quantity_ordered_on_po = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0
+    )
     quantity_received = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price_at_receipt = models.DecimalField(max_digits=10, decimal_places=2)
     item_notes = models.TextField(blank=True, null=True, default="", db_column="notes")
 
+    def get_item(self):
+        """Return the Item, whether from po_item or direct item FK."""
+        if self.po_item:
+            return self.po_item.item
+        return self.item
+
     def __str__(self) -> str:  # pragma: no cover - simple representation
-        return f"{self.grn} item {self.po_item}"
+        item = self.get_item()
+        return f"{self.grn} — {item}"
 
     class Meta:
         managed = True

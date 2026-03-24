@@ -4,5 +4,8 @@
   {% include "components/form_field.html" with field=form.type help_text_class="text-xs text-gray-500 leading-snug" %}
   {% include "components/form_field.html" with field=form.default_yield_qty help_text_class="text-xs text-gray-500 leading-snug" %}
   {% include "components/form_field.html" with field=form.default_yield_unit help_text_class="text-xs text-gray-500 leading-snug" %}
+  {# D2: Selling price and food cost target #}
+  {% include "components/form_field.html" with field=form.selling_price help_text_class="text-xs text-gray-500 leading-snug" %}
+  {% include "components/form_field.html" with field=form.target_food_cost_pct help_text_class="text-xs text-gray-500 leading-snug" %}
   {% include "components/form_field.html" with field=form.description_and_plating container_class="md:col-span-3" help_text_class="text-xs text-gray-500 leading-snug" %}
 </div>

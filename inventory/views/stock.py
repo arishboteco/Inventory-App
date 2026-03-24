@@ -17,6 +17,7 @@ from ..forms.stock_forms import (
     StockAdjustmentForm,
     StockBulkUploadForm,
     StockReceivingForm,
+    StockTransferForm,
     StockWastageForm,
 )
 from ..models import StockTransaction
@@ -31,6 +32,7 @@ def stock_movements(request):
         "receive": "Goods Received",
         "adjust": "Stock Adjustment",
         "waste": "Wastage/Spoilage",
+        "transfer": "Stock Transfer",  # D3
     }
     active = request.GET.get("section", "receive")
 
@@ -39,6 +41,7 @@ def stock_movements(request):
     receive_form = StockReceivingForm(prefix="receive", item_suggest_url=item_url)
     adjust_form = StockAdjustmentForm(prefix="adjust", item_suggest_url=item_url)
     waste_form = StockWastageForm(prefix="waste", item_suggest_url=item_url)
+    transfer_form = StockTransferForm(prefix="transfer")  # D3
     quick_form = StockAdjustmentForm(prefix="quick", item_suggest_url=item_url)
     reopen_modal: str | None = None
     bulk_form = StockBulkUploadForm()
@@ -81,7 +84,7 @@ def stock_movements(request):
         }
 
     def _hydrate_from_flash():
-        nonlocal receive_form, adjust_form, waste_form, reopen_modal
+        nonlocal receive_form, adjust_form, waste_form, transfer_form, reopen_modal
         payload = request.session.pop("stock_form_flash", None)
         if not payload:
             return
@@ -121,6 +124,14 @@ def stock_movements(request):
                     )
             _display_item_name(waste_form)
             reopen_modal = "waste"
+        elif which == "transfer":
+            transfer_form = StockTransferForm(data, prefix="transfer")
+            for field, items in errors.items():
+                for e in items:
+                    transfer_form.add_error(
+                        None if field == "__all__" else field, e.get("message")
+                    )
+            reopen_modal = "transfer"
 
     if request.method == "POST":
         if "submit_receive" in request.POST:
@@ -228,6 +239,37 @@ def stock_movements(request):
             else:
                 _flash_form("waste", waste_form)
                 return redirect(reverse("stock_movements") + "?section=waste")
+        elif "submit_transfer" in request.POST:
+            # D3: Handle stock transfer
+            transfer_form = StockTransferForm(request.POST, prefix="transfer")
+            if transfer_form.is_valid():
+                cd = transfer_form.cleaned_data
+                try:
+                    from ..models import StockTransaction
+                    StockTransaction.objects.create(
+                        item=cd["item"],
+                        quantity_change=cd["quantity"],
+                        transaction_type="TRANSFER",
+                        user_id=(getattr(request.user, "username", None) or "System"),
+                        user_int=(getattr(request.user, "pk", None) or None),
+                        from_department=cd["from_department"],
+                        to_department=cd["to_department"],
+                        notes=cd.get("notes") or "",
+                    )
+                    messages.success(
+                        request,
+                        f"Transferred {cd['quantity']} of {cd['item'].name} "
+                        f"from {cd['from_department']} to {cd['to_department']}.",
+                        extra_tags="toast",
+                    )
+                    return redirect(reverse("stock_movements") + "?section=transfer")
+                except Exception as exc:
+                    transfer_form.add_error(None, str(exc))
+                    _flash_form("transfer", transfer_form)
+                    return redirect(reverse("stock_movements") + "?section=transfer")
+            else:
+                _flash_form("transfer", transfer_form)
+                return redirect(reverse("stock_movements") + "?section=transfer")
         elif "submit_quick" in request.POST:
             quick_form = StockAdjustmentForm(
                 request.POST, prefix="quick", item_suggest_url=item_url
@@ -372,6 +414,7 @@ def stock_movements(request):
         "receive_form": receive_form,
         "adjust_form": adjust_form,
         "waste_form": waste_form,
+        "transfer_form": transfer_form,  # D3
         "quick_form": quick_form,
         "bulk_form": bulk_form,
         "bulk_success_count": bulk_success_count,

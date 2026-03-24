@@ -22,7 +22,7 @@ from django.views.generic import TemplateView
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
-from ..forms.purchase_forms import GRNForm
+from ..forms.purchase_forms import AdhocGRNForm, AdhocGRNLineFormSet, GRNForm
 from ..models import GoodsReceivedNote, GRNItem, PurchaseOrder, Supplier
 from ..services import goods_receiving_service, list_utils
 
@@ -360,21 +360,25 @@ class GRNDetailView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         grn = get_object_or_404(GoodsReceivedNote, pk=self.kwargs["pk"])
-        items = grn.grnitem_set.select_related(
-            "po_item", "po_item__item", "po_item__item__unit"
-        )
-        rows = [
-            (
+        items = grn.grnitem_set.select_related("po_item", "po_item__item", "po_item__item__unit", "item")
+        if grn.purchase_order_id:
+            po_row = (
                 "PO",
                 format_html(
                     '<a class="text-primary" href="{}">{}</a>',
                     reverse("purchase_order_detail", args=[grn.purchase_order_id]),
                     grn.purchase_order_id,
                 ),
-            ),
+            )
+        else:
+            po_row = ("PO", "Ad-hoc (no PO)")
+        rows = [
+            po_row,
             ("Supplier", grn.supplier.name),
             ("Date", grn.received_date),
         ]
+        if grn.delivery_note_number:
+            rows.append(("Delivery Note #", grn.delivery_note_number))
         if grn.notes:
             rows.append(("Notes", grn.notes))
         if grn.attachment:
@@ -487,3 +491,58 @@ def grn_export(request, pk: int):
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f"attachment; filename=grn_{grn.pk}.pdf"
     return response
+
+
+def create_adhoc_grn(request):
+    """D6: Create a GRN without a PO (ad-hoc receipt)."""
+    from django.db import transaction as db_transaction
+    from ..services import stock_service
+    from ..services.goods_receiving_service import generate_grn_number
+
+    if request.method == "POST":
+        form = AdhocGRNForm(request.POST, request.FILES)
+        formset = AdhocGRNLineFormSet(request.POST, prefix="lines")
+        if form.is_valid() and formset.is_valid():
+            try:
+                with db_transaction.atomic():
+                    grn = form.save(commit=False)
+                    grn.purchase_order = None
+                    grn.save()
+                    grn_number = generate_grn_number()
+                    user_id = getattr(request.user, "username", "System") or "System"
+                    for line_form in formset.forms:
+                        if not line_form.cleaned_data or line_form.cleaned_data.get("DELETE"):
+                            continue
+                        item = line_form.cleaned_data["item"]
+                        qty = line_form.cleaned_data["quantity_received"]
+                        price = line_form.cleaned_data.get("unit_price") or Decimal("0")
+                        notes = line_form.cleaned_data.get("item_notes") or ""
+                        GRNItem.objects.create(
+                            grn=grn,
+                            po_item=None,
+                            item=item,
+                            quantity_ordered_on_po=Decimal("0"),
+                            quantity_received=qty,
+                            unit_price_at_receipt=price,
+                            item_notes=notes,
+                        )
+                        stock_service.record_stock_transaction(
+                            item_id=item.pk,
+                            quantity_change=qty,
+                            transaction_type="RECEIVING",
+                            user_id=user_id,
+                            notes=f"Ad-hoc GRN {grn_number}",
+                        )
+                messages.success(request, f"Ad-hoc GRN {grn.pk} created.", extra_tags="toast")
+                return redirect("grn_detail", pk=grn.pk)
+            except Exception as exc:
+                logger.error("Error creating ad-hoc GRN: %s", exc)
+                form.add_error(None, str(exc))
+    else:
+        form = AdhocGRNForm(initial={"received_date": date.today()})
+        formset = AdhocGRNLineFormSet(prefix="lines")
+
+    return render(request, "inventory/grns/grn_adhoc_create.html", {
+        "form": form,
+        "formset": formset,
+    })

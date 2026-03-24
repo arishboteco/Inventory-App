@@ -343,6 +343,7 @@ class ItemsListView(TemplateView):
                     current_stock__lte=F("reorder_point"),
                 ).count()
                 stats["low_stock_percentage"] = low_stock_count / total_active * 100
+                stats["low_stock_count"] = low_stock_count
             else:
                 stats["low_stock_percentage"] = 0
         except Exception:  # pragma: no cover - defensive

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
+from decimal import Decimal
 
 from django import forms
 
@@ -272,3 +273,56 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
 
 class StockBulkUploadForm(StyledFormMixin, forms.Form):
     file = forms.FileField()
+
+
+class StockTransferForm(StyledFormMixin, forms.Form):
+    """D3: Transfer stock between departments."""
+
+    from ..models import Department
+
+    item = forms.ModelChoiceField(
+        queryset=Item.objects.filter(is_active=True).order_by("name"),
+        empty_label="— Select item —",
+        widget=forms.Select(attrs={"class": SELECT_CLASS}),
+    )
+    quantity = forms.DecimalField(
+        min_value=Decimal("0.01"),
+        decimal_places=2,
+        widget=forms.NumberInput(
+            attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0.01", "placeholder": "e.g. 5"}
+        ),
+        label="Quantity",
+    )
+    from_department = forms.ModelChoiceField(
+        queryset=None,  # set in __init__
+        empty_label="— From Department —",
+        widget=forms.Select(attrs={"class": SELECT_CLASS}),
+        label="From Department",
+    )
+    to_department = forms.ModelChoiceField(
+        queryset=None,  # set in __init__
+        empty_label="— To Department —",
+        widget=forms.Select(attrs={"class": SELECT_CLASS}),
+        label="To Department",
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS, "rows": 2}),
+        label="Notes",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from ..models import Department as Dept
+        qs = Dept.objects.all().order_by("name")
+        self.fields["from_department"].queryset = qs
+        self.fields["to_department"].queryset = qs
+        self.apply_styling()
+
+    def clean(self):
+        cleaned = super().clean()
+        from_dept = cleaned.get("from_department")
+        to_dept = cleaned.get("to_department")
+        if from_dept and to_dept and from_dept == to_dept:
+            self.add_error("to_department", "Cannot transfer to the same department.")
+        return cleaned

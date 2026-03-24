@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views.explore import explore, explore_export
-from .views.goods_received import GRNCreateView, GRNDetailView, GRNListView, grn_export
+from .views.goods_received import GRNCreateView, GRNDetailView, GRNListView, create_adhoc_grn, grn_export
 from .views.guides import WorkflowGuideView
 from .views.indents import (
     IndentCreateView,
@@ -9,6 +9,7 @@ from .views.indents import (
     IndentsTableView,
     IndentUpdateView,
     consolidate_indents,
+    generate_low_stock_indent,
     indent_detail,
     indent_pdf,
     indent_update_status,
@@ -67,6 +68,12 @@ from .views.recipes import (
 )
 from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
+from .views.stock_take import (
+    create_stock_take,
+    stock_take_count,
+    stock_take_list,
+    stock_take_review,
+)
 from .views.suppliers import (
     SupplierCreateView,
     SupplierDeleteView,
@@ -155,6 +162,10 @@ urlpatterns = [
     path("stock/users/search/", UserSearchView.as_view(), name="user_search"),
     path("stock/pos/search/", POSearchView.as_view(), name="po_search"),
     path("history-reports/", history_reports, name="history_reports"),
+    path("stock-takes/", stock_take_list, name="stock_take_list"),
+    path("stock-takes/new/", create_stock_take, name="stock_take_start"),
+    path("stock-takes/<int:pk>/count/", stock_take_count, name="stock_take_count"),
+    path("stock-takes/<int:pk>/review/", stock_take_review, name="stock_take_review"),
     path("visualizations/", visualizations, name="visualizations"),
     path("indents/", IndentsListView.as_view(), name="indents_list"),
     path("indents/table/", IndentsTableView.as_view(), name="indents_table"),
@@ -168,6 +179,7 @@ urlpatterns = [
         name="indent_update_status",
     ),
     path("indents/<int:pk>/pdf/", indent_pdf, name="indent_pdf"),
+    path("indents/generate-from-low-stock/", generate_low_stock_indent, name="low_stock_indent"),
     path("indents/consolidate/", indents_consolidate, name="indents_consolidate"),
     path(
         "indents/consolidate/preview/",
@@ -233,6 +245,7 @@ urlpatterns = [
     ),
     path("grns/", GRNListView.as_view(), name="grn_list"),
     path("grns/create/", GRNCreateView.as_view(), name="grn_create"),
+    path("grns/create/adhoc/", create_adhoc_grn, name="grn_create_adhoc"),
     path("grns/<int:pk>/export/", grn_export, name="grn_export"),
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),

@@ -66,6 +66,7 @@
           <button id="receive-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Receive Stock</button>
           <button id="adjust-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Adjust Stock</button>
           <button id="waste-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Record Wastage</button>
+          <button id="transfer-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Transfer Stock</button>
           <button id="bulk-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Bulk Upload</button>
           <a href="{% url 'history_reports' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">View Reports</a>
         </div>
@@ -79,6 +80,7 @@
   {% include "components/modal.html" with id="receive-modal" open_id="receive-open" title="Receive Stock" content_template="inventory/_receive_form_modal.html" %}
   {% include "components/modal.html" with id="adjust-modal" open_id="adjust-open" title="Adjust Stock" content_template="inventory/_adjust_form_modal.html" %}
   {% include "components/modal.html" with id="waste-modal" open_id="waste-open" title="Record Wastage" content_template="inventory/_waste_form_modal.html" %}
+  {% include "components/modal.html" with id="transfer-modal" open_id="transfer-open" title="Transfer Stock" content_template="inventory/_transfer_form_modal.html" %}
   {% include "components/modal.html" with id="stock-bulk-modal" open_id="bulk-open" title="Bulk Upload" content_template="inventory/_stock_bulk_modal.html" %}
       <script>
         (function(){
@@ -119,6 +121,7 @@
             setupItemMeta('receive-modal');
             setupItemMeta('adjust-modal');
             setupItemMeta('waste-modal');
+            setupItemMeta('transfer-modal');
             // Re-open modal if server indicated a form error
             var which = '{{ open_modal|default:"" }}';
             if (which) {

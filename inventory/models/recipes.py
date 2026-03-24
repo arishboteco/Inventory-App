@@ -33,9 +33,81 @@ class Recipe(models.Model):
     effective_to = models.DateField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # D2: Selling price and food cost tracking
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Menu selling price (ex. tax)"
+    )
+    target_food_cost_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, null=True, blank=True, default=30.00,
+        help_text="Target food cost percentage for this item type"
+    )
 
     def __str__(self):
         return self.name or f"Recipe {self.pk}"
+
+    def get_total_cost(self, _visited=None):
+        """Calculate total cost using last/initial purchase price.
+
+        Uses a visited set to prevent infinite loops from circular sub-recipe
+        references (added in D1).
+        """
+        if _visited is None:
+            _visited = set()
+        if self.pk in _visited:
+            return Decimal("0")
+        _visited.add(self.pk)
+
+        total = Decimal("0")
+        for recipe_item in self.items.select_related("item").all():
+            # Sub-recipe support (D1): check attribute exists and is set
+            sub = getattr(recipe_item, "sub_recipe", None)
+            if sub is not None:
+                sub_cost = sub.get_total_cost(_visited=_visited.copy())
+                sub_yield = Decimal(str(sub.default_yield_qty or 1)) or Decimal("1")
+                qty = Decimal(str(recipe_item.quantity or 0))
+                loss_mult = Decimal("1") + (
+                    Decimal(str(recipe_item.loss_pct or 0)) / Decimal("100")
+                )
+                if sub_yield:
+                    total += (sub_cost / sub_yield) * qty * loss_mult
+            elif recipe_item.item:
+                item = recipe_item.item
+                price = Decimal(str(item.last_purchase_price or 0))
+                if not price:
+                    price = Decimal(str(item.initial_purchase_price or 0))
+                qty = Decimal(str(recipe_item.quantity or 0))
+                loss_pct = Decimal(str(recipe_item.loss_pct or 0))
+                if qty and loss_pct and loss_pct < 100:
+                    try:
+                        effective_qty = qty / (1 - loss_pct / 100)
+                    except (ArithmeticError, ZeroDivisionError):
+                        effective_qty = qty
+                else:
+                    effective_qty = qty
+                total += price * effective_qty
+        return total
+
+    @property
+    def food_cost_percentage(self):
+        """Returns food cost as a percentage of selling price."""
+        if self.selling_price and self.selling_price > 0:
+            total_cost = self.get_total_cost()
+            return round(float(total_cost / self.selling_price) * 100, 1)
+        return None
+
+    @property
+    def food_cost_status(self):
+        """Returns 'success', 'warning', or 'danger' for Bootstrap colour coding."""
+        pct = self.food_cost_percentage
+        if pct is None:
+            return "unknown"
+        target = float(self.target_food_cost_pct or 30)
+        if pct <= target:
+            return "success"
+        elif pct <= target + 5:
+            return "warning"
+        return "danger"
 
     class Meta:
         managed = True
@@ -69,7 +141,7 @@ class RecipeComponent(models.Model):
 
 class RecipeItem(models.Model):
     """
-    Direct relationship between Recipe and Item.
+    Direct relationship between Recipe and Item (or a sub-recipe).
     Simplified model - no component_kind needed, direct item_id FK.
     """
 
@@ -80,11 +152,24 @@ class RecipeItem(models.Model):
         db_column="recipe_id",
         related_name="items",
     )
+    # D1: item is now nullable to support sub-recipe rows
     item = models.ForeignKey(
         "Item",
         models.CASCADE,
         db_column="item_id",
         related_name="recipe_usages",
+        null=True,
+        blank=True,
+    )
+    # D1: sub-recipe ingredient support
+    sub_recipe = models.ForeignKey(
+        Recipe,
+        models.SET_NULL,
+        db_column="sub_recipe_id",
+        related_name="used_in",
+        null=True,
+        blank=True,
+        help_text="Sub-recipe used as an ingredient",
     )
     quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
     unit = models.CharField(max_length=50, blank=True, null=True)
@@ -94,13 +179,67 @@ class RecipeItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not self.item and not self.sub_recipe:
+            raise ValidationError("Select either an inventory item or a sub-recipe.")
+        if self.item and self.sub_recipe:
+            raise ValidationError(
+                "Cannot select both an item and a sub-recipe — choose one."
+            )
+        if self.sub_recipe and self.sub_recipe == self.recipe:
+            raise ValidationError("A recipe cannot use itself as an ingredient.")
+        if self.sub_recipe:
+            self._check_circular(self.sub_recipe, visited={self.recipe_id})
+
+    def _check_circular(self, sub, visited):
+        from django.core.exceptions import ValidationError
+        if sub.pk in visited:
+            raise ValidationError(
+                f"Circular dependency detected: {sub.name} references back to this recipe."
+            )
+        visited.add(sub.pk)
+        for child in sub.items.filter(sub_recipe__isnull=False).select_related("sub_recipe"):
+            self._check_circular(child.sub_recipe, visited.copy())
+
+    def get_line_cost(self):
+        """Return the cost for this ingredient line."""
+        if self.sub_recipe:
+            sub_cost = self.sub_recipe.get_total_cost()
+            sub_yield = Decimal(str(self.sub_recipe.default_yield_qty or 1)) or Decimal("1")
+            qty = Decimal(str(self.quantity or 0))
+            loss_mult = Decimal("1") + (
+                Decimal(str(self.loss_pct or 0)) / Decimal("100")
+            )
+            if sub_yield:
+                return (sub_cost / sub_yield) * qty * loss_mult
+            return Decimal("0")
+        if self.item:
+            price = Decimal(str(self.item.last_purchase_price or 0))
+            if not price:
+                price = Decimal(str(self.item.initial_purchase_price or 0))
+            qty = Decimal(str(self.quantity or 0))
+            loss_pct = Decimal(str(self.loss_pct or 0))
+            if qty and loss_pct and loss_pct < 100:
+                try:
+                    effective_qty = qty / (1 - loss_pct / 100)
+                except (ArithmeticError, ZeroDivisionError):
+                    effective_qty = qty
+            else:
+                effective_qty = qty
+            return price * effective_qty
+        return Decimal("0")
+
     def __str__(self):
-        return f"{self.recipe} - {self.item.name} ({self.quantity} {self.unit})"
+        if self.sub_recipe:
+            return f"{self.recipe} - [Sub] {self.sub_recipe.name} ({self.quantity})"
+        name = self.item.name if self.item else "?"
+        return f"{self.recipe} - {name} ({self.quantity} {self.unit})"
 
     class Meta:
         managed = True
         db_table = "recipe_items_new"  # Use a new table to avoid conflicts
-        unique_together = ("recipe", "item")
+        # unique_together removed in D1 to support nullable item + sub_recipe rows
 
 
 class SaleTransaction(models.Model):

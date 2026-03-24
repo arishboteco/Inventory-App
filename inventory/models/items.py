@@ -141,6 +141,21 @@ class StockTransaction(models.Model):
     notes = models.TextField(blank=True, null=True, default="")
     reason_category = models.CharField(max_length=20, blank=True, null=True)
     transaction_date = models.DateTimeField(default=timezone.now)
+    # D3: Transfer support — source/destination departments
+    from_department = models.ForeignKey(
+        "inventory.Department",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="transfers_out",
+        help_text="Source department (for TRANSFER type only)",
+    )
+    to_department = models.ForeignKey(
+        "inventory.Department",
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="transfers_in",
+        help_text="Destination department (for TRANSFER type only)",
+    )
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"Transaction {self.pk} for {self.item}"

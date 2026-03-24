@@ -1,0 +1,83 @@
+{% extends "_base.html" %}
+{% load icon_tags %}
+{% block title %}Stock Take Count – Inventory Pro{% endblock %}
+{% block content %}
+<div class="w-full max-w-4xl mx-auto space-y-6 px-4 md:px-0 py-6">
+
+  <nav class="text-sm text-gray-500 flex items-center gap-1">
+    <a href="{% url 'stock_take_list' %}" class="hover:text-primary hover:underline">Stock Takes</a>
+    <span>›</span>
+    <span class="text-bodyText">Count #{{ stock_take.pk }}</span>
+  </nav>
+
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-border">
+      <h1 class="text-xl font-semibold text-bodyText">Stock Take #{{ stock_take.pk }} — Enter Counts</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        {{ stock_take.date }}
+        {% if stock_take.department %} · {{ stock_take.department.name }}{% endif %}
+        · {{ items|length }} item{{ items|length|pluralize }}
+      </p>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-surfaceSubtle border-b border-border">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Item</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">System Qty</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Physical Count <span class="text-primary normal-case">*</span></th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {% for sti in items %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle">
+              <td class="px-4 py-2">
+                <div class="font-medium text-bodyText">{{ sti.item.name }}</div>
+                <div class="text-xs text-gray-500">{{ sti.item.base_unit|default:"" }}</div>
+              </td>
+              <td class="px-4 py-2 text-right tabular-nums text-gray-600">{{ sti.system_qty|floatformat:3 }}</td>
+              <td class="px-4 py-2 text-right">
+                <input type="number"
+                       name="physical_{{ sti.pk }}"
+                       step="0.001"
+                       min="0"
+                       value="{{ sti.physical_qty|default:'' }}"
+                       placeholder="—"
+                       class="w-28 p-1.5 text-right border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary tabular-nums text-sm">
+              </td>
+              <td class="px-4 py-2">
+                <input type="text"
+                       name="notes_{{ sti.pk }}"
+                       value="{{ sti.notes|default:'' }}"
+                       placeholder="Optional"
+                       class="w-full p-1.5 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm">
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-4 py-8 text-center text-gray-500">No items in this stock take.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="px-6 py-4 border-t border-border flex items-center justify-between gap-3 flex-wrap">
+        <a href="{% url 'stock_take_list' %}"
+           class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition">
+          Save &amp; Back to List
+        </a>
+        <button type="submit"
+                class="inline-flex items-center px-6 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
+          {% icon 'arrow-right' 'w-4 h-4 mr-2' %}
+          Save &amp; Review Variances
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

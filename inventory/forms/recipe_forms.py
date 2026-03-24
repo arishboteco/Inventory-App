@@ -6,6 +6,8 @@ from ..models import Item, Recipe, RecipeItem
 from ..models.recipes import RECIPE_TYPES
 from .base import StyledFormMixin
 
+
+
 INPUT_CLASS = (
     "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg "
     "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -74,6 +76,26 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
             "single reference."
         ),
     )
+    # D2: Selling price and food cost target
+    selling_price = forms.DecimalField(
+        required=False,
+        decimal_places=2,
+        widget=forms.NumberInput(
+            attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0", "placeholder": "e.g. 25.00"}
+        ),
+        label="Menu Selling Price",
+        help_text="Selling price excluding tax",
+    )
+    target_food_cost_pct = forms.DecimalField(
+        required=False,
+        decimal_places=2,
+        initial=30.00,
+        widget=forms.NumberInput(
+            attrs={"class": INPUT_CLASS, "step": "0.1", "min": "0", "max": "100", "placeholder": "30.0"}
+        ),
+        label="Target Food Cost %",
+        help_text="Target food cost as % of selling price (typically 28–32%)",
+    )
 
     class Meta:
         model = Recipe
@@ -85,6 +107,8 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
             "default_yield_qty",
             "default_yield_unit",
             "plating_notes",
+            "selling_price",
+            "target_food_cost_pct",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -120,6 +144,7 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
 
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True),
+        required=False,
         widget=forms.Select(
             attrs={
                 "class": INPUT_CLASS + " predictive",
@@ -127,7 +152,20 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
             }
         ),
         label="Item",
-        empty_label="Select an item",
+        empty_label="— Select item —",
+    )
+    # D1: sub-recipe selector
+    sub_recipe = forms.ModelChoiceField(
+        queryset=Recipe.objects.filter(is_active=True),
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": INPUT_CLASS + " predictive",
+                "data-placeholder": "Select sub-recipe",
+            }
+        ),
+        label="Sub-Recipe",
+        empty_label="— Select sub-recipe —",
     )
     quantity = forms.DecimalField(
         min_value=0.01,
@@ -178,6 +216,7 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
         model = RecipeItem
         fields = [
             "item",
+            "sub_recipe",
             "quantity",
             "unit",
             "loss_pct",
@@ -205,7 +244,8 @@ RecipeItemFormSet = forms.inlineformset_factory(
     Recipe,
     RecipeItem,
     form=RecipeItemForm,
-    fields=["item", "quantity", "unit", "loss_pct"],
+    fk_name="recipe",  # D1: disambiguate from sub_recipe FK
+    fields=["item", "sub_recipe", "quantity", "unit", "loss_pct"],
     extra=1,
     can_delete=True,
 )
@@ -215,7 +255,8 @@ RecipeItemEditFormSet = forms.inlineformset_factory(
     Recipe,
     RecipeItem,
     form=RecipeItemForm,
-    fields=["item", "quantity", "unit", "loss_pct"],
+    fk_name="recipe",  # D1: disambiguate from sub_recipe FK
+    fields=["item", "sub_recipe", "quantity", "unit", "loss_pct"],
     extra=0,
     can_delete=True,
 )

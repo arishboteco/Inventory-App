@@ -1,0 +1,74 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}Generate Low-Stock Indent{% endblock %}
+{% block page_heading %}Generate Low-Stock Indent{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-gray-600">Review the items below and confirm to create a draft indent.</p>
+{% endblock %}
+{% block page_meta %}
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">
+      Low-stock items: <span class="text-bodyText">{{ low_stock_items|length }}</span>
+    </span>
+  </div>
+{% endblock %}
+
+{% block data_container %}
+<div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden">
+  {% if low_stock_items %}
+    <div class="px-4 pt-4 pb-2 border-b border-border">
+      <h2 class="text-lg font-semibold text-bodyText">Items Below Reorder Point</h2>
+      <p class="text-sm text-gray-500 mt-1">The following quantities will be requested to bring each item up to its reorder point (or minimum order quantity, whichever is greater).</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left">
+        <thead>
+          <tr class="bg-surfaceSubtle border-b border-border">
+            <th scope="col" class="px-4 py-2">Item</th>
+            <th scope="col" class="px-4 py-2 text-right">Current Stock</th>
+            <th scope="col" class="px-4 py-2 text-right">Reorder Point</th>
+            <th scope="col" class="px-4 py-2 text-right">Suggested Qty</th>
+            <th scope="col" class="px-4 py-2">Unit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in low_stock_items %}
+            {% with reorder=item.reorder_point|default:0 current=item.current_stock|default:0 min_order=item.minimum_order_qty|default:0 %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText border-b border-border last:border-0">
+              <td class="px-4 py-2 font-medium">{{ item.name }}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{{ current|floatformat:2 }}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{{ reorder|floatformat:2 }}</td>
+              <td class="px-4 py-2 text-right tabular-nums text-danger font-medium">
+                {{ reorder|floatformat:2 }}
+              </td>
+              <td class="px-4 py-2 text-gray-500">{{ item.base_unit|default:"—" }}</td>
+            </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="px-4 py-4 border-t border-border flex items-center justify-between gap-3 flex-wrap">
+      <a href="{% url 'items_list' %}"
+         class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition focus:outline-none focus:ring-2 focus:ring-primary">
+        Cancel
+      </a>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
+          Create Indent ({{ low_stock_items|length }} item{{ low_stock_items|length|pluralize }})
+        </button>
+      </form>
+    </div>
+  {% else %}
+    <div class="px-4 py-12 text-center">
+      <p class="text-gray-500 text-sm">All items are at or above their reorder points. No indent needed.</p>
+      <a href="{% url 'items_list' %}"
+         class="mt-4 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition focus:outline-none focus:ring-2 focus:ring-primary">
+        Back to Items
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

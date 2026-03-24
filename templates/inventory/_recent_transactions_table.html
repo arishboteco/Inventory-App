@@ -12,6 +12,7 @@
         <option value="RECEIVING" {% if filter_type == 'RECEIVING' %}selected{% endif %}>Receiving</option>
         <option value="ADJUSTMENT" {% if filter_type == 'ADJUSTMENT' %}selected{% endif %}>Adjustment</option>
         <option value="WASTAGE" {% if filter_type == 'WASTAGE' %}selected{% endif %}>Wastage</option>
+        <option value="TRANSFER" {% if filter_type == 'TRANSFER' %}selected{% endif %}>Transfer</option>
       </select>
       <input type="date" name="date_from" value="{{ filter_date_from|default:'' }}"
              class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -52,6 +53,8 @@
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Adjustment</span>
       {% elif tx.transaction_type == 'WASTAGE' %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Wastage</span>
+      {% elif tx.transaction_type == 'TRANSFER' %}
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Transfer</span>
       {% else %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText">{{ tx.transaction_type|default:"—" }}</span>
       {% endif %}
@@ -59,7 +62,14 @@
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
     <td class="px-4 py-2">{{ tx.user_id|default:"—" }}</td>
     <td class="px-4 py-2 tabular-nums">{{ tx.transaction_date|date:"Y-m-d" }}</td>
-    <td class="px-4 py-2">{{ tx.notes|default:"—" }}</td>
+    <td class="px-4 py-2">
+      {% if tx.transaction_type == 'TRANSFER' and tx.from_department and tx.to_department %}
+        <span class="text-purple-700 font-medium">{{ tx.from_department.name }} → {{ tx.to_department.name }}</span>
+        {% if tx.notes %}<span class="text-gray-400 ml-1">· {{ tx.notes }}</span>{% endif %}
+      {% else %}
+        {{ tx.notes|default:"—" }}
+      {% endif %}
+    </td>
   </tr>
   {% empty %}
   <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">

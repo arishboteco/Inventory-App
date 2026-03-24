@@ -78,6 +78,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "description": "Search items, batches, and availability.",
                 "url_name": "explore",
             },
+            {
+                "title": "Stock Takes",
+                "description": "Run physical counts and reconcile variances.",
+                "url_name": "stock_take_list",
+            },
         ],
     ),
     (
@@ -218,6 +223,9 @@ def primary_navigation(request):
                         "text": f"{low} {noun} below reorder level",
                         "url": "/items/?stock_status=low",
                     }
+                )
+                notifications.append(
+                    {"text": f"Generate indent for {low} low-stock {noun}", "url": "/indents/generate-from-low-stock/"}
                 )
             ctx["notification_count"] = low + pending
             ctx["notifications"] = notifications

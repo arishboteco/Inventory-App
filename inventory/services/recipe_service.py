@@ -199,11 +199,10 @@ def create_recipe(
             }
             recipe = Recipe.objects.create(**fields)
             for item_data in items:
-                # For now, just create the item without cycle checking
-                # Cycle checking would be complex with the item-based approach
                 RecipeItem.objects.create(
                     recipe=recipe,
-                    item_id=item_data["item_id"],
+                    item_id=item_data.get("item_id"),
+                    sub_recipe_id=item_data.get("sub_recipe_id"),
                     quantity=item_data["quantity"],
                     unit=item_data["unit"],
                     loss_pct=item_data.get("loss_pct") or 0,
@@ -231,11 +230,10 @@ def update_recipe(
             recipe.save()
             RecipeItem.objects.filter(recipe=recipe).delete()
             for item_data in items:
-                # For now, just create the item without cycle checking
-                # Cycle checking would be complex with the item-based approach
                 RecipeItem.objects.create(
                     recipe=recipe,
-                    item_id=item_data["item_id"],
+                    item_id=item_data.get("item_id"),
+                    sub_recipe_id=item_data.get("sub_recipe_id"),
                     quantity=item_data["quantity"],
                     unit=item_data["unit"],
                     loss_pct=item_data.get("loss_pct") or 0,

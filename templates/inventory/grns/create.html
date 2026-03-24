@@ -21,6 +21,17 @@
     {# ── Step 1: Select PO ── #}
     <div class="space-y-4">
       <h2 class="text-base font-semibold text-bodyText">Step 1 — Select a Purchase Order</h2>
+      <div class="mb-4">
+        <a href="{% url 'grn_create_adhoc' %}"
+           class="flex items-center justify-between p-4 border-2 border-dashed border-primary rounded-xl hover:bg-surfaceSubtle transition group">
+          <div>
+            <div class="font-medium text-primary">Receive Without PO</div>
+            <div class="text-xs text-gray-500 mt-0.5">Ad-hoc receipt — no purchase order required</div>
+          </div>
+          {% icon 'chevron-right' 'w-5 h-5 text-primary' %}
+        </a>
+      </div>
+
       {% if open_pos %}
         <div class="space-y-2">
           {% for po in open_pos %}

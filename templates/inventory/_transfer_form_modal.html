@@ -1,0 +1,27 @@
+{% load form_tags %}
+{# D3: Transfer Stock modal form #}
+<form method="post" action="{% url 'stock_movements' %}?section=transfer" id="transfer-form">
+  {% csrf_token %}
+  {% if transfer_form.non_field_errors %}
+    <ul class="mb-3 text-sm text-red-600 list-disc pl-5">
+      {% for e in transfer_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+  <div class="space-y-3">
+    {% include "components/form_field.html" with field=transfer_form.item %}
+    {% include "components/form_field.html" with field=transfer_form.quantity %}
+    {% include "components/form_field.html" with field=transfer_form.from_department %}
+    {% include "components/form_field.html" with field=transfer_form.to_department %}
+    {% include "components/form_field.html" with field=transfer_form.notes %}
+  </div>
+  <div class="mt-4 flex justify-end gap-2">
+    <button type="button" data-modal-close
+            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition focus:outline-none focus:ring-2 focus:ring-primary">
+      Cancel
+    </button>
+    <button type="submit" name="submit_transfer"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
+      Transfer Stock
+    </button>
+  </div>
+</form>

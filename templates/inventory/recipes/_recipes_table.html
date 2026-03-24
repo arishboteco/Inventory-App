@@ -80,6 +80,7 @@
             {% endif %}
           </a>
         </th>
+        <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Food Cost %</th>
         <th scope="col" class="sticky z-10 w-32 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Actions</th>
       </tr>
     </thead>
@@ -124,6 +125,19 @@
             {% endif %}
           </td>
           <td class="px-4 py-2 align-top">
+            {% if recipe.food_cost_percentage is not None %}
+              {% if recipe.food_cost_status == 'success' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">{{ recipe.food_cost_percentage }}%</span>
+              {% elif recipe.food_cost_status == 'warning' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">{{ recipe.food_cost_percentage }}%</span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">{{ recipe.food_cost_percentage }}%</span>
+              {% endif %}
+            {% else %}
+              <span class="text-gray-400">—</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 align-top">
             <div class="flex items-center gap-2">
               <button type="button"
                       class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
@@ -157,7 +171,7 @@
         </tr>
       {% empty %}
         <tr>
-          <td colspan="5" class="px-4 py-6 text-center text-gray-500">No recipes found.</td>
+          <td colspan="6" class="px-4 py-6 text-center text-gray-500">No recipes found.</td>
         </tr>
       {% endfor %}
     </tbody>

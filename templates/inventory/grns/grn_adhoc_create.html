@@ -1,0 +1,100 @@
+{% extends "_base.html" %}
+{% load icon_tags %}
+{% block title %}Receive Without PO – Inventory Pro{% endblock %}
+{% block content %}
+<div class="w-full max-w-4xl mx-auto space-y-6 px-4 md:px-0 py-6">
+
+  <nav class="text-sm text-gray-500 flex items-center gap-1">
+    <a href="{% url 'grn_list' %}" class="hover:text-primary hover:underline">GRNs</a>
+    <span>›</span>
+    <span class="text-bodyText">Receive Without PO</span>
+  </nav>
+
+  <div class="bg-surface border border-border rounded-2xl shadow-card p-6">
+    <div class="mb-6">
+      <h1 class="text-2xl font-semibold text-bodyText">Ad-hoc Receipt (No PO)</h1>
+      <p class="text-sm text-gray-600 mt-1">Record stock received directly from a supplier without a purchase order.</p>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <ul class="list-disc list-inside space-y-0.5">
+          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <h2 class="text-base font-semibold text-bodyText mb-3">Receipt Details</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {% include "components/form_field.html" with field=form.supplier %}
+        {% include "components/form_field.html" with field=form.received_date %}
+        {% include "components/form_field.html" with field=form.delivery_note_number %}
+        {% include "components/form_field.html" with field=form.notes %}
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-bodyText mb-1">
+          Delivery Document <span class="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png"
+               class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:text-sm file:font-medium file:bg-surface file:text-bodyText hover:file:bg-surfaceSubtle cursor-pointer">
+      </div>
+
+      <h2 class="text-base font-semibold text-bodyText mb-3">Line Items</h2>
+
+      {{ formset.management_form }}
+      {% if formset.non_form_errors %}
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {% for error in formset.non_form_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="overflow-x-auto rounded-xl border border-border mb-6" id="adhoc-lines-table">
+        <table class="min-w-full text-sm">
+          <thead class="bg-surfaceSubtle text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            <tr>
+              <th class="px-4 py-3 text-left">Item</th>
+              <th class="px-4 py-3 text-right">Qty Received <span class="text-primary">*</span></th>
+              <th class="px-4 py-3 text-right">Unit Price</th>
+              <th class="px-4 py-3 text-left">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            {% for line_form in formset %}
+            <tr class="odd:bg-surface even:bg-surfaceSubtle">
+              {% if line_form.non_field_errors %}
+                <td colspan="4" class="px-4 py-2 text-red-600 text-xs">{{ line_form.non_field_errors }}</td>
+              {% endif %}
+              <td class="px-4 py-2">
+                {{ line_form.item }}
+                {% if line_form.item.errors %}<p class="text-xs text-red-600 mt-0.5">{{ line_form.item.errors|join:", " }}</p>{% endif %}
+              </td>
+              <td class="px-4 py-2 text-right">
+                {{ line_form.quantity_received }}
+                {% if line_form.quantity_received.errors %}<p class="text-xs text-red-600 mt-0.5">{{ line_form.quantity_received.errors|join:", " }}</p>{% endif %}
+              </td>
+              <td class="px-4 py-2 text-right">{{ line_form.unit_price }}</td>
+              <td class="px-4 py-2">{{ line_form.item_notes }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-gray-500 mb-6">Leave unused rows blank — they will be ignored.</p>
+
+      <div class="flex items-center justify-between">
+        <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition">
+          Cancel
+        </a>
+        <button type="submit" class="inline-flex items-center px-6 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
+          {% icon 'archive-box-arrow-down' 'w-4 h-4 mr-2' %}
+          Save Ad-hoc GRN
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

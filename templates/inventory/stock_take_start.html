@@ -1,0 +1,55 @@
+{% extends "_base.html" %}
+{% load icon_tags %}
+{% block title %}New Stock Take – Inventory Pro{% endblock %}
+{% block content %}
+<div class="w-full max-w-lg mx-auto space-y-6 px-4 md:px-0 py-6">
+
+  <nav class="text-sm text-gray-500 flex items-center gap-1">
+    <a href="{% url 'stock_take_list' %}" class="hover:text-primary hover:underline">Stock Takes</a>
+    <span>›</span>
+    <span class="text-bodyText">New</span>
+  </nav>
+
+  <div class="bg-surface border border-border rounded-2xl shadow-card p-6">
+    <div class="mb-6">
+      <h1 class="text-2xl font-semibold text-bodyText">Start New Stock Take</h1>
+      <p class="text-sm text-gray-600 mt-1">System quantities will be snapshotted from current stock levels when you begin.</p>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+        </div>
+      {% endif %}
+      <div class="space-y-4">
+        <div>
+          <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Date</label>
+          {{ form.date }}
+          {% if form.date.errors %}<p class="text-xs text-red-600 mt-1">{{ form.date.errors|join:", " }}</p>{% endif %}
+        </div>
+        <div>
+          <label for="{{ form.department.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Department <span class="text-gray-400 font-normal">(optional — leave blank for all)</span></label>
+          {{ form.department }}
+        </div>
+        <div>
+          <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Notes <span class="text-gray-400 font-normal">(optional)</span></label>
+          {{ form.notes }}
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-between">
+        <a href="{% url 'stock_take_list' %}"
+           class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition">
+          Cancel
+        </a>
+        <button type="submit"
+                class="inline-flex items-center px-6 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
+          {% icon 'clipboard-document-list' 'w-4 h-4 mr-2' %}
+          Begin Count
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

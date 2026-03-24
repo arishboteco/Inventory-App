@@ -4,7 +4,7 @@ from django import forms
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError, connection, transaction
-from django.db.models import BooleanField, Case, DecimalField, Q, Sum, Value, When
+from django.db.models import BooleanField, Case, DecimalField, F, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -19,7 +19,7 @@ from django.views.generic import TemplateView
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..forms.indent_issue_forms import IndentIssueFormset, IndentItemIssueForm
 from ..indent_pdf import generate_indent_pdf
-from ..models import Department, Indent
+from ..models import Department, Indent, Item
 from ..models import IndentItem as IndentItemModel
 from ..models import Supplier as SupplierModel
 from ..services import indent_consolidation_service, indent_issue_service, list_utils
@@ -1123,4 +1123,56 @@ def issue_indent(request, pk: int):
             "formset": formset,
             "pairs": pairs,
         },
+    )
+
+
+def generate_low_stock_indent(request):
+    """D5: One-click indent for all items below their reorder point."""
+    low_stock_items = list(
+        Item.objects.filter(
+            is_active=True,
+            reorder_point__isnull=False,
+            current_stock__isnull=False,
+            current_stock__lt=F("reorder_point"),
+        )
+        .filter(reorder_point__gt=0)
+        .order_by("name")
+        .only("item_id", "name", "base_unit", "current_stock", "reorder_point", "minimum_order_qty")
+    )
+
+    if request.method == "POST":
+        if not low_stock_items:
+            messages.warning(request, "No low-stock items found.", extra_tags="toast")
+            return redirect("items_list")
+
+        ts = timezone.now().strftime("%Y%m%d%H%M%S")
+        mrn = f"LSI-{ts}"
+        with transaction.atomic():
+            indent = Indent.objects.create(
+                mrn=mrn,
+                requested_by=getattr(request.user, "username", "") or "",
+                status="PENDING",
+                notes="Auto-generated from low-stock alert",
+            )
+            for item in low_stock_items:
+                reorder_pt = float(item.reorder_point or 0)
+                current = float(item.current_stock or 0)
+                min_order = float(item.minimum_order_qty or 0)
+                suggested = max(reorder_pt - current, min_order)
+                IndentItemModel.objects.create(
+                    indent=indent,
+                    item=item,
+                    requested_qty=round(suggested, 2),
+                )
+        messages.success(
+            request,
+            f"Indent {mrn} created with {len(low_stock_items)} item(s).",
+            extra_tags="toast",
+        )
+        return redirect("indent_detail", pk=indent.pk)
+
+    return render(
+        request,
+        "inventory/low_stock_indent_confirm.html",
+        {"low_stock_items": low_stock_items},
     )

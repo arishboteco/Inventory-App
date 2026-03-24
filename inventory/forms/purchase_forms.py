@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 
 from ..models import (
@@ -156,6 +158,73 @@ class GRNForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = GoodsReceivedNote
         fields = ["received_date", "notes"]
+
+
+class AdhocGRNForm(StyledFormMixin, forms.ModelForm):
+    """D6: GRN header form for ad-hoc receipts (no PO required)."""
+
+    supplier = forms.ModelChoiceField(
+        queryset=Supplier.objects.filter(is_active=True).order_by("name"),
+        widget=forms.Select(attrs={"class": INPUT_CLASS}),
+        empty_label="— Select supplier —",
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": INPUT_CLASS, "rows": 2}),
+    )
+    delivery_note_number = forms.CharField(
+        required=False,
+        label="Delivery Note / Invoice #",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": "e.g. INV-2024-001"}),
+    )
+
+    class Meta:
+        model = GoodsReceivedNote
+        fields = ["supplier", "received_date", "delivery_note_number", "notes"]
+        widgets = {
+            "received_date": forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styling()
+
+
+class AdhocGRNLineForm(StyledFormMixin, forms.Form):
+    """D6: A single line item for an ad-hoc GRN."""
+
+    item = forms.ModelChoiceField(
+        queryset=Item.objects.filter(is_active=True).order_by("name"),
+        empty_label="— Select item —",
+        widget=forms.Select(attrs={"class": INPUT_CLASS}),
+    )
+    quantity_received = forms.DecimalField(
+        min_value=Decimal("0.01"),
+        decimal_places=2,
+        label="Quantity",
+        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0.01", "placeholder": "0.00"}),
+    )
+    unit_price = forms.DecimalField(
+        min_value=Decimal("0"),
+        decimal_places=2,
+        required=False,
+        label="Unit Price",
+        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0", "placeholder": "0.00"}),
+    )
+    item_notes = forms.CharField(
+        required=False,
+        label="Notes",
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": "Optional"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.apply_styling()
+
+
+AdhocGRNLineFormSet = forms.formset_factory(
+    AdhocGRNLineForm, extra=3, min_num=1, validate_min=True, can_delete=False
+)
 
 
 GRNItemFormSet = forms.inlineformset_factory(

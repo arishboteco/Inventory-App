@@ -1,6 +1,6 @@
 {% extends "components/detail_layout.html" %}
-{% block title %}Purchase Order Detail – Inventory Pro{% endblock %}
-{% block heading %}Purchase Order {{ po.pk }}{% endblock %}
+{% block title %}{{ po.po_number }} – {{ po.supplier.name }} – Inventory Pro{% endblock %}
+{% block heading %}{{ po.po_number }}{% endblock %}
 {% block status_badge %}
   <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-surfaceSubtle text-bodyText">
     Status: <span class="text-accent-text">{{ po.get_status_display }}</span>

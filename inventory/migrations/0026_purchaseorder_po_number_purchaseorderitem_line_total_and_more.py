@@ -11,7 +11,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("inventory", "0025_alter_stocksnapshot_options_and_more"),
+
+        ("inventory", "0024_fix_pk_sequences"),
     ]
 
     operations = [

@@ -41,7 +41,7 @@
               <td class="px-4 py-2 text-right tabular-nums text-danger font-medium">
                 {{ reorder|floatformat:2 }}
               </td>
-              <td class="px-4 py-2 text-gray-500">{{ item.base_unit|default:"—" }}</td>
+              <td class="px-4 py-2 text-gray-500">{{ item.unit|default:"—" }}</td>
             </tr>
             {% endwith %}
           {% endfor %}

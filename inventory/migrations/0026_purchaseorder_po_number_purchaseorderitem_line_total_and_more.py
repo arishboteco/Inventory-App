@@ -11,7 +11,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("inventory", "0025_alter_stocksnapshot_options_and_more"),
+        ("inventory", "0025_phase_d_features"),
     ]
 
     operations = [

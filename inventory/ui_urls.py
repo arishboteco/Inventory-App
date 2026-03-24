@@ -1,7 +1,13 @@
 from django.urls import path
 
 from .views.explore import explore, explore_export
-from .views.goods_received import GRNCreateView, GRNDetailView, GRNListView, create_adhoc_grn, grn_export
+from .views.goods_received import (
+    GRNCreateView,
+    GRNDetailView,
+    GRNListView,
+    create_adhoc_grn,
+    grn_export,
+)
 from .views.guides import WorkflowGuideView
 from .views.indents import (
     IndentCreateView,
@@ -179,7 +185,11 @@ urlpatterns = [
         name="indent_update_status",
     ),
     path("indents/<int:pk>/pdf/", indent_pdf, name="indent_pdf"),
-    path("indents/generate-from-low-stock/", generate_low_stock_indent, name="low_stock_indent"),
+    path(
+        "indents/generate-from-low-stock/",
+        generate_low_stock_indent,
+        name="low_stock_indent",
+    ),
     path("indents/consolidate/", indents_consolidate, name="indents_consolidate"),
     path(
         "indents/consolidate/preview/",

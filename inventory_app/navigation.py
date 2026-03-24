@@ -225,7 +225,10 @@ def primary_navigation(request):
                     }
                 )
                 notifications.append(
-                    {"text": f"Generate indent for {low} low-stock {noun}", "url": "/indents/generate-from-low-stock/"}
+                    {
+                        "text": f"Generate indent for {low} low-stock {noun}",
+                        "url": "/indents/generate-from-low-stock/",
+                    }
                 )
             ctx["notification_count"] = low + pending
             ctx["notifications"] = notifications

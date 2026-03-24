@@ -34,9 +34,7 @@ def get_po_summary_kpis() -> Dict[str, any]:
 
     # Basic counts by status
     total_pos = PurchaseOrder.objects.count()
-    pending_count = PurchaseOrder.objects.filter(
-        status__in=["SENT"]
-    ).count()
+    pending_count = PurchaseOrder.objects.filter(status__in=["SENT"]).count()
     completed_count = PurchaseOrder.objects.filter(status="RECEIVED").count()
     cancelled_count = PurchaseOrder.objects.filter(status="CANCELLED").count()
     draft_count = PurchaseOrder.objects.filter(status="DRAFT").count()

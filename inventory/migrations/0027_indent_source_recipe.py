@@ -2,6 +2,11 @@
 #
 # Adds a nullable source_recipe FK to the Indent model so the list view
 # can display whether an indent was created manually or from a Recipe.
+#
+# source_recipe_id already exists in the live DB (added by the old
+# 0025_phase_d_features migration that was later deleted and renumbered).
+# This migration is state-only so Django's ORM knows about the field
+# without attempting to re-create the column.
 
 import django.db.models.deletion
 from django.db import migrations, models
@@ -17,16 +22,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name="indent",
-            name="source_recipe",
-            field=models.ForeignKey(
-                blank=True,
-                db_column="source_recipe_id",
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name="indents",
-                to="inventory.recipe",
-            ),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="indent",
+                    name="source_recipe",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="source_recipe_id",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="indents",
+                        to="inventory.recipe",
+                    ),
+                ),
+            ],
+            database_operations=[],  # Column already exists in production DB
         ),
     ]

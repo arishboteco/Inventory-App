@@ -5,13 +5,13 @@
 # without attempting to re-create the columns.
 
 from decimal import Decimal
+
 from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-
         ("inventory", "0024_fix_pk_sequences"),
     ]
 

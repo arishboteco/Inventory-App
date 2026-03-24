@@ -246,6 +246,7 @@ def stock_movements(request):
                 cd = transfer_form.cleaned_data
                 try:
                     from ..models import StockTransaction
+
                     StockTransaction.objects.create(
                         item=cd["item"],
                         quantity_change=cd["quantity"],
@@ -386,9 +387,7 @@ def stock_movements(request):
     query_string = params.urlencode()
 
     total_transactions = qs.count()
-    pending_orders = PurchaseOrder.objects.filter(
-        status__in=["SENT"]
-    ).count()
+    pending_orders = PurchaseOrder.objects.filter(status__in=["SENT"]).count()
 
     tabs = [
         {

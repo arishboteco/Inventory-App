@@ -6,8 +6,6 @@ from ..models import Item, Recipe, RecipeItem
 from ..models.recipes import RECIPE_TYPES
 from .base import StyledFormMixin
 
-
-
 INPUT_CLASS = (
     "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg "
     "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -81,7 +79,12 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
         required=False,
         decimal_places=2,
         widget=forms.NumberInput(
-            attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0", "placeholder": "e.g. 25.00"}
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "min": "0",
+                "placeholder": "e.g. 25.00",
+            }
         ),
         label="Menu Selling Price",
         help_text="Selling price excluding tax",
@@ -91,7 +94,13 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
         decimal_places=2,
         initial=30.00,
         widget=forms.NumberInput(
-            attrs={"class": INPUT_CLASS, "step": "0.1", "min": "0", "max": "100", "placeholder": "30.0"}
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.1",
+                "min": "0",
+                "max": "100",
+                "placeholder": "30.0",
+            }
         ),
         label="Target Food Cost %",
         help_text="Target food cost as % of selling price (typically 28–32%)",

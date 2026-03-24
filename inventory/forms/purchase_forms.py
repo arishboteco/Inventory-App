@@ -175,14 +175,18 @@ class AdhocGRNForm(StyledFormMixin, forms.ModelForm):
     delivery_note_number = forms.CharField(
         required=False,
         label="Delivery Note / Invoice #",
-        widget=forms.TextInput(attrs={"class": INPUT_CLASS, "placeholder": "e.g. INV-2024-001"}),
+        widget=forms.TextInput(
+            attrs={"class": INPUT_CLASS, "placeholder": "e.g. INV-2024-001"}
+        ),
     )
 
     class Meta:
         model = GoodsReceivedNote
         fields = ["supplier", "received_date", "delivery_note_number", "notes"]
         widgets = {
-            "received_date": forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
+            "received_date": forms.DateInput(
+                attrs={"type": "date", "class": INPUT_CLASS}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -202,14 +206,28 @@ class AdhocGRNLineForm(StyledFormMixin, forms.Form):
         min_value=Decimal("0.01"),
         decimal_places=2,
         label="Quantity",
-        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0.01", "placeholder": "0.00"}),
+        widget=forms.NumberInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "min": "0.01",
+                "placeholder": "0.00",
+            }
+        ),
     )
     unit_price = forms.DecimalField(
         min_value=Decimal("0"),
         decimal_places=2,
         required=False,
         label="Unit Price",
-        widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0", "placeholder": "0.00"}),
+        widget=forms.NumberInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "min": "0",
+                "placeholder": "0.00",
+            }
+        ),
     )
     item_notes = forms.CharField(
         required=False,

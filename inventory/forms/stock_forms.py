@@ -289,7 +289,12 @@ class StockTransferForm(StyledFormMixin, forms.Form):
         min_value=Decimal("0.01"),
         decimal_places=2,
         widget=forms.NumberInput(
-            attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0.01", "placeholder": "e.g. 5"}
+            attrs={
+                "class": INPUT_CLASS,
+                "step": "0.01",
+                "min": "0.01",
+                "placeholder": "e.g. 5",
+            }
         ),
         label="Quantity",
     )
@@ -314,6 +319,7 @@ class StockTransferForm(StyledFormMixin, forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from ..models import Department as Dept
+
         qs = Dept.objects.all().order_by("name")
         self.fields["from_department"].queryset = qs
         self.fields["to_department"].queryset = qs

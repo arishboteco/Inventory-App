@@ -1137,7 +1137,14 @@ def generate_low_stock_indent(request):
         )
         .filter(reorder_point__gt=0)
         .order_by("name")
-        .only("item_id", "name", "base_unit", "current_stock", "reorder_point", "minimum_order_qty")
+        .only(
+            "item_id",
+            "name",
+            "base_unit",
+            "current_stock",
+            "reorder_point",
+            "minimum_order_qty",
+        )
     )
 
     if request.method == "POST":

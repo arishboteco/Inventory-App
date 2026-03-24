@@ -1,4 +1,15 @@
 # Multi-environment Dockerfile for Django application
+# Stage 1: Build Tailwind CSS using Node
+FROM node:20-slim AS css-builder
+
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install
+COPY static/ ./static/
+COPY tailwind.config.js postcss.config.js ./
+RUN npm run build
+
+# Stage 2: Python app
 FROM python:3.13-slim
 
 # Build-time environment selection
@@ -39,14 +50,20 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY --chown=appuser:appuser . .
 
+# Copy compiled CSS from Node stage
+COPY --from=css-builder --chown=appuser:appuser /app/static/css/app.css ./static/css/app.css
+
+# Collect static files for prod/staging
+RUN if [ "$BUILD_ENV" = "prod" ] || [ "$BUILD_ENV" = "staging" ]; then \
+        python manage.py collectstatic --noinput; \
+    fi
+
 # Expose the port Gunicorn will listen on
 EXPOSE 8000
 
-# Health check varies by environment
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD if [ "$BUILD_ENV" = "prod" ]; then curl -f http://localhost:8000/healthz || exit 1; \
-    elif [ "$BUILD_ENV" = "staging" ]; then curl -f http://localhost:8000/admin/ || exit 1; \
-    else exit 0; fi
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
 
-# Default command
-CMD ["sh", "-c", "python manage.py migrate && if [ '$BUILD_ENV' != 'dev' ]; then python manage.py collectstatic --noinput; fi && exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 30"]
+# Default command (migrations handled by fly.toml release_command in prod)
+CMD ["sh", "-c", "exec gunicorn inventory_app.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"]

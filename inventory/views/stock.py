@@ -245,8 +245,6 @@ def stock_movements(request):
             if transfer_form.is_valid():
                 cd = transfer_form.cleaned_data
                 try:
-                    from ..models import StockTransaction
-
                     StockTransaction.objects.create(
                         item=cd["item"],
                         quantity_change=cd["quantity"],

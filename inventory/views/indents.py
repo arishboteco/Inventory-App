@@ -1136,11 +1136,12 @@ def generate_low_stock_indent(request):
             current_stock__lt=F("reorder_point"),
         )
         .filter(reorder_point__gt=0)
+        .select_related("unit")
         .order_by("name")
         .only(
             "item_id",
             "name",
-            "base_unit",
+            "unit_id",
             "current_stock",
             "reorder_point",
             "minimum_order_qty",

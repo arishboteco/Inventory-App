@@ -1,4 +1,5 @@
 """D4: Physical stock-take workflow views."""
+
 from __future__ import annotations
 
 import logging
@@ -37,18 +38,26 @@ class StockTakeStartForm(forms.Form):
     )
     notes = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"class": INPUT_CLASS, "rows": 2, "placeholder": "Optional notes"}),
+        widget=forms.Textarea(
+            attrs={"class": INPUT_CLASS, "rows": 2, "placeholder": "Optional notes"}
+        ),
     )
 
 
 def stock_take_list(request):
-    stock_takes = StockTake.objects.select_related("department", "created_by").order_by("-date", "-created_at")
-    return render(request, "inventory/stock_take_list.html", {
-        "stock_takes": stock_takes,
-        "list_url": "/",
-        "list_title": "Dashboard",
-        "current_title": "Stock Takes",
-    })
+    stock_takes = StockTake.objects.select_related("department", "created_by").order_by(
+        "-date", "-created_at"
+    )
+    return render(
+        request,
+        "inventory/stock_take_list.html",
+        {
+            "stock_takes": stock_takes,
+            "list_url": "/",
+            "list_title": "Dashboard",
+            "current_title": "Stock Takes",
+        },
+    )
 
 
 def create_stock_take(request):
@@ -67,30 +76,40 @@ def create_stock_take(request):
                 items_qs = Item.objects.filter(is_active=True).order_by("name")
                 if dept:
                     items_qs = items_qs.filter(departments=dept)
-                StockTakeItem.objects.bulk_create([
-                    StockTakeItem(
-                        stock_take=st,
-                        item=item,
-                        system_qty=item.current_stock or 0,
-                    )
-                    for item in items_qs
-                ])
-            messages.success(request, f"Stock take #{st.pk} started.", extra_tags="toast")
+                StockTakeItem.objects.bulk_create(
+                    [
+                        StockTakeItem(
+                            stock_take=st,
+                            item=item,
+                            system_qty=item.current_stock or 0,
+                        )
+                        for item in items_qs
+                    ]
+                )
+            messages.success(
+                request, f"Stock take #{st.pk} started.", extra_tags="toast"
+            )
             return redirect("stock_take_count", pk=st.pk)
     else:
         form = StockTakeStartForm()
-    return render(request, "inventory/stock_take_start.html", {
-        "form": form,
-        "list_url": "/stock-takes/",
-        "list_title": "Stock Takes",
-        "current_title": "New Stock Take",
-    })
+    return render(
+        request,
+        "inventory/stock_take_start.html",
+        {
+            "form": form,
+            "list_url": "/stock-takes/",
+            "list_title": "Stock Takes",
+            "current_title": "New Stock Take",
+        },
+    )
 
 
 def stock_take_count(request, pk: int):
     st = get_object_or_404(StockTake, pk=pk)
     if st.status == "COMPLETED":
-        messages.info(request, "This stock take is already completed.", extra_tags="toast")
+        messages.info(
+            request, "This stock take is already completed.", extra_tags="toast"
+        )
         return redirect("stock_take_review", pk=pk)
 
     items = list(st.items.select_related("item").order_by("item__name"))
@@ -113,13 +132,17 @@ def stock_take_count(request, pk: int):
         messages.success(request, "Counts saved.", extra_tags="toast")
         return redirect("stock_take_review", pk=pk)
 
-    return render(request, "inventory/stock_take_count.html", {
-        "stock_take": st,
-        "items": items,
-        "list_url": "/stock-takes/",
-        "list_title": "Stock Takes",
-        "current_title": f"Count — Stock Take #{st.pk}",
-    })
+    return render(
+        request,
+        "inventory/stock_take_count.html",
+        {
+            "stock_take": st,
+            "items": items,
+            "list_url": "/stock-takes/",
+            "list_title": "Stock Takes",
+            "current_title": f"Count — Stock Take #{st.pk}",
+        },
+    )
 
 
 def stock_take_review(request, pk: int):
@@ -133,7 +156,9 @@ def stock_take_review(request, pk: int):
                 st.status = "COMPLETED"
                 st.completed_at = timezone.now()
                 st.save(update_fields=["status", "completed_at"])
-            messages.success(request, f"Stock take #{st.pk} completed.", extra_tags="toast")
+            messages.success(
+                request, f"Stock take #{st.pk} completed.", extra_tags="toast"
+            )
             return redirect("stock_take_list")
         elif action == "discard":
             st.delete()
@@ -143,17 +168,20 @@ def stock_take_review(request, pk: int):
     counted = [i for i in items if i.physical_qty is not None]
     uncounted = len(items) - len(counted)
     total_variance = sum(
-        (float(i.physical_qty or 0) - float(i.system_qty or 0))
-        for i in counted
+        (float(i.physical_qty or 0) - float(i.system_qty or 0)) for i in counted
     )
 
-    return render(request, "inventory/stock_take_review.html", {
-        "stock_take": st,
-        "items": items,
-        "counted_count": len(counted),
-        "uncounted_count": uncounted,
-        "total_variance": total_variance,
-        "list_url": "/stock-takes/",
-        "list_title": "Stock Takes",
-        "current_title": f"Review — Stock Take #{st.pk}",
-    })
+    return render(
+        request,
+        "inventory/stock_take_review.html",
+        {
+            "stock_take": st,
+            "items": items,
+            "counted_count": len(counted),
+            "uncounted_count": uncounted,
+            "total_variance": total_variance,
+            "list_url": "/stock-takes/",
+            "list_title": "Stock Takes",
+            "current_title": f"Review — Stock Take #{st.pk}",
+        },
+    )

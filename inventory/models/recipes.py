@@ -35,12 +35,19 @@ class Recipe(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     # D2: Selling price and food cost tracking
     selling_price = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True,
-        help_text="Menu selling price (ex. tax)"
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Menu selling price (ex. tax)",
     )
     target_food_cost_pct = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True, default=30.00,
-        help_text="Target food cost percentage for this item type"
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default=30.00,
+        help_text="Target food cost percentage for this item type",
     )
 
     def __str__(self):
@@ -181,6 +188,7 @@ class RecipeItem(models.Model):
 
     def clean(self):
         from django.core.exceptions import ValidationError
+
         if not self.item and not self.sub_recipe:
             raise ValidationError("Select either an inventory item or a sub-recipe.")
         if self.item and self.sub_recipe:
@@ -194,19 +202,24 @@ class RecipeItem(models.Model):
 
     def _check_circular(self, sub, visited):
         from django.core.exceptions import ValidationError
+
         if sub.pk in visited:
             raise ValidationError(
                 f"Circular dependency detected: {sub.name} references back to this recipe."
             )
         visited.add(sub.pk)
-        for child in sub.items.filter(sub_recipe__isnull=False).select_related("sub_recipe"):
+        for child in sub.items.filter(sub_recipe__isnull=False).select_related(
+            "sub_recipe"
+        ):
             self._check_circular(child.sub_recipe, visited.copy())
 
     def get_line_cost(self):
         """Return the cost for this ingredient line."""
         if self.sub_recipe:
             sub_cost = self.sub_recipe.get_total_cost()
-            sub_yield = Decimal(str(self.sub_recipe.default_yield_qty or 1)) or Decimal("1")
+            sub_yield = Decimal(str(self.sub_recipe.default_yield_qty or 1)) or Decimal(
+                "1"
+            )
             qty = Decimal(str(self.quantity or 0))
             loss_mult = Decimal("1") + (
                 Decimal(str(self.loss_pct or 0)) / Decimal("100")

@@ -360,7 +360,9 @@ class GRNDetailView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         grn = get_object_or_404(GoodsReceivedNote, pk=self.kwargs["pk"])
-        items = grn.grnitem_set.select_related("po_item", "po_item__item", "po_item__item__unit", "item")
+        items = grn.grnitem_set.select_related(
+            "po_item", "po_item__item", "po_item__item__unit", "item"
+        )
         if grn.purchase_order_id:
             po_row = (
                 "PO",
@@ -496,6 +498,7 @@ def grn_export(request, pk: int):
 def create_adhoc_grn(request):
     """D6: Create a GRN without a PO (ad-hoc receipt)."""
     from django.db import transaction as db_transaction
+
     from ..services import stock_service
     from ..services.goods_receiving_service import generate_grn_number
 
@@ -511,7 +514,9 @@ def create_adhoc_grn(request):
                     grn_number = generate_grn_number()
                     user_id = getattr(request.user, "username", "System") or "System"
                     for line_form in formset.forms:
-                        if not line_form.cleaned_data or line_form.cleaned_data.get("DELETE"):
+                        if not line_form.cleaned_data or line_form.cleaned_data.get(
+                            "DELETE"
+                        ):
                             continue
                         item = line_form.cleaned_data["item"]
                         qty = line_form.cleaned_data["quantity_received"]
@@ -533,7 +538,9 @@ def create_adhoc_grn(request):
                             user_id=user_id,
                             notes=f"Ad-hoc GRN {grn_number}",
                         )
-                messages.success(request, f"Ad-hoc GRN {grn.pk} created.", extra_tags="toast")
+                messages.success(
+                    request, f"Ad-hoc GRN {grn.pk} created.", extra_tags="toast"
+                )
                 return redirect("grn_detail", pk=grn.pk)
             except Exception as exc:
                 logger.error("Error creating ad-hoc GRN: %s", exc)
@@ -542,7 +549,11 @@ def create_adhoc_grn(request):
         form = AdhocGRNForm(initial={"received_date": date.today()})
         formset = AdhocGRNLineFormSet(prefix="lines")
 
-    return render(request, "inventory/grns/grn_adhoc_create.html", {
-        "form": form,
-        "formset": formset,
-    })
+    return render(
+        request,
+        "inventory/grns/grn_adhoc_create.html",
+        {
+            "form": form,
+            "formset": formset,
+        },
+    )

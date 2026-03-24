@@ -274,7 +274,9 @@ def recipe_create(request):
                 items.append(
                     {
                         "item_id": int(item_obj.pk) if item_obj else None,
-                        "sub_recipe_id": int(sub_recipe_obj.pk) if sub_recipe_obj else None,
+                        "sub_recipe_id": (
+                            int(sub_recipe_obj.pk) if sub_recipe_obj else None
+                        ),
                         "quantity": float(f.cleaned_data.get("quantity") or 0),
                         "unit": f.cleaned_data.get("unit"),
                         "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
@@ -325,7 +327,9 @@ def recipe_detail(request, pk: int):
                 items.append(
                     {
                         "item_id": int(item_obj.pk) if item_obj else None,
-                        "sub_recipe_id": int(sub_recipe_obj.pk) if sub_recipe_obj else None,
+                        "sub_recipe_id": (
+                            int(sub_recipe_obj.pk) if sub_recipe_obj else None
+                        ),
                         "quantity": float(f.cleaned_data.get("quantity") or 0),
                         "unit": f.cleaned_data.get("unit"),
                         "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
@@ -621,12 +625,22 @@ class RecipeViewPartialView(View):
             if sub_recipe_obj and not item:
                 try:
                     sub_cost = sub_recipe_obj.get_total_cost()
-                    sub_yield = _to_decimal(getattr(sub_recipe_obj, "default_yield_qty", None)) or Decimal("1")
-                    cost_per_base = (sub_cost / sub_yield).quantize(TWOPLACES) if sub_yield else Decimal("0.00")
+                    sub_yield = _to_decimal(
+                        getattr(sub_recipe_obj, "default_yield_qty", None)
+                    ) or Decimal("1")
+                    cost_per_base = (
+                        (sub_cost / sub_yield).quantize(TWOPLACES)
+                        if sub_yield
+                        else Decimal("0.00")
+                    )
                 except Exception:
                     cost_per_base = Decimal("0.00")
                 loss_mult = Decimal("1") + (loss_pct / Decimal("100"))
-                line_cost = (cost_per_base * qty * loss_mult).quantize(TWOPLACES) if qty else Decimal("0.00")
+                line_cost = (
+                    (cost_per_base * qty * loss_mult).quantize(TWOPLACES)
+                    if qty
+                    else Decimal("0.00")
+                )
                 total_cost += line_cost
                 items.append(
                     {

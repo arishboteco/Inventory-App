@@ -144,14 +144,16 @@ class StockTransaction(models.Model):
     # D3: Transfer support — source/destination departments
     from_department = models.ForeignKey(
         "inventory.Department",
-        null=True, blank=True,
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="transfers_out",
         help_text="Source department (for TRANSFER type only)",
     )
     to_department = models.ForeignKey(
         "inventory.Department",
-        null=True, blank=True,
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name="transfers_in",
         help_text="Destination department (for TRANSFER type only)",

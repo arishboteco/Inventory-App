@@ -208,8 +208,11 @@ class GoodsReceivedNote(models.Model):
     grn_id = models.AutoField(primary_key=True)
     # D6: Made nullable to support ad-hoc GRNs without a PO
     purchase_order = models.ForeignKey(
-        PurchaseOrder, models.SET_NULL, db_column="po_id",
-        null=True, blank=True,
+        PurchaseOrder,
+        models.SET_NULL,
+        db_column="po_id",
+        null=True,
+        blank=True,
     )
     supplier = models.ForeignKey(Supplier, models.CASCADE, db_column="supplier_id")
     received_date = models.DateField()
@@ -217,8 +220,10 @@ class GoodsReceivedNote(models.Model):
     attachment = models.FileField(upload_to="grn_attachments/", blank=True, null=True)
     # D6: Delivery note / invoice number for ad-hoc GRNs
     delivery_note_number = models.CharField(
-        max_length=100, blank=True, null=True,
-        help_text="Delivery note or invoice number"
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Delivery note or invoice number",
     )
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
@@ -238,13 +243,19 @@ class GRNItem(models.Model):
     grn = models.ForeignKey(GoodsReceivedNote, models.CASCADE, db_column="grn_id")
     # D6: Made nullable to support ad-hoc GRNs without a PO
     po_item = models.ForeignKey(
-        PurchaseOrderItem, models.SET_NULL, db_column="po_item_id",
-        null=True, blank=True,
+        PurchaseOrderItem,
+        models.SET_NULL,
+        db_column="po_item_id",
+        null=True,
+        blank=True,
     )
     # D6: Direct item FK for ad-hoc GRNs (null when linked via po_item)
     item = models.ForeignKey(
-        Item, models.PROTECT, db_column="direct_item_id",
-        null=True, blank=True,
+        Item,
+        models.PROTECT,
+        db_column="direct_item_id",
+        null=True,
+        blank=True,
         related_name="grn_items",
         help_text="Direct item reference (for ad-hoc GRNs without a PO)",
     )

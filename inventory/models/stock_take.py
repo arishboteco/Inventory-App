@@ -1,7 +1,6 @@
 from decimal import Decimal
 
 from django.db import models
-from django.utils import timezone
 
 
 class StockTake(models.Model):
@@ -21,9 +20,7 @@ class StockTake(models.Model):
         on_delete=models.SET_NULL,
         help_text="Leave blank for a full stock-take across all departments",
     )
-    status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="DRAFT"
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="DRAFT")
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

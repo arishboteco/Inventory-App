@@ -12,7 +12,7 @@ from .orders import (
     PurchaseOrder,
     PurchaseOrderItem,
 )
-from .recipes import Recipe, RecipeComponent, RecipeItem, SaleTransaction
+from .recipes import Recipe, RecipeItem, SaleTransaction
 from .stock_take import StockTake, StockTakeItem
 from .subcategory import SubCategory
 from .suppliers import PAYMENT_TERMS_CHOICES, Supplier
@@ -36,7 +36,6 @@ __all__ = [
     "ItemStatus",
     "PurchaseOrderStatus",
     "Recipe",
-    "RecipeComponent",
     "RecipeItem",
     "SaleTransaction",
     "Department",

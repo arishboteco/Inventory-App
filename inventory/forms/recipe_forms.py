@@ -13,7 +13,6 @@ INPUT_CLASS = (
 
 
 class RecipeForm(StyledFormMixin, forms.ModelForm):
-    # TODO: Add proper form validation and styling
     name = forms.CharField(
         max_length=255,
         widget=forms.TextInput(attrs={"class": INPUT_CLASS}),

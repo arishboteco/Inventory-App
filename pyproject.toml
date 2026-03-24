@@ -44,5 +44,4 @@ exclude = [
 "tests/**" = ["E501", "E712"]
 "tools/changelog.py" = ["E501"]
 "inventory/views/stock.py" = ["E501"]
-"inventory/forms/recipe_forms_old.py" = ["F821"]
 "inventory/migrations/*.py" = ["E501"]

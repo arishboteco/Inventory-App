@@ -2,12 +2,12 @@
 # 0025_phase_d_features.py (0025 was already occupied by
 # 0025_alter_stocksnapshot_options_and_more which is applied on production).
 #
-# All DDL operations are written defensively (ADD COLUMN IF NOT EXISTS,
-# CREATE TABLE IF NOT EXISTS, etc.) because the original 0025_phase_d_features
-# was applied to the production database before it was deleted and renumbered.
-# This allows the migration to run on both:
-#   - Production DB (columns already exist → no-op)
-#   - Fresh DB (columns don't exist → creates them)
+# STATE-ONLY migration: all operations have empty database_operations because
+# the original 0025_phase_d_features was applied to the production database
+# before it was deleted and renumbered. Every column/table already exists.
+#
+# Django's migration state is updated so the ORM knows about all Phase D
+# fields and models without attempting any DDL that would fail.
 
 import django.db.models.deletion
 from django.conf import settings
@@ -22,9 +22,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # ── 1. Remove RecipeItem unique_together(recipe, item) ────────────
-        # Defensive: drop any unique constraint on recipe_items table; if the
-        # constraint never existed in the live DB this is a no-op.
+        # ── 1. Remove RecipeItem unique_together ──────────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AlterUniqueTogether(
@@ -32,29 +30,9 @@ class Migration(migrations.Migration):
                     unique_together=set(),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    DO $$
-                    DECLARE
-                        r RECORD;
-                    BEGIN
-                        FOR r IN
-                            SELECT conname
-                            FROM pg_constraint
-                            WHERE conrelid = 'recipe_items'::regclass
-                              AND contype = 'u'
-                        LOOP
-                            EXECUTE 'ALTER TABLE recipe_items DROP CONSTRAINT '
-                                    || quote_ident(r.conname);
-                        END LOOP;
-                    END $$;
-                    """,
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-            ],
+            database_operations=[],  # Constraint already removed in production
         ),
-        # ── 2. GoodsReceivedNote: add delivery_note_number ────────────────
+        # ── 2. GoodsReceivedNote: delivery_note_number ────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AddField(
@@ -68,14 +46,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE goods_received_notes ADD COLUMN IF NOT EXISTS delivery_note_number VARCHAR(100);",
-                    reverse_sql="ALTER TABLE goods_received_notes DROP COLUMN IF EXISTS delivery_note_number;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
-        # ── 3. GRNItem: add direct item FK (ad-hoc GRNs without a PO) ────
+        # ── 3. GRNItem: direct item FK ────────────────────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AddField(
@@ -92,27 +65,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    ALTER TABLE grn_items ADD COLUMN IF NOT EXISTS direct_item_id BIGINT;
-                    DO $$ BEGIN
-                        IF NOT EXISTS (
-                            SELECT 1 FROM information_schema.table_constraints
-                            WHERE constraint_type = 'FOREIGN KEY'
-                              AND table_name = 'grn_items'
-                              AND constraint_name LIKE '%direct_item_id%'
-                        ) THEN
-                            ALTER TABLE grn_items
-                                ADD CONSTRAINT grn_items_direct_item_id_items_fk
-                                FOREIGN KEY (direct_item_id) REFERENCES items(id)
-                                DEFERRABLE INITIALLY DEFERRED;
-                        END IF;
-                    END $$;
-                    """,
-                    reverse_sql="ALTER TABLE grn_items DROP COLUMN IF EXISTS direct_item_id;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
         # ── 4. Recipe: selling_price ──────────────────────────────────────
         migrations.SeparateDatabaseAndState(
@@ -129,12 +82,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE recipes ADD COLUMN IF NOT EXISTS selling_price NUMERIC(10, 2);",
-                    reverse_sql="ALTER TABLE recipes DROP COLUMN IF EXISTS selling_price;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
         # ── 5. Recipe: target_food_cost_pct ──────────────────────────────
         migrations.SeparateDatabaseAndState(
@@ -152,12 +100,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE recipes ADD COLUMN IF NOT EXISTS target_food_cost_pct NUMERIC(5, 2) DEFAULT 30.0;",
-                    reverse_sql="ALTER TABLE recipes DROP COLUMN IF EXISTS target_food_cost_pct;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
         # ── 6. RecipeItem: sub_recipe FK ──────────────────────────────────
         migrations.SeparateDatabaseAndState(
@@ -176,27 +119,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    ALTER TABLE recipe_items ADD COLUMN IF NOT EXISTS sub_recipe_id BIGINT;
-                    DO $$ BEGIN
-                        IF NOT EXISTS (
-                            SELECT 1 FROM information_schema.table_constraints
-                            WHERE constraint_type = 'FOREIGN KEY'
-                              AND table_name = 'recipe_items'
-                              AND constraint_name LIKE '%sub_recipe_id%'
-                        ) THEN
-                            ALTER TABLE recipe_items
-                                ADD CONSTRAINT recipe_items_sub_recipe_id_recipes_fk
-                                FOREIGN KEY (sub_recipe_id) REFERENCES recipes(id)
-                                DEFERRABLE INITIALLY DEFERRED;
-                        END IF;
-                    END $$;
-                    """,
-                    reverse_sql="ALTER TABLE recipe_items DROP COLUMN IF EXISTS sub_recipe_id;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
         # ── 7. StockTransaction: from_department FK ───────────────────────
         migrations.SeparateDatabaseAndState(
@@ -214,27 +137,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    ALTER TABLE stock_transactions ADD COLUMN IF NOT EXISTS from_department_id BIGINT;
-                    DO $$ BEGIN
-                        IF NOT EXISTS (
-                            SELECT 1 FROM information_schema.table_constraints
-                            WHERE constraint_type = 'FOREIGN KEY'
-                              AND table_name = 'stock_transactions'
-                              AND constraint_name LIKE '%from_department_id%'
-                        ) THEN
-                            ALTER TABLE stock_transactions
-                                ADD CONSTRAINT stock_transactions_from_department_id_fk
-                                FOREIGN KEY (from_department_id) REFERENCES departments(id)
-                                DEFERRABLE INITIALLY DEFERRED;
-                        END IF;
-                    END $$;
-                    """,
-                    reverse_sql="ALTER TABLE stock_transactions DROP COLUMN IF EXISTS from_department_id;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
         # ── 8. StockTransaction: to_department FK ─────────────────────────
         migrations.SeparateDatabaseAndState(
@@ -252,31 +155,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    ALTER TABLE stock_transactions ADD COLUMN IF NOT EXISTS to_department_id BIGINT;
-                    DO $$ BEGIN
-                        IF NOT EXISTS (
-                            SELECT 1 FROM information_schema.table_constraints
-                            WHERE constraint_type = 'FOREIGN KEY'
-                              AND table_name = 'stock_transactions'
-                              AND constraint_name LIKE '%to_department_id%'
-                        ) THEN
-                            ALTER TABLE stock_transactions
-                                ADD CONSTRAINT stock_transactions_to_department_id_fk
-                                FOREIGN KEY (to_department_id) REFERENCES departments(id)
-                                DEFERRABLE INITIALLY DEFERRED;
-                        END IF;
-                    END $$;
-                    """,
-                    reverse_sql="ALTER TABLE stock_transactions DROP COLUMN IF EXISTS to_department_id;",
-                ),
-            ],
+            database_operations=[],  # Column already exists in production
         ),
-        # ── 9. GoodsReceivedNote.purchase_order → nullable ────────────────
-        # AlterField is idempotent in PostgreSQL (DROP NOT NULL on already-nullable
-        # column is a no-op).
+        # ── 9. GRN.purchase_order → nullable ──────────────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AlterField(
@@ -291,12 +172,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE goods_received_notes ALTER COLUMN po_id DROP NOT NULL;",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-            ],
+            database_operations=[],  # Already nullable in production
         ),
         # ── 10. GRNItem.po_item → nullable ────────────────────────────────
         migrations.SeparateDatabaseAndState(
@@ -313,12 +189,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE grn_items ALTER COLUMN po_item_id DROP NOT NULL;",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-            ],
+            database_operations=[],  # Already nullable in production
         ),
         # ── 11. GRNItem.quantity_ordered_on_po → default=0 ───────────────
         migrations.SeparateDatabaseAndState(
@@ -331,14 +202,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE grn_items ALTER COLUMN quantity_ordered_on_po SET DEFAULT 0;",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-            ],
+            database_operations=[],  # Default already set in production
         ),
-        # ── 12. RecipeItem.item → nullable (required for sub-recipes) ─────
+        # ── 12. RecipeItem.item → nullable ────────────────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.AlterField(
@@ -354,14 +220,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="ALTER TABLE recipe_items ALTER COLUMN item_id DROP NOT NULL;",
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
-            ],
+            database_operations=[],  # Already nullable in production
         ),
-        # ── 13. Create StockTake model ────────────────────────────────────
+        # ── 13. StockTake model ───────────────────────────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.CreateModel(
@@ -417,25 +278,9 @@ class Migration(migrations.Migration):
                     },
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    CREATE TABLE IF NOT EXISTS stock_takes (
-                        id BIGSERIAL PRIMARY KEY,
-                        date DATE NOT NULL,
-                        status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
-                        notes TEXT NOT NULL DEFAULT '',
-                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                        completed_at TIMESTAMPTZ,
-                        created_by_id INTEGER NOT NULL REFERENCES auth_user(id) DEFERRABLE INITIALLY DEFERRED,
-                        department_id BIGINT REFERENCES departments(id) DEFERRABLE INITIALLY DEFERRED
-                    );
-                    """,
-                    reverse_sql="DROP TABLE IF EXISTS stock_takes;",
-                ),
-            ],
+            database_operations=[],  # Table already exists in production
         ),
-        # ── 14. Create StockTakeItem model ────────────────────────────────
+        # ── 14. StockTakeItem model ───────────────────────────────────────
         migrations.SeparateDatabaseAndState(
             state_operations=[
                 migrations.CreateModel(
@@ -492,20 +337,6 @@ class Migration(migrations.Migration):
                     },
                 ),
             ],
-            database_operations=[
-                migrations.RunSQL(
-                    sql="""
-                    CREATE TABLE IF NOT EXISTS stock_take_items (
-                        id BIGSERIAL PRIMARY KEY,
-                        system_qty NUMERIC(10, 3) NOT NULL,
-                        physical_qty NUMERIC(10, 3),
-                        notes TEXT NOT NULL DEFAULT '',
-                        item_id BIGINT NOT NULL REFERENCES items(id) DEFERRABLE INITIALLY DEFERRED,
-                        stock_take_id BIGINT NOT NULL REFERENCES stock_takes(id) DEFERRABLE INITIALLY DEFERRED
-                    );
-                    """,
-                    reverse_sql="DROP TABLE IF EXISTS stock_take_items;",
-                ),
-            ],
+            database_operations=[],  # Table already exists in production
         ),
     ]

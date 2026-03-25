@@ -19,6 +19,7 @@ fpdf2==2.8.4                  # PDF generation for GRNs / indents
 pydantic==2.11.7              # Data validation / view models
 statsmodels==0.14.4           # Forecasting (Holt-Winters) — 0.14.5 incompatible with Python 3.13.4
 django-q2==1.8.0              # Background task queue
+requests==2.32.3              # HTTP client (keep-alive self-ping)
 
 # NOTE: Removed (previously present):
 #   supabase (no runtime usage; docs only)

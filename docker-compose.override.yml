@@ -1,0 +1,6 @@
+# Local development overrides — not committed to production
+# Exposes Postgres port so Django running on the host can connect to it.
+services:
+  db:
+    ports:
+      - "5432:5432"

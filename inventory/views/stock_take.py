@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import logging
 from datetime import date
+from decimal import Decimal
 
 from django import forms
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import F
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from ..models import Department, Item, StockTake, StockTakeItem
+from ..models import Department, Item, StockTake, StockTakeItem, StockTransaction
 
 logger = logging.getLogger(__name__)
 
@@ -164,13 +166,38 @@ def stock_take_review(request, pk: int):
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "complete" and st.status != "COMPLETED":
+            user_id = getattr(request.user, "username", None) or "System"
+            user_int = getattr(request.user, "pk", None)
             with transaction.atomic():
+                adjusted = 0
+                for sti in items:
+                    if sti.physical_qty is None:
+                        continue
+                    variance = Decimal(str(sti.physical_qty)) - Decimal(
+                        str(sti.system_qty)
+                    )
+                    if variance == Decimal("0"):
+                        continue
+                    Item.objects.filter(pk=sti.item_id).update(
+                        current_stock=F("current_stock") + variance
+                    )
+                    StockTransaction.objects.create(
+                        item_id=sti.item_id,
+                        quantity_change=variance,
+                        transaction_type="ADJUSTMENT",
+                        user_id=user_id,
+                        user_int_id=user_int,
+                        notes=f"Stock take #{st.pk} variance adjustment",
+                        reason_category="STOCK_TAKE",
+                    )
+                    adjusted += 1
                 st.status = "COMPLETED"
                 st.completed_at = timezone.now()
                 st.save(update_fields=["status", "completed_at"])
-            messages.success(
-                request, f"Stock take #{st.pk} completed.", extra_tags="toast"
-            )
+            msg = f"Stock take #{st.pk} completed."
+            if adjusted:
+                msg += f" {adjusted} item adjustment{'s' if adjusted != 1 else ''} applied."
+            messages.success(request, msg, extra_tags="toast")
             return redirect("stock_take_list")
         elif action == "discard":
             st.delete()

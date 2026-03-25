@@ -1,0 +1,103 @@
+{% extends "_base.html" %}
+{% load icon_tags %}
+{% block title %}Food Cost Report – Inventory Pro{% endblock %}
+{% block content %}
+<div class="w-full max-w-5xl mx-auto space-y-6 px-4 md:px-0 py-6">
+
+  <nav class="text-sm text-gray-500 flex items-center gap-1">
+    <a href="{% url 'recipes_list' %}" class="hover:text-primary hover:underline">Recipes</a>
+    <span>›</span>
+    <span class="text-bodyText">Food Cost Report</span>
+  </nav>
+
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-6 py-4 border-b border-border flex items-start justify-between gap-3 flex-wrap">
+      <div>
+        <h1 class="text-xl font-semibold text-bodyText">Food Cost Report</h1>
+        <p class="text-sm text-gray-500 mt-1">Active final recipes — ingredient cost vs. selling price</p>
+      </div>
+      <form method="get" class="flex items-center gap-2">
+        <label for="status-filter" class="text-sm text-gray-600">Filter:</label>
+        <select id="status-filter" name="status" onchange="this.form.submit()"
+                class="text-sm border border-border rounded-md px-2 py-1.5 bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary">
+          <option value="" {% if not status_filter %}selected{% endif %}>All</option>
+          <option value="success" {% if status_filter == 'success' %}selected{% endif %}>On target</option>
+          <option value="warning" {% if status_filter == 'warning' %}selected{% endif %}>Slightly over</option>
+          <option value="danger" {% if status_filter == 'danger' %}selected{% endif %}>Over budget</option>
+          <option value="unknown" {% if status_filter == 'unknown' %}selected{% endif %}>No price set</option>
+        </select>
+      </form>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-surfaceSubtle border-b border-border">
+          <tr>
+            <th scope="col" class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600">Recipe</th>
+            <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Ingredient Cost</th>
+            <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Selling Price</th>
+            <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Food Cost %</th>
+            <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Target %</th>
+            <th scope="col" class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600">Gross Margin</th>
+            <th scope="col" class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          {% for row in rows %}
+          <tr class="odd:bg-surface even:bg-surfaceSubtle text-bodyText hover:bg-surfaceSubtle">
+            <td class="px-4 py-2 font-medium">
+              <a href="{% url 'recipe_detail' row.recipe.pk %}" class="hover:text-primary hover:underline">{{ row.recipe.name }}</a>
+            </td>
+            <td class="px-4 py-2 text-right tabular-nums">
+              {% if row.total_cost %}{{ row.total_cost|floatformat:2 }}{% else %}<span class="text-gray-400">—</span>{% endif %}
+            </td>
+            <td class="px-4 py-2 text-right tabular-nums">
+              {% if row.recipe.selling_price %}{{ row.recipe.selling_price|floatformat:2 }}{% else %}<span class="text-gray-400">—</span>{% endif %}
+            </td>
+            <td class="px-4 py-2 text-right tabular-nums font-medium
+              {% if row.fc_status == 'success' %}text-success
+              {% elif row.fc_status == 'warning' %}text-warning
+              {% elif row.fc_status == 'danger' %}text-danger
+              {% else %}text-gray-400{% endif %}">
+              {% if row.food_cost_pct is not None %}{{ row.food_cost_pct|floatformat:1 }}%{% else %}<span class="text-gray-400">—</span>{% endif %}
+            </td>
+            <td class="px-4 py-2 text-right tabular-nums text-gray-500">
+              {% if row.recipe.target_food_cost_pct %}{{ row.recipe.target_food_cost_pct|floatformat:1 }}%{% else %}<span class="text-gray-400">—</span>{% endif %}
+            </td>
+            <td class="px-4 py-2 text-right tabular-nums">
+              {% if row.gross_margin is not None %}
+                <span class="{% if row.gross_margin >= 0 %}text-success{% else %}text-danger{% endif %}">
+                  {{ row.gross_margin|floatformat:2 }}
+                </span>
+              {% else %}<span class="text-gray-400">—</span>{% endif %}
+            </td>
+            <td class="px-4 py-2 text-center">
+              {% if row.fc_status == 'success' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">On target</span>
+              {% elif row.fc_status == 'warning' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Slightly over</span>
+              {% elif row.fc_status == 'danger' %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Over budget</span>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">No price</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+              {% if status_filter %}No recipes match this filter.{% else %}No active final recipes found.{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-6 py-3 border-t border-border bg-surfaceSubtle text-xs text-gray-500">
+      {{ rows|length }} recipe{{ rows|length|pluralize }} shown.
+      Costs are based on the most recent purchase price for each ingredient.
+    </div>
+  </div>
+</div>
+{% endblock %}

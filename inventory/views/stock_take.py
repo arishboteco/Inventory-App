@@ -115,6 +115,7 @@ def stock_take_count(request, pk: int):
     items = list(st.items.select_related("item").order_by("item__name"))
 
     if request.method == "POST":
+        invalid_items = []
         with transaction.atomic():
             for sti in items:
                 key = f"physical_{sti.pk}"
@@ -122,14 +123,25 @@ def stock_take_count(request, pk: int):
                 notes_key = f"notes_{sti.pk}"
                 if raw:
                     try:
-                        sti.physical_qty = float(raw)
+                        val = float(raw)
+                        if val < 0:
+                            invalid_items.append(sti.item.name)
+                        else:
+                            sti.physical_qty = val
                     except ValueError:
-                        pass
+                        invalid_items.append(sti.item.name)
                 sti.notes = request.POST.get(notes_key, "") or ""
                 sti.save(update_fields=["physical_qty", "notes"])
             st.status = "IN_PROGRESS"
             st.save(update_fields=["status"])
-        messages.success(request, "Counts saved.", extra_tags="toast")
+        if invalid_items:
+            messages.warning(
+                request,
+                f"Invalid quantities ignored for: {', '.join(invalid_items)}. Please re-enter valid numbers.",
+                extra_tags="toast",
+            )
+        else:
+            messages.success(request, "Counts saved.", extra_tags="toast")
         return redirect("stock_take_review", pk=pk)
 
     return render(

@@ -7,6 +7,7 @@ from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.templatetags.static import static
 
@@ -199,7 +200,7 @@ def create_recipe(
             }
             recipe = Recipe.objects.create(**fields)
             for item_data in items:
-                RecipeItem.objects.create(
+                ri = RecipeItem(
                     recipe=recipe,
                     item_id=item_data.get("item_id"),
                     sub_recipe_id=item_data.get("sub_recipe_id"),
@@ -209,8 +210,10 @@ def create_recipe(
                     sort_order=item_data.get("sort_order") or 0,
                     notes=_strip_or_none(item_data.get("notes")),
                 )
+                ri.clean()
+                ri.save()
         return True, "Recipe created.", recipe.recipe_id
-    except (IntegrityError, ValueError) as exc:
+    except (IntegrityError, ValueError, ValidationError) as exc:
         logger.error("Error creating recipe: %s", exc)
         return False, str(exc), None
 
@@ -230,7 +233,7 @@ def update_recipe(
             recipe.save()
             RecipeItem.objects.filter(recipe=recipe).delete()
             for item_data in items:
-                RecipeItem.objects.create(
+                ri = RecipeItem(
                     recipe=recipe,
                     item_id=item_data.get("item_id"),
                     sub_recipe_id=item_data.get("sub_recipe_id"),
@@ -240,6 +243,8 @@ def update_recipe(
                     sort_order=item_data.get("sort_order") or 0,
                     notes=_strip_or_none(item_data.get("notes")),
                 )
+                ri.clean()
+                ri.save()
         return True, "Recipe updated."
     except Recipe.DoesNotExist:
         return False, "Recipe not found."

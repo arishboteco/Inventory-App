@@ -679,7 +679,11 @@ def purchase_order_receive(request, pk: int):
                 except Exception:
                     qty = Decimal("0")
                 if qty < 0:
-                    qty = Decimal("0")
+                    form.add_error(
+                        None,
+                        f"Received quantity for {item.item.name} cannot be negative.",
+                    )
+                    continue
                 if qty:
                     any_received = True
                     remaining = item.quantity_ordered - item.received_total
@@ -765,7 +769,11 @@ class PurchaseOrderReceivePartialView(View):
                 except Exception:
                     qty = Decimal("0")
                 if qty < 0:
-                    qty = Decimal("0")
+                    form.add_error(
+                        None,
+                        f"Received quantity for {item.item.name} cannot be negative.",
+                    )
+                    continue
                 if qty:
                     any_received = True
                     remaining = item.quantity_ordered - item.received_total

@@ -506,45 +506,53 @@ def create_adhoc_grn(request):
         form = AdhocGRNForm(request.POST, request.FILES)
         formset = AdhocGRNLineFormSet(request.POST, prefix="lines")
         if form.is_valid() and formset.is_valid():
-            try:
-                with db_transaction.atomic():
-                    grn = form.save(commit=False)
-                    grn.purchase_order = None
-                    grn.save()
-                    grn_number = generate_grn_number()
-                    user_id = getattr(request.user, "username", "System") or "System"
-                    for line_form in formset.forms:
-                        if not line_form.cleaned_data or line_form.cleaned_data.get(
-                            "DELETE"
-                        ):
-                            continue
-                        item = line_form.cleaned_data["item"]
-                        qty = line_form.cleaned_data["quantity_received"]
-                        price = line_form.cleaned_data.get("unit_price") or Decimal("0")
-                        notes = line_form.cleaned_data.get("item_notes") or ""
-                        GRNItem.objects.create(
-                            grn=grn,
-                            po_item=None,
-                            item=item,
-                            quantity_ordered_on_po=Decimal("0"),
-                            quantity_received=qty,
-                            unit_price_at_receipt=price,
-                            item_notes=notes,
+            valid_lines = [
+                f
+                for f in formset.forms
+                if f.cleaned_data and not f.cleaned_data.get("DELETE")
+            ]
+            if not valid_lines:
+                form.add_error(None, "At least one line item is required.")
+            else:
+                try:
+                    with db_transaction.atomic():
+                        grn = form.save(commit=False)
+                        grn.purchase_order = None
+                        grn.save()
+                        grn_number = generate_grn_number()
+                        user_id = (
+                            getattr(request.user, "username", "System") or "System"
                         )
-                        stock_service.record_stock_transaction(
-                            item_id=item.pk,
-                            quantity_change=qty,
-                            transaction_type="RECEIVING",
-                            user_id=user_id,
-                            notes=f"Ad-hoc GRN {grn_number}",
-                        )
-                messages.success(
-                    request, f"Ad-hoc GRN {grn.pk} created.", extra_tags="toast"
-                )
-                return redirect("grn_detail", pk=grn.pk)
-            except Exception as exc:
-                logger.error("Error creating ad-hoc GRN: %s", exc)
-                form.add_error(None, str(exc))
+                        for line_form in valid_lines:
+                            item = line_form.cleaned_data["item"]
+                            qty = line_form.cleaned_data["quantity_received"]
+                            price = line_form.cleaned_data.get("unit_price") or Decimal(
+                                "0"
+                            )
+                            notes = line_form.cleaned_data.get("item_notes") or ""
+                            GRNItem.objects.create(
+                                grn=grn,
+                                po_item=None,
+                                item=item,
+                                quantity_ordered_on_po=Decimal("0"),
+                                quantity_received=qty,
+                                unit_price_at_receipt=price,
+                                item_notes=notes,
+                            )
+                            stock_service.record_stock_transaction(
+                                item_id=item.pk,
+                                quantity_change=qty,
+                                transaction_type="RECEIVING",
+                                user_id=user_id,
+                                notes=f"Ad-hoc GRN {grn_number}",
+                            )
+                    messages.success(
+                        request, f"Ad-hoc GRN {grn.pk} created.", extra_tags="toast"
+                    )
+                    return redirect("grn_detail", pk=grn.pk)
+                except Exception as exc:
+                    logger.error("Error creating ad-hoc GRN: %s", exc)
+                    form.add_error(None, str(exc))
     else:
         form = AdhocGRNForm(initial={"received_date": date.today()})
         formset = AdhocGRNLineFormSet(prefix="lines")

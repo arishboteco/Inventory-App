@@ -10,7 +10,7 @@ Thank you for considering a contribution to Inventory-App!
 ## Pull Requests
 
 - Follow the [pull request template](.github/pull_request_template.md).
-- Run `flake8` and `pytest` and ensure all checks pass.
+- Run `make ci` (formats with Black, lints with Ruff, runs pytest) and ensure all checks pass.
 - Maintain code style and add tests and documentation where appropriate.
 
 We appreciate your help in improving the project.

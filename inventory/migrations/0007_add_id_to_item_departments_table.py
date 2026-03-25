@@ -12,7 +12,16 @@ class Migration(migrations.Migration):
     operations = [
         # Add id column as primary key to item_departments table
         migrations.RunSQL(
-            "ALTER TABLE item_departments ADD COLUMN id SERIAL PRIMARY KEY;",
-            reverse_sql="ALTER TABLE item_departments DROP COLUMN id;",
+            """
+            DO $$ BEGIN
+              IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'item_departments' AND column_name = 'id'
+              ) THEN
+                ALTER TABLE item_departments ADD COLUMN id SERIAL PRIMARY KEY;
+              END IF;
+            END $$;
+            """,
+            reverse_sql="ALTER TABLE item_departments DROP COLUMN IF EXISTS id;",
         ),
     ]

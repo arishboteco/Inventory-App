@@ -777,3 +777,40 @@ class RecipeDeleteView(LoginRequiredMixin, DeleteView):
         recipe.delete()
         messages.success(request, f"Recipe '{name}' deleted.", extra_tags="toast")
         return redirect(self.success_url)
+
+
+def food_cost_report(request):
+    """Report listing all active FINAL recipes with food cost metrics."""
+    status_filter = request.GET.get("status", "")
+    qs = Recipe.objects.filter(type=Recipe.Type.FINAL, is_active=True).order_by("name")
+
+    rows = []
+    for recipe in qs:
+        total_cost = recipe.get_total_cost()
+        fcp = recipe.food_cost_percentage
+        fc_status = recipe.food_cost_status
+        if status_filter and fc_status != status_filter:
+            continue
+        selling = Decimal(str(recipe.selling_price or 0))
+        gross_margin = (selling - total_cost) if selling else None
+        rows.append(
+            {
+                "recipe": recipe,
+                "total_cost": total_cost,
+                "food_cost_pct": fcp,
+                "fc_status": fc_status,
+                "gross_margin": gross_margin,
+            }
+        )
+
+    return render(
+        request,
+        "inventory/recipes/food_cost_report.html",
+        {
+            "rows": rows,
+            "status_filter": status_filter,
+            "list_url": "/recipes/",
+            "list_title": "Recipes",
+            "current_title": "Food Cost Report",
+        },
+    )

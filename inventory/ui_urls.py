@@ -68,6 +68,7 @@ from .views.recipes import (
     RecipesListView,
     RecipesTableView,
     RecipeViewPartialView,
+    food_cost_report,
     recipe_create,
     recipe_create_indent,
     recipe_detail,
@@ -260,6 +261,7 @@ urlpatterns = [
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
     path("recipes/table/", RecipesTableView.as_view(), name="recipes_table"),
+    path("recipes/food-cost-report/", food_cost_report, name="food_cost_report"),
     path("recipes/create/", recipe_create, name="recipe_create"),
     path(
         "recipes/create/partial/",

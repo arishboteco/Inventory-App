@@ -89,6 +89,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
         "Insights & Settings",
         [
             {
+                "title": "Food Cost Report",
+                "description": "Review ingredient costs and margins across all recipes.",
+                "url_name": "food_cost_report",
+            },
+            {
                 "title": "Stock History Report",
                 "description": "Analyse trends and audit activity.",
                 "url_name": "history_reports",

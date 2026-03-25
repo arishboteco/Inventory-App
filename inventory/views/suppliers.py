@@ -89,7 +89,21 @@ class SuppliersListView(TemplateView):
             if bulk_form.is_valid():
                 inserted = 0
                 file = bulk_form.cleaned_data["file"]
-                data = io.StringIO(file.read().decode("utf-8"))
+                raw = file.read()
+                for encoding in ("utf-8-sig", "utf-8", "latin-1"):
+                    try:
+                        raw = raw.decode(encoding)
+                        break
+                    except (UnicodeDecodeError, AttributeError):
+                        continue
+                else:
+                    messages.error(
+                        request,
+                        "Could not decode CSV file — please save it as UTF-8.",
+                        extra_tags="toast",
+                    )
+                    raw = ""
+                data = io.StringIO(raw)
                 reader = csv.DictReader(data)
                 for row in reader:
                     form_row = SupplierForm(row)

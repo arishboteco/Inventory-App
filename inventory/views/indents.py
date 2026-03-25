@@ -798,13 +798,21 @@ class IndentUpdateView(View):
                 indent.department = dept
                 update_fields.append("department_id")
             except Department.DoesNotExist:
-                pass
+                messages.warning(
+                    request,
+                    f"Department ID '{dep_raw}' not found — assignment skipped.",
+                    extra_tags="toast",
+                )
         elif dep_raw:
             try:
                 indent.department = Department.objects.get(name=dep_raw)
                 update_fields.append("department_id")
             except Department.DoesNotExist:
-                pass
+                messages.warning(
+                    request,
+                    f"Department '{dep_raw}' not found — assignment skipped.",
+                    extra_tags="toast",
+                )
 
         # Date required
         date_raw = request.POST.get("date_required", "").strip()

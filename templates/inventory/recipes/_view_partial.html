@@ -18,7 +18,7 @@
       </div>
       <div class="space-y-1">
         <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Type</h4>
-        <p class="text-bodyText leading-snug">{{ recipe.type|default:"—" }}</p>
+        <p class="text-bodyText leading-snug">{{ recipe.get_type_display }}</p>
       </div>
       <div class="space-y-1">
         <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Default Yield</h4>

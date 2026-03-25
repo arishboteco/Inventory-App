@@ -33,8 +33,6 @@ def _filtered_recipes_queryset(request):
     params["recipe_count"] = qs.count()
 
     # Build filter options for the template filter_bar
-    from inventory.models.recipes import RECIPE_TYPES
-
     type_value = request.GET.get("type", "")
     params["filters"] = [
         {
@@ -42,7 +40,7 @@ def _filtered_recipes_queryset(request):
             "label": "Type",
             "value": type_value,
             "options": [{"value": "", "label": "All Types"}]
-            + [{"value": v, "label": label} for v, label in RECIPE_TYPES if v],
+            + [{"value": v, "label": label} for v, label in Recipe.Type.choices],
         },
     ]
     return qs, params

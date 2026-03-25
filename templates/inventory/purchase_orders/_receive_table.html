@@ -18,6 +18,7 @@
   <th scope="col" class="sticky z-10 px-4 py-2 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Item</th>
   <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Ordered</th>
   <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Received</th>
+  <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Remaining</th>
   <th scope="col" class="sticky z-10 px-4 py-2 text-right bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">Receive Now</th>
 {% endblock %}
 
@@ -27,11 +28,17 @@
     <td class="px-4 py-2">{{ item.item.name }}</td>
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.quantity_ordered|floatformat:2 }}</span></td>
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ item.received_total|floatformat:2 }}</span></td>
-    <td class="px-4 py-2 text-right"><input type="number" step="any" name="item_{{ item.pk }}" class="inline-block w-28 p-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary text-right tabular-nums" /></td>
+    <td class="px-4 py-2 text-right"><span class="tabular-nums font-medium {% if item.remaining == 0 %}text-gray-400{% else %}text-primary{% endif %}">{{ item.remaining|floatformat:2 }}</span></td>
+    <td class="px-4 py-2 text-right">
+      <input type="number" step="any" min="0" max="{{ item.remaining|floatformat:2 }}"
+             name="item_{{ item.pk }}"
+             class="inline-block w-28 p-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary text-right tabular-nums"
+             placeholder="0" />
+    </td>
   </tr>
   {% empty %}
   <tr>
-    <td colspan="4" class="px-4 py-2 text-center text-gray-600">No items to receive.</td>
+    <td colspan="5" class="px-4 py-2 text-center text-gray-600">No items to receive.</td>
   </tr>
   {% endfor %}
 {% endblock %}

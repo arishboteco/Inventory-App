@@ -144,6 +144,12 @@ class PurchaseOrderItem(models.Model):
         ] or Decimal("0")
         return total
 
+    @property
+    def remaining(self) -> Decimal:
+        return max(
+            Decimal("0"), (self.quantity_ordered or Decimal("0")) - self.received_total
+        )
+
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.purchase_order} - {self.item}"
 

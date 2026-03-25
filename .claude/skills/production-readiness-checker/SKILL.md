@@ -18,7 +18,7 @@ Before evaluating, establish:
 1. **What does this app do?** (domain, core workflow)
 2. **Who uses it?** (internal team of 5? public SaaS? restaurant kitchen staff?)
 3. **What's the scale?** (10 users/day? 10,000?)
-4. **What's already been done?** (any prior audits, bug fixes, phases completed?)
+4. **What's already been done?** Check the **Completed Work Log** section in CLAUDE.md — it tracks all phases completed so far. Don't re-evaluate fixed issues.
 5. **What's the deployment target?** (already hosted? needs CI/CD? compliance requirements?)
 
 The answers shape every recommendation. A 5-person internal tool doesn't need GDPR compliance flows. A public SaaS doesn't need kitchen station assignments.

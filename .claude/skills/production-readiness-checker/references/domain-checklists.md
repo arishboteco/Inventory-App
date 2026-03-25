@@ -2,24 +2,26 @@
 
 When evaluating production readiness, use the relevant domain checklist below to identify missing features. These are based on industry standards — not every app needs every item, but missing critical ones should be flagged.
 
+Items marked with [DONE] are already implemented in Inventory Pro (see CLAUDE.md Completed Work Log for details).
+
 ## Restaurant / F&B Inventory
 
 ### Critical (app is incomplete without these)
-- Sub-recipes / semi-processed items (a recipe using another recipe as an ingredient)
-- Food Cost % (total ingredient cost / selling price × 100) — the #1 metric
-- Physical stock-take workflow (count vs system, variance tracking)
-- Full procurement pipeline: Indent → PO → GRN → Stock update
+- [DONE] Sub-recipes / semi-processed items (a recipe using another recipe as an ingredient)
+- [DONE] Food Cost % (total ingredient cost / selling price x 100) — the #1 metric
+- [DONE] Physical stock-take workflow (count vs system, variance tracking, auto-adjust)
+- [DONE] Full procurement pipeline: Indent → PO → GRN → Stock update
 
 ### High (users will notice within first week)
-- Stock transfers between departments (Kitchen ↔ Bar ↔ Pastry)
-- Low-stock alerts with auto-reorder action
-- Ad-hoc receiving (goods without a PO — emergency purchases)
+- [DONE] Stock transfers between departments (Kitchen ↔ Bar ↔ Pastry)
+- [DONE] Low-stock alerts with auto-reorder action
+- [DONE] Ad-hoc receiving (goods without a PO — emergency purchases)
 - Allergen tracking on items, auto-display on recipes
-- Wastage reason codes (Spoiled / Over-prep / Dropped / Expired)
+- [DONE] Wastage reason codes (Spoiled / Over-prep / Dropped / Expired)
 
 ### Medium (will be requested eventually)
 - Batch/lot tracking with expiry dates
-- Consumption tracking — auto-deduct stock when a recipe is produced
+- [DONE] Consumption tracking — auto-deduct stock when a recipe is produced
 - Food cost trend reports over time
 - Recipe profitability ranking
 - Prep instructions and station assignment on recipes

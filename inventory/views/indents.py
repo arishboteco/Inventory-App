@@ -92,10 +92,14 @@ class IndentsListView(TemplateView):
                 "name": "requested_by",
                 "label": "Requested By",
                 "value": requested_by,
-                "options": [
-                    {"value": "", "label": "All Requesters"},
-                    {"value": "admin", "label": "admin"},
-                    {"value": "testuser", "label": "testuser"},
+                "options": [{"value": "", "label": "All Requesters"}]
+                + [
+                    {"value": u, "label": u}
+                    for u in Indent.objects.exclude(requested_by="")
+                    .exclude(requested_by__isnull=True)
+                    .values_list("requested_by", flat=True)
+                    .distinct()
+                    .order_by("requested_by")
                 ],
             },
         ]

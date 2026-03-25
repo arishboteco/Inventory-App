@@ -148,7 +148,7 @@ def test_recipe_metadata_fields():
         "name": "Salad",
         "description": "Fresh",
         "is_active": True,
-        "type": "FOOD",
+        "type": "FINAL",
         "default_yield_qty": 4,
         "default_yield_unit": "plate",
         "tags": "vegan,healthy",
@@ -165,6 +165,6 @@ def test_recipe_metadata_fields():
     assert ok and rid
 
     recipe = Recipe.objects.get(pk=rid)
-    assert recipe.type == "FOOD"
+    assert recipe.type == "FINAL"
     assert recipe.default_yield_unit == "plate"
     assert recipe.tags == ["vegan", "healthy"]

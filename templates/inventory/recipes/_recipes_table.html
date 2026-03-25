@@ -104,10 +104,10 @@
             </div>
           </td>
           <td class="px-4 py-2 align-top">
-            {% if recipe.type %}
-              {{ recipe.type }}
+            {% if recipe.type == "SUB" %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Sub-Recipe</span>
             {% else %}
-              <span class="text-gray-400">—</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Final Recipe</span>
             {% endif %}
           </td>
           <td class="px-4 py-2 align-top">

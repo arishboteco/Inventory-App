@@ -1,1 +1,0 @@
-web: gunicorn --bind 0.0.0.0:$PORT --workers 3 --worker-class sync --max-requests 1000 --max-requests-jitter 50 --timeout 120 --preload --access-logfile - --error-logfile - inventory_app.wsgi:application

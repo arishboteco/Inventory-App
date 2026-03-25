@@ -101,6 +101,14 @@ class Recipe(models.Model):
         return None
 
     @property
+    def gross_margin_percentage(self):
+        """Returns gross margin as a percentage (100 - food_cost_percentage)."""
+        pct = self.food_cost_percentage
+        if pct is None:
+            return None
+        return round(100 - pct, 1)
+
+    @property
     def food_cost_status(self):
         """Returns 'success', 'warning', or 'danger' for Bootstrap colour coding."""
         pct = self.food_cost_percentage

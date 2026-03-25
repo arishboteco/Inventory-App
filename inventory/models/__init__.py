@@ -13,6 +13,7 @@ from .orders import (
     PurchaseOrderItem,
 )
 from .recipes import Recipe, RecipeItem, SaleTransaction
+from .site_config import SiteConfig
 from .stock_take import StockTake, StockTakeItem
 from .subcategory import SubCategory
 from .suppliers import PAYMENT_TERMS_CHOICES, Supplier
@@ -45,4 +46,5 @@ __all__ = [
     "Unit",
     "StockTake",
     "StockTakeItem",
+    "SiteConfig",
 ]

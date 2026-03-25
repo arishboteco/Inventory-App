@@ -1,6 +1,22 @@
+from decimal import Decimal, InvalidOperation
+
 from django import template
 
 register = template.Library()
+
+
+@register.filter
+def currency(value, symbol="$"):
+    """Format a numeric value as currency: symbol + 2 decimal places.
+
+    Usage in templates:
+        {{ item.price|currency:site_config.currency_symbol }}
+        {{ total|currency:'£' }}
+    """
+    try:
+        return f"{symbol}{Decimal(str(value)):.2f}"
+    except (InvalidOperation, TypeError, ValueError):
+        return "—"
 
 
 @register.filter

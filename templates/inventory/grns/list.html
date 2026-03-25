@@ -1,5 +1,5 @@
 {% extends "components/create_manage_layout.html" %}
-{% load icon_tags %}
+{% load icon_tags form_tags %}
 {% block page_title %}Goods Received Notes – Inventory Pro{% endblock %}
 {% block page_heading %}Goods Received Notes{% endblock %}
 {% block page_subtitle %}
@@ -38,9 +38,7 @@
   {% include "components/kpi_card.html" with icon='archive-box-arrow-down' color='blue' label='Total GRNs' value=kpis.total_grns|default:"0" %}
   {% include "components/kpi_card.html" with icon='calendar' color='green' label='This Month' value=kpis.grns_this_month|default:"0" %}
   {% include "components/kpi_card.html" with icon='exclamation-triangle' color='yellow' label='Discrepancies' value=kpis.discrepancy_count|default:"0" %}
-  {% with val=kpis.value_this_month|floatformat:0|default:"0" %}
-    {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Value This Month' value="$"|add:val %}
-  {% endwith %}
+  {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Value This Month' value=kpis.value_this_month|currency:site_config.currency_symbol %}
 </div>
 {% endblock %}
 

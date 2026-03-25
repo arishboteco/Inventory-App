@@ -1,4 +1,4 @@
-{% load icon_tags %}
+{% load icon_tags form_tags %}
 <div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-xl">
   <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <h3 class="text-base font-semibold">{{ recipe.name }}</h3>
@@ -112,7 +112,7 @@
       <div id="cost-by-category" class="text-sm space-y-1"></div>
       <p id="recipe-zero-cost-notice" class="text-xs text-amber-600 {% if not zero_cost %}hidden{% endif %}">Some items are missing purchase costs, so their line totals show as 0. Add a price to the item to update this summary.</p>
       <div class="text-sm">
-        <div>Total Cost: <span id="recipe-total-cost">{{ total_cost|floatformat:2 }}</span></div>
+        <div>Total Cost: <span id="recipe-total-cost">{{ total_cost|currency:site_config.currency_symbol }}</span></div>
       </div>
       {# D2: Pricing & Food Cost % #}
       <div class="mt-3 pt-3 border-t border-border">
@@ -121,7 +121,7 @@
           <div>
             <p class="text-xs text-gray-500">Selling Price</p>
             {% if recipe.selling_price %}
-              <p class="font-semibold">${{ recipe.selling_price|floatformat:2 }}</p>
+              <p class="font-semibold">{{ recipe.selling_price|currency:site_config.currency_symbol }}</p>
             {% else %}
               <p class="text-gray-400 italic">Not set</p>
             {% endif %}
@@ -143,9 +143,9 @@
           </div>
           <div>
             <p class="text-xs text-gray-500">Gross Margin</p>
-            {% if recipe.food_cost_percentage is not None %}
-              <p class="font-semibold">{{ recipe.food_cost_percentage|floatformat:1 }}% cost</p>
-              <p class="text-xs text-gray-400">{{ 100|add:"-"|add:recipe.food_cost_percentage|floatformat:1 }}% margin</p>
+            {% if recipe.gross_margin_percentage is not None %}
+              <p class="font-semibold">{{ recipe.gross_margin_percentage|floatformat:1 }}%</p>
+              <p class="text-xs text-gray-400">{{ recipe.food_cost_percentage|floatformat:1 }}% food cost</p>
             {% else %}
               <p class="text-gray-400 italic">—</p>
             {% endif %}

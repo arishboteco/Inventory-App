@@ -1,6 +1,6 @@
 {% extends "components/create_manage_layout.html" %}
 {% load static %}
-{% load icon_tags %}
+{% load icon_tags form_tags %}
 
 {% block page_title %}Purchase Orders - Inventory Pro{% endblock %}
 
@@ -69,9 +69,7 @@
   {% include "components/kpi_card.html" with icon='shopping-cart' color='blue' label='Total Orders' value=kpis.total_pos|default:"0" %}
   {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Pending Receipt' value=kpis.pending_count|default:"0" %}
   {% include "components/kpi_card.html" with icon='check-circle' color='green' label='Completed' value=kpis.completed_count|default:"0" %}
-  {% with pending_value_formatted=kpis.pending_value|floatformat:0|default:"0" %}
-    {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Pending Value' value="$"|add:pending_value_formatted %}
-  {% endwith %}
+  {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Pending Value' value=kpis.pending_value|currency:site_config.currency_symbol %}
 </div>
 
 {% if kpis.overdue_count > 0 %}

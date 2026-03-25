@@ -4,6 +4,24 @@ Quick reference for anyone working on this codebase.
 
 ---
 
+## Documentation Index
+
+| File | Contents |
+|------|----------|
+| [docs/workflow.md](docs/workflow.md) | Indent → PO → GRN → Stock flow with mermaid diagram |
+| [docs/architecture.md](docs/architecture.md) | Category and Units schema reference |
+| [docs/design-system.md](docs/design-system.md) | Tailwind design tokens, colour palette, WCAG contrast ratios |
+| [docs/styleguide.md](docs/styleguide.md) | Tailwind patterns, component styles, dark mode notes |
+| [docs/component-guide.md](docs/component-guide.md) | Reusable template component reference |
+| [docs/user-journeys.md](docs/user-journeys.md) | Personas, key flows, Figma prototype link |
+| [docs/development-workflow.md](docs/development-workflow.md) | Changelog discipline and daily dev workflow |
+| [docs/deployment.md](docs/deployment.md) | Render deployment setup guide |
+| [docs/deployment-env-setup.md](docs/deployment-env-setup.md) | Render environment variable reference |
+| [docs/deployment-troubleshooting.md](docs/deployment-troubleshooting.md) | Render troubleshooting (threading, superuser, etc.) |
+| [docs/security.md](docs/security.md) | Secrets management — never commit credentials |
+
+---
+
 ## 1. What This App Does
 
 F&B inventory management for restaurants/cafés. The core workflow:

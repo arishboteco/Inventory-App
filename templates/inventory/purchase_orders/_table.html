@@ -1,5 +1,5 @@
 {% extends "components/responsive_table.html" %}
-{% load icon_tags %}
+{% load icon_tags form_tags %}
 
 {% block caption %}<caption>Purchase Orders</caption>{% endblock %}
 {% block thead_class %}
@@ -126,7 +126,7 @@
     <div class="text-xs text-right mt-1"><span class="tabular-nums">{{ po.received_total }} / {{ po.ordered_total }}</span></div>
   </td>
   <td class="px-4 py-2 text-right tabular-nums" data-col="total_value">
-    {% if po.total_value %}${{ po.total_value|floatformat:2 }}{% else %}—{% endif %}
+    {% if po.total_value %}{{ po.total_value|currency:site_config.currency_symbol }}{% else %}—{% endif %}
   </td>
   <td class="px-4 py-2" data-col="actions">
     <div class="flex justify-end gap-2">

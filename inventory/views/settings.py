@@ -14,6 +14,7 @@ from django.views.decorators.http import require_http_methods
 from ..models.category import Category
 from ..models.departments import Department, ItemDepartment
 from ..models.items import Item
+from ..models.site_config import SiteConfig
 from ..models.unit import Unit
 
 logger = logging.getLogger(__name__)
@@ -27,8 +28,30 @@ def settings_view(request):
     if request.method == "POST":
         action = request.POST.get("action", "")
 
+        # ── App Configuration ─────────────────────────────────────────────────
+        if action == "save_app_config":
+            cfg = SiteConfig.get()
+            business_name = request.POST.get("business_name", "").strip()
+            currency_symbol = request.POST.get("currency_symbol", "").strip()
+            food_cost_target = request.POST.get("default_food_cost_target", "").strip()
+            if business_name:
+                cfg.business_name = business_name
+            if currency_symbol:
+                cfg.currency_symbol = currency_symbol
+            if food_cost_target:
+                try:
+                    from decimal import Decimal
+
+                    cfg.default_food_cost_target = Decimal(food_cost_target)
+                except Exception:
+                    messages.error(request, "Invalid food cost target value.")
+                    return redirect("settings")
+            cfg.save()
+            messages.success(request, "App configuration saved.", extra_tags="toast")
+            return redirect("settings")
+
         # ── Units ────────────────────────────────────────────────────────────
-        if action == "add_unit":
+        elif action == "add_unit":
             purchase_unit = request.POST.get("purchase_unit", "").strip()
             base_unit = request.POST.get("base_unit", "").strip()
             conversion_factor = request.POST.get("conversion_factor", "1").strip()

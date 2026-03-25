@@ -1,5 +1,5 @@
 {% extends "components/responsive_table.html" %}
-{% load icon_tags %}
+{% load icon_tags form_tags %}
 
 {% block caption %}<caption>GRN Items</caption>{% endblock %}
 {% block thead_class %}
@@ -44,8 +44,8 @@
         <td class="px-4 py-2 text-right tabular-nums {% if item.has_discrepancy %}text-red-600 font-medium{% else %}text-success-dark{% endif %}">
           {% if variance >= 0 %}+{% endif %}{{ variance|floatformat:2 }}
         </td>
-        <td class="px-4 py-2 text-right tabular-nums">${{ item.unit_price_at_receipt|floatformat:2 }}</td>
-        <td class="px-4 py-2 text-right tabular-nums">${{ item.quantity_received|floatformat:2 }}</td>
+        <td class="px-4 py-2 text-right tabular-nums">{{ item.unit_price_at_receipt|currency:site_config.currency_symbol }}</td>
+        <td class="px-4 py-2 text-right tabular-nums font-medium">{{ item.line_total|currency:site_config.currency_symbol }}</td>
       </tr>
       {% endwith %}
     {% else %}

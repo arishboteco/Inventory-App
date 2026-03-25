@@ -272,6 +272,11 @@ class GRNItem(models.Model):
     unit_price_at_receipt = models.DecimalField(max_digits=10, decimal_places=2)
     item_notes = models.TextField(blank=True, null=True, default="", db_column="notes")
 
+    @property
+    def line_total(self):
+        """Computed line total: quantity_received × unit_price_at_receipt."""
+        return self.quantity_received * self.unit_price_at_receipt
+
     def get_item(self):
         """Return the Item, whether from po_item or direct item FK."""
         if self.po_item:

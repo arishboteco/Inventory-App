@@ -1,5 +1,5 @@
 {% extends "components/create_manage_layout.html" %}
-{% load static icon_tags %}
+{% load static icon_tags form_tags %}
 
 {% block table_id %}items-container{% endblock %}
 
@@ -31,9 +31,7 @@
         {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock %' value=pct|add:'%' %}
       {% endwith %}
       {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Avg Days Since Purchase' value=stats.avg_days_since_last_purchase|floatformat:1 %}
-      {% with total_value_formatted=stats.stock_value_on_hand|floatformat:0|default:"0" %}
-        {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value="$"|add:total_value_formatted %}
-      {% endwith %}
+      {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value=stats.stock_value_on_hand|currency:site_config.currency_symbol %}
     </div>
     {% if stats.fastest_movers %}
     <div class="mt-6">

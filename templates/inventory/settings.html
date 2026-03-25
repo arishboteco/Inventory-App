@@ -1,12 +1,62 @@
 {% extends "components/create_manage_layout.html" %}
-{% block page_title %}Settings – Inventory Pro{% endblock %}
+{% load form_tags %}
+{% block page_title %}Settings – {{ site_config.business_name }}{% endblock %}
 {% block page_heading %}Settings{% endblock %}
 {% block page_subtitle %}
-  <p class="text-sm text-gray-600">Manage reference data: units, categories, and departments.</p>
+  <p class="text-sm text-gray-600">Configure your app, manage reference data, and update your profile.</p>
 {% endblock %}
 
 {% block data_container %}
 <div class="space-y-6">
+
+  {# ── App Configuration ─────────────────────────────────────────── #}
+  <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
+    <div class="px-4 pt-4 pb-2 border-b border-border">
+      <h2 class="text-lg font-semibold text-bodyText">App Configuration</h2>
+      <p class="text-xs text-gray-500 mt-0.5">Business identity and display preferences applied across the whole app.</p>
+    </div>
+    <div class="p-4">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_app_config">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-700" for="cfg-business-name">Business / Venue Name</label>
+            <input type="text" id="cfg-business-name" name="business_name"
+                   value="{{ site_config.business_name }}"
+                   placeholder="e.g. The Blue Apron"
+                   class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <p class="text-xs text-gray-400">Used in page titles and reports.</p>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-700" for="cfg-currency">Currency Symbol</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-3 flex items-center text-gray-400 text-sm font-mono pointer-events-none">{{ site_config.currency_symbol }}</span>
+              <input type="text" id="cfg-currency" name="currency_symbol"
+                     value="{{ site_config.currency_symbol }}"
+                     maxlength="5" placeholder="$"
+                     class="h-9 pl-7 pr-3 border border-form-border rounded-md bg-form-bg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary w-full">
+            </div>
+            <p class="text-xs text-gray-400">Prefix for all prices (e.g. $, £, €, ₹).</p>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-700" for="cfg-food-cost">Default Food Cost Target (%)</label>
+            <div class="relative">
+              <input type="number" id="cfg-food-cost" name="default_food_cost_target"
+                     value="{{ site_config.default_food_cost_target|floatformat:-2 }}"
+                     min="0" max="100" step="0.5"
+                     class="h-9 px-3 pr-8 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full">
+              <span class="absolute inset-y-0 right-3 flex items-center text-gray-400 text-sm pointer-events-none">%</span>
+            </div>
+            <p class="text-xs text-gray-400">Default target for new recipes.</p>
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <button type="submit" class="h-9 px-5 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary">Save Configuration</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   {# ── Units ─────────────────────────────────────────────────────── #}
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
@@ -181,31 +231,30 @@
 
   {# ── User Profile ─────────────────────────────────────────────── #}
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div class="px-4 pt-4 pb-2 border-b border-border">
+    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between">
       <h2 class="text-lg font-semibold text-bodyText">User Profile</h2>
+      <span class="text-xs text-gray-500 px-2 py-0.5 rounded-full bg-surfaceSubtle border border-border">
+        {% if request.user.is_superuser %}Administrator{% elif request.user.is_staff %}Staff{% else %}User{% endif %}
+      </span>
     </div>
-    <div class="p-4">
-      <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+    <div class="p-4 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
         <div>
-          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Username</dt>
-          <dd class="mt-1 text-bodyText">{{ request.user.username }}</dd>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Username</p>
+          <p class="text-bodyText font-mono">{{ request.user.username }}</p>
         </div>
         <div>
-          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Name</dt>
-          <dd class="mt-1 text-bodyText">{{ request.user.get_full_name|default:'(not set)' }}</dd>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Display Name</p>
+          <p class="text-bodyText">{{ request.user.get_full_name|default:'(not set)' }}</p>
         </div>
         <div>
-          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Email</dt>
-          <dd class="mt-1 text-bodyText">{{ request.user.email|default:'—' }}</dd>
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email</p>
+          <p class="text-bodyText">{{ request.user.email|default:'—' }}</p>
         </div>
-        <div>
-          <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Role</dt>
-          <dd class="mt-1 text-bodyText">{% if request.user.is_superuser %}Administrator{% elif request.user.is_staff %}Staff{% else %}User{% endif %}</dd>
-        </div>
-      </dl>
-      <div class="mt-4 flex gap-2">
-        <a href="{% url 'change-password' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Change Password</a>
+      </div>
+      <div class="flex gap-2 pt-1 border-t border-border">
         <a href="{% url 'profile-edit' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Edit Profile</a>
+        <a href="{% url 'change-password' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Change Password</a>
       </div>
     </div>
   </div>

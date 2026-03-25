@@ -93,7 +93,7 @@
   <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.purchase_unit|default:"—" }}</td>
       <td data-col="stock" class="px-4 py-2 whitespace-normal break-words">
         {% if item.current_stock is not None %}
-          <span class="{% if item.current_stock < 0 %}text-danger font-medium{% endif %}">{{ item.current_stock|floatformat:0 }}</span>
+          <span class="{% if item.current_stock < 0 %}text-danger font-medium{% endif %}">{{ item.current_stock|floatformat:-2 }}</span>
           {% if item.current_stock < 0 %}
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-danger-soft text-danger ml-1">⚠ Negative</span>
           {% endif %}

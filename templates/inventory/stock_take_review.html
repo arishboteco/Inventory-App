@@ -102,7 +102,7 @@
     {% if stock_take.status != 'COMPLETED' %}
     {% if uncounted_count > 0 %}
     <div class="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-warning bg-warning-soft px-4 py-3 text-sm text-warning">
-      {% icon 'exclamation-triangle' 'w-5 h-5 flex-shrink-0 text-amber-500 mt-0.5' %}
+      {% icon 'exclamation-triangle' 'w-5 h-5 flex-shrink-0 text-warning mt-0.5' %}
       <div>
         <p class="font-medium">{{ uncounted_count }} item{{ uncounted_count|pluralize }} not yet counted</p>
         <p class="text-warning mt-0.5">These will be treated as no-variance (system qty accepted). Go back to <a href="{% url 'stock_take_count' stock_take.pk %}" class="underline font-medium">edit counts</a> if you want to record them first.</p>

@@ -35,7 +35,7 @@
   <button id="bulk-delete-btn"
           disabled
           onclick="window.location='{{ suppliers_bulk_delete_url }}'"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500">
+          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-danger text-white hover:opacity-90 focus:ring-2 focus:ring-danger">
     Bulk Delete
   </button>
   {% url 'suppliers_table' as suppliers_table_url %}

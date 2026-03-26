@@ -7,7 +7,7 @@
     Received on <span class="text-accent-text">{{ grn.received_date|default:'—' }}</span>
   </span>
   {% if has_discrepancy %}
-    <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-warning-light text-warning-dark border border-warning">
+    <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-warning-soft text-warning border border-warning">
       {% icon 'exclamation-triangle' 'w-3.5 h-3.5' %} Discrepancy
     </span>
   {% endif %}
@@ -20,7 +20,7 @@
 {% endblock %}
 {% block hero_extra %}
   {% if has_discrepancy %}
-  <div class="mt-4 bg-warning-light border-l-4 border-warning rounded-lg p-3 text-sm text-warning-dark">
+  <div class="mt-4 bg-warning-soft border-l-4 border-warning rounded-lg p-3 text-sm text-warning">
     <span class="font-medium">Discrepancy detected:</span> One or more items were received in quantities below what was ordered. Notify the supplier or purchase team if action is required.
   </div>
   {% else %}

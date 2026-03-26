@@ -87,6 +87,22 @@
   a {
     @apply text-primary underline visited:text-purple-900 hover:text-linkHover focus:text-linkHover focus:outline-none focus:ring-2 focus:ring-primary;
   }
+
+  /* Reset underlines & inherited colors for navigation & dropdown menus */
+  [data-nav-panel] a,
+  [data-top-nav] a,
+  nav [role="menu"] a,
+  nav .relative a[role="menuitem"],
+  nav .relative a.block {
+    text-decoration: none;
+    color: inherit;
+  }
+  [data-nav-panel] a:visited,
+  nav [role="menu"] a:visited,
+  nav .relative a[role="menuitem"]:visited,
+  nav .relative a.block:visited {
+    color: inherit;
+  }
 }
 
 @layer components {
@@ -96,6 +112,37 @@
   }
   .drawer-panel {
     @apply bg-surface border border-border rounded-xl max-w-drawer-md shadow-overlay;
+  }
+
+  /* Drawer layout for modal.js openDrawer() wrapper */
+  .drawer {
+    @apply flex flex-col max-h-[90vh] overflow-y-auto;
+  }
+  .drawer.right {
+    @apply ml-auto;
+  }
+  .drawer.wide {
+    @apply max-w-drawer-xl;
+  }
+
+  /* Modern thin scrollbar for drawers & modals */
+  .drawer::-webkit-scrollbar,
+  #modal-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .drawer::-webkit-scrollbar-track,
+  #modal-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .drawer::-webkit-scrollbar-thumb,
+  #modal-content::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+  .drawer,
+  #modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
   }
   .modal-panel {
     @apply bg-surface border border-border rounded-xl shadow-overlay;

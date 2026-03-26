@@ -6,7 +6,7 @@
   <!-- Left side: Logo and main nav -->
   <div class="flex items-center min-w-0 flex-1">
         <!-- App logo links to home (title removed) -->
-        <a href="{% url 'root' %}" aria-label="Home" class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary">
+        <a href="{% url 'root' %}" aria-label="Home" class="h-8 w-8 bg-primary rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary">
           {% icon 'squares-2x2' 'h-5 w-5 text-white' variant='solid' size=20 aria_label='' %}
         </a>
 
@@ -35,31 +35,31 @@
               {% for link in group.links %}
                 <li role="none">
                   {% if request.resolver_match.url_name == link.url_name %}
-                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50" data-nav-link>
-                      {% if link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'food_cost_report' %}{% icon 'calculator' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'ml_dashboard' %}{% icon 'sparkles' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'indents_list' %}{% icon 'clipboard-document-list' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'indents_consolidate_preview' %}{% icon 'queue-list' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'purchase_orders_list' %}{% icon 'receipt-percent' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'grn_list' %}{% icon 'inbox-arrow-down' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'explore' %}{% icon 'magnifying-glass-plus' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'stock_movements' %}{% icon 'arrows-right-left' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'stock_take_list' %}{% icon 'clipboard-document-check' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'items_list' %}{% icon 'cube' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'recipes_list' %}{% icon 'beaker' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% elif link.url_name == 'suppliers_list' %}{% icon 'truck' 'h-4 w-4 text-blue-600' aria_label='' %}
-                      {% else %}{% icon 'square-2-stack' 'h-4 w-4 text-blue-600' aria_label='' %}{% endif %}
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm font-semibold text-primary bg-primary/10" data-nav-link>
+                      {% if link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'food_cost_report' %}{% icon 'calculator' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'ml_dashboard' %}{% icon 'sparkles' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'indents_list' %}{% icon 'clipboard-document-list' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'indents_consolidate_preview' %}{% icon 'queue-list' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'purchase_orders_list' %}{% icon 'receipt-percent' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'grn_list' %}{% icon 'inbox-arrow-down' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'explore' %}{% icon 'magnifying-glass-plus' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'stock_movements' %}{% icon 'arrows-right-left' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'stock_take_list' %}{% icon 'clipboard-document-check' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'items_list' %}{% icon 'cube' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'recipes_list' %}{% icon 'beaker' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% elif link.url_name == 'suppliers_list' %}{% icon 'truck' 'h-4 w-4 text-primary' aria_label='' %}
+                      {% else %}{% icon 'square-2-stack' 'h-4 w-4 text-primary' aria_label='' %}{% endif %}
                       <span class="flex flex-col text-left">
                         <span class="truncate">{{ link.title|safe }}</span>
                         {% if link.description %}
-                          <span class="text-xs font-normal text-blue-900/70 leading-tight">{{ link.description }}</span>
+                          <span class="text-xs font-normal text-primary/70 leading-tight">{{ link.description }}</span>
                         {% endif %}
                       </span>
                     </a>
                   {% else %}
-                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" data-nav-link>
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" data-nav-link>
                       {% if link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'food_cost_report' %}{% icon 'calculator' 'h-4 w-4 text-gray-500' aria_label='' %}
                       {% elif link.url_name == 'history_reports' %}{% icon 'document-chart-bar' 'h-4 w-4 text-gray-500' aria_label='' %}
@@ -99,7 +99,7 @@
         </div>
 
   {% if nav_heading %}
-  <h1 class="ml-6 text-xl md:text-h2 font-semibold text-gray-900">{{ nav_heading }}</h1>
+  <h1 class="ml-6 text-xl md:text-h2 font-semibold text-bodyText">{{ nav_heading }}</h1>
   {% endif %}
       </div>
 
@@ -108,11 +108,11 @@
         {% if user.is_authenticated %}
         <!-- Global Search (dropdown) -->
         <div class="relative" x-data="{open:false}" @keydown.escape.window="open=false">
-          <button @click="open=!open; if(open){ $nextTick(()=> $refs.globalSearch && $refs.globalSearch.focus()) }" class="flex items-center gap-2 h-10 px-3 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()" aria-controls="global-search-panel">
+          <button @click="open=!open; if(open){ $nextTick(()=> $refs.globalSearch && $refs.globalSearch.focus()) }" class="flex items-center gap-2 h-10 px-3 text-sm text-bodyText border border-border rounded-lg hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()" aria-controls="global-search-panel">
             {% icon 'magnifying-glass' 'h-5 w-5 text-gray-500' aria_label='' %}
             <span class="hidden md:inline">Search</span>
           </button>
-          <div id="global-search-panel" x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-80 md:w-96 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-3">
+          <div id="global-search-panel" x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-80 md:w-96 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50 p-3">
             <form action="{% url 'items_list' %}" method="get" role="search" class="relative">
               <label for="global-search-input" class="sr-only">search across items, suppliers, orders, and recipes</label>
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
@@ -120,22 +120,22 @@
               </span>
               <input id="global-search-input" x-ref="globalSearch" type="text" name="q" autocomplete="off"
                      placeholder="Global search: items, suppliers, orders, recipes…"
-                     class="block w-full h-10 pl-10 pr-3 text-sm md:text-base bg-white appearance-none border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                     class="block w-full h-10 pl-10 pr-3 text-sm md:text-base bg-form-bg appearance-none border border-form-border rounded-lg text-bodyText placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
             </form>
           </div>
         </div>
 
         <!-- Notifications -->
         <div class="relative" x-data="{open:false}" @keydown.escape.window="open=false">
-          <button @click="open=!open" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 relative focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()" aria-label="View notifications">
+          <button @click="open=!open" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-surfaceSubtle relative focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()" aria-label="View notifications">
             {% icon 'bell' 'h-6 w-6' aria_label='' %}
-            {% if notification_count %}<span class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-caption rounded-full flex items-center justify-center">{{ notification_count }}</span>{% endif %}
+            {% if notification_count %}<span class="absolute -top-1 -right-1 h-4 w-4 bg-danger text-white text-caption rounded-full flex items-center justify-center">{{ notification_count }}</span>{% endif %}
           </button>
-          <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+          <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50">
             <div class="py-2">
-              <div class="px-4 py-2 text-sm text-gray-700 font-medium border-b border-border">Notifications</div>
+              <div class="px-4 py-2 text-sm text-bodyText font-medium border-b border-border">Notifications</div>
               {% for notif in notifications %}
-                <a href="{{ notif.url }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ notif.text }}</a>
+                <a href="{{ notif.url }}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle">{{ notif.text }}</a>
               {% empty %}
                 <div class="px-4 py-2 text-sm text-gray-500">No new notifications</div>
               {% endfor %}
@@ -147,21 +147,21 @@
         <!-- User Menu -->
         {% if user.is_authenticated %}
         <div class="relative" x-data="{open:false}" @keydown.escape.window="open=false">
-          <button @click="open=!open" class="flex items-center space-x-3 text-label rounded-lg p-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()">
-            <div class="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span class="text-blue-600 font-medium">{% if user.first_name %}{{ user.first_name.0|upper }}{% elif user.username %}{{ user.username.0|upper }}{% else %}?{% endif %}</span>
+          <button @click="open=!open" class="flex items-center space-x-3 text-label rounded-lg p-2 hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" aria-haspopup="true" :aria-expanded="open.toString()">
+            <div class="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <span class="text-primary font-medium">{% if user.first_name %}{{ user.first_name.0|upper }}{% elif user.username %}{{ user.username.0|upper }}{% else %}?{% endif %}</span>
             </div>
-            <span class="hidden lg:block text-gray-700 font-medium truncate max-w-[10ch]">{{ user.first_name|default:user.username }}</span>
+            <span class="hidden lg:block text-bodyText font-medium truncate max-w-[10ch]">{{ user.first_name|default:user.username }}</span>
             {% icon 'chevron-down' 'h-4 w-4 text-gray-400' variant='solid' size=20 aria_label='' %}
           </button>
-          <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+          <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50">
             <div class="py-1" role="menu">
-              <a href="{% url 'interactive-dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Dashboard</a>
-              <a href="{% url 'settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Settings</a>
-              <a href="{% url 'workflow_guide' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Help &amp; Guide</a>
-              <div class="border-t border-gray-100 my-1"></div>
-              <a href="/admin/" class="block px-4 py-2 text-sm text-gray-500 hover:bg-gray-100" role="menuitem">Admin Panel</a>
-              <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50" role="menuitem">Sign out</a>
+              <a href="{% url 'interactive-dashboard' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Dashboard</a>
+              <a href="{% url 'settings' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Settings</a>
+              <a href="{% url 'workflow_guide' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Help &amp; Guide</a>
+              <div class="border-t border-border my-1"></div>
+              <a href="/admin/" class="block px-4 py-2 text-sm text-gray-500 hover:bg-surfaceSubtle" role="menuitem">Admin Panel</a>
+              <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-danger hover:bg-danger-soft" role="menuitem">Sign out</a>
             </div>
           </div>
         </div>
@@ -170,19 +170,19 @@
         {% if user.is_authenticated %}
         <!-- Mobile menu button -->
         <div x-data="{open:false}" class="relative md:hidden">
-          <button @click="open=!open" :aria-expanded="open.toString()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Open mobile menu">
+          <button @click="open=!open" :aria-expanded="open.toString()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Open mobile menu">
             {% icon 'bars-3' 'h-6 w-6' aria_label='' %}
           </button>
           <!-- Mobile slide-out/dropdown -->
-          <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-2">
+          <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50 p-2">
             {% for group in navigation_groups %}
               <div class="py-1">
                 <div class="px-3 py-1 text-xs font-semibold text-gray-500">{{ group.category|safe }}</div>
                 {% for link in group.links %}
                   {% if request.resolver_match.url_name == link.url_name %}
-                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-blue-700 bg-blue-50">{{ link.title|safe }}</a>
+                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-primary bg-primary/10 font-medium">{{ link.title|safe }}</a>
                   {% else %}
-                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100">{{ link.title|safe }}</a>
+                    <a href="{{ link.url }}" class="block px-3 py-2 rounded-md text-sm text-bodyText hover:bg-surfaceSubtle">{{ link.title|safe }}</a>
                   {% endif %}
                 {% endfor %}
               </div>

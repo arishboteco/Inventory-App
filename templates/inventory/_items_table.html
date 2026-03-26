@@ -58,7 +58,7 @@
   <tbody class="bg-surface divide-y divide-border">
     {% for item in page_obj.object_list %}
     <tr
-      class="item-row odd:bg-surfaceSubtle odd:bg-gray-50 hover:bg-surfaceSubtle{% if item.current_stock is not None and item.current_stock < 0 %} !bg-danger-soft{% endif %}"
+      class="item-row odd:bg-surfaceSubtle hover:bg-surfaceSubtle{% if item.current_stock is not None and item.current_stock < 0 %} !bg-danger-soft{% endif %}"
       data-item-id="{{ item.item_id }}"
       data-unit-id="{{ item.unit_id }}"
       data-category-id="{{ item.category_id }}"

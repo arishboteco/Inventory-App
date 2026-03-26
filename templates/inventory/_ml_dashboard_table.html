@@ -1,7 +1,7 @@
 {% if table_data %}
 <div class="overflow-x-auto rounded-xl border border-border shadow-sm">
   <table class="w-full text-sm text-left table-sticky">
-    <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wide">
+    <thead class="bg-surfaceSubtle text-gray-600 text-xs font-semibold uppercase tracking-wider">
       <tr>
         <th scope="col" class="px-4 py-3">Item</th>
         <th scope="col" class="px-4 py-3">Category</th>
@@ -19,7 +19,7 @@
         {% elif row.days_cover is not None and row.days_cover < 7 %}
           <tr class="bg-warning-soft hover:bg-warning-soft transition">
         {% else %}
-          <tr class="hover:bg-gray-50 transition">
+          <tr class="hover:bg-surfaceSubtle transition">
         {% endif %}
 
           {# Item name + link #}

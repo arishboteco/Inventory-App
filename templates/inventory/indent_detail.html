@@ -97,11 +97,11 @@
   {% if has_po_links %}
   <div class="overflow-x-auto">
     <table class="min-w-full border border-border divide-y divide-border">
-      <thead class="bg-surfaceSubtle">
+      <thead class="bg-surfaceSubtle text-xs font-semibold uppercase tracking-wider text-gray-600">
         <tr>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">Item</th>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">PO</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-bodyText">Planned Qty</th>
+          <th class="px-3 py-2.5 text-left">Item</th>
+          <th class="px-3 py-2.5 text-left">PO</th>
+          <th class="px-3 py-2.5 text-right">Planned Qty</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-border">
@@ -111,7 +111,7 @@
               <td class="px-3 py-2 text-sm">{{ ii.item.name }}</td>
               <td class="px-3 py-2 text-sm">
                 {% with poi=link.po_item %}
-                  <a href="{% url 'purchase_order_detail' poi.purchase_order_id %}" class="text-blue-600 hover:underline">PO {{ poi.purchase_order_id }}</a>
+                  <a href="{% url 'purchase_order_detail' poi.purchase_order_id %}" class="text-primary hover:underline">PO {{ poi.purchase_order_id }}</a>
                 {% endwith %}
               </td>
               <td class="px-3 py-2 text-sm text-right">{{ link.planned_qty }}</td>

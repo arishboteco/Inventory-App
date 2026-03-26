@@ -49,12 +49,12 @@
   <h2 class="text-h2 md:text-h2 mb-4 mt-8">Linked Indent Lines</h2>
   <div class="overflow-x-auto">
     <table class="min-w-full border border-border divide-y divide-border">
-      <thead class="bg-surfaceSubtle">
+      <thead class="bg-surfaceSubtle text-xs font-semibold uppercase tracking-wider text-gray-600">
         <tr>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">PO Item</th>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">Indent</th>
-          <th class="px-3 py-2 text-left text-sm font-semibold text-bodyText">Item</th>
-          <th class="px-3 py-2 text-right text-sm font-semibold text-bodyText">Planned Qty</th>
+          <th class="px-3 py-2.5 text-left">PO Item</th>
+          <th class="px-3 py-2.5 text-left">Indent</th>
+          <th class="px-3 py-2.5 text-left">Item</th>
+          <th class="px-3 py-2.5 text-right">Planned Qty</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-border">
@@ -63,7 +63,7 @@
             <tr>
               <td class="px-3 py-2 text-sm">{{ it.item.name }}</td>
               <td class="px-3 py-2 text-sm">
-                <a href="{% url 'indent_detail' link.indent_item.indent_id %}" class="text-blue-600 hover:underline">Indent {{ link.indent_item.indent_id }}</a>
+                <a href="{% url 'indent_detail' link.indent_item.indent_id %}" class="text-primary hover:underline">Indent {{ link.indent_item.indent_id }}</a>
               </td>
               <td class="px-3 py-2 text-sm">{{ link.indent_item.item.name }}</td>
               <td class="px-3 py-2 text-sm text-right">{{ link.planned_qty }}</td>
@@ -82,7 +82,7 @@
         {% for g in grns %}
           {% if g.attachment %}
             <li>
-              <a href="{{ g.attachment.url }}" target="_blank" class="text-blue-600 hover:underline">GRN {{ g.pk }} Attachment</a>
+              <a href="{{ g.attachment.url }}" target="_blank" class="text-primary hover:underline">GRN #{{ g.pk }} — Attachment</a>
               <span class="text-gray-500">(received {{ g.received_date }})</span>
             </li>
           {% endif %}

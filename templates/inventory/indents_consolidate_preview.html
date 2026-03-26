@@ -46,9 +46,9 @@
                   <div class="font-semibold text-gray-800">{{ group.supplier.name|default:"(Unknown Supplier)" }}</div>
                   <div class="flex items-center gap-3">
                     {# Select-all / deselect-all per group (Fix 4) #}
-                    <button type="button" class="text-xs text-blue-600 hover:underline" data-select-all="group-{{ forloop.counter }}">Select all</button>
+                    <button type="button" class="text-xs text-primary hover:underline" data-select-all="group-{{ forloop.counter }}">Select all</button>
                     <span class="text-gray-300">|</span>
-                    <button type="button" class="text-xs text-blue-600 hover:underline" data-deselect-all="group-{{ forloop.counter }}">Deselect all</button>
+                    <button type="button" class="text-xs text-primary hover:underline" data-deselect-all="group-{{ forloop.counter }}">Deselect all</button>
                     <span class="text-xs text-gray-500 ml-2">{{ group.total_lines }} item{{ group.total_lines|pluralize }}</span>
                   </div>
                 </div>

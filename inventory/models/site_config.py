@@ -17,11 +17,6 @@ class SiteConfig(models.Model):
         default="Inventory Pro",
         help_text="Displayed in page headers and reports.",
     )
-    currency_symbol = models.CharField(
-        max_length=5,
-        default="$",
-        help_text="Prefix used for all monetary values (e.g. $, £, €, ₹).",
-    )
     default_food_cost_target = models.DecimalField(
         max_digits=5,
         decimal_places=2,

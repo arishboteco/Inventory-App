@@ -1,5 +1,4 @@
 {% extends "components/create_manage_layout.html" %}
-{% load form_tags %}
 {% block page_title %}Settings – {{ site_config.business_name }}{% endblock %}
 {% block page_heading %}Settings{% endblock %}
 {% block page_subtitle %}
@@ -7,329 +6,475 @@
 {% endblock %}
 
 {% block data_container %}
-<div class="space-y-6">
 
-  {# ── App Configuration ─────────────────────────────────────────── #}
+<!-- Tab Bar -->
+<div class="mb-6 border-b border-border">
+  <nav class="-mb-px flex gap-1 overflow-x-auto" id="settings-tab-bar" role="tablist">
+    <button type="button" role="tab" data-tab="config"
+            class="settings-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors focus:outline-none">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Configuration
+    </button>
+    <button type="button" role="tab" data-tab="units"
+            class="settings-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors focus:outline-none">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.97zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.97z"/></svg>
+      Units
+      <span class="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">{{ units|length }}</span>
+    </button>
+    <button type="button" role="tab" data-tab="categories"
+            class="settings-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors focus:outline-none">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/></svg>
+      Categories
+      <span class="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">{{ categories|length }}</span>
+    </button>
+    <button type="button" role="tab" data-tab="departments"
+            class="settings-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors focus:outline-none">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z"/></svg>
+      Departments
+      <span class="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">{{ departments|length }}</span>
+    </button>
+    <button type="button" role="tab" data-tab="profile"
+            class="settings-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors focus:outline-none">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+      Profile
+    </button>
+  </nav>
+</div>
+
+<!-- Tab Panels -->
+
+<!-- ── Configuration ──────────────────────────────────────────────── -->
+<div id="tab-config" class="settings-panel">
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div class="px-4 pt-4 pb-2 border-b border-border">
-      <h2 class="text-lg font-semibold text-bodyText">App Configuration</h2>
+    <div class="px-5 pt-5 pb-3 border-b border-border">
+      <h2 class="text-base font-semibold text-bodyText">App Configuration</h2>
       <p class="text-xs text-gray-500 mt-0.5">Business identity and display preferences applied across the whole app.</p>
     </div>
-    <div class="p-4">
-      <form method="post" class="space-y-4">
+    <div class="p-5">
+      <form method="post" class="space-y-6">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_app_config">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-gray-700" for="cfg-business-name">Business / Venue Name</label>
-            <input type="text" id="cfg-business-name" name="business_name"
-                   value="{{ site_config.business_name }}"
-                   placeholder="e.g. The Blue Apron"
-                   class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-            <p class="text-xs text-gray-400">Used in page titles and reports.</p>
-          </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-gray-700" for="cfg-currency">Currency Symbol</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-3 flex items-center text-gray-400 text-sm font-mono pointer-events-none">{{ site_config.currency_symbol }}</span>
-              <input type="text" id="cfg-currency" name="currency_symbol"
-                     value="{{ site_config.currency_symbol }}"
-                     maxlength="5" placeholder="$"
-                     class="h-9 pl-7 pr-3 border border-form-border rounded-md bg-form-bg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary w-full">
-            </div>
-            <p class="text-xs text-gray-400">Prefix for all prices (e.g. $, £, €, ₹).</p>
-          </div>
-          <div class="flex flex-col gap-1">
-            <label class="text-xs font-medium text-gray-700" for="cfg-food-cost">Default Food Cost Target (%)</label>
-            <div class="relative">
-              <input type="number" id="cfg-food-cost" name="default_food_cost_target"
+
+        <!-- Business Name -->
+        <div class="max-w-sm">
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="cfg-business-name">Business / Venue Name</label>
+          <input type="text" id="cfg-business-name" name="business_name"
+                 value="{{ site_config.business_name }}"
+                 placeholder="e.g. The Blue Apron"
+                 class="w-full h-10 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+          <p class="mt-1 text-xs text-gray-400">Displayed in page titles and reports.</p>
+        </div>
+
+        <!-- Food Cost Target -->
+        <div class="max-w-lg">
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="cfg-food-cost-num">Default Food Cost Target</label>
+          <div class="flex items-center gap-4">
+            <input type="range" id="cfg-food-cost-range"
+                   min="0" max="100" step="0.5"
+                   value="{{ site_config.default_food_cost_target|floatformat:-2 }}"
+                   class="flex-1 h-2 rounded-lg appearance-none cursor-pointer accent-primary"
+                   aria-label="Food cost target slider">
+            <div class="relative flex-shrink-0 w-28">
+              <input type="number" id="cfg-food-cost-num" name="default_food_cost_target"
                      value="{{ site_config.default_food_cost_target|floatformat:-2 }}"
                      min="0" max="100" step="0.5"
-                     class="h-9 px-3 pr-8 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full">
+                     class="w-full h-10 px-3 pr-8 border border-form-border rounded-lg bg-form-bg text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-primary">
               <span class="absolute inset-y-0 right-3 flex items-center text-gray-400 text-sm pointer-events-none">%</span>
             </div>
-            <p class="text-xs text-gray-400">Default target for new recipes.</p>
           </div>
+          <p class="mt-1 text-xs text-gray-400">Default target for new recipes. Drag the slider or type a value (0–100).</p>
         </div>
-        <div class="flex justify-end">
-          <button type="submit" class="h-9 px-5 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary">Save Configuration</button>
+
+        <div class="pt-2 border-t border-border flex justify-end">
+          <button type="submit"
+                  class="h-9 px-6 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+            Save Configuration
+          </button>
         </div>
       </form>
     </div>
   </div>
+</div>
 
-  {# ── Units ─────────────────────────────────────────────────────── #}
+<!-- ── Units ──────────────────────────────────────────────────────── -->
+<div id="tab-units" class="settings-panel hidden">
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between gap-4">
-      <h2 class="text-lg font-semibold text-bodyText">Units of Measurement</h2>
-      <span class="text-xs text-gray-500 mr-auto">{{ units|length }} unit{{ units|length|pluralize }}</span>
+    <div class="px-5 pt-5 pb-3 border-b border-border flex items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-bodyText">Units of Measurement</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Define purchase and base units with conversion factors.</p>
+      </div>
+      <button type="button" onclick="document.getElementById('add-unit-form').classList.toggle('hidden')"
+              class="flex-shrink-0 h-8 px-3 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+        + Add Unit
+      </button>
     </div>
-    <div class="p-4 space-y-4">
-      {# Add form at top #}
-      <form method="post" class="flex flex-wrap gap-2 items-end border border-border rounded-lg p-3 bg-surfaceSubtle">
+
+    <!-- Add form (collapsed by default) -->
+    <div id="add-unit-form" class="hidden border-b border-border bg-surfaceSubtle px-5 py-4">
+      <form method="post" class="flex flex-wrap gap-3 items-end">
         {% csrf_token %}
         <input type="hidden" name="action" value="add_unit">
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-700">Purchase Unit</label>
-          <input type="text" name="purchase_unit" required placeholder="e.g. kg" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Purchase Unit</label>
+          <input type="text" name="purchase_unit" required placeholder="e.g. kg"
+                 class="h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-700">Base Unit</label>
-          <input type="text" name="base_unit" required placeholder="e.g. g" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Base Unit</label>
+          <input type="text" name="base_unit" required placeholder="e.g. g"
+                 class="h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-36">
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-700">Conversion Factor</label>
-          <input type="number" name="conversion_factor" value="1" step="any" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-32">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Conversion Factor</label>
+          <input type="number" name="conversion_factor" value="1" step="0.001" min="0"
+                 class="h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-primary w-32">
         </div>
-        <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">+ Add Unit</button>
+        <div class="flex gap-2">
+          <button type="submit"
+                  class="h-9 px-4 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+            Save Unit
+          </button>
+          <button type="button" onclick="document.getElementById('add-unit-form').classList.add('hidden')"
+                  class="h-9 px-4 text-sm rounded-lg border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none">
+            Cancel
+          </button>
+        </div>
       </form>
-      {# Search #}
+    </div>
+
+    <div class="p-5 space-y-3">
       <input type="text" placeholder="Search units…" id="unit-search"
-             class="h-9 px-3 border border-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
+             class="h-9 px-3 border border-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full max-w-xs"
              oninput="filterTable(this, 'units-table')">
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm text-bodyText" id="units-table">
-          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-500">
             <tr>
-              <th class="px-3 py-2 text-left">Purchase Unit</th>
-              <th class="px-3 py-2 text-left">Base Unit</th>
-              <th class="px-3 py-2 text-right">Conversion Factor</th>
-              <th class="px-3 py-2"></th>
+              <th class="px-4 py-2.5 text-left rounded-tl-lg">Purchase Unit</th>
+              <th class="px-4 py-2.5 text-left">Base Unit</th>
+              <th class="px-4 py-2.5 text-right">Conversion Factor</th>
+              <th class="px-4 py-2.5 rounded-tr-lg"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border">
             {% for unit in units %}
-            <tr class="odd:bg-surface even:bg-surfaceSubtle" data-row>
-              <td class="px-3 py-2" id="unit-pu-{{ unit.unit_id }}">{{ unit.purchase_unit }}</td>
-              <td class="px-3 py-2" id="unit-bu-{{ unit.unit_id }}">{{ unit.base_unit }}</td>
-              <td class="px-3 py-2 text-right tabular-nums">{{ unit.conversion_factor|floatformat:"-4" }}</td>
-              <td class="px-3 py-2 text-right whitespace-nowrap">
+            <tr class="hover:bg-surfaceSubtle transition-colors" data-row>
+              <td class="px-4 py-2.5 font-medium" id="unit-pu-{{ unit.unit_id }}">{{ unit.purchase_unit }}</td>
+              <td class="px-4 py-2.5 text-gray-600" id="unit-bu-{{ unit.unit_id }}">{{ unit.base_unit }}</td>
+              <td class="px-4 py-2.5 text-right tabular-nums text-gray-600">{{ unit.conversion_factor|floatformat:"-4" }}</td>
+              <td class="px-4 py-2.5 text-right whitespace-nowrap">
                 <button type="button"
-                        class="text-xs text-primary hover:underline mr-2"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
                         onclick="openEditUnit({{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}', '{{ unit.base_unit|escapejs }}', '{{ unit.conversion_factor }}')">Edit</button>
                 <button type="button"
-                        class="text-xs text-red-600 hover:underline"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
                         onclick="confirmSettingsDelete('delete_unit', 'unit_id', {{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}')">Delete</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" class="px-3 py-4 text-center text-gray-500">No units defined.</td></tr>
+            <tr>
+              <td colspan="4" class="px-4 py-8 text-center text-gray-400">
+                <p class="font-medium">No units defined yet.</p>
+                <p class="text-xs mt-1">Click <strong>+ Add Unit</strong> above to get started.</p>
+              </td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
   </div>
+</div>
 
-  {# ── Categories ───────────────────────────────────────────────── #}
+<!-- ── Categories ─────────────────────────────────────────────────── -->
+<div id="tab-categories" class="settings-panel hidden">
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between gap-4">
-      <h2 class="text-lg font-semibold text-bodyText">Categories</h2>
-      <span class="text-xs text-gray-500 mr-auto">{{ categories|length }} entr{{ categories|length|pluralize:"y,ies" }}</span>
+    <div class="px-5 pt-5 pb-3 border-b border-border flex items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-bodyText">Categories</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Organise items by category and optional subcategory.</p>
+      </div>
+      <button type="button" onclick="document.getElementById('add-category-form').classList.toggle('hidden')"
+              class="flex-shrink-0 h-8 px-3 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+        + Add Category
+      </button>
     </div>
-    <div class="p-4 space-y-4">
-      {# Add form at top #}
-      <form method="post" class="flex flex-wrap gap-2 items-end border border-border rounded-lg p-3 bg-surfaceSubtle">
+
+    <!-- Add form -->
+    <div id="add-category-form" class="hidden border-b border-border bg-surfaceSubtle px-5 py-4">
+      <form method="post" class="flex flex-wrap gap-3 items-end">
         {% csrf_token %}
         <input type="hidden" name="action" value="add_category">
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-700">Category</label>
-          <input type="text" name="category" required placeholder="e.g. Dairy" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Category</label>
+          <input type="text" name="category" required placeholder="e.g. Dairy"
+                 class="h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-700">Subcategory <span class="text-gray-400">(optional)</span></label>
-          <input type="text" name="sub_category" placeholder="e.g. Cheese" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Subcategory <span class="text-gray-400">(optional)</span></label>
+          <input type="text" name="sub_category" placeholder="e.g. Cheese"
+                 class="h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-40">
         </div>
-        <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">+ Add Category</button>
+        <div class="flex gap-2">
+          <button type="submit"
+                  class="h-9 px-4 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+            Save Category
+          </button>
+          <button type="button" onclick="document.getElementById('add-category-form').classList.add('hidden')"
+                  class="h-9 px-4 text-sm rounded-lg border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none">
+            Cancel
+          </button>
+        </div>
       </form>
-      {# Search #}
+    </div>
+
+    <div class="p-5 space-y-3">
       <input type="text" placeholder="Search categories…" id="cat-search"
-             class="h-9 px-3 border border-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
+             class="h-9 px-3 border border-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full max-w-xs"
              oninput="filterTable(this, 'categories-table')">
-      <div class="overflow-x-auto max-h-72 overflow-y-auto">
+      <div class="overflow-x-auto max-h-96 overflow-y-auto">
         <table class="min-w-full text-sm text-bodyText" id="categories-table">
-          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600 sticky top-0">
+          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-500 sticky top-0">
             <tr>
-              <th class="px-3 py-2 text-left">Category</th>
-              <th class="px-3 py-2 text-left">Subcategory</th>
-              <th class="px-3 py-2"></th>
+              <th class="px-4 py-2.5 text-left">Category</th>
+              <th class="px-4 py-2.5 text-left">Subcategory</th>
+              <th class="px-4 py-2.5"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border">
             {% for cat in categories %}
-            <tr class="odd:bg-surface even:bg-surfaceSubtle" data-row>
-              <td class="px-3 py-2">{{ cat.category }}</td>
-              <td class="px-3 py-2 text-gray-500">{{ cat.sub_category|default:'—' }}</td>
-              <td class="px-3 py-2 text-right whitespace-nowrap">
+            <tr class="hover:bg-surfaceSubtle transition-colors" data-row>
+              <td class="px-4 py-2.5 font-medium">{{ cat.category }}</td>
+              <td class="px-4 py-2.5 text-gray-500">{{ cat.sub_category|default:'—' }}</td>
+              <td class="px-4 py-2.5 text-right whitespace-nowrap">
                 <button type="button"
-                        class="text-xs text-primary hover:underline mr-2"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
                         onclick="openEditCategory({{ cat.category_id }}, '{{ cat.category|escapejs }}', '{{ cat.sub_category|default:''|escapejs }}')">Edit</button>
                 <button type="button"
-                        class="text-xs text-red-600 hover:underline"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
                         onclick="confirmSettingsDelete('delete_category', 'category_id', {{ cat.category_id }}, '{{ cat.category|escapejs }}')">Delete</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="3" class="px-3 py-4 text-center text-gray-500">No categories defined.</td></tr>
+            <tr>
+              <td colspan="3" class="px-4 py-8 text-center text-gray-400">
+                <p class="font-medium">No categories defined yet.</p>
+                <p class="text-xs mt-1">Click <strong>+ Add Category</strong> above to get started.</p>
+              </td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
   </div>
+</div>
 
-  {# ── Departments ──────────────────────────────────────────────── #}
+<!-- ── Departments ────────────────────────────────────────────────── -->
+<div id="tab-departments" class="settings-panel hidden">
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between gap-4">
-      <h2 class="text-lg font-semibold text-bodyText">Departments</h2>
-      <span class="text-xs text-gray-500 mr-auto">{{ departments|length }} department{{ departments|length|pluralize }}</span>
+    <div class="px-5 pt-5 pb-3 border-b border-border flex items-center justify-between gap-4">
+      <div>
+        <h2 class="text-base font-semibold text-bodyText">Departments</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Define operational departments for stock transfers and indents.</p>
+      </div>
+      <button type="button" onclick="document.getElementById('add-department-form').classList.toggle('hidden')"
+              class="flex-shrink-0 h-8 px-3 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+        + Add Department
+      </button>
     </div>
-    <div class="p-4 space-y-4">
-      {# Add form at top #}
-      <form method="post" class="flex flex-wrap gap-2 items-end border border-border rounded-lg p-3 bg-surfaceSubtle">
+
+    <!-- Add form -->
+    <div id="add-department-form" class="hidden border-b border-border bg-surfaceSubtle px-5 py-4">
+      <form method="post" class="flex flex-wrap gap-3 items-end">
         {% csrf_token %}
         <input type="hidden" name="action" value="add_department">
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-medium text-gray-700">Department Name</label>
-          <input type="text" name="name" required placeholder="e.g. Kitchen" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-48">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Department Name</label>
+          <input type="text" name="name" required placeholder="e.g. Kitchen"
+                 class="h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-52">
         </div>
-        <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">+ Add Department</button>
+        <div class="flex gap-2">
+          <button type="submit"
+                  class="h-9 px-4 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+            Save Department
+          </button>
+          <button type="button" onclick="document.getElementById('add-department-form').classList.add('hidden')"
+                  class="h-9 px-4 text-sm rounded-lg border border-border bg-surface hover:bg-surfaceSubtle focus:outline-none">
+            Cancel
+          </button>
+        </div>
       </form>
-      {# Search #}
+    </div>
+
+    <div class="p-5 space-y-3">
       <input type="text" placeholder="Search departments…" id="dept-search"
-             class="h-9 px-3 border border-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full"
+             class="h-9 px-3 border border-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full max-w-xs"
              oninput="filterTable(this, 'departments-table')">
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm text-bodyText" id="departments-table">
-          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">
+          <thead class="text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-500">
             <tr>
-              <th class="px-3 py-2 text-left">Name</th>
-              <th class="px-3 py-2"></th>
+              <th class="px-4 py-2.5 text-left">Name</th>
+              <th class="px-4 py-2.5"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-border">
             {% for dept in departments %}
-            <tr class="odd:bg-surface even:bg-surfaceSubtle" data-row>
-              <td class="px-3 py-2">{{ dept.name }}</td>
-              <td class="px-3 py-2 text-right whitespace-nowrap">
+            <tr class="hover:bg-surfaceSubtle transition-colors" data-row>
+              <td class="px-4 py-2.5 font-medium">{{ dept.name }}</td>
+              <td class="px-4 py-2.5 text-right whitespace-nowrap">
                 <button type="button"
-                        class="text-xs text-primary hover:underline mr-2"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
                         onclick="openEditDepartment({{ dept.department_id }}, '{{ dept.name|escapejs }}')">Edit</button>
                 <button type="button"
-                        class="text-xs text-red-600 hover:underline"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
                         onclick="confirmSettingsDelete('delete_department', 'department_id', {{ dept.department_id }}, '{{ dept.name|escapejs }}')">Delete</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="2" class="px-3 py-4 text-center text-gray-500">No departments defined.</td></tr>
+            <tr>
+              <td colspan="2" class="px-4 py-8 text-center text-gray-400">
+                <p class="font-medium">No departments defined yet.</p>
+                <p class="text-xs mt-1">Click <strong>+ Add Department</strong> above to get started.</p>
+              </td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
   </div>
+</div>
 
-  {# ── User Profile ─────────────────────────────────────────────── #}
+<!-- ── Profile ────────────────────────────────────────────────────── -->
+<div id="tab-profile" class="settings-panel hidden">
   <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
-    <div class="px-4 pt-4 pb-2 border-b border-border flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-bodyText">User Profile</h2>
-      <span class="text-xs text-gray-500 px-2 py-0.5 rounded-full bg-surfaceSubtle border border-border">
+    <div class="px-5 pt-5 pb-3 border-b border-border flex items-center justify-between">
+      <div>
+        <h2 class="text-base font-semibold text-bodyText">User Profile</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Your account details and authentication settings.</p>
+      </div>
+      <span class="text-xs font-medium px-2.5 py-1 rounded-full
+        {% if request.user.is_superuser %}bg-purple-100 text-purple-700
+        {% elif request.user.is_staff %}bg-blue-100 text-blue-700
+        {% else %}bg-gray-100 text-gray-600{% endif %}">
         {% if request.user.is_superuser %}Administrator{% elif request.user.is_staff %}Staff{% else %}User{% endif %}
       </span>
     </div>
-    <div class="p-4 space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+    <div class="p-5 space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div>
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Username</p>
-          <p class="text-bodyText font-mono">{{ request.user.username }}</p>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Username</p>
+          <p class="text-sm text-bodyText font-mono bg-surfaceSubtle border border-border rounded-lg px-3 py-2">{{ request.user.username }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Display Name</p>
-          <p class="text-bodyText">{{ request.user.get_full_name|default:'(not set)' }}</p>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Display Name</p>
+          <p class="text-sm text-bodyText bg-surfaceSubtle border border-border rounded-lg px-3 py-2">{{ request.user.get_full_name|default:'(not set)' }}</p>
         </div>
         <div>
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email</p>
-          <p class="text-bodyText">{{ request.user.email|default:'—' }}</p>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Email</p>
+          <p class="text-sm text-bodyText bg-surfaceSubtle border border-border rounded-lg px-3 py-2">{{ request.user.email|default:'—' }}</p>
         </div>
       </div>
-      <div class="flex gap-2 pt-1 border-t border-border">
-        <a href="{% url 'profile-edit' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Edit Profile</a>
-        <a href="{% url 'change-password' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Change Password</a>
+      <div class="flex gap-3 pt-2 border-t border-border">
+        <a href="{% url 'profile-edit' %}"
+           class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>
+          Edit Profile
+        </a>
+        <a href="{% url 'change-password' %}"
+           class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-surface text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          Change Password
+        </a>
       </div>
     </div>
   </div>
-
 </div>
 
-{# ── Edit Modals (Alpine-free, pure HTML/JS) ─────────────────────────── #}
+<!-- ── Edit Dialogs ────────────────────────────────────────────────── -->
 
-{# Unit edit dialog #}
+<!-- Unit edit dialog -->
 <dialog id="edit-unit-dialog" class="rounded-2xl shadow-overlay p-0 w-full max-w-sm backdrop:bg-black/30">
   <div class="p-6 space-y-4">
-    <h3 class="text-lg font-semibold text-bodyText">Edit Unit</h3>
+    <h3 class="text-base font-semibold text-bodyText">Edit Unit</h3>
     <form method="post" class="space-y-3" id="edit-unit-form">
       {% csrf_token %}
       <input type="hidden" name="action" value="edit_unit">
       <input type="hidden" name="unit_id" id="edit-unit-id">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-700">Purchase Unit</label>
-        <input type="text" name="purchase_unit" id="edit-unit-pu" required class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Purchase Unit</label>
+        <input type="text" name="purchase_unit" id="edit-unit-pu" required
+               class="w-full h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-700">Base Unit</label>
-        <input type="text" name="base_unit" id="edit-unit-bu" required class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Base Unit</label>
+        <input type="text" name="base_unit" id="edit-unit-bu" required
+               class="w-full h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-700">Conversion Factor</label>
-        <input type="number" name="conversion_factor" id="edit-unit-cf" step="any" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Conversion Factor</label>
+        <input type="number" name="conversion_factor" id="edit-unit-cf" step="0.001" min="0"
+               class="w-full h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-primary">
       </div>
       <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="document.getElementById('edit-unit-dialog').close()" class="px-4 py-2 text-sm rounded-md border border-border bg-surface hover:bg-surfaceSubtle">Cancel</button>
-        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover">Save</button>
+        <button type="button" onclick="document.getElementById('edit-unit-dialog').close()"
+                class="px-4 py-2 text-sm rounded-lg border border-border bg-surface hover:bg-surfaceSubtle transition-colors">Cancel</button>
+        <button type="submit"
+                class="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover transition-colors">Save</button>
       </div>
     </form>
   </div>
 </dialog>
 
-{# Category edit dialog #}
+<!-- Category edit dialog -->
 <dialog id="edit-category-dialog" class="rounded-2xl shadow-overlay p-0 w-full max-w-sm backdrop:bg-black/30">
   <div class="p-6 space-y-4">
-    <h3 class="text-lg font-semibold text-bodyText">Edit Category</h3>
+    <h3 class="text-base font-semibold text-bodyText">Edit Category</h3>
     <form method="post" class="space-y-3">
       {% csrf_token %}
       <input type="hidden" name="action" value="edit_category">
       <input type="hidden" name="category_id" id="edit-cat-id">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-700">Category</label>
-        <input type="text" name="category" id="edit-cat-name" required class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Category</label>
+        <input type="text" name="category" id="edit-cat-name" required
+               class="w-full h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-700">Subcategory <span class="text-gray-400">(optional)</span></label>
-        <input type="text" name="sub_category" id="edit-cat-sub" class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Subcategory <span class="text-gray-400">(optional)</span></label>
+        <input type="text" name="sub_category" id="edit-cat-sub"
+               class="w-full h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
       </div>
       <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="document.getElementById('edit-category-dialog').close()" class="px-4 py-2 text-sm rounded-md border border-border bg-surface hover:bg-surfaceSubtle">Cancel</button>
-        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover">Save</button>
+        <button type="button" onclick="document.getElementById('edit-category-dialog').close()"
+                class="px-4 py-2 text-sm rounded-lg border border-border bg-surface hover:bg-surfaceSubtle transition-colors">Cancel</button>
+        <button type="submit"
+                class="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover transition-colors">Save</button>
       </div>
     </form>
   </div>
 </dialog>
 
-{# Department edit dialog #}
+<!-- Department edit dialog -->
 <dialog id="edit-department-dialog" class="rounded-2xl shadow-overlay p-0 w-full max-w-xs backdrop:bg-black/30">
   <div class="p-6 space-y-4">
-    <h3 class="text-lg font-semibold text-bodyText">Edit Department</h3>
+    <h3 class="text-base font-semibold text-bodyText">Edit Department</h3>
     <form method="post" class="space-y-3">
       {% csrf_token %}
       <input type="hidden" name="action" value="edit_department">
       <input type="hidden" name="department_id" id="edit-dept-id">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-700">Department Name</label>
-        <input type="text" name="name" id="edit-dept-name" required class="h-9 px-3 border border-form-border rounded-md bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Department Name</label>
+        <input type="text" name="name" id="edit-dept-name" required
+               class="w-full h-9 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
       </div>
       <div class="flex justify-end gap-2 pt-2">
-        <button type="button" onclick="document.getElementById('edit-department-dialog').close()" class="px-4 py-2 text-sm rounded-md border border-border bg-surface hover:bg-surfaceSubtle">Cancel</button>
-        <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover">Save</button>
+        <button type="button" onclick="document.getElementById('edit-department-dialog').close()"
+                class="px-4 py-2 text-sm rounded-lg border border-border bg-surface hover:bg-surfaceSubtle transition-colors">Cancel</button>
+        <button type="submit"
+                class="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover transition-colors">Save</button>
       </div>
     </form>
   </div>
@@ -337,7 +482,7 @@
 
 {% include "components/_confirm_modal.html" %}
 
-{# Hidden form used by confirmSettingsDelete() to POST reference-data deletes #}
+<!-- Hidden delete form -->
 <form id="settings-delete-form" method="post" style="display:none">
   {% csrf_token %}
   <input type="hidden" name="action" id="settings-delete-action">
@@ -346,18 +491,64 @@
   <input type="hidden" name="department_id" id="settings-delete-department-id">
 </form>
 
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
+  // ── Tab system ─────────────────────────────────────────────────────────
+  (function () {
+    var ACTIVE   = 'border-primary text-primary';
+    var INACTIVE = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300';
+
+    function activateTab(name) {
+      document.querySelectorAll('.settings-tab').forEach(function (btn) {
+        var isActive = btn.dataset.tab === name;
+        btn.classList.toggle('border-primary', isActive);
+        btn.classList.toggle('text-primary', isActive);
+        btn.classList.toggle('border-transparent', !isActive);
+        btn.classList.toggle('text-gray-500', !isActive);
+        btn.classList.toggle('hover:text-gray-700', !isActive);
+        btn.classList.toggle('hover:border-gray-300', !isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      document.querySelectorAll('.settings-panel').forEach(function (panel) {
+        panel.classList.toggle('hidden', panel.id !== 'tab-' + name);
+      });
+    }
+
+    document.querySelectorAll('.settings-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        activateTab(btn.dataset.tab);
+        history.replaceState(null, '', '?tab=' + btn.dataset.tab);
+      });
+    });
+
+    // Activate from URL param (passed by server after POST redirect)
+    var urlTab = new URLSearchParams(window.location.search).get('tab') || '{{ active_tab|default:"config" }}';
+    activateTab(urlTab);
+  }());
+
+  // ── Food cost target slider ────────────────────────────────────────────
+  (function () {
+    var rangeEl = document.getElementById('cfg-food-cost-range');
+    var numEl   = document.getElementById('cfg-food-cost-num');
+    if (!rangeEl || !numEl) return;
+    rangeEl.addEventListener('input', function () { numEl.value = rangeEl.value; });
+    numEl.addEventListener('input', function () {
+      var v = parseFloat(numEl.value);
+      if (!isNaN(v)) rangeEl.value = Math.min(100, Math.max(0, v));
+    });
+  }());
+
+  // ── Table search ──────────────────────────────────────────────────────
   function filterTable(input, tableId) {
     var q = input.value.toLowerCase();
-    document.querySelectorAll('#' + tableId + ' tr[data-row]').forEach(function(row) {
+    document.querySelectorAll('#' + tableId + ' tr[data-row]').forEach(function (row) {
       row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
     });
   }
 
+  // ── Edit dialogs ──────────────────────────────────────────────────────
   function openEditUnit(id, pu, bu, cf) {
     document.getElementById('edit-unit-id').value = id;
     document.getElementById('edit-unit-pu').value = pu;
@@ -380,38 +571,25 @@
   }
 
   // Close dialog on backdrop click
-  ['edit-unit-dialog', 'edit-category-dialog', 'edit-department-dialog'].forEach(function(id) {
+  ['edit-unit-dialog', 'edit-category-dialog', 'edit-department-dialog'].forEach(function (id) {
     var dlg = document.getElementById(id);
-    if (dlg) {
-      dlg.addEventListener('click', function(e) {
-        if (e.target === dlg) dlg.close();
-      });
-    }
+    if (dlg) dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
   });
 
-  // Wire settings reference-data deletes to the shared confirm modal.
-  // action: 'delete_unit'|'delete_category'|'delete_department'
-  // idField: the hidden input name, idValue: the record PK, label: display name
+  // ── Settings delete (re-uses shared confirm modal) ────────────────────
   function confirmSettingsDelete(action, idField, idValue, label) {
     var form = document.getElementById('settings-delete-form');
     document.getElementById('settings-delete-action').value = action;
-    // Reset all id fields first, then set the relevant one
-    ['settings-delete-unit-id', 'settings-delete-category-id', 'settings-delete-department-id'].forEach(function(f) {
+    ['settings-delete-unit-id', 'settings-delete-category-id', 'settings-delete-department-id'].forEach(function (f) {
       document.getElementById(f).value = '';
     });
     document.getElementById('settings-delete-' + idField.replace('_id', '') + '-id').value = idValue;
-    // Reuse the global confirmDelete modal but point it at the settings form submit
     var entityMap = { delete_unit: 'Unit', delete_category: 'Category', delete_department: 'Department' };
-    var entityType = entityMap[action] || 'item';
-    // Temporarily override the confirmModalForm action to submit the settings form
     var confirmForm = document.getElementById('confirmModalForm');
     if (confirmForm) {
-      confirmForm.onsubmit = function(e) {
-        e.preventDefault();
-        form.submit();
-      };
+      confirmForm.onsubmit = function (e) { e.preventDefault(); form.submit(); };
     }
-    window.confirmDelete('#', label, entityType);
+    window.confirmDelete('#', label, entityMap[action] || 'item');
   }
 </script>
 {% endblock %}

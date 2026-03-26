@@ -38,7 +38,7 @@
   {% include "components/kpi_card.html" with icon='archive-box-arrow-down' color='blue' label='Total GRNs' value=kpis.total_grns|default:"0" %}
   {% include "components/kpi_card.html" with icon='calendar' color='green' label='This Month' value=kpis.grns_this_month|default:"0" %}
   {% include "components/kpi_card.html" with icon='exclamation-triangle' color='yellow' label='Discrepancies' value=kpis.discrepancy_count|default:"0" %}
-  {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Value This Month' value=kpis.value_this_month|currency:site_config.currency_symbol %}
+  {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Value This Month' value=kpis.value_this_month|floatformat:2 %}
 </div>
 {% endblock %}
 

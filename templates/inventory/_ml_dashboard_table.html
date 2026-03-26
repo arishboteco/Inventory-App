@@ -48,7 +48,7 @@
           {# Forecast qty #}
           <td class="px-4 py-3">
             {% if row.has_data %}
-              {{ row.forecast|floatformat:1 }}
+              {{ row.forecast|floatformat:2 }}
               {% if row.item.unit %}
                 <span class="text-gray-400 text-xs">{{ row.item.unit.unit_name }}</span>
               {% endif %}
@@ -62,7 +62,7 @@
 
           {# Current stock #}
           <td class="px-4 py-3 text-gray-700">
-            {{ row.item.current_stock|floatformat:1 }}
+            {{ row.item.current_stock|floatformat:2 }}
             {% if row.item.unit %}
               <span class="text-gray-400 text-xs">{{ row.item.unit.unit_name }}</span>
             {% endif %}

@@ -17,7 +17,7 @@
     </div>
 
     {% if form.non_field_errors %}
-      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+      <div class="mb-4 p-3 bg-danger-soft border border-danger rounded-lg text-sm text-danger">
         <ul class="list-disc list-inside space-y-0.5">
           {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         </ul>
@@ -47,7 +47,7 @@
 
       {{ formset.management_form }}
       {% if formset.non_form_errors %}
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div class="mb-4 p-3 bg-danger-soft border border-danger rounded-lg text-sm text-danger">
           {% for error in formset.non_form_errors %}<p>{{ error }}</p>{% endfor %}
         </div>
       {% endif %}
@@ -66,15 +66,15 @@
             {% for line_form in formset %}
             <tr class="odd:bg-surface even:bg-surfaceSubtle">
               {% if line_form.non_field_errors %}
-                <td colspan="4" class="px-4 py-2 text-red-600 text-xs">{{ line_form.non_field_errors }}</td>
+                <td colspan="4" class="px-4 py-2 text-danger text-xs">{{ line_form.non_field_errors }}</td>
               {% endif %}
               <td class="px-4 py-2">
                 {{ line_form.item }}
-                {% if line_form.item.errors %}<p class="text-xs text-red-600 mt-0.5">{{ line_form.item.errors|join:", " }}</p>{% endif %}
+                {% if line_form.item.errors %}<p class="text-xs text-danger mt-0.5">{{ line_form.item.errors|join:", " }}</p>{% endif %}
               </td>
               <td class="px-4 py-2 text-right">
                 {{ line_form.quantity_received }}
-                {% if line_form.quantity_received.errors %}<p class="text-xs text-red-600 mt-0.5">{{ line_form.quantity_received.errors|join:", " }}</p>{% endif %}
+                {% if line_form.quantity_received.errors %}<p class="text-xs text-danger mt-0.5">{{ line_form.quantity_received.errors|join:", " }}</p>{% endif %}
               </td>
               <td class="px-4 py-2 text-right">{{ line_form.unit_price }}</td>
               <td class="px-4 py-2">{{ line_form.item_notes }}</td>

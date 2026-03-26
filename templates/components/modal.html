@@ -4,9 +4,9 @@ Generic modal component. Include with:
 The `content_template` is rendered inside the modal panel.
 {% endcomment %}
 <div id="{{ id }}" class="fixed inset-0 hidden z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
-  <div class="bg-white rounded-xl shadow border border-gray-200 w-full max-w-lg md:max-w-xl lg:max-w-2xl relative max-h-[90vh] overflow-y-auto">
+  <div class="bg-surface rounded-2xl shadow-card border border-border w-full max-w-lg md:max-w-xl lg:max-w-2xl relative max-h-[90vh] overflow-y-auto">
     {% if title %}
-    <div class="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-gray-100">
+    <div class="sticky top-0 bg-surface px-6 pt-6 pb-4 border-b border-border">
       <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
       <button type="button" class="absolute top-3 right-3 text-bodyText hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded" data-close>
         <span class="sr-only">Close</span>&times;

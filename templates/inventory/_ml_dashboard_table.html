@@ -15,9 +15,9 @@
     <tbody class="divide-y divide-border">
       {% for row in table_data %}
         {% if row.days_cover is not None and row.days_cover < 3 %}
-          <tr class="bg-red-50 hover:bg-red-100 transition">
+          <tr class="bg-danger-soft hover:bg-danger-soft transition">
         {% elif row.days_cover is not None and row.days_cover < 7 %}
-          <tr class="bg-amber-50 hover:bg-amber-100 transition">
+          <tr class="bg-warning-soft hover:bg-warning-soft transition">
         {% else %}
           <tr class="hover:bg-gray-50 transition">
         {% endif %}
@@ -37,7 +37,7 @@
           {# ABC badge #}
           <td class="px-4 py-3">
             {% if row.abc == "A" %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-800">A</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-success-soft text-success">A</span>
             {% elif row.abc == "B" %}
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800">B</span>
             {% else %}
@@ -72,9 +72,9 @@
           <td class="px-4 py-3 font-semibold">
             {% if row.days_cover is not None %}
               {% if row.days_cover < 3 %}
-                <span class="text-red-700">{{ row.days_cover }} day{{ row.days_cover|floatformat:0|pluralize }}</span>
+                <span class="text-danger">{{ row.days_cover }} day{{ row.days_cover|floatformat:0|pluralize }}</span>
               {% elif row.days_cover < 7 %}
-                <span class="text-amber-700">{{ row.days_cover }} day{{ row.days_cover|floatformat:0|pluralize }}</span>
+                <span class="text-warning">{{ row.days_cover }} day{{ row.days_cover|floatformat:0|pluralize }}</span>
               {% else %}
                 <span class="text-gray-700">{{ row.days_cover }} days</span>
               {% endif %}

@@ -41,7 +41,7 @@
       {% endif %}
       {{ formset.management_form }}
       {% if formset.non_form_errors %}
-      <ul class="text-red-600 list-disc pl-5">
+      <ul class="text-danger list-disc pl-5">
         {% for error in formset.non_form_errors %}
           <li>{{ error }}</li>
         {% endfor %}
@@ -124,7 +124,7 @@
         let err = cell.querySelector('[data-item-error]');
         if (!err){
           err = document.createElement('div');
-          err.className = 'mt-1 text-xs text-red-600 hidden';
+          err.className = 'mt-1 text-xs text-danger hidden';
           err.setAttribute('data-item-error','');
           cell.appendChild(err);
         }

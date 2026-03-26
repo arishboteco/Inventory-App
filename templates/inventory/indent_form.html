@@ -35,7 +35,7 @@
     <div class="md:col-span-12 space-y-3">
       {{ formset.management_form }}
       {% if formset.non_form_errors %}
-      <ul class="text-red-600 list-disc pl-5">
+      <ul class="text-danger list-disc pl-5">
         {% for error in formset.non_form_errors %}
           <li>{{ error }}</li>
         {% endfor %}

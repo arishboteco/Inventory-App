@@ -15,14 +15,14 @@
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">
       Department: <span class="text-bodyText">{{ indent.department|default:'—' }}</span>
     </span>
-    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border {% if is_overdue %}bg-red-50 border-red-200 text-red-600{% else %}bg-surfaceSubtle{% endif %}">
-      {% if is_overdue %}⚠ {% endif %}Needed by: <span class="{% if is_overdue %}text-red-700{% else %}text-bodyText{% endif %}">{{ indent.date_required|date:"d-m-Y"|default:'—' }}</span>
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border {% if is_overdue %}bg-danger-soft border-danger text-danger{% else %}bg-surfaceSubtle{% endif %}">
+      {% if is_overdue %}⚠ {% endif %}Needed by: <span class="{% if is_overdue %}text-danger{% else %}text-bodyText{% endif %}">{{ indent.date_required|date:"d-m-Y"|default:'—' }}</span>
     </span>
   </div>
 {% endblock %}
 {% block hero_extra %}
   {% if is_overdue %}
-  <div class="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+  <div class="mt-3 flex items-start gap-2 rounded-lg border border-danger bg-danger-soft px-4 py-3 text-sm text-danger">
     <span class="mt-0.5 shrink-0">⚠</span>
     <span>This indent is overdue — needed by <strong>{{ indent.date_required|date:"d-m-Y" }}</strong>. Please action immediately.</span>
   </div>

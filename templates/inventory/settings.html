@@ -182,7 +182,7 @@
                         class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
                         onclick="openEditUnit({{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}', '{{ unit.base_unit|escapejs }}', '{{ unit.conversion_factor|floatformat:"-6" }}')">Edit</button>
                 <button type="button"
-                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-danger bg-danger-soft hover:bg-danger-soft text-danger transition-colors"
                         onclick="confirmSettingsDelete('delete_unit', 'unit_id', {{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}')">Delete</button>
               </td>
             </tr>
@@ -266,7 +266,7 @@
                         class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
                         onclick="openEditCategory({{ cat.category_id }}, '{{ cat.category|escapejs }}', '{{ cat.sub_category|default:''|escapejs }}')">Edit</button>
                 <button type="button"
-                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-danger bg-danger-soft hover:bg-danger-soft text-danger transition-colors"
                         onclick="confirmSettingsDelete('delete_category', 'category_id', {{ cat.category_id }}, '{{ cat.category|escapejs }}')">Delete</button>
               </td>
             </tr>
@@ -343,7 +343,7 @@
                         class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
                         onclick="openEditDepartment({{ dept.department_id }}, '{{ dept.name|escapejs }}')">Edit</button>
                 <button type="button"
-                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                        class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-danger bg-danger-soft hover:bg-danger-soft text-danger transition-colors"
                         onclick="confirmSettingsDelete('delete_department', 'department_id', {{ dept.department_id }}, '{{ dept.name|escapejs }}')">Delete</button>
               </td>
             </tr>

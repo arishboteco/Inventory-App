@@ -114,7 +114,7 @@
       {% with status_upper=row.status|upper %}
         <span class="{{ badges|get_item:status_upper|default:'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-light text-warning' }}">{{ row.status }}</span>
         {% if row.is_overdue %}
-        <span class="inline-flex items-center gap-1 ml-1 px-2 py-0.5 rounded-full text-xs font-medium text-red-600 bg-red-50 border border-red-200" title="Overdue — needed by {{ row.date_required|date:'d-m-Y' }}">⚠ Overdue</span>
+        <span class="inline-flex items-center gap-1 ml-1 px-2 py-0.5 rounded-full text-xs font-medium text-danger bg-danger-soft border border-danger" title="Overdue — needed by {{ row.date_required|date:'d-m-Y' }}">⚠ Overdue</span>
         {% endif %}
       {% endwith %}
     </td>

@@ -30,7 +30,7 @@
   {% for item in items %}
     {% if show_variance %}
       {% with variance=item.variance %}
-      <tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle {% if item.has_discrepancy %}!bg-amber-50{% endif %}">
+      <tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle {% if item.has_discrepancy %}!bg-warning-soft{% endif %}">
         <td class="px-4 py-2">
           {{ item.po_item.item.name }}
           {% if item.has_discrepancy %}
@@ -41,7 +41,7 @@
         </td>
         <td class="px-4 py-2 text-right tabular-nums">{{ item.quantity_ordered_on_po|floatformat:2 }}</td>
         <td class="px-4 py-2 text-right tabular-nums">{{ item.quantity_received|floatformat:2 }}</td>
-        <td class="px-4 py-2 text-right tabular-nums {% if item.has_discrepancy %}text-red-600 font-medium{% else %}text-success-dark{% endif %}">
+        <td class="px-4 py-2 text-right tabular-nums {% if item.has_discrepancy %}text-danger font-medium{% else %}text-success-dark{% endif %}">
           {% if variance >= 0 %}+{% endif %}{{ variance|floatformat:2 }}
         </td>
         <td class="px-4 py-2 text-right tabular-nums">{{ item.unit_price_at_receipt|floatformat:2 }}</td>

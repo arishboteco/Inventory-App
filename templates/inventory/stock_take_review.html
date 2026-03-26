@@ -68,7 +68,7 @@
         <tbody class="divide-y divide-border">
           {% for sti in items %}
           {% with has_count=sti.physical_qty|default_if_none:"" %}
-          <tr class="odd:bg-surface even:bg-surfaceSubtle text-bodyText {% if has_count and sti.variance_status == 'danger' %}bg-red-50{% elif has_count and sti.variance_status == 'warning' %}bg-amber-50{% endif %}">
+          <tr class="odd:bg-surface even:bg-surfaceSubtle text-bodyText {% if has_count and sti.variance_status == 'danger' %}bg-danger-soft{% elif has_count and sti.variance_status == 'warning' %}bg-warning-soft{% endif %}">
             <td class="px-4 py-2 font-medium">{{ sti.item.name }}</td>
             <td class="px-4 py-2 text-right tabular-nums">{{ sti.system_qty|floatformat:3 }}</td>
             <td class="px-4 py-2 text-right tabular-nums">
@@ -101,11 +101,11 @@
 
     {% if stock_take.status != 'COMPLETED' %}
     {% if uncounted_count > 0 %}
-    <div class="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    <div class="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-warning bg-warning-soft px-4 py-3 text-sm text-warning">
       {% icon 'exclamation-triangle' 'w-5 h-5 flex-shrink-0 text-amber-500 mt-0.5' %}
       <div>
         <p class="font-medium">{{ uncounted_count }} item{{ uncounted_count|pluralize }} not yet counted</p>
-        <p class="text-amber-700 mt-0.5">These will be treated as no-variance (system qty accepted). Go back to <a href="{% url 'stock_take_count' stock_take.pk %}" class="underline font-medium">edit counts</a> if you want to record them first.</p>
+        <p class="text-warning mt-0.5">These will be treated as no-variance (system qty accepted). Go back to <a href="{% url 'stock_take_count' stock_take.pk %}" class="underline font-medium">edit counts</a> if you want to record them first.</p>
       </div>
     </div>
     {% endif %}
@@ -115,7 +115,7 @@
         <input type="hidden" name="action" value="discard">
         <button type="submit"
                 onclick="return confirm('Discard this stock take? This cannot be undone.')"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition">
+                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-danger bg-danger-soft text-danger hover:bg-danger-soft transition">
           Discard
         </button>
       </form>

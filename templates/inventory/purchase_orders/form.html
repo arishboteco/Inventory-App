@@ -14,7 +14,7 @@
   <div id="items-formset" class="mt-4 space-y-3">
     {{ formset.management_form }}
     {% if formset.non_form_errors %}
-      <ul class="text-red-600 list-disc pl-5">
+      <ul class="text-danger list-disc pl-5">
         {% for error in formset.non_form_errors %}
           <li>{{ error }}</li>
         {% endfor %}
@@ -24,7 +24,7 @@
     <div class="border rounded p-3 item-form relative">
       {{ f.id }}
       {% if f.non_field_errors %}
-        <ul class="text-red-600 list-disc pl-5 mb-2">
+        <ul class="text-danger list-disc pl-5 mb-2">
           {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
         </ul>
       {% endif %}
@@ -36,7 +36,7 @@
         </div>
       </div>
       <div class="flex justify-end mt-2">
-        <button type="button" class="remove-item text-xs text-red-600 hover:text-red-800 hover:underline">Remove</button>
+        <button type="button" class="remove-item text-xs text-danger hover:text-danger hover:underline">Remove</button>
       </div>
       <div class="hidden">{{ f.DELETE }}</div>
     </div>
@@ -62,7 +62,7 @@
         {% endif %}
       {% endfor %}
       <div class="flex justify-end mt-2">
-        <button type="button" class="remove-item text-xs text-red-600 hover:text-red-800 hover:underline">Remove</button>
+        <button type="button" class="remove-item text-xs text-danger hover:text-danger hover:underline">Remove</button>
       </div>
     </div>
   </template>

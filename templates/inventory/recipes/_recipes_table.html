@@ -127,11 +127,11 @@
           <td class="px-4 py-2 align-top">
             {% if recipe.food_cost_percentage is not None %}
               {% if recipe.food_cost_status == 'success' %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">{{ recipe.food_cost_percentage }}%</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">{{ recipe.food_cost_percentage }}%</span>
               {% elif recipe.food_cost_status == 'warning' %}
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">{{ recipe.food_cost_percentage }}%</span>
               {% else %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">{{ recipe.food_cost_percentage }}%</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">{{ recipe.food_cost_percentage }}%</span>
               {% endif %}
             {% else %}
               <span class="text-gray-400">—</span>
@@ -162,7 +162,7 @@
               </a>
               <button type="button"
                       onclick="confirmDelete('{% url 'recipe_delete' recipe.recipe_id %}', '{{ recipe.name|escapejs }}', 'Recipe')"
-                      class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-red-600 border border-border hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-400"
+                      class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-danger border border-border hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger"
                       aria-label="Delete {{ recipe.name }}">
                 {% icon 'trash' 'w-4 h-4' %}
               </button>

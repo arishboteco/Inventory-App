@@ -121,9 +121,9 @@
           <td class="px-4 py-2 text-gray-600">{{ item.unit.base_unit|default:'—' }}</td>
           <td class="px-4 py-2 text-right tabular-nums font-medium
             {% if item.current_stock <= 0 %}text-red-700{% elif item.current_stock < item.reorder_point %}text-amber-700{% else %}text-green-700{% endif %}">
-            {{ item.current_stock|floatformat:2 }}
+            {{ item.current_stock|floatformat:site_config.quantity_decimal_places }}
           </td>
-          <td class="px-4 py-2 text-right tabular-nums text-gray-600">{{ item.reorder_point|floatformat:2 }}</td>
+          <td class="px-4 py-2 text-right tabular-nums text-gray-600">{{ item.reorder_point|floatformat:site_config.quantity_decimal_places }}</td>
           <td class="px-4 py-2">
             {% if item.current_stock <= 0 %}
               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-red-700 bg-red-100">Out of Stock</span>

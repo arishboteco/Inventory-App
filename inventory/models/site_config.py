@@ -23,6 +23,11 @@ class SiteConfig(models.Model):
         default=30,
         help_text="Default target food cost % used in recipe costing.",
     )
+    quantity_decimal_places = models.IntegerField(
+        default=2,
+        choices=[(0, "0"), (1, "1"), (2, "2"), (3, "3"), (4, "4")],
+        help_text="Number of decimal places shown for stock quantities and conversion factors.",
+    )
 
     class Meta:
         managed = True

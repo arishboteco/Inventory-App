@@ -35,6 +35,7 @@ def settings_view(request):
             cfg = SiteConfig.get()
             business_name = request.POST.get("business_name", "").strip()
             food_cost_target = request.POST.get("default_food_cost_target", "").strip()
+            qty_dp = request.POST.get("quantity_decimal_places", "").strip()
             if business_name:
                 cfg.business_name = business_name
             if food_cost_target:
@@ -45,6 +46,8 @@ def settings_view(request):
                 except Exception:
                     messages.error(request, "Invalid food cost target value.")
                     return HttpResponseRedirect(reverse("settings") + "?tab=config")
+            if qty_dp in ("0", "1", "2", "3", "4"):
+                cfg.quantity_decimal_places = int(qty_dp)
             cfg.save()
             messages.success(request, "App configuration saved.", extra_tags="toast")
             return HttpResponseRedirect(reverse("settings") + "?tab=config")

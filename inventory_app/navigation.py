@@ -21,102 +21,92 @@ logger = logging.getLogger(__name__)
 # sections in the future.
 NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
     (
-        "Plan & Request",
+        "Insights",
         [
             {
-                "title": "Item Catalog",
-                "description": "Maintain products, variants, and stock policies.",
-                "url_name": "items_list",
+                "title": "Overview",
+                "description": "Daily numbers, charts, and alerts.",
+                "url_name": "visualizations",
             },
             {
-                "title": "Recipes & BOMs",
-                "description": "Build formulations and production yields.",
-                "url_name": "recipes_list",
+                "title": "Food Cost",
+                "description": "Recipe costs, margins, and selling prices.",
+                "url_name": "food_cost_report",
             },
             {
-                "title": "Indent Requests",
-                "description": "Capture and prioritise internal demand.",
+                "title": "History",
+                "description": "Past stock activity and audit trail.",
+                "url_name": "history_reports",
+            },
+            {
+                "title": "Reorder Suggestions",
+                "description": "What to order based on usage patterns.",
+                "url_name": "ml_dashboard",
+            },
+        ],
+    ),
+    (
+        "Procurement",
+        [
+            {
+                "title": "Indents",
+                "description": "Raise requests for items you need.",
                 "url_name": "indents_list",
             },
             {
-                "title": "Consolidation Planner",
-                "description": "Bundle approved indents into supplier orders.",
+                "title": "Order Planner",
+                "description": "Combine indents into purchase orders.",
                 "url_name": "indents_consolidate_preview",
             },
-        ],
-    ),
-    (
-        "Buy & Receive",
-        [
             {
                 "title": "Purchase Orders",
-                "description": "Plan sourcing and track order progress.",
+                "description": "Orders sent to suppliers.",
                 "url_name": "purchase_orders_list",
             },
             {
-                "title": "Goods Received Notes",
-                "description": "Verify deliveries and attach supporting docs.",
+                "title": "Receiving",
+                "description": "Check in deliveries from suppliers.",
                 "url_name": "grn_list",
-            },
-            {
-                "title": "Supplier Directory",
-                "description": "Manage vendor contacts and statuses.",
-                "url_name": "suppliers_list",
             },
         ],
     ),
     (
-        "Fulfill & Track",
+        "Stock",
         [
             {
-                "title": "Stock Movements",
-                "description": "Review adjustments and inter-store transfers.",
-                "url_name": "stock_movements",
-            },
-            {
-                "title": "Inventory Explorer",
-                "description": "Search items, batches, and availability.",
+                "title": "Stock Levels",
+                "description": "What you have on hand right now.",
                 "url_name": "explore",
             },
             {
-                "title": "Stock Takes",
-                "description": "Run physical counts and reconcile variances.",
+                "title": "Movements",
+                "description": "Transfers, wastage, and adjustments.",
+                "url_name": "stock_movements",
+            },
+            {
+                "title": "Stock Count",
+                "description": "Physical count and fix differences.",
                 "url_name": "stock_take_list",
             },
         ],
     ),
     (
-        "Insights & Settings",
+        "Master Data",
         [
             {
-                "title": "Food Cost Report",
-                "description": "Review ingredient costs and margins across all recipes.",
-                "url_name": "food_cost_report",
+                "title": "Items",
+                "description": "Your products and stock settings.",
+                "url_name": "items_list",
             },
             {
-                "title": "Stock History Report",
-                "description": "Analyse trends and audit activity.",
-                "url_name": "history_reports",
+                "title": "Recipes",
+                "description": "Ingredients, portions, and costings.",
+                "url_name": "recipes_list",
             },
             {
-                "title": "Visual Dashboards",
-                "description": "Track KPIs and live performance.",
-                "url_name": "visualizations",
-            },
-            {
-                "title": "ML Planner",
-                "description": "View ABC classification and demand forecasts.",
-                "url_name": "ml_dashboard",
-            },
-            {
-                "title": "Workflow Handbook",
-                "description": "Follow the end-to-end Inventory Pro process.",
-                "url_name": "workflow_guide",
-            },
-            {
-                "title": "Settings",
-                "description": "Manage reference data: units, categories, departments.",
-                "url_name": "settings",
+                "title": "Suppliers",
+                "description": "Who you buy from.",
+                "url_name": "suppliers_list",
             },
         ],
     ),

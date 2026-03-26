@@ -1,6 +1,6 @@
 <!-- Modern Corporate Top Navigation -->
 {% load icon_tags %}
-<nav class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+<nav class="bg-surface border-b border-border shadow-sm sticky top-0 z-40">
   <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
   <div class="flex justify-between h-16">
   <!-- Left side: Logo and main nav -->
@@ -30,7 +30,7 @@
             </span>
             {% icon 'chevron-down' 'h-4 w-4 text-gray-500 transition-transform duration-150' aria_label='' %}
           </button>
-          <div data-nav-panel class="hidden absolute left-0 top-full mt-2 w-72 bg-white border border-gray-200 shadow-lg rounded-lg py-2 z-50">
+          <div data-nav-panel class="hidden absolute left-0 top-full mt-2 w-72 bg-surface border border-border shadow-lg rounded-lg py-2 z-50">
             <ul class="max-h-[60vh] overflow-auto" role="menu">
               {% for link in group.links %}
                 <li role="none">
@@ -133,7 +133,7 @@
           </button>
           <div x-cloak x-show="open" @click.outside="open=false" class="absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
             <div class="py-2">
-              <div class="px-4 py-2 text-sm text-gray-700 font-medium border-b border-gray-100">Notifications</div>
+              <div class="px-4 py-2 text-sm text-gray-700 font-medium border-b border-border">Notifications</div>
               {% for notif in notifications %}
                 <a href="{{ notif.url }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">{{ notif.text }}</a>
               {% empty %}

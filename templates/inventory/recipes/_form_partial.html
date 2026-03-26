@@ -1,5 +1,5 @@
 {% load form_tags %}
-<div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-xl">
+<div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden drawer-panel max-w-drawer-xl">
   <form method="post" data-modal-form data-requires-line-items action="{% if is_edit and recipe %}{% url 'recipe_edit_partial' recipe.pk %}{% else %}{% url 'recipe_create_partial' %}{% endif %}">
     {% csrf_token %}
     <div class="px-4 py-3 border-b border-border bg-surfaceSubtle">
@@ -40,7 +40,7 @@
       {% include "inventory/recipes/_form_fields.html" with form=form %}
       {{ formset.management_form }}
       {% if formset.non_form_errors %}
-      <ul class="text-red-600 list-disc pl-5">
+      <ul class="text-danger list-disc pl-5">
         {% for error in formset.non_form_errors %}
         <li>{{ error }}</li>
         {% endfor %}
@@ -62,7 +62,7 @@
           </label>
         </div>
         <div id="cost-by-category" class="text-sm space-y-1"></div>
-        <p id="recipe-zero-cost-notice" class="mt-2 text-xs text-amber-600 hidden">Some items are missing purchase costs, so their line totals show as 0. Add a price to the item to update this summary.</p>
+        <p id="recipe-zero-cost-notice" class="mt-2 text-xs text-warning hidden">Some items are missing purchase costs, so their line totals show as 0. Add a price to the item to update this summary.</p>
         <div class="mt-2 text-sm">
           <div>Total Cost: <span id="recipe-total-cost">0.00</span></div>
           <div class="font-semibold">Suggested Price: <span id="recipe-suggested-price">0.00</span></div>

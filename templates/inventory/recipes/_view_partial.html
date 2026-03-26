@@ -1,5 +1,5 @@
 {% load icon_tags form_tags %}
-<div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-xl">
+<div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden drawer-panel max-w-drawer-xl">
   <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <h3 class="text-base font-semibold">{{ recipe.name }}</h3>
     <div class="flex items-center gap-2">
@@ -80,7 +80,7 @@
           </thead>
           <tbody class="bg-surface divide-y divide-border">
             {% for item in items %}
-            <tr class="form-row {% if item.has_zero_price %}bg-amber-50{% endif %}" data-recipe-row="true" data-category="{{ item.category }}" data-subcategory="{{ item.subcategory }}" data-cost-per-base-unit="{{ item.cost_per_base_unit_str }}" data-quantity="{{ item.quantity_str }}" data-has-item="{% if item.has_item %}1{% else %}0{% endif %}" {% if item.has_zero_price %}data-has-zero-price="1"{% endif %}>
+            <tr class="form-row {% if item.has_zero_price %}bg-warning-soft{% endif %}" data-recipe-row="true" data-category="{{ item.category }}" data-subcategory="{{ item.subcategory }}" data-cost-per-base-unit="{{ item.cost_per_base_unit_str }}" data-quantity="{{ item.quantity_str }}" data-has-item="{% if item.has_item %}1{% else %}0{% endif %}" {% if item.has_zero_price %}data-has-zero-price="1"{% endif %}>
               <td class="px-3 py-2 align-top">
                 <div class="font-medium text-bodyText flex items-center gap-1.5">
                   {{ item.name }}
@@ -94,7 +94,7 @@
               <td class="px-3 py-2 align-middle">{{ item.unit|default:"—" }}</td>
               <td class="px-3 py-2 align-middle">{{ item.loss_pct|floatformat:-2 }}</td>
               <td class="px-3 py-2 align-middle">
-                <div class="text-sm {% if item.has_zero_price %}text-amber-600{% endif %}" data-line-cost data-base-cost="{{ item.line_cost_str }}">{{ item.line_cost_str }}</div>
+                <div class="text-sm {% if item.has_zero_price %}text-warning{% endif %}" data-line-cost data-base-cost="{{ item.line_cost_str }}">{{ item.line_cost_str }}</div>
               </td>
             </tr>
             {% empty %}
@@ -110,7 +110,7 @@
     <section class="p-3 border border-border rounded-lg bg-surfaceSubtle space-y-2" id="recipe-cost-panel">
       <h4 class="font-semibold text-sm">Cost Breakdown</h4>
       <div id="cost-by-category" class="text-sm space-y-1"></div>
-      <p id="recipe-zero-cost-notice" class="text-xs text-amber-600 {% if not zero_cost %}hidden{% endif %}">Some items are missing purchase costs, so their line totals show as 0. Add a price to the item to update this summary.</p>
+      <p id="recipe-zero-cost-notice" class="text-xs text-warning {% if not zero_cost %}hidden{% endif %}">Some items are missing purchase costs, so their line totals show as 0. Add a price to the item to update this summary.</p>
       <div class="text-sm">
         <div>Total Cost: <span id="recipe-total-cost">{{ total_cost|floatformat:2 }}</span></div>
       </div>
@@ -130,11 +130,11 @@
             <p class="text-xs text-gray-500">Food Cost %</p>
             {% if recipe.food_cost_percentage is not None %}
               {% if recipe.food_cost_status == 'success' %}
-                <p class="font-semibold text-green-600">{{ recipe.food_cost_percentage }}%</p>
+                <p class="font-semibold text-success">{{ recipe.food_cost_percentage }}%</p>
               {% elif recipe.food_cost_status == 'warning' %}
                 <p class="font-semibold text-yellow-600">{{ recipe.food_cost_percentage }}%</p>
               {% else %}
-                <p class="font-semibold text-red-600">{{ recipe.food_cost_percentage }}%</p>
+                <p class="font-semibold text-danger">{{ recipe.food_cost_percentage }}%</p>
               {% endif %}
               <p class="text-xs text-gray-400">Target: {{ recipe.target_food_cost_pct|default:"30" }}%</p>
             {% else %}

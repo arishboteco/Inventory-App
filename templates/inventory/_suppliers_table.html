@@ -117,7 +117,7 @@
           {% icon 'check' 'w-5 h-5 text-success' %}
           <span class="sr-only">Deactivate</span>
           {% else %}
-          {% icon 'x-mark' 'w-5 h-5 text-red-600' %}
+          {% icon 'x-mark' 'w-5 h-5 text-danger' %}
           <span class="sr-only">Activate</span>
           {% endif %}
         </button>
@@ -147,7 +147,7 @@
         </a>
         <button type="button"
                 onclick="confirmDelete('{% url 'supplier_delete' row.supplier_id %}', '{{ row.name|escapejs }}', 'Supplier')"
-                class="text-red-500 hover:text-red-700"
+                class="text-danger hover:text-danger"
                 title="Delete">
           {% icon 'trash' 'w-5 h-5' %}
           <span class="sr-only">Delete</span>

@@ -19,7 +19,7 @@
     <form method="post">
       {% csrf_token %}
       {% if form.non_field_errors %}
-        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+        <div class="mb-4 p-3 bg-danger-soft border border-danger rounded-lg text-sm text-danger">
           {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
         </div>
       {% endif %}
@@ -27,7 +27,7 @@
         <div>
           <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Date</label>
           {{ form.date }}
-          {% if form.date.errors %}<p class="text-xs text-red-600 mt-1">{{ form.date.errors|join:", " }}</p>{% endif %}
+          {% if form.date.errors %}<p class="text-xs text-danger mt-1">{{ form.date.errors|join:", " }}</p>{% endif %}
         </div>
         <div>
           <label for="{{ form.department.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Department <span class="text-gray-400 font-normal">(optional — leave blank for all)</span></label>

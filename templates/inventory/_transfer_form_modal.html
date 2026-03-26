@@ -3,7 +3,7 @@
 <form method="post" action="{% url 'stock_movements' %}?section=transfer" id="transfer-form">
   {% csrf_token %}
   {% if transfer_form.non_field_errors %}
-    <ul class="mb-3 text-sm text-red-600 list-disc pl-5">
+    <ul class="mb-3 text-sm text-danger list-disc pl-5">
       {% for e in transfer_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
     </ul>
   {% endif %}

@@ -2,7 +2,7 @@
 <form method="post" class="grid grid-cols-2 gap-4 max-sm:grid-cols-1 mb-4">
   {% csrf_token %}
   {% if adjust_form.non_field_errors %}
-  <ul class="text-red-600 list-disc pl-5">
+  <ul class="text-danger list-disc pl-5">
     {% for error in adjust_form.non_field_errors %}
     <li>{{ error }}</li>
     {% endfor %}

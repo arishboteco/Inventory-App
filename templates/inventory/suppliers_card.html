@@ -10,12 +10,12 @@
       {% if row.contact_person %}<p class="text-sm text-gray-600">{{ row.contact_person }}</p>{% endif %}
       {% if row.phone %}
       <p class="text-sm text-gray-500 mt-1">
-        <a href="tel:{{ row.phone }}" class="hover:text-primary">{{ row.phone }}</a>
+        <a href="tel:{{ row.phone }}" class="hover:text-primary transition">{{ row.phone }}</a>
       </p>
       {% endif %}
       {% if row.email %}
       <p class="text-sm text-gray-500">
-        <a href="mailto:{{ row.email }}" class="hover:text-primary">{{ row.email }}</a>
+        <a href="mailto:{{ row.email }}" class="hover:text-primary transition">{{ row.email }}</a>
       </p>
       {% endif %}
     </div>
@@ -45,7 +45,7 @@
         <input type="hidden" name="sort" value="{{ sort }}" />
         <input type="hidden" name="direction" value="{{ direction }}" />
         <input type="hidden" name="view" value="cards" />
-        <button type="submit" title="Toggle" class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-surfaceSubtle hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
+        <button type="submit" title="Toggle" class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-surfaceSubtle hover:bg-surface transition focus:outline-none focus:ring-2 focus:ring-primary">
           {% if row.is_active %}
           {% icon 'check' 'w-5 h-5 text-success' %}
           <span class="sr-only">Deactivate</span>

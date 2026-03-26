@@ -73,13 +73,13 @@
 </div>
 
 {% if kpis.overdue_count > 0 %}
-<div class="mb-6 bg-warning-light border-l-4 border-warning rounded-lg p-4">
+<div class="mb-6 bg-warning-soft border-l-4 border-warning rounded-lg p-4">
   <div class="flex items-start">
     <div class="flex-shrink-0">
       {% icon 'exclamation-triangle' 'w-5 h-5 text-warning' %}
     </div>
     <div class="ml-3">
-      <p class="text-sm font-medium text-warning-dark">
+      <p class="text-sm font-medium text-warning">
         <strong>{{ kpis.overdue_count }}</strong> order{{ kpis.overdue_count|pluralize }} past expected delivery date
       </p>
     </div>

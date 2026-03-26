@@ -38,7 +38,7 @@
       <h3 class="text-sm font-medium text-gray-500 mb-2">Top Fastest Movers (7d)</h3>
       <ul class="text-sm text-bodyText space-y-1">
         {% for name, qty in stats.fastest_movers %}
-          <li>{{ name }} - {{ qty|floatformat:2 }}</li>
+          <li>{{ name }} - {{ qty|floatformat:site_config.quantity_decimal_places }}</li>
         {% endfor %}
       </ul>
     </div>

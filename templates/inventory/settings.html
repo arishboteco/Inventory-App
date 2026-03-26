@@ -85,6 +85,20 @@
           <p class="mt-1 text-xs text-gray-400">Default target for new recipes. Drag the slider or type a value (0–100).</p>
         </div>
 
+        <!-- Quantity Decimal Places -->
+        <div class="max-w-xs">
+          <label class="block text-sm font-medium text-gray-700 mb-1" for="cfg-qty-dp">Quantity Decimal Places</label>
+          <select id="cfg-qty-dp" name="quantity_decimal_places"
+                  class="w-full h-10 px-3 border border-form-border rounded-lg bg-form-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+            <option value="0" {% if site_config.quantity_decimal_places == 0 %}selected{% endif %}>0 — whole numbers (e.g. 125)</option>
+            <option value="1" {% if site_config.quantity_decimal_places == 1 %}selected{% endif %}>1 decimal place (e.g. 125.5)</option>
+            <option value="2" {% if site_config.quantity_decimal_places == 2 %}selected{% endif %}>2 decimal places (e.g. 125.50)</option>
+            <option value="3" {% if site_config.quantity_decimal_places == 3 %}selected{% endif %}>3 decimal places (e.g. 125.500)</option>
+            <option value="4" {% if site_config.quantity_decimal_places == 4 %}selected{% endif %}>4 decimal places (e.g. 125.5000)</option>
+          </select>
+          <p class="mt-1 text-xs text-gray-400">Controls how stock quantities are displayed throughout the app (e.g. items list, forecasts).</p>
+        </div>
+
         <div class="pt-2 border-t border-border flex justify-end">
           <button type="submit"
                   class="h-9 px-6 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary transition-colors">
@@ -162,11 +176,11 @@
             <tr class="hover:bg-surfaceSubtle transition-colors" data-row>
               <td class="px-4 py-2.5 font-medium" id="unit-pu-{{ unit.unit_id }}">{{ unit.purchase_unit }}</td>
               <td class="px-4 py-2.5 text-gray-600" id="unit-bu-{{ unit.unit_id }}">{{ unit.base_unit }}</td>
-              <td class="px-4 py-2.5 text-right tabular-nums text-gray-600">{{ unit.conversion_factor|floatformat:"-4" }}</td>
+              <td class="px-4 py-2.5 text-right tabular-nums text-gray-600">{{ unit.conversion_factor|floatformat:"-6" }}</td>
               <td class="px-4 py-2.5 text-right whitespace-nowrap">
                 <button type="button"
                         class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-border bg-surface hover:bg-surfaceSubtle text-bodyText transition-colors mr-1"
-                        onclick="openEditUnit({{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}', '{{ unit.base_unit|escapejs }}', '{{ unit.conversion_factor }}')">Edit</button>
+                        onclick="openEditUnit({{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}', '{{ unit.base_unit|escapejs }}', '{{ unit.conversion_factor|floatformat:"-6" }}')">Edit</button>
                 <button type="button"
                         class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
                         onclick="confirmSettingsDelete('delete_unit', 'unit_id', {{ unit.unit_id }}, '{{ unit.purchase_unit|escapejs }}')">Delete</button>

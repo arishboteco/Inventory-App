@@ -85,7 +85,7 @@
                 <div class="font-medium text-bodyText flex items-center gap-1.5">
                   {{ item.name }}
                   {% if item.is_sub_recipe %}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Sub-Recipe</span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-info-soft text-info-text">Sub-Recipe</span>
                   {% endif %}
                 </div>
                 <div class="text-xs text-gray-500">{{ item.category }}</div>
@@ -132,7 +132,7 @@
               {% if recipe.food_cost_status == 'success' %}
                 <p class="font-semibold text-success">{{ recipe.food_cost_percentage }}%</p>
               {% elif recipe.food_cost_status == 'warning' %}
-                <p class="font-semibold text-yellow-600">{{ recipe.food_cost_percentage }}%</p>
+                <p class="font-semibold text-warning-text">{{ recipe.food_cost_percentage }}%</p>
               {% else %}
                 <p class="font-semibold text-danger">{{ recipe.food_cost_percentage }}%</p>
               {% endif %}

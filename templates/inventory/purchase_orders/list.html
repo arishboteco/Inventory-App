@@ -120,7 +120,7 @@
       <input type="hidden" name="q" value="{{ q|default:'' }}" />
       <div>
         <label for="status" class="block text-sm font-medium text-bodyText mb-1">Status</label>
-        <select id="status" name="status" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" autocomplete="off">
+        <select id="status" name="status" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary predictive" autocomplete="off">
           <option value="">All Statuses</option>
           {% for value, label in statuses %}
             <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
@@ -131,7 +131,7 @@
       </div>
       <div>
         <label for="supplier" class="block text-sm font-medium text-bodyText mb-1">Supplier</label>
-        <select id="supplier" name="supplier" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" autocomplete="off">
+        <select id="supplier" name="supplier" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary predictive" autocomplete="off">
           <option value="">All Suppliers</option>
           {% for supplier in suppliers %}
             <option value="{{ supplier.pk }}" {% if current_supplier == supplier.pk|stringformat:"s" %}selected{% endif %}>
@@ -142,11 +142,11 @@
       </div>
       <div>
         <label for="start-date" class="block text-sm font-medium text-bodyText mb-1">Start Date</label>
-        <input id="start-date" type="date" name="start_date" value="{{ start_date }}" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off">
+        <input id="start-date" type="date" name="start_date" value="{{ start_date }}" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off">
       </div>
       <div>
         <label for="end-date" class="block text-sm font-medium text-bodyText mb-1">End Date</label>
-        <input id="end-date" type="date" name="end_date" value="{{ end_date }}" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off">
+        <input id="end-date" type="date" name="end_date" value="{{ end_date }}" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" autocomplete="off">
       </div>
       <div class="flex items-end space-x-2">
         <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong flex-1">

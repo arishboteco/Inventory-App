@@ -48,7 +48,7 @@
       <form method="get" class="grid gap-4 grid-cols-1 lg:grid-cols-4 items-end">
         <div>
           <label for="id_supplier" class="block text-sm font-medium text-bodyText mb-1">Supplier</label>
-          <select id="id_supplier" name="supplier" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" autocomplete="off">
+          <select id="id_supplier" name="supplier" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary predictive" autocomplete="off">
             <option value="">All Suppliers</option>
             {% for s in suppliers %}
               <option value="{{ s.pk }}" {% if current_supplier == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
@@ -57,11 +57,11 @@
         </div>
         <div>
           <label for="id_start_date" class="block text-sm font-medium text-bodyText mb-1">Start Date</label>
-          <input id="id_start_date" type="date" name="start_date" value="{{ start_date }}" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
+          <input id="id_start_date" type="date" name="start_date" value="{{ start_date }}" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
         <div>
           <label for="id_end_date" class="block text-sm font-medium text-bodyText mb-1">End Date</label>
-          <input id="id_end_date" type="date" name="end_date" value="{{ end_date }}" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" />
+          <input id="id_end_date" type="date" name="end_date" value="{{ end_date }}" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" />
         </div>
         <div class="flex gap-2">
           <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong flex-1">
@@ -91,7 +91,7 @@
         {% endif %}
         <div>
           <label for="id_po" class="block text-sm font-medium text-bodyText mb-1">Purchase Order</label>
-          <select id="id_po" name="po" class="block w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary predictive" required>
+          <select id="id_po" name="po" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary predictive" required>
             <option value="">Select a PO...</option>
             {% for po in open_pos %}
               <option value="{{ po.pk }}">PO #{{ po.pk }} — {{ po.supplier.name }} ({{ po.get_status_display }})</option>
@@ -127,7 +127,7 @@
                 {% if grn.purchase_order_id %}
                   PO <a class="text-primary hover:underline" href="{% url 'purchase_order_detail' grn.purchase_order_id %}">{{ grn.purchase_order_id }}</a>
                 {% else %}
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Ad-hoc</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-soft text-accent-text">Ad-hoc</span>
                 {% endif %}
               </p>
             </div>

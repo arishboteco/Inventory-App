@@ -59,10 +59,10 @@
               {% elif row.fc_status == 'warning' %}text-warning
               {% elif row.fc_status == 'danger' %}text-danger
               {% else %}text-gray-400{% endif %}">
-              {% if row.food_cost_pct is not None %}{{ row.food_cost_pct|floatformat:1 }}%{% else %}<span class="text-gray-400">—</span>{% endif %}
+              {% if row.food_cost_pct is not None %}{{ row.food_cost_pct|floatformat:2 }}%{% else %}<span class="text-gray-400">—</span>{% endif %}
             </td>
             <td class="px-4 py-2 text-right tabular-nums text-gray-500">
-              {% if row.recipe.target_food_cost_pct %}{{ row.recipe.target_food_cost_pct|floatformat:1 }}%{% else %}<span class="text-gray-400">—</span>{% endif %}
+              {% if row.recipe.target_food_cost_pct %}{{ row.recipe.target_food_cost_pct|floatformat:2 }}%{% else %}<span class="text-gray-400">—</span>{% endif %}
             </td>
             <td class="px-4 py-2 text-right tabular-nums">
               {% if row.gross_margin is not None %}

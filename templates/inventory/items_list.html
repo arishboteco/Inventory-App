@@ -30,15 +30,15 @@
       {% with pct=stats.low_stock_percentage|floatformat:0|default:"0" %}
         {% include "components/kpi_card.html" with icon='exclamation-triangle' color='red' label='Low Stock %' value=pct|add:'%' %}
       {% endwith %}
-      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Avg Days Since Purchase' value=stats.avg_days_since_last_purchase|floatformat:1 %}
-      {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value=stats.stock_value_on_hand|currency:site_config.currency_symbol %}
+      {% include "components/kpi_card.html" with icon='clock' color='yellow' label='Avg Days Since Purchase' value=stats.avg_days_since_last_purchase|floatformat:2 %}
+      {% include "components/kpi_card.html" with icon='banknotes' color='green' label='Stock Value' value=stats.stock_value_on_hand|floatformat:2 %}
     </div>
     {% if stats.fastest_movers %}
     <div class="mt-6">
       <h3 class="text-sm font-medium text-gray-500 mb-2">Top Fastest Movers (7d)</h3>
       <ul class="text-sm text-bodyText space-y-1">
         {% for name, qty in stats.fastest_movers %}
-          <li>{{ name }} - {{ qty|floatformat:0 }}</li>
+          <li>{{ name }} - {{ qty|floatformat:2 }}</li>
         {% endfor %}
       </ul>
     </div>

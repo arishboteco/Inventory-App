@@ -8,7 +8,9 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from ..models.category import Category
@@ -32,12 +34,9 @@ def settings_view(request):
         if action == "save_app_config":
             cfg = SiteConfig.get()
             business_name = request.POST.get("business_name", "").strip()
-            currency_symbol = request.POST.get("currency_symbol", "").strip()
             food_cost_target = request.POST.get("default_food_cost_target", "").strip()
             if business_name:
                 cfg.business_name = business_name
-            if currency_symbol:
-                cfg.currency_symbol = currency_symbol
             if food_cost_target:
                 try:
                     from decimal import Decimal
@@ -45,10 +44,10 @@ def settings_view(request):
                     cfg.default_food_cost_target = Decimal(food_cost_target)
                 except Exception:
                     messages.error(request, "Invalid food cost target value.")
-                    return redirect("settings")
+                    return HttpResponseRedirect(reverse("settings") + "?tab=config")
             cfg.save()
             messages.success(request, "App configuration saved.", extra_tags="toast")
-            return redirect("settings")
+            return HttpResponseRedirect(reverse("settings") + "?tab=config")
 
         # ── Units ────────────────────────────────────────────────────────────
         elif action == "add_unit":
@@ -68,6 +67,7 @@ def settings_view(request):
                     messages.error(request, "Failed to add unit.")
             else:
                 messages.error(request, "Purchase unit and base unit are required.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=units")
 
         elif action == "edit_unit":
             unit_id = request.POST.get("unit_id")
@@ -87,6 +87,7 @@ def settings_view(request):
                     messages.error(request, "Failed to update unit.")
             else:
                 messages.error(request, "Purchase unit and base unit are required.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=units")
 
         elif action == "delete_unit":
             unit_id = request.POST.get("unit_id")
@@ -104,6 +105,7 @@ def settings_view(request):
                 except Exception as exc:
                     logger.error("Failed to delete unit: %s", exc)
                     messages.error(request, "Failed to delete unit.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=units")
 
         # ── Categories ───────────────────────────────────────────────────────
         elif action == "add_category":
@@ -121,6 +123,7 @@ def settings_view(request):
                     messages.error(request, "Failed to add category.")
             else:
                 messages.error(request, "Category name is required.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=categories")
 
         elif action == "edit_category":
             category_id = request.POST.get("category_id")
@@ -138,6 +141,7 @@ def settings_view(request):
                     messages.error(request, "Failed to update category.")
             else:
                 messages.error(request, "Category name is required.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=categories")
 
         elif action == "delete_category":
             category_id = request.POST.get("category_id")
@@ -155,6 +159,7 @@ def settings_view(request):
                 except Exception as exc:
                     logger.error("Failed to delete category: %s", exc)
                     messages.error(request, "Failed to delete category.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=categories")
 
         # ── Departments ──────────────────────────────────────────────────────
         elif action == "add_department":
@@ -175,6 +180,7 @@ def settings_view(request):
                         messages.error(request, "Failed to add department.")
             else:
                 messages.error(request, "Department name is required.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=departments")
 
         elif action == "edit_department":
             department_id = request.POST.get("department_id")
@@ -201,6 +207,7 @@ def settings_view(request):
                         messages.error(request, "Failed to update department.")
             else:
                 messages.error(request, "Department name is required.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=departments")
 
         elif action == "delete_department":
             department_id = request.POST.get("department_id")
@@ -218,17 +225,20 @@ def settings_view(request):
                 except Exception as exc:
                     logger.error("Failed to delete department: %s", exc)
                     messages.error(request, "Failed to delete department.")
+            return HttpResponseRedirect(reverse("settings") + "?tab=departments")
 
-        return redirect("settings")
+        return HttpResponseRedirect(reverse("settings"))
 
     units = Unit.objects.all()
     categories = Category.objects.all()
     departments = Department.objects.all()
+    active_tab = request.GET.get("tab", "config")
 
     ctx = {
         "units": units,
         "categories": categories,
         "departments": departments,
+        "active_tab": active_tab,
         "list_url": "/",
         "list_title": "Dashboard",
         "current_title": "Settings",
@@ -250,7 +260,7 @@ def profile_edit_view(request):
         user.email = email
         user.save(update_fields=["first_name", "last_name", "email"])
         messages.success(request, "Profile updated.", extra_tags="toast")
-        return redirect("settings")
+        return HttpResponseRedirect(reverse("settings") + "?tab=profile")
     return render(
         request,
         "inventory/user_profile_edit.html",
@@ -274,7 +284,7 @@ def change_password_view(request):
             messages.success(
                 request, "Password changed successfully.", extra_tags="toast"
             )
-            return redirect("settings")
+            return HttpResponseRedirect(reverse("settings") + "?tab=profile")
     else:
         form = PasswordChangeForm(request.user)
     return render(

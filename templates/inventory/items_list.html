@@ -4,10 +4,10 @@
 {% block table_id %}items-container{% endblock %}
 
 
-{% block page_title %}Item Master Management{% endblock %}
-{% block page_heading %}Item Master Management{% endblock %}
+{% block page_title %}Items – Inventory Pro{% endblock %}
+{% block page_heading %}Items{% endblock %}
 {% block page_subtitle %}
-  <p class="text-sm text-gray-600">Manage catalogue details, stock levels, and supplier assignments.</p>
+  <p class="text-sm text-gray-600">Manage your ingredient and product catalogue.</p>
 {% endblock %}
 {% block page_meta %}
   <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
@@ -17,7 +17,7 @@
 {% endblock %}
 {% block hero_extra %}
   <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
-    <span class="font-medium text-bodyText">Tip:</span> Use the filters to narrow by category or supplier; actions update instantly via the new responsive table.
+    <span class="font-medium text-bodyText">Tip:</span> Use the filters to narrow by category, supplier, or stock status. Tick rows to bulk-deactivate or reassign departments.
   </div>
 {% endblock %}
 
@@ -61,19 +61,29 @@
           </div>
           <div class="flex flex-wrap items-center gap-2 justify-end">
             <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong" data-modal-url="{% url 'item_create_partial' %}" data-modal-type="drawer" data-modal-prefetch="eager" data-modal-inline-template="inline-item-create-drawer">Add Item</button>
-            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-url="{% url 'items_bulk_upload' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle">Bulk Upload</button>
-            <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Export</button>
-            {% if stats.low_stock_count %}
-            <a href="{% url 'low_stock_indent' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-warning text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-warning border border-transparent">Generate Indent ({{ stats.low_stock_count }} low)</a>
-            {% endif %}
-                <div id="bulk-actions-top" class="hidden border border-border bg-surfaceSubtle px-3 py-2 rounded-lg flex items-center gap-2" role="region" aria-label="Bulk actions">
-                  <span id="bulk-count-top" class="text-sm text-bodyText">0 selected</span>
-                  <div class="flex items-center gap-2">
-                    <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Deactivate</button>
-                    <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Assign Dept</button>
-                    <button type="button" data-bulk-action="delete" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-danger-soft text-danger border border-danger hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger">Delete Selected</button>
-                  </div>
-                </div>
+            <!-- More actions dropdown -->
+            <div class="relative" x-data="{ open: false }" @keydown.escape="open = false" @click.outside="open = false">
+              <button type="button" @click="open = !open" :aria-expanded="open.toString()" class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
+                More
+                <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+              </button>
+              <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-1 w-48 rounded-lg bg-surface border border-border shadow-card z-30 py-1" role="menu">
+                <button type="button" @click="open = false" data-modal-url="{% url 'items_bulk_upload' %}?partial=1" data-modal-type="drawer" data-modal-prefetch="idle" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Bulk Upload</button>
+                <button type="submit" form="filters" formaction="{{ export_url }}" formmethod="get" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Export CSV</button>
+                {% if stats.low_stock_count %}
+                <div class="border-t border-border my-1"></div>
+                <a href="{% url 'low_stock_indent' %}" class="block px-4 py-2 text-sm text-warning font-medium hover:bg-warning-soft" role="menuitem">Generate Indent ({{ stats.low_stock_count }} low)</a>
+                {% endif %}
+              </div>
+            </div>
+            <div id="bulk-actions-top" class="hidden border border-border bg-surfaceSubtle px-3 py-2 rounded-lg flex items-center gap-2" role="region" aria-label="Bulk actions">
+              <span id="bulk-count-top" class="text-sm text-bodyText">0 selected</span>
+              <div class="flex items-center gap-2">
+                <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Deactivate</button>
+                <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Assign Dept</button>
+                <button type="button" data-bulk-action="delete" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-danger-soft text-danger border border-danger hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger">Delete Selected</button>
+              </div>
+            </div>
             <div class="relative" data-col-menu-container>
               <button type="button" class="inline-flex items-center justify-center w-8 h-8 p-0 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Show/Hide Columns" title="Show/Hide Columns" aria-haspopup="true" aria-expanded="false" aria-controls="columns-menu" data-col-menu-button>{% icon 'cog-6-tooth' 'w-4 h-4' %}</button>
               <!-- Column visibility dropdown -->

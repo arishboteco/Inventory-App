@@ -4,7 +4,7 @@
 {% block page_title %}Transactions – Stock Movements{% endblock %}
 {% block page_heading %}Stock Movements{% endblock %}
 {% block page_subtitle %}
-  <p class="text-sm text-gray-600">Record receipts, adjustments, and wastage in one place.</p>
+  <p class="text-sm text-gray-600">Record stock receipts, adjustments, wastage, and transfers.</p>
 {% endblock %}
 {% block page_meta %}
   <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
@@ -64,11 +64,21 @@
         </div>
         <div class="flex flex-wrap items-center gap-2 justify-end">
           <button id="receive-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Receive Stock</button>
-          <button id="adjust-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Adjust Stock</button>
-          <button id="waste-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Record Wastage</button>
-          <button id="transfer-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Transfer Stock</button>
-          <button id="bulk-open" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Bulk Upload</button>
-          <a href="{% url 'history_reports' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">View Reports</a>
+          <!-- More actions dropdown -->
+          <div class="relative" x-data="{ open: false }" @keydown.escape="open = false" @click.outside="open = false">
+            <button type="button" @click="open = !open" :aria-expanded="open.toString()" class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
+              More Actions
+              <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+            </button>
+            <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-1 w-44 rounded-lg bg-surface border border-border shadow-card z-30 py-1" role="menu">
+              <button id="adjust-open" type="button" @click="open = false" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Adjust Stock</button>
+              <button id="waste-open" type="button" @click="open = false" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Record Wastage</button>
+              <button id="transfer-open" type="button" @click="open = false" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Transfer Stock</button>
+              <button id="bulk-open" type="button" @click="open = false" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Bulk Upload</button>
+              <div class="border-t border-border my-1"></div>
+              <a href="{% url 'history_reports' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">View Reports</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -119,7 +119,7 @@
         {% with all_depts=item.departments.all %}
         {% if all_depts %}
           {% for dept in all_depts|slice:":2" %}
-          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{{ dept.name }}</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info-soft text-info-text">{{ dept.name }}</span>
           {% endfor %}
           {% if all_depts|length > 2 %}
           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText">+{{ all_depts|length|add:"-2" }} more</span>

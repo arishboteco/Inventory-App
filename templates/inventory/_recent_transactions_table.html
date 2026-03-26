@@ -50,11 +50,11 @@
       {% if tx.transaction_type == 'RECEIVING' %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Receiving</span>
       {% elif tx.transaction_type == 'ADJUSTMENT' %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Adjustment</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info-soft text-info-text">Adjustment</span>
       {% elif tx.transaction_type == 'WASTAGE' %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Wastage</span>
       {% elif tx.transaction_type == 'TRANSFER' %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Transfer</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText border border-border">Transfer</span>
       {% else %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText">{{ tx.transaction_type|default:"—" }}</span>
       {% endif %}
@@ -64,8 +64,8 @@
     <td class="px-4 py-2 tabular-nums">{{ tx.transaction_date|date:"Y-m-d" }}</td>
     <td class="px-4 py-2">
       {% if tx.transaction_type == 'TRANSFER' and tx.from_department and tx.to_department %}
-        <span class="text-purple-700 font-medium">{{ tx.from_department.name }} → {{ tx.to_department.name }}</span>
-        {% if tx.notes %}<span class="text-gray-400 ml-1">· {{ tx.notes }}</span>{% endif %}
+        <span class="text-bodyText font-medium">{{ tx.from_department.name }} → {{ tx.to_department.name }}</span>
+        {% if tx.notes %}<span class="text-bodyText opacity-60 ml-1">· {{ tx.notes }}</span>{% endif %}
       {% else %}
         {{ tx.notes|default:"—" }}
       {% endif %}

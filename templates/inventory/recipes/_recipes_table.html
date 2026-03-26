@@ -105,9 +105,9 @@
           </td>
           <td class="px-4 py-2 align-top">
             {% if recipe.type == "SUB" %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Sub-Recipe</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info-soft text-info-text">Sub-Recipe</span>
             {% else %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Final Recipe</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-info-soft text-info-text">Final Recipe</span>
             {% endif %}
           </td>
           <td class="px-4 py-2 align-top">
@@ -129,7 +129,7 @@
               {% if recipe.food_cost_status == 'success' %}
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">{{ recipe.food_cost_percentage }}%</span>
               {% elif recipe.food_cost_status == 'warning' %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">{{ recipe.food_cost_percentage }}%</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-soft text-warning-text">{{ recipe.food_cost_percentage }}%</span>
               {% else %}
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">{{ recipe.food_cost_percentage }}%</span>
               {% endif %}

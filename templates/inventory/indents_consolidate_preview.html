@@ -23,8 +23,8 @@
         </div>
       {% else %}
         {# C5: Recommended-path guidance banner #}
-        <div class="mb-5 flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
-          <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <div class="mb-5 flex items-start gap-3 bg-info-soft border border-info rounded-lg px-4 py-3 text-sm text-info-text">
+          <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-info" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
           </svg>
           <div>
@@ -32,7 +32,7 @@
             Review and adjust quantities below, deselect any items you want to exclude, then click
             <strong>Create Purchase Orders</strong>.
             Each supplier group becomes one draft PO which you can edit before sending.
-            For one-off orders, go to <a href="{% url 'purchase_orders_list' %}" class="underline hover:text-blue-900">Purchase Orders</a> and create a PO manually.
+            For one-off orders, go to <a href="{% url 'purchase_orders_list' %}" class="underline hover:text-info-text">Purchase Orders</a> and create a PO manually.
           </div>
         </div>
         <form method="post" id="consolidate-form">

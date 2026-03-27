@@ -14,11 +14,7 @@
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <div class="hidden md:flex items-center gap-1" role="group" aria-label="Table density">
-        <button type="button" data-density-btn data-value="compact" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Compact rows">Compact</button>
-        <button type="button" data-density-btn data-value="comfortable" class="inline-flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Comfortable rows">Comfortable</button>
-      </div>
-      <div class="relative" data-col-menu-container x-data="{open:false}" @click.outside="open=false">
+<div class="relative" data-col-menu-container x-data="{open:false}" @click.outside="open=false">
       <button type="button" data-col-menu-button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">
         Columns
         <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -130,11 +126,7 @@
   </td>
   <td class="px-4 py-2" data-col="actions">
     <div class="flex justify-end gap-2">
-      <a href="{% url 'purchase_order_detail' po.pk %}" class="text-primary" title="View">
-        {% icon 'eye' 'w-5 h-5' %}
-        <span class="sr-only">View</span>
-      </a>
-      <a href="{% url 'purchase_order_edit' po.pk %}"
+<a href="{% url 'purchase_order_edit' po.pk %}"
          data-modal-url="{% url 'purchase_order_edit_partial' po.pk %}"
          data-modal-type="drawer"
          data-modal-prefetch="hover"

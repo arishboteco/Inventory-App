@@ -18,24 +18,15 @@ def _create_item(name="Widget", active=True):
     )
 
 
-def test_explore_filters_by_query_and_active(client):
-    _create_item("Apple", True)
-    _create_item("Banana", False)
+def test_explore_redirects_to_items(client):
     url = reverse("explore") + "?q=Banana&active=0"
     resp = client.get(url)
-    assert resp.status_code == 200
-    content = resp.content.decode()
-    assert "Banana" in content
-    assert "Apple" not in content
+    assert resp.status_code == 301
+    assert resp["Location"] == "/items/"
 
 
-def test_explore_export_csv(client):
-    _create_item("Apple", True)
+def test_explore_export_redirects_to_items(client):
     url = reverse("explore_export")
     resp = client.get(url)
-    assert resp.status_code == 200
-    assert resp["Content-Type"] == "text/csv"
-    assert "attachment; filename=items.csv" in resp["Content-Disposition"]
-    rows = list(csv.reader(resp.content.decode().splitlines()))
-    assert rows[0] == ["ID", "Name", "Unit", "Current Stock", "Active"]
-    assert rows[1][1] == "Apple"
+    assert resp.status_code == 301
+    assert resp["Location"] == "/items/"

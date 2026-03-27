@@ -340,7 +340,7 @@ class ItemsListView(TemplateView):
                 low_stock_count = active_qs.filter(
                     current_stock__isnull=False,
                     reorder_point__isnull=False,
-                    current_stock__lte=F("reorder_point"),
+                    current_stock__lt=F("reorder_point"),
                 ).count()
                 stats["low_stock_percentage"] = low_stock_count / total_active * 100
                 stats["low_stock_count"] = low_stock_count

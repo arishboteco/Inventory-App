@@ -1,8 +1,9 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from .views import ajax_dashboard_data, interactive_dashboard
 
 urlpatterns = [
-    path("interactive-dashboard/", interactive_dashboard, name="interactive-dashboard"),
+    path("interactive-dashboard/", RedirectView.as_view(url="/", permanent=True), name="interactive-dashboard"),
     path("dashboard-data/", ajax_dashboard_data, name="ajax-dashboard-data"),
 ]

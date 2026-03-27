@@ -13,7 +13,7 @@ import threading
 
 logger = logging.getLogger(__name__)
 
-_DASHBOARD_PATHS = frozenset(["/", "/interactive-dashboard/"])
+_DASHBOARD_PATHS = frozenset(["/"])
 
 # Thread-local flag to avoid recursive calls within the same request
 _taking_snapshot = threading.local()

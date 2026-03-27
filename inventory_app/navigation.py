@@ -25,8 +25,8 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
         [
             {
                 "title": "Overview",
-                "description": "Daily numbers, charts, and alerts.",
-                "url_name": "visualizations",
+                "description": "Live stock overview, KPIs, and trend charts.",
+                "url_name": "root",
             },
             {
                 "title": "Food Cost",
@@ -37,6 +37,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "title": "History",
                 "description": "Past stock activity and audit trail.",
                 "url_name": "history_reports",
+            },
+            {
+                "title": "Stock Charts",
+                "description": "Interactive stock trend chart with filters.",
+                "url_name": "visualizations",
             },
             {
                 "title": "Reorder Suggestions",
@@ -75,8 +80,8 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
         [
             {
                 "title": "Stock Levels",
-                "description": "What you have on hand right now.",
-                "url_name": "explore",
+                "description": "Your products, stock levels, and settings.",
+                "url_name": "items_list",
             },
             {
                 "title": "Movements",
@@ -93,11 +98,6 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
     (
         "Master Data",
         [
-            {
-                "title": "Items",
-                "description": "Your products and stock settings.",
-                "url_name": "items_list",
-            },
             {
                 "title": "Recipes",
                 "description": "Ingredients, portions, and costings.",

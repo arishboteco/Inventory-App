@@ -153,4 +153,16 @@ def build_filters(request) -> List[Dict[str, Any]]:
             "options": department_options,
             "multiple": True,
         },
+        {
+            "name": "stock_status",
+            "label": "Stock",
+            "value": request.GET.get("stock_status", ""),
+            "options": [
+                {"value": "", "label": "All Stock"},
+                {"value": "out", "label": "Out of Stock"},
+                {"value": "low", "label": "Low Stock"},
+                {"value": "normal", "label": "In Stock"},
+            ],
+            "multiple": False,
+        },
     ]

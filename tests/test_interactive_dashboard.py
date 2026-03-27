@@ -55,9 +55,9 @@ def test_ajax_dashboard_data_filters(client, item_factory):
 
 
 @pytest.mark.django_db
-def test_interactive_dashboard_template(client, django_user_model):
+def test_interactive_dashboard_redirects(client, django_user_model):
     user = django_user_model.objects.create_user(username="u", password="pw")
     client.force_login(user)
     resp = client.get(reverse("interactive-dashboard"))
-    assert resp.status_code == 200
-    assert b"dashboard-filters" in resp.content
+    assert resp.status_code == 301
+    assert resp["Location"] == "/"

@@ -31,13 +31,14 @@
 {% endblock %}
 
 {% block secondary_actions %}
-  {% url 'suppliers_bulk_delete' as suppliers_bulk_delete_url %}
-  <button id="bulk-delete-btn"
-          disabled
-          onclick="window.location='{{ suppliers_bulk_delete_url }}'"
-          class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed bg-danger text-white hover:opacity-90 focus:ring-2 focus:ring-danger">
-    Bulk Delete
-  </button>
+  {% url 'suppliers_list' as suppliers_list_url %}
+  {% if view == 'cards' %}
+    {% include "components/button.html" with href=suppliers_list_url variant='secondary' label='Table View' %}
+  {% else %}
+    {% with card_view_url=suppliers_list_url|add:'?view=cards' %}
+      {% include "components/button.html" with href=card_view_url variant='secondary' label='Card View' %}
+    {% endwith %}
+  {% endif %}
   {% url 'suppliers_table' as suppliers_table_url %}
   {% with export_url=suppliers_table_url|add:'?export=1' %}
     {% include "components/button.html" with href=export_url variant='secondary' label='Export CSV' %}
@@ -49,14 +50,35 @@
           data-modal-prefetch="idle">
     Bulk Upload
   </button>
-  {% url 'suppliers_list' as suppliers_list_url %}
-  {% if view == 'cards' %}
-    {% include "components/button.html" with href=suppliers_list_url variant='secondary' label='Table View' %}
-  {% else %}
-    {% with card_view_url=suppliers_list_url|add:'?view=cards' %}
-      {% include "components/button.html" with href=card_view_url variant='secondary' label='Card View' %}
-    {% endwith %}
-  {% endif %}
+  <!-- More dropdown (contains destructive actions) -->
+  {% url 'suppliers_bulk_delete' as suppliers_bulk_delete_url %}
+  <div class="relative" x-data="{ open: false }" @keydown.escape="open = false" @click.outside="open = false">
+    <button type="button"
+            @click="open = !open"
+            :aria-expanded="open.toString()"
+            class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
+      More
+      <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+    </button>
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-75"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="absolute right-0 mt-1 w-44 rounded-lg bg-surface border border-border shadow-card z-30 py-1"
+         role="menu">
+      <button id="bulk-delete-btn"
+              type="button"
+              disabled
+              @click="open = false; window.location='{{ suppliers_bulk_delete_url }}'"
+              class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-surfaceSubtle disabled:opacity-40 disabled:cursor-not-allowed"
+              role="menuitem">
+        Bulk Delete
+      </button>
+    </div>
+  </div>
 {% endblock %}
 
 {% block filters %}

@@ -96,6 +96,7 @@
                   <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="stock_status" checked> <span>Stock Status</span></label></li>
                   <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="departments" checked> <span>Departments</span></label></li>
                   <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="status" checked> <span>Status</span></label></li>
+                  <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="abc_class"> <span>ABC Class</span></label></li>
                 </ul>
               </div>
             </div>
@@ -118,15 +119,6 @@
       <template id="inline-item-create-drawer">
         {% include 'inventory/_item_create_bare.html' %}
       </template>
-      <!-- Bulk Actions Bar -->
-  <div id="bulk-actions" class="hidden border-t border-border bg-surfaceSubtle px-4 py-3 flex items-center justify-between" role="region" aria-label="Bulk actions bar">
-        <span id="bulk-count" class="text-sm text-bodyText">0 selected</span>
-        <div class="flex items-center gap-2">
-          <button type="button" data-bulk-action="deactivate" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Deactivate</button>
-          <button type="button" data-bulk-action="assign" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Assign Dept</button>
-          <button type="button" data-bulk-action="delete" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-danger-soft text-danger border border-danger hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger">Delete Selected</button>
-        </div>
-      </div>
 
     </div>
   <div id="items-aria-live" class="sr-only" aria-live="polite"></div>

@@ -28,9 +28,6 @@
     {% icon 'plus' 'w-4 h-4 mr-2' %}
     New GRN
   </a>
-  <a href="{% url 'grn_create_adhoc' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">
-    Receive Without PO
-  </a>
 {% endblock %}
 
 {% block kpis %}
@@ -74,44 +71,7 @@
   </div>
 {% endblock %}
 
-{% block extra_top %}
-  {# Quick GRN Entry #}
-  <div class="bg-surface border border-border rounded-2xl shadow-card mb-6">
-    <button type="button" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-bodyText hover:bg-surfaceSubtle rounded-xl transition" onclick="this.closest('div').querySelector('.quick-form-body').classList.toggle('hidden')">
-      <span>{% icon 'bolt' 'w-4 h-4 mr-2 inline' %} Quick GRN Entry (receive all items from a PO)</span>
-      <span>{% icon 'chevron-down' 'w-4 h-4' %}</span>
-    </button>
-    <div class="quick-form-body hidden border-t border-border p-4">
-      <form method="post" class="grid gap-4 max-w-lg">
-        {% csrf_token %}
-        {% if quick_form.non_field_errors %}
-          <ul class="text-danger list-disc pl-5 text-sm">
-            {% for e in quick_form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
-          </ul>
-        {% endif %}
-        <div>
-          <label for="id_po" class="block text-sm font-medium text-bodyText mb-1">Purchase Order</label>
-          <select id="id_po" name="po" class="block w-full px-3 py-2 border border-form-border rounded-lg bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary predictive" required>
-            <option value="">Select a PO...</option>
-            {% for po in open_pos %}
-              <option value="{{ po.pk }}">PO #{{ po.pk }} — {{ po.supplier.name }} ({{ po.get_status_display }})</option>
-            {% endfor %}
-          </select>
-          {% if not open_pos %}<p class="text-xs text-gray-500 mt-1">No POs awaiting receipt.</p>{% endif %}
-        </div>
-        {% for field in quick_form %}
-          {% include "components/form_field.html" with field=field %}
-        {% endfor %}
-        <div>
-          <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">
-            Create GRN (Receive All)
-          </button>
-          <a href="{% url 'grn_create' %}" class="ml-3 text-sm text-primary hover:underline">Or enter quantities manually →</a>
-        </div>
-      </form>
-    </div>
-  </div>
-{% endblock %}
+{% block extra_top %}{% endblock %}
 
 {% block data_container %}
   <ol class="relative border-l border-border">

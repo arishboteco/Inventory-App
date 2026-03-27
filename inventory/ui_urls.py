@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from .views.explore import explore, explore_export
 from .views.goods_received import (
@@ -98,8 +99,8 @@ from .views.suppliers import (
 from .views.visualizations import visualizations
 
 urlpatterns = [
-    path("explore/", explore, name="explore"),
-    path("explore/export/", explore_export, name="explore_export"),
+    path("explore/", RedirectView.as_view(url="/items/", permanent=True), name="explore"),
+    path("explore/export/", RedirectView.as_view(url="/items/", permanent=True), name="explore_export"),
     path("items/", ItemsListView.as_view(), name="items_list"),
     path("items/table/", ItemsTableView.as_view(), name="items_table"),
     path("items/export/", ItemsExportView.as_view(), name="items_export"),

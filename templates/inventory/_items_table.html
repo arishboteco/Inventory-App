@@ -50,6 +50,9 @@
 
           </div>
         </th>
+  <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="abc_class" data-field="abc_class" data-sort="col8" aria-sort="none">
+          <div class="flex items-center gap-1"><span>ABC</span></div>
+        </th>
         <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">
           Actions
         </th>
@@ -134,6 +137,17 @@
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Active</span>
         {% else %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-danger-soft text-danger">Inactive</span>
+        {% endif %}
+      </td>
+      <td data-col="abc_class" class="px-4 py-2 whitespace-normal break-words">
+        {% if item.abc_class == 'A' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-danger-soft text-danger">A</span>
+        {% elif item.abc_class == 'B' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-soft text-warning">B</span>
+        {% elif item.abc_class == 'C' %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surfaceSubtle text-bodyText">C</span>
+        {% else %}
+          <span class="text-gray-400">—</span>
         {% endif %}
       </td>
       <td class="px-4 py-2 whitespace-normal break-words">

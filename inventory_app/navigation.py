@@ -99,6 +99,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
         "Master Data",
         [
             {
+                "title": "Items",
+                "description": "Your products, stock levels, and settings.",
+                "url_name": "items_list",
+            },
+            {
                 "title": "Recipes",
                 "description": "Ingredients, portions, and costings.",
                 "url_name": "recipes_list",

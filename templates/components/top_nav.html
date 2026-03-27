@@ -35,7 +35,7 @@
               {% for link in group.links %}
                 <li role="none">
                   {% if request.resolver_match.url_name == link.url_name %}
-                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 px-4 py-2 text-sm font-semibold text-primary bg-primary/10" data-nav-link>
+                    <a role="menuitem" href="{{ link.url }}" class="flex items-start gap-2 mx-1 px-3 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-md" data-nav-link>
                       {% if link.url_name == 'root' %}{% icon 'home' 'h-4 w-4 text-primary' aria_label='' %}
                       {% elif link.url_name == 'visualizations' %}{% icon 'presentation-chart-bar' 'h-4 w-4 text-primary' aria_label='' %}
                       {% elif link.url_name == 'food_cost_report' %}{% icon 'calculator' 'h-4 w-4 text-primary' aria_label='' %}

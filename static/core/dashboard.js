@@ -54,7 +54,28 @@ document.addEventListener("DOMContentLoaded", () => {
     renderChart(data.labels, data.values, metric);
   }
 
-  document.getElementById("apply-filters").addEventListener("click", fetchData);
+  // Auto-fetch on any select change
+  document.querySelectorAll("#dashboard-filters select").forEach((sel) => {
+    sel.addEventListener("change", fetchData);
+  });
+
+  // Range pill buttons
+  const rangeInput = document.getElementById("range-value");
+  document.querySelectorAll(".range-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      rangeInput.value = btn.dataset.range;
+      document.querySelectorAll(".range-btn").forEach((b) => {
+        b.classList.remove("bg-primary", "text-white");
+        b.classList.add("bg-surface", "text-bodyText");
+        b.removeAttribute("aria-pressed");
+      });
+      btn.classList.add("bg-primary", "text-white");
+      btn.classList.remove("bg-surface", "text-bodyText");
+      btn.setAttribute("aria-pressed", "true");
+      fetchData();
+    });
+  });
+
   renderChart(
     window.initialTrendLabels || [],
     window.initialTrendValues || [],

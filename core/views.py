@@ -9,8 +9,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from inventory.models import Item, PurchaseOrder, StockTransaction, Supplier
+from inventory.models import Indent, Item, PurchaseOrder, StockTransaction, Supplier
 from inventory.services import counts, kpis
+from inventory.services.stock_utils import get_low_stock_items
 
 from .viewmodels import DashboardContext
 
@@ -33,6 +34,9 @@ def root_view(request):
             "trend_values": json.dumps(values),
             "items": Item.objects.filter(is_active=True),
             "suppliers": Supplier.objects.filter(is_active=True),
+            "low_stock_items": get_low_stock_items()[:5],
+            "submitted_indent_count": Indent.objects.filter(status="SUBMITTED").count(),
+            "sent_po_count": PurchaseOrder.objects.filter(status="SENT").count(),
             "list_url": reverse("root"),
             "list_title": "Dashboard",
             "current_title": "Dashboard",

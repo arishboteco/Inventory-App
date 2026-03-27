@@ -79,11 +79,6 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
         "Stock",
         [
             {
-                "title": "Stock Levels",
-                "description": "Your products, stock levels, and settings.",
-                "url_name": "items_list",
-            },
-            {
                 "title": "Movements",
                 "description": "Transfers, wastage, and adjustments.",
                 "url_name": "stock_movements",

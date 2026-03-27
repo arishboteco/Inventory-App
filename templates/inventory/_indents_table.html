@@ -167,9 +167,9 @@
               hx-include="#filters"
               hx-indicator="#indents-loading">
           {% csrf_token %}
-          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Consolidate to PO" aria-label="Consolidate to PO">
+          <button type="submit" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" title="Send to Processing" aria-label="Send to Processing">
             {% icon 'play' 'w-4 h-4' %}
-            <span class="sr-only">Consolidate to PO</span>
+            <span class="sr-only">Send to Processing</span>
           </button>
         </form>
         {% endif %}
@@ -229,16 +229,6 @@
       {% endif %}
     {% endif %}
     <div class="flex items-center justify-between max-md:flex-col max-md:items-stretch gap-3">
-    <form id="indents-bulk-actions" class="flex items-center gap-2"
-          hx-post="{% url 'indents_consolidate' %}?{{ querystring|default:'' }}&page={{ page_obj.number }}"
-          hx-target="#indents_table" hx-include="#filters, #indents-bulk-actions" hx-indicator="#indents-loading">
-      {% csrf_token %}
-      <button type="submit" class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong"
-              title="Consolidate selected indents into POs">
-        Consolidate to PO
-      </button>
-      <span class="text-xs text-gray-500">Selected rows will be grouped by supplier.</span>
-    </form>
     {% include "components/pagination.html" with page_obj=page_obj base_url=table_url extra_query=querystring hx_target="#indents_table" hx_include="#filters" hx_indicator="#indents-loading" %}
     </div>
   </div>

@@ -85,7 +85,7 @@ class IndentViewSet(viewsets.ModelViewSet):
         status: exact status match.
     """
 
-    queryset = Indent.objects.all()
+    queryset = Indent.objects.all().select_related("department", "processed_by")
     serializer_class = IndentSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = DefaultPagination
@@ -153,7 +153,7 @@ class GRNItemViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     """Manage recipe records via the API."""
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all().prefetch_related("items__item", "items__sub_recipe")
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = DefaultPagination

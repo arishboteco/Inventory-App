@@ -63,7 +63,7 @@ class Recipe(models.Model):
         _visited.add(self.pk)
 
         total = Decimal("0")
-        for recipe_item in self.items.select_related("item").all():
+        for recipe_item in self.items.select_related("item", "sub_recipe").all():
             # Sub-recipe support (D1): check attribute exists and is set
             sub = getattr(recipe_item, "sub_recipe", None)
             if sub is not None:
@@ -95,8 +95,13 @@ class Recipe(models.Model):
     @property
     def food_cost_percentage(self):
         """Returns food cost as a percentage of selling price."""
+        return self.compute_food_cost_percentage()
+
+    def compute_food_cost_percentage(self, total_cost=None):
+        """Compute food cost %, optionally reusing a pre-computed total_cost."""
         if self.selling_price and self.selling_price > 0:
-            total_cost = self.get_total_cost()
+            if total_cost is None:
+                total_cost = self.get_total_cost()
             return round(float(total_cost / self.selling_price) * 100, 1)
         return None
 
@@ -111,7 +116,11 @@ class Recipe(models.Model):
     @property
     def food_cost_status(self):
         """Returns 'success', 'warning', or 'danger' for Bootstrap colour coding."""
-        pct = self.food_cost_percentage
+        return self.compute_food_cost_status()
+
+    def compute_food_cost_status(self, food_cost_pct=None):
+        """Compute status, optionally reusing a pre-computed percentage."""
+        pct = food_cost_pct if food_cost_pct is not None else self.food_cost_percentage
         if pct is None:
             return "unknown"
         target = float(self.target_food_cost_pct or 30)
@@ -124,6 +133,9 @@ class Recipe(models.Model):
     class Meta:
         managed = True
         db_table = "recipes"
+        indexes = [
+            models.Index(fields=["type", "is_active"], name="idx_recipe_type_active"),
+        ]
 
 
 class RecipeComponent(models.Model):

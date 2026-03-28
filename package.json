@@ -6,12 +6,22 @@
     "build": "mkdir -p static/css && postcss static/src/app.css -o static/css/app.css --env production",
     "build-css": "npm run build",
     "dev-css": "postcss static/src/app.css -o static/css/app.css --watch",
+    "minify-js": "node scripts/minify-js.mjs",
     "test": "jest"
+  },
+  "jest": {
+    "roots": ["tests/js"],
+    "testEnvironment": "jsdom",
+    "moduleFileExtensions": ["js"],
+    "moduleNameMapper": {
+      "^static/js/(.*)$": "<rootDir>/static/js/$1"
+    }
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
     "autoprefixer": "^10.4.16",
     "cssnano": "^6.1.2",
+    "esbuild": "^0.24.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.4.31",

@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -184,10 +185,7 @@ def root_view(request):
         low_stock_pct = (
             round(low_stock_count / active_items * 100, 1) if active_items else 0
         )
-        try:
-            stock_value = float(dkpis.closing_stock_value())
-        except Exception:
-            stock_value = 0
+        stock_value = float(closing) if closing else 0
         try:
             fastest_movers = kpis.fastest_movers_last_7_days()
         except Exception:
@@ -235,22 +233,27 @@ def health_check(request):
 
 
 def dashboard_kpis(request):
-    """HTMX endpoint returning KPI card values."""
+    """HTMX endpoint returning KPI card values. Cached for 60s per range."""
     end = timezone.now().date()
     range_days = int(request.GET.get("range", "30"))
     start = end - timedelta(days=range_days - 1)
-    data = {
-        "opening_stock": dkpis.opening_stock_value(start, end),
-        "purchases": dkpis.purchases_total(start, end),
-        "closing_stock": dkpis.closing_stock_value(),
-        "consumption": dkpis.consumption_total(start, end),
-        "consumption_delta": dkpis.consumption_delta(start, end),
-        "sales_revenue": dkpis.sales_revenue(start, end),
-        "actual_fc": dkpis.actual_food_cost_pct(start, end),
-        "ideal_fc": dkpis.ideal_food_cost_pct(start, end),
-        "wastage": dkpis.wastage_total(start, end),
-        "wastage_delta": dkpis.wastage_delta(start, end),
-    }
+
+    cache_key = f"dashboard_kpis:{range_days}:{end.isoformat()}"
+    data = cache.get(cache_key)
+    if data is None:
+        data = {
+            "opening_stock": dkpis.opening_stock_value(start, end),
+            "purchases": dkpis.purchases_total(start, end),
+            "closing_stock": dkpis.closing_stock_value(),
+            "consumption": dkpis.consumption_total(start, end),
+            "consumption_delta": dkpis.consumption_delta(start, end),
+            "sales_revenue": dkpis.sales_revenue(start, end),
+            "actual_fc": dkpis.actual_food_cost_pct(start, end),
+            "ideal_fc": dkpis.ideal_food_cost_pct(start, end),
+            "wastage": dkpis.wastage_total(start, end),
+            "wastage_delta": dkpis.wastage_delta(start, end),
+        }
+        cache.set(cache_key, data, 60)
     return render(request, "core/_kpi_cards.html", data)
 
 

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -39,6 +39,11 @@
 /* Fluid search width: keeps a reasonable min size and caps maximum */
 .search-fluid {
   width: clamp(14rem, 24vw, 28rem);
+}
+
+/* Dashboard chart shell */
+.dashboard-chart-shell {
+  min-height: 20rem;
 }
 
 @layer base {

@@ -4,7 +4,7 @@
 {% block title %}{% if page_title %}{{ page_title }}{% else %}Dashboard – Inventory Pro{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-8 max-md:px-6 max-sm:px-4 py-8 space-y-8 min-h-[calc(100vh-8rem)]">
+<div class="container mx-auto px-8 max-md:px-6 max-sm:px-4 py-8 space-y-6 min-h-[calc(100vh-8rem)]">
   {% if not user.is_authenticated %}
     <div class="bg-primary text-white rounded p-8 text-center">
       <h1 class="text-h1 font-bold">Welcome to Inventory Pro</h1>
@@ -27,7 +27,102 @@
     </div>
   {% else %}
 
-    {% include "core/_kpi_cards.html" with items=item_count low_stock=low_stock suppliers=supplier_count pending_indents=pending_indents %}
+    <!-- Greeting + period toggle -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-xl font-semibold text-bodyText">{{ greeting }}</h1>
+      <div class="flex rounded-md border border-border overflow-hidden text-sm" role="group" aria-label="Date range">
+        <button type="button" data-range="7"  class="range-btn px-3 py-1.5 {% if selected_range == '7' %}bg-primary text-white{% else %}bg-surface text-bodyText hover:bg-surfaceSubtle{% endif %} transition focus:outline-none">7d</button>
+        <button type="button" data-range="30" class="range-btn px-3 py-1.5 {% if selected_range == '30' or not selected_range %}bg-primary text-white{% else %}bg-surface text-bodyText hover:bg-surfaceSubtle{% endif %} transition focus:outline-none">30d</button>
+        <button type="button" data-range="90" class="range-btn px-3 py-1.5 {% if selected_range == '90' %}bg-primary text-white{% else %}bg-surface text-bodyText hover:bg-surfaceSubtle{% endif %} transition focus:outline-none">90d</button>
+      </div>
+      <input type="hidden" id="filter-range" value="{{ selected_range|default:'30' }}">
+    </div>
+
+    <!-- KPI Cards -->
+    {% include "core/_kpi_cards.html" %}
+
+    <!-- Chart + Alerts -->
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+      <!-- Chart (3 cols) -->
+      <div class="lg:col-span-3 card">
+        <div class="card-header flex items-center justify-between gap-3 px-4 pt-4">
+          <h3 class="text-lg font-semibold text-bodyText">Consumption vs Wastage</h3>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-primary"></span> Consumption</span>
+            <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-danger"></span> Wastage</span>
+          </div>
+        </div>
+        <div class="card-body p-4">
+          <div id="stock-trend-placeholder"
+               class="h-80 flex flex-col items-center justify-center text-gray-500 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+            </svg>
+            <p class="text-sm font-medium">No data for the selected period</p>
+            <p class="text-xs text-gray-400 mt-1">Transaction data will appear here once recorded.</p>
+          </div>
+          <div class="h-80"><canvas id="stock-trend-chart" class="w-full h-full"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Alerts (2 cols) -->
+      <div class="lg:col-span-2 card divide-y divide-border">
+        <div class="px-4 pt-4 pb-2">
+          <h3 class="text-sm font-semibold text-bodyText">Needs attention</h3>
+        </div>
+        {% if alerts %}
+          {% for alert in alerts %}
+          <div class="px-4 py-3 flex items-start gap-3">
+            <span class="mt-0.5">
+              {% icon alert.icon 'w-4 h-4' %}
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-bodyText">{{ alert.label }}</p>
+              <a href="{{ alert.url }}" class="text-xs text-primary hover:underline mt-0.5 block">View →</a>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="px-4 py-6 text-center">
+            <p class="text-sm text-gray-400">All clear — nothing needs attention right now.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Inventory snapshot -->
+    <div>
+      <h2 class="text-base font-semibold text-bodyText mb-3">Inventory snapshot</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-surface border border-border rounded-xl px-4 py-3.5">
+          <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Active Items</p>
+          <p class="text-xl font-semibold text-bodyText">{{ active_items|default:"0" }}</p>
+          {% if low_stock_count %}
+            <p class="text-[11px] text-danger-text font-medium">{{ low_stock_count }} below reorder</p>
+          {% endif %}
+        </div>
+        {% include "components/kpi_metric_card.html" with label="Low Stock %" value=low_stock_pct is_pct=True %}
+        {% include "components/kpi_metric_card.html" with label="Stock Value" value=stock_value is_currency=True %}
+
+        <!-- Top Movers (7d) -->
+        <div class="bg-surface border border-border rounded-xl px-4 py-3.5">
+          <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-2">Top movers (7d)</p>
+          {% if fastest_movers %}
+            <ul class="space-y-1">
+              {% for name, qty in fastest_movers %}
+              <li class="flex items-center justify-between text-xs">
+                <span class="truncate text-bodyText">{{ name }}</span>
+                <span class="tabular-nums text-gray-500 ml-2 shrink-0">{{ qty|floatformat:1 }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-xs text-gray-400">No movement data yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
 
     <!-- Quick Actions -->
     <div class="flex flex-wrap gap-3">
@@ -45,111 +140,6 @@
       </a>
     </div>
 
-    <!-- Chart + Needs Attention -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-
-      <!-- Stock Trend (3 cols) -->
-      <div class="lg:col-span-3 card">
-        <div class="card-header flex flex-wrap items-center justify-between gap-3">
-          <h3 class="text-lg font-semibold">Stock Trend</h3>
-          <form id="dashboard-filters" class="flex flex-wrap items-center gap-2">
-            <input type="hidden" name="range" id="range-value" value="30">
-            <select name="item"
-                    class="text-sm border border-border rounded-md px-2 py-1.5 bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="">All Items</option>
-              {% for i in items %}<option value="{{ i.pk }}">{{ i.name }}</option>{% endfor %}
-            </select>
-            <select name="supplier"
-                    class="text-sm border border-border rounded-md px-2 py-1.5 bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="">All Suppliers</option>
-              {% for s in suppliers %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}
-            </select>
-            <select name="metric"
-                    class="text-sm border border-border rounded-md px-2 py-1.5 bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="quantity">Quantity</option>
-              <option value="value">Value</option>
-            </select>
-            <div class="flex rounded-md border border-border overflow-hidden text-sm" role="group" aria-label="Date range">
-              <button type="button" data-range="7"  class="range-btn px-3 py-1.5 bg-surface text-bodyText hover:bg-surfaceSubtle transition focus:outline-none">7d</button>
-              <button type="button" data-range="30" class="range-btn px-3 py-1.5 bg-primary text-white transition focus:outline-none" aria-pressed="true">30d</button>
-              <button type="button" data-range="90" class="range-btn px-3 py-1.5 bg-surface text-bodyText hover:bg-surfaceSubtle transition focus:outline-none">90d</button>
-            </div>
-          </form>
-        </div>
-        <div class="card-body">
-          <div id="stock-trend-placeholder"
-               class="h-80 flex flex-col items-center justify-center text-gray-500 hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
-            </svg>
-            <p class="text-sm font-medium">No data for the selected filters</p>
-            <p class="text-xs text-gray-400 mt-1">Stock movement data will appear here once transactions are recorded.</p>
-          </div>
-          <div class="h-80"><canvas id="stock-trend-chart" class="w-full h-full"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Needs Attention (2 cols) -->
-      <div class="lg:col-span-2 card divide-y divide-border">
-
-        <!-- Low Stock -->
-        <div class="p-4">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-semibold text-bodyText flex items-center gap-1.5">
-              {% icon 'exclamation-triangle' 'w-4 h-4 text-warning' %}
-              Low Stock
-            </span>
-            <a href="{% url 'items_list' %}?stock_status=low" class="text-xs text-primary hover:underline">View all</a>
-          </div>
-          {% if low_stock_items %}
-            <ul class="space-y-1.5">
-              {% for item in low_stock_items %}
-              <li class="flex items-center justify-between text-xs">
-                <span class="truncate text-bodyText">{{ item.name }}</span>
-                <span class="tabular-nums text-danger font-medium ml-3 shrink-0">{{ item.current_stock }} / {{ item.reorder_point }}</span>
-              </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-xs text-gray-400">All items are well-stocked.</p>
-          {% endif %}
-        </div>
-
-        <!-- Awaiting Approval -->
-        <div class="p-4">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-semibold text-bodyText flex items-center gap-1.5">
-              {% icon 'clipboard-document-list' 'w-4 h-4 text-primary' %}
-              Awaiting Approval
-            </span>
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-warning-soft text-warning">{{ submitted_indent_count }}</span>
-          </div>
-          {% if submitted_indent_count %}
-            <a href="{% url 'indents_list' %}?status=SUBMITTED" class="text-xs text-primary hover:underline mt-1.5 block">Review indents →</a>
-          {% else %}
-            <p class="text-xs text-gray-400 mt-1.5">No indents pending approval.</p>
-          {% endif %}
-        </div>
-
-        <!-- POs to Receive -->
-        <div class="p-4">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-semibold text-bodyText flex items-center gap-1.5">
-              {% icon 'inbox-arrow-down' 'w-4 h-4 text-primary' %}
-              POs to Receive
-            </span>
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-info-soft text-primary">{{ sent_po_count }}</span>
-          </div>
-          {% if sent_po_count %}
-            <a href="{% url 'purchase_orders_list' %}?status=SENT" class="text-xs text-primary hover:underline mt-1.5 block">View purchase orders →</a>
-          {% else %}
-            <p class="text-xs text-gray-400 mt-1.5">No outstanding purchase orders.</p>
-          {% endif %}
-        </div>
-
-      </div>
-    </div>
-
   {% endif %}
 </div>
 {% endblock %}
@@ -158,7 +148,8 @@
   {% if user.is_authenticated %}
   <script>
     window.initialTrendLabels = {{ trend_labels|safe }};
-    window.initialTrendValues = {{ trend_values|safe }};
+    window.initialConsumption = {{ trend_consumption|safe }};
+    window.initialWastage = {{ trend_wastage|safe }};
   </script>
   <script src="{% static 'core/dashboard.js' %}?v={{ STATIC_VERSION }}" defer></script>
   {% endif %}

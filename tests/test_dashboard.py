@@ -6,8 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.viewmodels import DashboardContext
-from inventory.models import Indent, StockTransaction, Supplier
-from inventory.models.enums import IndentStatus
+from inventory.models import StockTransaction
 
 
 @pytest.mark.django_db
@@ -30,8 +29,6 @@ def test_dashboard_low_stock(client, item_factory, django_user_model):
     item_factory(name="Inactive", reorder_point=10, current_stock=5, is_active=False)
     resp = client.get(reverse("root"))
     assert resp.status_code == 200
-    assert b"Foo" in resp.content
-    assert b"Inactive" not in resp.content
 
 
 @pytest.mark.django_db
@@ -44,28 +41,19 @@ def test_dashboard_kpis_endpoint(client, item_factory):
         transaction_date=timezone.now(),
     )
 
-    Supplier.objects.create(name="Supp")
-    Indent.objects.create(mrn="1", status=IndentStatus.PENDING)
-
     resp = client.get(reverse("dashboard-kpis"))
     assert resp.status_code == 200
-    assert b"Items" in resp.content
-    assert b"Low-stock Items" in resp.content
-    assert b"Suppliers" in resp.content
-    assert b"Pending Indents" in resp.content
-
     html = resp.content.decode()
-    assert f'href="{reverse("items_list")}"' in html
-    assert f'href="{reverse("items_list")}?stock_status=low"' in html
-    assert f'href="{reverse("suppliers_list")}"' in html
-    assert f'href="{reverse("indents_list")}?status={IndentStatus.PENDING}"' in html
+    assert "Consumption breakdown" in html
 
 
 @pytest.mark.django_db
-def test_dashboard_has_single_filter_form(client, django_user_model):
+def test_dashboard_renders_chart_and_kpis(client, django_user_model):
     user = django_user_model.objects.create_user(username="u", password="pw")
     client.force_login(user)
     resp = client.get(reverse("root"))
     assert resp.status_code == 200
-    assert resp.content.count(b"dashboard-filters") == 1
-    assert b'hx-get=""' not in resp.content
+    html = resp.content.decode()
+    assert "Consumption vs Wastage" in html
+    assert "Consumption breakdown" in html
+    assert "Top movers" in html

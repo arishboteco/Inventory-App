@@ -1,9 +1,64 @@
-{% url 'items_list' as items_list_url %}
-{% url 'suppliers_list' as suppliers_list_url %}
-{% url 'indents_list' as indents_list_url %}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-  {% include "components/kpi_card.html" with icon='cube' label='Items' value=items href=items_list_url %}
-  {% include "components/kpi_card.html" with icon='exclamation-triangle' label='Low-stock Items' value=low_stock href=items_list_url|add:'?stock_status=low' warning=low_stock %}
-  {% include "components/kpi_card.html" with icon='truck' label='Suppliers' value=suppliers href=suppliers_list_url %}
-  {% include "components/kpi_card.html" with icon='clipboard-document-list' label='Pending Indents' value=pending_indents href=indents_list_url|add:'?status=PENDING' info=pending_indents %}
+<!-- Consumption breakdown + KPI metrics -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+  <!-- Left: Consumption breakdown table -->
+  <div class="lg:col-span-1 bg-surface border border-border rounded-xl p-4">
+    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Consumption breakdown</h3>
+    <table class="w-full text-sm">
+      <tbody class="divide-y divide-border">
+        <tr>
+          <td class="py-1.5 text-gray-500">Opening Stock</td>
+          <td class="py-1.5 text-right font-medium text-bodyText">{{ opening_stock|floatformat:0|default:"—" }}</td>
+        </tr>
+        <tr>
+          <td class="py-1.5 text-gray-500">+ Purchases</td>
+          <td class="py-1.5 text-right font-medium text-bodyText">{{ purchases|floatformat:0|default:"—" }}</td>
+        </tr>
+        <tr>
+          <td class="py-1.5 text-gray-500">− Closing Stock</td>
+          <td class="py-1.5 text-right font-medium text-bodyText">{{ closing_stock|floatformat:0|default:"—" }}</td>
+        </tr>
+        <tr class="border-t-2 border-border">
+          <td class="py-2 font-semibold text-bodyText">= Consumption</td>
+          <td class="py-2 text-right font-bold text-bodyText">{{ consumption|floatformat:0|default:"—" }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% if consumption_delta is not None %}
+      <p class="mt-1 text-[11px] font-medium {% if consumption_delta > 0 %}text-danger-text{% elif consumption_delta < 0 %}text-success-text{% else %}text-gray-400{% endif %}">
+        {% if consumption_delta > 0 %}+{% endif %}{{ consumption_delta|floatformat:1 }}% vs prev period
+      </p>
+    {% endif %}
+  </div>
+
+  <!-- Right: KPI cards grid -->
+  <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+    {% include "components/kpi_metric_card.html" with label="Sales Revenue" value=sales_revenue is_currency=True %}
+
+    <!-- Food Cost % card with actual + ideal -->
+    <div class="bg-surface border border-border rounded-xl px-4 py-3.5 flex flex-col gap-0.5">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Food Cost %</p>
+      <p class="text-xl font-semibold text-bodyText leading-tight">
+        {% if actual_fc is not None %}
+          {{ actual_fc }}%
+        {% else %}
+          <span class="text-gray-300">&mdash;</span>
+        {% endif %}
+      </p>
+      {% if ideal_fc is not None %}
+        <p class="text-[11px] text-gray-400">Ideal {{ ideal_fc }}%</p>
+      {% endif %}
+      {% if actual_fc is not None and ideal_fc is not None %}
+        {% if actual_fc > ideal_fc %}
+          <span class="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-danger-soft text-danger-text">Over target</span>
+        {% else %}
+          <span class="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-success-soft text-success-text">On target</span>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    {% include "components/kpi_metric_card.html" with label="Wastage" value=wastage is_currency=True delta=wastage_delta invert_delta=True %}
+
+  </div>
 </div>

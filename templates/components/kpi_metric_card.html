@@ -1,0 +1,21 @@
+<div class="bg-surface border border-border rounded-xl px-4 py-3.5 flex flex-col gap-0.5 {{ extra_class }}">
+  <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">{{ label }}</p>
+  <p class="text-xl font-semibold text-bodyText leading-tight">
+    {% if value is None %}
+      <span class="text-gray-300">&mdash;</span>
+    {% elif is_pct %}
+      {{ value }}%
+    {% elif is_currency %}
+      {{ value|floatformat:0 }}
+    {% else %}
+      {{ value }}
+    {% endif %}
+  </p>
+  {% if delta is not None %}
+    <p class="text-[11px] font-medium {% if delta > 0 and invert_delta %}text-danger-text{% elif delta > 0 %}text-success-text{% elif delta < 0 and invert_delta %}text-success-text{% elif delta < 0 %}text-danger-text{% else %}text-gray-400{% endif %}">
+      {% if delta > 0 %}+{% endif %}{{ delta|floatformat:1 }}% vs prev period
+    </p>
+  {% elif show_hint %}
+    <p class="text-[11px] text-gray-400">{{ hint_text|default:"—" }}</p>
+  {% endif %}
+</div>

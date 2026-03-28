@@ -30,14 +30,29 @@ class Migration(migrations.Migration):
             ],
             database_operations=[],
         ),
-        migrations.RemoveField(
-            model_name='indent',
-            name='processed_by_user_id',
-        ),
-        migrations.AddField(
-            model_name='indent',
-            name='processed_by',
-            field=models.ForeignKey(blank=True, db_column='processed_by_id', null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+        # Indent: replace legacy processed_by_user_id (CharField in 0001) with
+        # processed_by FK (db_column processed_by_id). Production often already has
+        # processed_by_id and no processed_by_user_id, so real RemoveField/AddField
+        # DDL fails; state-only sync matches 0029-style drift handling.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveField(
+                    model_name="indent",
+                    name="processed_by_user_id",
+                ),
+                migrations.AddField(
+                    model_name="indent",
+                    name="processed_by",
+                    field=models.ForeignKey(
+                        blank=True,
+                        db_column="processed_by_id",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.AlterField(
             model_name='siteconfig',

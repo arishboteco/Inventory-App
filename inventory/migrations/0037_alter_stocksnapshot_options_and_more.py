@@ -17,9 +17,18 @@ class Migration(migrations.Migration):
             name='stocksnapshot',
             options={'managed': True, 'ordering': ['snapshot_date']},
         ),
-        migrations.AlterUniqueTogether(
-            name='recipecomponent',
-            unique_together=set(),
+        # RecipeComponent.unique_together was removed in Django state. Production
+        # PostgreSQL often has no matching UNIQUE constraint (schema drift / prior
+        # manual DDL), so a plain AlterUniqueTogether raises ValueError when Django
+        # tries to drop a non-existent constraint. State-only update matches 0029.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AlterUniqueTogether(
+                    name="recipecomponent",
+                    unique_together=set(),
+                ),
+            ],
+            database_operations=[],
         ),
         migrations.RemoveField(
             model_name='indent',

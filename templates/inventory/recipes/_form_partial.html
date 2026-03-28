@@ -1,5 +1,5 @@
 {% load form_tags %}
-<div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden drawer-panel max-w-drawer-xl">
+<div class="bg-surface rounded-2xl shadow-card border border-border drawer-panel max-w-drawer-xl">
   <form method="post" data-modal-form data-requires-line-items action="{% if is_edit and recipe %}{% url 'recipe_edit_partial' recipe.pk %}{% else %}{% url 'recipe_create_partial' %}{% endif %}">
     {% csrf_token %}
     <div class="px-4 py-3 border-b border-border bg-surfaceSubtle">

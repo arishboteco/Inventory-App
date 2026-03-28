@@ -7,16 +7,15 @@
     <title>{% block title %}Inventory Pro{% endblock %}</title>
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml" />
   <link rel="alternate icon" href="{% static 'img/favicon.svg' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="{% static 'css/app.css' %}?v={{ STATIC_VERSION }}" rel="stylesheet">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css">
-  <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js" defer></script>
-  <script>window.Dropzone && (Dropzone.autoDiscover = false);</script>
+  {% block extra_head_js %}{% endblock %}
   <style>
     /* Hint browsers to avoid native datalist popover when our overlay is active */
     input[list][data-predictive-input]::-webkit-calendar-picker-indicator { display: none !important; }
@@ -46,7 +45,6 @@
   <!-- Load chips enhancer globally so modals/drawers can initialize it without race conditions -->
   <script src="{% static 'js/multiselect-chips.js' %}?v={{ STATIC_VERSION }}" defer></script>
   <script src="{% static 'js/tables.js' %}?v={{ STATIC_VERSION }}" defer></script>
-  <script src="{% static 'js/recipe-components.js' %}?v={{ STATIC_VERSION }}" defer></script>
     {% block extra_css %}{% endblock %}
   </head>
   <body class="min-h-screen flex flex-col">

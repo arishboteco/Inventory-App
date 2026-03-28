@@ -49,12 +49,12 @@
   <script src="{% static 'js/recipe-components.js' %}?v={{ STATIC_VERSION }}" defer></script>
     {% block extra_css %}{% endblock %}
   </head>
-  <body class="min-h-screen">
+  <body class="min-h-screen flex flex-col">
     <!-- Top Navigation -->
     {% include "components/top_nav.html" with nav_heading=block.nav_heading %}
 
     <!-- Main Content Area -->
-    <div class="min-h-screen">
+    <div class="flex-1 flex flex-col">
       <!-- Unified Notification Container (managed by notifications.js) -->
       <div id="notification-container" class="fixed top-20 right-4 space-y-2 z-50 max-w-sm" aria-live="polite" aria-label="Notifications"></div>
 

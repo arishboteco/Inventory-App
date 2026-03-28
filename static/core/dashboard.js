@@ -17,20 +17,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const hasData = consumption.some((v) => v > 0) || wastage.some((v) => v > 0);
     if (!hasData) {
       if (chart) { chart.destroy(); chart = null; }
+      canvas.parentElement.classList.add("hidden");
       placeholder.classList.remove("hidden");
       return;
     }
     placeholder.classList.add("hidden");
+    canvas.parentElement.classList.remove("hidden");
+
+    const shortLabels = labels.map((l) => {
+      const d = new Date(l + "T00:00:00");
+      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    });
 
     const dataset = {
-      labels,
+      labels: shortLabels,
       datasets: [
         {
           label: "Consumption",
           data: consumption,
           borderColor: primaryColor,
           backgroundColor: primaryColor + "18",
+          borderWidth: 2,
           pointRadius: 0,
+          pointHitRadius: 8,
           tension: 0.35,
           fill: true,
         },
@@ -39,25 +48,63 @@ document.addEventListener("DOMContentLoaded", () => {
           data: wastage,
           borderColor: dangerColor,
           backgroundColor: dangerColor + "18",
+          borderWidth: 2,
           pointRadius: 0,
+          pointHitRadius: 8,
           tension: 0.35,
           fill: true,
         },
       ],
     };
 
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(17,24,39,0.9)",
+          titleFont: { size: 13 },
+          bodyFont: { size: 12 },
+          padding: 10,
+          cornerRadius: 6,
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            font: { size: 11 },
+            color: "#6b7280",
+            maxRotation: 45,
+            autoSkipPadding: 12,
+          },
+          border: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: "rgba(0,0,0,0.04)" },
+          ticks: {
+            font: { size: 11 },
+            color: "#6b7280",
+            padding: 8,
+          },
+          border: { display: false },
+        },
+      },
+      layout: { padding: { top: 4, right: 8, bottom: 0, left: 0 } },
+    };
+
     if (!chart) {
       chart = new Chart(ctx, {
         type: "line",
         data: dataset,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-        },
+        options: chartOptions,
       });
     } else {
       chart.data = dataset;
+      chart.options = chartOptions;
       chart.update();
     }
   }

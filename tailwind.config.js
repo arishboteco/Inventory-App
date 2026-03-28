@@ -32,13 +32,13 @@ module.exports = {
     },
     extend: {
       colors: {
-        // Neutrals & surfaces (warmer feel)
-        body: "#f8f5f0",
-        bodyText: "#1f2937",
+        // Neutrals & surfaces (cool gray)
+        body: "#f9fafb",
+        bodyText: "#111827",
         surface: "#ffffff",
-        surfaceSubtle: "#f3ebe2",
-        border: "#e3d5c8",
-        form: { bg: "#fffaf3", border: "#e8dcca", text: "#1f2937" },
+        surfaceSubtle: "#f3f4f6",
+        border: "#e5e7eb",
+        form: { bg: "#ffffff", border: "#d1d5db", text: "#111827" },
 
         // Primary brand
         primary: "#2563eb",
@@ -120,7 +120,7 @@ module.exports = {
         badge: ["clamp(0.8rem, 0.3vw + 0.7rem, 1rem)", { lineHeight: "1" }],
       },
       fontFamily: {
-        sans: ["Roboto", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
       boxShadow: {
         // Elevation tokens

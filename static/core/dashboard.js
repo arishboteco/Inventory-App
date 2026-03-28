@@ -3,31 +3,45 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   const placeholder = document.getElementById("stock-trend-placeholder");
+
   const primaryColor = getComputedStyle(document.documentElement)
     .getPropertyValue("--color-primary")
     .trim();
+  const dangerColor = getComputedStyle(document.documentElement)
+    .getPropertyValue("--danger-text")
+    .trim() || "#dc2626";
+
   let chart;
 
-  function renderChart(labels, values, metric) {
-    if (!values.length) {
-      if (chart) {
-        chart.destroy();
-        chart = null;
-      }
+  function renderChart(labels, consumption, wastage) {
+    const hasData = consumption.some((v) => v > 0) || wastage.some((v) => v > 0);
+    if (!hasData) {
+      if (chart) { chart.destroy(); chart = null; }
       placeholder.classList.remove("hidden");
       return;
     }
-
     placeholder.classList.add("hidden");
+
     const dataset = {
       labels,
       datasets: [
         {
-          label: metric,
-          data: values,
+          label: "Consumption",
+          data: consumption,
           borderColor: primaryColor,
-          fill: false,
-          tension: 0.1,
+          backgroundColor: primaryColor + "18",
+          pointRadius: 0,
+          tension: 0.35,
+          fill: true,
+        },
+        {
+          label: "Wastage",
+          data: wastage,
+          borderColor: dangerColor,
+          backgroundColor: dangerColor + "18",
+          pointRadius: 0,
+          tension: 0.35,
+          fill: true,
         },
       ],
     };
@@ -36,7 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
       chart = new Chart(ctx, {
         type: "line",
         data: dataset,
-        options: { responsive: true, maintainAspectRatio: false },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+        },
       });
     } else {
       chart.data = dataset;
@@ -45,22 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function fetchData() {
-    const form = document.getElementById("dashboard-filters");
-    const params = new URLSearchParams(new FormData(form));
-    const response = await fetch(`/dashboard-data/?${params.toString()}`);
+    const range = document.getElementById("filter-range").value || "30";
+    const response = await fetch(`/dashboard-data/?range=${range}`);
     const data = await response.json();
-    const metric =
-      params.get("metric") === "value" ? "Stock Value" : "Stock Quantity";
-    renderChart(data.labels, data.values, metric);
+    renderChart(data.labels, data.consumption, data.wastage);
   }
 
-  // Auto-fetch on any select change
-  document.querySelectorAll("#dashboard-filters select").forEach((sel) => {
-    sel.addEventListener("change", fetchData);
-  });
-
-  // Range pill buttons
-  const rangeInput = document.getElementById("range-value");
+  const rangeInput = document.getElementById("filter-range");
   document.querySelectorAll(".range-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       rangeInput.value = btn.dataset.range;
@@ -78,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderChart(
     window.initialTrendLabels || [],
-    window.initialTrendValues || [],
-    "Stock Quantity",
+    window.initialConsumption || [],
+    window.initialWastage || [],
   );
 });

@@ -1,5 +1,8 @@
 {% extends "components/form_layout.html" %}
-{% load form_tags %}
+{% load static form_tags %}
+{% block extra_head_js %}
+  <script src="{% static 'js/recipe-components.js' %}?v={{ STATIC_VERSION }}" defer></script>
+{% endblock %}
 {% block title %}Recipe Detail – Inventory Pro{% endblock %}
 {% block heading %}{% if recipe %}Edit {{ recipe.name }}{% else %}New Recipe{% endif %}{% endblock %}
 {% block form_summary %}

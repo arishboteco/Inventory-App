@@ -787,8 +787,8 @@ def food_cost_report(request):
     rows = []
     for recipe in qs:
         total_cost = recipe.get_total_cost()
-        fcp = recipe.food_cost_percentage
-        fc_status = recipe.food_cost_status
+        fcp = recipe.compute_food_cost_percentage(total_cost=total_cost)
+        fc_status = recipe.compute_food_cost_status(food_cost_pct=fcp)
         if status_filter and fc_status != status_filter:
             continue
         selling = Decimal(str(recipe.selling_price or 0))

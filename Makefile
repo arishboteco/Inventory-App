@@ -42,6 +42,11 @@ changelog-release:
 changelog-show:
 	@python tools/changelog.py unreleased
 
+# Minify JS files in static/js/ using esbuild
+minify:
+	npx --yes esbuild --version > /dev/null
+	node scripts/minify-js.mjs
+
 .PHONY: up
 # Ensure the dev server is running on port 8000
 up:

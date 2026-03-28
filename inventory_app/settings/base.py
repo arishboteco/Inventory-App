@@ -54,6 +54,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "django.middleware.gzip.GZipMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -161,15 +162,20 @@ WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 WHITENOISE_AUTOREFRESH = DEBUG
 WHITENOISE_USE_FINDERS = DEBUG
 
-# Optional Redis cache if REDIS_URL is set
+# Cache: Redis if REDIS_URL is set, otherwise in-memory (per-process)
 if app_settings.redis_url:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": app_settings.redis_url,
-            "OPTIONS": {
-                "client_class": "django_redis.client.DefaultClient",
-            },
+            "TIMEOUT": 300,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "inventory-default",
             "TIMEOUT": 300,
         }
     }

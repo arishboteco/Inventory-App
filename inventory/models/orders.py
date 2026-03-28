@@ -57,6 +57,10 @@ class Indent(models.Model):
     class Meta:
         managed = True
         db_table = "indents"
+        indexes = [
+            models.Index(fields=["status", "date_submitted"], name="idx_indent_status_date"),
+            models.Index(fields=["status", "department"], name="idx_indent_status_dept"),
+        ]
 
 
 class IndentItem(models.Model):
@@ -120,6 +124,9 @@ class PurchaseOrder(models.Model):
     class Meta:
         managed = True
         db_table = "purchase_orders"
+        indexes = [
+            models.Index(fields=["status", "order_date"], name="idx_po_status_date"),
+        ]
 
 
 class PurchaseOrderItem(models.Model):
@@ -240,6 +247,9 @@ class GoodsReceivedNote(models.Model):
     class Meta:
         managed = True
         db_table = "goods_received_notes"
+        indexes = [
+            models.Index(fields=["received_date"], name="idx_grn_received_date"),
+        ]
 
 
 class GRNItem(models.Model):

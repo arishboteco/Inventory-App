@@ -1,0 +1,83 @@
+{% load form_tags %}
+<div class="mt-3 space-y-3">
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}
+  <ul class="text-danger list-disc pl-5">
+    {% for error in formset.non_form_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <div class="overflow-x-auto border border-border rounded-lg">
+    <table class="min-w-full w-full table-fixed text-sm text-bodyText">
+      <thead>
+        <tr class="border-b border-border bg-surfaceSubtle text-left">
+          <th scope="col" class="px-3 py-2 font-medium w-[40%] min-w-[10rem]">Item</th>
+          <th scope="col" class="px-3 py-2 font-medium w-[22%] min-w-[6rem]">Qty</th>
+          <th scope="col" class="px-3 py-2 font-medium w-[22%] min-w-[6rem]">Unit price</th>
+          <th scope="col" class="px-3 py-2 w-12" aria-label="Actions"></th>
+        </tr>
+      </thead>
+      <tbody id="items-formset">
+        {% for f in formset %}
+        <tr class="item-form align-top border-b border-border last:border-0">
+          <td class="px-3 py-2 align-top">
+            <div class="hidden">{{ f.id }}</div>
+            {% if f.non_field_errors %}
+            <ul class="text-danger list-disc pl-5 mb-2 text-xs">
+              {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+            {% include "components/form_field.html" with field=f.item %}
+          </td>
+          <td class="px-3 py-2 align-top">
+            {% include "components/form_field.html" with field=f.quantity_ordered %}
+          </td>
+          <td class="px-3 py-2 align-top">
+            {% include "components/form_field.html" with field=f.unit_price %}
+          </td>
+          <td class="px-3 py-2 align-top text-right">
+            <div class="hidden">{{ f.DELETE }}</div>
+            <button type="button" class="remove-item text-xs text-danger hover:underline whitespace-nowrap">Remove</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<template id="item-empty-form">
+  <tr class="item-form align-top border-b border-border">
+    <td class="px-3 py-2 align-top">
+      {% for field in formset.empty_form %}
+        {% if field.name == 'id' %}
+          <div class="hidden">{{ field }}</div>
+        {% elif field.name == 'item' %}
+          {% include "components/form_field.html" with field=field %}
+        {% endif %}
+      {% endfor %}
+    </td>
+    <td class="px-3 py-2 align-top">
+      {% for field in formset.empty_form %}
+        {% if field.name == 'quantity_ordered' %}
+          {% include "components/form_field.html" with field=field %}
+        {% endif %}
+      {% endfor %}
+    </td>
+    <td class="px-3 py-2 align-top">
+      {% for field in formset.empty_form %}
+        {% if field.name == 'unit_price' %}
+          {% include "components/form_field.html" with field=field %}
+        {% endif %}
+      {% endfor %}
+    </td>
+    <td class="px-3 py-2 align-top text-right">
+      {% for field in formset.empty_form %}
+        {% if field.name == 'DELETE' %}
+          <div class="hidden">{{ field }}</div>
+        {% endif %}
+      {% endfor %}
+      <button type="button" class="remove-item text-xs text-danger hover:underline whitespace-nowrap">Remove</button>
+    </td>
+  </tr>
+</template>

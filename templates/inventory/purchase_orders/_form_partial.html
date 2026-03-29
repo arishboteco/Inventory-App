@@ -5,45 +5,16 @@
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <div class="p-4">
-  <form method="post" data-modal-form data-requires-line-items action="{% if is_edit %}{% url 'purchase_order_edit_partial' po.pk %}{% else %}{% url 'purchase_order_create_partial' %}{% endif %}">
+  <form method="post" id="po-drawer-form" data-drawer="purchase-order" data-formset-prefix="{{ formset.prefix }}" data-modal-form data-requires-line-items action="{% if is_edit %}{% url 'purchase_order_edit_partial' po.pk %}{% else %}{% url 'purchase_order_create_partial' %}{% endif %}">
       {% csrf_token %}
+      {{ item_prices|json_script:"po-item-prices" }}
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         {% for field in form %}
           {% include "components/form_field.html" with field=field %}
         {% endfor %}
       </div>
-      <div id="items-formset" class="mt-3 space-y-3">
-        {{ formset.management_form }}
-        {% if formset.non_form_errors %}
-          <ul class="text-danger list-disc pl-5">
-            {% for error in formset.non_form_errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-        {% for f in formset %}
-        <div class="border rounded p-3 item-form relative">
-          {{ f.id }}
-          {% if f.non_field_errors %}
-            <ul class="text-danger list-disc pl-5 mb-2">
-              {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-            </ul>
-          {% endif %}
-          <div class="grid grid-cols-1 gap-3">
-            {% include "components/form_field.html" with field=f.item %}
-            <div class="grid grid-cols-2 gap-3">
-              {% include "components/form_field.html" with field=f.quantity_ordered %}
-              {% include "components/form_field.html" with field=f.unit_price %}
-            </div>
-          </div>
-          <div class="flex justify-end mt-2">
-            <button type="button" class="remove-item text-xs text-danger hover:text-danger hover:underline">Remove</button>
-          </div>
-          {# Hidden DELETE field — toggled by Remove button #}
-          <div class="hidden">{{ f.DELETE }}</div>
-        </div>
-        {% endfor %}
-      </div>
+      <datalist id="supplier-options"></datalist>
+      {% include "inventory/purchase_orders/_po_line_items.html" with formset=formset %}
       <div class="mt-3 flex items-center justify-between">
         <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
         <div class="flex items-center gap-2">
@@ -51,65 +22,6 @@
           <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Save</button>
         </div>
       </div>
-      <template id="item-empty-form">
-        <div class="border rounded p-3 item-form relative">
-          {% for field in formset.empty_form %}
-            {% if field.name == 'id' or field.name == 'DELETE' %}
-              <div class="hidden">{{ field }}</div>
-            {% elif field.name == 'item' %}
-              {% include "components/form_field.html" with field=field %}
-            {% elif field.name == 'quantity_ordered' or field.name == 'unit_price' %}
-              {% include "components/form_field.html" with field=field %}
-            {% endif %}
-          {% endfor %}
-          <div class="flex justify-end mt-2">
-            <button type="button" class="remove-item text-xs text-danger hover:text-danger hover:underline">Remove</button>
-          </div>
-        </div>
-      </template>
     </form>
   </div>
 </div>
-<script>
-  (function () {
-    var itemPrices = {{ item_prices_json|safe }};
-
-    document.addEventListener('DOMContentLoaded', function () {
-      var formsetEl = document.getElementById('items-formset');
-
-      // Event delegation: Remove button
-      formsetEl.addEventListener('click', function (e) {
-        if (!e.target.classList.contains('remove-item')) return;
-        var row = e.target.closest('.item-form');
-        var deleteInput = row ? row.querySelector('input[type="checkbox"][name$="-DELETE"]') : null;
-        if (deleteInput) {
-          deleteInput.checked = true;
-          row.style.display = 'none';
-        } else if (row) {
-          row.remove();
-        }
-      });
-
-      // Event delegation: item-select auto-fill unit_price
-      formsetEl.addEventListener('change', function (e) {
-        if (!e.target.classList.contains('item-select')) return;
-        var row = e.target.closest('.item-form');
-        if (!row) return;
-        var priceInput = row.querySelector('input[name$="-unit_price"]');
-        if (priceInput && itemPrices[e.target.value] !== undefined) {
-          priceInput.value = parseFloat(itemPrices[e.target.value]).toFixed(2);
-        }
-      });
-
-      if (window.initFormset) {
-        window.initFormset({
-          formsetPrefix: '{{ formset.prefix }}',
-          addButtonId: 'add-item',
-          formContainer: '#items-formset',
-          formClass: 'item-form',
-          templateId: 'item-empty-form',
-        });
-      }
-    });
-  })();
-</script>

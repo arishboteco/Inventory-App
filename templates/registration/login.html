@@ -4,9 +4,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (function () {
+      var k = "inventory-theme";
+      var v;
+      try {
+        v = localStorage.getItem(k);
+      } catch (e) {
+        v = null;
+      }
+      var mode = v === "light" || v === "dark" || v === "system" ? v : "system";
+      var dark =
+        mode === "dark" ||
+        (mode === "system" &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      var el = document.documentElement;
+      if (dark) el.classList.add("dark");
+      el.style.colorScheme = dark ? "dark" : "light";
+    })();
+  </script>
   <title>Login – Inventory Pro</title>
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
-  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}?v={{ STATIC_VERSION }}" rel="stylesheet">
+  <script src="{% static 'js/theme.js' %}?v={{ STATIC_VERSION }}" defer></script>
   <style>
     .login-hero {
       min-height: 100vh;
@@ -59,7 +79,7 @@
     </p>
 
     <!-- Login Card -->
-    <div style="width:100%;max-width:400px;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.15);padding:32px">
+    <div class="w-full max-w-md rounded-xl shadow-overlay border border-border bg-surface text-bodyText p-8">
 
       <!-- Error alert (wrong credentials) -->
       {% if form.errors %}
@@ -72,8 +92,8 @@
         {% csrf_token %}
 
         <!-- Username -->
-        <div style="margin-bottom:16px">
-          <label for="id_username" style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:4px">
+        <div class="mb-4">
+          <label for="id_username" class="block text-sm font-medium text-bodyText mb-1">
             Username
           </label>
           <input
@@ -82,24 +102,23 @@
             id="id_username"
             required
             autocomplete="username"
-            class="block w-full px-3 py-2.5 border border-gray-300 rounded-md bg-white text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+            class="block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
           >
         </div>
 
         <!-- Password with show/hide toggle -->
-        <div style="margin-bottom:24px">
-          <label for="id_password" style="display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:4px">
+        <div class="mb-6">
+          <label for="id_password" class="block text-sm font-medium text-bodyText mb-1">
             Password
           </label>
-          <div style="position:relative">
+          <div class="relative">
             <input
               type="password"
               name="password"
               id="id_password"
               required
               autocomplete="current-password"
-              class="block w-full px-3 py-2.5 border border-gray-300 rounded-md bg-white text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-              style="padding-right:40px"
+              class="block w-full pl-3 pr-10 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             >
             <button
               type="button"

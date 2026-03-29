@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Django Inventory Management Application",
   "scripts": {
-    "build": "mkdir -p static/css && postcss static/src/app.css -o static/css/app.css --env production",
+    "build": "node -e \"require('fs').mkdirSync('static/css',{recursive:true})\" && postcss static/src/app.css -o static/css/app.css --env production",
     "build-css": "npm run build",
     "dev-css": "postcss static/src/app.css -o static/css/app.css --watch",
     "minify-js": "node scripts/minify-js.mjs",

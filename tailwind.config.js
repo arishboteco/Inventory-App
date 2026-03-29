@@ -1,4 +1,5 @@
 module.exports = {
+  darkMode: "class",
   content: ["./templates/**/*.{html,js}", "./static/js/**/*.js"],
   safelist: ["hidden"],
   theme: {
@@ -32,58 +33,60 @@ module.exports = {
     },
     extend: {
       colors: {
-        // Neutrals & surfaces (cool gray)
-        body: "#f9fafb",
-        bodyText: "#111827",
-        surface: "#ffffff",
-        surfaceSubtle: "#f3f4f6",
-        border: "#e5e7eb",
-        form: { bg: "#ffffff", border: "#d1d5db", text: "#111827" },
-
-        // Primary brand
-        primary: "#2563eb",
-        primaryHover: "#1d4ed8",
-        linkHover: "#1e3a8a",
-
-        // Warm accent for highlights
-        accent: {
-          text: "#92400e",
-          soft: "#fdf2d0",
-          strong: "#f4b740",
-          DEFAULT: "#f59f25",
+        // Semantic tokens from CSS variables (see static/src/app.css :root / html.dark)
+        body: "var(--color-body-bg)",
+        bodyText: "var(--color-body-text)",
+        surface: "var(--color-surface)",
+        surfaceSubtle: "var(--color-surface-subtle)",
+        border: "var(--color-border)",
+        form: {
+          bg: "var(--color-form-bg)",
+          border: "var(--color-form-border)",
+          text: "var(--color-form-text)",
         },
 
-        // Semantic palettes
+        primary: "rgb(var(--color-primary-rgb) / <alpha-value>)",
+        primaryHover: "var(--color-primary-hover)",
+        linkHover: "var(--color-link-hover)",
+
+        accent: {
+          text: "var(--color-accent-text)",
+          soft: "var(--color-accent-soft)",
+          strong: "var(--color-accent-strong)",
+          DEFAULT: "var(--color-accent)",
+        },
+
         success: {
-          text: "#166534",
-          soft: "#dcfce7",
-          strong: "#22c55e",
-          DEFAULT: "#15803d",
+          text: "var(--color-success-text)",
+          soft: "var(--color-success-soft)",
+          strong: "var(--color-success-strong)",
+          DEFAULT: "var(--color-success-default)",
+          dark: "var(--color-success-dark)",
         },
         warning: {
-          text: "#854d0e",
-          soft: "#fef3c7",
-          strong: "#f59e0b",
-          DEFAULT: "#a16207",
+          text: "var(--color-warning-text)",
+          soft: "var(--color-warning-soft)",
+          strong: "var(--color-warning-strong)",
+          DEFAULT: "var(--color-warning-default)",
         },
         danger: {
-          text: "#7f1d1d",
-          soft: "#fee2e2",
-          strong: "#ef4444",
-          DEFAULT: "#dc2626",
+          text: "var(--color-danger-text)",
+          soft: "var(--color-danger-soft)",
+          strong: "var(--color-danger-strong)",
+          DEFAULT: "var(--color-danger-default)",
         },
         info: {
-          text: "#1e3a8a",
-          soft: "#dbeafe",
-          strong: "#3b82f6",
-          DEFAULT: "#2563eb",
+          text: "var(--color-info-text)",
+          soft: "var(--color-info-soft)",
+          strong: "var(--color-info-strong)",
+          DEFAULT: "var(--color-info-default)",
         },
 
         table: {
-          border: "#e5e7eb",
-          headerBg: "#f9fafb",
-          headerText: "#374151",
-          hoverBg: "#f3f4f6",
+          border: "var(--color-table-border)",
+          headerBg: "var(--color-table-header-bg)",
+          headerText: "var(--color-table-header-text)",
+          hoverBg: "var(--color-table-hover-bg)",
         },
       },
       spacing: {
@@ -124,11 +127,11 @@ module.exports = {
       },
       boxShadow: {
         // Elevation tokens
-        card: "0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08)",
-        "sticky-header": "0 2px 4px rgba(0,0,0,0.06)",
-        overlay: "0 10px 25px rgba(0,0,0,0.25)",
-        btn: "0 2px 4px rgba(0, 0, 0, 0.25)",
-        "form-focus": "0 0 0 2px rgba(29, 78, 216, 0.4)",
+        card: "var(--shadow-card)",
+        "sticky-header": "var(--shadow-sticky-header)",
+        overlay: "var(--shadow-overlay)",
+        btn: "var(--shadow-btn)",
+        "form-focus": "var(--shadow-form-focus)",
       },
     },
   },

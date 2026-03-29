@@ -1,4 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+[x-cloak] {
+  display: none !important;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -22,18 +27,18 @@
   outline: none;
 }
 .nav-link:focus {
-  box-shadow: 0 0 0 2px var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 2px rgb(var(--color-primary-rgb) / 0.5);
 }
 .nav-link--active {
-  color: #1d4ed8; /* text-blue-700 */
-  background: #eff6ff; /* bg-blue-50 */
+  color: rgb(var(--color-primary-rgb));
+  background: rgb(var(--color-primary-rgb) / 0.1);
 }
 .nav-link--inactive {
-  color: #374151; /* text-gray-700 */
+  color: var(--color-nav-inactive);
 }
 .nav-link--inactive:hover {
-  color: #2563eb; /* hover:text-blue-600 */
-  background: #f3f4f6; /* hover:bg-gray-100 */
+  color: rgb(var(--color-primary-rgb));
+  background: var(--color-nav-inactive-hover-bg);
 }
 
 /* Fluid search width: keeps a reasonable min size and caps maximum */
@@ -48,41 +53,127 @@
 
 @layer base {
   :root {
-    /* Primary & links */
-    --color-primary: theme("colors.primary");
-    --color-primary-hover: theme("colors.primaryHover");
-    --color-link-hover: theme("colors.linkHover");
+    color-scheme: light;
 
-    /* Accent */
-    --color-accent: theme("colors.accent");
-    --color-accent-soft: theme("colors.accent.soft");
-    --color-accent-strong: theme("colors.accent.strong");
-    --color-accent-text: theme("colors.accent.text");
+    --color-primary-rgb: 37 99 235;
+    --color-primary-hover: #1d4ed8;
+    --color-link-hover: #1e3a8a;
+    --color-link-visited: #6b21a8;
 
-    /* Neutrals */
-    --color-body-bg: theme("colors.body");
-    --color-body-text: theme("colors.bodyText");
-    --color-surface: theme("colors.surface");
-    --color-surface-subtle: theme("colors.surfaceSubtle");
-    --color-border: theme("colors.border");
-    --color-form-bg: theme("colors.form.bg");
-    --color-form-text: theme("colors.form.text");
-    --color-form-border: theme("colors.form.border");
+    --color-body-bg: #f9fafb;
+    --color-body-text: #111827;
+    --color-surface: #ffffff;
+    --color-surface-subtle: #f3f4f6;
+    --color-border: #e5e7eb;
+    --color-form-bg: #ffffff;
+    --color-form-border: #d1d5db;
+    --color-form-text: #111827;
 
-    /* Semantic */
-    --success-text: theme("colors.success.text");
-    --success-soft: theme("colors.success.soft");
-    --success-strong: theme("colors.success.strong");
-    --warning-text: theme("colors.warning.text");
-    --warning-soft: theme("colors.warning.soft");
-    --warning-strong: theme("colors.warning.strong");
-    --danger-text: theme("colors.danger.text");
-    --danger-soft: theme("colors.danger.soft");
-    --danger-strong: theme("colors.danger.strong");
-    --info-text: theme("colors.info.text");
-    --info-soft: theme("colors.info.soft");
-    --info-strong: theme("colors.info.strong");
+    --color-nav-inactive: #374151;
+    --color-nav-inactive-hover-bg: #f3f4f6;
+
+    --color-accent: #f59f25;
+    --color-accent-text: #92400e;
+    --color-accent-soft: #fdf2d0;
+    --color-accent-strong: #f4b740;
+
+    --color-success-text: #166534;
+    --color-success-soft: #dcfce7;
+    --color-success-strong: #22c55e;
+    --color-success-default: #15803d;
+    --color-success-dark: #14532d;
+
+    --color-warning-text: #854d0e;
+    --color-warning-soft: #fef3c7;
+    --color-warning-strong: #f59e0b;
+    --color-warning-default: #a16207;
+
+    --color-danger-text: #7f1d1d;
+    --color-danger-soft: #fee2e2;
+    --color-danger-strong: #ef4444;
+    --color-danger-default: #dc2626;
+
+    --color-info-text: #1e3a8a;
+    --color-info-soft: #dbeafe;
+    --color-info-strong: #3b82f6;
+    --color-info-default: #2563eb;
+
+    --color-table-border: #e5e7eb;
+    --color-table-header-bg: #f9fafb;
+    --color-table-header-text: #374151;
+    --color-table-hover-bg: #f3f4f6;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.08);
+    --shadow-sticky-header: 0 2px 4px rgb(0 0 0 / 0.06);
+    --shadow-overlay: 0 10px 25px rgb(0 0 0 / 0.25);
+    --shadow-btn: 0 2px 4px rgb(0 0 0 / 0.25);
+    --shadow-form-focus: 0 0 0 2px rgb(29 78 216 / 0.4);
+    --shadow-form-input: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+
+    --predictive-bg: var(--color-surface);
+    --predictive-text: var(--color-body-text);
+    --predictive-border: var(--color-form-border);
   }
+
+  html.dark {
+    color-scheme: dark;
+
+    --color-primary-rgb: 96 165 250;
+    --color-primary-hover: #93c5fd;
+    --color-link-hover: #bfdbfe;
+    --color-link-visited: #c4b5fd;
+
+    --color-body-bg: #0f1419;
+    --color-body-text: #f3f4f6;
+    --color-surface: #1f2937;
+    --color-surface-subtle: #111827;
+    --color-border: #374151;
+    --color-form-bg: #1f2937;
+    --color-form-border: #4b5563;
+    --color-form-text: #f9fafb;
+
+    --color-nav-inactive: #d1d5db;
+    --color-nav-inactive-hover-bg: #374151;
+
+    --color-accent: #fbbf24;
+    --color-accent-text: #fde68a;
+    --color-accent-soft: #422006;
+    --color-accent-strong: #f59e0b;
+
+    --color-success-text: #86efac;
+    --color-success-soft: #14532d;
+    --color-success-strong: #4ade80;
+    --color-success-default: #22c55e;
+    --color-success-dark: #166534;
+
+    --color-warning-text: #fde68a;
+    --color-warning-soft: #422006;
+    --color-warning-strong: #fbbf24;
+    --color-warning-default: #d97706;
+
+    --color-danger-text: #fecaca;
+    --color-danger-soft: #450a0a;
+    --color-danger-strong: #f87171;
+    --color-danger-default: #ef4444;
+
+    --color-info-text: #bfdbfe;
+    --color-info-soft: #1e3a5f;
+    --color-info-strong: #60a5fa;
+    --color-info-default: #3b82f6;
+
+    --color-table-border: #374151;
+    --color-table-header-bg: #111827;
+    --color-table-header-text: #e5e7eb;
+    --color-table-hover-bg: #374151;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.45);
+    --shadow-sticky-header: 0 2px 4px rgb(0 0 0 / 0.4);
+    --shadow-overlay: 0 10px 25px rgb(0 0 0 / 0.55);
+    --shadow-btn: 0 2px 4px rgb(0 0 0 / 0.4);
+    --shadow-form-focus: 0 0 0 2px rgb(96 165 250 / 0.45);
+    --shadow-form-input: 0 1px 3px 0 rgb(0 0 0 / 0.35);
+  }
+
   body {
     @apply bg-body text-bodyText font-sans;
   }
@@ -90,7 +181,13 @@
   /* Base link styles: underlined with primary color and visible focus ring.
      Buttons use utility classes to remove the underline. */
   a {
-    @apply text-primary underline visited:text-purple-900 hover:text-linkHover focus:text-linkHover focus:outline-none focus:ring-2 focus:ring-primary;
+    @apply text-primary underline focus:text-linkHover focus:outline-none focus:ring-2 focus:ring-primary;
+  }
+  a:hover {
+    @apply text-linkHover;
+  }
+  a:visited {
+    color: var(--color-link-visited);
   }
 
   /* Reset underlines & inherited colors for navigation & dropdown menus */
@@ -108,6 +205,50 @@
   nav .relative a.block:visited {
     color: inherit;
   }
+}
+
+/* Raw gray utilities used across templates — map to theme-aware colors */
+html.dark .text-gray-400 {
+  color: #9ca3af;
+}
+html.dark .text-gray-500 {
+  color: #9ca3af;
+}
+html.dark .text-gray-600 {
+  color: #d1d5db;
+}
+html.dark .text-gray-700 {
+  color: #e5e7eb;
+}
+html.dark .text-gray-900 {
+  color: #f9fafb;
+}
+html.dark .bg-gray-50 {
+  background-color: var(--color-table-header-bg);
+}
+html.dark .bg-gray-100 {
+  background-color: #374151;
+}
+html.dark .bg-gray-200 {
+  background-color: #4b5563;
+}
+html.dark .border-gray-200 {
+  border-color: #4b5563;
+}
+html.dark .border-gray-300 {
+  border-color: #4b5563;
+}
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #374151;
+}
+html.dark .placeholder-gray-400::placeholder {
+  color: #9ca3af;
+}
+html.dark .ring-black {
+  --tw-ring-color: rgb(0 0 0 / 0.35);
+}
+html.dark .ring-opacity-5 {
+  --tw-ring-opacity: 0.12;
 }
 
 @layer components {
@@ -141,13 +282,21 @@
   }
   .drawer::-webkit-scrollbar-thumb,
   #modal-content::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgb(0 0 0 / 0.15);
     border-radius: 3px;
   }
   .drawer,
   #modal-content {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    scrollbar-color: rgb(0 0 0 / 0.15) transparent;
+  }
+  html.dark .drawer::-webkit-scrollbar-thumb,
+  html.dark #modal-content::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.2);
+  }
+  html.dark .drawer,
+  html.dark #modal-content {
+    scrollbar-color: rgb(255 255 255 / 0.2) transparent;
   }
   .modal-panel {
     @apply bg-surface border border-border rounded-xl shadow-overlay;
@@ -195,7 +344,7 @@
     /* Removed fixed height and scroll behavior to allow full-page scrolling */
   }
   .table-sticky thead th {
-    @apply sticky top-0 bg-gray-50 z-20 border-b border-border shadow-none;
+    @apply sticky top-0 z-20 border-b border-border shadow-none bg-table-headerBg text-table-headerText;
   }
   /* Subtle shadow when scrolled */
   .group[data-shadow="true"] thead th {
@@ -236,7 +385,8 @@
   form input:not([type="checkbox"]):not([type="radio"]):focus,
   form select:focus,
   form textarea:focus {
-    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:shadow-[0_1px_3px_0_rgba(0,0,0,0.1)];
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary;
+    box-shadow: var(--shadow-form-focus), var(--shadow-form-input);
   }
 
   /* Improved datalist styling for predictive dropdowns */
@@ -265,6 +415,14 @@
 
 @layer utilities {
   /* Utilities rely on CSS variables for theming */
+}
+
+/* Predictive overlays (also set inline in _base for JS-driven layers) */
+.predictive-overlay,
+.predictive-dropdown-list {
+  background-color: var(--predictive-bg) !important;
+  color: var(--predictive-text) !important;
+  border-color: var(--predictive-border) !important;
 }
 
 /* Respect reduced motion preferences */

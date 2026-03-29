@@ -198,6 +198,9 @@ def create_recipe(
                 "plating_notes": data.get("plating_notes"),
                 "tags": _parse_tags(data.get("tags")),
             }
+            rtype = fields.get("type")
+            if rtype in (None, "", Recipe.Type.FINAL, "FINAL"):
+                fields["default_yield_unit"] = "portion"
             recipe = Recipe.objects.create(**fields)
             for item_data in items:
                 ri = RecipeItem(
@@ -230,6 +233,9 @@ def update_recipe(
                     setattr(recipe, k, _parse_tags(v))
                 else:
                     setattr(recipe, k, v)
+            eff_type = data.get("type", recipe.type)
+            if eff_type in (None, "", Recipe.Type.FINAL, "FINAL"):
+                recipe.default_yield_unit = "portion"
             recipe.save()
             RecipeItem.objects.filter(recipe=recipe).delete()
             for item_data in items:

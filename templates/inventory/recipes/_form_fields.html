@@ -1,9 +1,35 @@
 {% load form_tags %}
-<div class="grid gap-4 md:grid-cols-3">
+<div class="grid gap-4 md:grid-cols-3" data-recipe-yield-unit-root>
   {% include "components/form_field.html" with field=form.name container_class="md:col-span-2" help_text_class="text-xs text-gray-500 leading-snug" %}
   {% include "components/form_field.html" with field=form.type help_text_class="text-xs text-gray-500 leading-snug" %}
   {% include "components/form_field.html" with field=form.default_yield_qty help_text_class="text-xs text-gray-500 leading-snug" %}
-  {% include "components/form_field.html" with field=form.default_yield_unit help_text_class="text-xs text-gray-500 leading-snug" %}
+  <!-- Default yield unit: hidden field + type-dependent UI (see static/js/recipe-yield-unit.js) -->
+  <div class="space-y-1">
+    {{ form.default_yield_unit }}
+    <label class="block text-sm font-medium text-bodyText" for="id_default_yield_unit_sub_select">Default yield unit</label>
+    <div data-recipe-yield-final class="space-y-1 hidden">
+      <p class="block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text text-sm">Portion</p>
+      <p class="text-xs text-gray-500 leading-snug">Final recipes always yield portions.</p>
+    </div>
+    <div data-recipe-yield-sub class="space-y-1 hidden">
+      <select id="id_default_yield_unit_sub_select"
+              class="block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary leading-normal"
+              autocomplete="off"
+              aria-describedby="id_default_yield_unit_sub_help">
+        {% for code, label in form.sub_yield_unit_choices %}
+          <option value="{{ code }}"{% if form.default_yield_unit.value == code %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <p id="id_default_yield_unit_sub_help" class="text-xs text-gray-500 leading-snug">Base unit this sub-recipe yields (from inventory units).</p>
+    </div>
+    {% if form.default_yield_unit.errors %}
+      <ul class="text-sm text-danger list-disc pl-5 leading-normal">
+        {% for error in form.default_yield_unit.errors %}
+          <li class="leading-normal">{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
   {# D2: Selling price and food cost target #}
   {% include "components/form_field.html" with field=form.selling_price help_text_class="text-xs text-gray-500 leading-snug" %}
   {% include "components/form_field.html" with field=form.target_food_cost_pct help_text_class="text-xs text-gray-500 leading-snug" %}

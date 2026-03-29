@@ -201,6 +201,8 @@ def test_recipe_create_partial_success_returns_close_only_payload(client, item_f
     assert payload.get("reload") not in (True, "true")
     assert payload["recipe"]["name"] == "Test Bread"
     assert Recipe.objects.filter(name="Test Bread").exists()
+    saved = Recipe.objects.get(name="Test Bread")
+    assert saved.default_yield_unit == "portion"
     assert payload.get("htmx", {}).get("event") == "recipes:refresh"
     assert payload.get("htmx", {}).get("detail", {}).get("action") == "created"
 
@@ -248,10 +250,78 @@ def test_recipe_create_partial_persists_sub_recipe_line(client, item_factory):
     )
     assert response.status_code == 200
     recipe = Recipe.objects.get(name="Mother Sauce")
+    assert recipe.default_yield_unit == "portion"
     ri = recipe.items.first()
     assert ri is not None
     assert ri.sub_recipe_id == sub.pk
     assert ri.item_id is None
+
+
+@pytest.mark.django_db
+def test_recipe_create_partial_sub_recipe_requires_base_yield_unit(
+    client, item_factory
+):
+    """Sub-recipes must post a valid inventory base unit for default_yield_unit."""
+    item = item_factory(name="Flour")
+    url = reverse("recipe_create_partial")
+    data = {
+        "name": "Sauce Base",
+        "description_and_plating": "",
+        "is_active": "on",
+        "type": Recipe.Type.SUB,
+        "default_yield_qty": "1",
+        "default_yield_unit": "portion",
+        "items-TOTAL_FORMS": "1",
+        "items-INITIAL_FORMS": "0",
+        "items-MIN_NUM_FORMS": "0",
+        "items-MAX_NUM_FORMS": "1000",
+        "items-0-ingredient": f"i:{item.pk}",
+        "items-0-quantity": "1",
+        "items-0-unit": "kg",
+        "items-0-loss_pct": "0",
+        "items-0-DELETE": "",
+    }
+    response = client.post(
+        url,
+        data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["ok"] is False
+    assert payload["errors"]["form"]["default_yield_unit"]
+
+
+@pytest.mark.django_db
+def test_recipe_create_partial_sub_recipe_accepts_base_unit(client, item_factory):
+    item = item_factory(name="Flour")
+    url = reverse("recipe_create_partial")
+    data = {
+        "name": "Roux Stock",
+        "description_and_plating": "",
+        "is_active": "on",
+        "type": Recipe.Type.SUB,
+        "default_yield_qty": "2",
+        "default_yield_unit": "GM",
+        "items-TOTAL_FORMS": "1",
+        "items-INITIAL_FORMS": "0",
+        "items-MIN_NUM_FORMS": "0",
+        "items-MAX_NUM_FORMS": "1000",
+        "items-0-ingredient": f"i:{item.pk}",
+        "items-0-quantity": "100",
+        "items-0-unit": "kg",
+        "items-0-loss_pct": "0",
+        "items-0-DELETE": "",
+    }
+    response = client.post(
+        url,
+        data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    assert response.status_code == 200
+    recipe = Recipe.objects.get(name="Roux Stock")
+    assert recipe.type == Recipe.Type.SUB
+    assert recipe.default_yield_unit == "GM"
 
 
 @pytest.mark.django_db

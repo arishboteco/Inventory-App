@@ -502,7 +502,7 @@ def item_meta(request, item_id: int):
     conv = float(uinfo.get("conversion_factor") or 1.0)
     price_source = item.last_purchase_price or item.initial_purchase_price or 0
     last_price = float(price_source or 0)
-    cost_per_base = (last_price / conv) if conv else 0.0
+    cost_per_base = float(UnitsService.cost_per_base_for_item(item))
     cat = getattr(item, "category", None)
     category = getattr(cat, "category", "")
     subcategory = getattr(cat, "sub_category", "")

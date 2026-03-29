@@ -30,7 +30,7 @@ flowchart LR
    - If no eligible items remain, an info toast explains why.
 
 4. **Generate Purchase Orders** (`/purchase-orders/`)
-   - Quick create drawer and list hero highlight outstanding receipts (orders in `ORDERED`/`PARTIAL`).
+   - New Purchase Order drawer (supplier, dates, line items) and list hero highlight outstanding receipts (orders in `ORDERED`/`PARTIAL`).
    - Detail hero chips show supplier, order dates, and provide CTA for receiving goods.
 
 5. **Receive Goods (GRN)** (`/purchase-orders/<id>/receive/` or `/grns/`)

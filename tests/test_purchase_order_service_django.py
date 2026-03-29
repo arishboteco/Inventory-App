@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from inventory.forms.purchase_forms import PurchaseOrderForm, PurchaseOrderItemFormSet
 from inventory.models import (
     GoodsReceivedNote,
     GRNItem,
@@ -10,6 +11,39 @@ from inventory.models import (
     Supplier,
 )
 from inventory.services import purchase_order_service
+
+
+@pytest.mark.django_db
+def test_save_purchase_order_from_forms_creates(item_factory):
+    supplier = Supplier.objects.create(name="Vendor", is_active=True)
+    item = item_factory(name="Widget")
+    form = PurchaseOrderForm(
+        {
+            "supplier": str(supplier.pk),
+            "order_date": str(date.today()),
+            "expected_delivery_date": "",
+            "status": "DRAFT",
+            "notes": "",
+        }
+    )
+    formset = PurchaseOrderItemFormSet(
+        {
+            "items-TOTAL_FORMS": "1",
+            "items-INITIAL_FORMS": "0",
+            "items-MIN_NUM_FORMS": "0",
+            "items-MAX_NUM_FORMS": "1000",
+            "items-0-item": str(item.pk),
+            "items-0-quantity_ordered": "2",
+            "items-0-unit_price": "3.00",
+        },
+        prefix="items",
+    )
+    assert form.is_valid(), form.errors
+    assert formset.is_valid(), formset.errors
+    po = purchase_order_service.save_purchase_order_from_forms(form, formset)
+    assert po.pk
+    assert po.supplier_id == supplier.pk
+    assert po.purchaseorderitem_set.count() == 1
 
 
 @pytest.mark.django_db

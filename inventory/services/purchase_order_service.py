@@ -5,16 +5,65 @@ from typing import Any, Dict, List, Optional
 from django.db import IntegrityError, transaction
 from django.db.models import Max, Sum
 
+from inventory.forms.purchase_forms import PurchaseOrderForm, PurchaseOrderItemFormSet
 from inventory.models import Item, PurchaseOrder, PurchaseOrderItem, Supplier
 
 from .exceptions import PurchaseOrderServiceError
 
 logger = logging.getLogger(__name__)
 
+# Create uses ``create_po``; update uses ``ModelForm`` + formset save (stable line PKs).
+# ``save_purchase_order_from_forms`` is the single entry point once forms are valid.
+
 
 def generate_po_number() -> str:
     next_id = (PurchaseOrder.objects.aggregate(m=Max("po_id"))["m"] or 0) + 1
     return f"PO-{next_id:04d}"
+
+
+def _po_header_dict_from_cleaned_form(form: PurchaseOrderForm) -> Dict[str, Any]:
+    """Header fields for ``create_po`` (form must be valid)."""
+
+    return {
+        "supplier_id": form.cleaned_data["supplier"].pk,
+        "order_date": form.cleaned_data["order_date"],
+        "expected_delivery_date": form.cleaned_data.get("expected_delivery_date"),
+        "status": form.cleaned_data.get("status"),
+        "notes": form.cleaned_data.get("notes"),
+    }
+
+
+def _po_line_items_from_formset_cleaned(cleaned_rows: list) -> List[Dict[str, Any]]:
+    """Line payloads for ``create_po`` from a validated ``PurchaseOrderItemFormSet``."""
+
+    items_data: List[Dict[str, Any]] = []
+    for row in cleaned_rows:
+        if row and not row.get("DELETE", False):
+            items_data.append(
+                {
+                    "item_id": row["item"].pk,
+                    "quantity_ordered": row["quantity_ordered"],
+                    "unit_price": row["unit_price"],
+                }
+            )
+    return items_data
+
+
+def save_purchase_order_from_forms(
+    form: PurchaseOrderForm,
+    formset: PurchaseOrderItemFormSet,
+) -> PurchaseOrder:
+    """Persist header and lines. Call only when ``form`` and ``formset`` are valid."""
+
+    if form.instance.pk:
+        po = form.save()
+        formset.save()
+        return po
+
+    po_data = _po_header_dict_from_cleaned_form(form)
+    items_data = _po_line_items_from_formset_cleaned(formset.cleaned_data)
+    po_id = create_po(po_data, items_data)
+    return PurchaseOrder.objects.get(pk=po_id)
 
 
 def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:

@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 from django import forms
@@ -11,6 +12,40 @@ from ..models import (
     Supplier,
 )
 from .base import INPUT_CLASS, StyledFormMixin
+
+
+def _resolve_supplier_from_raw(raw: str) -> Supplier:
+    """Map typed datalist / POST value to a Supplier (active only)."""
+    raw = str(raw or "").strip()
+    if not raw:
+        raise forms.ValidationError("Choose a valid supplier from the list.")
+
+    qs = Supplier.objects.filter(is_active=True)
+
+    m = re.match(r"^(\d+)\s*[-–]\s*(.+)$", raw)
+    if m:
+        found = qs.filter(pk=int(m.group(1))).first()
+        if found:
+            return found
+
+    if raw.isdigit():
+        found = qs.filter(pk=int(raw)).first()
+        if found:
+            return found
+
+    exact = qs.filter(name__iexact=raw).first()
+    if exact:
+        return exact
+
+    candidates = list(qs.filter(name__istartswith=raw)[:2])
+    if len(candidates) == 1:
+        return candidates[0]
+    if len(candidates) > 1:
+        raise forms.ValidationError(
+            "Multiple suppliers match. Please choose from the list."
+        )
+
+    raise forms.ValidationError("Choose a valid supplier from the list.")
 
 
 class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
@@ -48,7 +83,40 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
                 status_field.choices = filtered
         except Exception:
             pass
+        if supplier_suggest_url:
+            supplier_label = self.fields["supplier"].label
+            self.fields["supplier"] = forms.CharField(
+                label=supplier_label,
+                required=True,
+                widget=forms.TextInput(
+                    attrs={
+                        "data-predictive-input": "1",
+                        "autocomplete": "off",
+                        "autocapitalize": "none",
+                        "autocorrect": "off",
+                        "spellcheck": "false",
+                        "placeholder": "Type to search suppliers...",
+                        "hx-get": supplier_suggest_url,
+                        "hx-trigger": "keyup changed delay:300ms",
+                        "hx-target": "#supplier-options",
+                        "hx-swap": "innerHTML",
+                        "list": "supplier-options",
+                    }
+                ),
+            )
+            if getattr(self.instance, "pk", None) and getattr(
+                self.instance, "supplier_id", None
+            ):
+                try:
+                    self.initial["supplier"] = self.instance.supplier.name
+                except Supplier.DoesNotExist:
+                    pass
         self.apply_styling()
+
+    def clean_supplier(self):
+        if not isinstance(self.fields["supplier"], forms.CharField):
+            return self.cleaned_data.get("supplier")
+        return _resolve_supplier_from_raw(self.cleaned_data.get("supplier", ""))
 
 
 class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):

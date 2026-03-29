@@ -1,14 +1,14 @@
 {% load form_tags %}
-<div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden drawer-panel max-w-drawer-xl">
-  <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
+<div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden drawer-panel max-w-drawer-xl flex flex-col min-h-0 max-h-[90vh]">
+  <div class="shrink-0 px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <h3 class="text-lg font-semibold text-bodyText">Add New Item</h3>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
-  <div class="p-4 space-y-4">
-    <p class="text-sm text-gray-600">Fill in catalogue details. Fields marked * are required.</p>
-    <form method="post" data-modal-form action="{% url 'items_list' %}">
-      {% csrf_token %}
-      <input type="hidden" name="partial" value="1"/>
+  <form method="post" data-modal-form action="{% url 'items_list' %}" class="flex flex-col flex-1 min-h-0">
+    {% csrf_token %}
+    <input type="hidden" name="partial" value="1"/>
+    <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+      <p class="text-sm text-gray-600">Fill in catalogue details. Fields marked * are required.</p>
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Name<span class="text-danger"> *</span></label>
@@ -67,20 +67,20 @@
           {{ form.notes|add_class:"block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary resize-y" }}
           {% include "forms/feedback.html" %}
         </div>
-        <div class="col-span-2 flex justify-between items-center gap-2">
-          <div>
-            <label for="{{ form.is_active.id_for_label }}" class="inline-flex items-center gap-2 text-bodyText">
-              {{ form.is_active }}
-              <span>Active</span>
-            </label>
-            {% include "forms/feedback.html" %}
-          </div>
-          <div>
-            <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-            <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Create</button>
-          </div>
-        </div>
       </div>
-    </form>
-  </div>
+    </div>
+    <div class="shrink-0 border-t border-border bg-surfaceSubtle px-4 py-3 flex justify-between items-center gap-2">
+      <div>
+        <label for="{{ form.is_active.id_for_label }}" class="inline-flex items-center gap-2 text-bodyText">
+          {{ form.is_active }}
+          <span>Active</span>
+        </label>
+        {% include "forms/feedback.html" %}
+      </div>
+      <div class="flex flex-wrap gap-2 justify-end">
+        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Create</button>
+      </div>
+    </div>
+  </form>
 </div>

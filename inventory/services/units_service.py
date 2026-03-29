@@ -21,8 +21,9 @@ Usage:
 """
 
 import logging
+from decimal import Decimal
 from functools import lru_cache
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from inventory.models.unit import Unit
 
@@ -92,6 +93,30 @@ class UnitsService:
         """Get the base_unit for recipe calculations."""
         unit_info = UnitsService.get_unit_info(unit_id)
         return unit_info["base_unit"]
+
+    @staticmethod
+    def cost_per_base_for_item(item: Any) -> Decimal:
+        """Cost per base unit for recipe costing (purchase price / conversion_factor).
+
+        ``last_purchase_price`` / ``initial_purchase_price`` are per purchase_unit;
+        recipe line quantities are in base_unit.
+        """
+        last = Decimal(str(getattr(item, "last_purchase_price", None) or 0))
+        if not last:
+            last = Decimal(str(getattr(item, "initial_purchase_price", None) or 0))
+        unit_id = getattr(item, "unit_id", None)
+        if unit_id is None:
+            return last if last else Decimal("0")
+        unit_info = UnitsService.get_unit_info(unit_id)
+        conv = Decimal(str(unit_info.get("conversion_factor") or 1))
+        if conv <= 0:
+            conv = Decimal("1")
+        if not last:
+            return Decimal("0")
+        try:
+            return last / conv
+        except ArithmeticError:
+            return Decimal("0")
 
     @staticmethod
     def convert_purchase_to_base(quantity: float, unit_id: int) -> float:

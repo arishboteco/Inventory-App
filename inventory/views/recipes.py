@@ -646,9 +646,6 @@ class RecipeViewPartialView(View):
             subcategory = ""
             base_unit_display = ""
 
-            conversion = Decimal("1")
-            last_price = Decimal("0")
-
             if item:
                 category_obj = getattr(item, "category", None)
                 category = getattr(category_obj, "category", "") or ""
@@ -656,34 +653,21 @@ class RecipeViewPartialView(View):
                 unit_id = getattr(item, "unit_id", None)
                 if unit_id:
                     try:
-                        unit_info = UnitsService.get_unit_info(unit_id) or {}
+                        base_unit_display = (
+                            UnitsService.get_base_unit_display(unit_id) or ""
+                        )
                     except Exception:  # pragma: no cover - defensive
-                        unit_info = {}
-                    conversion = _to_decimal(unit_info.get("conversion_factor") or 1)
-                    if not conversion:
-                        conversion = Decimal("1")
-                    base_unit_display = (
-                        UnitsService.get_base_unit_display(unit_id) or ""
-                    )
-                last_price = _to_decimal(getattr(item, "last_purchase_price", None))
-                if not last_price:
-                    last_price = _to_decimal(
-                        getattr(item, "initial_purchase_price", None)
-                    )
+                        base_unit_display = ""
 
             if not unit_label:
                 unit_label = base_unit_display
 
-            cost_per_base = Decimal("0")
-            if conversion:
-                try:
-                    cost_per_base = last_price / conversion
-                except ArithmeticError:  # pragma: no cover - defensive
-                    cost_per_base = Decimal("0")
-
-            cost_per_base = (
-                cost_per_base.quantize(TWOPLACES) if cost_per_base else Decimal("0.00")
-            )
+            if item:
+                cost_per_base = UnitsService.cost_per_base_for_item(item).quantize(
+                    TWOPLACES
+                )
+            else:
+                cost_per_base = Decimal("0.00")
             # Apply loss %: effective_qty = qty / (1 - loss_pct/100)
             effective_qty = qty
             if qty and loss_pct and loss_pct < 100:

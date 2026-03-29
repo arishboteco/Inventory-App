@@ -76,10 +76,10 @@ class Recipe(models.Model):
                 if sub_yield:
                     total += (sub_cost / sub_yield) * qty * loss_mult
             elif recipe_item.item:
+                from inventory.services.units_service import UnitsService
+
                 item = recipe_item.item
-                price = Decimal(str(item.last_purchase_price or 0))
-                if not price:
-                    price = Decimal(str(item.initial_purchase_price or 0))
+                cost_per_base = UnitsService.cost_per_base_for_item(item)
                 qty = Decimal(str(recipe_item.quantity or 0))
                 loss_pct = Decimal(str(recipe_item.loss_pct or 0))
                 if qty and loss_pct and loss_pct < 100:
@@ -89,7 +89,7 @@ class Recipe(models.Model):
                         effective_qty = qty
                 else:
                     effective_qty = qty
-                total += price * effective_qty
+                total += cost_per_base * effective_qty
         return total
 
     @property
@@ -245,9 +245,9 @@ class RecipeItem(models.Model):
                 return (sub_cost / sub_yield) * qty * loss_mult
             return Decimal("0")
         if self.item:
-            price = Decimal(str(self.item.last_purchase_price or 0))
-            if not price:
-                price = Decimal(str(self.item.initial_purchase_price or 0))
+            from inventory.services.units_service import UnitsService
+
+            cost_per_base = UnitsService.cost_per_base_for_item(self.item)
             qty = Decimal(str(self.quantity or 0))
             loss_pct = Decimal(str(self.loss_pct or 0))
             if qty and loss_pct and loss_pct < 100:
@@ -257,7 +257,7 @@ class RecipeItem(models.Model):
                     effective_qty = qty
             else:
                 effective_qty = qty
-            return price * effective_qty
+            return cost_per_base * effective_qty
         return Decimal("0")
 
     def __str__(self):

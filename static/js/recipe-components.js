@@ -90,7 +90,7 @@
 
     var hasItem = row.dataset.hasItem === "1";
     if (!hasItem) {
-      var select = row.querySelector('select[id$="-item"]');
+      var select = row.querySelector('select[id$="-ingredient"]');
       hasItem = !!(select && select.value);
     }
     var hasZeroPrice = hasItem && quantity > 0 && costPerBase === 0;
@@ -101,11 +101,61 @@
     }
   }
 
-  function handleItemChange(row, itemSelect, scope) {
-    var value = itemSelect.value;
+  function parseIngredientValue(value) {
+    if (!value || typeof value !== "string") {
+      return null;
+    }
+    if (value.indexOf("i:") === 0) {
+      return { kind: "item", id: value.slice(2) };
+    }
+    if (value.indexOf("r:") === 0) {
+      return { kind: "sub", id: value.slice(2) };
+    }
+    return null;
+  }
+
+  function applyIngredientMeta(row, ingredientSelect, scope, data) {
+    var baseId = ingredientSelect.id.replace(/-ingredient$/, "");
+    var unitHidden = document.getElementById(baseId + "-unit");
+    var unitDisplay = document.getElementById(baseId + "-unit_display");
+    if (!data || !data.ok) {
+      return;
+    }
+    var baseUnitValue = data.base_unit;
+    if (!baseUnitValue || !String(baseUnitValue).trim()) {
+      baseUnitValue = data.unit;
+    }
+    var resolvedUnit = baseUnitValue ? String(baseUnitValue).trim() : "";
+    if (unitHidden) {
+      unitHidden.value = resolvedUnit;
+    }
+    if (unitDisplay) {
+      unitDisplay.value = resolvedUnit;
+    }
+    row.dataset.category = (data.category || "").trim();
+    row.dataset.subcategory = (data.subcategory || "").trim();
+    row.dataset.itemName = (data.name || "").trim();
+
+    var costPerBaseUnit = toNumber(data.cost_per_base_unit);
+    if (!costPerBaseUnit && data.last_purchase_price !== undefined) {
+      var lastPrice = toNumber(data.last_purchase_price);
+      var conversion = toNumber(data.conversion_factor) || 1;
+      costPerBaseUnit = conversion ? lastPrice / conversion : 0;
+    }
+    if (!Number.isFinite(costPerBaseUnit) || costPerBaseUnit < 0) {
+      costPerBaseUnit = 0;
+    }
+    row.dataset.costPerBaseUnit = String(costPerBaseUnit);
+    row.dataset.hasZeroPrice = costPerBaseUnit === 0 ? "1" : "0";
+
+    updateRowCost(row, { scope: scope });
+  }
+
+  function handleIngredientChange(row, ingredientSelect, scope) {
+    var value = ingredientSelect.value;
     row.dataset.hasItem = value ? "1" : "0";
 
-    var baseId = itemSelect.id.replace("-item", "");
+    var baseId = ingredientSelect.id.replace(/-ingredient$/, "");
     var unitHidden = document.getElementById(baseId + "-unit");
     var unitDisplay = document.getElementById(baseId + "-unit_display");
 
@@ -125,56 +175,41 @@
       return;
     }
 
-    if (itemSelect.dataset.recipeFetching === "1") {
+    var parsed = parseIngredientValue(value);
+    if (!parsed || !parsed.id) {
+      row.dataset.category = "";
+      row.dataset.subcategory = "";
+      row.dataset.itemName = "";
+      row.dataset.costPerBaseUnit = "0";
+      updateRowCost(row, { scope: scope });
       return;
     }
-    itemSelect.dataset.recipeFetching = "1";
 
-    fetch("/items/meta/" + value + "/")
+    if (ingredientSelect.dataset.recipeFetching === "1") {
+      return;
+    }
+    ingredientSelect.dataset.recipeFetching = "1";
+
+    var url =
+      parsed.kind === "sub"
+        ? "/recipes/meta/" + encodeURIComponent(parsed.id) + "/"
+        : "/items/meta/" + encodeURIComponent(parsed.id) + "/";
+
+    fetch(url)
       .then(function (response) {
         if (!response.ok) {
-          throw new Error("Failed to fetch item metadata");
+          throw new Error("Failed to fetch ingredient metadata");
         }
         return response.json();
       })
       .then(function (data) {
-        if (!data || !data.ok) {
-          return;
-        }
-        var baseUnitValue = data.base_unit;
-        if (!baseUnitValue || !String(baseUnitValue).trim()) {
-          baseUnitValue = data.unit;
-        }
-        var resolvedUnit = baseUnitValue ? String(baseUnitValue).trim() : "";
-        if (unitHidden) {
-          unitHidden.value = resolvedUnit;
-        }
-        if (unitDisplay) {
-          unitDisplay.value = resolvedUnit;
-        }
-        row.dataset.category = (data.category || "").trim();
-        row.dataset.subcategory = (data.subcategory || "").trim();
-        row.dataset.itemName = (data.name || "").trim();
-
-        var costPerBaseUnit = toNumber(data.cost_per_base_unit);
-        if (!costPerBaseUnit) {
-          var lastPrice = toNumber(data.last_purchase_price);
-          var conversion = toNumber(data.conversion_factor) || 1;
-          costPerBaseUnit = conversion ? lastPrice / conversion : 0;
-        }
-        if (!Number.isFinite(costPerBaseUnit) || costPerBaseUnit < 0) {
-          costPerBaseUnit = 0;
-        }
-        row.dataset.costPerBaseUnit = String(costPerBaseUnit);
-        row.dataset.hasZeroPrice = costPerBaseUnit === 0 ? "1" : "0";
-
-        updateRowCost(row, { scope: scope });
+        applyIngredientMeta(row, ingredientSelect, scope, data);
       })
       .catch(function (err) {
-        console.error("Unable to fetch item metadata", err);
+        console.error("Unable to fetch ingredient metadata", err);
       })
       .finally(function () {
-        delete itemSelect.dataset.recipeFetching;
+        delete ingredientSelect.dataset.recipeFetching;
       });
   }
 
@@ -184,11 +219,11 @@
     }
     row.dataset.recipeEventsBound = "1";
 
-    var itemSelect = row.querySelector('select[id$="-item"]');
-    if (itemSelect) {
-      itemSelect.addEventListener("change", function () {
+    var ingredientSelect = row.querySelector('select[id$="-ingredient"]');
+    if (ingredientSelect) {
+      ingredientSelect.addEventListener("change", function () {
         row.dataset.recipeBootstrapped = "1";
-        handleItemChange(row, itemSelect, scope);
+        handleIngredientChange(row, ingredientSelect, scope);
       });
     }
 
@@ -232,10 +267,10 @@
       updateRowCost(row, { scope: scope, silent: true });
       return;
     }
-    var itemSelect = row.querySelector('select[id$="-item"]');
-    if (itemSelect && itemSelect.value) {
+    var ingredientSelect = row.querySelector('select[id$="-ingredient"]');
+    if (ingredientSelect && ingredientSelect.value) {
       row.dataset.recipeBootstrapped = "1";
-      handleItemChange(row, itemSelect, scope);
+      handleIngredientChange(row, ingredientSelect, scope);
     } else {
       updateRowCost(row, { scope: scope, silent: true });
     }
@@ -384,7 +419,7 @@
 
       var hasItem = row.dataset.hasItem === "1";
       if (!hasItem) {
-        var select = row.querySelector('select[id$="-item"]');
+        var select = row.querySelector('select[id$="-ingredient"]');
         hasItem = !!(select && select.value);
       }
       var quantityValue = toNumber(row.dataset.quantity);

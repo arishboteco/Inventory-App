@@ -603,14 +603,19 @@
         }
         if (!hasValidLine) {
           const inlineItems = Array.from(
-            form.querySelectorAll('select[name^="items-"][name$="-item"]'),
+            form.querySelectorAll(
+              'select[name^="items-"][name$="-item"], select[name^="items-"][name$="-ingredient"]',
+            ),
           );
           if (inlineItems.length) {
             checkedSources = true;
             for (const select of inlineItems) {
               const value = (select.value || "").trim();
               if (!value) continue;
-              const baseName = (select.name || "").replace(/-item$/, "");
+              const baseName = (select.name || "").replace(
+                /-(item|ingredient)$/,
+                "",
+              );
               if (!baseName) continue;
               const qtyField =
                 form.querySelector(

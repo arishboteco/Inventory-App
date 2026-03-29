@@ -14,23 +14,24 @@ from inventory.services.recipe_service import (
 
 
 @pytest.mark.django_db
-def test_recipe_create_partial_invalid_ajax_returns_json(client):
+def test_recipe_create_partial_invalid_ajax_returns_json(client, item_factory):
+    item = item_factory(name="Flour")
     url = reverse("recipe_create_partial")
     data = {
         "name": "",
         "description_and_plating": "",
         "is_active": "on",
-        "type": "",
+        "type": Recipe.Type.FINAL,
         "default_yield_qty": "",
         "default_yield_unit": "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
         "items-MIN_NUM_FORMS": "0",
         "items-MAX_NUM_FORMS": "1000",
-        "items-0-item": "",
-        "items-0-quantity": "",
-        "items-0-unit": "",
-        "items-0-loss_pct": "",
+        "items-0-ingredient": f"i:{item.pk}",
+        "items-0-quantity": "1",
+        "items-0-unit": "kg",
+        "items-0-loss_pct": "0",
         "items-0-DELETE": "",
     }
 
@@ -46,30 +47,28 @@ def test_recipe_create_partial_invalid_ajax_returns_json(client):
     assert payload["message"]
     assert "<" not in payload["message"]
     assert payload["errors"]["form"]["name"][0] == "This field is required."
-    assert (
-        payload["errors"]["formset"][0]["errors"]["item"][0]
-        == "This field is required."
-    )
+    assert not payload["errors"]["formset"]
 
 
 @pytest.mark.django_db
-def test_recipe_create_partial_invalid_non_ajax_returns_html(client):
+def test_recipe_create_partial_invalid_non_ajax_returns_html(client, item_factory):
+    item = item_factory(name="Flour")
     url = reverse("recipe_create_partial")
     data = {
         "name": "",
         "description_and_plating": "",
         "is_active": "on",
-        "type": "",
+        "type": Recipe.Type.FINAL,
         "default_yield_qty": "",
         "default_yield_unit": "",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
         "items-MIN_NUM_FORMS": "0",
         "items-MAX_NUM_FORMS": "1000",
-        "items-0-item": "",
-        "items-0-quantity": "",
-        "items-0-unit": "",
-        "items-0-loss_pct": "",
+        "items-0-ingredient": f"i:{item.pk}",
+        "items-0-quantity": "1",
+        "items-0-unit": "kg",
+        "items-0-loss_pct": "0",
         "items-0-DELETE": "",
     }
 
@@ -105,7 +104,7 @@ def test_recipe_edit_partial_invalid_ajax_returns_json(client, item_factory):
         "items-MIN_NUM_FORMS": "0",
         "items-MAX_NUM_FORMS": "1000",
         "items-0-id": str(recipe_item.pk),
-        "items-0-item": str(item.pk),
+        "items-0-ingredient": f"i:{item.pk}",
         "items-0-quantity": "1",
         "items-0-unit": recipe_item.unit or "",
         "items-0-loss_pct": "0",
@@ -151,7 +150,7 @@ def test_recipe_edit_partial_invalid_non_ajax_returns_html(client, item_factory)
         "items-MIN_NUM_FORMS": "0",
         "items-MAX_NUM_FORMS": "1000",
         "items-0-id": str(recipe_item.pk),
-        "items-0-item": str(item.pk),
+        "items-0-ingredient": f"i:{item.pk}",
         "items-0-quantity": "1",
         "items-0-unit": recipe_item.unit or "",
         "items-0-loss_pct": "0",
@@ -173,14 +172,14 @@ def test_recipe_create_partial_success_returns_close_only_payload(client, item_f
         "name": "Test Bread",
         "description_and_plating": "",
         "is_active": "on",
-        "type": "",
+        "type": Recipe.Type.FINAL,
         "default_yield_qty": "1",
         "default_yield_unit": "loaf",
         "items-TOTAL_FORMS": "1",
         "items-INITIAL_FORMS": "0",
         "items-MIN_NUM_FORMS": "0",
         "items-MAX_NUM_FORMS": "1000",
-        "items-0-item": str(item.pk),
+        "items-0-ingredient": f"i:{item.pk}",
         "items-0-quantity": "2.5",
         "items-0-unit": "kg",
         "items-0-unit_display": "kg",
@@ -204,6 +203,81 @@ def test_recipe_create_partial_success_returns_close_only_payload(client, item_f
     assert Recipe.objects.filter(name="Test Bread").exists()
     assert payload.get("htmx", {}).get("event") == "recipes:refresh"
     assert payload.get("htmx", {}).get("detail", {}).get("action") == "created"
+
+
+@pytest.mark.django_db
+def test_recipe_create_partial_persists_sub_recipe_line(client, item_factory):
+    flour = item_factory(name="Flour")
+    sub = Recipe.objects.create(
+        name="Roux Base",
+        is_active=True,
+        type=Recipe.Type.SUB,
+        default_yield_qty=Decimal("1"),
+        default_yield_unit="kg",
+    )
+    RecipeItem.objects.create(
+        recipe=sub,
+        item=flour,
+        quantity=Decimal("1"),
+        unit="kg",
+        loss_pct=Decimal("0"),
+    )
+    url = reverse("recipe_create_partial")
+    data = {
+        "name": "Mother Sauce",
+        "description_and_plating": "",
+        "is_active": "on",
+        "type": Recipe.Type.FINAL,
+        "default_yield_qty": "1",
+        "default_yield_unit": "L",
+        "items-TOTAL_FORMS": "1",
+        "items-INITIAL_FORMS": "0",
+        "items-MIN_NUM_FORMS": "0",
+        "items-MAX_NUM_FORMS": "1000",
+        "items-0-ingredient": f"r:{sub.pk}",
+        "items-0-quantity": "0.5",
+        "items-0-unit": "kg",
+        "items-0-unit_display": "kg",
+        "items-0-loss_pct": "0",
+        "items-0-DELETE": "",
+    }
+    response = client.post(
+        url,
+        data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    assert response.status_code == 200
+    recipe = Recipe.objects.get(name="Mother Sauce")
+    ri = recipe.items.first()
+    assert ri is not None
+    assert ri.sub_recipe_id == sub.pk
+    assert ri.item_id is None
+
+
+@pytest.mark.django_db
+def test_recipe_meta_returns_cost_per_yield_unit(client, item_factory):
+    flour = item_factory(name="Flour", last_purchase_price=Decimal("10.00"))
+    sub = Recipe.objects.create(
+        name="Meta Sub",
+        is_active=True,
+        type=Recipe.Type.SUB,
+        default_yield_qty=Decimal("2"),
+        default_yield_unit="kg",
+    )
+    RecipeItem.objects.create(
+        recipe=sub,
+        item=flour,
+        quantity=Decimal("1"),
+        unit="kg",
+        loss_pct=Decimal("0"),
+    )
+    url = reverse("recipe_meta", args=[sub.pk])
+    response = client.get(url)
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True
+    assert payload["category"] == "Sub-Recipe"
+    assert payload["cost_per_base_unit"] == pytest.approx(5.0)
 
 
 @pytest.mark.django_db

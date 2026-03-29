@@ -65,7 +65,7 @@
     // Dropdown list (portal)
     const dropdown = document.createElement("div");
     dropdown.className =
-      "predictive-dropdown-list fixed z-[60] bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden";
+      "predictive-dropdown-list fixed z-[60] bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-y-auto hidden";
     dropdown.style.minWidth = container.offsetWidth + "px";
 
     // Initialize visible value from the original select
@@ -84,7 +84,7 @@
       list.forEach((opt) => {
         const el = document.createElement("div");
         el.className =
-          "predictive-dropdown-option px-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-white/10 border-b border-gray-100 dark:border-gray-700 last:border-b-0";
+          "predictive-dropdown-option px-3 py-2 cursor-pointer hover:bg-surfaceSubtle border-b border-border last:border-b-0 text-bodyText";
         if (opt.ingredientKind === "sub") {
           el.classList.add("predictive-dropdown-option--sub");
         }

@@ -1,16 +1,16 @@
 {% load icon_tags %}
 {% if href %}
-<a href="{{ href }}" class="block rounded-2xl shadow-card hover:shadow-overlay transition {% if not warning and not info %}bg-surface border border-border{% endif %}"{% if warning %} style="background:#FFFBEB;border:1px solid #F59E0B"{% elif info %} style="background:#EFF6FF;border:1px solid #93C5FD"{% endif %}>
+<a href="{{ href }}" class="block rounded-2xl shadow-card hover:shadow-overlay transition {% if warning %}bg-warning-soft border border-warning-strong{% elif info %}bg-info-soft border border-info-strong{% else %}bg-surface border border-border{% endif %}">
 {% else %}
-<div class="rounded-2xl shadow-card {% if not warning and not info %}bg-surface border border-border{% endif %}"{% if warning %} style="background:#FFFBEB;border:1px solid #F59E0B"{% elif info %} style="background:#EFF6FF;border:1px solid #93C5FD"{% endif %}>
+<div class="rounded-2xl shadow-card {% if warning %}bg-warning-soft border border-warning-strong{% elif info %}bg-info-soft border border-info-strong{% else %}bg-surface border border-border{% endif %}">
 {% endif %}
   <div class="p-4">
     <div class="flex items-center gap-3">
-      <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center {% if not warning and not info %}bg-surfaceSubtle{% endif %}"{% if warning %} style="background:#FEF3C7"{% elif info %} style="background:#DBEAFE"{% endif %}>
+      <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center {% if warning %}bg-warning-strong/15 text-warning-default{% elif info %}bg-info-strong/15 text-info-default{% else %}bg-surfaceSubtle text-bodyText{% endif %}">
         {% if warning %}
-          <span style="color:#D97706">{% icon icon 'w-5 h-5' variant='solid' size=20 aria_label='' %}</span>
+          {% icon icon 'w-5 h-5' variant='solid' size=20 aria_label='' %}
         {% elif info %}
-          <span style="color:#1D4ED8">{% icon icon 'w-5 h-5' variant='solid' size=20 aria_label='' %}</span>
+          {% icon icon 'w-5 h-5' variant='solid' size=20 aria_label='' %}
         {% else %}
           {% with 'w-5 h-5 text-bodyText' as icon_classes %}
             {% icon icon icon_classes variant='solid' size=20 aria_label='' %}
@@ -18,8 +18,8 @@
         {% endif %}
       </div>
       <div class="min-w-0">
-        <p class="text-xs font-medium uppercase tracking-wide truncate"{% if warning %} style="color:#92400E"{% elif info %} style="color:#1E40AF"{% else %} style="color:#4B5563"{% endif %}>{{ label }}</p>
-        <p class="text-2xl font-semibold leading-tight"{% if warning %} style="color:#D97706"{% elif info %} style="color:#1D4ED8"{% else %} class="text-bodyText"{% endif %}>{{ value }}</p>
+        <p class="text-xs font-medium uppercase tracking-wide truncate {% if warning %}text-warning-text{% elif info %}text-info-text{% else %}text-gray-500{% endif %}">{{ label }}</p>
+        <p class="text-2xl font-semibold leading-tight {% if warning %}text-warning-default{% elif info %}text-info-default{% else %}text-bodyText{% endif %}">{{ value }}</p>
       </div>
     </div>
   </div>

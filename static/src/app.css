@@ -251,6 +251,14 @@ html.dark .ring-opacity-5 {
   --tw-ring-opacity: 0.12;
 }
 
+/* Hardcoded bg-white + remapped gray text broke contrast in dark mode — map to surface */
+html.dark .bg-white {
+  background-color: var(--color-surface);
+}
+html.dark .bg-white\/40 {
+  background-color: rgb(31 41 55 / 0.4);
+}
+
 @layer components {
   /* Tokens as utility aliases */
   .card {

@@ -6,6 +6,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.models import (
     BooleanField,
     Case,
+    Count,
     F,
     Prefetch,
     Q,
@@ -457,9 +458,19 @@ class ItemSearchView(TemplateView):
         if dep_raw:
             try:
                 if str(dep_raw).isdigit():
-                    qs = qs.filter(departments__department_id=int(dep_raw))
+                    dep_id = int(dep_raw)
+                    qs = (
+                        qs.annotate(_ndept=Count("departments", distinct=True))
+                        .filter(Q(_ndept=0) | Q(departments__department_id=dep_id))
+                        .distinct()
+                    )
                 else:
-                    qs = qs.filter(departments__name__iexact=str(dep_raw))
+                    name = str(dep_raw)
+                    qs = (
+                        qs.annotate(_ndept=Count("departments", distinct=True))
+                        .filter(Q(_ndept=0) | Q(departments__name__iexact=name))
+                        .distinct()
+                    )
             except Exception:
                 pass
         items = qs[:20]

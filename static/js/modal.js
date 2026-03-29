@@ -50,6 +50,9 @@
     if (!skipInit) {
       // Defer heavy enhancements to next frame to keep first paint snappy
       requestAnimationFrame(() => {
+        if (window.htmx && typeof window.htmx.process === "function") {
+          window.htmx.process(content);
+        }
         if (window.initMultiselectChips) window.initMultiselectChips(content);
         // Initialize indent form first so it can mark inputs to opt out of overlays
         if (window.initIndentForm) window.initIndentForm(content);
@@ -75,6 +78,9 @@
     content.innerHTML = `<div class="drawer ${side} wide">${html}</div>`;
     if (!skipInit) {
       requestAnimationFrame(() => {
+        if (window.htmx && typeof window.htmx.process === "function") {
+          window.htmx.process(content);
+        }
         if (window.initMultiselectChips) window.initMultiselectChips(content);
         if (window.initIndentForm) window.initIndentForm(content);
         if (window.initPredictiveDropdowns)

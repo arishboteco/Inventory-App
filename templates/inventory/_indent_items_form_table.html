@@ -1,27 +1,62 @@
 {% extends "components/responsive_table.html" %}
+{% load form_tags %}
 
-{% block caption %}<caption>Indent Items</caption>{% endblock %}
+{% block caption %}
+<caption class="text-left text-sm font-semibold text-bodyText py-2 px-1 [caption-side:top]">Indent Items</caption>
+{% endblock %}
+
+{% block table_class %}min-w-full w-full table-fixed text-label{% endblock %}
 
 {% block headers %}
-  <th scope="col">Item</th>
-  <th scope="col">Qty</th>
-  <th scope="col">Notes</th>
-  <th scope="col"></th>
+  <th scope="col" class="w-[48%] min-w-[10rem] align-bottom pb-2">Item</th>
+  <th scope="col" class="w-[14%] min-w-[5rem] align-bottom pb-2">Qty</th>
+  <th scope="col" class="w-[30%] min-w-[6rem] align-bottom pb-2">Notes</th>
+  <th scope="col" class="w-12 align-bottom pb-2" aria-label="Actions"></th>
 {% endblock %}
 
 {% block rows %}
   {% for item_form in formset %}
-    <tr class="form-row" data-indent-table>
-      <td>
-        {% include "components/form_field.html" with field=item_form.item %}
+    <tr class="form-row align-top" data-indent-table>
+      <td class="align-top py-2 pr-2">
+        <div class="space-y-1">
+          <label for="{{ item_form.item.id_for_label }}" class="sr-only">{{ item_form.item.label }}</label>
+          {{ item_form.item|add_class:"h-9 text-sm w-full max-w-full" }}
+          {% if item_form.item.errors %}
+          <ul class="text-xs text-danger list-disc pl-4">
+            {% for error in item_form.item.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
         <div data-item-meta class="mt-1 text-xs text-gray-500"></div>
         <div data-item-error class="mt-1 text-xs text-danger hidden"></div>
       </td>
-    <td>{% include "components/form_field.html" with field=item_form.requested_qty %}</td>
-    <td>{% include "components/form_field.html" with field=item_form.notes %}</td>
-    <td><button type="button" class="remove-row p-1.5 text-gray-400 hover:text-danger rounded focus:outline-none focus:ring-2 focus:ring-danger transition" title="Remove row" aria-label="Remove row">
-      <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button></td>
-  </tr>
+      <td class="align-top py-2 pr-2">
+        <div class="space-y-1">
+          <label for="{{ item_form.requested_qty.id_for_label }}" class="sr-only">{{ item_form.requested_qty.label }}</label>
+          {{ item_form.requested_qty|add_class:"h-9 text-sm w-full max-w-full" }}
+          {% if item_form.requested_qty.errors %}
+          <ul class="text-xs text-danger list-disc pl-4">
+            {% for error in item_form.requested_qty.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </td>
+      <td class="align-top py-2 pr-2">
+        <div class="space-y-1">
+          <label for="{{ item_form.notes.id_for_label }}" class="sr-only">{{ item_form.notes.label }}</label>
+          {{ item_form.notes|add_class:"h-9 text-sm w-full max-w-full" }}
+          {% if item_form.notes.errors %}
+          <ul class="text-xs text-danger list-disc pl-4">
+            {% for error in item_form.notes.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </td>
+      <td class="align-top py-2 text-right">
+        <button type="button" class="remove-row p-1.5 text-gray-400 hover:text-danger rounded focus:outline-none focus:ring-2 focus:ring-danger transition" title="Remove row" aria-label="Remove row">
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </td>
+    </tr>
   {% endfor %}
 {% endblock %}

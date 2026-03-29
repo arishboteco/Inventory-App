@@ -9,7 +9,7 @@ and data hooks for sort and column toggles. Consumers can override blocks.
   data-table-key="{% if table_id %}{{ table_id }}{% elif container_id %}{{ container_id }}{% else %}{{ request.path|default:'default' }}{% endif %}">
   {% block actions %}{% endblock %}
   <div class="sr-only" aria-live="polite" data-table-announcer></div>
-  <table class="min-w-full w-full table-auto text-label"{% if table_id %} id="{{ table_id }}"{% endif %}>
+  <table class="{% block table_class %}min-w-full w-full table-auto text-label{% endblock %}"{% if table_id %} id="{{ table_id }}"{% endif %}>
     {% block caption %}<caption class="sr-only">List</caption>{% endblock %}
     {% block thead_class %}<thead class="text-left text-xs font-semibold uppercase tracking-wider bg-surfaceSubtle text-gray-600">{% endblock %}
       <tr>

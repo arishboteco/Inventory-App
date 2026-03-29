@@ -2,6 +2,7 @@ import pytest
 from django.urls import reverse
 
 from inventory.models import Item, StockTransaction
+from inventory.models.departments import Department
 from inventory.services import item_service
 
 pytestmark = pytest.mark.django_db
@@ -203,3 +204,17 @@ def test_toggle_item_post(client):
     assert resp.status_code == 200
     item.refresh_from_db()
     assert item.is_active is True
+
+
+def test_item_search_includes_unassigned_when_department_filter(client):
+    """Department-scoped search still lists items with no department (indent UX)."""
+    dept = Department.objects.create(name="Kitchen SearchDept")
+    _create_item(name="Sugar Universal")
+    assigned = _create_item(name="Sugar Kitchen Only")
+    assigned.departments.add(dept)
+    url = reverse("item_search")
+    resp = client.get(url, {"q": "Sugar", "department": str(dept.department_id)})
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert "Sugar Universal" in content
+    assert "Sugar Kitchen Only" in content

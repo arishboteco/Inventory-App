@@ -1,4 +1,23 @@
 (function () {
+  function invalidateItemSuggestCache() {
+    const dl = document.getElementById("item-options");
+    if (dl) dl.removeAttribute("data-last-suggest-key");
+  }
+
+  if (!window._itemSuggestDeptInvalidateBound) {
+    window._itemSuggestDeptInvalidateBound = true;
+    document.addEventListener("change", function (e) {
+      const t = e.target;
+      if (t && (t.id === "department-ui" || t.id === "id_department")) {
+        invalidateItemSuggestCache();
+      }
+    });
+    document.addEventListener("input", function (e) {
+      const t = e.target;
+      if (t && t.id === "department-ui") invalidateItemSuggestCache();
+    });
+  }
+
   function buildOverlay(input) {
     const overlayPref = (
       input.getAttribute("data-overlay") || ""
@@ -31,32 +50,34 @@
 
     let activeIndex = -1;
     async function render(filter) {
-      const q = (filter || "").toLowerCase();
+      const rawFilter = filter || "";
+      const q = rawFilter.toLowerCase();
       // If this input has an hx-get for suggestions, proactively refresh the datalist
       // Some environments don't reliably send the event to HTMX when typing inside
       // overlays; refreshing here guarantees options are current.
+      const depHidden = document.getElementById("id_department");
+      const depUI = document.getElementById("department-ui");
+      const depVal =
+        (depHidden && depHidden.value) || (depUI && depUI.value) || "";
       try {
         const suggestUrl =
           input.getAttribute("hx-get") ||
           input.getAttribute("data-suggest-url");
         if (suggestUrl) {
-          const lastQ = datalist.getAttribute("data-last-q") || "";
-          if (q !== lastQ) {
-            datalist.setAttribute("data-last-q", q);
+          const suggestKey = depVal + "\u001e" + q;
+          const lastKey = datalist.getAttribute("data-last-suggest-key");
+          if (lastKey !== suggestKey) {
             const url = new URL(suggestUrl, window.location.origin);
-            if (q) url.searchParams.set("q", q);
-            // Also include the field's name form for servers expecting *-item
-            if (input.name && q) url.searchParams.set(input.name, q);
-            const depHidden = document.getElementById("id_department");
-            const depUI = document.getElementById("department-ui");
-            const depVal =
-              (depHidden && depHidden.value) || (depUI && depUI.value) || "";
+            url.searchParams.set("q", rawFilter.trim());
+            if (input.name) url.searchParams.set(input.name, rawFilter.trim());
             if (depVal) url.searchParams.set("department", depVal);
-            const html = await fetch(url.toString(), {
+            const resp = await fetch(url.toString(), {
               headers: { "X-Requested-With": "fetch" },
-            }).then((r) => (r.ok ? r.text() : ""));
-            if (html) {
-              datalist.innerHTML = html;
+            });
+            if (resp.ok) {
+              const html = await resp.text();
+              datalist.innerHTML = html || "";
+              datalist.setAttribute("data-last-suggest-key", suggestKey);
             }
           }
         }
@@ -72,7 +93,8 @@
       activeIndex = -1;
       items.forEach((o, idx) => {
         const row = document.createElement("div");
-        row.className = "px-3 py-2 cursor-pointer hover:bg-blue-50";
+        row.className =
+          "px-3 py-2 cursor-pointer hover:bg-surfaceSubtle text-bodyText";
         const label = o.textContent || o.value || "";
         row.textContent = label;
         row.setAttribute("role", "option");
@@ -89,7 +111,14 @@
       if (items.length === 0) {
         const msg = document.createElement("div");
         msg.className = "px-3 py-2 text-gray-500";
-        msg.textContent = q ? "No matches" : "Type to search...";
+        const optCount = datalist.querySelectorAll("option").length;
+        if (optCount === 0) {
+          msg.textContent = depVal
+            ? "No items for this department. Try another department or type to search."
+            : "No items available.";
+        } else {
+          msg.textContent = q ? "No matches" : "Type to search…";
+        }
         overlay.appendChild(msg);
       }
     }
@@ -175,14 +204,14 @@
       if (e.key === "ArrowDown") {
         e.preventDefault();
         activeIndex = Math.min(activeIndex + 1, rows.length - 1);
-        rows.forEach((r) => r.classList.remove("bg-blue-50"));
-        rows[activeIndex].classList.add("bg-blue-50");
+        rows.forEach((r) => r.classList.remove("bg-surfaceSubtle"));
+        rows[activeIndex].classList.add("bg-surfaceSubtle");
         rows[activeIndex].scrollIntoView({ block: "nearest" });
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         activeIndex = Math.max(activeIndex - 1, 0);
-        rows.forEach((r) => r.classList.remove("bg-blue-50"));
-        rows[activeIndex].classList.add("bg-blue-50");
+        rows.forEach((r) => r.classList.remove("bg-surfaceSubtle"));
+        rows[activeIndex].classList.add("bg-surfaceSubtle");
         rows[activeIndex].scrollIntoView({ block: "nearest" });
       } else if (e.key === "Enter" && activeIndex >= 0) {
         e.preventDefault();

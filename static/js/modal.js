@@ -545,6 +545,82 @@
     if (!form.hasAttribute("data-modal-form")) return;
     e.preventDefault();
     try {
+      const cssEscape = (s) => {
+        try {
+          return window.CSS && window.CSS.escape
+            ? window.CSS.escape(String(s))
+            : String(s);
+        } catch (_) {
+          return String(s);
+        }
+      };
+      const clearModalStructuredErrors = (formRoot) => {
+        formRoot.querySelectorAll("[data-modal-field-error]").forEach((el) => {
+          el.remove();
+        });
+        formRoot.querySelectorAll("[data-modal-invalid-outline]").forEach((el) => {
+          el.classList.remove("ring-2", "ring-red-400", "border-red-400");
+          el.removeAttribute("data-modal-invalid-outline");
+        });
+      };
+      /** Map ``build_form_error_payload``-shaped errors onto Django widget ids; return first control for focus. */
+      const applyStructuredFieldErrors = (formRoot, errors) => {
+        if (!errors || typeof errors !== "object") return null;
+        const prefix = formRoot.getAttribute("data-formset-prefix") || "items";
+        let firstEl = null;
+        const markFirst = (el) => {
+          if (el instanceof HTMLElement && !firstEl) firstEl = el;
+        };
+        const attachMsg = (control, messages) => {
+          if (!(control instanceof HTMLElement) || !messages || !messages.length)
+            return;
+          const box = document.createElement("div");
+          box.setAttribute("data-modal-field-error", "");
+          box.className = "text-sm text-red-600 mt-1 space-y-0.5";
+          messages.forEach((m) => {
+            const p = document.createElement("p");
+            p.textContent = m;
+            box.appendChild(p);
+          });
+          control.insertAdjacentElement("afterend", box);
+          control.classList.add("ring-2", "ring-red-400", "border-red-400");
+          control.setAttribute("data-modal-invalid-outline", "");
+          markFirst(control);
+        };
+        const findByIdOrName = (id, name) => {
+          const byId = id ? formRoot.querySelector(`#${cssEscape(id)}`) : null;
+          if (byId) return byId;
+          if (name)
+            return formRoot.querySelector(`[name="${cssEscape(name)}"]`);
+          return null;
+        };
+        if (errors.form && typeof errors.form === "object") {
+          Object.keys(errors.form).forEach((fieldName) => {
+            const msgs = errors.form[fieldName];
+            if (!Array.isArray(msgs) || !msgs.length) return;
+            const id = `id_${fieldName}`;
+            const el = findByIdOrName(id, fieldName);
+            if (el) attachMsg(el, msgs);
+          });
+        }
+        if (Array.isArray(errors.formset)) {
+          errors.formset.forEach((row) => {
+            if (!row || typeof row !== "object" || !row.errors) return;
+            const idx = row.index;
+            if (!Number.isInteger(idx)) return;
+            Object.keys(row.errors).forEach((fieldName) => {
+              const msgs = row.errors[fieldName];
+              if (!Array.isArray(msgs) || !msgs.length) return;
+              const id = `id_${prefix}-${idx}-${fieldName}`;
+              const name = `${prefix}-${idx}-${fieldName}`;
+              const el = findByIdOrName(id, name);
+              if (el) attachMsg(el, msgs);
+            });
+          });
+        }
+        return firstEl;
+      };
+      clearModalStructuredErrors(form);
       // Pre-submit guard: sync department hidden field from UI select if present
       try {
         const hiddenDept = form.querySelector("#id_department");
@@ -601,14 +677,19 @@
       };
       const showInlineError = (msg, detail) => {
         try {
+          clearModalStructuredErrors(form);
           let alert = form.querySelector("[data-modal-error]");
           if (!alert) {
             alert = document.createElement("div");
             alert.setAttribute("data-modal-error", "");
-            alert.className =
-              "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm";
             form.insertBefore(alert, form.firstElementChild);
           }
+          alert.setAttribute("role", "alert");
+          alert.setAttribute("aria-live", "assertive");
+          alert.setAttribute("aria-atomic", "true");
+          alert.setAttribute("tabindex", "-1");
+          alert.className =
+            "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm outline-none focus:ring-2 focus:ring-red-300";
           alert.replaceChildren();
           const lead = document.createElement("div");
           lead.textContent = msg;
@@ -618,17 +699,16 @@
               ? formatStructuredErrors(detail.errors)
               : null;
           if (extra) alert.appendChild(extra);
-          alert.scrollIntoView({ behavior: "smooth", block: "center" });
+          const firstBad = applyStructuredFieldErrors(
+            form,
+            detail && detail.errors,
+          );
+          const focusTarget = firstBad || alert;
+          focusTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+          try {
+            focusTarget.focus({ preventScroll: true });
+          } catch (_) {}
         } catch (_) {}
-      };
-      const cssEscape = (s) => {
-        try {
-          return window.CSS && window.CSS.escape
-            ? window.CSS.escape(String(s))
-            : String(s);
-        } catch (_) {
-          return String(s);
-        }
       };
       const hiddenDept = form.querySelector("#id_department");
       const uiDept = form.querySelector("#department-ui");
@@ -832,11 +912,18 @@
           form.querySelector("[data-modal-error]") ||
           document.createElement("div");
         alert.setAttribute("data-modal-error", "");
+        alert.setAttribute("role", "alert");
+        alert.setAttribute("aria-live", "assertive");
+        alert.setAttribute("aria-atomic", "true");
+        alert.setAttribute("tabindex", "-1");
         alert.className =
-          "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm";
+          "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm outline-none focus:ring-2 focus:ring-red-300";
         alert.textContent = msg;
         if (!alert.parentElement)
           form.insertBefore(alert, form.firstElementChild);
+        try {
+          alert.focus({ preventScroll: true });
+        } catch (_) {}
       } catch (_) {}
       if (window.console) console.error("[modal] fatal submit error", fatal);
       if (window.notifications) window.notifications.showToast(msg, "error");

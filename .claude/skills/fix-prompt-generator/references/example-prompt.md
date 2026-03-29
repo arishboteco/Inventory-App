@@ -16,7 +16,7 @@ This is a real example of a well-structured fix prompt generated for a Django in
 After all three fixes:
 1. Manual PO creation saves a PO and returns `{"ok": true}`
 2. Consolidation Planner → Confirm & Create → redirects to `/purchase-orders/` with new POs listed
-3. Quick PO button opens a drawer (or is hidden if the view doesn't exist)
+3. **New Purchase Order** (drawer) opens, saves, and returns `{"ok": true}` when valid
 
 ## Forbidden Actions
 
@@ -76,16 +76,16 @@ Set `line_total = quantity * unit_price` before saving each PO item.
 ✅ Fix 2 applied: line_total auto-computed in model save() and view
 ```
 
-## Fix 3 of 3 — Quick PO button does nothing
+## Fix 3 of 3 — PO create drawer does not save (JS / JSON)
 
 ### Steps
-1. Check if URL exists: `grep -rn "quick.create" --include="*.py"`
-2. If no URL → hide the button (safest)
-3. If URL exists → debug the JS handler (check event delegation)
+1. Confirm partial URL and `data-modal-form` wiring: `purchase_order_create_partial`
+2. Ensure POST returns JSON for `X-Requested-With: XMLHttpRequest` and `partial=1`
+3. If validation fails, return 400 with structured `errors` for the modal list
 
 ### Checkpoint Output
 ```
-✅ Fix 3 applied: Quick PO button [hidden/fixed]
+✅ Fix 3 applied: PO create drawer saves and surfaces field errors in the modal
 ```
 
 ## Final Verification

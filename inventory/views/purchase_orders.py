@@ -417,34 +417,17 @@ class PurchaseOrderCreatePartialView(View):
         form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
-            po_data: dict[str, Any] = {
-                "supplier_id": form.cleaned_data["supplier"].pk,
-                "order_date": form.cleaned_data["order_date"],
-                "expected_delivery_date": form.cleaned_data.get(
-                    "expected_delivery_date"
-                ),
-                "status": form.cleaned_data.get("status"),
-                "notes": form.cleaned_data.get("notes"),
-            }
-            items_data: list[dict[str, Any]] = []
-            for item_form in formset.cleaned_data:
-                if item_form and not item_form.get("DELETE", False):
-                    items_data.append(
-                        {
-                            "item_id": item_form["item"].pk,
-                            "quantity_ordered": item_form["quantity_ordered"],
-                            "unit_price": item_form["unit_price"],
-                        }
-                    )
             try:
-                po_id = purchase_order_service.create_po(po_data, items_data)
+                po = purchase_order_service.save_purchase_order_from_forms(
+                    form, formset
+                )
                 return JsonResponse(
                     {
                         "ok": True,
-                        "id": po_id,
+                        "id": po.pk,
                         "message": "Purchase order created",
                         "redirect": reverse(
-                            "purchase_order_detail", kwargs={"pk": po_id}
+                            "purchase_order_detail", kwargs={"pk": po.pk}
                         ),
                     }
                 )
@@ -467,27 +450,8 @@ def purchase_order_create(request):
         form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
-            po_data = {
-                "supplier_id": form.cleaned_data["supplier"].pk,
-                "order_date": form.cleaned_data["order_date"],
-                "expected_delivery_date": form.cleaned_data.get(
-                    "expected_delivery_date"
-                ),
-                "status": form.cleaned_data.get("status"),
-                "notes": form.cleaned_data.get("notes"),
-            }
-            items_data: list[dict[str, Any]] = []
-            for item_form in formset.cleaned_data:
-                if item_form and not item_form.get("DELETE", False):
-                    items_data.append(
-                        {
-                            "item_id": item_form["item"].pk,
-                            "quantity_ordered": item_form["quantity_ordered"],
-                            "unit_price": item_form["unit_price"],
-                        }
-                    )
             try:
-                purchase_order_service.create_po(po_data, items_data)
+                purchase_order_service.save_purchase_order_from_forms(form, formset)
                 return redirect("purchase_orders_list")
             except PurchaseOrderServiceError as exc:
                 messages.error(request, str(exc), extra_tags="toast")
@@ -515,8 +479,7 @@ def purchase_order_edit(request, pk: int):
         )
         formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
+            purchase_order_service.save_purchase_order_from_forms(form, formset)
             return redirect("purchase_order_detail", pk=pk)
     else:
         form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
@@ -564,8 +527,7 @@ class PurchaseOrderEditPartialView(View):
         )
         formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
+            purchase_order_service.save_purchase_order_from_forms(form, formset)
             return JsonResponse(
                 {
                     "ok": True,

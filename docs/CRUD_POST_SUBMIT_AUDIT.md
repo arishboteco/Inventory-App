@@ -29,7 +29,6 @@ All primary nav targets from `NAVIGATION_GROUPS` resolve to names in `ui_urls.py
 | Stock | Adjust / waste / transfer modals | `stock_movements` | FullPageForm | Redirect + `?section=...` on errors; PRG flash | Same pattern |
 | Stock | Bulk CSV modal | `stock_movements` | FullPageForm | Posts to same view | `_stock_bulk_modal.html` |
 | PO | Create / edit drawer | `purchase_order_create_partial`, `purchase_order_edit_partial` | Drawer JSON | JSON | `data-requires-line-items` |
-| PO | Quick create | `purchase_order_quick_create_partial` | Drawer JSON | JSON | — |
 | PO | Receive drawer | `purchase_order_receive_partial` | Drawer JSON | JSON `redirect` → PO detail | `data-modal-form` |
 | PO | Mark ordered | `purchase_order_mark_ordered` | FullPageForm | Redirect detail | Full page on PO detail |
 | Indents | Create drawer | `indent_create` `?partial=1` | Drawer JSON | JSON | — |
@@ -48,7 +47,9 @@ All primary nav targets from `NAVIGATION_GROUPS` resolve to names in `ui_urls.py
 ## Pattern grep — `data-modal-form` coverage
 
 Templates **with** `data-modal-form` (drawer JSON path):  
-`recipes/_form_partial.html`, `purchase_orders/_receive_partial.html`, `purchase_orders/_form_partial.html`, `purchase_orders/_quick_form_partial.html`, `_supplier_form_partial.html`, `_item_create_partial.html`, `_item_form_partial.html`, `_indent_create_partial.html`, `_bulk_upload_partial.html`, `_indent_detail_partial.html` (main update form only), `_item_create_bare.html`.
+`recipes/_form_partial.html`, `purchase_orders/_receive_partial.html`, `purchase_orders/_form_partial.html`, `_supplier_form_partial.html`, `_item_create_partial.html`, `_item_form_partial.html`, `_indent_create_partial.html`, `_bulk_upload_partial.html`, `_indent_detail_partial.html` (main update form only), `_item_create_bare.html`.
+
+See [drawer_modal_htmx_migration.md](drawer_modal_htmx_migration.md) for a full inventory and HTMX migration notes.
 
 **Native modals on stock** (`action=""`, no `data-modal-form`):  
 `_receive_form_modal.html`, `_adjust_form_modal.html`, `_waste_form_modal.html` — rely on current page URL being `/stock-movements/`.

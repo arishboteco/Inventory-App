@@ -33,6 +33,8 @@ def test_purchase_order_create_partial_get_has_drawer_hooks(po_staff_client):
     assert 'id="po-item-prices"' in content
     assert 'type="application/json"' in content
     assert 'id="items-formset"' in content
+    assert "supplier-options" in content
+    assert "hx-get" in content
 
 
 def test_purchase_order_create_partial_post_validation_returns_json(po_staff_client):

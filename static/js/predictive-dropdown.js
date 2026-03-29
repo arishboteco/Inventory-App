@@ -14,6 +14,59 @@
     return txt;
   }
 
+  function collapseWhitespace(s) {
+    return String(s || "")
+      .trim()
+      .replace(/\s+/g, " ");
+  }
+
+  /**
+   * Match typed text to an option value (for syncing hidden select with visible label).
+   * Tries exact (case-insensitive), collapsed-whitespace exact, single includes-match,
+   * then unique prefix match.
+   */
+  function resolveOptionValueFromTyped(typed, options) {
+    const raw = String(typed || "").trim();
+    if (!raw || !options.length) return "";
+    const q = raw.toLowerCase();
+    const qCollapsed = collapseWhitespace(raw).toLowerCase();
+
+    let exact = options.find((o) => o.text.toLowerCase() === q);
+    if (exact) return exact.value;
+
+    exact = options.find(
+      (o) => collapseWhitespace(o.text).toLowerCase() === qCollapsed,
+    );
+    if (exact) return exact.value;
+
+    const includes = options.filter((o) =>
+      o.text.toLowerCase().includes(q),
+    );
+    if (includes.length === 1) return includes[0].value;
+
+    const prefixes = options.filter((o) =>
+      o.text.toLowerCase().startsWith(q),
+    );
+    if (prefixes.length === 1) return prefixes[0].value;
+
+    return "";
+  }
+
+  function applyResolvedValue(originalSelect, textInput, options, newVal) {
+    const prev = originalSelect.value;
+    originalSelect.value = newVal;
+    const match = options.find((o) => o.value === originalSelect.value);
+    if (match) {
+      textInput.value = match.text;
+    } else if (!newVal) {
+      textInput.value = "";
+    }
+    if (originalSelect.value !== prev) {
+      originalSelect.dispatchEvent(new Event("input", { bubbles: true }));
+      originalSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+
   function upgradeSelect(originalSelect) {
     // Only enhance selects explicitly marked as predictive
     if (!originalSelect.classList.contains("predictive")) return;
@@ -72,30 +125,28 @@
     const selected = rawOptions.find((o) => o.selected && o.value);
     if (selected) textInput.value = selected.text;
 
-    // Helper: dispatch change/input on the original select (category_id)
-    function dispatchSelectChange() {
-      originalSelect.dispatchEvent(new Event("input", { bubbles: true }));
-      originalSelect.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-
     // Render dropdown options
     function renderOptions(list) {
       dropdown.innerHTML = "";
       list.forEach((opt) => {
         const el = document.createElement("div");
         el.className =
-          "predictive-dropdown-option px-3 py-2 cursor-pointer hover:bg-surfaceSubtle border-b border-border last:border-b-0 text-bodyText";
+          "predictive-dropdown-option flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-surfaceSubtle border-b border-border last:border-b-0 text-bodyText";
         if (opt.ingredientKind === "sub") {
           el.classList.add("predictive-dropdown-option--sub");
+          const badge = document.createElement("span");
+          badge.className = "predictive-dropdown-option-badge shrink-0";
+          badge.textContent = "Sub";
+          el.appendChild(badge);
         }
-        el.textContent = opt.text;
+        const label = document.createElement("span");
+        label.className = "min-w-0 truncate";
+        label.textContent = opt.text;
+        el.appendChild(label);
         el.addEventListener("click", () => {
-          textInput.value = opt.text;
-          const prev = originalSelect.value;
-          originalSelect.value = opt.value;
           dropdown.classList.add("hidden");
           textInput.blur();
-          if (originalSelect.value !== prev) dispatchSelectChange();
+          applyResolvedValue(originalSelect, textInput, options, opt.value);
         });
         dropdown.appendChild(el);
       });
@@ -113,18 +164,18 @@
       renderOptions(filtered);
       dropdown.classList.remove("hidden");
 
-      // Exact match → select and notify
-      const exact = filtered.find((o) => o.text.toLowerCase() === q.trim());
-      const newVal = exact ? exact.value : "";
-      if (originalSelect.value !== newVal) {
-        originalSelect.value = newVal;
-        dispatchSelectChange();
+      const newVal = resolveOptionValueFromTyped(e.target.value, filtered);
+      const prev = originalSelect.value;
+      originalSelect.value = newVal;
+      if (originalSelect.value !== prev) {
+        originalSelect.dispatchEvent(new Event("input", { bubbles: true }));
+        originalSelect.dispatchEvent(new Event("change", { bubbles: true }));
       }
     });
 
     // Keyboard navigation
     textInput.addEventListener("keydown", (e) => {
-      const rows = dropdown.querySelectorAll("div");
+      const rows = dropdown.querySelectorAll(".predictive-dropdown-option");
       let idx = Array.from(rows).findIndex((n) =>
         n.classList.contains("bg-blue-100"),
       );
@@ -182,13 +233,8 @@
       setTimeout(() => {
         dropdown.classList.add("hidden");
         if (dropdown._cleanup) dropdown._cleanup();
-        const typed = textInput.value.trim().toLowerCase();
-        const match = options.find((o) => o.text.toLowerCase() === typed);
-        const newVal = match ? match.value : "";
-        if (originalSelect.value !== newVal) {
-          originalSelect.value = newVal;
-          dispatchSelectChange();
-        }
+        const newVal = resolveOptionValueFromTyped(textInput.value, options);
+        applyResolvedValue(originalSelect, textInput, options, newVal);
       }, 150);
     });
 

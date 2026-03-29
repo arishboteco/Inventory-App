@@ -52,7 +52,19 @@
       color: inherit !important;
     }
     .predictive-dropdown-list .predictive-dropdown-option--sub {
-      color: var(--color-accent-text) !important;
+      border-left: 3px solid var(--color-accent) !important;
+      background-color: var(--color-accent-soft) !important;
+      color: var(--color-body-text) !important;
+    }
+    .predictive-dropdown-list .predictive-dropdown-option-badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.25rem;
+      background: var(--color-accent);
+      color: var(--color-surface);
     }
   </style>
   <script src="{% static 'js/predictive-dropdown.js' %}?v={{ STATIC_VERSION }}" defer></script>

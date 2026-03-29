@@ -278,6 +278,35 @@ def test_recipe_meta_returns_cost_per_yield_unit(client, item_factory):
     assert payload["ok"] is True
     assert payload["category"] == "Sub-Recipe"
     assert payload["cost_per_base_unit"] == pytest.approx(5.0)
+    assert payload["yield_dimension"] == "mass"
+    assert any(c["code"] == "GM" for c in payload["unit_choices"])
+
+
+@pytest.mark.django_db
+def test_recipe_meta_respects_display_unit_query(client, item_factory):
+    flour = item_factory(name="Flour", last_purchase_price=Decimal("10.00"))
+    sub = Recipe.objects.create(
+        name="Meta Sub GM",
+        is_active=True,
+        type=Recipe.Type.SUB,
+        default_yield_qty=Decimal("2"),
+        default_yield_unit="kg",
+    )
+    RecipeItem.objects.create(
+        recipe=sub,
+        item=flour,
+        quantity=Decimal("1"),
+        unit="kg",
+        loss_pct=Decimal("0"),
+    )
+    url = reverse("recipe_meta", args=[sub.pk])
+    response = client.get(url, {"display_unit": "GM"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True
+    assert payload["display_unit_code"] == "GM"
+    assert payload["base_unit"] == "g"
+    assert payload["cost_per_base_unit"] == pytest.approx(0.005)
 
 
 @pytest.mark.django_db

@@ -114,6 +114,80 @@ def _build_form_error_payload(form, formset):
     }
 
 
+def _normalize_unit_token(unit_raw: str) -> str:
+    u = (unit_raw or "").strip().upper().replace(".", "")
+    u = "".join(u.split())
+    return u
+
+
+def _recipe_yield_physical_amount(qty: Decimal, unit_raw: str) -> tuple[str, float]:
+    """Dimension and amount in grams (mass), ml (volume), or count (each)."""
+
+    q = float(qty or 1) or 1.0
+    t = _normalize_unit_token(unit_raw)
+    if t in ("KG", "KILO", "KILOS", "KILOGRAM", "KILOGRAMS"):
+        return "mass", q * 1000.0
+    if t in ("G", "GM", "GRAM", "GRAMS"):
+        return "mass", q
+    if t in ("L", "LITER", "LITRE", "LITERS", "LITRES"):
+        return "volume", q * 1000.0
+    if t in ("ML", "MILLILITER", "MILLILITERS", "MILLILITRE", "MILLILITRES"):
+        return "volume", q
+    return "count", q
+
+
+def _unit_choices_for_dimension(dim: str) -> list[dict[str, str]]:
+    if dim == "mass":
+        return [
+            {"code": "GM", "label": "g"},
+            {"code": "KG", "label": "kg"},
+        ]
+    if dim == "volume":
+        return [
+            {"code": "ML", "label": "ml"},
+            {"code": "L", "label": "L"},
+        ]
+    return [{"code": "PC", "label": "pc"}]
+
+
+def _default_display_unit_code(unit_raw: str, dim: str) -> str:
+    t = _normalize_unit_token(unit_raw)
+    if dim == "mass":
+        if t in ("KG", "KILO", "KILOS", "KILOGRAM", "KILOGRAMS"):
+            return "KG"
+        return "GM"
+    if dim == "volume":
+        if t in ("L", "LITER", "LITRE", "LITERS", "LITRES"):
+            return "L"
+        return "ML"
+    return "PC"
+
+
+def _sanitize_display_code(dim: str, code: str) -> str | None:
+    c = (code or "").strip().upper()
+    if dim == "mass":
+        return c if c in ("GM", "KG") else None
+    if dim == "volume":
+        return c if c in ("ML", "L") else None
+    return c if c == "PC" else None
+
+
+def _cost_and_label_for_display(
+    dim: str, cost_per_phys: float, display_code: str
+) -> tuple[float, str]:
+    """cost_per_phys is $ per g, per ml, or per count."""
+
+    if dim == "mass":
+        if display_code == "KG":
+            return cost_per_phys * 1000.0, "kg"
+        return cost_per_phys, "g"
+    if dim == "volume":
+        if display_code == "L":
+            return cost_per_phys * 1000.0, "L"
+        return cost_per_phys, "ml"
+    return cost_per_phys, "pc"
+
+
 def _collect_recipe_line_items(formset):
     """Build line-item dicts for recipe_service from a validated item formset."""
 
@@ -139,26 +213,43 @@ def _collect_recipe_line_items(formset):
 
 @require_GET
 def recipe_meta(request, recipe_id: int):
-    """JSON metadata for sub-recipe rows (cost per yield unit, display unit)."""
+    """JSON metadata for sub-recipe rows (cost per display unit, unit choices)."""
 
     recipe = get_object_or_404(Recipe, pk=recipe_id)
     total = recipe.get_total_cost()
-    sub_yield = Decimal(str(recipe.default_yield_qty or 1)) or Decimal("1")
+    yield_qty = Decimal(str(recipe.default_yield_qty or 1)) or Decimal("1")
+    yield_unit_raw = (recipe.default_yield_unit or "").strip()
+
+    dim, phys_amt = _recipe_yield_physical_amount(yield_qty, yield_unit_raw)
+    if phys_amt <= 0:
+        phys_amt = 1.0
     try:
-        cost_per = float(total / sub_yield) if sub_yield else 0.0
-    except (ArithmeticError, ZeroDivisionError):
-        cost_per = 0.0
-    base_unit = (recipe.default_yield_unit or "").strip()
+        cost_per_phys = float(total) / phys_amt
+    except (ArithmeticError, ZeroDivisionError, ValueError, TypeError):
+        cost_per_phys = 0.0
+
+    unit_choices = _unit_choices_for_dimension(dim)
+    default_code = _default_display_unit_code(yield_unit_raw, dim)
+    req_code = (request.GET.get("display_unit") or "").strip().upper()
+    display_code = _sanitize_display_code(dim, req_code) or default_code
+    cost_per, unit_label = _cost_and_label_for_display(dim, cost_per_phys, display_code)
+
     return JsonResponse(
         {
             "ok": True,
             "recipe_id": recipe.recipe_id,
             "name": recipe.name,
-            "base_unit": base_unit,
-            "unit": base_unit,
+            "base_unit": unit_label,
+            "unit": unit_label,
             "cost_per_base_unit": cost_per,
             "category": "Sub-Recipe",
             "subcategory": "",
+            "yield_dimension": dim,
+            "unit_choices": unit_choices,
+            "display_unit_code": display_code,
+            "default_display_unit_code": default_code,
+            "yield_qty": float(yield_qty),
+            "yield_unit_raw": yield_unit_raw,
         }
     )
 

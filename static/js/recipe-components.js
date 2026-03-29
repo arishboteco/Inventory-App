@@ -114,24 +114,114 @@
     return null;
   }
 
-  function applyIngredientMeta(row, ingredientSelect, scope, data) {
-    var baseId = ingredientSelect.id.replace(/-ingredient$/, "");
-    var unitHidden = document.getElementById(baseId + "-unit");
-    var unitDisplay = document.getElementById(baseId + "-unit_display");
+  function getRowUnitHidden(row) {
+    return row.querySelector(
+      'input[id$="-unit"]:not([id$="-unit_display"])',
+    );
+  }
+
+  function getRowUnitDisplay(row) {
+    return row.querySelector('input[id$="-unit_display"]');
+  }
+
+  function setSubRecipeBadgeVisible(row, show) {
+    var badge = row.querySelector("[data-recipe-sub-badge]");
+    if (!badge) {
+      return;
+    }
+    if (show) {
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  }
+
+  function removeSubRecipeUnitSelect(row) {
+    var cell = row.querySelector("[data-recipe-unit-cell]");
+    if (!cell) {
+      return;
+    }
+    var sel = cell.querySelector("select.recipe-subrecipe-unit-select");
+    if (sel) {
+      sel.remove();
+    }
+  }
+
+  function ensureSubRecipeUnitSelect(row, data, ingredientSelect, scope) {
+    var cell = row.querySelector("[data-recipe-unit-cell]");
+    if (!cell || !data.unit_choices || !data.unit_choices.length) {
+      return;
+    }
+    removeSubRecipeUnitSelect(row);
+    var sel = document.createElement("select");
+    sel.className =
+      "recipe-subrecipe-unit-select w-full rounded-md border border-form-border bg-form-bg px-2 py-2 text-sm text-form-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary";
+    sel.setAttribute("aria-label", "Sub-recipe quantity unit");
+    data.unit_choices.forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = opt.code;
+      o.textContent = opt.label;
+      if (String(opt.code) === String(data.display_unit_code)) {
+        o.selected = true;
+      }
+      sel.appendChild(o);
+    });
+    sel.addEventListener("change", function () {
+      var parsed = parseIngredientValue(ingredientSelect.value);
+      if (!parsed || parsed.kind !== "sub") {
+        return;
+      }
+      fetchSubRecipeMeta(row, parsed.id, sel.value, ingredientSelect, scope);
+    });
+    cell.appendChild(sel);
+  }
+
+  function fetchSubRecipeMeta(row, recipeId, displayCode, ingredientSelect, scope) {
+    if (ingredientSelect.dataset.recipeFetching === "1") {
+      return;
+    }
+    ingredientSelect.dataset.recipeFetching = "1";
+    var q = displayCode ? "?display_unit=" + encodeURIComponent(displayCode) : "";
+    fetch("/recipes/meta/" + encodeURIComponent(recipeId) + "/" + q)
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("Failed to fetch sub-recipe metadata");
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        applyIngredientMeta(row, ingredientSelect, scope, data, {
+          subUnitRefresh: true,
+        });
+      })
+      .catch(function (err) {
+        console.error("Unable to fetch sub-recipe metadata", err);
+      })
+      .finally(function () {
+        delete ingredientSelect.dataset.recipeFetching;
+      });
+  }
+
+  function applyIngredientMeta(row, ingredientSelect, scope, data, metaOpts) {
+    metaOpts = metaOpts || {};
+    var unitHidden = getRowUnitHidden(row);
+    var unitDisplay = getRowUnitDisplay(row);
     if (!data || !data.ok) {
       return;
     }
+    var parsed = parseIngredientValue(ingredientSelect.value);
+    var isSub =
+      parsed &&
+      parsed.kind === "sub" &&
+      Array.isArray(data.unit_choices) &&
+      data.unit_choices.length > 0;
+
     var baseUnitValue = data.base_unit;
     if (!baseUnitValue || !String(baseUnitValue).trim()) {
       baseUnitValue = data.unit;
     }
     var resolvedUnit = baseUnitValue ? String(baseUnitValue).trim() : "";
-    if (unitHidden) {
-      unitHidden.value = resolvedUnit;
-    }
-    if (unitDisplay) {
-      unitDisplay.value = resolvedUnit;
-    }
+
     row.dataset.category = (data.category || "").trim();
     row.dataset.subcategory = (data.subcategory || "").trim();
     row.dataset.itemName = (data.name || "").trim();
@@ -148,6 +238,36 @@
     row.dataset.costPerBaseUnit = String(costPerBaseUnit);
     row.dataset.hasZeroPrice = costPerBaseUnit === 0 ? "1" : "0";
 
+    if (isSub) {
+      setSubRecipeBadgeVisible(row, true);
+      if (unitDisplay) {
+        unitDisplay.classList.add("hidden");
+        unitDisplay.readOnly = true;
+      }
+      if (unitHidden) {
+        unitHidden.value = resolvedUnit;
+      }
+      if (metaOpts.subUnitRefresh) {
+        var existing = row.querySelector("select.recipe-subrecipe-unit-select");
+        if (existing && data.display_unit_code) {
+          existing.value = String(data.display_unit_code);
+        }
+      } else {
+        ensureSubRecipeUnitSelect(row, data, ingredientSelect, scope);
+      }
+    } else {
+      setSubRecipeBadgeVisible(row, false);
+      removeSubRecipeUnitSelect(row);
+      if (unitDisplay) {
+        unitDisplay.classList.remove("hidden");
+        unitDisplay.readOnly = true;
+        unitDisplay.value = resolvedUnit;
+      }
+      if (unitHidden) {
+        unitHidden.value = resolvedUnit;
+      }
+    }
+
     updateRowCost(row, { scope: scope });
   }
 
@@ -155,16 +275,19 @@
     var value = ingredientSelect.value;
     row.dataset.hasItem = value ? "1" : "0";
 
-    var baseId = ingredientSelect.id.replace(/-ingredient$/, "");
-    var unitHidden = document.getElementById(baseId + "-unit");
-    var unitDisplay = document.getElementById(baseId + "-unit_display");
+    var unitHidden = getRowUnitHidden(row);
+    var unitDisplay = getRowUnitDisplay(row);
 
     if (!value) {
+      setSubRecipeBadgeVisible(row, false);
+      removeSubRecipeUnitSelect(row);
       if (unitHidden) {
         unitHidden.value = "";
       }
       if (unitDisplay) {
         unitDisplay.value = "";
+        unitDisplay.classList.remove("hidden");
+        unitDisplay.readOnly = true;
       }
       row.dataset.category = "";
       row.dataset.subcategory = "";
@@ -203,7 +326,7 @@
         return response.json();
       })
       .then(function (data) {
-        applyIngredientMeta(row, ingredientSelect, scope, data);
+        applyIngredientMeta(row, ingredientSelect, scope, data, {});
       })
       .catch(function (err) {
         console.error("Unable to fetch ingredient metadata", err);
@@ -218,14 +341,6 @@
       return;
     }
     row.dataset.recipeEventsBound = "1";
-
-    var ingredientSelect = row.querySelector('select[id$="-ingredient"]');
-    if (ingredientSelect) {
-      ingredientSelect.addEventListener("change", function () {
-        row.dataset.recipeBootstrapped = "1";
-        handleIngredientChange(row, ingredientSelect, scope);
-      });
-    }
 
     var quantityInput = row.querySelector('input[id$="-quantity"]');
     if (quantityInput) {
@@ -259,6 +374,35 @@
     ) {
       window.initPredictiveDropdowns(row);
       row.dataset.predictiveInit = "1";
+    }
+
+    var ingredientSelect = row.querySelector('select[id$="-ingredient"]');
+    if (ingredientSelect) {
+      var lastIngValue = ingredientSelect.value;
+      ingredientSelect.addEventListener("change", function () {
+        lastIngValue = ingredientSelect.value;
+        row.dataset.recipeBootstrapped = "1";
+        handleIngredientChange(row, ingredientSelect, scope);
+      });
+      ingredientSelect.addEventListener("input", function () {
+        if (ingredientSelect.value === lastIngValue) {
+          return;
+        }
+        lastIngValue = ingredientSelect.value;
+        row.dataset.recipeBootstrapped = "1";
+        handleIngredientChange(row, ingredientSelect, scope);
+      });
+      if (ingredientSelect.id) {
+        var predText = document.getElementById(ingredientSelect.id + "_text");
+        if (predText) {
+          predText.addEventListener("blur", function () {
+            setTimeout(function () {
+              lastIngValue = ingredientSelect.value;
+              handleIngredientChange(row, ingredientSelect, scope);
+            }, 220);
+          });
+        }
+      }
     }
   }
 

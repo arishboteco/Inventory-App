@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
+from django.views.decorators.http import require_GET
 from django.views.generic import DeleteView, TemplateView
 
 from ..forms.recipe_forms import RecipeForm, RecipeItemEditFormSet, RecipeItemFormSet
@@ -111,6 +112,55 @@ def _build_form_error_payload(form, formset):
             "formset": formset_errors,
         },
     }
+
+
+def _collect_recipe_line_items(formset):
+    """Build line-item dicts for recipe_service from a validated item formset."""
+
+    items = []
+    for f in formset.forms:
+        if f.cleaned_data.get("DELETE"):
+            continue
+        item_obj = f.cleaned_data.get("item")
+        sub_recipe_obj = f.cleaned_data.get("sub_recipe")
+        if not item_obj and not sub_recipe_obj:
+            continue
+        items.append(
+            {
+                "item_id": int(item_obj.pk) if item_obj else None,
+                "sub_recipe_id": (int(sub_recipe_obj.pk) if sub_recipe_obj else None),
+                "quantity": float(f.cleaned_data.get("quantity") or 0),
+                "unit": f.cleaned_data.get("unit"),
+                "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
+            }
+        )
+    return items
+
+
+@require_GET
+def recipe_meta(request, recipe_id: int):
+    """JSON metadata for sub-recipe rows (cost per yield unit, display unit)."""
+
+    recipe = get_object_or_404(Recipe, pk=recipe_id)
+    total = recipe.get_total_cost()
+    sub_yield = Decimal(str(recipe.default_yield_qty or 1)) or Decimal("1")
+    try:
+        cost_per = float(total / sub_yield) if sub_yield else 0.0
+    except (ArithmeticError, ZeroDivisionError):
+        cost_per = 0.0
+    base_unit = (recipe.default_yield_unit or "").strip()
+    return JsonResponse(
+        {
+            "ok": True,
+            "recipe_id": recipe.recipe_id,
+            "name": recipe.name,
+            "base_unit": base_unit,
+            "unit": base_unit,
+            "cost_per_base_unit": cost_per,
+            "category": "Sub-Recipe",
+            "subcategory": "",
+        }
+    )
 
 
 def _serialize_recipe(recipe):
@@ -261,25 +311,7 @@ def recipe_create(request):
         formset = RecipeItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
-            items = []
-            for f in formset.forms:
-                if f.cleaned_data.get("DELETE"):
-                    continue
-                item_obj = f.cleaned_data.get("item")
-                sub_recipe_obj = f.cleaned_data.get("sub_recipe")
-                if not item_obj and not sub_recipe_obj:
-                    continue
-                items.append(
-                    {
-                        "item_id": int(item_obj.pk) if item_obj else None,
-                        "sub_recipe_id": (
-                            int(sub_recipe_obj.pk) if sub_recipe_obj else None
-                        ),
-                        "quantity": float(f.cleaned_data.get("quantity") or 0),
-                        "unit": f.cleaned_data.get("unit"),
-                        "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
-                    }
-                )
+            items = _collect_recipe_line_items(formset)
             ok, msg, rid = recipe_service.create_recipe(data, items)
             if ok and rid:
                 messages.success(request, "Recipe created", extra_tags="toast")
@@ -314,25 +346,7 @@ def recipe_detail(request, pk: int):
         formset = RecipeItemEditFormSet(request.POST, instance=recipe, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
-            items = []
-            for f in formset.forms:
-                if f.cleaned_data.get("DELETE"):
-                    continue
-                item_obj = f.cleaned_data.get("item")
-                sub_recipe_obj = f.cleaned_data.get("sub_recipe")
-                if not item_obj and not sub_recipe_obj:
-                    continue
-                items.append(
-                    {
-                        "item_id": int(item_obj.pk) if item_obj else None,
-                        "sub_recipe_id": (
-                            int(sub_recipe_obj.pk) if sub_recipe_obj else None
-                        ),
-                        "quantity": float(f.cleaned_data.get("quantity") or 0),
-                        "unit": f.cleaned_data.get("unit"),
-                        "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
-                    }
-                )
+            items = _collect_recipe_line_items(formset)
             ok, msg = recipe_service.update_recipe(recipe.pk, data, items)
             if ok:
                 messages.success(request, "Recipe updated", extra_tags="toast")
@@ -388,21 +402,7 @@ class RecipeCreatePartialView(View):
         formset = RecipeItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
-            items = []
-            for f in formset.forms:
-                if f.cleaned_data.get("DELETE"):
-                    continue
-                item_id = f.cleaned_data.get("item")
-                if not item_id:
-                    continue
-                items.append(
-                    {
-                        "item_id": int(item_id.pk),
-                        "quantity": float(f.cleaned_data.get("quantity") or 0),
-                        "unit": f.cleaned_data.get("unit"),
-                        "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
-                    }
-                )
+            items = _collect_recipe_line_items(formset)
             ok, msg, rid = recipe_service.create_recipe(data, items)
             if ok and rid:
                 recipe = Recipe.objects.filter(pk=rid).first()
@@ -477,21 +477,7 @@ class RecipeEditPartialView(View):
         formset = RecipeItemEditFormSet(request.POST, instance=recipe, prefix="items")
         if form.is_valid() and formset.is_valid():
             data = form.cleaned_data
-            items = []
-            for f in formset.forms:
-                if f.cleaned_data.get("DELETE"):
-                    continue
-                item_id = f.cleaned_data.get("item")
-                if not item_id:
-                    continue
-                items.append(
-                    {
-                        "item_id": int(item_id.pk),
-                        "quantity": float(f.cleaned_data.get("quantity") or 0),
-                        "unit": f.cleaned_data.get("unit"),
-                        "loss_pct": float(f.cleaned_data.get("loss_pct") or 0),
-                    }
-                )
+            items = _collect_recipe_line_items(formset)
             ok, msg = recipe_service.update_recipe(recipe.pk, data, items)
             if ok:
                 recipe.refresh_from_db()

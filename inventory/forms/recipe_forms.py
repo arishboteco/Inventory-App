@@ -146,33 +146,36 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
         return cleaned_data
 
 
-class RecipeItemForm(StyledFormMixin, forms.ModelForm):
-    """Form for Recipe Items - simplified from RecipeComponent."""
+class IngredientSelect(forms.Select):
+    """Select for encoded ingredient values (`i:<pk>` / `r:<pk>`) with kind markers."""
 
-    item = forms.ModelChoiceField(
-        queryset=Item.objects.filter(is_active=True),
+    def create_option(
+        self, name, value, label, selected, index, subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index, subindex=subindex, attrs=attrs
+        )
+        if value not in (None, ""):
+            val = str(value)
+            if val.startswith("i:"):
+                option.setdefault("attrs", {})["data-ingredient-kind"] = "item"
+            elif val.startswith("r:"):
+                option.setdefault("attrs", {})["data-ingredient-kind"] = "sub"
+        return option
+
+
+class RecipeItemForm(StyledFormMixin, forms.ModelForm):
+    """Single dropdown for inventory item or sub-recipe; maps to model FKs on save."""
+
+    ingredient = forms.ChoiceField(
         required=False,
-        widget=forms.Select(
+        choices=[],
+        widget=IngredientSelect(
             attrs={
-                "class": INPUT_CLASS + " predictive",
-                "data-placeholder": "Select an item",
+                "data-placeholder": "Select ingredient",
             }
         ),
-        label="Item",
-        empty_label="— Select item —",
-    )
-    # D1: sub-recipe selector
-    sub_recipe = forms.ModelChoiceField(
-        queryset=Recipe.objects.filter(is_active=True, type=Recipe.Type.SUB),
-        required=False,
-        widget=forms.Select(
-            attrs={
-                "class": INPUT_CLASS + " predictive",
-                "data-placeholder": "Select sub-recipe",
-            }
-        ),
-        label="Sub-Recipe",
-        empty_label="— Select sub-recipe —",
+        label="Ingredient",
     )
     quantity = forms.DecimalField(
         min_value=0.01,
@@ -222,8 +225,6 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = RecipeItem
         fields = [
-            "item",
-            "sub_recipe",
             "quantity",
             "unit",
             "loss_pct",
@@ -239,31 +240,116 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
             if unit_value:
                 self.initial.setdefault("unit", unit_value)
                 self.initial.setdefault("unit_display", unit_value)
-        # Keep the form fields in sync with the initial data so the template
-        # renders the stored unit immediately while the JS metadata loads.
         self.fields["unit"].initial = self.initial.get("unit", unit_value)
         self.fields["unit_display"].initial = self.initial.get(
             "unit_display", unit_value
         )
+
+        items_qs = Item.objects.filter(is_active=True).order_by("name")
+        subs_qs = Recipe.objects.filter(is_active=True, type=Recipe.Type.SUB).order_by(
+            "name"
+        )
+        parent_rid = getattr(instance, "recipe_id", None)
+        if parent_rid:
+            subs_qs = subs_qs.exclude(pk=parent_rid)
+
+        item_choices = [(f"i:{obj.pk}", obj.name) for obj in items_qs]
+        sub_choices = [(f"r:{obj.pk}", obj.name) for obj in subs_qs]
+
+        choices: list = [("", "— Select ingredient —")]
+        if item_choices:
+            choices.append(("Inventory items", item_choices))
+        if sub_choices:
+            choices.append(("Sub-recipes", sub_choices))
+
+        self.fields["ingredient"].choices = choices
+
+        if has_instance:
+            if instance.item_id:
+                self.initial.setdefault("ingredient", f"i:{instance.item_id}")
+            elif instance.sub_recipe_id:
+                self.initial.setdefault("ingredient", f"r:{instance.sub_recipe_id}")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cleaned_data["item"] = None
+        cleaned_data["sub_recipe"] = None
+        key = (cleaned_data.get("ingredient") or "").strip()
+        if not key:
+            qty = cleaned_data.get("quantity")
+            if qty is not None:
+                try:
+                    if qty > 0:
+                        self.add_error(
+                            "ingredient",
+                            "Select an ingredient or clear the quantity.",
+                        )
+                except (TypeError, ValueError):
+                    pass
+            return cleaned_data
+        try:
+            if key.startswith("i:"):
+                pk = int(key[2:], 10)
+                item = Item.objects.get(pk=pk, is_active=True)
+                cleaned_data["item"] = item
+            elif key.startswith("r:"):
+                pk = int(key[2:], 10)
+                sub = Recipe.objects.get(pk=pk, is_active=True, type=Recipe.Type.SUB)
+                parent_rid = getattr(self.instance, "recipe_id", None)
+                if parent_rid and pk == parent_rid:
+                    self.add_error(
+                        "ingredient",
+                        "A recipe cannot use itself as an ingredient.",
+                    )
+                    return cleaned_data
+                cleaned_data["sub_recipe"] = sub
+            else:
+                self.add_error("ingredient", "Select a valid ingredient.")
+                return cleaned_data
+        except (ValueError, Item.DoesNotExist, Recipe.DoesNotExist):
+            self.add_error("ingredient", "Select a valid ingredient.")
+            return cleaned_data
+        return cleaned_data
+
+    def _post_clean(self):
+        if self.cleaned_data.get("DELETE"):
+            super()._post_clean()
+            return
+        ingredient = (self.cleaned_data.get("ingredient") or "").strip()
+        item_obj = self.cleaned_data.get("item")
+        sub_obj = self.cleaned_data.get("sub_recipe")
+        if not ingredient and not item_obj and not sub_obj:
+            # Blank formset row: skip RecipeItem.clean() (FKs still null on instance).
+            return
+        self.instance.item = item_obj
+        self.instance.sub_recipe = sub_obj
+        super()._post_clean()
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.item = self.cleaned_data.get("item")
+        instance.sub_recipe = self.cleaned_data.get("sub_recipe")
+        if commit:
+            instance.save()
+        return instance
 
 
 RecipeItemFormSet = forms.inlineformset_factory(
     Recipe,
     RecipeItem,
     form=RecipeItemForm,
-    fk_name="recipe",  # D1: disambiguate from sub_recipe FK
-    fields=["item", "sub_recipe", "quantity", "unit", "loss_pct"],
+    fk_name="recipe",
+    fields=["ingredient", "quantity", "unit", "loss_pct"],
     extra=1,
     can_delete=True,
 )
 
-# Edit views use extra=0 so no blank row is pre-appended when existing items load.
 RecipeItemEditFormSet = forms.inlineformset_factory(
     Recipe,
     RecipeItem,
     form=RecipeItemForm,
-    fk_name="recipe",  # D1: disambiguate from sub_recipe FK
-    fields=["item", "sub_recipe", "quantity", "unit", "loss_pct"],
+    fk_name="recipe",
+    fields=["ingredient", "quantity", "unit", "loss_pct"],
     extra=0,
     can_delete=True,
 )

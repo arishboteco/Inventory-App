@@ -40,6 +40,10 @@
       value: opt.value,
       selected: opt.selected,
       disabled: opt.disabled,
+      ingredientKind:
+        opt.dataset.ingredientKind ||
+        opt.getAttribute("data-ingredient-kind") ||
+        "",
     }));
 
     const emptyOption = rawOptions.find((o) => !o.value && !o.disabled);
@@ -80,7 +84,10 @@
       list.forEach((opt) => {
         const el = document.createElement("div");
         el.className =
-          "px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0";
+          "predictive-dropdown-option px-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-white/10 border-b border-gray-100 dark:border-gray-700 last:border-b-0";
+        if (opt.ingredientKind === "sub") {
+          el.classList.add("predictive-dropdown-option--sub");
+        }
         el.textContent = opt.text;
         el.addEventListener("click", () => {
           textInput.value = opt.text;

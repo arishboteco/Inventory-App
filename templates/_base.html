@@ -48,8 +48,11 @@
     }
     .predictive-overlay [role="option"],
     .predictive-dropdown-list [role="option"],
-    .predictive-dropdown-list div {
+    .predictive-dropdown-list div.predictive-dropdown-option:not(.predictive-dropdown-option--sub) {
       color: inherit !important;
+    }
+    .predictive-dropdown-list .predictive-dropdown-option--sub {
+      color: var(--color-accent-text) !important;
     }
   </style>
   <script src="{% static 'js/predictive-dropdown.js' %}?v={{ STATIC_VERSION }}" defer></script>

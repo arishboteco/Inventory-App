@@ -270,7 +270,7 @@ html.dark .bg-white\/40 {
 
   /* Drawer layout for modal.js openDrawer() wrapper */
   .drawer {
-    @apply flex flex-col max-h-[90vh] overflow-y-auto;
+    @apply flex min-h-0 flex-col max-h-[90vh] overflow-y-auto;
   }
   .drawer.right {
     @apply ml-auto;

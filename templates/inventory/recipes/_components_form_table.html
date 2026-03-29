@@ -14,12 +14,13 @@
   {% for cform in formset.forms %}
   <tr class="form-row" data-form-index="{{ forloop.counter0 }}" data-recipe-row="true" data-has-item="0" data-quantity="0" data-cost-per-base-unit="0">
     <td class="px-3 py-2">
-      <div class="min-w-[12rem]">
+      <div class="min-w-[12rem] flex flex-col gap-1">
+        <span class="hidden self-start rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide bg-info-soft text-info-text" data-recipe-sub-badge>Sub-recipe</span>
         {% include "components/form_field_table.html" with field=cform.ingredient %}
       </div>
     </td>
     <td class="px-3 py-2">{% include "components/form_field_table.html" with field=cform.quantity %}</td>
-    <td class="px-3 py-2">
+    <td class="px-3 py-2 recipe-unit-cell" data-recipe-unit-cell>
       {{ cform.unit }}
       {% include "components/form_field_table.html" with field=cform.unit_display %}
     </td>
@@ -36,12 +37,13 @@
   <!-- empty form template row -->
   <tr class="form-row hidden" id="items-empty-row" data-recipe-row="true" data-has-item="0" data-quantity="0" data-cost-per-base-unit="0">
     <td class="px-3 py-2">
-      <div class="min-w-[12rem]">
+      <div class="min-w-[12rem] flex flex-col gap-1">
+        <span class="hidden self-start rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide bg-info-soft text-info-text" data-recipe-sub-badge>Sub-recipe</span>
         {% include "components/form_field_table.html" with field=formset.empty_form.ingredient %}
       </div>
     </td>
     <td class="px-3 py-2">{% include "components/form_field_table.html" with field=formset.empty_form.quantity %}</td>
-    <td class="px-3 py-2">
+    <td class="px-3 py-2 recipe-unit-cell" data-recipe-unit-cell>
       {{ formset.empty_form.unit }}
       {% include "components/form_field_table.html" with field=formset.empty_form.unit_display %}
     </td>

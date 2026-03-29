@@ -843,7 +843,15 @@ class RecipeDeleteView(LoginRequiredMixin, DeleteView):
 def food_cost_report(request):
     """Report listing all active FINAL recipes with food cost metrics."""
     status_filter = request.GET.get("status", "")
-    qs = Recipe.objects.filter(type=Recipe.Type.FINAL, is_active=True).order_by("name")
+    line_qs = RecipeItem.objects.select_related("item", "sub_recipe")
+    qs = (
+        Recipe.objects.filter(type=Recipe.Type.FINAL, is_active=True)
+        .order_by("name")
+        .prefetch_related(
+            Prefetch("items", queryset=line_qs),
+            Prefetch("items__sub_recipe__items", queryset=line_qs),
+        )
+    )
 
     rows = []
     for recipe in qs:

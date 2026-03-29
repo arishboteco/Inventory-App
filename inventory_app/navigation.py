@@ -198,10 +198,11 @@ def primary_navigation(request):
     ctx = {"navigation_groups": get_navigation_groups()}
     if hasattr(request, "user") and request.user.is_authenticated:
         try:
-            from inventory.services import kpis
+            from inventory.services.nav_kpis import get_cached_nav_kpis
 
-            low = kpis.low_stock_count()
-            pending = sum(kpis.pending_indent_counts().values())
+            nav_k = get_cached_nav_kpis()
+            low = nav_k["low_stock"]
+            pending = nav_k["pending_total"]
             notifications = []
             if pending > 0:
                 noun = "indent" if pending == 1 else "indents"

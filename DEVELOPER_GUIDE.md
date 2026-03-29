@@ -49,7 +49,7 @@ Inventory-App/
 │   ├── migrations/         # DB schema history (32 files)
 │   ├── middleware/         # LazyStockSnapshotMiddleware
 │   ├── templatetags/       # icon_tags, category_tags, form_tags
-│   ├── utils/              # cache_utils, category_migration
+│   ├── utils/              # category_migration
 │   ├── management/commands/# Custom manage.py commands (11 files)
 │   ├── serializers.py      # DRF serializers
 │   ├── admin.py            # Minimal admin registration

@@ -1,0 +1,60 @@
+{% load icon_tags %}
+<div
+  class="relative"
+  x-data="{ open: false, mode: 'system' }"
+  x-init="try { var m = localStorage.getItem('inventory-theme'); if (m === 'light' || m === 'dark' || m === 'system') mode = m; } catch (e) {}"
+  @themechange.window="if ($event.detail && $event.detail.mode) mode = $event.detail.mode"
+  @keydown.escape.window="open = false"
+>
+  <button
+    type="button"
+    @click="open = !open"
+    class="p-2 text-gray-500 hover:text-gray-600 rounded-lg hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+    :aria-expanded="open.toString()"
+    aria-haspopup="true"
+    aria-controls="theme-menu-panel"
+    aria-label="Color theme"
+  >
+    {% icon 'computer-desktop' 'h-5 w-5' aria_label='' %}
+  </button>
+  <div
+    id="theme-menu-panel"
+    x-cloak
+    x-show="open"
+    @click.outside="open = false"
+    class="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 z-50 py-1"
+    role="menu"
+    aria-label="Theme options"
+  >
+    <button
+      type="button"
+      role="menuitem"
+      class="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-bodyText hover:bg-surfaceSubtle"
+      @click="open = false; window.inventoryTheme && inventoryTheme.set('light')"
+    >
+      {% icon 'sun' 'h-4 w-4 text-gray-500 flex-shrink-0' aria_label='' %}
+      <span class="flex-1">Light</span>
+      <span class="text-primary text-xs font-semibold" x-show="mode === 'light'" aria-hidden="true">✓</span>
+    </button>
+    <button
+      type="button"
+      role="menuitem"
+      class="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-bodyText hover:bg-surfaceSubtle"
+      @click="open = false; window.inventoryTheme && inventoryTheme.set('dark')"
+    >
+      {% icon 'moon' 'h-4 w-4 text-gray-500 flex-shrink-0' aria_label='' %}
+      <span class="flex-1">Dark</span>
+      <span class="text-primary text-xs font-semibold" x-show="mode === 'dark'" aria-hidden="true">✓</span>
+    </button>
+    <button
+      type="button"
+      role="menuitem"
+      class="w-full flex items-center gap-2 px-3 py-2 text-sm text-left text-bodyText hover:bg-surfaceSubtle"
+      @click="open = false; window.inventoryTheme && inventoryTheme.set('system')"
+    >
+      {% icon 'computer-desktop' 'h-4 w-4 text-gray-500 flex-shrink-0' aria_label='' %}
+      <span class="flex-1">System</span>
+      <span class="text-primary text-xs font-semibold" x-show="mode === 'system'" aria-hidden="true">✓</span>
+    </button>
+  </div>
+</div>

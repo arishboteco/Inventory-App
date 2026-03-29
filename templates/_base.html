@@ -4,6 +4,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (function () {
+        var k = "inventory-theme";
+        var v;
+        try {
+          v = localStorage.getItem(k);
+        } catch (e) {
+          v = null;
+        }
+        var mode = v === "light" || v === "dark" || v === "system" ? v : "system";
+        var dark =
+          mode === "dark" ||
+          (mode === "system" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches);
+        var el = document.documentElement;
+        if (dark) el.classList.add("dark");
+        el.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
     <title>{% block title %}Inventory Pro{% endblock %}</title>
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml" />
   <link rel="alternate icon" href="{% static 'img/favicon.svg' %}" />
@@ -15,16 +34,17 @@
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="{% static 'js/theme.js' %}?v={{ STATIC_VERSION }}" defer></script>
   {% block extra_head_js %}{% endblock %}
   <style>
     /* Hint browsers to avoid native datalist popover when our overlay is active */
     input[list][data-predictive-input]::-webkit-calendar-picker-indicator { display: none !important; }
-    /* Ensure predictive overlays use light theme */
+    /* Predictive overlays follow CSS variables (see static/src/app.css) */
     .predictive-overlay,
     .predictive-dropdown-list {
-      background-color: #ffffff !important;
-      color: #111827 !important; /* gray-900 */
-      border-color: #d1d5db !important; /* gray-300 */
+      background-color: var(--color-surface) !important;
+      color: var(--color-body-text) !important;
+      border-color: var(--color-form-border) !important;
     }
     .predictive-overlay [role="option"],
     .predictive-dropdown-list [role="option"],

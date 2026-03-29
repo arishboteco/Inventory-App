@@ -107,6 +107,7 @@
 
       <!-- Right side: User menu and actions -->
   <div class="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
+        {% include "components/theme_toggle.html" %}
         {% if user.is_authenticated %}
         <!-- Global Search (dropdown) -->
         <div class="relative" x-data="{open:false}" @keydown.escape.window="open=false">

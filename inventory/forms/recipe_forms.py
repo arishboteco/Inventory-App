@@ -3,7 +3,20 @@ from decimal import Decimal
 from django import forms
 
 from ..models import Item, Recipe, RecipeItem
+from ..services.form_service import FormService
 from .base import StyledFormMixin
+
+
+def _match_base_unit(raw: str, choices: tuple[tuple[str, str], ...]) -> str | None:
+    """Return canonical base_unit code from choices, or None if no match."""
+    if not raw or not choices:
+        return None
+    r = str(raw).strip()
+    for code, _label in choices:
+        if str(code).strip().upper() == r.upper():
+            return str(code).strip()
+    return None
+
 
 INPUT_CLASS = (
     "w-full px-3 py-2 text-sm border border-gray-300 rounded-lg "
@@ -49,8 +62,8 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
     default_yield_unit = forms.CharField(
         required=False,
         max_length=50,
-        widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
-        help_text="Unit for the yield quantity",
+        widget=forms.HiddenInput(),
+        help_text="Unit for the yield quantity (sub-recipes only; finals use portion).",
     )
     plating_notes = forms.CharField(
         required=False,
@@ -120,6 +133,9 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        choices = tuple(FormService.get_base_unit_choices())
+        self.sub_yield_unit_choices = choices
+
         description = self.initial.get("description") or getattr(
             self.instance, "description", ""
         )
@@ -137,12 +153,56 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
                 self.initial.setdefault("description_and_plating", combined)
                 self.fields["description_and_plating"].initial = combined
 
+            eff_type = self._effective_recipe_type()
+            raw_unit = (
+                self.initial.get("default_yield_unit")
+                or getattr(self.instance, "default_yield_unit", None)
+                or ""
+            )
+            if eff_type == Recipe.Type.FINAL:
+                self.initial["default_yield_unit"] = "portion"
+                self.fields["default_yield_unit"].initial = "portion"
+            else:
+                matched = _match_base_unit(str(raw_unit), choices)
+                pick = matched if matched else (choices[0][0] if choices else "")
+                self.initial["default_yield_unit"] = pick
+                self.fields["default_yield_unit"].initial = pick
+
+    def _effective_recipe_type(self) -> str:
+        if self.is_bound:
+            raw = self.data.get(self.add_prefix("type"))
+            if raw in (Recipe.Type.FINAL, Recipe.Type.SUB):
+                return raw
+        inst_type = getattr(self.instance, "type", None)
+        if inst_type in (Recipe.Type.FINAL, Recipe.Type.SUB):
+            return inst_type
+        ini = self.initial.get("type")
+        if ini in (Recipe.Type.FINAL, Recipe.Type.SUB):
+            return ini
+        return Recipe.Type.FINAL
+
     def clean(self):
         cleaned_data = super().clean()
         combined = cleaned_data.get("description_and_plating", "")
         combined_text = str(combined).strip()
         cleaned_data["description"] = combined_text
         cleaned_data["plating_notes"] = combined_text
+
+        recipe_type = cleaned_data.get("type")
+        choices = tuple(FormService.get_base_unit_choices())
+
+        if recipe_type == Recipe.Type.FINAL:
+            cleaned_data["default_yield_unit"] = "portion"
+        elif recipe_type == Recipe.Type.SUB:
+            raw = (cleaned_data.get("default_yield_unit") or "").strip()
+            canonical = _match_base_unit(raw, choices)
+            if not canonical or not choices:
+                self.add_error(
+                    "default_yield_unit",
+                    "Select a valid base unit for the yield.",
+                )
+            else:
+                cleaned_data["default_yield_unit"] = canonical
         return cleaned_data
 
 

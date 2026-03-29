@@ -59,6 +59,8 @@
           window.initPredictiveDatalistOverlay(content);
         if (window.initRecipeComponentsTable)
           window.initRecipeComponentsTable(content);
+        if (window.initRecipeYieldUnitRoots)
+          window.initRecipeYieldUnitRoots(content);
       });
     }
     setAria(root, content);
@@ -81,6 +83,8 @@
           window.initPredictiveDatalistOverlay(content);
         if (window.initRecipeComponentsTable)
           window.initRecipeComponentsTable(content);
+        if (window.initRecipeYieldUnitRoots)
+          window.initRecipeYieldUnitRoots(content);
       });
     }
     setAria(root, content);

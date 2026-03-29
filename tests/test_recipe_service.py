@@ -166,5 +166,5 @@ def test_recipe_metadata_fields():
 
     recipe = Recipe.objects.get(pk=rid)
     assert recipe.type == "FINAL"
-    assert recipe.default_yield_unit == "plate"
+    assert recipe.default_yield_unit == "portion"
     assert recipe.tags == ["vegan", "healthy"]

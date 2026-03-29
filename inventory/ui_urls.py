@@ -1,7 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
-from .views.explore import explore, explore_export
 from .views.goods_received import (
     GRNCreateView,
     GRNDetailView,
@@ -50,7 +49,6 @@ from .views.ml import ml_dashboard
 from .views.purchase_orders import (
     PurchaseOrderCreatePartialView,
     PurchaseOrderEditPartialView,
-    PurchaseOrderQuickCreatePartialView,
     PurchaseOrderReceivePartialView,
     PurchaseOrdersCardsView,
     PurchaseOrdersExportView,
@@ -220,11 +218,6 @@ urlpatterns = [
         "purchase-orders/export/",
         PurchaseOrdersExportView.as_view(),
         name="purchase_orders_export",
-    ),
-    path(
-        "purchase-orders/quick-create/partial/",
-        PurchaseOrderQuickCreatePartialView.as_view(),
-        name="purchase_order_quick_create_partial",
     ),
     path(
         "purchase-orders/create/", purchase_order_create, name="purchase_order_create"

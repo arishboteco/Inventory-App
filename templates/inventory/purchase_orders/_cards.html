@@ -77,8 +77,8 @@
   </div>
   {% empty %}
   <div class="col-span-full">
-    {% url 'purchase_order_create' as po_create_url %}
-    {% include "components/empty_state.html" with title="No Purchase Orders" message="Create a new purchase order to get started." cta_label="New PO" cta_url=po_create_url %}
+    {% url 'purchase_order_create_partial' as po_drawer_url %}
+    {% include "components/empty_state.html" with title="No Purchase Orders" message="Create a new purchase order to get started." cta_label="New PO" cta_url="#" cta_modal_url=po_drawer_url %}
   </div>
   {% endfor %}
 </div>

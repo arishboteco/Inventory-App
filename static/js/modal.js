@@ -64,6 +64,8 @@
           window.initRecipeComponentsTable(content);
         if (window.initRecipeYieldUnitRoots)
           window.initRecipeYieldUnitRoots(content);
+        if (window.initPurchaseOrderDrawer)
+          window.initPurchaseOrderDrawer(content);
       });
     }
     setAria(root, content);
@@ -91,6 +93,8 @@
           window.initRecipeComponentsTable(content);
         if (window.initRecipeYieldUnitRoots)
           window.initRecipeYieldUnitRoots(content);
+        if (window.initPurchaseOrderDrawer)
+          window.initPurchaseOrderDrawer(content);
       });
     }
     setAria(root, content);
@@ -555,7 +559,47 @@
         'input[name="csrfmiddlewaretoken"]',
       )?.value;
       // Client-side preflight validation for better UX
-      const showInlineError = (msg) => {
+      const formatStructuredErrors = (errors) => {
+        if (!errors || typeof errors !== "object") return null;
+        const lines = [];
+        if (Array.isArray(errors.form_non_field))
+          lines.push(...errors.form_non_field);
+        if (Array.isArray(errors.formset_non_form))
+          lines.push(...errors.formset_non_form);
+        if (errors.form && typeof errors.form === "object") {
+          Object.keys(errors.form).forEach((k) => {
+            const arr = errors.form[k];
+            if (Array.isArray(arr))
+              arr.forEach((t) => lines.push(`${k}: ${t}`));
+          });
+        }
+        if (Array.isArray(errors.formset)) {
+          errors.formset.forEach((row) => {
+            if (!row || !row.errors) return;
+            const ri = Number.isInteger(row.index) ? row.index + 1 : "";
+            Object.keys(row.errors).forEach((k) => {
+              const arr = row.errors[k];
+              if (Array.isArray(arr)) {
+                arr.forEach((t) => {
+                  lines.push(
+                    ri ? `Row ${ri} — ${k}: ${t}` : `${k}: ${t}`,
+                  );
+                });
+              }
+            });
+          });
+        }
+        if (!lines.length) return null;
+        const ul = document.createElement("ul");
+        ul.className = "mt-2 list-disc pl-5 text-sm space-y-0.5";
+        lines.forEach((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          ul.appendChild(li);
+        });
+        return ul;
+      };
+      const showInlineError = (msg, detail) => {
         try {
           let alert = form.querySelector("[data-modal-error]");
           if (!alert) {
@@ -565,7 +609,15 @@
               "mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm";
             form.insertBefore(alert, form.firstElementChild);
           }
-          alert.textContent = msg;
+          alert.replaceChildren();
+          const lead = document.createElement("div");
+          lead.textContent = msg;
+          alert.appendChild(lead);
+          const extra =
+            detail && detail.errors
+              ? formatStructuredErrors(detail.errors)
+              : null;
+          if (extra) alert.appendChild(extra);
           alert.scrollIntoView({ behavior: "smooth", block: "center" });
         } catch (_) {}
       };
@@ -751,7 +803,7 @@
             const msg =
               (data && data.message) ||
               `${r.status} ${r.statusText || "Save failed"}`;
-            showInlineError(msg);
+            showInlineError(msg, data);
             if (window.console)
               console.debug("[modal] submit failed", {
                 status: r.status,

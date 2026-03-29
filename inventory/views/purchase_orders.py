@@ -24,6 +24,7 @@ from ..services import (
     purchase_order_service,
 )
 from ..services.exceptions import PurchaseOrderServiceError
+from .form_errors import build_form_error_payload
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,9 @@ PO_STATUS_BADGES = {
 RECEIVABLE_STATUSES = {"SENT", "RECEIVED"}
 
 
-def _build_item_prices_json() -> str:
-    """Return JSON mapping item pk → last_purchase_price for auto-fill in forms."""
-    prices = {
+def _build_item_prices_dict() -> dict[str, float]:
+    """Mapping item pk → last/initial purchase price for PO line autofill."""
+    return {
         str(item.pk): float(
             item.last_purchase_price or item.initial_purchase_price or 0
         )
@@ -48,7 +49,14 @@ def _build_item_prices_json() -> str:
             "item_id", "last_purchase_price", "initial_purchase_price"
         )
     }
-    return json.dumps(prices)
+
+
+def _build_item_prices_json() -> str:
+    return json.dumps(_build_item_prices_dict())
+
+
+def _is_partial_post(request) -> bool:
+    return (request.POST.get("partial") or "").lower() in {"1", "true", "yes"}
 
 
 def _annotate_total_value(qs):
@@ -65,7 +73,7 @@ def _annotate_total_value(qs):
 
 
 class PurchaseOrdersListView(TemplateView):
-    """Display purchase orders with quick creation form."""
+    """Display purchase orders list and filters."""
 
     template_name = "inventory/purchase_orders/list.html"
 
@@ -129,10 +137,6 @@ class PurchaseOrdersListView(TemplateView):
             .order_by("name")
         )
         querystring = list_utils.build_querystring(self.request)
-        supplier_url = reverse("supplier_search")
-        quick_form = PurchaseOrderForm(
-            prefix="quick", supplier_suggest_url=supplier_url
-        )
 
         # Get KPIs with caching
         try:
@@ -165,7 +169,6 @@ class PurchaseOrdersListView(TemplateView):
                 "suppliers": suppliers,
                 "querystring": querystring,
                 "sortable": True,
-                "quick_form": quick_form,
                 "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Orders",
@@ -178,20 +181,6 @@ class PurchaseOrdersListView(TemplateView):
         ctx["current_status"] = params.get("status")
         ctx["current_supplier"] = params.get("supplier")
         return ctx
-
-    def post(self, request, *args, **kwargs):
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(
-            request.POST, prefix="quick", supplier_suggest_url=supplier_url
-        )
-        if form.is_valid():
-            po = form.save()
-            messages.success(request, "Purchase order created", extra_tags="toast")
-            return redirect("purchase_order_edit", pk=po.pk)
-
-        ctx = self.get_context_data()
-        ctx["quick_form"] = form
-        return self.render_to_response(ctx)
 
 
 purchase_orders_list = PurchaseOrdersListView.as_view()
@@ -403,45 +392,14 @@ class PurchaseOrdersCardsView(TemplateView):
         return ctx
 
 
-class PurchaseOrderQuickCreatePartialView(View):
-    """Render a drawer partial for quick PO creation and handle submissions.
-
-    GET renders `inventory/purchase_orders/_quick_form_partial.html` with a minimal
-    form (supplier + order_date). POST validates and creates a draft PO, returning
-    JSON suitable for `static/js/modal.js` to close the drawer and redirect.
-    """
-
-    template_name = "inventory/purchase_orders/_quick_form_partial.html"
-
-    def get(self, request):
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
-        ctx = {"form": form}
-        return render(request, self.template_name, ctx)
-
-    def post(self, request):
-        supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
-        if form.is_valid():
-            po = form.save()
-            return JsonResponse(
-                {
-                    "ok": True,
-                    "id": po.pk,
-                    "message": "Purchase order created",
-                    "redirect": reverse("purchase_order_edit", kwargs={"pk": po.pk}),
-                }
-            )
-        return render(request, self.template_name, {"form": form}, status=400)
-
-
 class PurchaseOrderCreatePartialView(View):
     """Drawer partial for full PO creation with items formset."""
 
     template_name = "inventory/purchase_orders/_form_partial.html"
 
     def get(self, request):
-        form = PurchaseOrderForm()
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(prefix="items")
         return render(
             request,
@@ -450,12 +408,13 @@ class PurchaseOrderCreatePartialView(View):
                 "form": form,
                 "formset": formset,
                 "is_edit": False,
-                "item_prices_json": _build_item_prices_json(),
+                "item_prices": _build_item_prices_dict(),
             },
         )
 
     def post(self, request):
-        form = PurchaseOrderForm(request.POST)
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             po_data: dict[str, Any] = {
@@ -491,22 +450,21 @@ class PurchaseOrderCreatePartialView(View):
                 )
             except PurchaseOrderServiceError as exc:
                 return JsonResponse({"ok": False, "message": str(exc)}, status=400)
-        return render(
-            request,
-            self.template_name,
-            {
-                "form": form,
-                "formset": formset,
-                "is_edit": False,
-                "item_prices_json": _build_item_prices_json(),
-            },
-            status=400,
-        )
+        ctx = {
+            "form": form,
+            "formset": formset,
+            "is_edit": False,
+            "item_prices": _build_item_prices_dict(),
+        }
+        if _is_partial_post(request):
+            return JsonResponse(build_form_error_payload(form, formset), status=400)
+        return render(request, self.template_name, ctx, status=400)
 
 
 def purchase_order_create(request):
+    supplier_url = reverse("supplier_search")
     if request.method == "POST":
-        form = PurchaseOrderForm(request.POST)
+        form = PurchaseOrderForm(request.POST, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(request.POST, prefix="items")
         if form.is_valid() and formset.is_valid():
             po_data = {
@@ -534,7 +492,7 @@ def purchase_order_create(request):
             except PurchaseOrderServiceError as exc:
                 messages.error(request, str(exc), extra_tags="toast")
     else:
-        form = PurchaseOrderForm()
+        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(prefix="items")
     return render(
         request,
@@ -543,22 +501,25 @@ def purchase_order_create(request):
             "form": form,
             "formset": formset,
             "is_edit": False,
-            "item_prices_json": _build_item_prices_json(),
+            "item_prices": _build_item_prices_dict(),
         },
     )
 
 
 def purchase_order_edit(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
+    supplier_url = reverse("supplier_search")
     if request.method == "POST":
-        form = PurchaseOrderForm(request.POST, instance=po)
+        form = PurchaseOrderForm(
+            request.POST, instance=po, supplier_suggest_url=supplier_url
+        )
         formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             return redirect("purchase_order_detail", pk=pk)
     else:
-        form = PurchaseOrderForm(instance=po)
+        form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
     return render(
         request,
@@ -568,7 +529,7 @@ def purchase_order_edit(request, pk: int):
             "formset": formset,
             "is_edit": True,
             "po": po,
-            "item_prices_json": _build_item_prices_json(),
+            "item_prices": _build_item_prices_dict(),
         },
     )
 
@@ -580,7 +541,8 @@ class PurchaseOrderEditPartialView(View):
 
     def get(self, request, pk: int):
         po = get_object_or_404(PurchaseOrder, pk=pk)
-        form = PurchaseOrderForm(instance=po)
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
         return render(
             request,
@@ -590,13 +552,16 @@ class PurchaseOrderEditPartialView(View):
                 "formset": formset,
                 "is_edit": True,
                 "po": po,
-                "item_prices_json": _build_item_prices_json(),
+                "item_prices": _build_item_prices_dict(),
             },
         )
 
     def post(self, request, pk: int):
         po = get_object_or_404(PurchaseOrder, pk=pk)
-        form = PurchaseOrderForm(request.POST, instance=po)
+        supplier_url = reverse("supplier_search")
+        form = PurchaseOrderForm(
+            request.POST, instance=po, supplier_suggest_url=supplier_url
+        )
         formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
             form.save()
@@ -609,18 +574,16 @@ class PurchaseOrderEditPartialView(View):
                     "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
                 }
             )
-        return render(
-            request,
-            self.template_name,
-            {
-                "form": form,
-                "formset": formset,
-                "is_edit": True,
-                "po": po,
-                "item_prices_json": _build_item_prices_json(),
-            },
-            status=400,
-        )
+        ctx = {
+            "form": form,
+            "formset": formset,
+            "is_edit": True,
+            "po": po,
+            "item_prices": _build_item_prices_dict(),
+        }
+        if _is_partial_post(request):
+            return JsonResponse(build_form_error_payload(form, formset), status=400)
+        return render(request, self.template_name, ctx, status=400)
 
 
 def purchase_order_detail(request, pk: int):

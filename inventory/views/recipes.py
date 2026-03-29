@@ -16,6 +16,7 @@ from ..forms.recipe_forms import RecipeForm, RecipeItemEditFormSet, RecipeItemFo
 from ..models import Indent, IndentItem, Recipe, RecipeItem
 from ..services import list_utils, recipe_service
 from ..services.units_service import UnitsService
+from .form_errors import build_form_error_payload
 
 
 def _filtered_recipes_queryset(request):
@@ -45,73 +46,6 @@ def _filtered_recipes_queryset(request):
         },
     ]
     return qs, params
-
-
-def _get_field_label(form_like, field_name):
-    field = getattr(form_like, "fields", {}).get(field_name)
-    if field and getattr(field, "label", None):
-        return str(field.label)
-    return field_name.replace("_", " ").capitalize()
-
-
-def _build_form_error_payload(form, formset):
-    """Collect validation errors into a friendly JSON payload."""
-
-    form_non_field_errors = [str(error) for error in form.non_field_errors()]
-    formset_non_form_errors = [str(error) for error in formset.non_form_errors()]
-
-    form_errors = {}
-    first_form_field_error = None
-    for field_name, errors in form.errors.items():
-        error_texts = [str(error) for error in errors]
-        if not error_texts:
-            continue
-        form_errors[field_name] = error_texts
-        if first_form_field_error is None:
-            label = _get_field_label(form, field_name)
-            first_form_field_error = f"{label}: {error_texts[0]}"
-
-    formset_errors = []
-    first_formset_field_error = None
-    forms = list(formset.forms)
-    total_forms = len(forms)
-    for index, form_instance in enumerate(forms):
-        child_errors = {}
-        for field_name, errors in form_instance.errors.items():
-            error_texts = [str(error) for error in errors]
-            if not error_texts:
-                continue
-            child_errors[field_name] = error_texts
-            if first_formset_field_error is None:
-                label = _get_field_label(form_instance, field_name)
-                prefix = f"Row {index + 1} - " if total_forms > 1 else ""
-                first_formset_field_error = f"{prefix}{label}: {error_texts[0]}"
-        if child_errors:
-            formset_errors.append({"index": index, "errors": child_errors})
-
-    message_parts = []
-    message_parts.extend(form_non_field_errors)
-    message_parts.extend(formset_non_form_errors)
-    if first_form_field_error:
-        message_parts.append(first_form_field_error)
-    if first_formset_field_error:
-        message_parts.append(first_formset_field_error)
-
-    if not message_parts:
-        message_parts.append("Please correct the highlighted errors and try again.")
-
-    message = " ".join(part.strip() for part in message_parts if part)
-
-    return {
-        "ok": False,
-        "message": message,
-        "errors": {
-            "form": form_errors,
-            "form_non_field": form_non_field_errors,
-            "formset_non_form": formset_non_form_errors,
-            "formset": formset_errors,
-        },
-    }
 
 
 def _normalize_unit_token(unit_raw: str) -> str:
@@ -521,7 +455,7 @@ class RecipeCreatePartialView(View):
                 {"ok": False, "message": msg or "Error creating recipe"}, status=400
             )
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(_build_form_error_payload(form, formset), status=400)
+            return JsonResponse(build_form_error_payload(form, formset), status=400)
         plating_image_url, plating_placeholder_url = _get_plating_urls(None)
         return render(
             request,
@@ -596,7 +530,7 @@ class RecipeEditPartialView(View):
                 {"ok": False, "message": msg or "Error updating recipe"}, status=400
             )
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(_build_form_error_payload(form, formset), status=400)
+            return JsonResponse(build_form_error_payload(form, formset), status=400)
         plating_image_url, plating_placeholder_url = _get_plating_urls(recipe)
         setattr(recipe, "plating_image_url", plating_image_url)
         return render(

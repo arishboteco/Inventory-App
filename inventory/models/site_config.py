@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+
+from django.conf import settings
+from django.core.cache import cache
 from django.db import models
+
+_SITECONFIG_CACHE_KEY = "site_config:row:v1"
+_SITECONFIG_CACHE_TTL = 900
 
 
 class SiteConfig(models.Model):
@@ -43,7 +50,30 @@ class SiteConfig(models.Model):
 
     @classmethod
     def get(cls) -> SiteConfig:
+        if getattr(settings, "DISABLE_SITECONFIG_CACHE", False):
+            obj, _ = cls.objects.get_or_create(pk=1)
+            return obj
+        raw = cache.get(_SITECONFIG_CACHE_KEY)
+        if raw is not None:
+            obj = cls(
+                business_name=raw["business_name"],
+                default_food_cost_target=Decimal(str(raw["default_food_cost_target"])),
+                quantity_decimal_places=raw["quantity_decimal_places"],
+            )
+            obj.pk = 1
+            obj._state.adding = False
+            obj._state.db = "default"
+            return obj
         obj, _ = cls.objects.get_or_create(pk=1)
+        cache.set(
+            _SITECONFIG_CACHE_KEY,
+            {
+                "business_name": obj.business_name,
+                "default_food_cost_target": str(obj.default_food_cost_target),
+                "quantity_decimal_places": obj.quantity_decimal_places,
+            },
+            _SITECONFIG_CACHE_TTL,
+        )
         return obj
 
     def __str__(self) -> str:  # pragma: no cover

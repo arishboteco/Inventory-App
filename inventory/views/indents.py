@@ -676,6 +676,9 @@ def indent_detail(request, pk: int):
         # Lazy import to avoid circulars at module import time
         from ..services.units_service import UnitsService  # type: ignore
 
+        units_map = {
+            u["unit_id"]: u["purchase_unit"] for u in UnitsService.get_all_units()
+        }
         for it in items:
             rq = Decimal(str(getattr(it, "requested_qty", 0) or 0))
             iq = Decimal(str(getattr(it, "issued_qty", 0) or 0))
@@ -683,13 +686,10 @@ def indent_detail(request, pk: int):
             if remaining < 0:
                 remaining = Decimal("0")
             it.remaining_qty = remaining
-            # Unit display for the linked item (purchase unit for UI)
             try:
                 unit_id = getattr(getattr(it, "item", None), "unit_id", None)
                 it.unit_display = (
-                    UnitsService.get_purchase_unit_display(int(unit_id))
-                    if unit_id
-                    else ""
+                    units_map.get(int(unit_id), "") if unit_id is not None else ""
                 )
             except Exception:
                 it.unit_display = ""

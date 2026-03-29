@@ -57,3 +57,5 @@ LOGIN_EXEMPT_URLS = [
 
 # Hint app code to skip caching in views under tests
 DISABLE_DASHBOARD_CACHE = True
+DISABLE_NAV_KPIS_CACHE = True
+DISABLE_SITECONFIG_CACHE = True

@@ -2,7 +2,6 @@ import json
 import logging
 from datetime import timedelta
 
-from django.core.cache import cache
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -13,6 +12,11 @@ from inventory.models.enums import PurchaseOrderStatus
 from inventory.models.stock_take import StockTake
 from inventory.services import dashboard_kpis as dkpis
 from inventory.services import kpis
+from inventory.services.dashboard_bundle import (
+    get_cached_dashboard_bundle,
+    get_kpi_subset_for_partial,
+    range_days_from_start_end,
+)
 from inventory.services.stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)
@@ -30,8 +34,12 @@ def _greeting(user):
     return f"{prefix}, {name}" if name else prefix
 
 
-def _build_alerts():
-    """Build a list of alert dicts for the dashboard attention panel."""
+def _build_alerts(*, actual_fc_trailing_30d=None):
+    """Build a list of alert dicts for the dashboard attention panel.
+
+    Pass ``actual_fc_trailing_30d`` when already computed (e.g. from dashboard
+    bundle for a 30-day range) to avoid duplicate food-cost queries.
+    """
     alerts = []
 
     try:
@@ -49,10 +57,11 @@ def _build_alerts():
         pass
 
     try:
-        actual_fc = dkpis.actual_food_cost_pct(
-            timezone.now().date() - timedelta(days=29),
-            timezone.now().date(),
-        )
+        end = timezone.now().date()
+        if actual_fc_trailing_30d is not None:
+            actual_fc = actual_fc_trailing_30d
+        else:
+            actual_fc = dkpis.actual_food_cost_pct(end - timedelta(days=29), end)
         if actual_fc and actual_fc > 35:
             alerts.append(
                 {
@@ -131,54 +140,27 @@ def root_view(request):
     if request.user.is_authenticated:
         end = timezone.now().date()
         range_days = int(request.GET.get("range", "30"))
-        start = end - timedelta(days=range_days - 1)
+        bundle = get_cached_dashboard_bundle(range_days, end)
+        opening = bundle["opening_stock"]
+        closing = bundle["closing_stock"]
+        purchases = bundle["purchases"]
+        consumption = bundle["consumption"]
+        cons_delta = bundle["consumption_delta"]
+        revenue = bundle["sales_revenue"]
+        actual_fc = bundle["actual_fc"]
+        ideal_fc = bundle["ideal_fc"]
+        wastage = bundle["wastage"]
+        waste_delta = bundle["wastage_delta"]
+        trend_labels = bundle["trend_labels"]
+        trend_consumption = bundle["trend_consumption"]
+        trend_wastage = bundle["trend_wastage"]
 
-        try:
-            opening = dkpis.opening_stock_value(start, end)
-        except Exception:
-            opening = 0
-        try:
-            closing = dkpis.closing_stock_value()
-        except Exception:
-            closing = 0
-        try:
-            purchases = dkpis.purchases_total(start, end)
-        except Exception:
-            purchases = 0
-        try:
-            consumption = dkpis.consumption_total(start, end)
-        except Exception:
-            consumption = 0
-        try:
-            cons_delta = dkpis.consumption_delta(start, end)
-        except Exception:
-            cons_delta = None
-        try:
-            revenue = dkpis.sales_revenue(start, end)
-        except Exception:
-            revenue = 0
-        try:
-            actual_fc = dkpis.actual_food_cost_pct(start, end)
-        except Exception:
-            actual_fc = None
-        try:
-            ideal_fc = dkpis.ideal_food_cost_pct(start, end)
-        except Exception:
-            ideal_fc = None
-        try:
-            wastage = dkpis.wastage_total(start, end)
-        except Exception:
-            wastage = 0
-        try:
-            waste_delta = dkpis.wastage_delta(start, end)
-        except Exception:
-            waste_delta = None
-        try:
-            trend_labels, trend_consumption, trend_wastage = dkpis.daily_trends(
-                start, end
-            )
-        except Exception:
-            trend_labels, trend_consumption, trend_wastage = [], [], []
+        alert_fc_30 = actual_fc if range_days == 30 else None
+        if alert_fc_30 is None:
+            try:
+                alert_fc_30 = dkpis.actual_food_cost_pct(end - timedelta(days=29), end)
+            except Exception:
+                alert_fc_30 = None
 
         active_items = Item.objects.filter(is_active=True).count()
         low_stock_count = kpis.low_stock_count()
@@ -212,7 +194,7 @@ def root_view(request):
             "low_stock_pct": low_stock_pct,
             "stock_value": stock_value,
             "fastest_movers": fastest_movers,
-            "alerts": _build_alerts(),
+            "alerts": _build_alerts(actual_fc_trailing_30d=alert_fc_30),
             "low_stock_items": get_low_stock_items()[:5],
             "list_url": reverse("root"),
             "list_title": "Dashboard",
@@ -233,27 +215,11 @@ def health_check(request):
 
 
 def dashboard_kpis(request):
-    """HTMX endpoint returning KPI card values. Cached for 60s per range."""
+    """HTMX endpoint returning KPI card values (shared cache with dashboard bundle)."""
     end = timezone.now().date()
     range_days = int(request.GET.get("range", "30"))
-    start = end - timedelta(days=range_days - 1)
-
-    cache_key = f"dashboard_kpis:{range_days}:{end.isoformat()}"
-    data = cache.get(cache_key)
-    if data is None:
-        data = {
-            "opening_stock": dkpis.opening_stock_value(start, end),
-            "purchases": dkpis.purchases_total(start, end),
-            "closing_stock": dkpis.closing_stock_value(),
-            "consumption": dkpis.consumption_total(start, end),
-            "consumption_delta": dkpis.consumption_delta(start, end),
-            "sales_revenue": dkpis.sales_revenue(start, end),
-            "actual_fc": dkpis.actual_food_cost_pct(start, end),
-            "ideal_fc": dkpis.ideal_food_cost_pct(start, end),
-            "wastage": dkpis.wastage_total(start, end),
-            "wastage_delta": dkpis.wastage_delta(start, end),
-        }
-        cache.set(cache_key, data, 60)
+    bundle = get_cached_dashboard_bundle(range_days, end)
+    data = get_kpi_subset_for_partial(bundle)
     return render(request, "core/_kpi_cards.html", data)
 
 
@@ -278,7 +244,11 @@ def interactive_dashboard(request):
 def ajax_dashboard_data(request):
     """Return JSON chart data for the given filters."""
     start, end = _parse_date_range(request)
-    labels, consumption, wastage = dkpis.daily_trends(start, end)
+    range_days = range_days_from_start_end(start, end)
+    bundle = get_cached_dashboard_bundle(range_days, end)
+    labels = bundle["trend_labels"]
+    consumption = bundle["trend_consumption"]
+    wastage = bundle["trend_wastage"]
     return JsonResponse(
         {"labels": labels, "consumption": consumption, "wastage": wastage}
     )

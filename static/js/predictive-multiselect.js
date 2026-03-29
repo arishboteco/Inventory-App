@@ -28,7 +28,7 @@
 
     const dropdown = document.createElement("div");
     dropdown.className =
-      "absolute z-[60] mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto w-full hidden";
+      "absolute z-[60] mt-1 bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-y-auto w-full hidden";
 
     // Build option list snapshot
     let options = Array.from(sel.options).map((o) => ({
@@ -60,12 +60,12 @@
       selected.forEach((o) => {
         const pill = document.createElement("span");
         pill.className =
-          "inline-flex items-center gap-1 bg-blue-50 text-blue-800 border border-blue-200 rounded-full px-2 py-0.5 text-xs";
+          "inline-flex items-center gap-1 bg-info-soft text-info-text border border-border rounded-full px-2 py-0.5 text-xs";
         const lab = document.createElement("span");
         lab.textContent = o.label;
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "ml-1 text-blue-700 hover:text-blue-900";
+        btn.className = "ml-1 text-bodyText hover:text-danger";
         btn.setAttribute("aria-label", `Remove ${o.label}`);
         btn.textContent = "×";
         btn.addEventListener("click", () => {
@@ -104,16 +104,16 @@
       // Toolbar for bulk actions
       const toolbar = document.createElement("div");
       toolbar.className =
-        "sticky top-0 bg-white p-2 border-b border-gray-200 flex items-center gap-2";
+        "sticky top-0 bg-surface p-2 border-b border-border flex items-center gap-2";
       const btnSelectAll = document.createElement("button");
       btnSelectAll.type = "button";
       btnSelectAll.className =
-        "text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50";
+        "text-xs px-2 py-1 rounded border border-border text-bodyText hover:bg-surfaceSubtle";
       btnSelectAll.textContent = "Select all";
       const btnClearAll = document.createElement("button");
       btnClearAll.type = "button";
       btnClearAll.className =
-        "text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50";
+        "text-xs px-2 py-1 rounded border border-border text-bodyText hover:bg-surfaceSubtle";
       btnClearAll.textContent = "Clear";
       toolbar.appendChild(btnSelectAll);
       toolbar.appendChild(btnClearAll);
@@ -129,7 +129,7 @@
       visible.forEach((o) => {
         const row = document.createElement("label");
         row.className =
-          "flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100 last:border-b-0";
+          "flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-surfaceSubtle border-b border-border text-bodyText last:border-b-0";
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = !!o.selected;

@@ -17,7 +17,7 @@
 
     const overlay = document.createElement("div");
     overlay.className =
-      "predictive-overlay fixed left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto hidden z-[70]";
+      "predictive-overlay fixed left-0 right-0 bg-surface border border-border rounded-md shadow-lg max-h-60 overflow-auto hidden z-[70]";
     overlay.setAttribute("role", "listbox");
 
     function position() {

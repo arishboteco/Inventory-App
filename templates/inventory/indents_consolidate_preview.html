@@ -120,22 +120,22 @@
 {# Fix 1: Confirmation modal #}
 {% if total_groups > 0 %}
 <div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title"
-     style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:460px;width:100%;margin:0 16px;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
-    <h2 id="confirm-modal-title" style="font-size:1.125rem;font-weight:700;margin:0 0 12px">Confirm Purchase Order Creation</h2>
-    <p id="confirm-modal-body" style="color:#374151;margin:0 0 24px;line-height:1.6">
+     class="hidden flex fixed inset-0 z-50 items-center justify-center bg-black/40 p-4">
+  <div class="bg-surface border border-border text-bodyText rounded-xl shadow-overlay max-w-md w-full p-7">
+    <h2 id="confirm-modal-title" class="text-lg font-bold text-bodyText mb-3">Confirm Purchase Order Creation</h2>
+    <p id="confirm-modal-body" class="text-sm text-bodyText mb-6 leading-relaxed">
       You are about to create <strong id="confirm-po-count">{{ total_supplier_count }}</strong> Purchase Order{{ total_supplier_count|pluralize }}
       covering <strong id="confirm-item-count">{{ total_item_count }}</strong> item{{ total_item_count|pluralize }}
       across <strong>{{ total_supplier_count }}</strong> supplier{{ total_supplier_count|pluralize }}.
       This action cannot be undone.
     </p>
-    <div style="display:flex;justify-content:flex-end;gap:12px">
+    <div class="flex justify-end gap-3">
       <button type="button" id="cancel-confirm-modal"
-              style="padding:8px 18px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;font-size:.875rem;font-weight:500;cursor:pointer">
+              class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
         Cancel
       </button>
       <button type="button" id="confirm-submit"
-              style="padding:8px 18px;border-radius:6px;border:none;background:#1D4ED8;color:#fff;font-size:.875rem;font-weight:500;cursor:pointer">
+              class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-primary text-white hover:bg-primaryHover focus:outline-none focus:ring-2 focus:ring-primary">
         Confirm &amp; Create
       </button>
     </div>
@@ -154,18 +154,18 @@
     // Update counts based on currently checked items
     var checked = document.querySelectorAll('.group-checkbox:checked').length;
     document.getElementById('confirm-item-count').textContent = checked;
-    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
     confirmBtn.focus();
   });
-  cancelBtn.addEventListener('click', function () { modal.style.display = 'none'; });
+  cancelBtn.addEventListener('click', function () { modal.classList.add('hidden'); });
   modal.addEventListener('click', function (e) {
-    if (e.target === modal) modal.style.display = 'none';
+    if (e.target === modal) modal.classList.add('hidden');
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') modal.style.display = 'none';
+    if (e.key === 'Escape') modal.classList.add('hidden');
   });
   confirmBtn.addEventListener('click', function () {
-    modal.style.display = 'none';
+    modal.classList.add('hidden');
     form.submit();
   });
 

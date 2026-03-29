@@ -98,10 +98,10 @@
       const isEdit = /\/items\/\d+\/edit\//.test(url);
       const heading = isEdit ? "Edit Item" : "Add New Item";
       markup = `
-        <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden drawer-panel max-w-drawer-xl" aria-busy="true">
-          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-            <h3 class="text-lg font-semibold">${heading}</h3>
-            <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-white text-gray-400 border border-border cursor-wait" disabled>Loading…</button>
+        <div class="bg-surface rounded-xl shadow border border-border overflow-hidden drawer-panel max-w-drawer-xl" aria-busy="true">
+          <div class="px-4 py-3 border-b border-border bg-table-headerBg flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-bodyText">${heading}</h3>
+            <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-gray-400 border border-border cursor-wait" disabled>Loading…</button>
           </div>
           <div class="p-4 space-y-4">
             <div class="grid grid-cols-2 gap-3">
@@ -110,18 +110,18 @@
                   () => `
                 <div class=\"space-y-1\">
                   <div class=\"h-4 w-28 bg-gray-200 rounded\"></div>
-                  <div class=\"h-9 w-full bg-gray-100 rounded border border-gray-200 animate-pulse\"></div>
+                  <div class=\"h-9 w-full bg-gray-100 rounded border border-border animate-pulse\"></div>
                 </div>`,
                 )
                 .join("")}
               <div class="col-span-2 space-y-1">
                 <div class="h-4 w-32 bg-gray-200 rounded"></div>
-                <div class="h-20 w-full bg-gray-100 rounded border border-gray-200 animate-pulse"></div>
+                <div class="h-20 w-full bg-gray-100 rounded border border-border animate-pulse"></div>
               </div>
             </div>
             <div class="flex justify-end gap-2 pt-2">
-              <div class="h-9 w-24 bg-gray-100 rounded border border-gray-200 animate-pulse"></div>
-              <div class="h-9 w-28 bg-gray-100 rounded border border-gray-200 animate-pulse"></div>
+              <div class="h-9 w-24 bg-gray-100 rounded border border-border animate-pulse"></div>
+              <div class="h-9 w-28 bg-gray-100 rounded border border-border animate-pulse"></div>
             </div>
           </div>
         </div>`;

@@ -1,29 +1,18 @@
-{% extends "_base.html" %}
+{% extends "components/form_layout.html" %}
 {% load icon_tags %}
+
 {% block title %}New GRN – Inventory Pro{% endblock %}
-{% block content %}
-<div class="w-full max-w-4xl mx-auto space-y-6 px-4 md:px-0 py-6">
-
-  {# Breadcrumb #}
-  <nav class="text-sm text-gray-500 flex items-center gap-1">
-    <a href="{% url 'grn_list' %}" class="hover:text-primary hover:underline">GRNs</a>
-    <span>›</span>
-    <span class="text-bodyText">New GRN</span>
-  </nav>
-
-  <div class="bg-surface border border-border rounded-2xl shadow-card p-6">
-    <div class="mb-6">
-      <h1 class="text-2xl font-semibold text-bodyText">New Goods Received Note</h1>
-      <p class="text-sm text-gray-600 mt-1">Select a purchase order, enter received quantities, and save.</p>
-    </div>
-
-    {% if step == "select_po" %}
-    {# ── Step 1: Select PO ── #}
+{% block heading %}New Goods Received Note{% endblock %}
+{% block form_summary %}
+  <p class="text-sm text-gray-600 mt-1">Select a purchase order, enter received quantities, and save.</p>
+{% endblock %}
+{% block form_container_class %}bg-surface border border-border rounded-2xl shadow-card p-6 space-y-4{% endblock %}
+{% block form_body %}
+  {% if step == "select_po" %}
     <div class="space-y-4">
       <h2 class="text-base font-semibold text-bodyText">Step 1 — Select a Purchase Order</h2>
       <div class="mb-4">
-        <a href="{% url 'grn_create_adhoc' %}"
-           class="flex items-center justify-between p-4 border-2 border-dashed border-primary rounded-xl hover:bg-surfaceSubtle transition group">
+        <a href="{% url 'grn_create_adhoc' %}" class="flex items-center justify-between p-4 border-2 border-dashed border-primary rounded-xl hover:bg-surfaceSubtle transition group">
           <div>
             <div class="font-medium text-primary">Receive Without PO</div>
             <div class="text-xs text-gray-500 mt-0.5">Ad-hoc receipt — no purchase order required</div>
@@ -35,15 +24,10 @@
       {% if open_pos %}
         <div class="space-y-2">
           {% for po in open_pos %}
-          <a href="{% url 'grn_create' %}?po={{ po.pk }}"
-             class="flex items-center justify-between p-4 border border-border rounded-xl hover:border-primary hover:bg-surfaceSubtle transition group">
+          <a href="{% url 'grn_create' %}?po={{ po.pk }}" class="flex items-center justify-between p-4 border border-border rounded-xl hover:border-primary hover:bg-surfaceSubtle transition group">
             <div>
               <div class="font-medium text-bodyText group-hover:text-primary">PO #{{ po.pk }} — {{ po.supplier.name }}</div>
-              <div class="text-xs text-gray-500 mt-0.5">
-                Ordered {{ po.order_date }}
-                {% if po.expected_delivery_date %} · Expected {{ po.expected_delivery_date }}{% endif %}
-                · <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-surfaceSubtle border border-border">{{ po.get_status_display }}</span>
-              </div>
+              <div class="text-xs text-gray-500 mt-0.5">Ordered {{ po.order_date }}{% if po.expected_delivery_date %} · Expected {{ po.expected_delivery_date }}{% endif %} · <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-surfaceSubtle border border-border">{{ po.get_status_display }}</span></div>
             </div>
             {% icon 'chevron-right' 'w-5 h-5 text-gray-400 group-hover:text-primary' %}
           </a>
@@ -56,25 +40,18 @@
         </div>
       {% endif %}
 
-      {# Ad-hoc receipt without PO #}
       <div class="mt-6 p-4 border border-dashed border-border rounded-xl bg-surfaceSubtle">
         <div class="flex items-start gap-3">
           {% icon 'inbox-arrow-down' 'w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0' %}
           <div>
             <h3 class="text-sm font-semibold text-bodyText">No Purchase Order?</h3>
             <p class="text-xs text-gray-500 mt-0.5">Record an ad-hoc receipt for emergency or walk-in purchases directly as a stock adjustment.</p>
-            <a href="{% url 'stock_movements' %}?type=RECEIVING"
-               class="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">
-              {% icon 'arrow-right' 'w-4 h-4' %}
-              Record Ad-hoc Receipt
-            </a>
+            <a href="{% url 'stock_movements' %}?type=RECEIVING" class="inline-flex items-center gap-1 mt-2 text-sm font-medium text-primary hover:underline">{% icon 'arrow-right' 'w-4 h-4' %}Record Ad-hoc Receipt</a>
           </div>
         </div>
       </div>
     </div>
-
-    {% else %}
-    {# ── Step 2: Enter quantities ── #}
+  {% else %}
     <div class="mb-4 flex items-center gap-2 text-sm text-gray-600">
       <a href="{% url 'grn_create' %}" class="text-primary hover:underline">← Back to PO selection</a>
     </div>
@@ -83,126 +60,39 @@
       <div class="flex items-start justify-between">
         <div>
           <div class="font-semibold text-bodyText">PO #{{ po.pk }} — {{ po.supplier.name }}</div>
-          <div class="text-xs text-gray-500 mt-0.5">
-            Ordered {{ po.order_date }}
-            {% if po.expected_delivery_date %} · Expected {{ po.expected_delivery_date }}{% endif %}
-          </div>
+          <div class="text-xs text-gray-500 mt-0.5">Ordered {{ po.order_date }}{% if po.expected_delivery_date %} · Expected {{ po.expected_delivery_date }}{% endif %}</div>
         </div>
         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle border border-border">{{ po.get_status_display }}</span>
       </div>
     </div>
 
     {% if form.non_field_errors %}
-      <div class="mb-4 p-3 bg-danger-soft border border-danger rounded-lg text-sm text-danger">
-        <ul class="list-disc list-inside space-y-0.5">
-          {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-        </ul>
-      </div>
+      <div class="mb-4 p-3 bg-danger-soft border border-danger rounded-lg text-sm text-danger"><ul class="list-disc list-inside space-y-0.5">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
     {% endif %}
 
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="hidden" name="po_id" value="{{ po.pk }}">
-
-      {# GRN Header fields #}
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {% include "components/form_field.html" with field=form.received_date %}
         {% include "components/form_field.html" with field=form.notes %}
       </div>
-
-      {# Attachment #}
       <div class="mb-6">
-        <label class="block text-sm font-medium text-bodyText mb-1">
-          Delivery Document <span class="text-gray-400 font-normal">(optional)</span>
-        </label>
-        <input type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png"
-               class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:text-sm file:font-medium file:bg-surface file:text-bodyText hover:file:bg-surfaceSubtle cursor-pointer">
+        <label class="block text-sm font-medium text-bodyText mb-1">Delivery Document <span class="text-gray-400 font-normal">(optional)</span></label>
+        <input type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png" class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:text-sm file:font-medium file:bg-surface file:text-bodyText hover:file:bg-surfaceSubtle cursor-pointer">
         <p class="text-xs text-gray-500 mt-1">Upload delivery docket, invoice, or photos of goods (PDF, JPG, PNG).</p>
       </div>
-
-      {# Line items table #}
       <h2 class="text-base font-semibold text-bodyText mb-3">Line Items</h2>
       {% if items %}
       <div class="overflow-x-auto rounded-xl border border-border mb-6">
-        <table class="min-w-full text-sm">
-          <thead class="bg-surfaceSubtle text-xs font-semibold text-gray-600 uppercase tracking-wider">
-            <tr>
-              <th class="px-4 py-3 text-left">Item</th>
-              <th class="px-4 py-3 text-right">Ordered</th>
-              <th class="px-4 py-3 text-right">Previously Received</th>
-              <th class="px-4 py-3 text-right">Remaining</th>
-              <th class="px-4 py-3 text-right">Receive Now <span class="text-primary">*</span></th>
-              <th class="px-4 py-3 text-right">Unit Price</th>
-              <th class="px-4 py-3 text-left">Notes</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            {% for item in items %}
-            <tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle">
-              <td class="px-4 py-3 font-medium text-bodyText">
-                {{ item.item.name }}
-                {% if item.item.unit %}
-                  <span class="text-xs text-gray-500">({{ item.item.unit.purchase_unit }})</span>
-                {% endif %}
-              </td>
-              <td class="px-4 py-3 text-right tabular-nums">{{ item.quantity_ordered|floatformat:2 }}</td>
-              <td class="px-4 py-3 text-right tabular-nums text-gray-500">
-                {{ item.prev_received|floatformat:2 }}
-              </td>
-              <td class="px-4 py-3 text-right tabular-nums font-medium">{{ item.remaining_qty|floatformat:2 }}</td>
-              <td class="px-4 py-3 text-right">
-                <input
-                  type="number"
-                  name="item_{{ item.pk }}"
-                  step="0.01"
-                  min="0"
-                  max="{{ item.remaining_qty }}"
-                  value="{{ item.remaining_qty|floatformat:2 }}"
-                  class="w-28 p-1.5 text-right border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary tabular-nums"
-                >
-              </td>
-              <td class="px-4 py-3 text-right">
-                <input
-                  type="number"
-                  name="price_{{ item.pk }}"
-                  step="0.01"
-                  min="0"
-                  value="{{ item.unit_price|floatformat:2 }}"
-                  class="w-24 p-1.5 text-right border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary tabular-nums"
-                >
-              </td>
-              <td class="px-4 py-3">
-                <input
-                  type="text"
-                  name="notes_{{ item.pk }}"
-                  placeholder="Optional note"
-                  class="w-full p-1.5 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                >
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
+        <table class="min-w-full text-sm"><thead class="bg-surfaceSubtle text-xs font-semibold text-gray-600 uppercase tracking-wider"><tr><th class="px-4 py-3 text-left">Item</th><th class="px-4 py-3 text-right">Ordered</th><th class="px-4 py-3 text-right">Previously Received</th><th class="px-4 py-3 text-right">Remaining</th><th class="px-4 py-3 text-right">Receive Now <span class="text-primary">*</span></th><th class="px-4 py-3 text-right">Unit Price</th><th class="px-4 py-3 text-left">Notes</th></tr></thead>
+          <tbody class="divide-y divide-border">{% for item in items %}<tr class="odd:bg-surfaceSubtle hover:bg-surfaceSubtle"><td class="px-4 py-3 font-medium text-bodyText">{{ item.item.name }}{% if item.item.unit %}<span class="text-xs text-gray-500">({{ item.item.unit.purchase_unit }})</span>{% endif %}</td><td class="px-4 py-3 text-right tabular-nums">{{ item.quantity_ordered|floatformat:2 }}</td><td class="px-4 py-3 text-right tabular-nums text-gray-500">{{ item.prev_received|floatformat:2 }}</td><td class="px-4 py-3 text-right tabular-nums font-medium">{{ item.remaining_qty|floatformat:2 }}</td><td class="px-4 py-3 text-right"><input type="number" name="item_{{ item.pk }}" step="0.01" min="0" max="{{ item.remaining_qty }}" value="{{ item.remaining_qty|floatformat:2 }}" class="w-28 p-1.5 text-right border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary tabular-nums"></td><td class="px-4 py-3 text-right"><input type="number" name="price_{{ item.pk }}" step="0.01" min="0" value="{{ item.unit_price|floatformat:2 }}" class="w-24 p-1.5 text-right border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary tabular-nums"></td><td class="px-4 py-3"><input type="text" name="notes_{{ item.pk }}" placeholder="Optional note" class="w-full p-1.5 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"></td></tr>{% endfor %}</tbody>
         </table>
       </div>
       {% else %}
-        <div class="text-center py-8 border border-dashed border-border rounded-xl mb-6">
-          <p class="text-gray-500">All items on this PO have already been fully received.</p>
-        </div>
+        <div class="text-center py-8 border border-dashed border-border rounded-xl mb-6"><p class="text-gray-500">All items on this PO have already been fully received.</p></div>
       {% endif %}
-
-      <div class="flex items-center justify-between">
-        <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition">
-          Cancel
-        </a>
-        {% if items %}
-        <button type="submit" class="inline-flex items-center px-6 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
-          {% icon 'archive-box-arrow-down' 'w-4 h-4 mr-2' %}
-          Save GRN
-        </button>
-        {% endif %}
-      </div>
+      <div class="flex items-center justify-between"><a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-border bg-surface text-bodyText hover:bg-surfaceSubtle transition">Cancel</a>{% if items %}<button type="submit" class="inline-flex items-center px-6 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">{% icon 'archive-box-arrow-down' 'w-4 h-4 mr-2' %}Save GRN</button>{% endif %}</div>
     </form>
-    {% endif %}
-  </div>
-</div>
+  {% endif %}
 {% endblock %}

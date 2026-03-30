@@ -7,16 +7,16 @@
 {% block page_title %}Items – Inventory Pro{% endblock %}
 {% block page_heading %}Items{% endblock %}
 {% block page_subtitle %}
-  <p class="text-sm text-gray-600">Manage your ingredient and product catalogue.</p>
+  <p class="text-sm text-table-headerText">Manage your ingredient and product catalogue.</p>
 {% endblock %}
 {% block page_meta %}
-  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
+  <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-table-headerText">
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Items: <span class="text-bodyText">{{ page_obj.paginator.count|default:0 }}</span></span>
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">Page Size: <span class="text-bodyText">{{ page_size|default:25 }}</span></span>
   </div>
 {% endblock %}
 {% block hero_extra %}
-  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-gray-600">
+  <div class="mt-4 bg-surfaceSubtle border border-dashed border-border rounded-lg p-3 text-sm text-table-headerText">
     <span class="font-medium text-bodyText">Tip:</span> Use the filters to narrow by category, supplier, or stock status. Tick rows to bulk-deactivate or reassign departments.
   </div>
 {% endblock %}
@@ -64,7 +64,7 @@
               <button type="button" class="inline-flex items-center justify-center w-8 h-8 p-0 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" aria-label="Show/Hide Columns" title="Show/Hide Columns" aria-haspopup="true" aria-expanded="false" aria-controls="columns-menu" data-col-menu-button>{% icon 'cog-6-tooth' 'w-4 h-4' %}</button>
               <!-- Column visibility dropdown -->
               <div id="columns-menu" data-col-menu class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-surface ring-1 ring-black ring-opacity-5 p-3 z-40">
-                <p class="text-xs font-medium text-gray-500 mb-2">Toggle Columns</p>
+                <p class="text-xs font-medium text-table-headerText mb-2">Toggle Columns</p>
                 <ul class="space-y-1 text-sm">
                   <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="category" checked> <span>Category</span></label></li>
                   <li><label class="inline-flex items-center gap-2"><input type="checkbox" class="h-4 w-4" data-col-toggle value="unit" checked> <span>Unit</span></label></li>

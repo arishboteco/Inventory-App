@@ -1,32 +1,50 @@
-<form id="filters" class="flex flex-wrap md:flex-nowrap items-end gap-2 md:gap-3 mb-0 w-full" method="get">
+{% comment %}
+Single filter form (id=filters). Optional:
+- filter_bar_card: wrap in surface card
+- show_date_range + start_date, end_date, start_date_label, end_date_label
+- page_size_options: list of values (ints/str); shows select; omits hidden page_size
+- export_href + export_label
+- view_toggle_table_href, view_toggle_cards_href, view_toggle_current (table|cards)
+- bulk_slot_template: template path to include after page size
+- hx_push_url, hx_swap: passthrough on HTMX controls
+{% endcomment %}
+{% if filter_bar_card %}
+<div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden mb-4 md:mb-6">
+  <div class="p-4 space-y-4">
+{% endif %}
+<form id="filters" class="flex flex-wrap md:flex-nowrap items-end gap-2 md:gap-3 mb-0 w-full {{ filter_bar_form_class }}" method="get">
   <div class="flex flex-col md:flex-none min-w-[9rem] md:min-w-[9rem] md:basis-[clamp(9rem,14vw,15rem)] md:flex-1">
-    <label id="label-filter-q" for="filter-q" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-gray-700 truncate md:max-w-[8rem]{% endif %}">{{ search_label|default:'Search' }}</label>
+    <label id="label-filter-q" for="filter-q" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-bodyText truncate md:max-w-[8rem]{% endif %}">{{ search_label|default:'Search' }}</label>
       <input
         id="filter-q"
         type="text"
         name="q"
         autocomplete="off"
-  placeholder="{{ search_placeholder|default:'Search items' }}"
-        class="block w-full h-9 px-3 pr-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-        value="{{ q }}"
+        placeholder="{{ search_placeholder|default:'Search items' }}"
+        class="block w-full h-9 px-3 pr-9 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary"
+        value="{{ q|default:'' }}"
         hx-get="{{ hx_get }}"
         hx-target="{{ hx_target }}"
         hx-trigger="keyup changed delay:{{ search_delay|default:'300ms' }}"
         hx-include="#filters"
         {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+        {% if hx_push_url %}hx-push-url="{{ hx_push_url }}"{% endif %}
+        {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
       />
     </div>
-    {% for f in filters %}
+    {% if filters %}{% for f in filters %}
       <div class="flex flex-col md:flex-none min-w-[9rem] md:min-w-[9rem] md:basis-[clamp(9rem,14vw,15rem)] md:flex-1">
-        <label id="label-filter-{{ f.name }}" for="filter-{{ f.name }}" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-gray-700 truncate md:max-w-[8rem]{% endif %}">{{ f.label|default:f.name|capfirst }}</label>
+        <label id="label-filter-{{ f.name }}" for="filter-{{ f.name }}" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-bodyText truncate md:max-w-[8rem]{% endif %}">{{ f.label|default:f.name|capfirst }}</label>
         <select
           name="{{ f.name }}"
-          class="block w-full h-9 px-3 pr-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_names and f.name in predictive_names %} predictive{% endif %}"
+          class="block w-full h-9 px-3 pr-9 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary{% if predictive_names and f.name in predictive_names %} predictive{% endif %}"
           hx-get="{{ hx_get }}"
           hx-target="{{ hx_target }}"
           hx-trigger="change"
           hx-include="#filters"
           {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+          {% if hx_push_url %}hx-push-url="{{ hx_push_url }}"{% endif %}
+          {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
           id="filter-{{ f.name }}"
           autocomplete="off"
           {% if f.multiple %}multiple size="1"{% endif %}
@@ -47,15 +65,113 @@
           {% endfor %}
         </select>
       </div>
-    {% endfor %}
-  {# Action buttons were moved out of the filter bar to the toolbar header #}
+    {% endfor %}{% endif %}
+  {% if show_date_range %}
+    <div class="flex flex-col md:flex-none min-w-[9rem] md:basis-[clamp(9rem,14vw,12rem)]">
+      <label for="filter-start-date" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-bodyText truncate{% endif %}">{{ start_date_label|default:'Start date' }}</label>
+      <input
+        id="filter-start-date"
+        type="date"
+        name="{{ start_date_param|default:'start_date' }}"
+        value="{{ start_date|default:'' }}"
+        class="block w-full h-9 px-3 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary"
+        autocomplete="off"
+        hx-get="{{ hx_get }}"
+        hx-target="{{ hx_target }}"
+        hx-trigger="change"
+        hx-include="#filters"
+        {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+        {% if hx_push_url %}hx-push-url="{{ hx_push_url }}"{% endif %}
+        {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+      />
+    </div>
+    <div class="flex flex-col md:flex-none min-w-[9rem] md:basis-[clamp(9rem,14vw,12rem)]">
+      <label for="filter-end-date" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-bodyText truncate{% endif %}">{{ end_date_label|default:'End date' }}</label>
+      <input
+        id="filter-end-date"
+        type="date"
+        name="{{ end_date_param|default:'end_date' }}"
+        value="{{ end_date|default:'' }}"
+        class="block w-full h-9 px-3 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary"
+        autocomplete="off"
+        hx-get="{{ hx_get }}"
+        hx-target="{{ hx_target }}"
+        hx-trigger="change"
+        hx-include="#filters"
+        {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+        {% if hx_push_url %}hx-push-url="{{ hx_push_url }}"{% endif %}
+        {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+      />
+    </div>
+  {% endif %}
+  {% if view_toggle_table_href and view_toggle_cards_href %}
+    <div class="flex flex-col min-w-[10rem]">
+      {% if not hide_labels %}<span class="text-label text-xs font-medium text-bodyText mb-1">{{ view_toggle_label|default:'View' }}</span>{% endif %}
+      <div class="inline-flex rounded-md shadow-sm h-9" role="group">
+        <a
+          href="{{ view_toggle_table_href }}"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium border rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary {% if view_toggle_current == 'table' or not view_toggle_current %}bg-primary text-white border-primary{% else %}bg-surface text-bodyText border-border hover:bg-surfaceSubtle{% endif %}"
+        >
+          {{ view_toggle_table_label|default:'Table' }}
+        </a>
+        <a
+          href="{{ view_toggle_cards_href }}"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium border-t border-b border-r rounded-r-md focus:outline-none focus:ring-2 focus:ring-primary {% if view_toggle_current == 'cards' %}bg-primary text-white border-primary{% else %}bg-surface text-bodyText border-border hover:bg-surfaceSubtle{% endif %}"
+        >
+          {{ view_toggle_cards_label|default:'Cards' }}
+        </a>
+      </div>
+    </div>
+  {% endif %}
+  {% if export_href %}
+    <div class="flex flex-col min-w-[8rem]">
+      {% if not hide_labels %}<span class="text-label text-xs font-medium text-bodyText mb-1">{{ export_label|default:'Export' }}</span>{% endif %}
+      <a
+        href="{{ export_href }}"
+        class="inline-flex items-center justify-center h-9 px-3 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        {{ export_label|default:'Export' }}
+      </a>
+    </div>
+  {% endif %}
+  {% if page_size_options %}
+    <div class="flex flex-col min-w-[6rem] md:flex-none">
+      <label for="filter-page-size" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-bodyText{% endif %}">{{ page_size_label|default:'Page size' }}</label>
+      <select
+        id="filter-page-size"
+        name="page_size"
+        class="block w-full h-9 px-3 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary"
+        hx-get="{{ hx_get }}"
+        hx-target="{{ hx_target }}"
+        hx-trigger="change"
+        hx-include="#filters"
+        {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
+        {% if hx_push_url %}hx-push-url="{{ hx_push_url }}"{% endif %}
+        {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+      >
+        {% for opt in page_size_options %}
+          <option value="{{ opt }}" {% if page_size == opt or page_size|stringformat:"s" == opt|stringformat:"s" %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  {% endif %}
+  {% if bulk_slot_template %}
+    <div class="flex flex-col md:flex-1 min-w-[8rem] items-stretch justify-end">
+      {% include bulk_slot_template %}
+    </div>
+  {% endif %}
   {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
-  {% if page_size %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
+  {% if page_size and not page_size_options %}<input type="hidden" name="page_size" value="{{ page_size|default:25 }}">{% endif %}
   {% if sort %}<input type="hidden" name="sort" value="{{ sort|default:'name' }}">{% endif %}
   {% if direction %}<input type="hidden" name="direction" value="{{ direction|default:'asc' }}">{% endif %}
+  {% if view %}<input type="hidden" name="view" value="{{ view }}">{% endif %}
   <noscript>
-    <div class="mt-2">
+    <div class="mt-2 w-full">
       <button type="submit" class="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primaryHover focus:ring-2 focus:ring-primary">Apply</button>
     </div>
   </noscript>
 </form>
+{% if filter_bar_card %}
+  </div>
+</div>
+{% endif %}

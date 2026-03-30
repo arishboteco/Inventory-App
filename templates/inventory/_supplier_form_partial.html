@@ -9,15 +9,11 @@
       <input type="hidden" name="partial" value="1"/>
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         {% for field in form %}
-        <div class="space-y-1 col-span-2">
-          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">{{ field.label }}</label>
-          {{ field }}
-          {% include "forms/feedback.html" %}
-        </div>
+        {% include "components/form_field.html" with field=field container_class="col-span-2" %}
         {% endfor %}
-        <div class="col-span-2 flex justify-between items-center gap-2">
-          <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
+        <div class="col-span-2 flex flex-row-reverse flex-wrap gap-2 justify-end items-center">
           <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">{% if is_edit %}Save{% else %}Create{% endif %}</button>
+          <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
         </div>
       </div>
     </form>

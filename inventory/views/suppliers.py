@@ -44,6 +44,7 @@ class SuppliersListView(TemplateView):
         filters = [
             {
                 "name": "active",
+                "label": "Status",
                 "value": active,
                 "list_id": "active-statuses",
                 "options": [
@@ -55,6 +56,19 @@ class SuppliersListView(TemplateView):
         ]
         hx_view_name = "suppliers_cards" if view == "cards" else "suppliers_table"
         container_id = "suppliers_cards" if view == "cards" else "suppliers_table"
+
+        export_params = self.request.GET.copy()
+        export_params.pop("page", None)
+        export_params["export"] = "1"
+        export_href = f"{reverse('suppliers_table')}?{export_params.urlencode()}"
+
+        toggle_table = self.request.GET.copy()
+        toggle_table["view"] = "table"
+        view_toggle_table_href = "?" + toggle_table.urlencode()
+        toggle_cards = self.request.GET.copy()
+        toggle_cards["view"] = "cards"
+        view_toggle_cards_href = "?" + toggle_cards.urlencode()
+
         ctx.update(
             {
                 "q": q,
@@ -66,6 +80,11 @@ class SuppliersListView(TemplateView):
                 "total_suppliers": total_suppliers,
                 "filters": filters,
                 "export_url": reverse("suppliers_table"),
+                "export_href": export_href,
+                "view_toggle_table_href": view_toggle_table_href,
+                "view_toggle_cards_href": view_toggle_cards_href,
+                "view_toggle_current": view,
+                "page_size_options": [10, 25, 50, 100],
                 "hx_view_name": hx_view_name,
                 "container_id": container_id,
                 "list_url": reverse("root"),

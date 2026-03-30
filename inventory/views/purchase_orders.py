@@ -130,7 +130,6 @@ class PurchaseOrdersListView(TemplateView):
                 o.received_total = Decimal("0")
                 o.progress_percent = 0
 
-        statuses = PurchaseOrder._meta.get_field("status").choices
         suppliers = (
             Supplier.objects.filter(is_active=True)
             .only("supplier_id", "name")
@@ -160,21 +159,73 @@ class PurchaseOrdersListView(TemplateView):
         # View mode (table or cards)
         view_mode = self.request.GET.get("view", "table")
 
+        status_field = PurchaseOrder._meta.get_field("status")
+        status_options = [{"value": "", "label": "All Statuses"}]
+        for value, label in status_field.choices:
+            status_options.append({"value": value, "label": str(label)})
+        supplier_options = [{"value": "", "label": "All Suppliers"}]
+        for s in suppliers:
+            supplier_options.append({"value": str(s.pk), "label": s.name})
+
+        export_params = self.request.GET.copy()
+        export_params.pop("page", None)
+        export_qs = export_params.urlencode()
+        export_href = (
+            f"{reverse('purchase_orders_export')}?{export_qs}"
+            if export_qs
+            else reverse("purchase_orders_export")
+        )
+
+        toggle_table = self.request.GET.copy()
+        toggle_table["view"] = "table"
+        view_toggle_table_href = "?" + toggle_table.urlencode()
+        toggle_cards = self.request.GET.copy()
+        toggle_cards["view"] = "cards"
+        view_toggle_cards_href = "?" + toggle_cards.urlencode()
+
+        if view_mode == "cards":
+            po_hx_get = reverse("purchase_orders_cards")
+            po_hx_target = "#purchase_orders_cards"
+        else:
+            po_hx_get = reverse("purchase_orders_table")
+            po_hx_target = "#purchase_orders_table"
+
         ctx.update(
             {
                 "orders": page_obj,
                 "page_obj": page_obj,
-                "page_size": per_page,  # NEW: Pass page size
-                "statuses": statuses,
+                "page_size": per_page,
                 "suppliers": suppliers,
                 "querystring": querystring,
                 "sortable": True,
                 "list_url": reverse("root"),
                 "list_title": "Dashboard",
                 "current_title": "Orders",
-                "kpis": kpis,  # NEW: KPIs data
-                "view": view_mode,  # NEW: View mode
-                "export_url": reverse("purchase_orders_export"),  # NEW: Export URL
+                "kpis": kpis,
+                "view": view_mode,
+                "export_url": reverse("purchase_orders_export"),
+                "export_href": export_href,
+                "filters": [
+                    {
+                        "name": "status",
+                        "label": "Status",
+                        "options": status_options,
+                        "value": (params.get("status") or "").strip(),
+                    },
+                    {
+                        "name": "supplier",
+                        "label": "Supplier",
+                        "options": supplier_options,
+                        "value": str(params.get("supplier") or "").strip(),
+                    },
+                ],
+                "predictive_filter_names": ["status", "supplier"],
+                "page_size_options": [10, 20, 50, 100],
+                "po_hx_get": po_hx_get,
+                "po_hx_target": po_hx_target,
+                "view_toggle_table_href": view_toggle_table_href,
+                "view_toggle_cards_href": view_toggle_cards_href,
+                "view_toggle_current": view_mode,
             }
         )
         ctx.update(params)

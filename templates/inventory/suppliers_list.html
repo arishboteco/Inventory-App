@@ -3,17 +3,17 @@
 {% block page_title %}Suppliers – Inventory Pro{% endblock %}
 {% block page_heading %}Suppliers ({{ total_suppliers }}){% endblock %}
 {% block page_subtitle %}
-  <p class="text-sm text-gray-600">Maintain vendor contacts and availability.</p>
+  <p class="text-sm text-table-headerText">Maintain vendor contacts and availability.</p>
 {% endblock %}
 {% block page_meta %}
   <div class="flex flex-wrap items-center gap-2 text-xs font-medium">
-    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle text-bodyText">
-      {% icon 'view-columns' 'w-3 h-3 text-gray-500' %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-info-soft text-info-text">
+      {% icon 'view-columns' 'w-3 h-3 text-table-headerText' %}
       View:
       <span class="text-bodyText">{{ view|capfirst }}</span>
     </span>
-    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle text-bodyText">
-      {% icon 'adjustments-horizontal' 'w-3 h-3 text-gray-500' %}
+    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-info-soft text-info-text">
+      {% icon 'adjustments-horizontal' 'w-3 h-3 text-table-headerText' %}
       Status:
       <span class="text-bodyText">{% if active == '1' %}Active{% elif active == '0' %}Inactive{% else %}All{% endif %}</span>
     </span>
@@ -31,18 +31,10 @@
 {% endblock %}
 
 {% block secondary_actions %}
-  {% url 'suppliers_list' as suppliers_list_url %}
-  {% if view == 'cards' %}
-    {% include "components/button.html" with href=suppliers_list_url variant='secondary' label='Table View' %}
-  {% else %}
-    {% with card_view_url=suppliers_list_url|add:'?view=cards' %}
-      {% include "components/button.html" with href=card_view_url variant='secondary' label='Card View' %}
-    {% endwith %}
-  {% endif %}
-  {% url 'suppliers_table' as suppliers_table_url %}
-  {% with export_url=suppliers_table_url|add:'?export=1' %}
-    {% include "components/button.html" with href=export_url variant='secondary' label='Export CSV' %}
-  {% endwith %}
+  <a href="{% url 'suppliers_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">
+    {% icon 'x-mark' 'w-4 h-4 mr-2' %}
+    Clear filters
+  </a>
   <button type="button"
           class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary"
           data-modal-url="{% url 'suppliers_bulk_upload_partial' %}"
@@ -83,7 +75,9 @@
 
 {% block filters %}
   {% url hx_view_name as suppliers_view_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target='#'|add:container_id filters=filters export_url=export_url export_param_name="export" export_param_value="1" page_size=page_size sort=sort direction=direction %}
+  {% with hx_tgt='#'|add:container_id %}
+  {% include "components/filter_bar.html" with filter_bar_card=True search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target=hx_tgt filters=filters page_size_options=page_size_options page_size=page_size sort=sort direction=direction export_href=export_href export_label="Export CSV" view_toggle_table_href=view_toggle_table_href view_toggle_cards_href=view_toggle_cards_href view_toggle_current=view_toggle_current hx_indicator="#htmx-spinner" %}
+  {% endwith %}
 {% endblock %}
 
 {% block extra_top %}{% endblock %}

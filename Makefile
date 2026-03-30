@@ -1,6 +1,6 @@
 # Makefile for Inventory-App (Python 3.13)
 
-.PHONY: install fmt lint test coverage precommit ci changelog-add changelog-release changelog-show
+.PHONY: install fmt lint test coverage precommit ci changelog-add changelog-release changelog-show ui-conformance
 
 # Install dev dependencies
 install:
@@ -29,6 +29,10 @@ precommit:
 
 # Run full CI locally: format, lint, and tests
 ci: fmt lint test
+
+# UI contract drift checks (rg); see templates/UI_CONTRACT_AND_CONFORMANCE.md
+ui-conformance:
+	bash scripts/ui-conformance.sh
 
 # Changelog management
 changelog-add:

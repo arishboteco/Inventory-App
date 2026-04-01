@@ -1211,6 +1211,7 @@ def generate_low_stock_indent(request):
                         indent=indent,
                         item_id=entry["item"].pk,
                         requested_qty=entry["suggested_qty"],
+                        issued_qty=0,
                     )
         except (DatabaseError, IntegrityError):
             logger.exception("Failed to create low-stock indent (mrn=%s)", mrn)

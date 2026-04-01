@@ -7,29 +7,37 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0037_alter_stocksnapshot_options_and_more'),
+        ("inventory", "0037_alter_stocksnapshot_options_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='goodsreceivednote',
-            index=models.Index(fields=['received_date'], name='idx_grn_received_date'),
+            model_name="goodsreceivednote",
+            index=models.Index(fields=["received_date"], name="idx_grn_received_date"),
         ),
         migrations.AddIndex(
-            model_name='indent',
-            index=models.Index(fields=['status', 'date_submitted'], name='idx_indent_status_date'),
+            model_name="indent",
+            index=models.Index(
+                fields=["status", "date_submitted"], name="idx_indent_status_date"
+            ),
         ),
         migrations.AddIndex(
-            model_name='indent',
-            index=models.Index(fields=['status', 'department'], name='idx_indent_status_dept'),
+            model_name="indent",
+            index=models.Index(
+                fields=["status", "department"], name="idx_indent_status_dept"
+            ),
         ),
         migrations.AddIndex(
-            model_name='purchaseorder',
-            index=models.Index(fields=['status', 'order_date'], name='idx_po_status_date'),
+            model_name="purchaseorder",
+            index=models.Index(
+                fields=["status", "order_date"], name="idx_po_status_date"
+            ),
         ),
         migrations.AddIndex(
-            model_name='recipe',
-            index=models.Index(fields=['type', 'is_active'], name='idx_recipe_type_active'),
+            model_name="recipe",
+            index=models.Index(
+                fields=["type", "is_active"], name="idx_recipe_type_active"
+            ),
         ),
     ]

@@ -24,6 +24,7 @@ def test_low_stock_indent_post_creates_indent_and_items(client, item_factory):
     assert response.status_code == 200
 
     indent = Indent.objects.get()
+    assert indent.status == "SUBMITTED"
     assert response.request["PATH_INFO"] == reverse(
         "indent_detail", kwargs={"pk": indent.pk}
     )
@@ -56,3 +57,59 @@ def test_low_stock_indent_post_uses_unique_mrn_within_same_second(
     assert first.status_code == 302
     assert second.status_code == 302
     assert Indent.objects.count() == 2
+
+
+@pytest.mark.django_db
+def test_low_stock_indent_creates_multiple_items(client, item_factory):
+    item_factory(
+        name="Chicken",
+        reorder_point=100,
+        current_stock=10,
+        unit_id=19,
+        category_id=1,
+        is_active=True,
+    )
+    item_factory(
+        name="Rice",
+        reorder_point=200,
+        current_stock=50,
+        unit_id=19,
+        category_id=1,
+        is_active=True,
+    )
+    item_factory(
+        name="Oil",
+        reorder_point=50,
+        current_stock=5,
+        unit_id=19,
+        category_id=1,
+        is_active=True,
+    )
+
+    url = reverse("low_stock_indent")
+    response = client.post(url, follow=True)
+
+    assert response.status_code == 200
+    indent = Indent.objects.get()
+    assert indent.status == "SUBMITTED"
+    assert IndentItem.objects.filter(indent=indent).count() == 3
+
+
+@pytest.mark.django_db
+def test_low_stock_indent_detail_renders_after_create(client, item_factory):
+    item_factory(
+        name="Chicken",
+        reorder_point=100,
+        current_stock=10,
+        unit_id=19,
+        category_id=1,
+        is_active=True,
+    )
+
+    response = client.post(reverse("low_stock_indent"))
+    assert response.status_code == 302
+
+    indent = Indent.objects.get()
+    detail_response = client.get(reverse("indent_detail", kwargs={"pk": indent.pk}))
+    assert detail_response.status_code == 200
+    assert b"Approve" in detail_response.content

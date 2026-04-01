@@ -58,13 +58,9 @@ class LazyStockSnapshotMiddleware:
                     with _snapshot_lock:
                         if not _snapshot_pending:
                             _snapshot_pending = True
-                            t = threading.Thread(
-                                target=_run_snapshot, daemon=True
-                            )
+                            t = threading.Thread(target=_run_snapshot, daemon=True)
                             t.start()
             except Exception:
-                logger.exception(
-                    "LazyStockSnapshotMiddleware: snapshot check failed"
-                )
+                logger.exception("LazyStockSnapshotMiddleware: snapshot check failed")
 
         return self.get_response(request)

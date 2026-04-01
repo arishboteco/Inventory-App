@@ -8,14 +8,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('inventory', '0036_siteconfig_quantity_decimal_places'),
+        ("inventory", "0036_siteconfig_quantity_decimal_places"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='stocksnapshot',
-            options={'managed': True, 'ordering': ['snapshot_date']},
+            name="stocksnapshot",
+            options={"managed": True, "ordering": ["snapshot_date"]},
         ),
         # RecipeComponent.unique_together was removed in Django state. Production
         # PostgreSQL often has no matching UNIQUE constraint (schema drift / prior
@@ -55,13 +55,17 @@ class Migration(migrations.Migration):
             database_operations=[],
         ),
         migrations.AlterField(
-            model_name='siteconfig',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="siteconfig",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='stocksnapshot',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="stocksnapshot",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
     ]

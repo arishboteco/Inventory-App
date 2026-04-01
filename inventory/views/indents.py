@@ -698,7 +698,7 @@ def indent_detail(request, pk: int):
         for it in items:
             it.remaining_qty = getattr(it, "requested_qty", 0)
             it.unit_display = ""
-    badge_class = INDENT_STATUS_BADGES.get(indent.status.upper(), "")
+    badge_class = INDENT_STATUS_BADGES.get((indent.status or "").upper(), "")
     rows = [
         (
             "Status",
@@ -741,13 +741,13 @@ def indent_detail(request, pk: int):
         is_overdue = (
             getattr(indent, "date_required", None) is not None
             and indent.date_required < _today
-            and indent.status.upper() not in ("COMPLETED", "CANCELLED")
+            and (indent.status or "").upper() not in ("COMPLETED", "CANCELLED")
         )
     except Exception:
         is_overdue = False
     edit_mode = request.GET.get("edit") == "1"
     # Only SUBMITTED or APPROVED indents can be edited
-    if edit_mode and indent.status.upper() not in {"SUBMITTED", "APPROVED"}:
+    if edit_mode and (indent.status or "").upper() not in {"SUBMITTED", "APPROVED"}:
         edit_mode = False
     department_options = []
     if edit_mode:
@@ -862,6 +862,7 @@ def indent_update_status(request, pk: int, status: str):
     target = (status or "").upper()
     current = (indent.status or "").upper() or "SUBMITTED"
     allowed = {
+        "PENDING": {"SUBMITTED"},
         "SUBMITTED": {"APPROVED"},
         "APPROVED": {"PROCESSING"},
         "PROCESSING": {"COMPLETED", "CANCELLED"},
@@ -890,10 +891,12 @@ def indent_update_status(request, pk: int, status: str):
         except Exception:
             indent.processed_by = None
         indent.date_processed = timezone.now()
-    indent.save(
-        update_fields=["status", "processed_by", "date_processed", "updated_at"]
-    ) if target in {"APPROVED", "COMPLETED"} else indent.save(
-        update_fields=["status", "updated_at"]
+    (
+        indent.save(
+            update_fields=["status", "processed_by", "date_processed", "updated_at"]
+        )
+        if target in {"APPROVED", "COMPLETED"}
+        else indent.save(update_fields=["status", "updated_at"])
     )  # type: ignore
     # If HTMX request, return the updated table fragment to stay on the same page
     if request.headers.get("HX-Request"):
@@ -1195,19 +1198,28 @@ def generate_low_stock_indent(request):
 
         ts = timezone.now().strftime("%Y%m%d%H%M%S")
         mrn = f"LSI-{ts}-{uuid.uuid4().hex[:6].upper()}"
-        with transaction.atomic():
-            indent = Indent.objects.create(
-                mrn=mrn,
-                requested_by=getattr(request.user, "username", "") or "",
-                status="PENDING",
-                notes="Auto-generated from low-stock alert",
-            )
-            for entry in enriched_items:
-                IndentItemModel.objects.create(
-                    indent=indent,
-                    item=entry["item"],
-                    requested_qty=entry["suggested_qty"],
+        try:
+            with transaction.atomic():
+                indent = Indent.objects.create(
+                    mrn=mrn,
+                    requested_by=getattr(request.user, "username", "") or "",
+                    status="SUBMITTED",
+                    notes="Auto-generated from low-stock alert",
                 )
+                for entry in enriched_items:
+                    IndentItemModel.objects.create(
+                        indent=indent,
+                        item_id=entry["item"].pk,
+                        requested_qty=entry["suggested_qty"],
+                    )
+        except (DatabaseError, IntegrityError):
+            logger.exception("Failed to create low-stock indent (mrn=%s)", mrn)
+            messages.error(
+                request,
+                "Could not create indent — please try again.",
+                extra_tags="toast",
+            )
+            return redirect("low_stock_indent")
         messages.success(
             request,
             f"Indent {mrn} created with {len(enriched_items)} item(s).",

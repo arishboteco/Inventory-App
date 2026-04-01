@@ -2,6 +2,9 @@
 Generic button component. Use `href` for links or rely on `type` for button elements.
 Variants: primary (default), secondary, danger, ghost, accent, square.
 Optional: extra_classes, extra_attrs (trusted HTML attributes only, e.g. hx-* or data-modal-*).
+
+SECURITY: extra_attrs is rendered with |safe. NEVER pass user-controlled data into
+extra_attrs. Only use with hardcoded or server-validated attribute strings.
 {% endcomment %}
 {% with base_classes="inline-flex items-center px-4 py-2 text-label font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" %}
   {% if href %}

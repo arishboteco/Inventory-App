@@ -22,10 +22,10 @@
         </select>
       </div>
       <div class="md:col-span-3">
-        {% include "components/form_field.html" with field=form.date_required %}
+        {% include "components/form_field.html" with field=form.date_required field_class="h-9" %}
       </div>
       <div class="md:col-span-5">
-        {% include "components/form_field.html" with field=form.notes %}
+        {% include "components/form_field.html" with field=form.notes field_class="resize-y md:resize-none" %}
       </div>
     </div>
     <!-- Items list (takes most space) -->

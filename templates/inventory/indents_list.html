@@ -52,7 +52,7 @@
 {% block filters %}
   {% url 'indents_table' as indents_table_url %}
   <div class="mb-4">
-    {% include "components/filter_bar.html" with hide_labels=True search_placeholder="Search MRN, requester, department…" hx_get=indents_table_url hx_target="#indents_table" hx_indicator="#indents-loading" filters=filters %}
+    {% include "components/filter_bar.html" with hide_labels=True search_placeholder="Search MRN, requester, department…" hx_get=indents_table_url hx_target="#indents_table" hx_indicator="#indents-loading" filters=filters search_delay="400ms" %}
   </div>
 {% endblock %}
 

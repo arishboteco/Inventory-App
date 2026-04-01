@@ -1,21 +1,35 @@
 {% load form_tags %}
 <div class="{% if container_class %}{{ container_class }} {% endif %}space-y-1">
-  <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-bodyText">{{ field.label }}</label>
-  {% if field.field.widget.attrs.class %}
-    {{ field|add_class:"leading-normal" }}
-  {% elif field.field.widget.input_type == "checkbox" %}
-    {{ field|add_class:"h-4 w-4 rounded border-form-border text-primary focus:ring-primary" }}
+  {% if field.field.widget.input_type == "checkbox" %}
+    <div class="inline-flex items-center gap-2 h-9">
+      {{ field|add_class:"h-4 w-4 rounded border-form-border text-primary focus:ring-primary" }}
+      <label for="{{ field.id_for_label }}" class="text-sm font-medium text-bodyText">{{ field.label }}</label>
+    </div>
   {% elif field.field.widget.input_type == "radio" %}
-    {{ field|add_class:"h-4 w-4 rounded-full border-form-border text-primary focus:ring-primary" }}
+    <div class="inline-flex items-center gap-2 h-9">
+      {{ field|add_class:"h-4 w-4 rounded-full border-form-border text-primary focus:ring-primary" }}
+      <label for="{{ field.id_for_label }}" class="text-sm font-medium text-bodyText">{{ field.label }}</label>
+    </div>
   {% else %}
-    {{ field|add_class:"block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" }}
+    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-bodyText">{{ field.label }}</label>
+    {% if field.field.widget.attrs.class %}
+      {{ field|add_class:"leading-normal" }}
+    {% elif field_class %}
+      {% with base="block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" %}
+        {% with full=base|add:" "|add:field_class %}
+          {{ field|add_class:full }}
+        {% endwith %}
+      {% endwith %}
+    {% else %}
+      {{ field|add_class:"block w-full px-3 py-2.5 border border-form-border rounded-md bg-form-bg text-form-text shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary" }}
+    {% endif %}
   {% endif %}
   {% include "forms/feedback.html" %}
   {% if field.help_text %}
     {% if help_text_class %}
       <p class="{{ help_text_class }}">{{ field.help_text }}</p>
     {% else %}
-      <p class="text-sm text-table-headerText leading-normal">{{ field.help_text }}</p>
+      <p class="text-sm text-bodyText/70 leading-normal">{{ field.help_text }}</p>
     {% endif %}
   {% endif %}
   {% if field.errors %}

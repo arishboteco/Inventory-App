@@ -108,20 +108,20 @@
         <!-- Page Content -->
         <main class="flex-1 px-3 sm:px-4 md:px-6 py-4 bg-surfaceSubtle">
           {% block breadcrumbs %}{% endblock %}
-          {% if messages %}
-            {% include "components/alert.html" %}
-            <script>
-              document.addEventListener('DOMContentLoaded', function () {
-                if (window.notificationManager) {
-                  {% for message in messages %}
-                    {% if 'toast' in message.tags %}
-                      window.notificationManager.showToast("{{ message|escapejs }}", "{{ message.level_tag }}");
-                    {% endif %}
-                  {% endfor %}
-                }
-              });
-            </script>
+{% if messages %}
+  {% include "components/alert.html" %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.notifications) {
+        {% for message in messages %}
+          {% if 'toast' in message.tags %}
+            window.notifications.showToast("{{ message|escapejs }}", "{{ message.level_tag }}");
           {% endif %}
+        {% endfor %}
+      }
+    });
+  </script>
+{% endif %}
           {% block content %}{% endblock %}
         </main>
 

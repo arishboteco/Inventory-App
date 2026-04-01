@@ -8,14 +8,14 @@
 {% block page_meta %}
   <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-600">
     <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-surfaceSubtle">
-      Low-stock items: <span class="text-bodyText">{{ low_stock_items|length }}</span>
+      Low-stock items: <span class="text-bodyText">{{ enriched_items|length }}</span>
     </span>
   </div>
 {% endblock %}
 
 {% block data_container %}
 <div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden">
-  {% if low_stock_items %}
+  {% if enriched_items %}
     <div class="px-4 pt-4 pb-2 border-b border-border">
       <h2 class="text-lg font-semibold text-bodyText">Items Below Reorder Point</h2>
       <p class="text-sm text-gray-500 mt-1">The following quantities will be requested to bring each item up to its reorder point (or minimum order quantity, whichever is greater).</p>
@@ -32,18 +32,16 @@
           </tr>
         </thead>
         <tbody>
-          {% for item in low_stock_items %}
-            {% with reorder=item.reorder_point|default:0 current=item.current_stock|default:0 min_order=item.minimum_order_qty|default:0 %}
+          {% for entry in enriched_items %}
             <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText border-b border-border last:border-0">
-              <td class="px-4 py-2 font-medium">{{ item.name }}</td>
-              <td class="px-4 py-2 text-right tabular-nums">{{ current|floatformat:2 }}</td>
-              <td class="px-4 py-2 text-right tabular-nums">{{ reorder|floatformat:2 }}</td>
+              <td class="px-4 py-2 font-medium">{{ entry.item.name }}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{{ entry.current_stock|floatformat:2 }}</td>
+              <td class="px-4 py-2 text-right tabular-nums">{{ entry.reorder_point|floatformat:2 }}</td>
               <td class="px-4 py-2 text-right tabular-nums text-danger font-medium">
-                {{ reorder|floatformat:2 }}
+                {{ entry.suggested_qty|floatformat:2 }}
               </td>
-              <td class="px-4 py-2 text-gray-500">{{ item.unit|default:"—" }}</td>
+              <td class="px-4 py-2 text-gray-500">{{ entry.item.unit.purchase_unit|default:"—" }}</td>
             </tr>
-            {% endwith %}
           {% endfor %}
         </tbody>
       </table>
@@ -57,7 +55,7 @@
         {% csrf_token %}
         <button type="submit"
                 class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong transition focus:outline-none focus:ring-2 focus:ring-accent-strong">
-          Create Indent ({{ low_stock_items|length }} item{{ low_stock_items|length|pluralize }})
+          Create Indent ({{ enriched_items|length }} item{{ enriched_items|length|pluralize }})
         </button>
       </form>
     </div>

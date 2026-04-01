@@ -632,7 +632,7 @@ class IndentCreateView(View):
                     for i, ferr in enumerate(formset.errors):
                         if ferr:
                             first_key = next(iter(ferr))
-                            err_msg = f"Row {i+1} - {first_key}: {ferr[first_key][0]}"
+                            err_msg = f"Row {i + 1} - {first_key}: {ferr[first_key][0]}"
                             break
                 elif formset.non_form_errors():
                     err_msg = "; ".join(formset.non_form_errors())
@@ -889,7 +889,11 @@ def indent_update_status(request, pk: int, status: str):
         except Exception:
             indent.processed_by = None
         indent.date_processed = timezone.now()
-    indent.save(update_fields=["status", "processed_by", "date_processed", "updated_at"]) if target in {"APPROVED", "COMPLETED"} else indent.save(update_fields=["status", "updated_at"])  # type: ignore
+    indent.save(
+        update_fields=["status", "processed_by", "date_processed", "updated_at"]
+    ) if target in {"APPROVED", "COMPLETED"} else indent.save(
+        update_fields=["status", "updated_at"]
+    )  # type: ignore
     # If HTMX request, return the updated table fragment to stay on the same page
     if request.headers.get("HX-Request"):
         # Reuse the table view logic to render current filtered/sorted list
@@ -1101,7 +1105,9 @@ def issue_indent(request, pk: int):
     )
     # Build formset for all items in this indent
     if request.method == "POST":
-        Formset = forms.formset_factory(IndentItemIssueForm, formset=IndentIssueFormset, extra=0)  # type: ignore
+        Formset = forms.formset_factory(
+            IndentItemIssueForm, formset=IndentIssueFormset, extra=0
+        )  # type: ignore
         formset = Formset(request.POST)
         if formset.is_valid():
             lines: list[indent_issue_service.IssueLine] = []
@@ -1123,7 +1129,9 @@ def issue_indent(request, pk: int):
             messages.info(request, result.message, extra_tags="toast")
             return redirect("indent_detail", pk=indent.pk)
     else:
-        Formset = forms.formset_factory(IndentItemIssueForm, formset=IndentIssueFormset, extra=0)  # type: ignore
+        Formset = forms.formset_factory(
+            IndentItemIssueForm, formset=IndentIssueFormset, extra=0
+        )  # type: ignore
         initial = IndentIssueFormset.initial_for_indent(indent.indent_id)
         formset = Formset(initial=initial)
 
@@ -1163,8 +1171,24 @@ def generate_low_stock_indent(request):
         )
     )
 
+    enriched_items = []
+    for item in low_stock_items:
+        reorder_pt = float(item.reorder_point or 0)
+        current = float(item.current_stock or 0)
+        min_order = float(item.minimum_order_qty or 0)
+        suggested = max(reorder_pt - current, min_order)
+        enriched_items.append(
+            {
+                "item": item,
+                "current_stock": current,
+                "reorder_point": reorder_pt,
+                "minimum_order_qty": min_order,
+                "suggested_qty": round(suggested, 2),
+            }
+        )
+
     if request.method == "POST":
-        if not low_stock_items:
+        if not enriched_items:
             messages.warning(request, "No low-stock items found.", extra_tags="toast")
             return redirect("items_list")
 
@@ -1177,19 +1201,15 @@ def generate_low_stock_indent(request):
                 status="PENDING",
                 notes="Auto-generated from low-stock alert",
             )
-            for item in low_stock_items:
-                reorder_pt = float(item.reorder_point or 0)
-                current = float(item.current_stock or 0)
-                min_order = float(item.minimum_order_qty or 0)
-                suggested = max(reorder_pt - current, min_order)
+            for entry in enriched_items:
                 IndentItemModel.objects.create(
                     indent=indent,
-                    item=item,
-                    requested_qty=round(suggested, 2),
+                    item=entry["item"],
+                    requested_qty=entry["suggested_qty"],
                 )
         messages.success(
             request,
-            f"Indent {mrn} created with {len(low_stock_items)} item(s).",
+            f"Indent {mrn} created with {len(enriched_items)} item(s).",
             extra_tags="toast",
         )
         return redirect("indent_detail", pk=indent.pk)
@@ -1197,5 +1217,5 @@ def generate_low_stock_indent(request):
     return render(
         request,
         "inventory/low_stock_indent_confirm.html",
-        {"low_stock_items": low_stock_items},
+        {"enriched_items": enriched_items},
     )

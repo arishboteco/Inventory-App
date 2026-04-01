@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from django import forms
 from django.contrib import messages
@@ -1193,7 +1194,7 @@ def generate_low_stock_indent(request):
             return redirect("items_list")
 
         ts = timezone.now().strftime("%Y%m%d%H%M%S")
-        mrn = f"LSI-{ts}"
+        mrn = f"LSI-{ts}-{uuid.uuid4().hex[:6].upper()}"
         with transaction.atomic():
             indent = Indent.objects.create(
                 mrn=mrn,

@@ -752,6 +752,7 @@ def recipe_create_indent(request, pk: int):
             indent=indent,
             item=item,
             requested_qty=effective_qty,
+            issued_qty=0,
         )
 
     messages.success(request, f"Indent {mrn} created from recipe", extra_tags="toast")

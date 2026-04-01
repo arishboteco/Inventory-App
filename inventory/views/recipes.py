@@ -730,9 +730,9 @@ def recipe_create_indent(request, pk: int):
 
     indent = Indent.objects.create(
         mrn=mrn,
+        requested_by=getattr(request.user, "username", "") or "",
         notes=f"Recipe: {recipe.name}",
-        status="DRAFT",
-        date_required=None,
+        status="SUBMITTED",
     )
 
     for row in recipe.items.all():

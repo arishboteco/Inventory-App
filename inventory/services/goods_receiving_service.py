@@ -83,6 +83,7 @@ def _process_items(
             GRNItem(
                 grn=grn,
                 po_item=po_item,
+                item=item,
                 quantity_ordered_on_po=Decimal(
                     str(item_d.get("quantity_ordered_on_po", po_item.quantity_ordered))
                 ),

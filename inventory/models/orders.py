@@ -58,8 +58,12 @@ class Indent(models.Model):
         managed = True
         db_table = "indents"
         indexes = [
-            models.Index(fields=["status", "date_submitted"], name="idx_indent_status_date"),
-            models.Index(fields=["status", "department"], name="idx_indent_status_dept"),
+            models.Index(
+                fields=["status", "date_submitted"], name="idx_indent_status_date"
+            ),
+            models.Index(
+                fields=["status", "department"], name="idx_indent_status_dept"
+            ),
         ]
 
 

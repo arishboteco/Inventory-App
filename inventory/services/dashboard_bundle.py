@@ -36,9 +36,7 @@ def compute_dashboard_bundle(start: date, end: date) -> Dict[str, Any]:
             return default
 
     try:
-        trend_labels, trend_consumption, trend_wastage = dkpis.daily_trends(
-            start, end
-        )
+        trend_labels, trend_consumption, trend_wastage = dkpis.daily_trends(start, end)
     except Exception:
         trend_labels, trend_consumption, trend_wastage = [], [], []
 
@@ -47,9 +45,7 @@ def compute_dashboard_bundle(start: date, end: date) -> Dict[str, Any]:
         "purchases": _safe(lambda: dkpis.purchases_total(start, end), 0),
         "closing_stock": _safe(lambda: dkpis.closing_stock_value(), 0),
         "consumption": _safe(lambda: dkpis.consumption_total(start, end), 0),
-        "consumption_delta": _safe(
-            lambda: dkpis.consumption_delta(start, end), None
-        ),
+        "consumption_delta": _safe(lambda: dkpis.consumption_delta(start, end), None),
         "sales_revenue": _safe(lambda: dkpis.sales_revenue(start, end), 0),
         "actual_fc": _safe(lambda: dkpis.actual_food_cost_pct(start, end), None),
         "ideal_fc": _safe(lambda: dkpis.ideal_food_cost_pct(start, end), None),

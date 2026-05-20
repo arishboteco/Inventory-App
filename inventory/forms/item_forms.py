@@ -70,6 +70,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
             "minimum_order_qty",
             "lead_time_days",
             "reorder_point",
+            "current_stock",
             "notes",
             "is_active",
         ]
@@ -105,6 +106,14 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                     "step": "0.01",
                     "min": "0",
                     "placeholder": "10.00",
+                }
+            ),
+            "current_stock": forms.NumberInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "0.00",
                 }
             ),
             "is_active": forms.CheckboxInput(
@@ -150,6 +159,7 @@ class ItemForm(StyledFormMixin, forms.ModelForm):
                 "minimum_order_qty",
                 "lead_time_days",
                 "reorder_point",
+                "current_stock",
             ]:
                 if f in self.fields:
                     # Using empty string ensures the input renders blank

@@ -5,6 +5,20 @@ from django.db import models
 from .fields import CoerceFloatField
 
 
+def _normalise_recipe_unit(unit_raw: str) -> str:
+    return (unit_raw or "").strip().upper().replace(".", "")
+
+
+def _quantity_in_base_units(quantity, unit_raw: str) -> Decimal:
+    qty = Decimal(str(quantity or 0))
+    token = _normalise_recipe_unit(unit_raw)
+    if token in ("KG", "KILO", "KILOS", "KILOGRAM", "KILOGRAMS"):
+        return qty * Decimal("1000")
+    if token in ("L", "LITER", "LITRE", "LITERS", "LITRES"):
+        return qty * Decimal("1000")
+    return qty
+
+
 class Recipe(models.Model):
     class Type(models.TextChoices):
         FINAL = "FINAL", "Final Recipe"
@@ -69,7 +83,9 @@ class Recipe(models.Model):
             if sub is not None:
                 sub_cost = sub.get_total_cost(_visited=_visited.copy())
                 sub_yield = Decimal(str(sub.default_yield_qty or 1)) or Decimal("1")
-                qty = Decimal(str(recipe_item.quantity or 0))
+                qty = _quantity_in_base_units(
+                    recipe_item.quantity, recipe_item.unit or ""
+                )
                 loss_mult = Decimal("1") + (
                     Decimal(str(recipe_item.loss_pct or 0)) / Decimal("100")
                 )
@@ -80,7 +96,9 @@ class Recipe(models.Model):
 
                 item = recipe_item.item
                 cost_per_base = UnitsService.cost_per_base_for_item(item)
-                qty = Decimal(str(recipe_item.quantity or 0))
+                qty = _quantity_in_base_units(
+                    recipe_item.quantity, recipe_item.unit or ""
+                )
                 loss_pct = Decimal(str(recipe_item.loss_pct or 0))
                 if qty and loss_pct and loss_pct < 100:
                     try:
@@ -237,7 +255,7 @@ class RecipeItem(models.Model):
             sub_yield = Decimal(str(self.sub_recipe.default_yield_qty or 1)) or Decimal(
                 "1"
             )
-            qty = Decimal(str(self.quantity or 0))
+            qty = _quantity_in_base_units(self.quantity, self.unit or "")
             loss_mult = Decimal("1") + (
                 Decimal(str(self.loss_pct or 0)) / Decimal("100")
             )
@@ -248,7 +266,7 @@ class RecipeItem(models.Model):
             from inventory.services.units_service import UnitsService
 
             cost_per_base = UnitsService.cost_per_base_for_item(self.item)
-            qty = Decimal(str(self.quantity or 0))
+            qty = _quantity_in_base_units(self.quantity, self.unit or "")
             loss_pct = Decimal(str(self.loss_pct or 0))
             if qty and loss_pct and loss_pct < 100:
                 try:

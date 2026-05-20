@@ -2,12 +2,14 @@ import json
 import logging
 from datetime import timedelta
 
+from django.db.models import DecimalField, ExpressionWrapper, F, Sum
+from django.db.models.functions import Coalesce, TruncDate
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from inventory.models import Indent, Item, PurchaseOrder
+from inventory.models import Indent, Item, PurchaseOrder, StockTransaction
 from inventory.models.enums import PurchaseOrderStatus
 from inventory.models.stock_take import StockTake
 from inventory.services import dashboard_kpis as dkpis
@@ -21,6 +23,39 @@ from inventory.services.recovery_dashboard_service import build_owner_money_dash
 from inventory.services.stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)
+
+
+def _stock_trend_data(item_id, start, end, metric="quantity"):
+    """Return daily stock movement trend data for compatibility reports/tests."""
+    value_expr = F("quantity_change")
+    if metric == "value":
+        value_expr = ExpressionWrapper(
+            F("quantity_change") * Coalesce(F("item__last_purchase_price"), 0),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+    rows = (
+        StockTransaction.objects.filter(
+            item_id=item_id,
+            transaction_date__date__gte=start,
+            transaction_date__date__lte=end,
+        )
+        .annotate(day=TruncDate("transaction_date"))
+        .values("day")
+        .annotate(
+            total=Coalesce(
+                Sum(value_expr),
+                0,
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
+        )
+        .order_by("day")
+    )
+    labels = []
+    values = []
+    for row in rows:
+        labels.append(row["day"].strftime("%Y-%m-%d"))
+        values.append(float(row["total"] or 0))
+    return labels, values
 
 
 def _greeting(user):
@@ -254,6 +289,43 @@ def interactive_dashboard(request):
 def ajax_dashboard_data(request):
     """Return JSON chart data for the given filters."""
     start, end = _parse_date_range(request)
+    item_id = request.GET.get("item")
+    supplier_id = request.GET.get("supplier")
+    metric = request.GET.get("metric", "quantity")
+    if item_id or supplier_id:
+        qs = StockTransaction.objects.filter(
+            transaction_date__date__gte=start,
+            transaction_date__date__lte=end,
+        )
+        if item_id:
+            qs = qs.filter(item_id=item_id)
+        if supplier_id:
+            qs = qs.filter(related_po__supplier_id=supplier_id)
+        if metric == "value":
+            value_expr = ExpressionWrapper(
+                F("quantity_change") * Coalesce(F("item__last_purchase_price"), 0),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
+        else:
+            value_expr = F("quantity_change")
+        rows = (
+            qs.annotate(day=TruncDate("transaction_date"))
+            .values("day")
+            .annotate(
+                total=Coalesce(
+                    Sum(value_expr),
+                    0,
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                )
+            )
+            .order_by("day")
+        )
+        return JsonResponse(
+            {
+                "labels": [row["day"].strftime("%Y-%m-%d") for row in rows],
+                "values": [float(row["total"] or 0) for row in rows],
+            }
+        )
     range_days = range_days_from_start_end(start, end)
     bundle = get_cached_dashboard_bundle(range_days, end)
     labels = bundle["trend_labels"]

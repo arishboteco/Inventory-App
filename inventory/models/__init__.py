@@ -12,8 +12,8 @@ from .orders import (
     PurchaseOrder,
     PurchaseOrderItem,
 )
+from .recipes import Recipe, RecipeComponent, RecipeItem, SaleTransaction
 from .recovery import SavingsLedger, VendorItemPrice
-from .recipes import Recipe, RecipeItem, SaleTransaction
 from .site_config import SiteConfig
 from .stock_take import StockTake, StockTakeItem
 from .subcategory import SubCategory
@@ -40,6 +40,7 @@ __all__ = [
     "ItemStatus",
     "PurchaseOrderStatus",
     "Recipe",
+    "RecipeComponent",
     "RecipeItem",
     "SaleTransaction",
     "Department",

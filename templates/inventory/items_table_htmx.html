@@ -1,0 +1,3 @@
+{% url 'items_table' as items_table_url %}
+{% include "components/filter_bar.html" with filter_oob=True filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" hide_labels=True search_placeholder='Search items by name or category' %}
+{% include "inventory/_items_table.html" %}

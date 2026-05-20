@@ -61,7 +61,7 @@
   <tbody class="bg-surface divide-y divide-border">
     {% for item in page_obj.object_list %}
     <tr
-      class="item-row odd:bg-surfaceSubtle hover:bg-surfaceSubtle{% if item.current_stock is not None and item.current_stock < 0 %} !bg-danger-soft{% endif %}"
+      class="item-row odd:bg-gray-50 odd:bg-surfaceSubtle hover:bg-surfaceSubtle{% if item.current_stock is not None and item.current_stock < 0 %} !bg-danger-soft{% endif %}"
       data-item-id="{{ item.item_id }}"
       data-unit-id="{{ item.unit_id }}"
       data-category-id="{{ item.category_id }}"
@@ -96,9 +96,11 @@
   <td data-col="unit" class="px-4 py-2 whitespace-normal break-words">{{ item.unit.purchase_unit|default:"—" }}</td>
       <td data-col="stock" class="px-4 py-2 whitespace-normal break-words">
         {% if item.current_stock is not None %}
-          <span class="{% if item.current_stock < 0 %}text-danger font-medium{% endif %}">{{ item.current_stock|floatformat:-2 }}</span>
           {% if item.current_stock < 0 %}
+            <span class="text-danger font-medium">{{ item.current_stock|floatformat:-2 }}</span>
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-danger-soft text-danger ml-1">⚠ Negative</span>
+          {% else %}
+            {{ item.current_stock|floatformat:-2 }}
           {% endif %}
         {% else %}
           <span class="text-gray-400">—</span>

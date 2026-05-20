@@ -81,7 +81,25 @@ ADJUSTMENT_REASONS = [
 SELECT_CLASS = INPUT_CLASS + " cursor-pointer"
 
 
-class StockReceivingForm(StyledFormMixin, forms.ModelForm):
+def _item_autocomplete_field(item_suggest_url: str, *, label: str = "Item"):
+    return forms.CharField(
+        label=label,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "hx-get": item_suggest_url,
+                "hx-trigger": "keyup changed delay:500ms",
+                "hx-target": "#item-options",
+                "list": "item-options",
+                "autocomplete": "off",
+                "placeholder": "Type to search items...",
+            }
+        ),
+    )
+
+
+class StockReceivingForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
         empty_label="— Select item —",
@@ -109,6 +127,8 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if item_suggest_url:
+            self.fields["item"] = _item_autocomplete_field(item_suggest_url)
         self.fields["quantity_change"].required = True
         self.fields["quantity_change"].widget = forms.NumberInput(
             attrs={
@@ -136,7 +156,7 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
     def clean_quantity_change(self):
         qty = self.cleaned_data.get("quantity_change")
         if qty is None or qty <= 0:
-            raise forms.ValidationError("Quantity must be greater than zero.")
+            raise forms.ValidationError("Quantity must be positive")
         return qty
 
     def save(self, commit: bool = True):
@@ -147,7 +167,7 @@ class StockReceivingForm(StyledFormMixin, forms.ModelForm):
         return obj
 
 
-class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
+class StockAdjustmentForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
         empty_label="— Select item —",
@@ -184,6 +204,8 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if item_suggest_url:
+            self.fields["item"] = _item_autocomplete_field(item_suggest_url)
         self.fields["quantity_change"].required = True
         self.fields["quantity_change"].widget = forms.NumberInput(
             attrs={
@@ -208,7 +230,7 @@ class StockAdjustmentForm(StyledFormMixin, forms.ModelForm):
         return obj
 
 
-class StockWastageForm(StyledFormMixin, forms.ModelForm):
+class StockWastageForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
         empty_label="— Select item —",
@@ -245,6 +267,8 @@ class StockWastageForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if item_suggest_url:
+            self.fields["item"] = _item_autocomplete_field(item_suggest_url)
         self.fields["quantity_change"].required = True
         self.fields["quantity_change"].widget = forms.NumberInput(
             attrs={

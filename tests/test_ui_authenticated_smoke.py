@@ -23,9 +23,11 @@ from inventory.models import (
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
+    SavingsLedger,
     StockTake,
     StockTakeItem,
     Supplier,
+    VendorItemPrice,
 )
 from inventory.models.enums import IndentStatus
 
@@ -77,6 +79,21 @@ def smoke_entities(item_factory, django_user_model):
         supplier=supplier,
         received_date=date.today(),
         purchase_order=po,
+    )
+    SavingsLedger.objects.create(
+        date=date.today(),
+        item=item,
+        saving_type=SavingsLedger.SavingType.VENDOR_SAVING,
+        status=SavingsLedger.Status.CONFIRMED,
+        confirmed_saving=Decimal("10.00"),
+    )
+    VendorItemPrice.objects.create(
+        vendor=supplier,
+        item=item,
+        unit=item.unit,
+        price=Decimal("1.00"),
+        effective_from=date.today(),
+        source="smoke",
     )
     user = django_user_model.objects.get(username="admin")
     stock_take = StockTake.objects.create(
@@ -234,6 +251,8 @@ _UI_URL_NAMES: tuple[str, ...] = (
     "grn_create_adhoc",
     "grn_export",
     "grn_detail",
+    "savings_ledger_list",
+    "vendor_prices_list",
     "recipes_list",
     "recipes_table",
     "food_cost_report",

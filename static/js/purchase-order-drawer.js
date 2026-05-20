@@ -13,6 +13,37 @@
     }
   }
 
+  function readItemVendorHints(form) {
+    const el = form.querySelector("#po-item-vendor-hints");
+    if (!el || !el.textContent) return {};
+    try {
+      return JSON.parse(el.textContent);
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function applyHints(row, itemId, hints) {
+    const suggestedEl = row.querySelector("[data-suggested-qty]");
+    const priceHintEl = row.querySelector("[data-price-hint]");
+    const hint = hints[itemId] || {};
+    if (suggestedEl) {
+      const qty = Number(hint.suggested_qty || 0);
+      suggestedEl.textContent = qty > 0 ? `Suggested qty: ${qty.toFixed(2)}` : "";
+    }
+    if (priceHintEl) {
+      const cheapest = Number(hint.cheapest_price || 0);
+      const last = Number(hint.last_price || 0);
+      if (cheapest > 0) {
+        priceHintEl.textContent = `Cheapest vendor: ${cheapest.toFixed(2)} | Last: ${last.toFixed(2)}`;
+      } else if (last > 0) {
+        priceHintEl.textContent = `Last purchase: ${last.toFixed(2)}`;
+      } else {
+        priceHintEl.textContent = "";
+      }
+    }
+  }
+
   function initPurchaseOrderDrawer(root) {
     const scope =
       root && root.nodeType === Node.ELEMENT_NODE ? root : document;
@@ -24,6 +55,7 @@
     if (!formsetEl) return;
 
     const itemPrices = readItemPrices(form);
+    const itemVendorHints = readItemVendorHints(form);
     const prefix = form.getAttribute("data-formset-prefix") || "items";
 
     if (!formsetEl._poDelegationBound) {
@@ -62,6 +94,7 @@
         ) {
           priceInput.value = parseFloat(itemPrices[t.value]).toFixed(2);
         }
+        applyHints(row, t.value, itemVendorHints);
       });
     }
 
@@ -75,6 +108,13 @@
       });
       form._poFormsetInitialized = true;
     }
+
+    formsetEl.querySelectorAll(".item-form").forEach(function (row) {
+      const sel = row.querySelector("select.item-select");
+      if (sel && sel.value) {
+        applyHints(row, sel.value, itemVendorHints);
+      }
+    });
 
     if (form.id === "po-form" && !form._poNativeValidityBound) {
       form._poNativeValidityBound = true;

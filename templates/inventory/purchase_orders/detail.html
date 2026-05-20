@@ -54,6 +54,20 @@
   {% include "components/detail_table.html" with rows=rows %}
 {% endblock %}
 {% block extra_tables %}
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <p class="text-xs uppercase text-gray-500">Estimated Saving</p>
+      <p class="text-xl font-semibold text-success">&#8377;{{ saving_summary.estimated|default:0|floatformat:0 }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <p class="text-xs uppercase text-gray-500">Confirmed Saving</p>
+      <p class="text-xl font-semibold text-success">&#8377;{{ saving_summary.confirmed|default:0|floatformat:0 }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-lg p-4">
+      <p class="text-xs uppercase text-gray-500">Lost Saving</p>
+      <p class="text-xl font-semibold text-danger">&#8377;{{ saving_summary.lost|default:0|floatformat:0 }}</p>
+    </div>
+  </div>
   <h2 class="text-h2 md:text-h2 mb-4 mt-8">Items</h2>
   {% include "inventory/purchase_orders/_items_table.html" with items=items table_id="po-items-{{ po.pk }}" %}
   <h2 class="text-h2 md:text-h2 mb-4 mt-8">Linked Indent Lines</h2>

@@ -9,6 +9,7 @@ from inventory.forms.purchase_forms import PurchaseOrderForm, PurchaseOrderItemF
 from inventory.models import Item, PurchaseOrder, PurchaseOrderItem, Supplier
 
 from .exceptions import PurchaseOrderServiceError
+from .vendor_savings_service import create_po_estimated_savings
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,8 @@ def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:
     try:
         with transaction.atomic():
             supplier = Supplier.objects.get(pk=po_data["supplier_id"])
+            item_ids = [int(i["item_id"]) for i in items_data]
+            item_map = Item.objects.in_bulk(item_ids)
             po = PurchaseOrder.objects.create(
                 po_number=po_data.get("po_number") or generate_po_number(),
                 supplier=supplier,
@@ -95,13 +98,32 @@ def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:
                 notes=po_data.get("notes"),
             )
             for item_d in items_data:
-                item = Item.objects.get(pk=item_d["item_id"])
+                item = item_map.get(int(item_d["item_id"]))
+                if item is None:
+                    raise Item.DoesNotExist(f"Item {item_d['item_id']} not found")
                 PurchaseOrderItem.objects.create(
                     purchase_order=po,
                     item=item,
                     quantity_ordered=Decimal(str(item_d["quantity_ordered"])),
                     unit_price=Decimal(str(item_d["unit_price"])),
                 )
+            po_lines = [
+                {
+                    "item_id": int(item_d["item_id"]),
+                    "quantity_ordered": Decimal(str(item_d["quantity_ordered"])),
+                    "unit_price": Decimal(str(item_d["unit_price"])),
+                    "fallback_price": item_map[int(item_d["item_id"])].last_purchase_price
+                    or item_map[int(item_d["item_id"])].initial_purchase_price
+                    or Decimal("0"),
+                }
+                for item_d in items_data
+            ]
+            create_po_estimated_savings(
+                po_id=po.po_id,
+                po_date=po.order_date,
+                supplier_id=supplier.pk,
+                po_lines=po_lines,
+            )
             return po.po_id
     except (Supplier.DoesNotExist, Item.DoesNotExist) as exc:
         raise PurchaseOrderServiceError(f"Invalid reference: {exc}") from exc

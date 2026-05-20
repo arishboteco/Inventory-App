@@ -29,12 +29,14 @@
             </ul>
             {% endif %}
             {% include "components/form_field.html" with field=f.item %}
+            <p class="mt-1 text-xs text-gray-500" data-suggested-qty></p>
           </td>
           <td class="px-3 py-2 align-top">
             {% include "components/form_field.html" with field=f.quantity_ordered %}
           </td>
           <td class="px-3 py-2 align-top">
             {% include "components/form_field.html" with field=f.unit_price %}
+            <p class="mt-1 text-xs text-gray-500" data-price-hint></p>
           </td>
           <td class="px-3 py-2 align-top text-right">
             <div class="hidden">{{ f.DELETE }}</div>
@@ -54,6 +56,7 @@
           <div class="hidden">{{ field }}</div>
         {% elif field.name == 'item' %}
           {% include "components/form_field.html" with field=field %}
+          <p class="mt-1 text-xs text-gray-500" data-suggested-qty></p>
         {% endif %}
       {% endfor %}
     </td>
@@ -61,6 +64,7 @@
       {% for field in formset.empty_form %}
         {% if field.name == 'quantity_ordered' %}
           {% include "components/form_field.html" with field=field %}
+          <p class="mt-1 text-xs text-gray-500" data-price-hint></p>
         {% endif %}
       {% endfor %}
     </td>

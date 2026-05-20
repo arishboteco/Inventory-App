@@ -19,6 +19,7 @@ from .models import (
     SubCategory,
     Supplier,
     Unit,
+    VendorItemPrice,
 )
 
 for model in [
@@ -35,6 +36,7 @@ for model in [
     GoodsReceivedNote,
     GRNItem,
     SavingsLedger,
+    VendorItemPrice,
     Department,
     ItemDepartment,
 ]:

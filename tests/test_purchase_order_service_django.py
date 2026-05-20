@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 import pytest
 
@@ -8,7 +9,9 @@ from inventory.models import (
     GRNItem,
     PurchaseOrder,
     PurchaseOrderItem,
+    SavingsLedger,
     Supplier,
+    VendorItemPrice,
 )
 from inventory.services import purchase_order_service
 
@@ -86,3 +89,29 @@ def test_get_orders_progress(item_factory):
     assert progress[po.pk]["ordered_total"] == 10
     assert progress[po.pk]["received_total"] == 4
     assert progress[po.pk]["percent"] == 40
+
+
+@pytest.mark.django_db
+def test_create_po_creates_estimated_vendor_savings(item_factory):
+    supplier = Supplier.objects.create(name="Vendor")
+    cheaper = Supplier.objects.create(name="Cheaper")
+    item = item_factory(name="Rice", last_purchase_price="120.00")
+    VendorItemPrice.objects.create(
+        vendor=cheaper,
+        item=item,
+        price="100.00",
+        effective_from=date.today(),
+        is_active=True,
+    )
+    po_id = purchase_order_service.create_po(
+        {"supplier_id": supplier.pk, "order_date": date.today()},
+        [{"item_id": item.item_id, "quantity_ordered": 10, "unit_price": 110.0}],
+    )
+    entry = SavingsLedger.objects.get(
+        source_document_type="PO",
+        source_document_id=str(po_id),
+        item=item,
+    )
+    assert entry.status == SavingsLedger.Status.ESTIMATED
+    assert entry.estimated_saving == Decimal("0.00")
+    assert entry.lost_saving == Decimal("100.00")

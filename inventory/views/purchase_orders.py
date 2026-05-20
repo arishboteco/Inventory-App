@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
 from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
-from ..models import Item, PurchaseOrder, Supplier
+from ..models import Item, PurchaseOrder, SavingsLedger, Supplier, VendorItemPrice
 from ..services import (
     goods_receiving_service,
     list_utils,
@@ -53,6 +53,29 @@ def _build_item_prices_dict() -> dict[str, float]:
 
 def _build_item_prices_json() -> str:
     return json.dumps(_build_item_prices_dict())
+
+
+def _build_item_vendor_hints_dict() -> dict[str, dict[str, float]]:
+    hints: dict[str, dict[str, float]] = {}
+    items = Item.objects.filter(is_active=True).only(
+        "item_id", "reorder_point", "current_stock", "last_purchase_price"
+    )
+    for item in items:
+        cheapest = (
+            VendorItemPrice.objects.filter(item_id=item.pk, is_active=True)
+            .order_by("price", "-effective_from", "-pk")
+            .values_list("price", flat=True)
+            .first()
+        )
+        reorder = Decimal(str(item.reorder_point or 0))
+        stock = Decimal(str(item.current_stock or 0))
+        suggested_qty = reorder - stock
+        hints[str(item.pk)] = {
+            "cheapest_price": float(cheapest or 0),
+            "last_price": float(item.last_purchase_price or 0),
+            "suggested_qty": float(suggested_qty if suggested_qty > 0 else Decimal("0")),
+        }
+    return hints
 
 
 def _is_partial_post(request) -> bool:
@@ -460,6 +483,7 @@ class PurchaseOrderCreatePartialView(View):
                 "formset": formset,
                 "is_edit": False,
                 "item_prices": _build_item_prices_dict(),
+                "item_vendor_hints": _build_item_vendor_hints_dict(),
             },
         )
 
@@ -489,6 +513,7 @@ class PurchaseOrderCreatePartialView(View):
             "formset": formset,
             "is_edit": False,
             "item_prices": _build_item_prices_dict(),
+            "item_vendor_hints": _build_item_vendor_hints_dict(),
         }
         if _is_partial_post(request):
             return JsonResponse(build_form_error_payload(form, formset), status=400)
@@ -517,6 +542,7 @@ def purchase_order_create(request):
             "formset": formset,
             "is_edit": False,
             "item_prices": _build_item_prices_dict(),
+            "item_vendor_hints": _build_item_vendor_hints_dict(),
         },
     )
 
@@ -544,6 +570,7 @@ def purchase_order_edit(request, pk: int):
             "is_edit": True,
             "po": po,
             "item_prices": _build_item_prices_dict(),
+            "item_vendor_hints": _build_item_vendor_hints_dict(),
         },
     )
 
@@ -567,6 +594,7 @@ class PurchaseOrderEditPartialView(View):
                 "is_edit": True,
                 "po": po,
                 "item_prices": _build_item_prices_dict(),
+                "item_vendor_hints": _build_item_vendor_hints_dict(),
             },
         )
 
@@ -631,8 +659,16 @@ def purchase_order_detail(request, pk: int):
         "rows": rows,
         "list_url": reverse("purchase_orders_list"),
         "list_title": "Purchase Orders",
-        "current_title": f"Purchase Order {po.pk}",
-    }
+            "current_title": f"Purchase Order {po.pk}",
+            "saving_summary": SavingsLedger.objects.filter(
+                source_document_type="PO",
+                source_document_id=str(po.pk),
+            ).aggregate(
+                estimated=Sum("estimated_saving"),
+                confirmed=Sum("confirmed_saving"),
+                lost=Sum("lost_saving"),
+            ),
+        }
     return render(request, "inventory/purchase_orders/detail.html", ctx)
 
 

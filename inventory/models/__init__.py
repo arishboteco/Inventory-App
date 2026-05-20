@@ -12,7 +12,7 @@ from .orders import (
     PurchaseOrder,
     PurchaseOrderItem,
 )
-from .recovery import SavingsLedger
+from .recovery import SavingsLedger, VendorItemPrice
 from .recipes import Recipe, RecipeItem, SaleTransaction
 from .site_config import SiteConfig
 from .stock_take import StockTake, StockTakeItem
@@ -35,6 +35,7 @@ __all__ = [
     "GoodsReceivedNote",
     "GRNItem",
     "SavingsLedger",
+    "VendorItemPrice",
     "IndentStatus",
     "ItemStatus",
     "PurchaseOrderStatus",

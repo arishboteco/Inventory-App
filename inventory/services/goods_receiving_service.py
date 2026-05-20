@@ -16,6 +16,7 @@ from inventory.models import (
 
 from . import indent_consolidation_service, stock_service
 from .exceptions import StockServiceError
+from .vendor_savings_service import apply_grn_realization
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,13 @@ def _process_items(
             related_po_id=po.po_id if po else None,
             notes=f"GRN {grn_number}",
         )
+        if po:
+            apply_grn_realization(
+                po_id=po.po_id,
+                item_id=item.item_id,
+                quantity_received=qty,
+                invoice_price=item_d["unit_price_at_receipt"],
+            )
 
     GRNItem.objects.bulk_create(grn_items)
     # Apply received quantities to pending indents for fulfillment roll-up

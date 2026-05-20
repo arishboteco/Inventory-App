@@ -1,0 +1,122 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}Savings Ledger{% endblock %}
+{% block page_heading %}Savings Ledger{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-bodyText/70">Track every estimated, confirmed, verified, lost, or rejected saving in one owner-facing ledger.</p>
+{% endblock %}
+
+{% block filters %}
+  <form method="get" class="bg-surface border border-border rounded-xl p-4 grid gap-3 md:grid-cols-4 md:items-end">
+    <div>
+      <label for="ledger-status" class="block text-sm font-medium text-bodyText">Status</label>
+      <select id="ledger-status" name="status" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All statuses</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="ledger-saving-type" class="block text-sm font-medium text-bodyText">Saving Type</label>
+      <select id="ledger-saving-type" name="saving_type" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All types</option>
+        {% for value, label in saving_type_choices %}
+          <option value="{{ value }}" {% if saving_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Apply</button>
+    <a href="{% url 'savings_ledger_list' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md border border-border text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Reset</a>
+  </form>
+{% endblock %}
+
+{% block kpis %}
+  <div class="grid gap-3 md:grid-cols-3">
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Estimated Saving</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">₹{{ summary.estimated_total|floatformat:2 }}</p>
+    </div>
+    <div class="bg-success-soft border border-success/20 rounded-xl p-4">
+      <p class="text-sm text-success">Confirmed / Verified</p>
+      <p class="mt-1 text-2xl font-semibold text-success">₹{{ summary.confirmed_total|floatformat:2 }}</p>
+    </div>
+    <div class="bg-danger-soft border border-danger/20 rounded-xl p-4">
+      <p class="text-sm text-danger">Lost Saving</p>
+      <p class="mt-1 text-2xl font-semibold text-danger">₹{{ summary.lost_total|floatformat:2 }}</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_top %}
+  <section class="bg-surface border border-border rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-bodyText">Add Ledger Entry</h2>
+    <form method="post" class="mt-4 grid gap-4 md:grid-cols-3">
+      {% csrf_token %}
+      {% include "components/form_field.html" with field=form.date %}
+      {% include "components/form_field.html" with field=form.outlet %}
+      {% include "components/form_field.html" with field=form.item %}
+      {% include "components/form_field.html" with field=form.saving_type %}
+      {% include "components/form_field.html" with field=form.status %}
+      {% include "components/form_field.html" with field=form.source_document_type %}
+      {% include "components/form_field.html" with field=form.source_document_id %}
+      {% include "components/form_field.html" with field=form.baseline_price %}
+      {% include "components/form_field.html" with field=form.selected_price %}
+      {% include "components/form_field.html" with field=form.invoice_price %}
+      {% include "components/form_field.html" with field=form.quantity %}
+      {% include "components/form_field.html" with field=form.estimated_saving %}
+      {% include "components/form_field.html" with field=form.confirmed_saving %}
+      {% include "components/form_field.html" with field=form.lost_saving %}
+      <div class="md:col-span-3">
+        {% include "components/form_field.html" with field=form.notes %}
+      </div>
+      <div class="md:col-span-3">
+        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Save Entry</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block data_container %}
+  <div class="overflow-x-auto bg-surface border border-border rounded-xl">
+    <table class="min-w-full divide-y divide-border text-sm">
+      <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wider text-bodyText/70">
+        <tr>
+          <th class="px-4 py-3">Date</th>
+          <th class="px-4 py-3">Type</th>
+          <th class="px-4 py-3">Item</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3 text-right">Estimated</th>
+          <th class="px-4 py-3 text-right">Confirmed</th>
+          <th class="px-4 py-3 text-right">Lost</th>
+          <th class="px-4 py-3">Source</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        {% for entry in page_obj %}
+          <tr class="odd:bg-surfaceSubtle/50">
+            <td class="px-4 py-3 whitespace-nowrap">{{ entry.date|date:"d M Y" }}</td>
+            <td class="px-4 py-3">{{ entry.get_saving_type_display }}</td>
+            <td class="px-4 py-3">{{ entry.item|default:"-" }}</td>
+            <td class="px-4 py-3">{{ entry.get_status_display }}</td>
+            <td class="px-4 py-3 text-right tabular-nums">₹{{ entry.estimated_saving|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-right tabular-nums text-success">₹{{ entry.confirmed_saving|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-right tabular-nums text-danger">₹{{ entry.lost_saving|floatformat:2 }}</td>
+            <td class="px-4 py-3">{{ entry.source_document_type }} {{ entry.source_document_id }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="px-4 py-8 text-center text-bodyText/70">No savings ledger entries yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block pagination %}
+  <div class="mt-4">
+    {% url 'savings_ledger_list' as ledger_url %}
+    {% include "components/pagination.html" with page_obj=page_obj base_url=ledger_url %}
+  </div>
+{% endblock %}

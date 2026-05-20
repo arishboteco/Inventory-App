@@ -12,7 +12,7 @@ Single filter form (id=filters). Optional:
 <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden mb-4 md:mb-6">
   <div class="p-4 space-y-4">
 {% endif %}
-<form id="filters" class="flex flex-wrap md:flex-nowrap items-end gap-2 md:gap-3 mb-0 w-full {{ filter_bar_form_class }}" method="get">
+<form id="filters" class="flex flex-wrap md:flex-nowrap items-end gap-2 md:gap-3 mb-0 w-full {{ filter_bar_form_class }}" method="get"{% if filter_oob %} hx-swap-oob="true"{% endif %}>
   <div class="flex flex-col md:flex-none min-w-[9rem] md:min-w-[9rem] md:basis-[clamp(9rem,14vw,15rem)] md:flex-1">
     <label id="label-filter-q" for="filter-q" class="{% if hide_labels %}sr-only{% else %}text-label text-xs font-medium text-bodyText truncate md:max-w-[8rem]{% endif %}">{{ search_label|default:'Search' }}</label>
       <input

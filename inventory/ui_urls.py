@@ -73,6 +73,7 @@ from .views.recipes import (
     recipe_detail,
     recipe_meta,
 )
+from .views.recovery import savings_ledger_list, vendor_prices_list
 from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.stock_take import (
@@ -260,6 +261,8 @@ urlpatterns = [
     path("grns/create/adhoc/", create_adhoc_grn, name="grn_create_adhoc"),
     path("grns/<int:pk>/export/", grn_export, name="grn_export"),
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
+    path("savings-ledger/", savings_ledger_list, name="savings_ledger_list"),
+    path("vendor-prices/", vendor_prices_list, name="vendor_prices_list"),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
     path("recipes/table/", RecipesTableView.as_view(), name="recipes_table"),
     path("recipes/food-cost-report/", food_cost_report, name="food_cost_report"),

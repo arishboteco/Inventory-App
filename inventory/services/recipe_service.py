@@ -192,7 +192,7 @@ def create_recipe(
                 "name": data.get("name"),
                 "description": data.get("description"),
                 "is_active": data.get("is_active"),
-                "type": data.get("type"),
+                "type": data.get("type") or Recipe.Type.FINAL,
                 "default_yield_qty": data.get("default_yield_qty"),
                 "default_yield_unit": data.get("default_yield_unit"),
                 "plating_notes": data.get("plating_notes"),

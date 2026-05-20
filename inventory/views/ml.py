@@ -20,13 +20,22 @@ _MIN_DATA_POINTS = 2  # matches ml.forecast_item_demand threshold
 
 
 def _compute_and_cache() -> tuple:
-    """Run both ML computations synchronously and store results in cache."""
+    """Queue both ML computations and fall back to synchronous computation."""
     from django.utils import timezone
 
-    forecasts = ml.train_models(periods=1)
-    cache.set(_FORECASTS_KEY, forecasts, _CACHE_TTL)
-    classifications = ml.abc_classification()
-    cache.set(_ABC_KEY, classifications, _CACHE_TTL)
+    ml.queue_train_models(periods=1, cache_key=_FORECASTS_KEY, ttl=_CACHE_TTL)
+    ml.queue_abc_classification(cache_key=_ABC_KEY, ttl=_CACHE_TTL)
+
+    forecasts = cache.get(_FORECASTS_KEY)
+    if forecasts is None:
+        forecasts = ml.train_models(periods=1)
+        cache.set(_FORECASTS_KEY, forecasts, _CACHE_TTL)
+
+    classifications = cache.get(_ABC_KEY)
+    if classifications is None:
+        classifications = ml.abc_classification()
+        cache.set(_ABC_KEY, classifications, _CACHE_TTL)
+
     cache.set(_TIMESTAMP_KEY, timezone.now(), _CACHE_TTL)
     return forecasts, classifications
 

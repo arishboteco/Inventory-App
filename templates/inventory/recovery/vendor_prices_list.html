@@ -1,0 +1,104 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}Vendor Prices{% endblock %}
+{% block page_heading %}Vendor Prices{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-bodyText/70">Maintain item-wise vendor prices used by purchase comparison and estimated savings.</p>
+{% endblock %}
+
+{% block filters %}
+  <form method="get" class="bg-surface border border-border rounded-xl p-4 grid gap-3 md:grid-cols-5 md:items-end">
+    <div>
+      <label for="vendor-filter" class="block text-sm font-medium text-bodyText">Vendor</label>
+      <input id="vendor-filter" name="vendor" value="{{ vendor }}" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div>
+      <label for="item-filter" class="block text-sm font-medium text-bodyText">Item</label>
+      <input id="item-filter" name="item" value="{{ item }}" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div>
+      <label for="active-filter" class="block text-sm font-medium text-bodyText">Active</label>
+      <select id="active-filter" name="active" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All</option>
+        <option value="1" {% if active == "1" %}selected{% endif %}>Active only</option>
+        <option value="0" {% if active == "0" %}selected{% endif %}>Inactive only</option>
+      </select>
+    </div>
+    <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Apply</button>
+    <a href="{% url 'vendor_prices_list' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md border border-border text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Reset</a>
+  </form>
+{% endblock %}
+
+{% block kpis %}
+  <div class="grid gap-3 md:grid-cols-2">
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Active Vendor Prices</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">{{ active_count }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Inactive Vendor Prices</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">{{ inactive_count }}</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_top %}
+  <section class="bg-surface border border-border rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-bodyText">Add Vendor Price</h2>
+    <form method="post" class="mt-4 grid gap-4 md:grid-cols-4">
+      {% csrf_token %}
+      {% include "components/form_field.html" with field=form.vendor %}
+      {% include "components/form_field.html" with field=form.item %}
+      {% include "components/form_field.html" with field=form.unit %}
+      {% include "components/form_field.html" with field=form.price %}
+      {% include "components/form_field.html" with field=form.effective_from %}
+      {% include "components/form_field.html" with field=form.source %}
+      {% include "components/form_field.html" with field=form.is_active %}
+      <div class="md:col-span-4">
+        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Save Vendor Price</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block data_container %}
+  <div class="overflow-x-auto bg-surface border border-border rounded-xl">
+    <table class="min-w-full divide-y divide-border text-sm">
+      <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wider text-bodyText/70">
+        <tr>
+          <th class="px-4 py-3">Vendor</th>
+          <th class="px-4 py-3">Item</th>
+          <th class="px-4 py-3">Unit</th>
+          <th class="px-4 py-3 text-right">Price</th>
+          <th class="px-4 py-3">Effective From</th>
+          <th class="px-4 py-3">Source</th>
+          <th class="px-4 py-3">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        {% for price in page_obj %}
+          <tr class="odd:bg-surfaceSubtle/50">
+            <td class="px-4 py-3">{{ price.vendor }}</td>
+            <td class="px-4 py-3">{{ price.item }}</td>
+            <td class="px-4 py-3">{{ price.unit|default:"-" }}</td>
+            <td class="px-4 py-3 text-right tabular-nums">₹{{ price.price|floatformat:2 }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ price.effective_from|date:"d M Y" }}</td>
+            <td class="px-4 py-3">{{ price.source|default:"-" }}</td>
+            <td class="px-4 py-3">{% if price.is_active %}Active{% else %}Inactive{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-bodyText/70">No vendor prices yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block pagination %}
+  <div class="mt-4">
+    {% url 'vendor_prices_list' as vendor_prices_url %}
+    {% include "components/pagination.html" with page_obj=page_obj base_url=vendor_prices_url %}
+  </div>
+{% endblock %}

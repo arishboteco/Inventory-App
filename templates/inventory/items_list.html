@@ -21,7 +21,14 @@
   </div>
 {% endblock %}
 
-{% block kpis %}{% endblock %}
+{% block kpis %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {% include "components/kpi_card.html" with icon='cube' color='blue' label='Active Items' value=stats.active_items|default:"0" %}
+    {% include "components/kpi_card.html" with icon='exclamation-triangle' color='yellow' label='Low Stock %' value=stats.low_stock_pct|default:"0" %}
+    {% include "components/kpi_card.html" with icon='clock' color='green' label='Avg Days Since Purchase' value=stats.avg_days_since_purchase|default:"0" %}
+    {% include "components/kpi_card.html" with icon='banknotes' color='purple' label='Stock Value' value=stats.stock_value|floatformat:2 %}
+  </div>
+{% endblock %}
 
 {% block data_container %}
     {% url 'items_table' as items_table_url %}

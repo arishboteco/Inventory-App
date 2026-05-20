@@ -184,7 +184,7 @@ def pending_indent_counts() -> dict:
 
 
 def stock_trend_last_7_days() -> Tuple[List[str], List[float]]:
-    """Return labels and net stock change for the past 7 days."""
+    """Return labels and cumulative net stock change for the past 7 days."""
     today = timezone.now().date()
     start = today - timedelta(days=6)
     qs = (
@@ -201,10 +201,12 @@ def stock_trend_last_7_days() -> Tuple[List[str], List[float]]:
         data[day] = float(row["total"])
     labels: List[str] = []
     values: List[float] = []
+    running_total = 0.0
     for i in range(7):
         day = start + timedelta(days=i)
         labels.append(day.strftime("%Y-%m-%d"))
-        values.append(data.get(day, 0.0))
+        running_total += data.get(day, 0.0)
+        values.append(running_total)
     return labels, values
 
 

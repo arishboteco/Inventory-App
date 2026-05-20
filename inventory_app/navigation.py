@@ -34,6 +34,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "url_name": "food_cost_report",
             },
             {
+                "title": "Savings Ledger",
+                "description": "Trace estimated, confirmed, and lost savings.",
+                "url_name": "savings_ledger_list",
+            },
+            {
                 "title": "History",
                 "description": "Past stock activity and audit trail.",
                 "url_name": "history_reports",
@@ -72,6 +77,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "title": "Receiving",
                 "description": "Check in deliveries from suppliers.",
                 "url_name": "grn_list",
+            },
+            {
+                "title": "Vendor Prices",
+                "description": "Compare item prices across approved vendors.",
+                "url_name": "vendor_prices_list",
             },
         ],
     ),
@@ -195,6 +205,21 @@ def get_navigation_groups(
 
 def primary_navigation(request):
     """Provide grouped navigation data and notification counts for the top nav."""
+    match = getattr(request, "resolver_match", None)
+    url_name = getattr(match, "url_name", "") or ""
+    path = getattr(request, "path", "") or ""
+    if (
+        request.headers.get("HX-Request")
+        or url_name.endswith("_table")
+        or url_name.endswith("_cards")
+        or "/table/" in path
+        or "/cards/" in path
+    ):
+        return {
+            "navigation_groups": [],
+            "notification_count": 0,
+            "notifications": [],
+        }
     ctx = {"navigation_groups": get_navigation_groups()}
     if hasattr(request, "user") and request.user.is_authenticated:
         try:

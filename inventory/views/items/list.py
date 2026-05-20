@@ -27,7 +27,7 @@ from ...forms.item_forms import ItemForm
 from ...models import Category, Item, Supplier, Unit
 from ...models.departments import Department
 from ...models.orders import PurchaseOrderItem
-from ...services import category_filters, list_utils
+from ...services import category_filters, kpis, list_utils
 from ...services.categories_service import CategoriesService
 from .constants import EXCLUDED_FIELDS
 
@@ -326,13 +326,28 @@ class ItemsListView(TemplateView):
         stats = {}
         try:
             active_qs = kpi_qs.filter(is_active=True)
+            active_count = active_qs.count()
             stats["low_stock_count"] = active_qs.filter(
                 current_stock__isnull=False,
                 reorder_point__isnull=False,
                 current_stock__lt=F("reorder_point"),
             ).count()
+            stats["active_items"] = active_count
+            stats["low_stock_pct"] = (
+                round(stats["low_stock_count"] / active_count * 100, 1)
+                if active_count
+                else 0
+            )
+            stats["avg_days_since_purchase"] = round(
+                kpis.average_days_since_last_purchase(), 1
+            )
+            stats["stock_value"] = kpis.stock_value_on_hand()
         except Exception:  # pragma: no cover - defensive
             stats["low_stock_count"] = 0
+            stats["active_items"] = 0
+            stats["low_stock_pct"] = 0
+            stats["avg_days_since_purchase"] = 0
+            stats["stock_value"] = 0
 
         filters_list = category_filters.build_filters(request)
 
@@ -384,6 +399,8 @@ class ItemsTableView(TemplateView):
         return qs
 
     def get_template_names(self):  # pragma: no cover - simple logic
+        if self.request.headers.get("HX-Request"):
+            return ["inventory/items_table_htmx.html"]
         return ["inventory/_items_table.html"]
 
     def get_context_data(self, **kwargs):
@@ -399,6 +416,14 @@ class ItemsTableView(TemplateView):
             {"page_obj": page_obj, "page_size": per_page, "querystring": querystring}
         )
         ctx.update(category_filters.resolve_category_filters(self.request))
+        ctx["filters"] = category_filters.build_filters(self.request)
+        ctx["predictive_filter_names"] = [
+            "category",
+            "subcategory",
+            "base_unit",
+            "supplier",
+            "department",
+        ]
         return ctx
 
 

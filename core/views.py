@@ -17,6 +17,7 @@ from inventory.services.dashboard_bundle import (
     get_kpi_subset_for_partial,
     range_days_from_start_end,
 )
+from inventory.services.recovery_dashboard_service import build_owner_money_dashboard
 from inventory.services.stock_utils import get_low_stock_items
 
 logger = logging.getLogger(__name__)
@@ -140,16 +141,18 @@ def root_view(request):
     if request.user.is_authenticated:
         end = timezone.now().date()
         range_days = int(request.GET.get("range", "30"))
+        start = end - timedelta(days=range_days - 1)
         bundle = get_cached_dashboard_bundle(range_days, end)
-        opening = bundle["opening_stock"]
-        closing = bundle["closing_stock"]
-        purchases = bundle["purchases"]
-        consumption = bundle["consumption"]
+        owner_money = build_owner_money_dashboard(start, end, bundle)
+        opening = owner_money["opening_stock"]
+        closing = owner_money["closing_stock"]
+        purchases = owner_money["purchases"]
+        consumption = owner_money["actual_food_cost"]
         cons_delta = bundle["consumption_delta"]
-        revenue = bundle["sales_revenue"]
-        actual_fc = bundle["actual_fc"]
-        ideal_fc = bundle["ideal_fc"]
-        wastage = bundle["wastage"]
+        revenue = owner_money["sales_revenue"]
+        actual_fc = owner_money["current_food_cost_pct"]
+        ideal_fc = owner_money["target_food_cost_pct"]
+        wastage = owner_money["wastage"]
         waste_delta = bundle["wastage_delta"]
         trend_labels = bundle["trend_labels"]
         trend_consumption = bundle["trend_consumption"]
@@ -184,6 +187,7 @@ def root_view(request):
             "sales_revenue": revenue,
             "actual_fc": actual_fc,
             "ideal_fc": ideal_fc,
+            **owner_money,
             "wastage": wastage,
             "wastage_delta": waste_delta,
             "trend_labels": json.dumps(trend_labels),
@@ -218,8 +222,14 @@ def dashboard_kpis(request):
     """HTMX endpoint returning KPI card values (shared cache with dashboard bundle)."""
     end = timezone.now().date()
     range_days = int(request.GET.get("range", "30"))
+    start = end - timedelta(days=range_days - 1)
     bundle = get_cached_dashboard_bundle(range_days, end)
     data = get_kpi_subset_for_partial(bundle)
+    owner_money = build_owner_money_dashboard(start, end, bundle)
+    data.update(owner_money)
+    data["consumption"] = owner_money["actual_food_cost"]
+    data["actual_fc"] = owner_money["current_food_cost_pct"]
+    data["ideal_fc"] = owner_money["target_food_cost_pct"]
     return render(request, "core/_kpi_cards.html", data)
 
 

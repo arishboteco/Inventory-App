@@ -1,26 +1,24 @@
-<!-- Consumption breakdown + KPI metrics -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-  <!-- Left: Consumption breakdown table -->
-  <div class="lg:col-span-1 bg-surface border border-border rounded-xl p-4">
+<!-- Owner money dashboard KPI metrics -->
+<div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+  <div class="xl:col-span-1 bg-surface border border-border rounded-xl p-4">
     <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Consumption breakdown</h3>
     <table class="w-full text-sm">
       <tbody class="divide-y divide-border">
         <tr>
           <td class="py-1.5 text-gray-500">Opening Stock</td>
-          <td class="py-1.5 text-right font-medium text-bodyText">{{ opening_stock|floatformat:0|default:"—" }}</td>
+          <td class="py-1.5 text-right font-medium text-bodyText">&#8377;{{ opening_stock|floatformat:0 }}</td>
         </tr>
         <tr>
           <td class="py-1.5 text-gray-500">+ Purchases</td>
-          <td class="py-1.5 text-right font-medium text-bodyText">{{ purchases|floatformat:0|default:"—" }}</td>
+          <td class="py-1.5 text-right font-medium text-bodyText">&#8377;{{ purchases|floatformat:0 }}</td>
         </tr>
         <tr>
-          <td class="py-1.5 text-gray-500">− Closing Stock</td>
-          <td class="py-1.5 text-right font-medium text-bodyText">{{ closing_stock|floatformat:0|default:"—" }}</td>
+          <td class="py-1.5 text-gray-500">- Closing Stock</td>
+          <td class="py-1.5 text-right font-medium text-bodyText">&#8377;{{ closing_stock|floatformat:0 }}</td>
         </tr>
         <tr class="border-t-2 border-border">
-          <td class="py-2 font-semibold text-bodyText">= Consumption</td>
-          <td class="py-2 text-right font-bold text-bodyText">{{ consumption|floatformat:0|default:"—" }}</td>
+          <td class="py-2 font-semibold text-bodyText">= Actual Food Cost</td>
+          <td class="py-2 text-right font-bold text-bodyText">&#8377;{{ actual_food_cost|floatformat:0 }}</td>
         </tr>
       </tbody>
     </table>
@@ -31,34 +29,47 @@
     {% endif %}
   </div>
 
-  <!-- Right: KPI cards grid -->
-  <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-    {% include "components/kpi_metric_card.html" with label="Sales Revenue" value=sales_revenue is_currency=True %}
-
-    <!-- Food Cost % card with actual + ideal -->
-    <div class="bg-surface border border-border rounded-xl px-4 py-3.5 flex flex-col gap-0.5">
-      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Food Cost %</p>
-      <p class="text-xl font-semibold text-bodyText leading-tight">
-        {% if actual_fc is not None %}
-          {{ actual_fc }}%
-        {% else %}
-          <span class="text-gray-300">&mdash;</span>
-        {% endif %}
+  <div class="xl:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Current Food Cost %</p>
+      <p class="text-2xl font-semibold text-bodyText leading-tight">
+        {% if current_food_cost_pct is not None %}{{ current_food_cost_pct }}%{% else %}<span class="text-gray-300">&mdash;</span>{% endif %}
       </p>
-      {% if ideal_fc is not None %}
-        <p class="text-[11px] text-gray-400">Ideal {{ ideal_fc }}%</p>
-      {% endif %}
-      {% if actual_fc is not None and ideal_fc is not None %}
-        {% if actual_fc > ideal_fc %}
-          <span class="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-danger-soft text-danger-text">Over target</span>
-        {% else %}
-          <span class="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-success-soft text-success-text">On target</span>
-        {% endif %}
-      {% endif %}
+      <p class="text-[11px] text-gray-400">Actual food cost / net food sales</p>
     </div>
 
-    {% include "components/kpi_metric_card.html" with label="Wastage" value=wastage is_currency=True delta=wastage_delta invert_delta=True %}
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Target Food Cost %</p>
+      <p class="text-2xl font-semibold text-bodyText leading-tight">
+        {% if target_food_cost_pct is not None %}{{ target_food_cost_pct }}%{% else %}<span class="text-gray-300">&mdash;</span>{% endif %}
+      </p>
+      <p class="text-[11px] text-gray-400">Weighted recipe target</p>
+    </div>
 
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Food Cost Gap</p>
+      <p class="text-2xl font-semibold leading-tight {% if food_cost_gap_pct and food_cost_gap_pct > 0 %}text-danger{% else %}text-success{% endif %}">
+        {% if food_cost_gap_pct is not None %}{{ food_cost_gap_pct }}%{% else %}<span class="text-gray-300">&mdash;</span>{% endif %}
+      </p>
+      <p class="text-[11px] text-gray-400">Current minus target</p>
+    </div>
+
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Unrealised Profit</p>
+      <p class="text-2xl font-semibold text-danger leading-tight">&#8377;{{ unrealised_profit|floatformat:0 }}</p>
+      <p class="text-[11px] text-gray-400">Net sales x food cost gap</p>
+    </div>
+
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Recovered Profit This Month</p>
+      <p class="text-2xl font-semibold text-success leading-tight">&#8377;{{ recovered_profit_this_month|floatformat:0 }}</p>
+      <p class="text-[11px] text-gray-400">Savings ledger starts in Phase 2</p>
+    </div>
+
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Remaining Opportunity</p>
+      <p class="text-2xl font-semibold text-warning-text leading-tight">&#8377;{{ remaining_opportunity|floatformat:0 }}</p>
+      <p class="text-[11px] text-gray-400">Money still leaking</p>
+    </div>
   </div>
 </div>

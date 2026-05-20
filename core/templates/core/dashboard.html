@@ -29,7 +29,10 @@
 
     <!-- Greeting + period toggle -->
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-xl font-semibold text-bodyText">{{ greeting }}</h1>
+      <div>
+        <h1 class="text-xl font-semibold text-bodyText">{{ greeting }}</h1>
+        <p class="text-sm text-gray-500 mt-1">Food-cost recovery system for finding leakage and recovering profit.</p>
+      </div>
       <div class="flex rounded-md border border-border overflow-hidden text-sm" role="group" aria-label="Date range">
         <button type="button" data-range="7"  class="range-btn px-3 py-1.5 {% if selected_range == '7' %}bg-primary text-white{% else %}bg-surface text-bodyText hover:bg-surfaceSubtle{% endif %} transition focus:outline-none">7d</button>
         <button type="button" data-range="30" class="range-btn px-3 py-1.5 {% if selected_range == '30' or not selected_range %}bg-primary text-white{% else %}bg-surface text-bodyText hover:bg-surfaceSubtle{% endif %} transition focus:outline-none">30d</button>
@@ -41,7 +44,7 @@
     <!-- KPI Cards -->
     {% include "core/_kpi_cards.html" %}
 
-    <!-- Chart + Alerts -->
+    <!-- Chart + Leakage -->
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
       <!-- Chart (3 cols) -->
@@ -66,8 +69,40 @@
         </div>
       </div>
 
-      <!-- Alerts (2 cols) -->
+      <!-- Leakage (2 cols) -->
       <div class="lg:col-span-2 card divide-y divide-border">
+        <div class="px-4 pt-4 pb-2">
+          <h3 class="text-sm font-semibold text-bodyText">Top leakage areas</h3>
+        </div>
+        {% for area in top_leakage_areas %}
+          <div class="px-4 py-3 flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-bodyText">{{ area.label }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">{{ area.detail }}</p>
+              <a href="{{ area.url }}" class="text-xs text-primary hover:underline mt-1 block">Review &rarr;</a>
+            </div>
+            <p class="text-sm font-semibold tabular-nums {% if area.status == 'danger' %}text-danger{% elif area.status == 'warning' %}text-warning-text{% else %}text-success{% endif %}">&#8377;{{ area.amount|floatformat:0 }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Weekly actions + existing operational alerts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card divide-y divide-border">
+        <div class="px-4 pt-4 pb-2">
+          <h3 class="text-sm font-semibold text-bodyText">Weekly action plan</h3>
+        </div>
+        {% for action in weekly_action_plan %}
+          <div class="px-4 py-3">
+            <p class="text-sm font-medium text-bodyText">{{ action.title }}</p>
+            <p class="text-xs text-gray-500 mt-0.5">{{ action.detail }}</p>
+            <a href="{{ action.url }}" class="text-xs text-primary hover:underline mt-1 block">Open &rarr;</a>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="card divide-y divide-border">
         <div class="px-4 pt-4 pb-2">
           <h3 class="text-sm font-semibold text-bodyText">Needs attention</h3>
         </div>

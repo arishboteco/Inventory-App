@@ -115,6 +115,15 @@ def purchases_total(start, end):
     return total or Decimal("0")
 
 
+def actual_food_cost_value(start, end):
+    """Actual food cost using opening stock + purchases - closing stock."""
+    return (
+        opening_stock_value(start, end)
+        + purchases_total(start, end)
+        - closing_stock_value()
+    )
+
+
 def opening_stock_value(start, end):
     """Back-calculated: closing_value − net change during the period."""
     closing = closing_stock_value()
@@ -141,13 +150,12 @@ def sales_revenue(start, end):
 
 
 def consumption_total(start, end):
-    """Cost value of SALE + ISSUE transactions in the period."""
-    qs = StockTransaction.objects.filter(
-        transaction_type__in=["SALE", "ISSUE"],
-        transaction_date__date__gte=start,
-        transaction_date__date__lte=end,
-    )
-    return _abs_outbound_value(qs)
+    """Actual food cost value for the period.
+
+    The owner dashboard labels this as consumption, so it must match the
+    financial formula: opening stock + purchases - closing stock.
+    """
+    return actual_food_cost_value(start, end)
 
 
 def consumption_delta(start, end):
@@ -163,11 +171,11 @@ def consumption_delta(start, end):
 
 
 def actual_food_cost_pct(start, end):
-    """Consumption / Revenue × 100."""
+    """Actual Food Cost / Net Food Sales x 100."""
     revenue = _sales_revenue(start, end)
     if not revenue:
         return None
-    return round(float(consumption_total(start, end) / revenue * 100), 1)
+    return round(float(actual_food_cost_value(start, end) / revenue * 100), 1)
 
 
 def ideal_food_cost_pct(start, end):

@@ -5,8 +5,11 @@ from __future__ import annotations
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Dict
 
+from django.db.models import DecimalField, Sum
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 
+from inventory.models import SavingsLedger
 from inventory.services import dashboard_kpis as dkpis
 
 MONEY_PLACES = Decimal("0.01")
@@ -149,6 +152,24 @@ def _weekly_action_plan(
     return actions
 
 
+def _recovered_profit_this_month(end_date) -> Decimal:
+    total = SavingsLedger.objects.filter(
+        date__year=end_date.year,
+        date__month=end_date.month,
+        status__in=[
+            SavingsLedger.Status.CONFIRMED,
+            SavingsLedger.Status.VERIFIED,
+        ],
+    ).aggregate(
+        total=Coalesce(
+            Sum("confirmed_saving"),
+            Decimal("0"),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+    )["total"]
+    return _money(total or ZERO_MONEY)
+
+
 def build_owner_money_dashboard(
     start,
     end,
@@ -188,7 +209,7 @@ def build_owner_money_dashboard(
     unrealised_profit = _positive_money(
         sales_revenue * positive_gap_pct / Decimal("100")
     )
-    recovered_profit_this_month = ZERO_MONEY
+    recovered_profit_this_month = _recovered_profit_this_month(end)
     remaining_opportunity = _positive_money(
         unrealised_profit - recovered_profit_this_month
     )

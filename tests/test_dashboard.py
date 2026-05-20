@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.viewmodels import DashboardContext
-from inventory.models import Recipe, SaleTransaction, StockTransaction
+from inventory.models import Recipe, SaleTransaction, SavingsLedger, StockTransaction
 from inventory.services import dashboard_kpis as dkpis
 
 
@@ -112,3 +112,35 @@ def test_dashboard_renders_chart_and_kpis(client, django_user_model):
     assert "Consumption vs Wastage" in html
     assert "Consumption breakdown" in html
     assert "Top movers" in html
+
+
+@pytest.mark.django_db
+def test_dashboard_recovered_profit_uses_confirmed_and_verified_ledger_entries(
+    client, django_user_model
+):
+    user = django_user_model.objects.create_user(username="owner2", password="pw")
+    client.force_login(user)
+
+    today = timezone.now().date()
+    SavingsLedger.objects.create(
+        date=today,
+        saving_type=SavingsLedger.SavingType.VENDOR_SAVING,
+        status=SavingsLedger.Status.CONFIRMED,
+        confirmed_saving=Decimal("1200.00"),
+    )
+    SavingsLedger.objects.create(
+        date=today,
+        saving_type=SavingsLedger.SavingType.WASTE_REDUCTION,
+        status=SavingsLedger.Status.VERIFIED,
+        confirmed_saving=Decimal("800.00"),
+    )
+    SavingsLedger.objects.create(
+        date=today,
+        saving_type=SavingsLedger.SavingType.RECIPE_OPTIMISATION,
+        status=SavingsLedger.Status.ESTIMATED,
+        confirmed_saving=Decimal("9999.00"),
+    )
+
+    resp = client.get(reverse("root"))
+    assert resp.status_code == 200
+    assert resp.context["recovered_profit_this_month"] == Decimal("2000.00")

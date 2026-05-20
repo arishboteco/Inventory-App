@@ -14,6 +14,7 @@ from .models import (
     Recipe,
     RecipeItem,
     SaleTransaction,
+    SavingsLedger,
     StockTransaction,
     SubCategory,
     Supplier,
@@ -33,6 +34,7 @@ for model in [
     PurchaseOrderItem,
     GoodsReceivedNote,
     GRNItem,
+    SavingsLedger,
     Department,
     ItemDepartment,
 ]:

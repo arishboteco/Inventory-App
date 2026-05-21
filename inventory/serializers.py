@@ -32,6 +32,11 @@ class ItemSerializer(serializers.ModelSerializer):
             "name",
             "unit_id",
             "category_id",
+            "initial_purchase_price",
+            "last_purchase_price",
+            "preferred_supplier",
+            "minimum_order_qty",
+            "lead_time_days",
             "reorder_point",
             "current_stock",
             "notes",
@@ -69,6 +74,10 @@ class SupplierSerializer(serializers.ModelSerializer):
             "phone",
             "email",
             "address",
+            "tax_id",
+            "payment_terms",
+            "credit_limit",
+            "supplier_rating",
             "notes",
             "is_active",
             "updated_at",
@@ -154,6 +163,7 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
         model = PurchaseOrder
         fields = [
             "po_id",
+            "po_number",
             "supplier",
             "order_date",
             "expected_delivery_date",
@@ -187,9 +197,12 @@ class GoodsReceivedNoteSerializer(serializers.ModelSerializer):
         model = GoodsReceivedNote
         fields = [
             "grn_id",
+            "grn_number",
             "purchase_order",
             "supplier",
             "received_date",
+            "delivery_note_number",
+            "attachment",
             "notes",
         ]
 

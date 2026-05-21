@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Max, Sum
 
 from .departments import Department
 from .enums import IndentStatus, ItemStatus, PurchaseOrderStatus
@@ -223,6 +223,7 @@ class GoodsReceivedNote(models.Model):
     """Acknowledges receipt of goods for a purchase order."""
 
     grn_id = models.AutoField(primary_key=True)
+    grn_number = models.CharField(max_length=100, unique=True, blank=True, default="")
     # D6: Made nullable to support ad-hoc GRNs without a PO
     purchase_order = models.ForeignKey(
         PurchaseOrder,
@@ -243,10 +244,19 @@ class GoodsReceivedNote(models.Model):
         help_text="Delivery note or invoice number",
     )
 
+    def save(self, *args, **kwargs):
+        if not self.grn_number:
+            next_id = (
+                GoodsReceivedNote.objects.aggregate(m=Max("grn_id"))["m"] or 0
+            ) + 1
+            self.grn_number = f"GRN-{next_id:04d}"
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:  # pragma: no cover - simple representation
+        label = self.grn_number or f"GRN {self.pk}"
         if self.purchase_order_id:
-            return f"GRN {self.pk} for PO {self.purchase_order_id}"
-        return f"GRN {self.pk} (Ad-hoc)"
+            return f"{label} for PO {self.purchase_order_id}"
+        return f"{label} (Ad-hoc)"
 
     class Meta:
         managed = True

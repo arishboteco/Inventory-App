@@ -518,8 +518,9 @@ def create_adhoc_grn(request):
                     with db_transaction.atomic():
                         grn = form.save(commit=False)
                         grn.purchase_order = None
+                        grn.grn_number = generate_grn_number()
                         grn.save()
-                        grn_number = generate_grn_number()
+                        grn_number = grn.grn_number
                         user_id = (
                             getattr(request.user, "username", "System") or "System"
                         )

@@ -113,3 +113,19 @@ def test_purchase_order_edit_partial_post_validation_returns_json(
     data = json.loads(resp.content)
     assert data.get("ok") is False
     assert "errors" in data
+
+
+def test_purchase_order_full_form_notes_not_inside_two_column_grid(po_staff_client):
+    resp = po_staff_client.get(reverse("purchase_order_create"))
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content.decode(), "html.parser")
+
+    notes = soup.find("textarea", attrs={"name": "notes"})
+    assert notes is not None
+
+    grid = soup.find(
+        "div",
+        class_=lambda value: value and "grid-cols-2" in value and "gap-4" in value,
+    )
+    assert grid is not None
+    assert grid.find("textarea", attrs={"name": "notes"}) is None

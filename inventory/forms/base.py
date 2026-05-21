@@ -9,6 +9,12 @@ DATE_INPUT_FORMATS_FALLBACK = (
     "%m/%d/%Y",
     "%m-%d-%Y",
 )
+DATETIME_INPUT_FORMATS_FALLBACK = (
+    "%Y-%m-%dT%H:%M",
+    "%Y-%m-%d %H:%M",
+    "%d-%m-%Y %H:%M",
+    "%d/%m/%Y %H:%M",
+)
 TIME_INPUT_FORMATS_FALLBACK = ("%H:%M", "%H:%M:%S")
 
 INPUT_CLASS = (
@@ -56,12 +62,28 @@ class StyledFormMixin:
                 widget.attrs["type"] = "time"
                 if not getattr(widget, "format", None):
                     widget.format = "%H:%M"
+            # Some widgets inherited readonly attrs from older templates.
+            # Date/time fields must remain editable for keyboard entry.
+            if isinstance(
+                widget, (forms.DateInput, forms.DateTimeInput, forms.TimeInput)
+            ):
+                if str(widget.attrs.get("readonly", "")).lower() in {
+                    "1",
+                    "true",
+                    "readonly",
+                }:
+                    widget.attrs.pop("readonly", None)
 
             # Accept common manual text formats in addition to native picker values.
             if isinstance(field, forms.DateField):
                 existing = tuple(getattr(field, "input_formats", ()) or ())
                 field.input_formats = tuple(
                     dict.fromkeys((*DATE_INPUT_FORMATS_FALLBACK, *existing))
+                )
+            elif isinstance(field, forms.DateTimeField):
+                existing = tuple(getattr(field, "input_formats", ()) or ())
+                field.input_formats = tuple(
+                    dict.fromkeys((*DATETIME_INPUT_FORMATS_FALLBACK, *existing))
                 )
             elif isinstance(field, forms.TimeField):
                 existing = tuple(getattr(field, "input_formats", ()) or ())

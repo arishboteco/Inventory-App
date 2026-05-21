@@ -69,7 +69,13 @@ def test_role_owner_sees_owner_money_navigation(django_user_model):
     assert "pos_sales_import" in visible_urls
     assert "variance_report" in visible_urls
     assert "chef_bulletins_list" in visible_urls
+    assert "recovery_actions_list" in visible_urls
+    assert "purchase_orders_list" in visible_urls
+    assert "grn_list" in visible_urls
+    assert "stock_movements" in visible_urls
+    assert "stock_take_list" in visible_urls
     assert "indents_list" in visible_urls
+    assert "indents_consolidate_preview" in visible_urls
     assert "items_list" in visible_urls
     assert "recipes_list" in visible_urls
     assert "suppliers_list" in visible_urls

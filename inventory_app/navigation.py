@@ -58,6 +58,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "url_name": "pos_sales_import",
             },
             {
+                "title": "Ideal vs Actual",
+                "description": "Track item-level variance and leakage value by period.",
+                "url_name": "variance_report",
+            },
+            {
                 "title": "History",
                 "description": "Past stock activity and audit trail.",
                 "url_name": "history_reports",
@@ -162,6 +167,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "visualizations",
         "ml_dashboard",
         "pos_sales_import",
+        "variance_report",
         "indents_consolidate_preview",
         "purchase_orders_list",
         "grn_list",
@@ -186,6 +192,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "stock_movements",
         "ml_dashboard",
         "pos_sales_import",
+        "variance_report",
     },
     ROLE_KITCHEN_STAFF: {
         "indents_list",

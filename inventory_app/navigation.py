@@ -53,6 +53,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "url_name": "savings_ledger_list",
             },
             {
+                "title": "Sales Import",
+                "description": "Import POS sales and map menu items to recipes.",
+                "url_name": "pos_sales_import",
+            },
+            {
                 "title": "History",
                 "description": "Past stock activity and audit trail.",
                 "url_name": "history_reports",
@@ -156,6 +161,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "history_reports",
         "visualizations",
         "ml_dashboard",
+        "pos_sales_import",
         "indents_consolidate_preview",
         "purchase_orders_list",
         "grn_list",
@@ -179,6 +185,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "recipes_list",
         "stock_movements",
         "ml_dashboard",
+        "pos_sales_import",
     },
     ROLE_KITCHEN_STAFF: {
         "indents_list",

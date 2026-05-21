@@ -265,12 +265,12 @@ html.dark .bg-white\/40 {
     @apply bg-surface border border-border rounded-xl shadow-card;
   }
   .drawer-panel {
-    @apply bg-surface border border-border rounded-xl max-w-drawer-md shadow-overlay;
+    @apply bg-surface border border-border rounded-xl max-w-drawer-md shadow-overlay max-h-[calc(100vh-2rem)] min-h-0 overflow-y-auto;
   }
 
   /* Drawer layout for modal.js openDrawer() wrapper */
   .drawer {
-    @apply flex min-h-0 flex-col max-h-[90vh] overflow-y-auto;
+    @apply flex min-h-0 flex-col max-h-[calc(100vh-2rem)] overflow-y-auto;
   }
   .drawer.right {
     @apply ml-auto;

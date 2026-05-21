@@ -3,8 +3,9 @@ Generic modal component. Include with:
 {% include "components/modal.html" with id="my-modal" open_id="open-btn" title="Optional Title" content_template="path/to/template.html" %}
 The `content_template` is rendered inside the modal panel.
 {% endcomment %}
-<div id="{{ id }}" class="fixed inset-0 hidden z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
-  <div class="bg-surface rounded-2xl shadow-card border border-border w-full max-w-lg md:max-w-xl lg:max-w-2xl relative max-h-[90vh] overflow-y-auto">
+<div id="{{ id }}" class="fixed inset-0 hidden z-50 bg-black/50 overflow-y-auto p-4">
+  <div class="min-h-full flex items-start justify-center sm:items-center">
+  <div class="bg-surface rounded-2xl shadow-card border border-border w-full max-w-lg md:max-w-xl lg:max-w-2xl relative max-h-[calc(100vh-2rem)] overflow-y-auto">
     {% if title %}
     <div class="sticky top-0 bg-surface px-6 pt-6 pb-4 border-b border-border">
       <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
@@ -20,6 +21,7 @@ The `content_template` is rendered inside the modal panel.
     <div class="p-6">
       {% include content_template %}
     </div>
+  </div>
   </div>
 
 </div>

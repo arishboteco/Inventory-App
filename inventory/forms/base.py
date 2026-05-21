@@ -33,6 +33,20 @@ class StyledFormMixin:
                 self._append_class(widget, CHECKBOX_CLASS)
                 continue
 
+            # Ensure native pickers for date/time widgets unless explicitly overridden
+            if isinstance(widget, forms.DateInput) and "type" not in widget.attrs:
+                widget.input_type = "date"
+                widget.attrs["type"] = "date"
+            elif (
+                isinstance(widget, forms.DateTimeInput)
+                and "type" not in widget.attrs
+            ):
+                widget.input_type = "datetime-local"
+                widget.attrs["type"] = "datetime-local"
+            elif isinstance(widget, forms.TimeInput) and "type" not in widget.attrs:
+                widget.input_type = "time"
+                widget.attrs["type"] = "time"
+
             # All other inputs get the base INPUT_CLASS
             self._append_class(widget, INPUT_CLASS)
 

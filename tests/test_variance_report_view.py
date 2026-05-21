@@ -55,6 +55,8 @@ def test_variance_report_page_renders(client, item_factory):
     html = response.content.decode()
     assert "Ideal vs Actual Variance" in html
     assert "Variance Render Item" in html
+    assert "Recorded Wastage" in html
+    assert "Unexplained" in html
 
 
 def test_variance_report_show_mode_filters(client, item_factory):

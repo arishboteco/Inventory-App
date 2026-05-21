@@ -7,7 +7,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from core.viewmodels import DashboardContext
-from inventory.models import Recipe, SaleTransaction, SavingsLedger, StockTransaction
+from inventory.models import (
+    Recipe,
+    RecipeItem,
+    SaleTransaction,
+    SavingsLedger,
+    StockTransaction,
+)
 from inventory.services import dashboard_kpis as dkpis
 
 
@@ -144,3 +150,53 @@ def test_dashboard_recovered_profit_uses_confirmed_and_verified_ledger_entries(
     resp = client.get(reverse("root"))
     assert resp.status_code == 200
     assert resp.context["recovered_profit_this_month"] == Decimal("2000.00")
+
+
+@pytest.mark.django_db
+def test_dashboard_surfaces_unexplained_variance_area(
+    client, django_user_model, item_factory
+):
+    user = django_user_model.objects.create_user(username="owner3", password="pw")
+    client.force_login(user)
+    item = item_factory(
+        name="Unexplained Variance Item",
+        unit_id=19,
+        current_stock=Decimal("10.00"),
+        last_purchase_price=Decimal("200.00"),
+    )
+    recipe = Recipe.objects.create(
+        name="Unexplained Recipe",
+        is_active=True,
+        type=Recipe.Type.FINAL,
+        selling_price=Decimal("300.00"),
+        target_food_cost_pct=Decimal("30.00"),
+    )
+    RecipeItem.objects.create(
+        recipe=recipe,
+        item=item,
+        quantity=Decimal("100.00"),
+        unit="GM",
+        loss_pct=Decimal("0.00"),
+    )
+    SaleTransaction.objects.create(
+        recipe=recipe,
+        quantity=Decimal("5.00"),
+        sale_date=timezone.now(),
+    )
+    StockTransaction.objects.create(
+        item=item,
+        quantity_change=Decimal("1.00"),
+        transaction_type="RECEIVING",
+        transaction_date=timezone.now(),
+    )
+    StockTransaction.objects.create(
+        item=item,
+        quantity_change=Decimal("-1.50"),
+        transaction_type="ISSUE",
+        transaction_date=timezone.now(),
+    )
+
+    resp = client.get(reverse("root"))
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    assert "Unexplained variance" in html

@@ -24,6 +24,7 @@ def record_stock_transaction(
     related_po_id: Optional[int] = None,
     notes: Optional[str] = None,
     reason_category: Optional[str] = None,
+    wastage_photo=None,
     transaction_date=None,
 ) -> None:
     """Record a single stock transaction.
@@ -70,6 +71,8 @@ def record_stock_transaction(
                     notes=notes,
                     reason_category=reason_category,
                 )
+                if wastage_photo is not None:
+                    create_kwargs["wastage_photo"] = wastage_photo
                 if transaction_date is not None:
                     create_kwargs["transaction_date"] = transaction_date
                 StockTransaction.objects.create(**create_kwargs)

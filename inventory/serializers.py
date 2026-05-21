@@ -103,6 +103,8 @@ class StockTransactionSerializer(serializers.ModelSerializer):
             "user_int",
             "related_indent",
             "related_po",
+            "reason_category",
+            "wastage_photo",
             "notes",
             "transaction_date",
         ]

@@ -62,11 +62,13 @@ class ItemNameResolutionMixin:
 
 
 WASTAGE_CATEGORIES = [
-    ("SPOILAGE", "Spoilage"),
-    ("EXPIRY", "Expiry / Past Use-By"),
-    ("OVERCOOKING", "Overcooking / Preparation Loss"),
-    ("PEST", "Pest Damage"),
-    ("THEFT", "Theft / Shrinkage"),
+    ("SPOILED", "Spoiled"),
+    ("EXPIRED", "Expired"),
+    ("OVER_PREPPED", "Over-prepped"),
+    ("BURNT", "Burnt"),
+    ("RETURNED", "Returned"),
+    ("BREAKAGE", "Breakage"),
+    ("STAFF_MEAL", "Staff meal"),
     ("OTHER", "Other"),
 ]
 
@@ -253,6 +255,21 @@ class StockWastageForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm
         required=False,
         widget=forms.Textarea(attrs={"class": INPUT_CLASS, "rows": 2}),
     )
+    wastage_photo = forms.FileField(
+        required=False,
+        label="Photo (optional)",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": (
+                    "block w-full text-sm text-form-text border border-form-border "
+                    "rounded-md cursor-pointer bg-form-bg focus:outline-none "
+                    "focus:ring-2 focus:ring-primary focus:border-primary"
+                ),
+                "accept": ".jpg,.jpeg,.png,.webp",
+            }
+        ),
+        help_text="Upload a photo as evidence of wastage.",
+    )
 
     class Meta:
         model = StockTransaction
@@ -262,6 +279,7 @@ class StockWastageForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm
             "reason_category",
             "transaction_date",
             "notes",
+            "wastage_photo",
         ]
         labels = {"quantity_change": "Quantity"}
 

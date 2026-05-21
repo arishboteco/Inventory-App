@@ -206,7 +206,10 @@ def stock_movements(request):
                 return redirect(reverse("stock_movements") + "?section=adjust")
         elif "submit_waste" in request.POST:
             waste_form = StockWastageForm(
-                request.POST, prefix="waste", item_suggest_url=item_url
+                request.POST,
+                request.FILES,
+                prefix="waste",
+                item_suggest_url=item_url,
             )
             if waste_form.is_valid():
                 cd = waste_form.cleaned_data
@@ -220,6 +223,7 @@ def stock_movements(request):
                         user_int=(getattr(request.user, "pk", None) or None),
                         notes=cd.get("notes"),
                         reason_category=cd.get("reason_category") or None,
+                        wastage_photo=cd.get("wastage_photo"),
                         transaction_date=cd.get("transaction_date") or None,
                     )
                     messages.success(

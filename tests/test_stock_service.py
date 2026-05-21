@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.utils import OperationalError
 
 from inventory.models import (
@@ -153,3 +154,26 @@ def test_concurrent_stock_updates(item_factory):
     item.refresh_from_db()
     assert item.current_stock == Decimal("5")
     assert StockTransaction.objects.filter(item=item).count() == 5
+
+
+@pytest.mark.django_db
+def test_record_wastage_stores_reason_and_optional_photo(item_factory, settings):
+    settings.MEDIA_ROOT = "C:/Github/Inventory-App/.tmp_test_media"
+    item = item_factory(name="Waste Test Item", current_stock=Decimal("10"))
+    photo = SimpleUploadedFile(
+        "wastage.jpg",
+        b"fake-jpeg-content",
+        content_type="image/jpeg",
+    )
+    stock_service.record_stock_transaction(
+        item_id=item.item_id,
+        quantity_change=Decimal("-2.00"),
+        transaction_type="WASTAGE",
+        reason_category="SPOILED",
+        wastage_photo=photo,
+        user_id="tester",
+    )
+
+    tx = StockTransaction.objects.get(item=item, transaction_type="WASTAGE")
+    assert tx.reason_category == "SPOILED"
+    assert tx.wastage_photo.name.endswith("wastage.jpg")

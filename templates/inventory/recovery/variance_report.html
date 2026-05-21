@@ -38,7 +38,7 @@
 {% endblock %}
 
 {% block kpis %}
-  <div class="grid gap-3 md:grid-cols-4">
+  <div class="grid gap-3 md:grid-cols-5">
     <div class="bg-surface border border-border rounded-xl p-4">
       <p class="text-sm text-bodyText/70">Visible Items</p>
       <p class="mt-1 text-2xl font-semibold text-bodyText">{{ visible_count }}</p>
@@ -47,9 +47,13 @@
       <p class="text-sm text-danger">Leakage Value</p>
       <p class="mt-1 text-2xl font-semibold text-danger">Rs. {{ summary.leakage_value|floatformat:2 }}</p>
     </div>
-    <div class="bg-success-soft border border-success/20 rounded-xl p-4">
-      <p class="text-sm text-success">Favourable Value</p>
-      <p class="mt-1 text-2xl font-semibold text-success">Rs. {{ summary.favourable_value|floatformat:2 }}</p>
+    <div class="bg-warning-soft border border-warning/20 rounded-xl p-4">
+      <p class="text-sm text-warning-text">Recorded Wastage</p>
+      <p class="mt-1 text-2xl font-semibold text-warning-text">Rs. {{ summary.recorded_wastage_value|floatformat:2 }}</p>
+    </div>
+    <div class="bg-danger-soft border border-danger/20 rounded-xl p-4">
+      <p class="text-sm text-danger">Unexplained Leakage</p>
+      <p class="mt-1 text-2xl font-semibold text-danger">Rs. {{ summary.unexplained_leakage_value|floatformat:2 }}</p>
     </div>
     <div class="bg-surface border border-border rounded-xl p-4">
       <p class="text-sm text-bodyText/70">Unmapped Sales Rows</p>
@@ -68,6 +72,8 @@
           <th class="px-4 py-3 text-right">Actual Usage</th>
           <th class="px-4 py-3 text-right">Variance</th>
           <th class="px-4 py-3 text-right">Variance Value</th>
+          <th class="px-4 py-3 text-right">Recorded Wastage</th>
+          <th class="px-4 py-3 text-right">Unexplained</th>
           <th class="px-4 py-3">Likely Reason</th>
           <th class="px-4 py-3">Recommended Action</th>
         </tr>
@@ -84,12 +90,20 @@
             <td class="px-4 py-3 text-right tabular-nums {% if row.variance_value > 0 %}text-danger{% elif row.variance_value < 0 %}text-success{% endif %}">
               Rs. {{ row.variance_value|floatformat:2 }}
             </td>
+            <td class="px-4 py-3 text-right tabular-nums text-warning-text">
+              {{ row.recorded_wastage_qty|floatformat:3 }} {{ row.unit_label }}<br>
+              <span class="text-xs">Rs. {{ row.recorded_wastage_value|floatformat:2 }}</span>
+            </td>
+            <td class="px-4 py-3 text-right tabular-nums {% if row.unexplained_variance_value > 0 %}text-danger{% else %}text-success{% endif %}">
+              {{ row.unexplained_variance_qty|floatformat:3 }} {{ row.unit_label }}<br>
+              <span class="text-xs">Rs. {{ row.unexplained_variance_value|floatformat:2 }}</span>
+            </td>
             <td class="px-4 py-3">{{ row.likely_reason }}</td>
             <td class="px-4 py-3">{{ row.recommended_action }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-bodyText/70">No item variance found for this period.</td>
+            <td colspan="9" class="px-4 py-8 text-center text-bodyText/70">No item variance found for this period.</td>
           </tr>
         {% endfor %}
       </tbody>

@@ -102,9 +102,7 @@ def create_po_estimated_savings(
                 estimated_saving=baseline.estimated_saving * qty,
                 lost_saving=baseline.estimated_loss * qty,
                 status=SavingsLedger.Status.ESTIMATED,
-                notes=(
-                    "Auto-estimated on PO creation using vendor/item baseline."
-                ),
+                notes=("Auto-estimated on PO creation using vendor/item baseline."),
             )
         )
     if entries:
@@ -132,28 +130,30 @@ def apply_grn_realization(
     diff = baseline - invoice
     confirmed = diff * qty if diff > 0 else Decimal("0")
     lost = -diff * qty if diff < 0 else Decimal("0")
-    status = SavingsLedger.Status.VERIFIED if confirmed > 0 else SavingsLedger.Status.LOST
+    status = (
+        SavingsLedger.Status.VERIFIED if confirmed > 0 else SavingsLedger.Status.LOST
+    )
     estimates.update(
         invoice_price=invoice,
-        confirmed_saving=Coalesce(F("confirmed_saving"), Decimal("0"))
-        + confirmed,
+        confirmed_saving=Coalesce(F("confirmed_saving"), Decimal("0")) + confirmed,
         lost_saving=Coalesce(F("lost_saving"), Decimal("0")) + lost,
         status=status,
     )
 
 
 def recovered_profit_for_month(*, year: int, month: int) -> Decimal:
-    return (
-        SavingsLedger.objects.filter(
-            date__year=year,
-            date__month=month,
-            status__in=[SavingsLedger.Status.CONFIRMED, SavingsLedger.Status.VERIFIED],
-        ).aggregate(
-            total=Coalesce(
-                Sum("confirmed_saving"),
-                Decimal("0"),
-                output_field=DecimalField(max_digits=14, decimal_places=2),
-            )
-        )["total"]
-        or Decimal("0")
+    return SavingsLedger.objects.filter(
+        date__year=year,
+        date__month=month,
+        status__in=[SavingsLedger.Status.CONFIRMED, SavingsLedger.Status.VERIFIED],
+    ).aggregate(
+        total=Coalesce(
+            Sum("confirmed_saving"),
+            Decimal("0"),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+    )[
+        "total"
+    ] or Decimal(
+        "0"
     )

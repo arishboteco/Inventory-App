@@ -43,7 +43,8 @@ def test_purchase_order_create_partial_get_has_drawer_hooks(po_staff_client):
     notes = soup.find("textarea", attrs={"name": "notes"})
     assert notes is not None
     grid = soup.find(
-        "div", class_=lambda value: value and "grid-cols-2" in value and "gap-4" in value
+        "div",
+        class_=lambda value: value and "grid-cols-2" in value and "gap-4" in value,
     )
     assert grid is not None
     assert grid.find("textarea", attrs={"name": "notes"}) is None

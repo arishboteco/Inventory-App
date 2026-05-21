@@ -558,10 +558,12 @@
         formRoot.querySelectorAll("[data-modal-field-error]").forEach((el) => {
           el.remove();
         });
-        formRoot.querySelectorAll("[data-modal-invalid-outline]").forEach((el) => {
-          el.classList.remove("ring-2", "ring-red-400", "border-red-400");
-          el.removeAttribute("data-modal-invalid-outline");
-        });
+        formRoot
+          .querySelectorAll("[data-modal-invalid-outline]")
+          .forEach((el) => {
+            el.classList.remove("ring-2", "ring-red-400", "border-red-400");
+            el.removeAttribute("data-modal-invalid-outline");
+          });
       };
       /** Map ``build_form_error_payload``-shaped errors onto Django widget ids; return first control for focus. */
       const applyStructuredFieldErrors = (formRoot, errors) => {
@@ -572,7 +574,11 @@
           if (el instanceof HTMLElement && !firstEl) firstEl = el;
         };
         const attachMsg = (control, messages) => {
-          if (!(control instanceof HTMLElement) || !messages || !messages.length)
+          if (
+            !(control instanceof HTMLElement) ||
+            !messages ||
+            !messages.length
+          )
             return;
           const box = document.createElement("div");
           box.setAttribute("data-modal-field-error", "");
@@ -657,9 +663,7 @@
               const arr = row.errors[k];
               if (Array.isArray(arr)) {
                 arr.forEach((t) => {
-                  lines.push(
-                    ri ? `Row ${ri} — ${k}: ${t}` : `${k}: ${t}`,
-                  );
+                  lines.push(ri ? `Row ${ri} — ${k}: ${t}` : `${k}: ${t}`);
                 });
               }
             });

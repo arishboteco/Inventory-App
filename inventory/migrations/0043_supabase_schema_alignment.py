@@ -20,11 +20,14 @@ def ensure_grn_number(apps, schema_editor):
 
     if connection.vendor == "postgresql":
         with connection.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 ALTER TABLE goods_received_notes
                 ADD COLUMN IF NOT EXISTS grn_number varchar(100)
-                """)
-            cursor.execute("""
+                """
+            )
+            cursor.execute(
+                """
                 WITH duplicate_numbers AS (
                     SELECT grn_number
                     FROM goods_received_notes
@@ -37,16 +40,21 @@ def ensure_grn_number(apps, schema_editor):
                 WHERE grn_number IS NULL
                    OR grn_number = ''
                    OR grn_number IN (SELECT grn_number FROM duplicate_numbers)
-                """)
-            cursor.execute("""
+                """
+            )
+            cursor.execute(
+                """
                 ALTER TABLE goods_received_notes
                 ALTER COLUMN grn_number SET NOT NULL
-                """)
-            cursor.execute("""
+                """
+            )
+            cursor.execute(
+                """
                 CREATE UNIQUE INDEX IF NOT EXISTS
                     goods_received_notes_grn_number_uniq
                 ON goods_received_notes (grn_number)
-                """)
+                """
+            )
         return
 
     if not _column_exists(connection, table, "grn_number"):
@@ -56,16 +64,20 @@ def ensure_grn_number(apps, schema_editor):
             )
 
     with connection.cursor() as cursor:
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE goods_received_notes
             SET grn_number = 'GRN-' || printf('%04d', grn_id)
             WHERE grn_number IS NULL OR grn_number = ''
-            """)
-        cursor.execute("""
+            """
+        )
+        cursor.execute(
+            """
             CREATE UNIQUE INDEX IF NOT EXISTS
                 goods_received_notes_grn_number_uniq
             ON goods_received_notes (grn_number)
-            """)
+            """
+        )
 
 
 def ensure_sales_transactions(apps, schema_editor):
@@ -79,7 +91,8 @@ def repair_status_defaults(apps, schema_editor):
     connection = schema_editor.connection
     with connection.cursor() as cursor:
         if _table_exists(connection, "purchase_orders"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE purchase_orders
                 SET status = CASE status
                     WHEN 'Draft' THEN 'DRAFT'
@@ -92,9 +105,11 @@ def repair_status_defaults(apps, schema_editor):
                 WHERE status IN (
                     'Draft', 'Sent to Supplier', 'Sent', 'Received', 'Cancelled'
                 )
-                """)
+                """
+            )
         if _table_exists(connection, "indents"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE indents
                 SET status = CASE status
                     WHEN 'Pending' THEN 'PENDING'
@@ -109,9 +124,11 @@ def repair_status_defaults(apps, schema_editor):
                     'Pending', 'Submitted', 'Processing', 'Approved',
                     'Completed', 'Cancelled'
                 )
-                """)
+                """
+            )
         if _table_exists(connection, "indent_items"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE indent_items
                 SET item_status = CASE item_status
                     WHEN 'Pending Issue' THEN 'PENDING'
@@ -123,7 +140,8 @@ def repair_status_defaults(apps, schema_editor):
                 WHERE item_status IN (
                     'Pending Issue', 'Pending', 'Issued', 'Cancelled'
                 )
-                """)
+                """
+            )
 
         if connection.vendor == "postgresql":
             cursor.execute(

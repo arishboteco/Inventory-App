@@ -12,13 +12,15 @@ def reset_content_type_sequence(apps, schema_editor):
     """
     if schema_editor.connection.vendor != "postgresql":
         return
-    schema_editor.execute("""
+    schema_editor.execute(
+        """
         SELECT setval(
             pg_get_serial_sequence('django_content_type', 'id'),
             COALESCE(MAX(id), 1)
         )
         FROM django_content_type;
-        """)
+        """
+    )
 
 
 class Migration(migrations.Migration):

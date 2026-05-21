@@ -112,7 +112,9 @@ def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:
                     "item_id": int(item_d["item_id"]),
                     "quantity_ordered": Decimal(str(item_d["quantity_ordered"])),
                     "unit_price": Decimal(str(item_d["unit_price"])),
-                    "fallback_price": item_map[int(item_d["item_id"])].last_purchase_price
+                    "fallback_price": item_map[
+                        int(item_d["item_id"])
+                    ].last_purchase_price
                     or item_map[int(item_d["item_id"])].initial_purchase_price
                     or Decimal("0"),
                 }

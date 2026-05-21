@@ -39,14 +39,10 @@
     );
     if (exact) return exact.value;
 
-    const includes = options.filter((o) =>
-      o.text.toLowerCase().includes(q),
-    );
+    const includes = options.filter((o) => o.text.toLowerCase().includes(q));
     if (includes.length === 1) return includes[0].value;
 
-    const prefixes = options.filter((o) =>
-      o.text.toLowerCase().startsWith(q),
-    );
+    const prefixes = options.filter((o) => o.text.toLowerCase().startsWith(q));
     if (prefixes.length === 1) return prefixes[0].value;
 
     return "";

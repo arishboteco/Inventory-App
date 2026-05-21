@@ -45,7 +45,7 @@
     window.dispatchEvent(
       new CustomEvent("themechange", {
         detail: { mode: mode, dark: effective },
-      })
+      }),
     );
   }
 
@@ -69,7 +69,7 @@
           window.dispatchEvent(
             new CustomEvent("themechange", {
               detail: { mode: "system", dark: prefersDark() },
-            })
+            }),
           );
         }
       });

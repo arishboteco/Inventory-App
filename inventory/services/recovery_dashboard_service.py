@@ -166,7 +166,9 @@ def _recovered_profit_this_month(end_date) -> Decimal:
             Decimal("0"),
             output_field=DecimalField(max_digits=14, decimal_places=2),
         )
-    )["total"]
+    )[
+        "total"
+    ]
     return _money(total or ZERO_MONEY)
 
 

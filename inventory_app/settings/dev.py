@@ -1,5 +1,5 @@
-from .base import *  # noqa
 from .base import MIDDLEWARE as _BASE_MIDDLEWARE
+from .base import *  # noqa
 
 DEBUG = True
 

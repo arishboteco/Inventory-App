@@ -34,13 +34,15 @@ def migrate_item_categories(dry_run=True):
 
     with connection.cursor() as cursor:
         # Get all items that have category text but no category_id_ref
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT item_id, name, category, sub_category, category_id_ref
             FROM items
             WHERE category IS NOT NULL AND category != ''
             AND (category_id_ref IS NULL OR category_id_ref = 0)
             ORDER BY category, sub_category
-        """)
+        """
+        )
         items_to_migrate = cursor.fetchall()
 
         if not items_to_migrate:
@@ -133,11 +135,13 @@ def migrate_item_categories(dry_run=True):
 
             # Verify the migration
             logger.info("\n=== VERIFICATION ===")
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(*) FROM items
                 WHERE category IS NOT NULL AND category != ''
                 AND category_id_ref IS NOT NULL
-            """)
+            """
+            )
             migrated_count = cursor.fetchone()[0]
             logger.info("Items now using category_id_ref: %d", migrated_count)
 
@@ -151,13 +155,15 @@ def validate_category_migration():
 
     with connection.cursor() as cursor:
         # Check items with category_id_ref
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT i.item_id, i.name, i.category_id_ref, c.category, c.sub_category
             FROM items i
             LEFT JOIN category c ON i.category_id_ref = c.category_id
             WHERE i.category_id_ref IS NOT NULL
             ORDER BY i.item_id
-        """)
+        """
+        )
         items = cursor.fetchall()
 
         logger.info("Found %d items with category_id references:", len(items))
@@ -206,11 +212,13 @@ def cleanup_duplicate_category_fields():
 
     with connection.cursor() as cursor:
         # Check that all items with categories have category_id_ref
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) FROM items
             WHERE (category IS NOT NULL AND category != '')
             AND (category_id_ref IS NULL OR category_id_ref = 0)
-        """)
+        """
+        )
         unmigrated = cursor.fetchone()[0]
 
         if unmigrated > 0:
@@ -221,11 +229,13 @@ def cleanup_duplicate_category_fields():
             return False
 
         # Check that all category_id_ref values are valid
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) FROM items i
             LEFT JOIN category c ON i.category_id_ref = c.category_id
             WHERE i.category_id_ref IS NOT NULL AND c.category_id IS NULL
-        """)
+        """
+        )
         invalid_refs = cursor.fetchone()[0]
 
         if invalid_refs > 0:

@@ -7,16 +7,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const primaryColor = getComputedStyle(document.documentElement)
     .getPropertyValue("--color-primary")
     .trim();
-  const dangerColor = getComputedStyle(document.documentElement)
-    .getPropertyValue("--danger-text")
-    .trim() || "#dc2626";
+  const dangerColor =
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--danger-text")
+      .trim() || "#dc2626";
 
   let chart;
 
   function renderChart(labels, consumption, wastage) {
-    const hasData = consumption.some((v) => v > 0) || wastage.some((v) => v > 0);
+    const hasData =
+      consumption.some((v) => v > 0) || wastage.some((v) => v > 0);
     if (!hasData) {
-      if (chart) { chart.destroy(); chart = null; }
+      if (chart) {
+        chart.destroy();
+        chart = null;
+      }
       canvas.parentElement.classList.add("hidden");
       placeholder.classList.remove("hidden");
       return;
@@ -26,7 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const shortLabels = labels.map((l) => {
       const d = new Date(l + "T00:00:00");
-      return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      return d.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
     });
 
     const dataset = {

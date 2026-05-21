@@ -8,6 +8,7 @@ from ..models import (
     Indent,
     IndentItem,
     Item,
+    POSMenuItemMapping,
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
@@ -22,6 +23,7 @@ from ..serializers import (
     IndentItemSerializer,
     IndentSerializer,
     ItemSerializer,
+    POSMenuItemMappingSerializer,
     PurchaseOrderItemSerializer,
     PurchaseOrderSerializer,
     RecipeItemSerializer,
@@ -177,6 +179,17 @@ class SaleTransactionViewSet(viewsets.ModelViewSet):
 
     queryset = SaleTransaction.objects.all().select_related("recipe")
     serializer_class = SaleTransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = DefaultPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = "__all__"
+
+
+class POSMenuItemMappingViewSet(viewsets.ModelViewSet):
+    """CRUD API for POS menu item mappings."""
+
+    queryset = POSMenuItemMapping.objects.all().select_related("recipe")
+    serializer_class = POSMenuItemMappingSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = DefaultPagination
     filter_backends = [DjangoFilterBackend]

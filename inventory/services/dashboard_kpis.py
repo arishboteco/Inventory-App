@@ -48,15 +48,22 @@ def _abs_outbound_value(qs):
 def _sales_revenue(start, end):
     """Revenue from SaleTransaction rows in the period.
 
-    Uses ``recipe.selling_price * quantity`` as the revenue proxy.
-    Falls back to 0 when no sales exist.
+    Uses imported ``net_sales`` when present and falls back to
+    ``recipe.selling_price * quantity`` for legacy/manual rows.
     """
-    total = (
-        SaleTransaction.objects.filter(
-            sale_date__date__gte=start,
-            sale_date__date__lte=end,
+    base_qs = SaleTransaction.objects.filter(
+        sale_date__date__gte=start,
+        sale_date__date__lte=end,
+    ).select_related("recipe")
+    net_total = base_qs.aggregate(
+        total=Coalesce(
+            Sum("net_sales"),
+            Decimal("0"),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
         )
-        .select_related("recipe")
+    )["total"] or Decimal("0")
+    fallback_total = (
+        base_qs.filter(net_sales__isnull=True)
         .aggregate(
             total=Coalesce(
                 Sum(
@@ -69,8 +76,9 @@ def _sales_revenue(start, end):
                 output_field=DecimalField(max_digits=14, decimal_places=2),
             )
         )["total"]
+        or Decimal("0")
     )
-    return total or Decimal("0")
+    return net_total + fallback_total
 
 
 # ── public KPI functions ───────────────────────────────────────────────

@@ -66,6 +66,7 @@ def test_role_owner_sees_owner_money_navigation(django_user_model):
     assert "root" in visible_urls
     assert "savings_ledger_list" in visible_urls
     assert "vendor_prices_list" in visible_urls
+    assert "pos_sales_import" in visible_urls
     assert "indents_list" not in visible_urls
 
 
@@ -99,6 +100,20 @@ def test_role_kitchen_staff_sees_indent_requests_only(django_user_model):
 
     assert role == navigation.ROLE_KITCHEN_STAFF
     assert visible_urls == {"indents_list"}
+
+
+@pytest.mark.django_db
+def test_role_head_chef_sees_sales_import(django_user_model):
+    chef_group, _ = Group.objects.get_or_create(name="Head Chef")
+    user = django_user_model.objects.create_user(username="chef", password="pw")
+    user.groups.add(chef_group)
+
+    role = navigation.get_primary_role(user)
+    groups = navigation.get_navigation_groups_for_role(role)
+    visible_urls = {link["url_name"] for group in groups for link in group["links"]}
+
+    assert role == navigation.ROLE_HEAD_CHEF
+    assert "pos_sales_import" in visible_urls
 
 
 @pytest.mark.django_db

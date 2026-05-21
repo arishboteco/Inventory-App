@@ -1,0 +1,116 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}POS Sales Import{% endblock %}
+{% block page_heading %}POS Sales Import{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-bodyText/70">Upload POS sales, map menu items to recipes, and feed food-cost recovery reporting.</p>
+{% endblock %}
+
+{% block extra_top %}
+  <section class="bg-surface border border-border rounded-xl p-4 space-y-4">
+    <h2 class="text-lg font-semibold text-bodyText">Upload POS CSV</h2>
+    <form method="post" enctype="multipart/form-data" class="grid gap-3 md:grid-cols-3 md:items-end">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload">
+      <div class="md:col-span-2">
+        {% include "components/form_field.html" with field=import_form.file %}
+      </div>
+      <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">
+        Import CSV
+      </button>
+    </form>
+    <p class="text-xs text-bodyText/60">Required columns: date, outlet, pos_item_name, quantity_sold, gross_sales, discount, net_sales, tax</p>
+  </section>
+
+  <section class="bg-surface border border-border rounded-xl p-4 space-y-4">
+    <h2 class="text-lg font-semibold text-bodyText">Map POS Menu Items</h2>
+    <form method="post" class="grid gap-4 md:grid-cols-4">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="map">
+      <div class="md:col-span-2">
+        {% include "components/form_field.html" with field=mapping_form.pos_item_name %}
+      </div>
+      {% include "components/form_field.html" with field=mapping_form.recipe %}
+      {% include "components/form_field.html" with field=mapping_form.is_active %}
+      <div class="md:col-span-4">
+        {% include "components/form_field.html" with field=mapping_form.notes %}
+      </div>
+      <div class="md:col-span-4">
+        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">
+          Save Mapping
+        </button>
+      </div>
+    </form>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <div class="bg-surfaceSubtle border border-border rounded-lg p-3">
+        <h3 class="text-sm font-semibold text-bodyText mb-2">Unmapped POS Items</h3>
+        <div class="space-y-2 max-h-52 overflow-auto">
+          {% for row in unmapped_items %}
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-bodyText">{{ row.pos_item_name }}</span>
+              <span class="text-bodyText/70">Rows: {{ row.row_count }} | Net: Rs. {{ row.net_total|floatformat:2 }}</span>
+            </div>
+          {% empty %}
+            <p class="text-sm text-bodyText/70">No unmapped rows.</p>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="bg-surfaceSubtle border border-border rounded-lg p-3">
+        <h3 class="text-sm font-semibold text-bodyText mb-2">Active Mappings</h3>
+        <div class="space-y-2 max-h-52 overflow-auto">
+          {% for mapping in mappings %}
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-bodyText">{{ mapping.pos_item_name }}</span>
+              <span class="text-bodyText/70">{{ mapping.recipe.name|default:"Unmapped" }}</span>
+            </div>
+          {% empty %}
+            <p class="text-sm text-bodyText/70">No mappings yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block data_container %}
+  <div class="overflow-x-auto bg-surface border border-border rounded-xl">
+    <table class="min-w-full divide-y divide-border text-sm">
+      <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wider text-bodyText/70">
+        <tr>
+          <th class="px-4 py-3">Date</th>
+          <th class="px-4 py-3">Outlet</th>
+          <th class="px-4 py-3">POS Item</th>
+          <th class="px-4 py-3">Recipe</th>
+          <th class="px-4 py-3 text-right">Qty</th>
+          <th class="px-4 py-3 text-right">Net Sales</th>
+          <th class="px-4 py-3">Source</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        {% for sale in page_obj %}
+          <tr class="odd:bg-surfaceSubtle/50">
+            <td class="px-4 py-3 whitespace-nowrap">{{ sale.sale_date|date:"d M Y" }}</td>
+            <td class="px-4 py-3">{{ sale.outlet|default:"-" }}</td>
+            <td class="px-4 py-3">{{ sale.pos_item_name|default:"-" }}</td>
+            <td class="px-4 py-3">{{ sale.recipe.name|default:"Unmapped" }}</td>
+            <td class="px-4 py-3 text-right">{{ sale.quantity|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-right tabular-nums">Rs. {{ sale.net_sales|default:0|floatformat:2 }}</td>
+            <td class="px-4 py-3">{{ sale.get_source_display }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-bodyText/70">No imported POS sales yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block pagination %}
+  <div class="mt-4">
+    {% url 'pos_sales_import' as base_url %}
+    {% include "components/pagination.html" with page_obj=page_obj base_url=base_url %}
+  </div>
+{% endblock %}

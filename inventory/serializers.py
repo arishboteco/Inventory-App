@@ -6,6 +6,7 @@ from .models import (
     Indent,
     IndentItem,
     Item,
+    POSMenuItemMapping,
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
@@ -240,9 +241,35 @@ class SaleTransactionSerializer(serializers.ModelSerializer):
             "sale_id",
             "recipe",
             "quantity",
+            "outlet",
+            "pos_item_name",
+            "gross_sales",
+            "discount",
+            "net_sales",
+            "tax",
+            "source",
+            "source_row_number",
             "user_id",
             "notes",
             "sale_date",
+        ]
+
+
+class POSMenuItemMappingSerializer(serializers.ModelSerializer):
+    notes = serializers.CharField(
+        allow_blank=True, allow_null=True, required=False, default=""
+    )
+
+    class Meta:
+        model = POSMenuItemMapping
+        fields = [
+            "mapping_id",
+            "pos_item_name",
+            "recipe",
+            "is_active",
+            "notes",
+            "created_at",
+            "updated_at",
         ]
 
 

@@ -12,7 +12,13 @@ from .orders import (
     PurchaseOrder,
     PurchaseOrderItem,
 )
-from .recipes import Recipe, RecipeComponent, RecipeItem, SaleTransaction
+from .recipes import (
+    POSMenuItemMapping,
+    Recipe,
+    RecipeComponent,
+    RecipeItem,
+    SaleTransaction,
+)
 from .recovery import SavingsLedger, VendorItemPrice
 from .site_config import SiteConfig
 from .stock_take import StockTake, StockTakeItem
@@ -43,6 +49,7 @@ __all__ = [
     "RecipeComponent",
     "RecipeItem",
     "SaleTransaction",
+    "POSMenuItemMapping",
     "Department",
     "ItemDepartment",
     "Category",

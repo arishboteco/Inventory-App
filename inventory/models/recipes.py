@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
+from django.utils import timezone
 
 from .fields import CoerceFloatField
 
@@ -291,14 +292,32 @@ class RecipeItem(models.Model):
 
 
 class SaleTransaction(models.Model):
+    class Source(models.TextChoices):
+        MANUAL = "MANUAL", "Manual"
+        POS_CSV = "POS_CSV", "POS CSV Import"
+
     sale_id = models.AutoField(primary_key=True)
     recipe = models.ForeignKey(
         Recipe, models.DO_NOTHING, db_column="recipe_id", blank=True, null=True
     )
     quantity = CoerceFloatField(default=Decimal("0"), blank=True, null=True)
+    outlet = models.CharField(max_length=120, blank=True, null=True)
+    pos_item_name = models.CharField(max_length=255, blank=True, null=True)
+    gross_sales = models.DecimalField(
+        max_digits=14, decimal_places=2, blank=True, null=True
+    )
+    discount = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
+    net_sales = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
+    tax = models.DecimalField(max_digits=14, decimal_places=2, blank=True, null=True)
+    source = models.CharField(
+        max_length=20,
+        choices=Source.choices,
+        default=Source.MANUAL,
+    )
+    source_row_number = models.PositiveIntegerField(blank=True, null=True)
     user_id = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True, default="")
-    sale_date = models.DateTimeField(auto_now_add=True)
+    sale_date = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"Sale {self.pk} of {self.recipe}"
@@ -306,3 +325,34 @@ class SaleTransaction(models.Model):
     class Meta:
         managed = True
         db_table = "sales_transactions"
+        indexes = [
+            models.Index(fields=["sale_date"], name="idx_sale_txn_date"),
+            models.Index(fields=["source"], name="idx_sale_txn_source"),
+        ]
+
+
+class POSMenuItemMapping(models.Model):
+    mapping_id = models.AutoField(primary_key=True)
+    pos_item_name = models.CharField(max_length=255, unique=True)
+    recipe = models.ForeignKey(
+        Recipe,
+        models.SET_NULL,
+        db_column="recipe_id",
+        blank=True,
+        null=True,
+        related_name="pos_mappings",
+    )
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True, null=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.pos_item_name} -> {self.recipe or 'Unmapped'}"
+
+    class Meta:
+        managed = True
+        db_table = "pos_menu_item_mappings"
+        indexes = [
+            models.Index(fields=["is_active"], name="idx_pos_map_active"),
+        ]

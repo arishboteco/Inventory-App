@@ -9,6 +9,7 @@ from .views import (
     IndentItemViewSet,
     IndentViewSet,
     ItemViewSet,
+    POSMenuItemMappingViewSet,
     PurchaseOrderItemViewSet,
     PurchaseOrderViewSet,
     RecipeItemViewSet,
@@ -38,6 +39,7 @@ router.register(r"purchase-order-items", PurchaseOrderItemViewSet)
 router.register(r"goods-received-notes", GoodsReceivedNoteViewSet)
 router.register(r"grn-items", GRNItemViewSet)
 router.register(r"sale-transactions", SaleTransactionViewSet)
+router.register(r"pos-menu-item-mappings", POSMenuItemMappingViewSet)
 
 urlpatterns = router.urls + [
     path("items/export/", ItemsExportView.as_view(), name="items_export_api"),

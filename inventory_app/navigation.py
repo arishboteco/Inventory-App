@@ -63,6 +63,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "url_name": "variance_report",
             },
             {
+                "title": "Chef Bulletins",
+                "description": "Recipe alerts, trials, and chef decisions.",
+                "url_name": "chef_bulletins_list",
+            },
+            {
                 "title": "History",
                 "description": "Past stock activity and audit trail.",
                 "url_name": "history_reports",
@@ -168,6 +173,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "ml_dashboard",
         "pos_sales_import",
         "variance_report",
+        "chef_bulletins_list",
         "indents_consolidate_preview",
         "purchase_orders_list",
         "grn_list",
@@ -193,6 +199,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "ml_dashboard",
         "pos_sales_import",
         "variance_report",
+        "chef_bulletins_list",
     },
     ROLE_KITCHEN_STAFF: {
         "indents_list",
@@ -284,6 +291,8 @@ def get_primary_role(user) -> str | None:
 
 def get_navigation_groups_for_role(role: str | None) -> List[dict]:
     """Return navigation groups filtered by role, or full groups if no role."""
+    if role == ROLE_OWNER:
+        return get_navigation_groups()
     allowed_urls = ROLE_ALLOWED_URLS.get(role)
     if not allowed_urls:
         return get_navigation_groups()

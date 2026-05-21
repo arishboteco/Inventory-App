@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Category,
+    ChefBulletin,
     Department,
     GoodsReceivedNote,
     GRNItem,
@@ -19,6 +20,7 @@ from .models import (
     StockTransaction,
     SubCategory,
     Supplier,
+    TrialRecipeVersion,
     Unit,
     VendorItemPrice,
 )
@@ -39,6 +41,8 @@ for model in [
     GRNItem,
     SavingsLedger,
     VendorItemPrice,
+    ChefBulletin,
+    TrialRecipeVersion,
     Department,
     ItemDepartment,
 ]:

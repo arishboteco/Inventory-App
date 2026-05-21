@@ -1,6 +1,11 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
+from .views.chef_bulletins import (
+    chef_bulletin_decision,
+    chef_bulletin_detail,
+    chef_bulletins_list,
+)
 from .views.goods_received import (
     GRNCreateView,
     GRNDetailView,
@@ -75,7 +80,6 @@ from .views.recipes import (
 )
 from .views.recovery import savings_ledger_list, vendor_prices_list
 from .views.sales import pos_sales_import
-from .views.variance import variance_report
 from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
 from .views.stock_take import (
@@ -98,6 +102,7 @@ from .views.suppliers import (
     SuppliersTableView,
     SupplierToggleActiveView,
 )
+from .views.variance import variance_report
 from .views.visualizations import visualizations
 
 urlpatterns = [
@@ -267,6 +272,17 @@ urlpatterns = [
     path("vendor-prices/", vendor_prices_list, name="vendor_prices_list"),
     path("pos-sales/", pos_sales_import, name="pos_sales_import"),
     path("variance-report/", variance_report, name="variance_report"),
+    path("chef-bulletins/", chef_bulletins_list, name="chef_bulletins_list"),
+    path(
+        "chef-bulletins/<int:bulletin_id>/",
+        chef_bulletin_detail,
+        name="chef_bulletin_detail",
+    ),
+    path(
+        "chef-bulletins/<int:bulletin_id>/decision/",
+        chef_bulletin_decision,
+        name="chef_bulletin_decision",
+    ),
     path("recipes/", RecipesListView.as_view(), name="recipes_list"),
     path("recipes/table/", RecipesTableView.as_view(), name="recipes_table"),
     path("recipes/food-cost-report/", food_cost_report, name="food_cost_report"),

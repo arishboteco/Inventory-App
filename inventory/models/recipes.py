@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -356,3 +357,130 @@ class POSMenuItemMapping(models.Model):
         indexes = [
             models.Index(fields=["is_active"], name="idx_pos_map_active"),
         ]
+
+
+class ChefBulletin(models.Model):
+    class AlertType(models.TextChoices):
+        FOOD_COST_ABOVE_TARGET = "FOOD_COST_ABOVE_TARGET", "Recipe food cost above target"
+        INGREDIENT_PRICE_INCREASED = (
+            "INGREDIENT_PRICE_INCREASED",
+            "Ingredient price increased",
+        )
+        RECIPE_COST_CHANGED = "RECIPE_COST_CHANGED", "Recipe cost changed"
+        HIGH_SALES_LOW_MARGIN = "HIGH_SALES_LOW_MARGIN", "High sales but low margin"
+        ACTUAL_USAGE_ABOVE_IDEAL = (
+            "ACTUAL_USAGE_ABOVE_IDEAL",
+            "Actual usage above ideal",
+        )
+
+    class RiskLevel(models.TextChoices):
+        LOW = "LOW", "Low"
+        MEDIUM = "MEDIUM", "Medium"
+        HIGH = "HIGH", "High"
+
+    class ChefDecision(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        APPROVE_TRIAL = "APPROVE_TRIAL", "Approve trial"
+        MODIFY = "MODIFY", "Modify"
+        REJECT = "REJECT", "Reject"
+        SEND_TO_OWNER = "SEND_TO_OWNER", "Send to owner"
+
+    bulletin_id = models.AutoField(primary_key=True)
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="chef_bulletins",
+    )
+    period_start = models.DateField(db_index=True)
+    period_end = models.DateField(db_index=True)
+    alert_type = models.CharField(max_length=40, choices=AlertType.choices)
+    headline = models.CharField(max_length=255, blank=True, default="")
+    current_food_cost_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    target_food_cost_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    monthly_sales = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    unrealised_profit = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    main_cost_drivers = models.JSONField(default=list, blank=True)
+    suggested_change = models.TextField(blank=True, default="")
+    expected_saving = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    risk_level = models.CharField(
+        max_length=10,
+        choices=RiskLevel.choices,
+        default=RiskLevel.MEDIUM,
+    )
+    chef_decision = models.CharField(
+        max_length=20,
+        choices=ChefDecision.choices,
+        default=ChefDecision.PENDING,
+    )
+    decision_notes = models.TextField(blank=True, default="")
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    decided_at = models.DateTimeField(blank=True, null=True)
+    is_open = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "chef_bulletins"
+        ordering = ["-expected_saving", "-updated_at"]
+        indexes = [
+            models.Index(fields=["recipe", "alert_type"], name="chef_bul_recipe_alert_idx"),
+            models.Index(fields=["is_open", "risk_level"], name="chef_bul_open_risk_idx"),
+            models.Index(fields=["period_start", "period_end"], name="chef_bul_period_idx"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"{self.recipe} - {self.get_alert_type_display()}"
+
+
+class TrialRecipeVersion(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        UNDER_REVIEW = "UNDER_REVIEW", "Under review"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+
+    trial_id = models.AutoField(primary_key=True)
+    bulletin = models.ForeignKey(
+        ChefBulletin,
+        on_delete=models.CASCADE,
+        related_name="trial_versions",
+    )
+    source_recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="trial_versions_source",
+    )
+    trial_recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="trial_versions_generated",
+    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    notes = models.TextField(blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "trial_recipe_versions"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["bulletin", "status"], name="trial_ver_bulletin_status_idx"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"Trial for {self.source_recipe}"

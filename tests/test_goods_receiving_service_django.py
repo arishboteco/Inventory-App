@@ -3,7 +3,13 @@ from decimal import Decimal
 
 import pytest
 
-from inventory.models import PurchaseOrder, PurchaseOrderItem, SavingsLedger, Supplier
+from inventory.models import (
+    GoodsReceivedNote,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    SavingsLedger,
+    Supplier,
+)
 from inventory.services import goods_receiving_service, purchase_order_service
 
 
@@ -35,6 +41,8 @@ def test_create_grn_updates_stock_and_po(item_factory):
     ]
     success, msg, grn_id = goods_receiving_service.create_grn(grn_data, items_data)
     assert success, msg
+    grn = GoodsReceivedNote.objects.get(pk=grn_id)
+    assert grn.grn_number == "GRN-0001"
     item.refresh_from_db()
     assert item.current_stock == 5
     po_item.refresh_from_db()

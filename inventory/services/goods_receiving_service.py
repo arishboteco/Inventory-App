@@ -48,6 +48,7 @@ def _create_grn_header(
         else None
     )
     grn = GoodsReceivedNote.objects.create(
+        grn_number=generate_grn_number(),
         purchase_order=po,
         supplier=supplier,
         received_date=grn_data["received_date"],
@@ -63,7 +64,7 @@ def _process_items(
     user_id: str,
     po: Optional[PurchaseOrder],
 ) -> None:
-    grn_number = generate_grn_number()
+    grn_number = grn.grn_number
     item_ids = {d["item_id"] for d in items_received_data}
     po_item_ids = {d["po_item_id"] for d in items_received_data}
     items = Item.objects.in_bulk(item_ids)

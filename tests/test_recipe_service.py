@@ -11,12 +11,11 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(scope="module", autouse=True)
 def create_tables(django_db_blocker):
-    """Ensure the temporary SaleTransaction table exists for this module.
+    """Ensure the permanent SaleTransaction table exists for this module.
 
     The table is created by migrations in normal operation, so it may already
     be present. Attempting to create it again raises an ``OperationalError``.
-    To make the tests resilient we ignore the error if the table already exists
-    and likewise ignore missing-table errors on cleanup.
+    To make the tests resilient we ignore the error if the table already exists.
     """
 
     with django_db_blocker.unblock():
@@ -26,12 +25,6 @@ def create_tables(django_db_blocker):
             except OperationalError:
                 pass
     yield
-    with django_db_blocker.unblock():
-        with connection.schema_editor() as editor:
-            try:
-                editor.delete_model(SaleTransaction)
-            except OperationalError:
-                pass
 
 
 def _create_item(name="Flour", unit_id=19, stock=20):

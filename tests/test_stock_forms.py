@@ -38,6 +38,9 @@ def test_stock_movements_page_has_datalist(client):
     assert 'hx-target="#item-options"' in content
     assert 'hx-trigger="keyup changed delay:500ms"' in content
     assert 'list="item-options"' in content
+    assert 'id="modal-root"' in content
+    assert "min-h-full flex items-start justify-center sm:items-center" in content
+    assert "max-h-[calc(100vh-2rem)]" in content
 
 
 @pytest.mark.django_db

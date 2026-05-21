@@ -11,6 +11,10 @@ from django.urls import reverse
 
 from inventory.models import SavingsLedger
 from inventory.services import dashboard_kpis as dkpis
+from inventory.services.recovery_actions_service import (
+    summarize_recovery_actions,
+    weekly_action_plan_from_actions,
+)
 from inventory.services.variance_service import build_variance_report
 
 MONEY_PLACES = Decimal("0.01")
@@ -106,7 +110,7 @@ def _leakage_areas(
     return areas[:3]
 
 
-def _weekly_action_plan(
+def _weekly_action_plan_fallback(
     *,
     food_cost_gap_pct: Decimal | None,
     target_food_cost_pct: Decimal | None,
@@ -232,6 +236,14 @@ def build_owner_money_dashboard(
     )
     variance_summary = build_variance_report(start, end)["summary"]
     unexplained_leakage = _money(variance_summary.get("unexplained_leakage_value", 0))
+    recovery_summary = summarize_recovery_actions()
+    action_plan = weekly_action_plan_from_actions(limit=3)
+    if not action_plan:
+        action_plan = _weekly_action_plan_fallback(
+            food_cost_gap_pct=food_cost_gap_pct,
+            target_food_cost_pct=target_food_cost_pct,
+            wastage=wastage,
+        )
 
     return {
         "opening_stock": opening_stock,
@@ -245,6 +257,11 @@ def build_owner_money_dashboard(
         "unrealised_profit": unrealised_profit,
         "recovered_profit_this_month": recovered_profit_this_month,
         "remaining_opportunity": remaining_opportunity,
+        "open_opportunity": _money(recovery_summary["open_opportunity"]),
+        "expected_recovery": _money(recovery_summary["expected_recovery"]),
+        "verified_recovered_profit": _money(
+            recovery_summary["verified_recovered_profit"]
+        ),
         "wastage": wastage,
         "unexplained_leakage": unexplained_leakage,
         "top_leakage_areas": _leakage_areas(
@@ -253,9 +270,5 @@ def build_owner_money_dashboard(
             wastage=wastage,
             unexplained_leakage=unexplained_leakage,
         ),
-        "weekly_action_plan": _weekly_action_plan(
-            food_cost_gap_pct=food_cost_gap_pct,
-            target_food_cost_pct=target_food_cost_pct,
-            wastage=wastage,
-        ),
+        "weekly_action_plan": action_plan,
     }

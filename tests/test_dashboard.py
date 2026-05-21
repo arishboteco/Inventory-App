@@ -10,6 +10,7 @@ from core.viewmodels import DashboardContext
 from inventory.models import (
     Recipe,
     RecipeItem,
+    RecoveryAction,
     SaleTransaction,
     SavingsLedger,
     StockTransaction,
@@ -104,6 +105,9 @@ def test_dashboard_renders_owner_money_recovery_cards(client, django_user_model)
     assert "Unrealised Profit" in html
     assert "Recovered Profit This Month" in html
     assert "Remaining Opportunity" in html
+    assert "Open Opportunity" in html
+    assert "Expected Recovery" in html
+    assert "Verified Recovered Profit" in html
     assert "Top leakage areas" in html
     assert "Weekly action plan" in html
 
@@ -200,3 +204,22 @@ def test_dashboard_surfaces_unexplained_variance_area(
     assert resp.status_code == 200
     html = resp.content.decode()
     assert "Unexplained variance" in html
+
+
+@pytest.mark.django_db
+def test_dashboard_uses_recovery_actions_for_weekly_action_plan(
+    client, django_user_model
+):
+    user = django_user_model.objects.create_user(username="owner-weekly", password="pw")
+    client.force_login(user)
+    RecoveryAction.objects.create(
+        title="Close chicken variance leakage",
+        leakage_type=RecoveryAction.LeakageType.VARIANCE_REDUCTION,
+        expected_saving=Decimal("300.00"),
+        status=RecoveryAction.Status.SUGGESTED,
+    )
+
+    resp = client.get(reverse("root"))
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    assert "Close chicken variance leakage" in html

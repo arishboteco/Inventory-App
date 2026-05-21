@@ -1,0 +1,136 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}Recovery Actions{% endblock %}
+{% block page_heading %}Recovery Actions{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-bodyText/70">Track leakage recovery tasks from suggestion through verified savings.</p>
+{% endblock %}
+
+{% block filters %}
+  <form method="get" class="bg-surface border border-border rounded-xl p-4 grid gap-3 md:grid-cols-6 md:items-end">
+    <div>
+      <label for="recovery-start-date" class="block text-sm font-medium text-bodyText">Start Date</label>
+      <input id="recovery-start-date" type="date" name="start_date" value="{{ start_date }}" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div>
+      <label for="recovery-end-date" class="block text-sm font-medium text-bodyText">End Date</label>
+      <input id="recovery-end-date" type="date" name="end_date" value="{{ end_date }}" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+    </div>
+    <div>
+      <label for="recovery-status" class="block text-sm font-medium text-bodyText">Status</label>
+      <select id="recovery-status" name="status" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All statuses</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="recovery-leakage-type" class="block text-sm font-medium text-bodyText">Leakage Type</label>
+      <select id="recovery-leakage-type" name="leakage_type" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All types</option>
+        {% for value, label in leakage_type_choices %}
+          <option value="{{ value }}" {% if leakage_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="recovery-assigned-to" class="block text-sm font-medium text-bodyText">Assigned To</label>
+      <select id="recovery-assigned-to" name="assigned_to" class="block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+        <option value="">All users</option>
+        {% for user in assigned_user_choices %}
+          <option value="{{ user.pk }}" {% if assigned_to == user.pk|stringformat:'s' %}selected{% endif %}>{{ user.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Apply</button>
+      <a href="{% url 'recovery_actions_list' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md border border-border text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Reset</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block kpis %}
+  <div class="grid gap-3 md:grid-cols-3">
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Open Opportunity</p>
+      <p class="mt-1 text-2xl font-semibold text-warning-text">Rs. {{ summary.open_opportunity|floatformat:2 }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Expected Recovery</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">Rs. {{ summary.expected_recovery|floatformat:2 }}</p>
+    </div>
+    <div class="bg-success-soft border border-success/20 rounded-xl p-4">
+      <p class="text-sm text-success">Verified Recovered</p>
+      <p class="mt-1 text-2xl font-semibold text-success">Rs. {{ summary.verified_recovered_profit|floatformat:2 }}</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_top %}
+  <section class="bg-surface border border-border rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-bodyText">Add Recovery Action</h2>
+    <form method="post" class="mt-4 grid gap-4 md:grid-cols-3">
+      {% csrf_token %}
+      {% include "components/form_field.html" with field=form.title %}
+      {% include "components/form_field.html" with field=form.leakage_type %}
+      {% include "components/form_field.html" with field=form.expected_saving %}
+      {% include "components/form_field.html" with field=form.assigned_to %}
+      {% include "components/form_field.html" with field=form.due_date %}
+      {% include "components/form_field.html" with field=form.linked_item %}
+      <div class="md:col-span-3">
+        {% include "components/form_field.html" with field=form.linked_chef_bulletin %}
+      </div>
+      <div class="md:col-span-3">
+        {% include "components/form_field.html" with field=form.notes %}
+      </div>
+      <div class="md:col-span-3">
+        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Save Action</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}
+
+{% block data_container %}
+  <div class="overflow-x-auto bg-surface border border-border rounded-xl">
+    <table class="min-w-full divide-y divide-border text-sm">
+      <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wider text-bodyText/70">
+        <tr>
+          <th class="px-4 py-3">Title</th>
+          <th class="px-4 py-3">Type</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Assigned</th>
+          <th class="px-4 py-3">Due</th>
+          <th class="px-4 py-3 text-right">Expected</th>
+          <th class="px-4 py-3 text-right">Verified</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-border">
+        {% for action in page_obj %}
+          <tr class="odd:bg-surfaceSubtle/50">
+            <td class="px-4 py-3">
+              <a href="{% url 'recovery_action_detail' action_id=action.pk %}" class="font-semibold text-primary hover:underline">{{ action.title }}</a>
+            </td>
+            <td class="px-4 py-3">{{ action.get_leakage_type_display }}</td>
+            <td class="px-4 py-3">{{ action.get_status_display }}</td>
+            <td class="px-4 py-3">{{ action.assigned_to.username|default:"Unassigned" }}</td>
+            <td class="px-4 py-3">{{ action.due_date|date:"d M Y"|default:"-" }}</td>
+            <td class="px-4 py-3 text-right tabular-nums">Rs. {{ action.expected_saving|floatformat:2 }}</td>
+            <td class="px-4 py-3 text-right tabular-nums text-success">Rs. {{ action.verified_saving|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-bodyText/70">No recovery actions yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
+
+{% block pagination %}
+  <div class="mt-4">
+    {% url 'recovery_actions_list' as base_url %}
+    {% include "components/pagination.html" with page_obj=page_obj base_url=base_url %}
+  </div>
+{% endblock %}

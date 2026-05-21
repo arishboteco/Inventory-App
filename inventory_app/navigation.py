@@ -53,6 +53,11 @@ NAVIGATION_GROUPS: List[tuple[str, List[Mapping[str, str]]]] = [
                 "url_name": "savings_ledger_list",
             },
             {
+                "title": "Recovery Actions",
+                "description": "Track assigned actions and verified recovery.",
+                "url_name": "recovery_actions_list",
+            },
+            {
                 "title": "Sales Import",
                 "description": "Import POS sales and map menu items to recipes.",
                 "url_name": "pos_sales_import",
@@ -178,6 +183,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "purchase_orders_list",
         "grn_list",
         "vendor_prices_list",
+        "recovery_actions_list",
     },
     ROLE_PURCHASE: {
         "indents_consolidate_preview",
@@ -185,6 +191,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "purchase_orders_list",
         "grn_list",
         "savings_ledger_list",
+        "recovery_actions_list",
     },
     ROLE_STOREKEEPER: {
         "grn_list",
@@ -200,6 +207,7 @@ ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
         "pos_sales_import",
         "variance_report",
         "chef_bulletins_list",
+        "recovery_actions_list",
     },
     ROLE_KITCHEN_STAFF: {
         "indents_list",

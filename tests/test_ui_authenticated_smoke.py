@@ -23,6 +23,7 @@ from inventory.models import (
     PurchaseOrder,
     PurchaseOrderItem,
     Recipe,
+    RecoveryAction,
     SavingsLedger,
     StockTake,
     StockTakeItem,
@@ -46,6 +47,7 @@ _POST_ONLY_GET_SKIP = frozenset(
         "supplier_delete",
         "suppliers_bulk_delete",
         "recipe_create_indent",
+        "recovery_action_status",
     }
 )
 
@@ -107,6 +109,11 @@ def smoke_entities(item_factory, django_user_model):
         item=item,
         system_qty=Decimal("0"),
     )
+    recovery_action = RecoveryAction.objects.create(
+        title=f"SmokeAction-{uuid.uuid4().hex[:6]}",
+        leakage_type=RecoveryAction.LeakageType.VENDOR_PRICE,
+        expected_saving=Decimal("15.00"),
+    )
     return {
         "item": item,
         "supplier": supplier,
@@ -115,6 +122,7 @@ def smoke_entities(item_factory, django_user_model):
         "po": po,
         "grn": grn,
         "stock_take": stock_take,
+        "recovery_action": recovery_action,
     }
 
 
@@ -127,6 +135,7 @@ def _kwargs_for_url_name(name: str, ctx: dict) -> dict | None:
     po = ctx["po"]
     grn = ctx["grn"]
     stock_take = ctx["stock_take"]
+    recovery_action = ctx["recovery_action"]
 
     pk_urls = {
         "item_edit": {"pk": item.pk},
@@ -158,6 +167,8 @@ def _kwargs_for_url_name(name: str, ctx: dict) -> dict | None:
         "recipe_delete": {"pk": recipe.pk},
         "recipe_detail": {"pk": recipe.pk},
         "recipe_create_indent": {"pk": recipe.pk},
+        "recovery_action_detail": {"action_id": recovery_action.pk},
+        "recovery_action_status": {"action_id": recovery_action.pk},
     }
     if name in pk_urls:
         return pk_urls[name]
@@ -253,6 +264,9 @@ _UI_URL_NAMES: tuple[str, ...] = (
     "grn_detail",
     "savings_ledger_list",
     "vendor_prices_list",
+    "recovery_actions_list",
+    "recovery_action_detail",
+    "recovery_action_status",
     "recipes_list",
     "recipes_table",
     "food_cost_report",

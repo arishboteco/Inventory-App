@@ -78,7 +78,13 @@ from .views.recipes import (
     recipe_detail,
     recipe_meta,
 )
-from .views.recovery import savings_ledger_list, vendor_prices_list
+from .views.recovery import (
+    recovery_action_detail,
+    recovery_action_status,
+    recovery_actions_list,
+    savings_ledger_list,
+    vendor_prices_list,
+)
 from .views.sales import pos_sales_import
 from .views.settings import change_password_view, profile_edit_view, settings_view
 from .views.stock import POSearchView, UserSearchView, history_reports, stock_movements
@@ -270,6 +276,17 @@ urlpatterns = [
     path("grns/<int:pk>/", GRNDetailView.as_view(), name="grn_detail"),
     path("savings-ledger/", savings_ledger_list, name="savings_ledger_list"),
     path("vendor-prices/", vendor_prices_list, name="vendor_prices_list"),
+    path("recovery-actions/", recovery_actions_list, name="recovery_actions_list"),
+    path(
+        "recovery-actions/<int:action_id>/",
+        recovery_action_detail,
+        name="recovery_action_detail",
+    ),
+    path(
+        "recovery-actions/<int:action_id>/status/",
+        recovery_action_status,
+        name="recovery_action_status",
+    ),
     path("pos-sales/", pos_sales_import, name="pos_sales_import"),
     path("variance-report/", variance_report, name="variance_report"),
     path("chef-bulletins/", chef_bulletins_list, name="chef_bulletins_list"),

@@ -20,8 +20,9 @@ from django.views.generic import TemplateView
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..forms.indent_issue_forms import IndentIssueFormset, IndentItemIssueForm
 from ..indent_pdf import generate_indent_pdf
-from ..models import Department, Indent, Item
+from ..models import Department, Indent
 from ..models import IndentItem as IndentItemModel
+from ..models import Item
 from ..models import Supplier as SupplierModel
 from ..services import indent_consolidation_service, indent_issue_service, list_utils
 

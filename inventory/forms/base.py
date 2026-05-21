@@ -48,10 +48,7 @@ class StyledFormMixin:
                 widget.attrs["type"] = "date"
                 if not getattr(widget, "format", None):
                     widget.format = "%Y-%m-%d"
-            elif (
-                isinstance(widget, forms.DateTimeInput)
-                and "type" not in widget.attrs
-            ):
+            elif isinstance(widget, forms.DateTimeInput) and "type" not in widget.attrs:
                 widget.input_type = "datetime-local"
                 widget.attrs["type"] = "datetime-local"
             elif isinstance(widget, forms.TimeInput) and "type" not in widget.attrs:

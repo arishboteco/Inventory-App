@@ -62,13 +62,15 @@
 
   function initRecipeYieldUnitRoots(container) {
     var scope = container || document;
-    scope.querySelectorAll("[data-recipe-yield-unit-root]").forEach(function (root) {
-      if (root.dataset.recipeYieldUnitInit === "1") {
-        return;
-      }
-      root.dataset.recipeYieldUnitInit = "1";
-      bindRoot(root);
-    });
+    scope
+      .querySelectorAll("[data-recipe-yield-unit-root]")
+      .forEach(function (root) {
+        if (root.dataset.recipeYieldUnitInit === "1") {
+          return;
+        }
+        root.dataset.recipeYieldUnitInit = "1";
+        bindRoot(root);
+      });
   }
 
   window.initRecipeYieldUnitRoots = initRecipeYieldUnitRoots;

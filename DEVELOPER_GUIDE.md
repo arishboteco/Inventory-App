@@ -6,19 +6,19 @@ Quick reference for anyone working on this codebase.
 
 ## Documentation Index
 
-| File | Contents |
-|------|----------|
-| [docs/workflow.md](docs/workflow.md) | Indent → PO → GRN → Stock flow with mermaid diagram |
-| [docs/architecture.md](docs/architecture.md) | Category and Units schema reference |
-| [docs/design-system.md](docs/design-system.md) | Tailwind design tokens, colour palette, WCAG contrast ratios |
-| [docs/styleguide.md](docs/styleguide.md) | Tailwind patterns, component styles, dark mode notes |
-| [docs/component-guide.md](docs/component-guide.md) | Reusable template component reference |
-| [docs/user-journeys.md](docs/user-journeys.md) | Personas, key flows, Figma prototype link |
-| [docs/development-workflow.md](docs/development-workflow.md) | Changelog discipline and daily dev workflow |
-| [docs/deployment.md](docs/deployment.md) | Render deployment setup guide |
-| [docs/deployment-env-setup.md](docs/deployment-env-setup.md) | Render environment variable reference |
-| [docs/deployment-troubleshooting.md](docs/deployment-troubleshooting.md) | Render troubleshooting (threading, superuser, etc.) |
-| [docs/security.md](docs/security.md) | Secrets management — never commit credentials |
+| File                                                                     | Contents                                                     |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| [docs/workflow.md](docs/workflow.md)                                     | Indent → PO → GRN → Stock flow with mermaid diagram          |
+| [docs/architecture.md](docs/architecture.md)                             | Category and Units schema reference                          |
+| [docs/design-system.md](docs/design-system.md)                           | Tailwind design tokens, colour palette, WCAG contrast ratios |
+| [docs/styleguide.md](docs/styleguide.md)                                 | Tailwind patterns, component styles, dark mode notes         |
+| [docs/component-guide.md](docs/component-guide.md)                       | Reusable template component reference                        |
+| [docs/user-journeys.md](docs/user-journeys.md)                           | Personas, key flows, Figma prototype link                    |
+| [docs/development-workflow.md](docs/development-workflow.md)             | Changelog discipline and daily dev workflow                  |
+| [docs/deployment.md](docs/deployment.md)                                 | Render deployment setup guide                                |
+| [docs/deployment-env-setup.md](docs/deployment-env-setup.md)             | Render environment variable reference                        |
+| [docs/deployment-troubleshooting.md](docs/deployment-troubleshooting.md) | Render troubleshooting (threading, superuser, etc.)          |
+| [docs/security.md](docs/security.md)                                     | Secrets management — never commit credentials                |
 
 ---
 
@@ -127,6 +127,7 @@ Category / SubCategory / Unit — reference data
 ```
 
 **Critical constraints:**
+
 - `PurchaseOrderItem.line_total` has NOT NULL — always set before save
 - `RecipeItem.item_id` is nullable (sub-recipe rows have no item)
 - `RecipeItem` must have exactly one of `item` or `sub_recipe`
@@ -135,18 +136,19 @@ Category / SubCategory / Unit — reference data
 
 ## 4. Status Flows
 
-| Model | States |
-|-------|--------|
-| Indent | SUBMITTED → APPROVED → PROCESSING → COMPLETED (or CANCELLED) |
-| PurchaseOrder | DRAFT → SENT → RECEIVED |
-| GRN | DRAFT → RECEIVED (confirming auto-fulfills linked indents) |
-| StockTake | DRAFT → IN_PROGRESS → COMPLETED |
+| Model         | States                                                       |
+| ------------- | ------------------------------------------------------------ |
+| Indent        | SUBMITTED → APPROVED → PROCESSING → COMPLETED (or CANCELLED) |
+| PurchaseOrder | DRAFT → SENT → RECEIVED                                      |
+| GRN           | DRAFT → RECEIVED (confirming auto-fulfills linked indents)   |
+| StockTake     | DRAFT → IN_PROGRESS → COMPLETED                              |
 
 ---
 
 ## 5. Architecture Patterns
 
 ### HTMX Drawer Pattern
+
 Most create/edit forms use a slide-in drawer loaded via HTMX:
 
 ```html
@@ -161,6 +163,7 @@ A delegated JS handler in `modal.js` intercepts clicks, fetches the partial HTML
 **Rule:** Drawer forms must submit via `fetch()` or `hx-post` — never native `form.submit()`, which causes full-page navigation to the raw partial URL.
 
 ### JSON Response Convention
+
 Views serving drawers return JSON for AJAX requests:
 
 ```python
@@ -169,18 +172,19 @@ if request.headers.get("X-Requested-With") == "XMLHttpRequest":
 ```
 
 ### Formsets (PO items, Recipe ingredients)
+
 Django formsets manage inline rows. Always include the management form:
 
 ```html
-{{ formset.management_form }}
-{% for form in formset %}
-  <!-- row -->
+{{ formset.management_form }} {% for form in formset %}
+<!-- row -->
 {% endfor %}
 ```
 
 Management field names follow the pattern: `items-TOTAL_FORMS`, `items-0-item`, etc.
 
 ### Service Layer
+
 Views should be thin. Business logic lives in `inventory/services/`:
 
 ```python
@@ -196,47 +200,47 @@ Never put complex queries or calculations directly in views.
 
 ## 6. Views Reference
 
-| File | Lines | Covers |
-|------|-------|--------|
-| `views/indents.py` | 1,201 | List, detail, create/edit, consolidation, PDF, issue tracking |
-| `views/purchase_orders.py` | 856 | PO list, detail, create, receive |
-| `views/recipes.py` | 779 | Recipe CRUD, food cost report, sub-recipe costing |
-| `views/stock.py` | 702 | Movements, history, adjustments, wastage, transfers |
-| `views/goods_received.py` | 567 | GRN create, confirm, ad-hoc receiving |
-| `views/suppliers.py` | 530 | Supplier CRUD, bulk operations |
-| `views/items/` | — | Items list, detail, stock operations (submodule) |
-| `views/stock_take.py` | 199 | Physical count workflow |
-| `views/settings.py` | 266 | Units, categories, departments reference data |
-| `views/api.py` | 183 | DRF ViewSets |
-| `views/explore.py` | — | Explore/search page |
-| `views/ml.py` | — | Demand forecasting dashboard |
-| `views/visualizations.py` | — | Charts (Plotly, Chart.js) |
+| File                       | Lines | Covers                                                        |
+| -------------------------- | ----- | ------------------------------------------------------------- |
+| `views/indents.py`         | 1,201 | List, detail, create/edit, consolidation, PDF, issue tracking |
+| `views/purchase_orders.py` | 856   | PO list, detail, create, receive                              |
+| `views/recipes.py`         | 779   | Recipe CRUD, food cost report, sub-recipe costing             |
+| `views/stock.py`           | 702   | Movements, history, adjustments, wastage, transfers           |
+| `views/goods_received.py`  | 567   | GRN create, confirm, ad-hoc receiving                         |
+| `views/suppliers.py`       | 530   | Supplier CRUD, bulk operations                                |
+| `views/items/`             | —     | Items list, detail, stock operations (submodule)              |
+| `views/stock_take.py`      | 199   | Physical count workflow                                       |
+| `views/settings.py`        | 266   | Units, categories, departments reference data                 |
+| `views/api.py`             | 183   | DRF ViewSets                                                  |
+| `views/explore.py`         | —     | Explore/search page                                           |
+| `views/ml.py`              | —     | Demand forecasting dashboard                                  |
+| `views/visualizations.py`  | —     | Charts (Plotly, Chart.js)                                     |
 
 ---
 
 ## 7. Services Reference
 
-| File | Purpose |
-|------|---------|
-| `item_service.py` | Item CRUD, stock status, ABC classification |
-| `recipe_service.py` | Recursive cost calculation, sub-recipe handling |
-| `stock_service.py` | Stock movements, adjustments, wastage |
-| `indent_consolidation_service.py` | Group indent items into PO suggestions |
-| `goods_receiving_service.py` | GRN confirmation, indent auto-fulfilment |
-| `purchase_order_service.py` | PO workflows, status transitions |
-| `purchase_order_kpis.py` | PO analytics and KPIs |
-| `kpis.py` | Dashboard KPIs (low stock, pending orders, costs) |
-| `dashboard_service.py` | Dashboard data aggregation |
-| `list_utils.py` | Generic filtering, sorting, pagination helpers |
-| `form_service.py` | Dynamic form generation |
-| `ml.py` | Holt-Winters demand forecasting |
-| `snapshot_service.py` | Daily stock snapshot generation |
-| `supplier_service.py` | Supplier CRUD operations |
-| `department_service.py` | Department management |
-| `categories_service.py` | Category/subcategory operations |
-| `units_service.py` | Unit of measure management |
-| `ui_service.py` | UI choice lists and options |
-| `exceptions.py` | Custom exception hierarchy |
+| File                              | Purpose                                           |
+| --------------------------------- | ------------------------------------------------- |
+| `item_service.py`                 | Item CRUD, stock status, ABC classification       |
+| `recipe_service.py`               | Recursive cost calculation, sub-recipe handling   |
+| `stock_service.py`                | Stock movements, adjustments, wastage             |
+| `indent_consolidation_service.py` | Group indent items into PO suggestions            |
+| `goods_receiving_service.py`      | GRN confirmation, indent auto-fulfilment          |
+| `purchase_order_service.py`       | PO workflows, status transitions                  |
+| `purchase_order_kpis.py`          | PO analytics and KPIs                             |
+| `kpis.py`                         | Dashboard KPIs (low stock, pending orders, costs) |
+| `dashboard_service.py`            | Dashboard data aggregation                        |
+| `list_utils.py`                   | Generic filtering, sorting, pagination helpers    |
+| `form_service.py`                 | Dynamic form generation                           |
+| `ml.py`                           | Holt-Winters demand forecasting                   |
+| `snapshot_service.py`             | Daily stock snapshot generation                   |
+| `supplier_service.py`             | Supplier CRUD operations                          |
+| `department_service.py`           | Department management                             |
+| `categories_service.py`           | Category/subcategory operations                   |
+| `units_service.py`                | Unit of measure management                        |
+| `ui_service.py`                   | UI choice lists and options                       |
+| `exceptions.py`                   | Custom exception hierarchy                        |
 
 ---
 
@@ -262,15 +266,17 @@ Partial views (for HTMX drawers) use a `-partial` suffix.
 ## 9. Template Conventions
 
 ### File naming
-| Pattern | Example | Purpose |
-|---------|---------|---------|
-| `feature_list.html` | `indent_list.html` | Full list page |
-| `feature_detail.html` | `recipe_detail.html` | Full detail page |
-| `_feature_partial.html` | `_po_create_partial.html` | HTMX drawer content |
-| `_feature_table.html` | `_indents_table.html` | Table fragment |
-| `_feature_section.html` | `_stock_section.html` | Page section fragment |
+
+| Pattern                 | Example                   | Purpose               |
+| ----------------------- | ------------------------- | --------------------- |
+| `feature_list.html`     | `indent_list.html`        | Full list page        |
+| `feature_detail.html`   | `recipe_detail.html`      | Full detail page      |
+| `_feature_partial.html` | `_po_create_partial.html` | HTMX drawer content   |
+| `_feature_table.html`   | `_indents_table.html`     | Table fragment        |
+| `_feature_section.html` | `_stock_section.html`     | Page section fragment |
 
 ### Reusable components (in `templates/components/`)
+
 ```
 _base.html              Master layout (nav, sidebar, footer)
 button.html             Styled button with variants
@@ -290,27 +296,28 @@ alert.html              Inline alert message
 ```
 
 ### Comments
+
 Use HTML comments `<!-- -->` in templates, not Django `{# #}` comments — Django comments can appear as visible text when a partial is loaded outside its full template context.
 
 ---
 
 ## 10. Static JS Files
 
-| File | Purpose |
-|------|---------|
-| `modal.js` | Drawer/modal open, close, HTMX loading |
-| `items-table.js` | Items list filtering, sorting, row selection |
-| `recipe-components.js` | Recipe ingredient form (add/remove rows) |
-| `indent-form.js` | Indent form auto-add rows, validation |
-| `predictive-dropdown.js` | Searchable single-select |
-| `predictive-multiselect.js` | Searchable multi-select |
-| `multiselect-chips.js` | Chip-style multi-select |
-| `notifications.js` | Toast notifications |
-| `smart-forms.js` | Auto-submit, inline validation |
-| `column-filters.js` | Dynamic column filter dropdowns |
-| `tables.js` | Sticky headers, column sorting |
-| `forms.js` / `formset.js` | Generic form utilities, formset row management |
-| `top-nav.js` | Navigation interactions |
+| File                        | Purpose                                        |
+| --------------------------- | ---------------------------------------------- |
+| `modal.js`                  | Drawer/modal open, close, HTMX loading         |
+| `items-table.js`            | Items list filtering, sorting, row selection   |
+| `recipe-components.js`      | Recipe ingredient form (add/remove rows)       |
+| `indent-form.js`            | Indent form auto-add rows, validation          |
+| `predictive-dropdown.js`    | Searchable single-select                       |
+| `predictive-multiselect.js` | Searchable multi-select                        |
+| `multiselect-chips.js`      | Chip-style multi-select                        |
+| `notifications.js`          | Toast notifications                            |
+| `smart-forms.js`            | Auto-submit, inline validation                 |
+| `column-filters.js`         | Dynamic column filter dropdowns                |
+| `tables.js`                 | Sticky headers, column sorting                 |
+| `forms.js` / `formset.js`   | Generic form utilities, formset row management |
+| `top-nav.js`                | Navigation interactions                        |
 
 JS tests live in `static/js/*.test.js` and run via `npm test`.
 
@@ -333,6 +340,7 @@ XFrameOptionsMiddleware                    Django built-in
 ```
 
 Two additional middleware are defined but inactive:
+
 - `core.performance_middleware.PerformanceMonitoringMiddleware` — tracks query counts and response time. Add to `MIDDLEWARE` in `base.py` to enable.
 
 ---
@@ -380,6 +388,7 @@ python manage.py runserver
 ```
 
 ### Branch & PR convention
+
 ```
 Branch:   feature/<short-slug>
 Base:     feature/django-refactor
@@ -404,27 +413,27 @@ PR title: fix: <what>, feat: <what>, chore: <what>, docs: <what>
 
 ## 15. Common Gotchas
 
-| Problem | Cause | Fix |
-|---------|-------|-----|
-| Form submits to raw unstyled page | Native `form.submit()` in drawer | Use `fetch()` or `hx-post` |
-| `NOT NULL constraint` on `line_total` | Forgot to compute PO line total | Set `line_total = qty × price` before save |
-| Circular recipe cost loop | Sub-recipe references itself | `clean()` calls `_check_circular()` — always validate |
-| Wrong numbers in cost calculations | Using `float` instead of `Decimal` | Import and use `decimal.Decimal` everywhere |
-| Drawer buttons show for wrong status | Static buttons not status-conditional | Gate buttons on `object.status` in template |
-| Django comment visible in partial | `{# comment #}` in included partial | Use `<!-- HTML comment -->` instead |
-| 500 on any RecipeItem query | Missing `sub_recipe_id` column | Migration 0032 adds it — deploy to fix |
-| Render cold start delay | Free tier sleeps after 15min | First request takes ~50s — expected |
+| Problem                               | Cause                                 | Fix                                                   |
+| ------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
+| Form submits to raw unstyled page     | Native `form.submit()` in drawer      | Use `fetch()` or `hx-post`                            |
+| `NOT NULL constraint` on `line_total` | Forgot to compute PO line total       | Set `line_total = qty × price` before save            |
+| Circular recipe cost loop             | Sub-recipe references itself          | `clean()` calls `_check_circular()` — always validate |
+| Wrong numbers in cost calculations    | Using `float` instead of `Decimal`    | Import and use `decimal.Decimal` everywhere           |
+| Drawer buttons show for wrong status  | Static buttons not status-conditional | Gate buttons on `object.status` in template           |
+| Django comment visible in partial     | `{# comment #}` in included partial   | Use `<!-- HTML comment -->` instead                   |
+| 500 on any RecipeItem query           | Missing `sub_recipe_id` column        | Migration 0032 adds it — deploy to fix                |
+| Render cold start delay               | Free tier sleeps after 15min          | First request takes ~50s — expected                   |
 
 ---
 
 ## 16. What Can Be Safely Ignored / Is Legacy
 
-| Item | Status |
-|------|--------|
-| `docs/archive/` | Historical analysis docs — reference only, not maintained |
-| `core/performance_middleware.py` | Defined, not active — enable in `base.py` if needed |
-| `inventory/services/supabase_cache.py` | Supabase removed from deps — dead code |
-| `inventory/services/sale_service.py` | SaleTransaction model exists but rarely used |
-| `static/js/*.test.js` | JS unit tests — run via `npm test`, not pytest |
-| `db/` app directory | Empty app placeholder — no models or views |
-| `nginx/` directory | Nginx config — not used on Render (uses gunicorn directly) |
+| Item                                   | Status                                                     |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `docs/archive/`                        | Historical analysis docs — reference only, not maintained  |
+| `core/performance_middleware.py`       | Defined, not active — enable in `base.py` if needed        |
+| `inventory/services/supabase_cache.py` | Supabase removed from deps — dead code                     |
+| `inventory/services/sale_service.py`   | SaleTransaction model exists but rarely used               |
+| `static/js/*.test.js`                  | JS unit tests — run via `npm test`, not pytest             |
+| `db/` app directory                    | Empty app placeholder — no models or views                 |
+| `nginx/` directory                     | Nginx config — not used on Render (uses gunicorn directly) |

@@ -26,11 +26,13 @@ The answers shape every recommendation. A 5-person internal tool doesn't need GD
 ## Step 2: Evaluate Against Five Dimensions
 
 ### Dimension 1 — Core Workflow Integrity
+
 The most important dimension. Can a user complete the primary workflow end-to-end without errors?
 
 Walk the happy path. If the app is an inventory system, that's: create an order → receive goods → update stock. If it's an e-commerce app: browse → add to cart → checkout → confirm.
 
 Questions to answer:
+
 - Does the happy path complete without errors?
 - Does each step's output correctly feed into the next step?
 - Are there dead ends where the user gets stuck?
@@ -39,6 +41,7 @@ Questions to answer:
 If the core workflow is broken, nothing else matters. This is always Phase A.
 
 ### Dimension 2 — Data Integrity & Consistency
+
 Can the app be trusted with real data?
 
 - Do totals, counts, and status badges match the actual data?
@@ -48,9 +51,11 @@ Can the app be trusted with real data?
 - Is there validation on inputs that affect downstream data?
 
 ### Dimension 3 — UX Clarity
+
 Can a new user figure out what to do without training?
 
 This is where you look for:
+
 - **Redundant paths** — Two ways to do the same thing with no guidance on which to use
 - **Confusing distinctions** — Two similar actions with unclear differences (e.g., "Adjust Stock" vs "Record Wastage")
 - **Missing context** — Pages that show data without explaining what it means or what to do with it
@@ -59,20 +64,23 @@ This is where you look for:
 
 Document each issue in a table:
 
-| # | Issue | User Impact | Fix |
-|---|-------|-------------|-----|
+| #   | Issue | User Impact | Fix |
+| --- | ----- | ----------- | --- |
 
 ### Dimension 4 — Domain Feature Completeness
+
 Does the app have the features its domain requires?
 
 This is domain-specific. For a restaurant inventory app, you'd check: sub-recipes, food cost %, allergen tracking, stock-take workflow, waste reason codes. For an e-commerce app: order tracking, refund flow, inventory sync, email notifications.
 
 Research what's standard for the domain. List missing features by impact:
+
 - **Critical** — App is fundamentally incomplete without this
 - **High** — Users will hit this gap within the first week
 - **Medium** — Nice to have, will be requested eventually
 
 ### Dimension 5 — Operational Readiness
+
 Can the app run reliably in production?
 
 - **Error handling** — What does the user see when something goes wrong?
@@ -87,21 +95,27 @@ Can the app run reliably in production?
 Group all findings into phases following this structure:
 
 ### Phase A — Unblock Core Workflow
+
 Fix anything that prevents the primary happy path from completing. This is always the highest priority and should take no more than a few days. Gate: the happy path works end-to-end.
 
 ### Phase B — Fix Known Bugs
+
 All remaining bugs from the audit, ordered P0 → P1 → P2. Gate: all bugs resolved, no regressions.
 
 ### Phase C — Remove UX Confusion
+
 Address redundant paths, confusing distinctions, missing guidance. These are typically low-effort, high-impact template and copy changes. Gate: a new user can navigate the core workflow without asking questions.
 
 ### Phase D — Add Missing Features
+
 Domain-specific features the app needs. Order by: blocking features first, then high-impact, then nice-to-have. Gate: feature checklist complete, tested.
 
 ### Phase E — Data Quality & Reporting
+
 Reports, analytics, data cleanup, and data presentation improvements. Gate: key metrics are accurate and accessible.
 
 ### Phase F — Scale & Compliance
+
 Performance, security, multi-user/multi-location support, compliance requirements. Gate: app can handle target load with proper access controls.
 
 ## Roadmap Format
@@ -109,9 +123,10 @@ Performance, security, multi-user/multi-location support, compliance requirement
 For each phase, produce a table:
 
 | Step | Task | Bug/Feature ID | Effort Estimate |
-|------|------|---------------|-----------------|
+| ---- | ---- | -------------- | --------------- |
 
 Include:
+
 - **A gate at the end of each phase** — what must be true before moving to the next phase
 - **A recommended order** within each phase — what to tackle first and why
 - **Effort estimates** — rough time ranges (30 min, 4 hrs, 1-2 days, 1 week)

@@ -19,6 +19,7 @@ This reference captures recurring patterns from real audits. When auditing, watc
 **How to spot it:** Check browser console for JS errors on page load. The delegated click handler may not be initialized.
 
 **Common causes:**
+
 - Event listener uses `querySelectorAll` on load, misses dynamically added buttons
 - JS error earlier in the file prevents the handler from registering
 - Button is inside a `<form>` tag that intercepts the click

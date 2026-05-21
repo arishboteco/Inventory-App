@@ -73,7 +73,9 @@ def _build_item_vendor_hints_dict() -> dict[str, dict[str, float]]:
         hints[str(item.pk)] = {
             "cheapest_price": float(cheapest or 0),
             "last_price": float(item.last_purchase_price or 0),
-            "suggested_qty": float(suggested_qty if suggested_qty > 0 else Decimal("0")),
+            "suggested_qty": float(
+                suggested_qty if suggested_qty > 0 else Decimal("0")
+            ),
         }
     return hints
 
@@ -659,16 +661,16 @@ def purchase_order_detail(request, pk: int):
         "rows": rows,
         "list_url": reverse("purchase_orders_list"),
         "list_title": "Purchase Orders",
-            "current_title": f"Purchase Order {po.pk}",
-            "saving_summary": SavingsLedger.objects.filter(
-                source_document_type="PO",
-                source_document_id=str(po.pk),
-            ).aggregate(
-                estimated=Sum("estimated_saving"),
-                confirmed=Sum("confirmed_saving"),
-                lost=Sum("lost_saving"),
-            ),
-        }
+        "current_title": f"Purchase Order {po.pk}",
+        "saving_summary": SavingsLedger.objects.filter(
+            source_document_type="PO",
+            source_document_id=str(po.pk),
+        ).aggregate(
+            estimated=Sum("estimated_saving"),
+            confirmed=Sum("confirmed_saving"),
+            lost=Sum("lost_saving"),
+        ),
+    }
     return render(request, "inventory/purchase_orders/detail.html", ctx)
 
 

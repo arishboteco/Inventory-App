@@ -29,7 +29,8 @@
     const hint = hints[itemId] || {};
     if (suggestedEl) {
       const qty = Number(hint.suggested_qty || 0);
-      suggestedEl.textContent = qty > 0 ? `Suggested qty: ${qty.toFixed(2)}` : "";
+      suggestedEl.textContent =
+        qty > 0 ? `Suggested qty: ${qty.toFixed(2)}` : "";
     }
     if (priceHintEl) {
       const cheapest = Number(hint.cheapest_price || 0);
@@ -45,8 +46,7 @@
   }
 
   function initPurchaseOrderDrawer(root) {
-    const scope =
-      root && root.nodeType === Node.ELEMENT_NODE ? root : document;
+    const scope = root && root.nodeType === Node.ELEMENT_NODE ? root : document;
     const form =
       scope.querySelector("#po-drawer-form") || scope.querySelector("#po-form");
     if (!form || form._poDrawerInitialized) return;
@@ -78,12 +78,7 @@
 
       formsetEl.addEventListener("change", function (e) {
         const t = e.target;
-        if (
-          !t ||
-          !t.classList ||
-          !t.classList.contains("item-select")
-        )
-          return;
+        if (!t || !t.classList || !t.classList.contains("item-select")) return;
         const row = t.closest(".item-form");
         if (!row) return;
         const priceInput = row.querySelector('input[name$="-unit_price"]');
@@ -98,7 +93,10 @@
       });
     }
 
-    if (!form._poFormsetInitialized && typeof window.initFormset === "function") {
+    if (
+      !form._poFormsetInitialized &&
+      typeof window.initFormset === "function"
+    ) {
       window.initFormset({
         formsetPrefix: prefix,
         addButtonId: "add-item",
@@ -135,7 +133,9 @@
     if (
       document.getElementById("po-form") &&
       (!document.getElementById("modal-root") ||
-        !document.getElementById("modal-root").contains(document.getElementById("po-form")))
+        !document
+          .getElementById("modal-root")
+          .contains(document.getElementById("po-form")))
     ) {
       initPurchaseOrderDrawer(document);
     }

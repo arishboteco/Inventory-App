@@ -4,18 +4,18 @@
 
 Forms intercepted by `static/js/modal.js` (`fetch` POST, `partial=1`, JSON success; structured `errors` on 400 from `build_form_error_payload` where implemented).
 
-| Template | POST action (URL name / pattern) | Notes |
-|----------|----------------------------------|--------|
-| `inventory/purchase_orders/_form_partial.html` | `purchase_order_create_partial`, `purchase_order_edit_partial` | `data-formset-prefix`; `initPurchaseOrderDrawer` |
-| `inventory/purchase_orders/_receive_partial.html` | `purchase_order_receive_partial` | `multipart/form-data`; line qty validation |
-| `inventory/recipes/_form_partial.html` | `recipe_create_partial`, `recipe_edit_partial` | `data-formset-prefix`; `initRecipeComponentsTable` |
-| `inventory/_supplier_form_partial.html` | `supplier_create`, `supplier_edit` | `?partial=1` |
-| `inventory/_item_form_partial.html` | `item_edit` | `?partial=1` |
-| `inventory/_item_create_partial.html` | `items_list` | Item create drawer |
-| `inventory/_item_create_bare.html` | `items_list` | Bare / inline create |
-| `inventory/_indent_create_partial.html` | `indent_create` | `initIndentForm`, line items |
-| `inventory/_indent_detail_partial.html` | `indent_update` | Edit indent in drawer |
-| `inventory/_bulk_upload_partial.html` | `{{ upload_url }}`, `upload_csv?partial=1` | Two forms; multipart |
+| Template                                          | POST action (URL name / pattern)                               | Notes                                              |
+| ------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| `inventory/purchase_orders/_form_partial.html`    | `purchase_order_create_partial`, `purchase_order_edit_partial` | `data-formset-prefix`; `initPurchaseOrderDrawer`   |
+| `inventory/purchase_orders/_receive_partial.html` | `purchase_order_receive_partial`                               | `multipart/form-data`; line qty validation         |
+| `inventory/recipes/_form_partial.html`            | `recipe_create_partial`, `recipe_edit_partial`                 | `data-formset-prefix`; `initRecipeComponentsTable` |
+| `inventory/_supplier_form_partial.html`           | `supplier_create`, `supplier_edit`                             | `?partial=1`                                       |
+| `inventory/_item_form_partial.html`               | `item_edit`                                                    | `?partial=1`                                       |
+| `inventory/_item_create_partial.html`             | `items_list`                                                   | Item create drawer                                 |
+| `inventory/_item_create_bare.html`                | `items_list`                                                   | Bare / inline create                               |
+| `inventory/_indent_create_partial.html`           | `indent_create`                                                | `initIndentForm`, line items                       |
+| `inventory/_indent_detail_partial.html`           | `indent_update`                                                | Edit indent in drawer                              |
+| `inventory/_bulk_upload_partial.html`             | `{{ upload_url }}`, `upload_csv?partial=1`                     | Two forms; multipart                               |
 
 **Client hub:** `static/js/modal.js` — delegated `submit` on `[data-modal-form]`; summary + per-field highlights for `errors` matching `build_form_error_payload`.
 

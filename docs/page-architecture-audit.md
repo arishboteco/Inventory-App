@@ -42,59 +42,60 @@ These provide standard slots for heading, actions, filters, table/data area, and
 ## 2) Page-by-page differences and features
 
 > Legend:
+>
 > - **Layout** = base template style.
 > - **Interaction model** = full page / HTMX partial / modal-drawer hybrids.
 > - **Notes** = standout differences vs the rest of the app.
 
 ### Insights pages
 
-| Page | Primary route | Layout | Interaction model | Key differences / features |
-|---|---|---|---|---|
-| Dashboard (Overview) | `root` | `core/dashboard.html` | Full page + partial KPI endpoint | Rich KPI bundle + alert panel + trend JSON data; separate core app namespace vs inventory pages. |
-| Food Cost | `food_cost_report` | `inventory/recipes/food_cost_report.html` | Mostly full page | Lives under recipe domain but conceptually an insights page. |
-| History | `history_reports` | `components/create_manage_layout.html` | HTMX-aware filtering | Uses history tabs/partials and report-style workflow. |
-| Stock Charts | `visualizations` | `components/create_manage_layout.html` | Full page with chart data in JSON | Function-based view computes daily series and renders chart payloads. |
-| Reorder Suggestions (ML Dashboard) | `ml_dashboard` | `components/create_manage_layout.html` | Full page + POST recompute | Synchronous recompute + cache usage; blends analytics and operations. |
+| Page                               | Primary route      | Layout                                    | Interaction model                 | Key differences / features                                                                       |
+| ---------------------------------- | ------------------ | ----------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Dashboard (Overview)               | `root`             | `core/dashboard.html`                     | Full page + partial KPI endpoint  | Rich KPI bundle + alert panel + trend JSON data; separate core app namespace vs inventory pages. |
+| Food Cost                          | `food_cost_report` | `inventory/recipes/food_cost_report.html` | Mostly full page                  | Lives under recipe domain but conceptually an insights page.                                     |
+| History                            | `history_reports`  | `components/create_manage_layout.html`    | HTMX-aware filtering              | Uses history tabs/partials and report-style workflow.                                            |
+| Stock Charts                       | `visualizations`   | `components/create_manage_layout.html`    | Full page with chart data in JSON | Function-based view computes daily series and renders chart payloads.                            |
+| Reorder Suggestions (ML Dashboard) | `ml_dashboard`     | `components/create_manage_layout.html`    | Full page + POST recompute        | Synchronous recompute + cache usage; blends analytics and operations.                            |
 
 ### Procurement pages
 
-| Page | Primary route | Layout | Interaction model | Key differences / features |
-|---|---|---|---|---|
-| Indents list | `indents_list` | `components/create_manage_layout.html` | HTMX table refresh | Strong list/table split with filters and status workflows. |
-| Indent detail | `indent_detail` | `components/detail_layout.html` | Full page + optional partial rendering | Supports partial detail rendering for drawer/edit scenarios. |
-| Indent create/update | `indent_create` / `indent_update` | `components/form_layout.html` | Full form + drawer partials | Hybrid form strategy (full page and modal partial). |
-| Order Planner (Consolidate) | `indents_consolidate_preview` | `components/create_manage_layout.html` | Full page action flow | A planner-style flow that behaves like a wizard step. |
-| Purchase Orders list | `purchase_orders_list` | `components/create_manage_layout.html` | HTMX table/cards + view mode switch | Most advanced list page (KPIs, table/cards toggle, progress bars, export). |
-| PO detail / receive | `purchase_order_detail` / `purchase_order_receive` | `detail_layout` + `form_layout` | Full page + partial modal endpoints | Has a mature partial endpoint set for create/edit/receive drawers. |
-| GRN list | `grn_list` | `components/create_manage_layout.html` | List page with quick form options | Consistent with list architecture. |
-| GRN create/detail | `grn_create` / `grn_detail` | `_base` (create), `detail_layout` (detail) | Full page forms/details | Create page uses raw `_base` rather than shared `form_layout`. |
+| Page                        | Primary route                                      | Layout                                     | Interaction model                      | Key differences / features                                                 |
+| --------------------------- | -------------------------------------------------- | ------------------------------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
+| Indents list                | `indents_list`                                     | `components/create_manage_layout.html`     | HTMX table refresh                     | Strong list/table split with filters and status workflows.                 |
+| Indent detail               | `indent_detail`                                    | `components/detail_layout.html`            | Full page + optional partial rendering | Supports partial detail rendering for drawer/edit scenarios.               |
+| Indent create/update        | `indent_create` / `indent_update`                  | `components/form_layout.html`              | Full form + drawer partials            | Hybrid form strategy (full page and modal partial).                        |
+| Order Planner (Consolidate) | `indents_consolidate_preview`                      | `components/create_manage_layout.html`     | Full page action flow                  | A planner-style flow that behaves like a wizard step.                      |
+| Purchase Orders list        | `purchase_orders_list`                             | `components/create_manage_layout.html`     | HTMX table/cards + view mode switch    | Most advanced list page (KPIs, table/cards toggle, progress bars, export). |
+| PO detail / receive         | `purchase_order_detail` / `purchase_order_receive` | `detail_layout` + `form_layout`            | Full page + partial modal endpoints    | Has a mature partial endpoint set for create/edit/receive drawers.         |
+| GRN list                    | `grn_list`                                         | `components/create_manage_layout.html`     | List page with quick form options      | Consistent with list architecture.                                         |
+| GRN create/detail           | `grn_create` / `grn_detail`                        | `_base` (create), `detail_layout` (detail) | Full page forms/details                | Create page uses raw `_base` rather than shared `form_layout`.             |
 
 ### Stock pages
 
-| Page | Primary route | Layout | Interaction model | Key differences / features |
-|---|---|---|---|---|
-| Stock Movements | `stock_movements` | `components/create_manage_layout.html` | Multi-form page with modal sections + flash-reopen | Large function-based workflow handling receiving/adjust/waste/transfer in one endpoint. |
-| Stock Count list | `stock_take_list` | `components/create_manage_layout.html` | Full page list | High-level entry screen for stock take sessions. |
-| Stock Count start/count/review | `stock_take_start`, `stock_take_count`, `stock_take_review` | `_base` templates | Full-page task flow | Operationally a wizard, but visually/layout-wise separate from form/detail layouts. |
+| Page                           | Primary route                                               | Layout                                 | Interaction model                                  | Key differences / features                                                              |
+| ------------------------------ | ----------------------------------------------------------- | -------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Stock Movements                | `stock_movements`                                           | `components/create_manage_layout.html` | Multi-form page with modal sections + flash-reopen | Large function-based workflow handling receiving/adjust/waste/transfer in one endpoint. |
+| Stock Count list               | `stock_take_list`                                           | `components/create_manage_layout.html` | Full page list                                     | High-level entry screen for stock take sessions.                                        |
+| Stock Count start/count/review | `stock_take_start`, `stock_take_count`, `stock_take_review` | `_base` templates                      | Full-page task flow                                | Operationally a wizard, but visually/layout-wise separate from form/detail layouts.     |
 
 ### Master data pages
 
-| Page | Primary route | Layout | Interaction model | Key differences / features |
-|---|---|---|---|---|
-| Items list | `items_list` | `components/create_manage_layout.html` | HTMX table + filters + inline create options | Very feature-rich filters (category/subcategory/dept/stock-state) and export. |
-| Item detail/edit/delete | `item_detail` etc. | `detail_layout` + `form_layout` partials | Full page + inline/partial updates | Good separation of detail and partial edit fragments. |
-| Recipes list | `recipes_list` | `components/create_manage_layout.html` | Table/cards patterns + partial create/edit/view | Strong partial ecosystem; supports recipe-specific line-item behaviors. |
-| Recipe detail | `recipe_detail` | `components/form_layout.html` | Full page + partial fragments | Detail rendered in a form-style layout, unlike most detail pages. |
-| Suppliers list | `suppliers_list` | `components/create_manage_layout.html` | HTMX table/cards + inline create/bulk upload | Similar to PO list in flexibility; includes bulk delete/upload flows. |
-| Supplier cards standalone | `suppliers_cards` | `_base` | HTMX fragment use case | Duplicate presentation path that does not inherit list layout. |
-| Settings/Profile/Password | `settings`, `profile-edit`, `change-password` | `create_manage_layout` / `form_layout` | Mostly full form pages | Settings page is list-style layout, profile/password are form-style.
+| Page                      | Primary route                                 | Layout                                   | Interaction model                               | Key differences / features                                                    |
+| ------------------------- | --------------------------------------------- | ---------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| Items list                | `items_list`                                  | `components/create_manage_layout.html`   | HTMX table + filters + inline create options    | Very feature-rich filters (category/subcategory/dept/stock-state) and export. |
+| Item detail/edit/delete   | `item_detail` etc.                            | `detail_layout` + `form_layout` partials | Full page + inline/partial updates              | Good separation of detail and partial edit fragments.                         |
+| Recipes list              | `recipes_list`                                | `components/create_manage_layout.html`   | Table/cards patterns + partial create/edit/view | Strong partial ecosystem; supports recipe-specific line-item behaviors.       |
+| Recipe detail             | `recipe_detail`                               | `components/form_layout.html`            | Full page + partial fragments                   | Detail rendered in a form-style layout, unlike most detail pages.             |
+| Suppliers list            | `suppliers_list`                              | `components/create_manage_layout.html`   | HTMX table/cards + inline create/bulk upload    | Similar to PO list in flexibility; includes bulk delete/upload flows.         |
+| Supplier cards standalone | `suppliers_cards`                             | `_base`                                  | HTMX fragment use case                          | Duplicate presentation path that does not inherit list layout.                |
+| Settings/Profile/Password | `settings`, `profile-edit`, `change-password` | `create_manage_layout` / `form_layout`   | Mostly full form pages                          | Settings page is list-style layout, profile/password are form-style.          |
 
 ### Utility and supporting pages
 
-| Page | Route | Layout | Notes |
-|---|---|---|---|
-| Workflow guide | `workflow_guide` | `_base` | Informational documentation page, intentionally custom. |
-| Login / password reset info | `/accounts/login/`, `password_reset_info` | standalone templates | Auth pages are stylistically separate from app shell. |
+| Page                        | Route                                     | Layout               | Notes                                                   |
+| --------------------------- | ----------------------------------------- | -------------------- | ------------------------------------------------------- |
+| Workflow guide              | `workflow_guide`                          | `_base`              | Informational documentation page, intentionally custom. |
+| Login / password reset info | `/accounts/login/`, `password_reset_info` | standalone templates | Auth pages are stylistically separate from app shell.   |
 
 ---
 
@@ -199,15 +200,16 @@ Create one short checklist used before merging any new page:
 - A single, comprehensive standardization initiative can make pages feel and behave the same without rewriting everything.
 - Best return on effort: **unify layout usage + list-page contract first**, then refactor a few large views.
 
-
 ---
 
 ## 7) Single comprehensive implementation plan (documented for execution)
 
 ### Task name
+
 **Inventory UI Standardization Program (one coordinated project)**
 
 ### Goal in simple terms
+
 Make every major page in the app feel and behave the same way, so users do not need to re-learn each screen and developers can build new pages faster with fewer one-off decisions.
 
 ### What this one project includes

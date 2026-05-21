@@ -115,9 +115,7 @@
   }
 
   function getRowUnitHidden(row) {
-    return row.querySelector(
-      'input[id$="-unit"]:not([id$="-unit_display"])',
-    );
+    return row.querySelector('input[id$="-unit"]:not([id$="-unit_display"])');
   }
 
   function getRowUnitDisplay(row) {
@@ -176,12 +174,20 @@
     cell.appendChild(sel);
   }
 
-  function fetchSubRecipeMeta(row, recipeId, displayCode, ingredientSelect, scope) {
+  function fetchSubRecipeMeta(
+    row,
+    recipeId,
+    displayCode,
+    ingredientSelect,
+    scope,
+  ) {
     if (ingredientSelect.dataset.recipeFetching === "1") {
       return;
     }
     ingredientSelect.dataset.recipeFetching = "1";
-    var q = displayCode ? "?display_unit=" + encodeURIComponent(displayCode) : "";
+    var q = displayCode
+      ? "?display_unit=" + encodeURIComponent(displayCode)
+      : "";
     fetch("/recipes/meta/" + encodeURIComponent(recipeId) + "/" + q)
       .then(function (response) {
         if (!response.ok) {

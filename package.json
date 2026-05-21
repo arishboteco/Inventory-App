@@ -10,9 +10,13 @@
     "test": "jest"
   },
   "jest": {
-    "roots": ["tests/js"],
+    "roots": [
+      "tests/js"
+    ],
     "testEnvironment": "jsdom",
-    "moduleFileExtensions": ["js"],
+    "moduleFileExtensions": [
+      "js"
+    ],
     "moduleNameMapper": {
       "^static/js/(.*)$": "<rootDir>/static/js/$1"
     }

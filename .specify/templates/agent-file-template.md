@@ -23,11 +23,11 @@ specs/                  # Spec Kit per-feature artifacts
 
 ## Commands
 
-| Command | Purpose |
-|--------|---------|
-| `make ci` | Format (Black), lint (Ruff), test (pytest) — run before commit |
-| `make fmt` / `make lint` / `make test` | Individual steps |
-| `make dev` | Django + optional CSS watcher (`AGENTS.md`) |
+| Command                                | Purpose                                                        |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `make ci`                              | Format (Black), lint (Ruff), test (pytest) — run before commit |
+| `make fmt` / `make lint` / `make test` | Individual steps                                               |
+| `make dev`                             | Django + optional CSS watcher (`AGENTS.md`)                    |
 
 ## Code Style
 

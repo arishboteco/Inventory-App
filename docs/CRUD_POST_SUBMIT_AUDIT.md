@@ -4,12 +4,12 @@ Generated as part of the systematic audit (March 2026). Use this with [inventory
 
 ## Interaction types
 
-| Type | Meaning | Client behavior |
-|------|---------|-----------------|
-| **FullPageForm** | Normal `<form>` POST | Browser follows redirect or renders full HTML |
-| **DrawerOrModal_JSON** | Form has `data-modal-form` | [static/js/modal.js](../static/js/modal.js) `fetch()` + JSON; may `window.location` on `redirect` |
-| **HTMX** | `hx-get` / `hx-post` | Partial swap into target |
-| **fetch_only** | JS `fetch()` without modal attribute | Expect JSON; no full navigation unless handled in JS |
+| Type                   | Meaning                              | Client behavior                                                                                   |
+| ---------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| **FullPageForm**       | Normal `<form>` POST                 | Browser follows redirect or renders full HTML                                                     |
+| **DrawerOrModal_JSON** | Form has `data-modal-form`           | [static/js/modal.js](../static/js/modal.js) `fetch()` + JSON; may `window.location` on `redirect` |
+| **HTMX**               | `hx-get` / `hx-post`                 | Partial swap into target                                                                          |
+| **fetch_only**         | JS `fetch()` without modal attribute | Expect JSON; no full navigation unless handled in JS                                              |
 
 ## Navigation vs routes
 
@@ -17,32 +17,32 @@ All primary nav targets from `NAVIGATION_GROUPS` resolve to names in `ui_urls.py
 
 ## POST / submit matrix (high-value flows)
 
-| Area | Action | URL name | Interaction | Success outcome | Failure / notes |
-|------|--------|----------|-------------|-----------------|-----------------|
-| Items | List / filter | `items_list`, `items_table` | HTMX (table) | Swap `#items-list` | — |
-| Items | Create (drawer) | `item_create_partial` → POST `items_list` | Drawer JSON | JSON `ok`, reload per modal.js | Partial must include `data-modal-form` |
-| Items | Edit (drawer) | `item_edit` `?partial=1` | Drawer JSON | JSON / redirect per view | — |
-| Items | Inline update | `item_inline_update` | fetch_only | JSON | Hardcoded `/items/<id>/inline-update/` in JS |
-| Items | Bulk actions | `items_bulk_update` | fetch_only | JSON + `window.location.reload()` | — |
-| Items | Bulk upload drawer | `items_bulk_upload` `?partial=1` | Drawer JSON | Per `ItemsBulkUploadView` | `_bulk_upload_partial.html` |
-| Stock | Receive (modal) | `stock_movements` + `submit_receive` | FullPageForm | `redirect("stock_movements")` | `_receive_form_modal.html`: `action=""` — not `data-modal-form` |
-| Stock | Adjust / waste / transfer modals | `stock_movements` | FullPageForm | Redirect + `?section=...` on errors; PRG flash | Same pattern |
-| Stock | Bulk CSV modal | `stock_movements` | FullPageForm | Posts to same view | `_stock_bulk_modal.html` |
-| PO | Create / edit drawer | `purchase_order_create_partial`, `purchase_order_edit_partial` | Drawer JSON | JSON | `data-requires-line-items` |
-| PO | Receive drawer | `purchase_order_receive_partial` | Drawer JSON | JSON `redirect` → PO detail | `data-modal-form` |
-| PO | Mark ordered | `purchase_order_mark_ordered` | FullPageForm | Redirect detail | Full page on PO detail |
-| Indents | Create drawer | `indent_create` `?partial=1` | Drawer JSON | JSON | — |
-| Indents | Update (drawer) | `indent_update` | Drawer JSON | — | `_indent_detail_partial.html` |
-| Indents | Status buttons in drawer | `indent_update_status` | FullPageForm (inline forms) | Redirect | Small forms without `data-modal-form` — POST goes to named URL (full page) |
-| Indents | Consolidate | `indents_consolidate_preview` | FullPageForm | Redirect PO list / same page | — |
-| GRN | Create / adhoc | `grn_create`, `grn_create_adhoc` | FullPageForm | Redirect / render | — |
-| Recipes | Create / edit drawer | `recipe_create_partial`, `recipe_edit_partial` | Drawer JSON | JSON | — |
-| Recipes | Request ingredients | `recipe_create_indent` | FullPageForm | `redirect("indent_detail")` | Form in `_view_partial.html` has **no** `data-modal-form` — intentional full navigation to indent |
-| Recipes | Delete | `recipe_delete` | POST (modal flow) | Redirect list | — |
-| Suppliers | Create / edit drawer | `supplier_create`, `supplier_edit` `?partial=1` | Drawer JSON | JSON | List uses `data-modal-url` to `supplier_create` — form partial supplies `data-modal-form` |
-| Suppliers | Bulk upload | `suppliers_bulk_upload_partial` | Drawer JSON | JSON | — |
-| Stock take | Start / count / review | `stock_take_*` | FullPageForm | Redirect / render | — |
-| Settings / profile | Various | `settings`, `profile-edit`, `change-password` | FullPageForm | Redirect / render | — |
+| Area               | Action                           | URL name                                                       | Interaction                 | Success outcome                                | Failure / notes                                                                                   |
+| ------------------ | -------------------------------- | -------------------------------------------------------------- | --------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Items              | List / filter                    | `items_list`, `items_table`                                    | HTMX (table)                | Swap `#items-list`                             | —                                                                                                 |
+| Items              | Create (drawer)                  | `item_create_partial` → POST `items_list`                      | Drawer JSON                 | JSON `ok`, reload per modal.js                 | Partial must include `data-modal-form`                                                            |
+| Items              | Edit (drawer)                    | `item_edit` `?partial=1`                                       | Drawer JSON                 | JSON / redirect per view                       | —                                                                                                 |
+| Items              | Inline update                    | `item_inline_update`                                           | fetch_only                  | JSON                                           | Hardcoded `/items/<id>/inline-update/` in JS                                                      |
+| Items              | Bulk actions                     | `items_bulk_update`                                            | fetch_only                  | JSON + `window.location.reload()`              | —                                                                                                 |
+| Items              | Bulk upload drawer               | `items_bulk_upload` `?partial=1`                               | Drawer JSON                 | Per `ItemsBulkUploadView`                      | `_bulk_upload_partial.html`                                                                       |
+| Stock              | Receive (modal)                  | `stock_movements` + `submit_receive`                           | FullPageForm                | `redirect("stock_movements")`                  | `_receive_form_modal.html`: `action=""` — not `data-modal-form`                                   |
+| Stock              | Adjust / waste / transfer modals | `stock_movements`                                              | FullPageForm                | Redirect + `?section=...` on errors; PRG flash | Same pattern                                                                                      |
+| Stock              | Bulk CSV modal                   | `stock_movements`                                              | FullPageForm                | Posts to same view                             | `_stock_bulk_modal.html`                                                                          |
+| PO                 | Create / edit drawer             | `purchase_order_create_partial`, `purchase_order_edit_partial` | Drawer JSON                 | JSON                                           | `data-requires-line-items`                                                                        |
+| PO                 | Receive drawer                   | `purchase_order_receive_partial`                               | Drawer JSON                 | JSON `redirect` → PO detail                    | `data-modal-form`                                                                                 |
+| PO                 | Mark ordered                     | `purchase_order_mark_ordered`                                  | FullPageForm                | Redirect detail                                | Full page on PO detail                                                                            |
+| Indents            | Create drawer                    | `indent_create` `?partial=1`                                   | Drawer JSON                 | JSON                                           | —                                                                                                 |
+| Indents            | Update (drawer)                  | `indent_update`                                                | Drawer JSON                 | —                                              | `_indent_detail_partial.html`                                                                     |
+| Indents            | Status buttons in drawer         | `indent_update_status`                                         | FullPageForm (inline forms) | Redirect                                       | Small forms without `data-modal-form` — POST goes to named URL (full page)                        |
+| Indents            | Consolidate                      | `indents_consolidate_preview`                                  | FullPageForm                | Redirect PO list / same page                   | —                                                                                                 |
+| GRN                | Create / adhoc                   | `grn_create`, `grn_create_adhoc`                               | FullPageForm                | Redirect / render                              | —                                                                                                 |
+| Recipes            | Create / edit drawer             | `recipe_create_partial`, `recipe_edit_partial`                 | Drawer JSON                 | JSON                                           | —                                                                                                 |
+| Recipes            | Request ingredients              | `recipe_create_indent`                                         | FullPageForm                | `redirect("indent_detail")`                    | Form in `_view_partial.html` has **no** `data-modal-form` — intentional full navigation to indent |
+| Recipes            | Delete                           | `recipe_delete`                                                | POST (modal flow)           | Redirect list                                  | —                                                                                                 |
+| Suppliers          | Create / edit drawer             | `supplier_create`, `supplier_edit` `?partial=1`                | Drawer JSON                 | JSON                                           | List uses `data-modal-url` to `supplier_create` — form partial supplies `data-modal-form`         |
+| Suppliers          | Bulk upload                      | `suppliers_bulk_upload_partial`                                | Drawer JSON                 | JSON                                           | —                                                                                                 |
+| Stock take         | Start / count / review           | `stock_take_*`                                                 | FullPageForm                | Redirect / render                              | —                                                                                                 |
+| Settings / profile | Various                          | `settings`, `profile-edit`, `change-password`                  | FullPageForm                | Redirect / render                              | —                                                                                                 |
 
 ## Pattern grep — `data-modal-form` coverage
 
@@ -58,14 +58,14 @@ See [drawer_modal_htmx_migration.md](drawer_modal_htmx_migration.md) for a full 
 
 If the app is mounted under a subpath (`FORCE_SCRIPT_NAME`), these may 404 while `{% url %}` works:
 
-| File | Paths |
-|------|--------|
-| [static/js/items-table.js](../static/js/items-table.js) | `/items/<id>/inline-update/`, `/items/<id>/delete/`, `/items/<id>/toggle/`, `/items/bulk/`, `/items/table/`, `/items/export/` |
-| [static/js/indent-form.js](../static/js/indent-form.js) | `/items/meta/<id>/` |
-| [static/js/recipe-components.js](../static/js/recipe-components.js) | `/recipes/meta/...`, `/items/meta/...` |
-| [static/js/smart-forms.js](../static/js/smart-forms.js) | `/items/check-similar-names/`, `/items/<id>/` |
-| [static/js/column-filters.js](../static/js/column-filters.js) | `/items/distinct/...`, `/items/table/` |
-| [templates/inventory/stock_movements.html](../templates/inventory/stock_movements.html) (inline script) | `/items/meta/<id>/` |
+| File                                                                                                    | Paths                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| [static/js/items-table.js](../static/js/items-table.js)                                                 | `/items/<id>/inline-update/`, `/items/<id>/delete/`, `/items/<id>/toggle/`, `/items/bulk/`, `/items/table/`, `/items/export/` |
+| [static/js/indent-form.js](../static/js/indent-form.js)                                                 | `/items/meta/<id>/`                                                                                                           |
+| [static/js/recipe-components.js](../static/js/recipe-components.js)                                     | `/recipes/meta/...`, `/items/meta/...`                                                                                        |
+| [static/js/smart-forms.js](../static/js/smart-forms.js)                                                 | `/items/check-similar-names/`, `/items/<id>/`                                                                                 |
+| [static/js/column-filters.js](../static/js/column-filters.js)                                           | `/items/distinct/...`, `/items/table/`                                                                                        |
+| [templates/inventory/stock_movements.html](../templates/inventory/stock_movements.html) (inline script) | `/items/meta/<id>/`                                                                                                           |
 
 ## “Restock” flows (terminology)
 

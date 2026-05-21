@@ -10,7 +10,8 @@ def reset_pk_sequences(apps, schema_editor):
     """
     if schema_editor.connection.vendor != "postgresql":
         return
-    schema_editor.execute("""
+    schema_editor.execute(
+        """
         SELECT setval(
             pg_get_serial_sequence('item_departments', 'id'),
             COALESCE((SELECT MAX(id) FROM item_departments), 0) + 1,
@@ -21,7 +22,8 @@ def reset_pk_sequences(apps, schema_editor):
             COALESCE((SELECT MAX(recipe_item_id) FROM recipe_items_new), 0) + 1,
             false
         );
-        """)
+        """
+    )
 
 
 class Migration(migrations.Migration):

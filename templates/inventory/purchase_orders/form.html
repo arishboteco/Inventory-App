@@ -11,8 +11,13 @@
   {{ item_vendor_hints|json_script:"po-item-vendor-hints" }}
   <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
     {% for field in form %}
-      {% include "components/form_field.html" with field=field %}
+      {% if field.name != "notes" %}
+        {% include "components/form_field.html" with field=field %}
+      {% endif %}
     {% endfor %}
+  </div>
+  <div class="mt-4">
+    {% include "components/form_field.html" with field=form.notes %}
   </div>
   <datalist id="supplier-options"></datalist>
   {% include "inventory/purchase_orders/_po_line_items.html" with formset=formset %}

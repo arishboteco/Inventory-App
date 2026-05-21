@@ -6,6 +6,7 @@ import json
 from datetime import date
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
 from inventory.models import PurchaseOrder, Supplier
@@ -35,6 +36,17 @@ def test_purchase_order_create_partial_get_has_drawer_hooks(po_staff_client):
     assert 'id="items-formset"' in content
     assert "supplier-options" in content
     assert "hx-get" in content
+    assert "drawer-panel max-w-drawer-xl flex flex-col min-h-0" in content
+    assert "p-4 flex-1 min-h-0 overflow-y-auto" in content
+
+    soup = BeautifulSoup(content, "html.parser")
+    notes = soup.find("textarea", attrs={"name": "notes"})
+    assert notes is not None
+    grid = soup.find(
+        "div", class_=lambda value: value and "grid-cols-2" in value and "gap-4" in value
+    )
+    assert grid is not None
+    assert grid.find("textarea", attrs={"name": "notes"}) is None
 
 
 def test_purchase_order_create_partial_post_validation_returns_json(po_staff_client):

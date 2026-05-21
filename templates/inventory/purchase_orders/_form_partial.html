@@ -1,18 +1,23 @@
 {% load form_tags %}
-<div class="bg-surface border border-border rounded-2xl shadow-overlay overflow-hidden drawer-panel max-w-drawer-xl">
+<div class="bg-surface border border-border rounded-2xl shadow-overlay drawer-panel max-w-drawer-xl flex flex-col min-h-0">
   <div class="px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
     <h3 class="text-base font-semibold text-bodyText">{% if is_edit %}Edit{% else %}New{% endif %} Purchase Order</h3>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
-  <div class="p-4">
-  <form method="post" id="po-drawer-form" data-drawer="purchase-order" data-formset-prefix="{{ formset.prefix }}" data-modal-form data-requires-line-items action="{% if is_edit %}{% url 'purchase_order_edit_partial' po.pk %}{% else %}{% url 'purchase_order_create_partial' %}{% endif %}">
+  <div class="p-4 flex-1 min-h-0 overflow-y-auto">
+  <form method="post" id="po-drawer-form" class="flex flex-col gap-4" data-drawer="purchase-order" data-formset-prefix="{{ formset.prefix }}" data-modal-form data-requires-line-items action="{% if is_edit %}{% url 'purchase_order_edit_partial' po.pk %}{% else %}{% url 'purchase_order_create_partial' %}{% endif %}">
       {% csrf_token %}
       {{ item_prices|json_script:"po-item-prices" }}
       {{ item_vendor_hints|json_script:"po-item-vendor-hints" }}
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         {% for field in form %}
-          {% include "components/form_field.html" with field=field %}
+          {% if field.name != "notes" %}
+            {% include "components/form_field.html" with field=field %}
+          {% endif %}
         {% endfor %}
+      </div>
+      <div class="mt-4">
+        {% include "components/form_field.html" with field=form.notes %}
       </div>
       <datalist id="supplier-options"></datalist>
       {% include "inventory/purchase_orders/_po_line_items.html" with formset=formset %}

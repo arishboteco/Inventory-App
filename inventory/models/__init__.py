@@ -13,11 +13,13 @@ from .orders import (
     PurchaseOrderItem,
 )
 from .recipes import (
+    ChefBulletin,
     POSMenuItemMapping,
     Recipe,
     RecipeComponent,
     RecipeItem,
     SaleTransaction,
+    TrialRecipeVersion,
 )
 from .recovery import SavingsLedger, VendorItemPrice
 from .site_config import SiteConfig
@@ -50,6 +52,8 @@ __all__ = [
     "RecipeItem",
     "SaleTransaction",
     "POSMenuItemMapping",
+    "ChefBulletin",
+    "TrialRecipeVersion",
     "Department",
     "ItemDepartment",
     "Category",

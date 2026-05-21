@@ -1,0 +1,107 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}Chef Bulletin{% endblock %}
+{% block page_heading %}{{ bulletin.recipe.name }}{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-bodyText/70">{{ bulletin.get_alert_type_display }} for {{ bulletin.period_start|date:"d M Y" }} to {{ bulletin.period_end|date:"d M Y" }}.</p>
+{% endblock %}
+
+{% block primary_actions %}
+  <a href="{% url 'chef_bulletins_list' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md border border-border text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Back to Bulletins</a>
+{% endblock %}
+
+{% block kpis %}
+  <div class="grid gap-3 md:grid-cols-4">
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Current FC%</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">{{ bulletin.current_food_cost_pct|floatformat:2 }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Target FC%</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">{{ bulletin.target_food_cost_pct|floatformat:2 }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Monthly Sales</p>
+      <p class="mt-1 text-2xl font-semibold text-bodyText">Rs. {{ bulletin.monthly_sales|floatformat:2 }}</p>
+    </div>
+    <div class="bg-success-soft border border-success/20 rounded-xl p-4">
+      <p class="text-sm text-success">Expected Saving</p>
+      <p class="mt-1 text-2xl font-semibold text-success">Rs. {{ bulletin.expected_saving|floatformat:2 }}</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_top %}
+  <section class="bg-surface border border-border rounded-xl p-4 space-y-4">
+    <div>
+      <h2 class="text-lg font-semibold text-bodyText">Bulletin Summary</h2>
+      <p class="mt-1 text-sm text-bodyText/70">{{ bulletin.headline }}</p>
+    </div>
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <h3 class="text-sm font-semibold text-bodyText">Main Cost Drivers</h3>
+        <ul class="mt-2 space-y-1 text-sm text-bodyText/80">
+          {% for driver in bulletin.main_cost_drivers %}
+            <li>{{ driver }}</li>
+          {% empty %}
+            <li>No cost drivers recorded.</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-bodyText">Suggested Change</h3>
+        <p class="mt-2 text-sm text-bodyText/80">{{ bulletin.suggested_change }}</p>
+      </div>
+    </div>
+    <div class="grid gap-4 md:grid-cols-2">
+      <div>
+        <p class="text-sm text-bodyText/70">Risk Level</p>
+        <p class="text-base font-semibold text-bodyText">{{ bulletin.get_risk_level_display }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-bodyText/70">Current Decision</p>
+        <p class="text-base font-semibold text-bodyText">{{ bulletin.get_chef_decision_display }}</p>
+      </div>
+      {% if bulletin.decided_by %}
+        <div>
+          <p class="text-sm text-bodyText/70">Decided By</p>
+          <p class="text-base font-semibold text-bodyText">{{ bulletin.decided_by.username }}</p>
+        </div>
+      {% endif %}
+      {% if bulletin.decided_at %}
+        <div>
+          <p class="text-sm text-bodyText/70">Decided At</p>
+          <p class="text-base font-semibold text-bodyText">{{ bulletin.decided_at|date:"d M Y H:i" }}</p>
+        </div>
+      {% endif %}
+    </div>
+    {% if bulletin.decision_notes %}
+      <div>
+        <h3 class="text-sm font-semibold text-bodyText">Decision Notes</h3>
+        <p class="mt-2 text-sm text-bodyText/80">{{ bulletin.decision_notes }}</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="bg-surface border border-border rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-bodyText">Chef Decision</h2>
+    <form method="post" action="{% url 'chef_bulletin_decision' bulletin_id=bulletin.bulletin_id %}" class="mt-4 grid gap-4 md:grid-cols-3">
+      {% csrf_token %}
+      <div class="md:col-span-1">
+        <label for="bulletin-decision" class="block text-sm font-medium text-bodyText">Decision</label>
+        <select id="bulletin-decision" name="decision" class="mt-1 block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">
+          {% for value, label in decision_choices %}
+            <option value="{{ value }}" {% if bulletin.chef_decision == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label for="bulletin-notes" class="block text-sm font-medium text-bodyText">Notes</label>
+        <textarea id="bulletin-notes" name="decision_notes" rows="2" class="mt-1 block w-full p-2 border border-form-border rounded-md bg-form-bg text-form-text focus:outline-none focus:ring-2 focus:ring-primary">{{ bulletin.decision_notes }}</textarea>
+      </div>
+      <div class="md:col-span-3">
+        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Save Decision</button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

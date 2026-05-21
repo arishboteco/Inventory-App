@@ -68,7 +68,11 @@ def test_role_owner_sees_owner_money_navigation(django_user_model):
     assert "vendor_prices_list" in visible_urls
     assert "pos_sales_import" in visible_urls
     assert "variance_report" in visible_urls
-    assert "indents_list" not in visible_urls
+    assert "chef_bulletins_list" in visible_urls
+    assert "indents_list" in visible_urls
+    assert "items_list" in visible_urls
+    assert "recipes_list" in visible_urls
+    assert "suppliers_list" in visible_urls
 
 
 @pytest.mark.django_db
@@ -116,6 +120,7 @@ def test_role_head_chef_sees_sales_import(django_user_model):
     assert role == navigation.ROLE_HEAD_CHEF
     assert "pos_sales_import" in visible_urls
     assert "variance_report" in visible_urls
+    assert "chef_bulletins_list" in visible_urls
 
 
 @pytest.mark.django_db

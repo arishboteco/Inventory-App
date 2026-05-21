@@ -20,12 +20,26 @@ from inventory.services.variance_service import build_variance_report
 ZERO = Decimal("0")
 HIGH_SALES_THRESHOLD = Decimal("10000")
 LOW_MARGIN_THRESHOLD = Decimal("60")
+MAX_PCT = Decimal("9999.99")
+MAX_MONEY = Decimal("999999999999.99")
 
 
 def _as_decimal(value) -> Decimal:
     if value in (None, ""):
         return ZERO
     return Decimal(str(value))
+
+
+def _clamp_decimal(
+    value: Decimal,
+    *,
+    min_value: Decimal = ZERO,
+    max_value: Decimal,
+    places: str = "0.01",
+) -> Decimal:
+    quant = Decimal(places)
+    bounded = min(max(value, min_value), max_value)
+    return bounded.quantize(quant)
 
 
 def _month_window(ref_date: date | None = None) -> tuple[date, date]:
@@ -180,32 +194,65 @@ def refresh_chef_bulletins(
         .prefetch_related("items__item", "items__sub_recipe")
         .order_by("name")
     )
+    # Guard against legacy oversize decimal values that can break SQLite conversion.
+    now = timezone.now()
+    ChefBulletin.objects.filter(current_food_cost_pct__gt=MAX_PCT).update(
+        current_food_cost_pct=MAX_PCT,
+        updated_at=now,
+    )
+    ChefBulletin.objects.filter(target_food_cost_pct__gt=MAX_PCT).update(
+        target_food_cost_pct=MAX_PCT,
+        updated_at=now,
+    )
+    ChefBulletin.objects.filter(monthly_sales__gt=MAX_MONEY).update(
+        monthly_sales=MAX_MONEY,
+        updated_at=now,
+    )
+    ChefBulletin.objects.filter(unrealised_profit__gt=MAX_MONEY).update(
+        unrealised_profit=MAX_MONEY,
+        updated_at=now,
+    )
+    ChefBulletin.objects.filter(expected_saving__gt=MAX_MONEY).update(
+        expected_saving=MAX_MONEY,
+        updated_at=now,
+    )
+
     existing_open = {
-        (b.recipe_id, b.alert_type): b
-        for b in ChefBulletin.objects.filter(
+        (row["recipe_id"], row["alert_type"]): row["bulletin_id"]
+        for row in ChefBulletin.objects.filter(
             is_open=True,
             period_start=start_date,
             period_end=end_date,
-        ).select_related("recipe")
+        ).values("bulletin_id", "recipe_id", "alert_type")
     }
     active_keys: set[tuple[int, str]] = set()
 
     for recipe in recipes:
         total_cost = _as_decimal(recipe.get_total_cost())
         current_pct_raw = recipe.compute_food_cost_percentage(total_cost=total_cost)
-        current_pct = _as_decimal(current_pct_raw).quantize(Decimal("0.01"))
-        target_pct = _as_decimal(recipe.target_food_cost_pct or Decimal("30")).quantize(
-            Decimal("0.01")
+        current_pct = _clamp_decimal(
+            _as_decimal(current_pct_raw),
+            max_value=MAX_PCT,
+            places="0.01",
+        )
+        target_pct = _clamp_decimal(
+            _as_decimal(recipe.target_food_cost_pct or Decimal("30")),
+            max_value=MAX_PCT,
+            places="0.01",
         )
         sales_state = sales_map.get(recipe.pk) or {}
-        monthly_sales = _as_decimal(sales_state.get("sales_total")).quantize(
-            Decimal("0.01")
+        monthly_sales = _clamp_decimal(
+            _as_decimal(sales_state.get("sales_total")),
+            max_value=MAX_MONEY,
+            places="0.01",
         )
         sales_qty = _as_decimal(sales_state.get("qty_total"))
         expected_gap_pct = max(current_pct - target_pct, ZERO)
-        unrealised_profit = (
-            monthly_sales * expected_gap_pct / Decimal("100")
-        ).quantize(Decimal("0.01"))
+        unrealised_profit = _clamp_decimal(
+            (monthly_sales * expected_gap_pct / Decimal("100")),
+            max_value=MAX_MONEY,
+            places="0.01",
+        )
         main_cost_drivers = _recipe_cost_drivers(recipe)
         recipe_item_ids = set(
             RecipeItem.objects.filter(recipe=recipe, item__isnull=False).values_list(
@@ -304,9 +351,11 @@ def refresh_chef_bulletins(
                 )
             )
 
-        unexplained_value = sum(
-            _as_decimal(unexplained_by_item.get(item_id)) for item_id in recipe_item_ids
-        ).quantize(Decimal("0.01"))
+        unexplained_value = _clamp_decimal(
+            sum(_as_decimal(unexplained_by_item.get(item_id)) for item_id in recipe_item_ids),
+            max_value=MAX_MONEY,
+            places="0.01",
+        )
         if sales_qty > 0 and unexplained_value > 0:
             alert_payloads.append(
                 (
@@ -329,32 +378,38 @@ def refresh_chef_bulletins(
         for alert_type, payload in alert_payloads:
             key = (recipe.pk, alert_type)
             active_keys.add(key)
-            bulletin = existing_open.get(key)
-            if bulletin is None:
+            bulletin_id = existing_open.get(key)
+            if bulletin_id is None:
                 ChefBulletin.objects.create(
                     recipe=recipe,
                     alert_type=alert_type,
                     **payload,
                 )
                 continue
-            for field, value in payload.items():
-                setattr(bulletin, field, value)
-            bulletin.save()
+            ChefBulletin.objects.filter(pk=bulletin_id).update(
+                **payload,
+                updated_at=timezone.now(),
+            )
 
-    stale = ChefBulletin.objects.filter(
-        is_open=True,
-        period_start=start_date,
-        period_end=end_date,
+    stale_ids = list(
+        ChefBulletin.objects.filter(
+            is_open=True,
+            period_start=start_date,
+            period_end=end_date,
+        ).values_list("bulletin_id", "recipe_id", "alert_type")
     )
-    for bulletin in stale:
-        if (bulletin.recipe_id, bulletin.alert_type) not in active_keys:
-            bulletin.is_open = False
-            bulletin.save(update_fields=["is_open", "updated_at"])
+    for bulletin_id, recipe_id, alert_type in stale_ids:
+        if (recipe_id, alert_type) not in active_keys:
+            ChefBulletin.objects.filter(pk=bulletin_id).update(
+                is_open=False,
+                updated_at=timezone.now(),
+            )
 
     return list(
-        ChefBulletin.objects.select_related("recipe", "decided_by")
-        .filter(period_start=start_date, period_end=end_date)
-        .order_by("-is_open", "-expected_saving", "-updated_at")
+        ChefBulletin.objects.filter(
+            period_start=start_date,
+            period_end=end_date,
+        ).values_list("bulletin_id", flat=True)
     )
 
 

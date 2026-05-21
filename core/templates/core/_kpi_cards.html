@@ -71,5 +71,23 @@
       <p class="text-2xl font-semibold text-warning-text leading-tight">&#8377;{{ remaining_opportunity|floatformat:0 }}</p>
       <p class="text-[11px] text-gray-400">Money still leaking</p>
     </div>
+
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Open Opportunity</p>
+      <p class="text-2xl font-semibold text-warning-text leading-tight">&#8377;{{ open_opportunity|floatformat:0 }}</p>
+      <p class="text-[11px] text-gray-400">Expected saving in open actions</p>
+    </div>
+
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Expected Recovery</p>
+      <p class="text-2xl font-semibold text-bodyText leading-tight">&#8377;{{ expected_recovery|floatformat:0 }}</p>
+      <p class="text-[11px] text-gray-400">Assigned, in-progress, and implemented actions</p>
+    </div>
+
+    <div class="bg-surface border border-border rounded-xl px-4 py-4 flex flex-col gap-1">
+      <p class="text-[11px] font-medium uppercase tracking-wide text-gray-400">Verified Recovered Profit</p>
+      <p class="text-2xl font-semibold text-success leading-tight">&#8377;{{ verified_recovered_profit|floatformat:0 }}</p>
+      <p class="text-[11px] text-gray-400">Recovered profit proven through verified actions</p>
+    </div>
   </div>
 </div>

@@ -1,0 +1,112 @@
+{% extends "components/create_manage_layout.html" %}
+
+{% block page_title %}Recovery Action{% endblock %}
+{% block page_heading %}{{ action.title }}{% endblock %}
+{% block page_subtitle %}
+  <p class="text-sm text-bodyText/70">{{ action.get_leakage_type_display }} action created {{ action.created_at|date:"d M Y" }}.</p>
+{% endblock %}
+
+{% block primary_actions %}
+  <a href="{% url 'recovery_actions_list' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md border border-border text-bodyText hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Back to Actions</a>
+{% endblock %}
+
+{% block kpis %}
+  <div class="grid gap-3 md:grid-cols-4">
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Status</p>
+      <p class="mt-1 text-lg font-semibold text-bodyText">{{ action.get_status_display }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Expected Saving</p>
+      <p class="mt-1 text-lg font-semibold text-bodyText">Rs. {{ action.expected_saving|floatformat:2 }}</p>
+    </div>
+    <div class="bg-success-soft border border-success/20 rounded-xl p-4">
+      <p class="text-sm text-success">Verified Saving</p>
+      <p class="mt-1 text-lg font-semibold text-success">Rs. {{ action.verified_saving|floatformat:2 }}</p>
+    </div>
+    <div class="bg-surface border border-border rounded-xl p-4">
+      <p class="text-sm text-bodyText/70">Assigned To</p>
+      <p class="mt-1 text-lg font-semibold text-bodyText">{{ action.assigned_to.username|default:"Unassigned" }}</p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_top %}
+  <section class="bg-surface border border-border rounded-xl p-4 space-y-4">
+    <h2 class="text-lg font-semibold text-bodyText">Action Details</h2>
+    <div class="grid gap-3 md:grid-cols-3 text-sm">
+      <div>
+        <p class="text-bodyText/70">Due Date</p>
+        <p class="font-medium text-bodyText">{{ action.due_date|date:"d M Y"|default:"-" }}</p>
+      </div>
+      <div>
+        <p class="text-bodyText/70">Implemented Date</p>
+        <p class="font-medium text-bodyText">{{ action.implemented_date|date:"d M Y"|default:"-" }}</p>
+      </div>
+      <div>
+        <p class="text-bodyText/70">Linked Item</p>
+        <p class="font-medium text-bodyText">{{ action.linked_item|default:"-" }}</p>
+      </div>
+    </div>
+    {% if action.linked_chef_bulletin %}
+      <div class="text-sm">
+        <p class="text-bodyText/70">Linked Chef Bulletin</p>
+        <a href="{% url 'chef_bulletin_detail' bulletin_id=action.linked_chef_bulletin_id %}" class="font-medium text-primary hover:underline">
+          {{ action.linked_chef_bulletin.headline }}
+        </a>
+      </div>
+    {% endif %}
+    {% if action.notes %}
+      <div class="text-sm">
+        <p class="text-bodyText/70">Notes</p>
+        <p class="font-medium text-bodyText whitespace-pre-line">{{ action.notes }}</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="bg-surface border border-border rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-bodyText">Update Status</h2>
+    <form method="post" action="{% url 'recovery_action_status' action_id=action.pk %}" class="mt-4 grid gap-4 md:grid-cols-2">
+      {% csrf_token %}
+      {% include "components/form_field.html" with field=status_form.status %}
+      {% include "components/form_field.html" with field=status_form.implemented_date %}
+      {% include "components/form_field.html" with field=status_form.verified_saving %}
+      <div class="md:col-span-2">
+        {% include "components/form_field.html" with field=status_form.notes %}
+      </div>
+      <div class="md:col-span-2">
+        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md bg-primary text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary">Save Status</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-surface border border-border rounded-xl p-4">
+    <h2 class="text-lg font-semibold text-bodyText">Linked Savings Ledger Entries</h2>
+    <div class="overflow-x-auto mt-3">
+      <table class="min-w-full divide-y divide-border text-sm">
+        <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wider text-bodyText/70">
+          <tr>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Type</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3 text-right">Confirmed</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border">
+          {% for entry in action.linked_savings_entries.all %}
+            <tr class="odd:bg-surfaceSubtle/50">
+              <td class="px-4 py-3">{{ entry.date|date:"d M Y" }}</td>
+              <td class="px-4 py-3">{{ entry.get_saving_type_display }}</td>
+              <td class="px-4 py-3">{{ entry.get_status_display }}</td>
+              <td class="px-4 py-3 text-right tabular-nums text-success">Rs. {{ entry.confirmed_saving|floatformat:2 }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="px-4 py-6 text-center text-bodyText/70">No linked ledger entries yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

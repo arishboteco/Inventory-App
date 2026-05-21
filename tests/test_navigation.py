@@ -89,6 +89,7 @@ def test_role_purchase_sees_procurement_only_navigation(django_user_model):
     assert "purchase_orders_list" in visible_urls
     assert "grn_list" in visible_urls
     assert "vendor_prices_list" in visible_urls
+    assert "recovery_actions_list" in visible_urls
     assert "items_list" not in visible_urls
     assert "recipes_list" not in visible_urls
 
@@ -121,6 +122,7 @@ def test_role_head_chef_sees_sales_import(django_user_model):
     assert "pos_sales_import" in visible_urls
     assert "variance_report" in visible_urls
     assert "chef_bulletins_list" in visible_urls
+    assert "recovery_actions_list" in visible_urls
 
 
 @pytest.mark.django_db

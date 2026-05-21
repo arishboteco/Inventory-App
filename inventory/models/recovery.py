@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -78,3 +79,72 @@ class VendorItemPrice(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - simple representation
         return f"{self.vendor} - {self.item} @ {self.price}"
+
+
+class RecoveryAction(models.Model):
+    class LeakageType(models.TextChoices):
+        FOOD_COST_GAP = "FOOD_COST_GAP", "Food cost gap"
+        VENDOR_PRICE = "VENDOR_PRICE", "Vendor price"
+        INVOICE_MISMATCH = "INVOICE_MISMATCH", "Invoice mismatch"
+        RECIPE_OPTIMISATION = "RECIPE_OPTIMISATION", "Recipe optimisation"
+        WASTE_REDUCTION = "WASTE_REDUCTION", "Waste reduction"
+        VARIANCE_REDUCTION = "VARIANCE_REDUCTION", "Variance reduction"
+        MENU_PRICE_CORRECTION = "MENU_PRICE_CORRECTION", "Menu price correction"
+
+    class Status(models.TextChoices):
+        SUGGESTED = "SUGGESTED", "Suggested"
+        ASSIGNED = "ASSIGNED", "Assigned"
+        IN_PROGRESS = "IN_PROGRESS", "In progress"
+        IMPLEMENTED = "IMPLEMENTED", "Implemented"
+        VERIFIED = "VERIFIED", "Verified"
+        REJECTED = "REJECTED", "Rejected"
+
+    title = models.CharField(max_length=255)
+    leakage_type = models.CharField(max_length=40, choices=LeakageType.choices)
+    expected_saving = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_actions",
+    )
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.SUGGESTED)
+    implemented_date = models.DateField(null=True, blank=True)
+    verified_saving = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    linked_savings_entries = models.ManyToManyField(
+        "inventory.SavingsLedger",
+        blank=True,
+        related_name="recovery_actions",
+    )
+    linked_chef_bulletin = models.ForeignKey(
+        "inventory.ChefBulletin",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_actions",
+    )
+    linked_item = models.ForeignKey(
+        "inventory.Item",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recovery_actions",
+    )
+    notes = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "recovery_actions"
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["status"], name="rec_action_status_idx"),
+            models.Index(fields=["leakage_type"], name="rec_action_type_idx"),
+            models.Index(fields=["due_date"], name="rec_action_due_idx"),
+            models.Index(fields=["assigned_to", "status"], name="rec_action_assign_status_idx"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - simple representation
+        return f"{self.title} ({self.get_status_display()})"

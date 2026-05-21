@@ -351,8 +351,12 @@ def refresh_chef_bulletins(
                 )
             )
 
+        unexplained_total = sum(
+            (_as_decimal(unexplained_by_item.get(item_id)) for item_id in recipe_item_ids),
+            ZERO,
+        )
         unexplained_value = _clamp_decimal(
-            sum(_as_decimal(unexplained_by_item.get(item_id)) for item_id in recipe_item_ids),
+            _as_decimal(unexplained_total),
             max_value=MAX_MONEY,
             places="0.01",
         )

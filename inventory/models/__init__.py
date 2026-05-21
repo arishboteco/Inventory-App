@@ -21,7 +21,7 @@ from .recipes import (
     SaleTransaction,
     TrialRecipeVersion,
 )
-from .recovery import SavingsLedger, VendorItemPrice
+from .recovery import RecoveryAction, SavingsLedger, VendorItemPrice
 from .site_config import SiteConfig
 from .stock_take import StockTake, StockTakeItem
 from .subcategory import SubCategory
@@ -44,6 +44,7 @@ __all__ = [
     "GRNItem",
     "SavingsLedger",
     "VendorItemPrice",
+    "RecoveryAction",
     "IndentStatus",
     "ItemStatus",
     "PurchaseOrderStatus",

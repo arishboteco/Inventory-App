@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Group
 from django.template.loader import render_to_string
 from django.test import RequestFactory
 from django.urls import NoReverseMatch, reverse
@@ -49,3 +50,76 @@ def test_get_navigation_links_raises_for_missing(monkeypatch):
     monkeypatch.setattr(navigation, "NAVIGATION_LINKS", bad_links)
     with pytest.raises(NoReverseMatch):
         navigation.get_navigation_links()
+
+
+@pytest.mark.django_db
+def test_role_owner_sees_owner_money_navigation(django_user_model):
+    owner_group, _ = Group.objects.get_or_create(name="Owner")
+    user = django_user_model.objects.create_user(username="owner", password="pw")
+    user.groups.add(owner_group)
+
+    role = navigation.get_primary_role(user)
+    groups = navigation.get_navigation_groups_for_role(role)
+    visible_urls = {link["url_name"] for group in groups for link in group["links"]}
+
+    assert role == navigation.ROLE_OWNER
+    assert "root" in visible_urls
+    assert "savings_ledger_list" in visible_urls
+    assert "vendor_prices_list" in visible_urls
+    assert "indents_list" not in visible_urls
+
+
+@pytest.mark.django_db
+def test_role_purchase_sees_procurement_only_navigation(django_user_model):
+    purchase_group, _ = Group.objects.get_or_create(name="Purchase")
+    user = django_user_model.objects.create_user(username="purchase", password="pw")
+    user.groups.add(purchase_group)
+
+    role = navigation.get_primary_role(user)
+    groups = navigation.get_navigation_groups_for_role(role)
+    visible_urls = {link["url_name"] for group in groups for link in group["links"]}
+
+    assert role == navigation.ROLE_PURCHASE
+    assert "purchase_orders_list" in visible_urls
+    assert "grn_list" in visible_urls
+    assert "vendor_prices_list" in visible_urls
+    assert "items_list" not in visible_urls
+    assert "recipes_list" not in visible_urls
+
+
+@pytest.mark.django_db
+def test_role_kitchen_staff_sees_indent_requests_only(django_user_model):
+    kitchen_group, _ = Group.objects.get_or_create(name="Kitchen Staff")
+    user = django_user_model.objects.create_user(username="kitchen", password="pw")
+    user.groups.add(kitchen_group)
+
+    role = navigation.get_primary_role(user)
+    groups = navigation.get_navigation_groups_for_role(role)
+    visible_urls = {link["url_name"] for group in groups for link in group["links"]}
+
+    assert role == navigation.ROLE_KITCHEN_STAFF
+    assert visible_urls == {"indents_list"}
+
+
+@pytest.mark.django_db
+def test_primary_navigation_hx_request_still_returns_empty(django_user_model):
+    user = django_user_model.objects.create_user(username="hx", password="pw")
+    request = RequestFactory().get("/", HTTP_HX_REQUEST="true")
+    request.user = user
+    request.resolver_match = None
+
+    ctx = navigation.primary_navigation(request)
+
+    assert ctx["navigation_groups"] == []
+
+
+@pytest.mark.django_db
+def test_top_nav_uses_post_logout_form(django_user_model):
+    user = django_user_model.objects.create_user(username="logout_u", password="pw")
+    rf = RequestFactory()
+    request = rf.get("/")
+    request.user = user
+    html = render_to_string("components/top_nav.html", request=request)
+
+    assert f'action="{reverse("logout")}"' in html
+    assert 'method="post"' in html

@@ -163,7 +163,10 @@
               <a href="{% url 'workflow_guide' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Help &amp; Guide</a>
               <div class="border-t border-border my-1"></div>
               {% if user.is_superuser %}<a href="/admin/" class="block px-4 py-2 text-sm text-gray-500 hover:bg-surfaceSubtle" role="menuitem">Admin Panel</a>{% endif %}
-              <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-danger hover:bg-danger-soft" role="menuitem">Sign out</a>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-left block px-4 py-2 text-sm text-danger hover:bg-danger-soft" role="menuitem">Sign out</button>
+              </form>
             </div>
           </div>
         </div>

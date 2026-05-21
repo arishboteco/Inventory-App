@@ -9,6 +9,20 @@ from django.urls import NoReverseMatch, reverse
 
 logger = logging.getLogger(__name__)
 
+ROLE_OWNER = "owner"
+ROLE_PURCHASE = "purchase"
+ROLE_STOREKEEPER = "storekeeper"
+ROLE_HEAD_CHEF = "head_chef"
+ROLE_KITCHEN_STAFF = "kitchen_staff"
+
+ROLE_GROUP_NAME_MAP: Mapping[str, str] = {
+    ROLE_OWNER: "Owner",
+    ROLE_PURCHASE: "Purchase",
+    ROLE_STOREKEEPER: "Storekeeper",
+    ROLE_HEAD_CHEF: "Head Chef",
+    ROLE_KITCHEN_STAFF: "Kitchen Staff",
+}
+
 # ---------------------------------------------------------------------------
 # Central definitions of navigation sections.  Each entry contains the user
 # facing title and the URL name that should resolve to the actual path.  The
@@ -134,6 +148,43 @@ NAVIGATION_LINKS = [
     for link in links
 ]
 
+ROLE_ALLOWED_URLS: Mapping[str, set[str]] = {
+    ROLE_OWNER: {
+        "root",
+        "food_cost_report",
+        "savings_ledger_list",
+        "history_reports",
+        "visualizations",
+        "ml_dashboard",
+        "indents_consolidate_preview",
+        "purchase_orders_list",
+        "grn_list",
+        "vendor_prices_list",
+    },
+    ROLE_PURCHASE: {
+        "indents_consolidate_preview",
+        "vendor_prices_list",
+        "purchase_orders_list",
+        "grn_list",
+        "savings_ledger_list",
+    },
+    ROLE_STOREKEEPER: {
+        "grn_list",
+        "stock_movements",
+        "stock_take_list",
+        "items_list",
+    },
+    ROLE_HEAD_CHEF: {
+        "food_cost_report",
+        "recipes_list",
+        "stock_movements",
+        "ml_dashboard",
+    },
+    ROLE_KITCHEN_STAFF: {
+        "indents_list",
+    },
+}
+
 
 def _resolve_link(link: Mapping[str, str]) -> Mapping[str, str]:
     """Resolve a navigation link to its absolute URL.
@@ -203,6 +254,35 @@ def get_navigation_groups(
     return resolved
 
 
+def get_primary_role(user) -> str | None:
+    """Return the first recognized role from the user's Django groups."""
+    if not getattr(user, "is_authenticated", False):
+        return None
+    if getattr(user, "is_superuser", False):
+        return ROLE_OWNER
+    names = set(user.groups.values_list("name", flat=True))
+    normalized = {name.strip().lower() for name in names}
+    for role_key, group_name in ROLE_GROUP_NAME_MAP.items():
+        if group_name.lower() in normalized:
+            return role_key
+    return None
+
+
+def get_navigation_groups_for_role(role: str | None) -> List[dict]:
+    """Return navigation groups filtered by role, or full groups if no role."""
+    allowed_urls = ROLE_ALLOWED_URLS.get(role)
+    if not allowed_urls:
+        return get_navigation_groups()
+    scoped_groups: List[tuple[str, List[Mapping[str, str]]]] = []
+    for category, links in NAVIGATION_GROUPS:
+        filtered_links = [
+            link for link in links if link.get("url_name", "") in allowed_urls
+        ]
+        if filtered_links:
+            scoped_groups.append((category, filtered_links))
+    return get_navigation_groups(groups=scoped_groups)
+
+
 def primary_navigation(request):
     """Provide grouped navigation data and notification counts for the top nav."""
     match = getattr(request, "resolver_match", None)
@@ -220,7 +300,12 @@ def primary_navigation(request):
             "notification_count": 0,
             "notifications": [],
         }
-    ctx = {"navigation_groups": get_navigation_groups()}
+    user = getattr(request, "user", None)
+    role = get_primary_role(user)
+    ctx = {
+        "navigation_groups": get_navigation_groups_for_role(role),
+        "primary_role": role,
+    }
     if hasattr(request, "user") and request.user.is_authenticated:
         try:
             from inventory.services.nav_kpis import get_cached_nav_kpis

@@ -11,6 +11,7 @@ from django.urls import reverse
 
 from inventory.models import SavingsLedger
 from inventory.services import dashboard_kpis as dkpis
+from inventory.services.variance_service import build_variance_report
 
 MONEY_PLACES = Decimal("0.01")
 PCT_PLACES = Decimal("0.1")
@@ -59,6 +60,7 @@ def _leakage_areas(
     food_cost_gap_pct: Decimal | None,
     unrealised_profit: Decimal,
     wastage: Decimal,
+    unexplained_leakage: Decimal,
 ) -> list[dict[str, Any]]:
     areas: list[dict[str, Any]] = []
     if food_cost_gap_pct is not None and food_cost_gap_pct > 0:
@@ -79,6 +81,16 @@ def _leakage_areas(
                 "detail": "Stock marked as wastage in this period",
                 "url": reverse("stock_movements") + "?section=waste",
                 "status": "warning",
+            }
+        )
+    if unexplained_leakage > 0:
+        areas.append(
+            {
+                "label": "Unexplained variance",
+                "amount": unexplained_leakage,
+                "detail": "Usage above ideal after removing recorded wastage.",
+                "url": reverse("variance_report"),
+                "status": "danger",
             }
         )
     if not areas:
@@ -218,6 +230,8 @@ def build_owner_money_dashboard(
     wastage = _money(
         _bundle_value(bundle, "wastage", lambda: dkpis.wastage_total(start, end))
     )
+    variance_summary = build_variance_report(start, end)["summary"]
+    unexplained_leakage = _money(variance_summary.get("unexplained_leakage_value", 0))
 
     return {
         "opening_stock": opening_stock,
@@ -232,10 +246,12 @@ def build_owner_money_dashboard(
         "recovered_profit_this_month": recovered_profit_this_month,
         "remaining_opportunity": remaining_opportunity,
         "wastage": wastage,
+        "unexplained_leakage": unexplained_leakage,
         "top_leakage_areas": _leakage_areas(
             food_cost_gap_pct=food_cost_gap_pct,
             unrealised_profit=unrealised_profit,
             wastage=wastage,
+            unexplained_leakage=unexplained_leakage,
         ),
         "weekly_action_plan": _weekly_action_plan(
             food_cost_gap_pct=food_cost_gap_pct,

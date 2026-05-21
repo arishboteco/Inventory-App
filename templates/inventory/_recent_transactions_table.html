@@ -5,7 +5,7 @@
 {% block actions %}
   <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-surfaceSubtle border-b border-border">
     <form method="get" action="" class="flex flex-wrap items-center gap-2">
-      <input type="text" name="item_q" value="{{ filter_item_q|default:'' }}" placeholder="Search item…"
+      <input type="text" name="item_q" value="{{ filter_item_q|default:'' }}" placeholder="Search item..."
              class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary w-40" />
       <select name="type" class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
         <option value="">All types</option>
@@ -45,7 +45,7 @@
   {% for tx in page_obj %}
   <tr class="odd:bg-surface even:bg-surfaceSubtle hover:bg-surfaceSubtle text-bodyText">
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.transaction_id }}</span></td>
-    <td class="px-4 py-2">{{ tx.item.name|default:"—" }}</td>
+    <td class="px-4 py-2">{{ tx.item.name|default:"-" }}</td>
     <td class="px-4 py-2">
       {% if tx.transaction_type == 'RECEIVING' %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success-soft text-success">Receiving</span>
@@ -56,18 +56,33 @@
       {% elif tx.transaction_type == 'TRANSFER' %}
         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText border border-border">Transfer</span>
       {% else %}
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText">{{ tx.transaction_type|default:"—" }}</span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surfaceSubtle text-bodyText">{{ tx.transaction_type|default:"-" }}</span>
       {% endif %}
     </td>
     <td class="px-4 py-2 text-right"><span class="tabular-nums">{{ tx.quantity_change }}</span></td>
-    <td class="px-4 py-2">{{ tx.user_id|default:"—" }}</td>
+    <td class="px-4 py-2">{{ tx.user_id|default:"-" }}</td>
     <td class="px-4 py-2 tabular-nums">{{ tx.transaction_date|date:"Y-m-d" }}</td>
     <td class="px-4 py-2">
       {% if tx.transaction_type == 'TRANSFER' and tx.from_department and tx.to_department %}
-        <span class="text-bodyText font-medium">{{ tx.from_department.name }} → {{ tx.to_department.name }}</span>
-        {% if tx.notes %}<span class="text-bodyText opacity-60 ml-1">· {{ tx.notes }}</span>{% endif %}
+        <span class="text-bodyText font-medium">{{ tx.from_department.name }} &rarr; {{ tx.to_department.name }}</span>
+        {% if tx.notes %}<span class="text-bodyText opacity-60 ml-1">&middot; {{ tx.notes }}</span>{% endif %}
+      {% elif tx.transaction_type == 'WASTAGE' %}
+        <div class="space-y-0.5">
+          {% if tx.reason_category %}
+            <p class="text-bodyText text-xs font-medium">{{ tx.reason_category|title|cut:"_" }}</p>
+          {% endif %}
+          {% if tx.notes %}
+            <p class="text-bodyText opacity-70">{{ tx.notes }}</p>
+          {% endif %}
+          {% if tx.wastage_photo %}
+            <a href="{{ tx.wastage_photo.url }}" target="_blank" rel="noopener" class="text-primary text-xs hover:underline">Photo</a>
+          {% endif %}
+          {% if not tx.reason_category and not tx.notes and not tx.wastage_photo %}
+            -
+          {% endif %}
+        </div>
       {% else %}
-        {{ tx.notes|default:"—" }}
+        {{ tx.notes|default:"-" }}
       {% endif %}
     </td>
   </tr>

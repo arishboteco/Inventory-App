@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS stock_transactions (
   related_indent_id INTEGER,
   related_po_id INTEGER,
   notes TEXT,
+  reason_category TEXT,
+  wastage_photo TEXT,
   transaction_date TEXT NOT NULL,
   FOREIGN KEY (item_id) REFERENCES items(item_id)
 );

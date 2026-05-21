@@ -41,6 +41,8 @@ def test_stock_movements_page_has_datalist(client):
     assert 'id="modal-root"' in content
     assert "min-h-full flex items-start justify-center" in content
     assert "max-h-[calc(100vh-2rem)]" in content
+    assert 'name="submit_waste"' in content
+    assert 'enctype="multipart/form-data"' in content
 
 
 @pytest.mark.django_db
@@ -50,3 +52,15 @@ def test_stock_receiving_form_requires_positive_quantity(qty):
     form = StockReceivingForm(data={"item": item.pk, "quantity_change": qty})
     assert not form.is_valid()
     assert form.errors["quantity_change"] == ["Quantity must be positive"]
+
+
+@pytest.mark.django_db
+def test_stock_wastage_form_includes_phase7_reasons_and_optional_photo():
+    form = StockWastageForm()
+    values = [value for value, _ in form.fields["reason_category"].choices]
+    assert "SPOILED" in values
+    assert "EXPIRED" in values
+    assert "OVER_PREPPED" in values
+    assert "STAFF_MEAL" in values
+    assert "wastage_photo" in form.fields
+    assert form.fields["wastage_photo"].required is False

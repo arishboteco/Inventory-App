@@ -51,6 +51,13 @@ def test_build_variance_report_computes_item_leakage(item_factory):
         transaction_type="ISSUE",
         transaction_date=timezone.now(),
     )
+    StockTransaction.objects.create(
+        item=item,
+        quantity_change=Decimal("-0.50"),
+        transaction_type="WASTAGE",
+        reason_category="SPOILED",
+        transaction_date=timezone.now(),
+    )
 
     today = timezone.localdate()
     report = build_variance_report(today, today)
@@ -60,10 +67,16 @@ def test_build_variance_report_computes_item_leakage(item_factory):
     row = rows[0]
     assert row.unit_label == "KG"
     assert row.ideal_usage == Decimal("1.00")
-    assert row.actual_usage == Decimal("2.00")
-    assert row.variance_qty == Decimal("1.00")
-    assert row.variance_value == Decimal("200.00")
-    assert report["summary"]["leakage_value"] == Decimal("200.00")
+    assert row.actual_usage == Decimal("2.50")
+    assert row.variance_qty == Decimal("1.50")
+    assert row.variance_value == Decimal("300.00")
+    assert row.recorded_wastage_qty == Decimal("0.50")
+    assert row.recorded_wastage_value == Decimal("100.00")
+    assert row.unexplained_variance_qty == Decimal("1.00")
+    assert row.unexplained_variance_value == Decimal("200.00")
+    assert report["summary"]["leakage_value"] == Decimal("300.00")
+    assert report["summary"]["recorded_wastage_value"] == Decimal("100.00")
+    assert report["summary"]["unexplained_leakage_value"] == Decimal("200.00")
 
 
 def test_build_variance_report_counts_unmapped_sales_rows(item_factory):
@@ -86,3 +99,4 @@ def test_build_variance_report_counts_unmapped_sales_rows(item_factory):
     today = timezone.localdate()
     report = build_variance_report(today, today)
     assert report["summary"]["unmapped_sales_count"] == 1
+    assert "unexplained_leakage_value" in report["summary"]

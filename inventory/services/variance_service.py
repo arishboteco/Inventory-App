@@ -181,17 +181,27 @@ def _actual_usage_by_item(start_date: date, end_date: date, candidate_item_ids: 
 
 
 def _likely_reason_and_action(
-    *, ideal_base: Decimal, actual_base: Decimal, variance_base: Decimal, wastage_base: Decimal
+    *,
+    ideal_base: Decimal,
+    actual_base: Decimal,
+    variance_base: Decimal,
+    recorded_wastage_base: Decimal,
+    unexplained_base: Decimal,
 ) -> tuple[str, str]:
     if ideal_base == 0 and actual_base > 0:
         return (
             "Usage exists but mapped sales are missing for this item.",
             "Map missing POS menu items to recipes and verify recipe ingredients.",
         )
-    if variance_base > 0 and wastage_base > 0:
+    if variance_base > 0 and recorded_wastage_base > 0 and unexplained_base <= 0:
+        return (
+            "Over-usage is fully explained by recorded wastage.",
+            "Keep logging wastage reasons and reduce avoidable kitchen loss.",
+        )
+    if variance_base > 0 and recorded_wastage_base > 0 and unexplained_base > 0:
         return (
             "Recorded wastage explains part of over-usage.",
-            "Review wastage reasons and assign a reduction action this week.",
+            "Reduce wastage first, then investigate remaining unexplained leakage.",
         )
     if variance_base > 0:
         return (
@@ -217,6 +227,10 @@ class VarianceRow:
     actual_usage: Decimal
     variance_qty: Decimal
     variance_value: Decimal
+    recorded_wastage_qty: Decimal
+    recorded_wastage_value: Decimal
+    unexplained_variance_qty: Decimal
+    unexplained_variance_value: Decimal
     likely_reason: str
     recommended_action: str
     is_unmapped_candidate: bool
@@ -237,6 +251,8 @@ def build_variance_report(start_date: date, end_date: date) -> dict:
     rows: list[VarianceRow] = []
     total_positive_leakage = ZERO
     total_negative_variance_value = ZERO
+    total_recorded_wastage_value = ZERO
+    total_unexplained_leakage_value = ZERO
 
     item_lookup = {
         item.pk: item
@@ -255,12 +271,17 @@ def build_variance_report(start_date: date, end_date: date) -> dict:
         variance_base = actual_base - ideal_base
         cost_per_base = UnitsService.cost_per_base_for_item(item)
         variance_value = variance_base * _as_decimal(cost_per_base)
-        wastage_base = _as_decimal(state["wastage_base"] if state else ZERO)
+        recorded_wastage_base = _as_decimal(state["wastage_base"] if state else ZERO)
+        positive_variance_base = max(variance_base, ZERO)
+        unexplained_base = max(positive_variance_base - recorded_wastage_base, ZERO)
+        recorded_wastage_value = recorded_wastage_base * _as_decimal(cost_per_base)
+        unexplained_value = unexplained_base * _as_decimal(cost_per_base)
         likely_reason, action = _likely_reason_and_action(
             ideal_base=ideal_base,
             actual_base=actual_base,
             variance_base=variance_base,
-            wastage_base=wastage_base,
+            recorded_wastage_base=recorded_wastage_base,
+            unexplained_base=unexplained_base,
         )
         is_unmapped_candidate = ideal_base == 0 and actual_base > 0
 
@@ -268,6 +289,8 @@ def build_variance_report(start_date: date, end_date: date) -> dict:
             total_positive_leakage += variance_value
         elif variance_value < 0:
             total_negative_variance_value += abs(variance_value)
+        total_recorded_wastage_value += recorded_wastage_value
+        total_unexplained_leakage_value += unexplained_value
 
         rows.append(
             VarianceRow(
@@ -277,6 +300,10 @@ def build_variance_report(start_date: date, end_date: date) -> dict:
                 actual_usage=_from_base_qty(item, actual_base),
                 variance_qty=_from_base_qty(item, variance_base),
                 variance_value=variance_value,
+                recorded_wastage_qty=_from_base_qty(item, recorded_wastage_base),
+                recorded_wastage_value=recorded_wastage_value,
+                unexplained_variance_qty=_from_base_qty(item, unexplained_base),
+                unexplained_variance_value=unexplained_value,
                 likely_reason=likely_reason,
                 recommended_action=action,
                 is_unmapped_candidate=is_unmapped_candidate,
@@ -300,5 +327,7 @@ def build_variance_report(start_date: date, end_date: date) -> dict:
             "unmapped_sales_count": unmapped_count,
             "leakage_value": total_positive_leakage,
             "favourable_value": total_negative_variance_value,
+            "recorded_wastage_value": total_recorded_wastage_value,
+            "unexplained_leakage_value": total_unexplained_leakage_value,
         },
     }

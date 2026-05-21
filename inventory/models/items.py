@@ -140,6 +140,11 @@ class StockTransaction(models.Model):
     )
     notes = models.TextField(blank=True, null=True, default="")
     reason_category = models.CharField(max_length=20, blank=True, null=True)
+    wastage_photo = models.FileField(
+        upload_to="wastage_photos/",
+        blank=True,
+        null=True,
+    )
     transaction_date = models.DateTimeField(default=timezone.now)
     # D3: Transfer support — source/destination departments
     from_department = models.ForeignKey(

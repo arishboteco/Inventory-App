@@ -1131,7 +1131,7 @@ def issue_indent(request, pk: int):
             if result.ok:
                 messages.success(request, result.message, extra_tags="toast")
                 return redirect("indent_detail", pk=indent.pk)
-            messages.info(request, result.message, extra_tags="toast")
+            messages.warning(request, result.message, extra_tags="toast")
             return redirect("indent_detail", pk=indent.pk)
     else:
         Formset = forms.formset_factory(

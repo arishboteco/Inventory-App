@@ -33,7 +33,7 @@
 {% block data_container %}
     {% url 'items_table' as items_table_url %}
     <div class="mb-4">
-  {% include "components/filter_bar.html" with filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" hide_labels=True search_placeholder='Search items by name or category' %}
+  {% include "components/filter_bar.html" with filters=filters predictive_names=predictive_filter_names hx_get=items_table_url hx_target="#items-list" hx_indicator="#items-loading" hide_labels=True search_placeholder='Search items...' reset_href=request.path %}
     </div>
     <div class="bg-surface border border-border rounded-2xl shadow-card overflow-hidden">
       <div id="items-toolbar">

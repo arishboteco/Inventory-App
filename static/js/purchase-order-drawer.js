@@ -68,6 +68,76 @@
     }
   }
 
+  function readItemLeadTimes(form) {
+    const el = form.querySelector("#po-item-lead-times");
+    if (!el || !el.textContent) return {};
+    try {
+      return JSON.parse(el.textContent);
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function parseOrderDate(value) {
+    const raw = String(value || "").trim();
+    let match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      return {
+        date: new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
+        format: "iso",
+      };
+    }
+    match = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (match) {
+      return {
+        date: new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])),
+        format: "dmy",
+      };
+    }
+    return null;
+  }
+
+  function pad2(value) {
+    return String(value).padStart(2, "0");
+  }
+
+  function formatDate(date, format) {
+    const year = date.getFullYear();
+    const month = pad2(date.getMonth() + 1);
+    const day = pad2(date.getDate());
+    if (format === "dmy") return `${day}-${month}-${year}`;
+    return `${year}-${month}-${day}`;
+  }
+
+  function updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes) {
+    const orderInput = form.querySelector('[name="order_date"]');
+    const expectedInput = form.querySelector('[name="expected_delivery_date"]');
+    if (!orderInput || !expectedInput) return;
+
+    const parsed = parseOrderDate(orderInput.value);
+    if (!parsed) return;
+
+    let maxLeadDays = null;
+    formsetEl.querySelectorAll(".item-form").forEach(function (row) {
+      if (row.style.display === "none") return;
+      const deleted = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      if (deleted && deleted.checked) return;
+      const itemSelect = row.querySelector("select.item-select");
+      if (!itemSelect || !itemSelect.value) return;
+      const leadDays = Number(itemLeadTimes[itemSelect.value]);
+      if (!Number.isFinite(leadDays)) return;
+      maxLeadDays = maxLeadDays === null ? leadDays : Math.max(maxLeadDays, leadDays);
+    });
+
+    if (maxLeadDays === null) return;
+    if (expectedInput.value && expectedInput.dataset.poAutoDate !== "1") return;
+
+    const expected = new Date(parsed.date);
+    expected.setDate(expected.getDate() + maxLeadDays);
+    expectedInput.value = formatDate(expected, parsed.format);
+    expectedInput.dataset.poAutoDate = "1";
+  }
+
   function applyHints(row, itemId, hints) {
     const suggestedEl = row.querySelector("[data-suggested-qty]");
     const priceHintEl = row.querySelector("[data-price-hint]");
@@ -101,6 +171,7 @@
 
     const itemPrices = readItemPrices(form);
     const itemVendorHints = readItemVendorHints(form);
+    const itemLeadTimes = readItemLeadTimes(form);
     const prefix = form.getAttribute("data-formset-prefix") || "items";
 
     if (!formsetEl._poDelegationBound) {
@@ -121,12 +192,15 @@
           if (!rowPk || !String(rowPk.value || "").trim()) {
             row.remove();
             renumberFormsetRows(form, formsetEl, prefix);
+            updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
             return;
           }
           row.style.display = "none";
+          updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
         } else {
           row.remove();
           renumberFormsetRows(form, formsetEl, prefix);
+          updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
         }
       });
 
@@ -144,6 +218,22 @@
           priceInput.value = parseFloat(itemPrices[t.value]).toFixed(2);
         }
         applyHints(row, t.value, itemVendorHints);
+        updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
+      });
+    }
+
+    const orderInput = form.querySelector('[name="order_date"]');
+    const expectedInput = form.querySelector('[name="expected_delivery_date"]');
+    if (orderInput && !orderInput._poLeadTimeBound) {
+      orderInput._poLeadTimeBound = true;
+      orderInput.addEventListener("change", function () {
+        updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
+      });
+    }
+    if (expectedInput && !expectedInput._poLeadTimeBound) {
+      expectedInput._poLeadTimeBound = true;
+      expectedInput.addEventListener("input", function () {
+        expectedInput.dataset.poAutoDate = "0";
       });
     }
 
@@ -167,6 +257,7 @@
         applyHints(row, sel.value, itemVendorHints);
       }
     });
+    updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
 
     if (form.id === "po-form" && !form._poNativeValidityBound) {
       form._poNativeValidityBound = true;

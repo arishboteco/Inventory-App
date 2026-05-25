@@ -26,6 +26,7 @@ class IssueResult:
     ok: bool
     message: str
     updated_items: int = 0
+    skipped_items: int = 0
 
 
 def _as_decimal(val: Any) -> Decimal:
@@ -71,6 +72,7 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
     }
 
     updated = 0
+    skipped_reasons: list[str] = []
     with transaction.atomic():
         for line in lines:
             qty = _as_decimal(getattr(line, "issue_qty", 0))
@@ -89,7 +91,10 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
             item: Item = ii.item  # type: ignore
             current = _as_decimal(item.current_stock or 0)
             if current < qty:
-                # Not enough stock; skip this line
+                item_name = getattr(item, "name", f"Item {item.item_id}")
+                skipped_reasons.append(
+                    f"{item_name}: requested {qty}, available {current}"
+                )
                 continue
             # Record stock movement (decrease)
             note_parts = [f"Issue for MRN {indent.mrn or indent.indent_id}"]
@@ -136,8 +141,29 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
                 indent.status = "PROCESSING"
                 indent.save(update_fields=["status", "updated_at"])  # type: ignore
 
+    if updated == 0 and skipped_reasons:
+        return IssueResult(
+            ok=False,
+            message="Cannot fulfill due to insufficient stock: "
+            + "; ".join(skipped_reasons),
+            updated_items=0,
+            skipped_items=len(skipped_reasons),
+        )
     if updated == 0:
-        return IssueResult(ok=False, message="No items issued", updated_items=0)
+        return IssueResult(
+            ok=False,
+            message="No items were issued. Enter an issue quantity greater than 0.",
+            updated_items=0,
+            skipped_items=0,
+        )
+    if skipped_reasons:
+        return IssueResult(
+            ok=True,
+            message=f"Issued {updated} line(s). Skipped due to insufficient stock: "
+            + "; ".join(skipped_reasons),
+            updated_items=updated,
+            skipped_items=len(skipped_reasons),
+        )
     return IssueResult(
         ok=True, message=f"Issued {updated} line(s)", updated_items=updated
     )

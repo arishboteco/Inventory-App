@@ -1,5 +1,14 @@
 {% extends "components/detail_layout.html" %}
 {% block title %}{{ po.po_number }} – {{ po.supplier.name }} – Inventory Pro{% endblock %}
+{% block breadcrumbs %}
+  <nav class="mb-4 text-sm text-gray-600" aria-label="Breadcrumb">
+    <ol class="flex flex-wrap items-center gap-2">
+      <li><a href="{% url 'purchase_orders_list' %}" class="text-primary hover:underline">Purchase Orders</a></li>
+      <li aria-hidden="true">/</li>
+      <li class="text-bodyText">{{ po.po_number }}</li>
+    </ol>
+  </nav>
+{% endblock %}
 {% block heading %}{{ po.po_number }}{% endblock %}
 {% block status_badge %}
   <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full border border-border bg-surfaceSubtle text-bodyText">
@@ -29,7 +38,16 @@
   </div>
 {% endblock %}
 {% block actions %}
-  <a href="{% url 'purchase_order_receive' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Receive Goods</a>
+  {% if po.status == 'DRAFT' %}
+    <form action="{% url 'purchase_order_mark_ordered' po.pk %}" method="post">
+      {% csrf_token %}
+      <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Send to Supplier</button>
+    </form>
+  {% elif po.status == 'SENT' %}
+    <a href="{% url 'purchase_order_receive' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Receive Goods</a>
+  {% elif po.status == 'RECEIVED' %}
+    <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">View GRNs</a>
+  {% endif %}
   <!-- More actions dropdown -->
   <div class="relative" x-data="{ open: false }" @keydown.escape="open = false" @click.outside="open = false">
     <button type="button" @click="open = !open" :aria-expanded="open.toString()" class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
@@ -39,10 +57,12 @@
     <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-1 w-44 rounded-lg bg-surface border border-border shadow-card z-30 py-1" role="menu">
       <a href="{% url 'purchase_order_edit' po.pk %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Edit</a>
       {% if po.status == 'DRAFT' %}
-      <form action="{% url 'purchase_order_mark_ordered' po.pk %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Send to Supplier</button>
-      </form>
+        <form action="{% url 'purchase_order_mark_ordered' po.pk %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Send to Supplier</button>
+        </form>
+      {% elif po.status == 'SENT' %}
+        <a href="{% url 'purchase_order_receive' po.pk %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Receive Goods</a>
       {% endif %}
       <div class="border-t border-border my-1"></div>
       <a href="{% url 'grn_list' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">View GRNs</a>

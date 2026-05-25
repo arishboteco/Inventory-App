@@ -216,6 +216,14 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
     can_delete=True,
 )
 
+PurchaseOrderItemEditFormSet = forms.inlineformset_factory(
+    PurchaseOrder,
+    PurchaseOrderItem,
+    form=PurchaseOrderItemForm,
+    extra=0,
+    can_delete=True,
+)
+
 
 class GRNForm(StyledFormMixin, forms.ModelForm):
     notes = forms.CharField(

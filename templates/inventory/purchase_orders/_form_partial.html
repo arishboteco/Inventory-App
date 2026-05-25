@@ -9,6 +9,7 @@
       {% csrf_token %}
       {{ item_prices|json_script:"po-item-prices" }}
       {{ item_vendor_hints|json_script:"po-item-vendor-hints" }}
+      {{ item_lead_times|json_script:"po-item-lead-times" }}
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         {% for field in form %}
           {% if field.name != "notes" %}

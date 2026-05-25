@@ -22,7 +22,9 @@
         {% for f in formset %}
         <tr class="item-form align-top border-b border-border last:border-0">
           <td class="px-3 py-2 align-top">
-            <div class="hidden">{{ f.id }}</div>
+            {% for hidden in f.hidden_fields %}
+              <div class="hidden">{{ hidden }}</div>
+            {% endfor %}
             {% if f.non_field_errors %}
             <ul class="text-danger list-disc pl-5 mb-2 text-xs">
               {% for error in f.non_field_errors %}<li>{{ error }}</li>{% endfor %}
@@ -51,10 +53,11 @@
 <template id="item-empty-form">
   <tr class="item-form align-top border-b border-border">
     <td class="px-3 py-2 align-top">
+      {% for hidden in formset.empty_form.hidden_fields %}
+        <div class="hidden">{{ hidden }}</div>
+      {% endfor %}
       {% for field in formset.empty_form %}
-        {% if field.name == 'id' %}
-          <div class="hidden">{{ field }}</div>
-        {% elif field.name == 'item' %}
+        {% if field.name == 'item' %}
           {% include "components/form_field.html" with field=field %}
           <p class="mt-1 text-xs text-gray-500" data-suggested-qty></p>
         {% endif %}

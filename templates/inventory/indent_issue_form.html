@@ -8,6 +8,13 @@
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {{ formset.management_form }}
+    {% if shortage_rows %}
+      <div class="rounded-lg border border-warning-strong bg-warning-soft px-4 py-3 text-sm text-warning">
+        <p class="font-medium text-bodyText">Available stock is short for this indent.</p>
+        <p class="mt-1">Issue available quantities now, then create a PO for the remaining shortage.</p>
+        <a href="{% url 'indents_consolidate_preview' %}?ids={{ indent.indent_id }}" class="inline-flex mt-2 text-primary font-medium hover:underline">Create PO for shortage</a>
+      </div>
+    {% endif %}
     <div class="bg-surface border border-border rounded-xl shadow-card">
       <table class="min-w-full divide-y divide-border">
         <thead class="bg-surfaceSubtle text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
@@ -16,6 +23,7 @@
             <th class="px-3 py-2 text-right">Requested</th>
             <th class="px-3 py-2 text-right">Issued</th>
             <th class="px-3 py-2 text-right">Pending</th>
+            <th class="px-3 py-2 text-right">Available</th>
             <th class="px-3 py-2 text-right">Issue Now</th>
             <th class="px-3 py-2">Source</th>
           </tr>
@@ -27,6 +35,7 @@
               <td class="px-3 py-2 text-right align-top">{{ row.requested_qty }}</td>
               <td class="px-3 py-2 text-right align-top">{{ row.issued_qty|default:0 }}</td>
               <td class="px-3 py-2 text-right align-top">{{ row.remaining_qty }}</td>
+              <td class="px-3 py-2 text-right align-top" data-testid="available-stock">{{ row.item.current_stock|default:0 }}</td>
               <td class="px-3 py-2 text-right align-top">{{ form.issue_qty }}{{ form.indent_item_id }}</td>
               <td class="px-3 py-2 align-top">{{ form.source_location }}</td>
             </tr>

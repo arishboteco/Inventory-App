@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from django.urls import reverse
 
@@ -47,6 +49,37 @@ def test_item_create_view_htmx_success(client, monkeypatch):
     content = resp.content.decode()
     assert "<option" in content
     assert "toast" in content
+
+
+def test_item_create_partial_persists_reorder_point_and_category(client):
+    from inventory.models import Category, Unit
+
+    unit = Unit.objects.create(
+        purchase_unit="kg",
+        base_unit="kg",
+        conversion_factor=1,
+    )
+    category = Category.objects.create(category="Food", sub_category="Dry Goods")
+    url = reverse("items_list")
+    resp = client.post(
+        url,
+        {
+            "partial": "1",
+            "name": "Brown Sugar",
+            "unit_id": str(unit.unit_id),
+            "category_id": str(category.category_id),
+            "reorder_point": "12.50",
+            "current_stock": "3.00",
+            "is_active": "on",
+        },
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["ok"] is True
+    item = Item.objects.get(name="Brown Sugar")
+    assert item.reorder_point == Decimal("12.50")
+    assert item.category_id == category.category_id
 
 
 def test_item_create_view_htmx_failure(client, monkeypatch):

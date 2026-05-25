@@ -10,11 +10,11 @@
     <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-sm font-medium text-bodyText mb-1">Name</label>
+          <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Name<span class="text-danger"> *</span></label>
           {{ form.name|add_class:"block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" }}
         </div>
         <div>
-          <label class="block text-sm font-medium text-bodyText mb-1">Unit</label>
+          <label for="{{ form.unit_id.id_for_label }}" class="block text-sm font-medium text-bodyText mb-1">Unit<span class="text-danger"> *</span></label>
           {{ form.unit_id|add_class:"block w-full px-3 py-2 border border-form-border rounded-md bg-form-bg focus:outline-none focus:ring-2 focus:ring-primary" }}
         </div>
         <div>

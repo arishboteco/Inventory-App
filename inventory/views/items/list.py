@@ -413,7 +413,13 @@ class ItemsTableView(TemplateView):
         except Exception:  # pragma: no cover - defensive
             querystring = ""
         ctx.update(
-            {"page_obj": page_obj, "page_size": per_page, "querystring": querystring}
+            {
+                "page_obj": page_obj,
+                "page_size": per_page,
+                "querystring": querystring,
+                "items_list_url": reverse("items_list"),
+                "items_table_url": reverse("items_table"),
+            }
         )
         ctx.update(category_filters.resolve_category_filters(self.request))
         ctx["filters"] = category_filters.build_filters(self.request)

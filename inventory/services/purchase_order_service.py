@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
@@ -50,11 +51,41 @@ def _po_line_items_from_formset_cleaned(cleaned_rows: list) -> List[Dict[str, An
     return items_data
 
 
+def _expected_delivery_from_lead_times(order_date, cleaned_rows: list):
+    if not order_date:
+        return None
+    lead_days = [
+        row["item"].lead_time_days
+        for row in cleaned_rows
+        if row
+        and not row.get("DELETE", False)
+        and row.get("item")
+        and row["item"].lead_time_days is not None
+    ]
+    if not lead_days:
+        return None
+    return order_date + timedelta(days=max(lead_days))
+
+
+def _apply_expected_delivery_fallback(form: PurchaseOrderForm, formset) -> None:
+    if form.cleaned_data.get("expected_delivery_date"):
+        return
+    calculated = _expected_delivery_from_lead_times(
+        form.cleaned_data.get("order_date"),
+        formset.cleaned_data,
+    )
+    if calculated:
+        form.instance.expected_delivery_date = calculated
+        form.cleaned_data["expected_delivery_date"] = calculated
+
+
 def save_purchase_order_from_forms(
     form: PurchaseOrderForm,
     formset: PurchaseOrderItemFormSet,
 ) -> PurchaseOrder:
     """Persist header and lines. Call only when ``form`` and ``formset`` are valid."""
+
+    _apply_expected_delivery_fallback(form, formset)
 
     if form.instance.pk:
         po = form.save()

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
-from inventory.models import PurchaseOrder, Supplier
+from inventory.models import PurchaseOrder, PurchaseOrderItem, Supplier
 
 pytestmark = pytest.mark.django_db
 
@@ -113,6 +114,35 @@ def test_purchase_order_edit_partial_post_validation_returns_json(
     data = json.loads(resp.content)
     assert data.get("ok") is False
     assert "errors" in data
+
+
+def test_purchase_order_edit_partial_renders_existing_line_pk_without_blank_extra(
+    po_staff_client, item_factory
+):
+    supplier = Supplier.objects.create(name="Edit Drawer Hidden PK Supplier")
+    item = item_factory(name="Edit Drawer Hidden PK Item")
+    po = PurchaseOrder.objects.create(
+        supplier=supplier,
+        order_date=date.today(),
+        status="DRAFT",
+    )
+    poi = PurchaseOrderItem.objects.create(
+        purchase_order=po,
+        item=item,
+        quantity_ordered=Decimal("2.00"),
+        unit_price=Decimal("3.00"),
+    )
+
+    resp = po_staff_client.get(
+        reverse("purchase_order_edit_partial", kwargs={"pk": po.pk})
+    )
+
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content.decode(), "html.parser")
+    assert soup.find("input", attrs={"name": "items-0-po_item_id"})["value"] == str(
+        poi.pk
+    )
+    assert soup.find("select", attrs={"name": "items-1-item"}) is None
 
 
 def test_purchase_order_full_form_notes_not_inside_two_column_grid(po_staff_client):

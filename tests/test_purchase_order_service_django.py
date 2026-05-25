@@ -50,6 +50,46 @@ def test_save_purchase_order_from_forms_creates(item_factory):
 
 
 @pytest.mark.django_db
+def test_save_purchase_order_from_forms_sets_expected_date_from_longest_item_lead_time(
+    item_factory,
+):
+    supplier = Supplier.objects.create(name="Lead Time Vendor", is_active=True)
+    short_lead = item_factory(name="Short Lead Item", lead_time_days=2)
+    long_lead = item_factory(name="Long Lead Item", lead_time_days=7)
+    order_date = date(2026, 5, 25)
+    form = PurchaseOrderForm(
+        {
+            "supplier": str(supplier.pk),
+            "order_date": str(order_date),
+            "expected_delivery_date": "",
+            "status": "DRAFT",
+            "notes": "",
+        }
+    )
+    formset = PurchaseOrderItemFormSet(
+        {
+            "items-TOTAL_FORMS": "2",
+            "items-INITIAL_FORMS": "0",
+            "items-MIN_NUM_FORMS": "0",
+            "items-MAX_NUM_FORMS": "1000",
+            "items-0-item": str(short_lead.pk),
+            "items-0-quantity_ordered": "2",
+            "items-0-unit_price": "3.00",
+            "items-1-item": str(long_lead.pk),
+            "items-1-quantity_ordered": "1",
+            "items-1-unit_price": "4.00",
+        },
+        prefix="items",
+    )
+
+    assert form.is_valid(), form.errors
+    assert formset.is_valid(), formset.errors
+    po = purchase_order_service.save_purchase_order_from_forms(form, formset)
+
+    assert po.expected_delivery_date == date(2026, 6, 1)
+
+
+@pytest.mark.django_db
 def test_create_po_and_get_po(item_factory):
     supplier = Supplier.objects.create(name="Vendor")
     item = item_factory(name="Widget")

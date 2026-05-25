@@ -15,7 +15,12 @@ from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import TemplateView
 
-from ..forms.purchase_forms import GRNForm, PurchaseOrderForm, PurchaseOrderItemFormSet
+from ..forms.purchase_forms import (
+    GRNForm,
+    PurchaseOrderForm,
+    PurchaseOrderItemEditFormSet,
+    PurchaseOrderItemFormSet,
+)
 from ..models import Item, PurchaseOrder, SavingsLedger, Supplier, VendorItemPrice
 from ..services import (
     goods_receiving_service,
@@ -78,6 +83,15 @@ def _build_item_vendor_hints_dict() -> dict[str, dict[str, float]]:
             ),
         }
     return hints
+
+
+def _build_item_lead_times_dict() -> dict[str, int]:
+    return {
+        str(item.pk): int(item.lead_time_days)
+        for item in Item.objects.filter(
+            is_active=True, lead_time_days__isnull=False
+        ).only("item_id", "lead_time_days")
+    }
 
 
 def _is_partial_post(request) -> bool:
@@ -486,6 +500,7 @@ class PurchaseOrderCreatePartialView(View):
                 "is_edit": False,
                 "item_prices": _build_item_prices_dict(),
                 "item_vendor_hints": _build_item_vendor_hints_dict(),
+                "item_lead_times": _build_item_lead_times_dict(),
             },
         )
 
@@ -516,6 +531,7 @@ class PurchaseOrderCreatePartialView(View):
             "is_edit": False,
             "item_prices": _build_item_prices_dict(),
             "item_vendor_hints": _build_item_vendor_hints_dict(),
+            "item_lead_times": _build_item_lead_times_dict(),
         }
         if _is_partial_post(request):
             return JsonResponse(build_form_error_payload(form, formset), status=400)
@@ -545,6 +561,7 @@ def purchase_order_create(request):
             "is_edit": False,
             "item_prices": _build_item_prices_dict(),
             "item_vendor_hints": _build_item_vendor_hints_dict(),
+            "item_lead_times": _build_item_lead_times_dict(),
         },
     )
 
@@ -556,13 +573,15 @@ def purchase_order_edit(request, pk: int):
         form = PurchaseOrderForm(
             request.POST, instance=po, supplier_suggest_url=supplier_url
         )
-        formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
+        formset = PurchaseOrderItemEditFormSet(
+            request.POST, instance=po, prefix="items"
+        )
         if form.is_valid() and formset.is_valid():
             purchase_order_service.save_purchase_order_from_forms(form, formset)
             return redirect("purchase_order_detail", pk=pk)
     else:
         form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
+        formset = PurchaseOrderItemEditFormSet(instance=po, prefix="items")
     return render(
         request,
         "inventory/purchase_orders/form.html",
@@ -573,6 +592,7 @@ def purchase_order_edit(request, pk: int):
             "po": po,
             "item_prices": _build_item_prices_dict(),
             "item_vendor_hints": _build_item_vendor_hints_dict(),
+            "item_lead_times": _build_item_lead_times_dict(),
         },
     )
 
@@ -586,7 +606,7 @@ class PurchaseOrderEditPartialView(View):
         po = get_object_or_404(PurchaseOrder, pk=pk)
         supplier_url = reverse("supplier_search")
         form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
+        formset = PurchaseOrderItemEditFormSet(instance=po, prefix="items")
         return render(
             request,
             self.template_name,
@@ -597,6 +617,7 @@ class PurchaseOrderEditPartialView(View):
                 "po": po,
                 "item_prices": _build_item_prices_dict(),
                 "item_vendor_hints": _build_item_vendor_hints_dict(),
+                "item_lead_times": _build_item_lead_times_dict(),
             },
         )
 
@@ -606,7 +627,9 @@ class PurchaseOrderEditPartialView(View):
         form = PurchaseOrderForm(
             request.POST, instance=po, supplier_suggest_url=supplier_url
         )
-        formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
+        formset = PurchaseOrderItemEditFormSet(
+            request.POST, instance=po, prefix="items"
+        )
         if form.is_valid() and formset.is_valid():
             purchase_order_service.save_purchase_order_from_forms(form, formset)
             return JsonResponse(
@@ -623,6 +646,8 @@ class PurchaseOrderEditPartialView(View):
             "is_edit": True,
             "po": po,
             "item_prices": _build_item_prices_dict(),
+            "item_vendor_hints": _build_item_vendor_hints_dict(),
+            "item_lead_times": _build_item_lead_times_dict(),
         }
         if _is_partial_post(request):
             return JsonResponse(build_form_error_payload(form, formset), status=400)

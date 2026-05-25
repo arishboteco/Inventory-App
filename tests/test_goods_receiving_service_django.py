@@ -21,6 +21,7 @@ def test_create_grn_updates_stock_and_po(item_factory):
         {"supplier_id": supplier.pk, "order_date": date.today()},
         [{"item_id": item.item_id, "quantity_ordered": 10, "unit_price": 1.0}],
     )
+    PurchaseOrder.objects.filter(pk=po_id).update(status="SENT")
     po_item = PurchaseOrderItem.objects.get(
         purchase_order_id=po_id, item_id=item.item_id
     )
@@ -59,6 +60,7 @@ def test_grn_realizes_estimated_saving_entries(item_factory):
         {"supplier_id": supplier.pk, "order_date": date.today()},
         [{"item_id": item.item_id, "quantity_ordered": 2, "unit_price": 90.0}],
     )
+    PurchaseOrder.objects.filter(pk=po_id).update(status="SENT")
     po_item = PurchaseOrderItem.objects.get(
         purchase_order_id=po_id, item_id=item.item_id
     )
@@ -86,3 +88,57 @@ def test_grn_realizes_estimated_saving_entries(item_factory):
     )
     assert ledger.status == SavingsLedger.Status.VERIFIED
     assert ledger.confirmed_saving == Decimal("24.00")
+
+
+@pytest.mark.django_db
+def test_create_grn_rejects_over_receipt_and_preserves_stock(item_factory):
+    supplier = Supplier.objects.create(name="Over Receipt Vendor")
+    item = item_factory(name="Over Receipt Item", current_stock=0)
+    po_id = purchase_order_service.create_po(
+        {"supplier_id": supplier.pk, "order_date": date.today(), "status": "SENT"},
+        [{"item_id": item.item_id, "quantity_ordered": 10, "unit_price": 1.0}],
+    )
+    po = PurchaseOrder.objects.get(pk=po_id)
+    po.status = "SENT"
+    po.save(update_fields=["status"])
+    po_item = PurchaseOrderItem.objects.get(
+        purchase_order_id=po_id, item_id=item.item_id
+    )
+    grn_data = {
+        "po_id": po_id,
+        "supplier_id": supplier.pk,
+        "received_date": date.today(),
+        "received_by_user_id": "tester",
+    }
+
+    success, msg, _ = goods_receiving_service.create_grn(
+        grn_data,
+        [
+            {
+                "item_id": item.item_id,
+                "po_item_id": po_item.pk,
+                "quantity_ordered_on_po": po_item.quantity_ordered,
+                "quantity_received": 7,
+                "unit_price_at_receipt": po_item.unit_price,
+            }
+        ],
+    )
+    assert success, msg
+
+    success, msg, _ = goods_receiving_service.create_grn(
+        grn_data,
+        [
+            {
+                "item_id": item.item_id,
+                "po_item_id": po_item.pk,
+                "quantity_ordered_on_po": po_item.quantity_ordered,
+                "quantity_received": 4,
+                "unit_price_at_receipt": po_item.unit_price,
+            }
+        ],
+    )
+
+    assert success is False
+    assert "exceeds remaining" in msg
+    item.refresh_from_db()
+    assert item.current_stock == Decimal("7")

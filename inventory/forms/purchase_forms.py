@@ -75,10 +75,11 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
         try:
             status_field = self.fields.get("status")
             if status_field and getattr(status_field, "choices", None):
+                current_status = str(getattr(self.instance, "status", "") or "").upper()
                 filtered = [
                     (v, lbl)
                     for v, lbl in status_field.choices
-                    if str(v).upper() != "SENT"
+                    if str(v).upper() != "SENT" or current_status == "SENT"
                 ]
                 status_field.choices = filtered
         except Exception:

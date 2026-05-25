@@ -7,6 +7,11 @@
   <div class="p-4">
   <form method="post" enctype="multipart/form-data" data-modal-form data-requires-line-items action="{% url 'purchase_order_receive_partial' po.pk %}">
       {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
       <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
         {% for field in form %}
           {% include "components/form_field.html" with field=field %}
@@ -22,7 +27,7 @@
       </div>
       <div class="mt-4 flex items-center justify-end gap-2">
         <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Submit GRN</button>
+        <button type="submit" {% if can_receive is False %}disabled{% endif %} class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong disabled:opacity-50 disabled:cursor-not-allowed">Submit GRN</button>
       </div>
     </form>
   </div>

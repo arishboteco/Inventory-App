@@ -29,7 +29,13 @@
   </div>
 {% endblock %}
 {% block actions %}
-  <a href="{% url 'purchase_order_receive' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Receive Goods</a>
+  {% if is_receivable %}
+  <a href="{% url 'purchase_order_receive' po.pk %}"
+     data-modal-url="{% url 'purchase_order_receive_partial' po.pk %}"
+     data-modal-type="drawer"
+     data-modal-prefetch="hover"
+     class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Receive Goods</a>
+  {% endif %}
   <!-- More actions dropdown -->
   <div class="relative" x-data="{ open: false }" @keydown.escape="open = false" @click.outside="open = false">
     <button type="button" @click="open = !open" :aria-expanded="open.toString()" class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">
@@ -37,7 +43,11 @@
       <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
     </button>
     <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute right-0 mt-1 w-44 rounded-lg bg-surface border border-border shadow-card z-30 py-1" role="menu">
-      <a href="{% url 'purchase_order_edit' po.pk %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Edit</a>
+      <a href="{% url 'purchase_order_edit' po.pk %}"
+         data-modal-url="{% url 'purchase_order_edit_partial' po.pk %}"
+         data-modal-type="drawer"
+         data-modal-prefetch="hover"
+         class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Edit</a>
       {% if po.status == 'DRAFT' %}
       <form action="{% url 'purchase_order_mark_ordered' po.pk %}" method="post">
         {% csrf_token %}

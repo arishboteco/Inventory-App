@@ -97,6 +97,86 @@ def _annotate_total_value(qs):
     )
 
 
+def _build_po_initial_from_request(
+    request,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Prefill a new PO drawer when launched from item/low-stock contexts."""
+
+    item_pk = request.GET.get("item")
+    if not item_pk or not str(item_pk).isdigit():
+        return {}, []
+    item = (
+        Item.objects.filter(pk=int(item_pk), is_active=True)
+        .select_related("preferred_supplier")
+        .first()
+    )
+    if not item:
+        return {}, []
+    reorder = Decimal(str(item.reorder_point or 0))
+    stock = Decimal(str(item.current_stock or 0))
+    suggested_qty = reorder - stock
+    if suggested_qty <= 0:
+        suggested_qty = item.minimum_order_qty or Decimal("1")
+    unit_price = item.last_purchase_price or item.initial_purchase_price or Decimal("0")
+    form_initial: dict[str, Any] = {}
+    if item.preferred_supplier_id and item.preferred_supplier:
+        form_initial["supplier"] = item.preferred_supplier.name
+    line_initial = [
+        {
+            "item": item.pk,
+            "quantity_ordered": suggested_qty,
+            "unit_price": unit_price,
+        }
+    ]
+    return form_initial, line_initial
+
+
+def _get_receive_items(po: PurchaseOrder):
+    return (
+        po.purchaseorderitem_set.select_related("item")
+        .annotate(_received_total=Sum("grnitem__quantity_received"))
+        .all()
+    )
+
+
+def _build_receive_items_data(request, form: GRNForm, items) -> list[dict[str, Any]]:
+    any_received = False
+    items_data: list[dict[str, Any]] = []
+    for item in items:
+        qty_field = f"item_{item.pk}"
+        try:
+            qty = Decimal(request.POST.get(qty_field, 0) or 0)
+        except Exception:
+            qty = Decimal("0")
+        if qty < 0:
+            form.add_error(
+                None,
+                f"Received quantity for {item.item.name} cannot be negative.",
+            )
+            continue
+        if qty:
+            any_received = True
+            remaining = item.quantity_ordered - item.received_total
+            if qty > remaining:
+                form.add_error(
+                    None,
+                    f"Received quantity for {item.item.name} exceeds remaining.",
+                )
+                continue
+            items_data.append(
+                {
+                    "item_id": item.item_id,
+                    "po_item_id": item.pk,
+                    "quantity_ordered_on_po": item.quantity_ordered,
+                    "quantity_received": qty,
+                    "unit_price_at_receipt": item.unit_price,
+                }
+            )
+    if not any_received:
+        form.add_error(None, "No quantities received.")
+    return items_data
+
+
 class PurchaseOrdersListView(TemplateView):
     """Display purchase orders list and filters."""
 
@@ -475,8 +555,11 @@ class PurchaseOrderCreatePartialView(View):
 
     def get(self, request):
         supplier_url = reverse("supplier_search")
-        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(prefix="items")
+        form_initial, line_initial = _build_po_initial_from_request(request)
+        form = PurchaseOrderForm(
+            initial=form_initial, supplier_suggest_url=supplier_url
+        )
+        formset = PurchaseOrderItemFormSet(prefix="items", initial=line_initial)
         return render(
             request,
             self.template_name,
@@ -534,8 +617,11 @@ def purchase_order_create(request):
             except PurchaseOrderServiceError as exc:
                 messages.error(request, str(exc), extra_tags="toast")
     else:
-        form = PurchaseOrderForm(supplier_suggest_url=supplier_url)
-        formset = PurchaseOrderItemFormSet(prefix="items")
+        form_initial, line_initial = _build_po_initial_from_request(request)
+        form = PurchaseOrderForm(
+            initial=form_initial, supplier_suggest_url=supplier_url
+        )
+        formset = PurchaseOrderItemFormSet(prefix="items", initial=line_initial)
     return render(
         request,
         "inventory/purchase_orders/form.html",
@@ -558,8 +644,11 @@ def purchase_order_edit(request, pk: int):
         )
         formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
-            purchase_order_service.save_purchase_order_from_forms(form, formset)
-            return redirect("purchase_order_detail", pk=pk)
+            try:
+                purchase_order_service.save_purchase_order_from_forms(form, formset)
+                return redirect("purchase_order_detail", pk=pk)
+            except PurchaseOrderServiceError as exc:
+                messages.error(request, str(exc), extra_tags="toast")
     else:
         form = PurchaseOrderForm(instance=po, supplier_suggest_url=supplier_url)
         formset = PurchaseOrderItemFormSet(instance=po, prefix="items")
@@ -608,21 +697,27 @@ class PurchaseOrderEditPartialView(View):
         )
         formset = PurchaseOrderItemFormSet(request.POST, instance=po, prefix="items")
         if form.is_valid() and formset.is_valid():
-            purchase_order_service.save_purchase_order_from_forms(form, formset)
-            return JsonResponse(
-                {
-                    "ok": True,
-                    "id": po.pk,
-                    "message": "Purchase order updated",
-                    "redirect": reverse("purchase_order_detail", kwargs={"pk": po.pk}),
-                }
-            )
+            try:
+                purchase_order_service.save_purchase_order_from_forms(form, formset)
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "id": po.pk,
+                        "message": "Purchase order updated",
+                        "redirect": reverse(
+                            "purchase_order_detail", kwargs={"pk": po.pk}
+                        ),
+                    }
+                )
+            except PurchaseOrderServiceError as exc:
+                return JsonResponse({"ok": False, "message": str(exc)}, status=400)
         ctx = {
             "form": form,
             "formset": formset,
             "is_edit": True,
             "po": po,
             "item_prices": _build_item_prices_dict(),
+            "item_vendor_hints": _build_item_vendor_hints_dict(),
         }
         if _is_partial_post(request):
             return JsonResponse(build_form_error_payload(form, formset), status=400)
@@ -658,6 +753,7 @@ def purchase_order_detail(request, pk: int):
         "po": po,
         "items": items,
         "badge_class": badge_class,
+        "is_receivable": po.status in RECEIVABLE_STATUSES,
         "rows": rows,
         "list_url": reverse("purchase_orders_list"),
         "list_title": "Purchase Orders",
@@ -676,49 +772,14 @@ def purchase_order_detail(request, pk: int):
 
 def purchase_order_receive(request, pk: int):
     po = get_object_or_404(PurchaseOrder, pk=pk)
-    items = (
-        po.purchaseorderitem_set.select_related("item")
-        .annotate(_received_total=Sum("grnitem__quantity_received"))
-        .all()
-    )
+    items = _get_receive_items(po)
     if request.method == "POST":
         form = GRNForm(request.POST)
-        if form.is_valid():
-            any_received = False
-            items_data: list[dict[str, Any]] = []
-            for item in items:
-                qty_field = f"item_{item.pk}"
-                try:
-                    qty = Decimal(request.POST.get(qty_field, 0) or 0)
-                except Exception:
-                    qty = Decimal("0")
-                if qty < 0:
-                    form.add_error(
-                        None,
-                        f"Received quantity for {item.item.name} cannot be negative.",
-                    )
-                    continue
-                if qty:
-                    any_received = True
-                    remaining = item.quantity_ordered - item.received_total
-                    if qty > remaining:
-                        form.add_error(
-                            None,
-                            f"Received quantity for {item.item.name} exceeds remaining",
-                        )
-                        continue
-                    items_data.append(
-                        {
-                            "item_id": item.item_id,
-                            "po_item_id": item.pk,
-                            "quantity_ordered_on_po": item.quantity_ordered,
-                            "quantity_received": qty,
-                            "unit_price_at_receipt": item.unit_price,
-                        }
-                    )
-            if not any_received:
-                form.add_error(None, "No quantities received")
-            elif not form.errors:
+        if po.status not in RECEIVABLE_STATUSES:
+            form.add_error(None, "Only sent purchase orders can receive goods.")
+        elif form.is_valid():
+            items_data = _build_receive_items_data(request, form, items)
+            if not form.errors:
                 grn_data = {
                     "po_id": po.pk,
                     "supplier_id": po.supplier_id,
@@ -734,13 +795,20 @@ def purchase_order_receive(request, pk: int):
                 )
                 if success:
                     return redirect("purchase_order_detail", pk=pk)
-                messages.error(request, msg, extra_tags="toast")
+                form.add_error(None, msg)
     else:
         form = GRNForm()
+        if po.status not in RECEIVABLE_STATUSES:
+            form.add_error(None, "Only sent purchase orders can receive goods.")
     return render(
         request,
         "inventory/purchase_orders/receive.html",
-        {"form": form, "po": po, "items": items},
+        {
+            "form": form,
+            "po": po,
+            "items": items,
+            "can_receive": po.status in RECEIVABLE_STATUSES,
+        },
     )
 
 
@@ -756,59 +824,27 @@ class PurchaseOrderReceivePartialView(View):
 
     def get(self, request, pk: int):
         po = get_object_or_404(PurchaseOrder, pk=pk)
-        items = (
-            po.purchaseorderitem_set.select_related("item")
-            .annotate(_received_total=Sum("grnitem__quantity_received"))
-            .all()
-        )
+        items = _get_receive_items(po)
         form = GRNForm()
-        ctx = {"form": form, "po": po, "items": items}
+        if po.status not in RECEIVABLE_STATUSES:
+            form.add_error(None, "Only sent purchase orders can receive goods.")
+        ctx = {
+            "form": form,
+            "po": po,
+            "items": items,
+            "can_receive": po.status in RECEIVABLE_STATUSES,
+        }
         return render(request, self.template_name, ctx)
 
     def post(self, request, pk: int):
         po = get_object_or_404(PurchaseOrder, pk=pk)
-        items = (
-            po.purchaseorderitem_set.select_related("item")
-            .annotate(_received_total=Sum("grnitem__quantity_received"))
-            .all()
-        )
+        items = _get_receive_items(po)
         form = GRNForm(request.POST)
-        if form.is_valid():
-            any_received = False
-            items_data: list[dict[str, Any]] = []
-            for item in items:
-                qty_field = f"item_{item.pk}"
-                try:
-                    qty = Decimal(request.POST.get(qty_field, 0) or 0)
-                except Exception:
-                    qty = Decimal("0")
-                if qty < 0:
-                    form.add_error(
-                        None,
-                        f"Received quantity for {item.item.name} cannot be negative.",
-                    )
-                    continue
-                if qty:
-                    any_received = True
-                    remaining = item.quantity_ordered - item.received_total
-                    if qty > remaining:
-                        form.add_error(
-                            None,
-                            f"Received quantity for {item.item.name} exceeds remaining",
-                        )
-                        continue
-                    items_data.append(
-                        {
-                            "item_id": item.item_id,
-                            "po_item_id": item.pk,
-                            "quantity_ordered_on_po": item.quantity_ordered,
-                            "quantity_received": qty,
-                            "unit_price_at_receipt": item.unit_price,
-                        }
-                    )
-            if not any_received:
-                form.add_error(None, "No quantities received")
-            elif not form.errors:
+        if po.status not in RECEIVABLE_STATUSES:
+            form.add_error(None, "Only sent purchase orders can receive goods.")
+        elif form.is_valid():
+            items_data = _build_receive_items_data(request, form, items)
+            if not form.errors:
                 grn_data = {
                     "po_id": po.pk,
                     "supplier_id": po.supplier_id,
@@ -833,8 +869,15 @@ class PurchaseOrderReceivePartialView(View):
                     )
                 return JsonResponse({"ok": False, "message": msg}, status=400)
 
-        # If we reach here, show the partial again with errors
-        ctx = {"form": form, "po": po, "items": items}
+        if _is_partial_post(request):
+            return JsonResponse(build_form_error_payload(form), status=400)
+
+        ctx = {
+            "form": form,
+            "po": po,
+            "items": items,
+            "can_receive": po.status in RECEIVABLE_STATUSES,
+        }
         return render(request, self.template_name, ctx, status=400)
 
 

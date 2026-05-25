@@ -19,6 +19,7 @@ from .exceptions import StockServiceError
 from .vendor_savings_service import apply_grn_realization
 
 logger = logging.getLogger(__name__)
+RECEIVABLE_STATUSES = {"SENT", "RECEIVED"}
 
 
 def generate_grn_number() -> str:
@@ -43,10 +44,12 @@ def _create_grn_header(
 ) -> Tuple[GoodsReceivedNote, Optional[PurchaseOrder]]:
     supplier = Supplier.objects.get(pk=grn_data["supplier_id"])
     po = (
-        PurchaseOrder.objects.get(pk=grn_data.get("po_id"))
+        PurchaseOrder.objects.select_for_update().get(pk=grn_data.get("po_id"))
         if grn_data.get("po_id")
         else None
     )
+    if po and po.status not in RECEIVABLE_STATUSES:
+        raise ValueError("Only sent purchase orders can receive goods.")
     grn = GoodsReceivedNote.objects.create(
         grn_number=generate_grn_number(),
         purchase_order=po,
@@ -68,7 +71,13 @@ def _process_items(
     item_ids = {d["item_id"] for d in items_received_data}
     po_item_ids = {d["po_item_id"] for d in items_received_data}
     items = Item.objects.in_bulk(item_ids)
-    po_items = PurchaseOrderItem.objects.in_bulk(po_item_ids)
+    po_items = PurchaseOrderItem.objects.select_for_update().in_bulk(po_item_ids)
+    remaining_by_po_item: dict[int, Decimal] = {}
+    for po_item_id, po_item in po_items.items():
+        remaining_by_po_item[po_item_id] = max(
+            Decimal("0"),
+            (po_item.quantity_ordered or Decimal("0")) - po_item.received_total,
+        )
 
     grn_items: List[GRNItem] = []
     for item_d in items_received_data:
@@ -80,7 +89,19 @@ def _process_items(
             raise PurchaseOrderItem.DoesNotExist(
                 f"PurchaseOrderItem {item_d['po_item_id']} not found"
             )
+        if po and po_item.purchase_order_id != po.pk:
+            raise ValueError("Received line does not belong to this purchase order.")
+        if po_item.item_id != item.item_id:
+            raise ValueError("Received line item does not match the purchase order.")
         qty = Decimal(str(item_d["quantity_received"]))
+        if qty <= 0:
+            raise ValueError(f"Received quantity for {item.name} must be positive.")
+        remaining = remaining_by_po_item.get(po_item.pk, Decimal("0"))
+        if qty > remaining:
+            raise ValueError(
+                f"Received quantity for {item.name} exceeds remaining quantity."
+            )
+        remaining_by_po_item[po_item.pk] = remaining - qty
         grn_items.append(
             GRNItem(
                 grn=grn,
@@ -158,6 +179,8 @@ def create_grn(
         StockServiceError,
     ) as exc:
         return False, f"Invalid reference: {exc}", None
+    except ValueError as exc:
+        return False, str(exc), None
     except Exception as exc:  # pragma: no cover - defensive
         logger.error("Error creating GRN: %s", exc)
         return False, "Database error creating GRN.", None

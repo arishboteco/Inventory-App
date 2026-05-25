@@ -8,11 +8,13 @@ def get_field_label(form_like, field_name: str) -> str:
     return field_name.replace("_", " ").capitalize()
 
 
-def build_form_error_payload(form, formset) -> dict:
+def build_form_error_payload(form, formset=None) -> dict:
     """Collect validation errors into a JSON-serializable dict for JsonResponse."""
 
     form_non_field_errors = [str(error) for error in form.non_field_errors()]
-    formset_non_form_errors = [str(error) for error in formset.non_form_errors()]
+    formset_non_form_errors = (
+        [str(error) for error in formset.non_form_errors()] if formset else []
+    )
 
     form_errors: dict[str, list[str]] = {}
     first_form_field_error = None
@@ -27,7 +29,7 @@ def build_form_error_payload(form, formset) -> dict:
 
     formset_errors: list[dict] = []
     first_formset_field_error = None
-    forms = list(formset.forms)
+    forms = list(formset.forms) if formset else []
     total_forms = len(forms)
     for index, form_instance in enumerate(forms):
         child_errors: dict[str, list[str]] = {}

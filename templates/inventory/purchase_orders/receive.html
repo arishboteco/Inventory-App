@@ -5,6 +5,11 @@
   <p class="text-sm text-gray-600">Record quantities received and attach supporting documents.</p>
 {% endblock %}
 {% block fields %}
+  {% if form.non_field_errors %}
+    <div class="mb-3 px-3 py-2 rounded-md border border-red-200 bg-red-50 text-red-700 text-sm">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
   <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
     {% for field in form %}
       {% include "components/form_field.html" with field=field %}

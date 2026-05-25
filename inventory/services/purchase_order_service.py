@@ -88,14 +88,43 @@ def save_purchase_order_from_forms(
     _apply_expected_delivery_fallback(form, formset)
 
     if form.instance.pk:
-        po = form.save()
-        formset.save()
+        with transaction.atomic():
+            _validate_po_update_formset(formset)
+            po = form.save()
+            formset.save()
         return po
 
     po_data = _po_header_dict_from_cleaned_form(form)
     items_data = _po_line_items_from_formset_cleaned(formset.cleaned_data)
     po_id = create_po(po_data, items_data)
     return PurchaseOrder.objects.get(pk=po_id)
+
+
+def _validate_po_update_formset(formset: PurchaseOrderItemFormSet) -> None:
+    """Prevent edits that would detach or invalidate existing receipt history."""
+
+    for item_form in formset.forms:
+        if not getattr(item_form, "cleaned_data", None):
+            continue
+        po_item = item_form.instance
+        if not po_item.pk:
+            continue
+        received_total = po_item.received_total
+        if not received_total:
+            continue
+        item_name = getattr(getattr(po_item, "item", None), "name", "this item")
+        if item_form.cleaned_data.get("DELETE"):
+            raise PurchaseOrderServiceError(
+                f"Cannot delete {item_name}; goods have already been received."
+            )
+        ordered_qty = item_form.cleaned_data.get("quantity_ordered")
+        if ordered_qty is not None and ordered_qty < received_total:
+            raise PurchaseOrderServiceError(
+                (
+                    f"Cannot reduce {item_name} below the already received "
+                    f"quantity ({received_total})."
+                )
+            )
 
 
 def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:

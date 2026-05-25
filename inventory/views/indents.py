@@ -1,5 +1,6 @@
 import logging
 import uuid
+from decimal import Decimal
 
 from django import forms
 from django.contrib import messages
@@ -20,9 +21,8 @@ from django.views.generic import TemplateView
 from ..forms.indent_forms import IndentForm, IndentItemFormSet
 from ..forms.indent_issue_forms import IndentIssueFormset, IndentItemIssueForm
 from ..indent_pdf import generate_indent_pdf
-from ..models import Department, Indent
+from ..models import Department, Indent, Item
 from ..models import IndentItem as IndentItemModel
-from ..models import Item
 from ..models import Supplier as SupplierModel
 from ..services import indent_consolidation_service, indent_issue_service, list_utils
 
@@ -1108,6 +1108,15 @@ def issue_indent(request, pk: int):
     items = list(
         indent.indentitem_set.select_related("item").order_by("indent_item_id").all()
     )
+    shortage_rows = [
+        item
+        for item in items
+        if max(
+            Decimal("0"),
+            Decimal(str(item.requested_qty or 0)) - Decimal(str(item.issued_qty or 0)),
+        )
+        > Decimal(str(getattr(item.item, "current_stock", 0) or 0))
+    ]
     # Build formset for all items in this indent
     if request.method == "POST":
         Formset = forms.formset_factory(
@@ -1129,7 +1138,15 @@ def issue_indent(request, pk: int):
                 indent.indent_id, lines, request.user
             )
             if result.ok:
-                messages.success(request, result.message, extra_tags="toast")
+                if result.shortage_items:
+                    messages.warning(
+                        request,
+                        result.message
+                        + " Create a PO for the remaining shortage from the indent page.",
+                        extra_tags="toast",
+                    )
+                else:
+                    messages.success(request, result.message, extra_tags="toast")
                 return redirect("indent_detail", pk=indent.pk)
             messages.warning(request, result.message, extra_tags="toast")
             return redirect("indent_detail", pk=indent.pk)
@@ -1150,6 +1167,7 @@ def issue_indent(request, pk: int):
             "items": items,
             "formset": formset,
             "pairs": pairs,
+            "shortage_rows": shortage_rows,
         },
     )
 

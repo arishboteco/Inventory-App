@@ -27,6 +27,7 @@ class IssueResult:
     message: str
     updated_items: int = 0
     skipped_items: int = 0
+    shortage_items: int = 0
 
 
 def _as_decimal(val: Any) -> Decimal:
@@ -92,10 +93,13 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
             current = _as_decimal(item.current_stock or 0)
             if current < qty:
                 item_name = getattr(item, "name", f"Item {item.item_id}")
+                shortage_qty = qty - current
                 skipped_reasons.append(
-                    f"{item_name}: requested {qty}, available {current}"
+                    f"{item_name}: requested {qty}, available {current}, shortage {shortage_qty}"
                 )
-                continue
+                if current <= 0:
+                    continue
+                qty = min(current, pending)
             # Record stock movement (decrease)
             note_parts = [f"Issue for MRN {indent.mrn or indent.indent_id}"]
             loc = (getattr(line, "source_location", "") or "").strip()
@@ -148,6 +152,7 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
             + "; ".join(skipped_reasons),
             updated_items=0,
             skipped_items=len(skipped_reasons),
+            shortage_items=len(skipped_reasons),
         )
     if updated == 0:
         return IssueResult(
@@ -155,6 +160,7 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
             message="No items were issued. Enter an issue quantity greater than 0.",
             updated_items=0,
             skipped_items=0,
+            shortage_items=0,
         )
     if skipped_reasons:
         return IssueResult(
@@ -163,6 +169,7 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
             + "; ".join(skipped_reasons),
             updated_items=updated,
             skipped_items=len(skipped_reasons),
+            shortage_items=len(skipped_reasons),
         )
     return IssueResult(
         ok=True, message=f"Issued {updated} line(s)", updated_items=updated

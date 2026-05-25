@@ -3,6 +3,51 @@
  * Called from modal.js after drawer HTML is injected (inline scripts in partials do not run).
  */
 (function () {
+  function renumberFormsetRows(form, formsetEl, prefix) {
+    const totalForms = form.querySelector(`#id_${prefix}-TOTAL_FORMS`);
+    if (!totalForms) return;
+
+    const rows = Array.from(formsetEl.querySelectorAll(".item-form"));
+    let nextIndex = 0;
+
+    rows.forEach(function (row) {
+      row.querySelectorAll("input, select, textarea, label").forEach(function (el) {
+        const attrName = el.getAttribute && el.getAttribute("name");
+        if (attrName && attrName.indexOf(`${prefix}-`) === 0) {
+          el.setAttribute(
+            "name",
+            attrName.replace(new RegExp(`^${prefix}-\\d+-`), `${prefix}-${nextIndex}-`),
+          );
+        }
+
+        const attrId = el.getAttribute && el.getAttribute("id");
+        if (attrId && attrId.indexOf(`id_${prefix}-`) === 0) {
+          el.setAttribute(
+            "id",
+            attrId.replace(
+              new RegExp(`^id_${prefix}-\\d+-`),
+              `id_${prefix}-${nextIndex}-`,
+            ),
+          );
+        }
+
+        const attrFor = el.getAttribute && el.getAttribute("for");
+        if (attrFor && attrFor.indexOf(`id_${prefix}-`) === 0) {
+          el.setAttribute(
+            "for",
+            attrFor.replace(
+              new RegExp(`^id_${prefix}-\\d+-`),
+              `id_${prefix}-${nextIndex}-`,
+            ),
+          );
+        }
+      });
+      nextIndex += 1;
+    });
+
+    totalForms.value = String(nextIndex);
+  }
+
   function readItemPrices(form) {
     const el = form.querySelector("#po-item-prices");
     if (!el || !el.textContent) return {};
@@ -70,9 +115,18 @@
         );
         if (deleteInput) {
           deleteInput.checked = true;
+          const rowPk = row.querySelector(
+            'input[type="hidden"][name$="-id"], input[type="hidden"][name$="-po_item_id"]',
+          );
+          if (!rowPk || !String(rowPk.value || "").trim()) {
+            row.remove();
+            renumberFormsetRows(form, formsetEl, prefix);
+            return;
+          }
           row.style.display = "none";
         } else {
           row.remove();
+          renumberFormsetRows(form, formsetEl, prefix);
         }
       });
 
@@ -121,6 +175,13 @@
           e.preventDefault();
           form.reportValidity();
         }
+      });
+    }
+
+    if (!form._poSubmitNormalizeBound) {
+      form._poSubmitNormalizeBound = true;
+      form.addEventListener("submit", function () {
+        renumberFormsetRows(form, formsetEl, prefix);
       });
     }
 

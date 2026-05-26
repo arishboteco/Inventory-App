@@ -61,20 +61,21 @@ def issue_indent(indent_id: int, lines: Iterable[IssueLine], user) -> IssueResul
     - Marks Indent COMPLETED when fully issued
     """
 
-    indent = Indent.objects.select_for_update(of=("self",)).get(pk=indent_id)
     uname, uid = _user_ident(user)
-
-    # Fetch all relevant IndentItems and Items in bulk
-    by_id = {
-        ii.indent_item_id: ii
-        for ii in IndentItem.objects.select_for_update()
-        .select_related("item")
-        .filter(indent_id=indent_id)
-    }
 
     updated = 0
     skipped_reasons: list[str] = []
     with transaction.atomic():
+        indent = Indent.objects.select_for_update(of=("self",)).get(pk=indent_id)
+        # Fetch all relevant IndentItems and Items in bulk after entering the
+        # transaction so row locks are valid on PostgreSQL.
+        by_id = {
+            ii.indent_item_id: ii
+            for ii in IndentItem.objects.select_for_update()
+            .select_related("item")
+            .filter(indent_id=indent_id)
+        }
+
         for line in lines:
             qty = _as_decimal(getattr(line, "issue_qty", 0))
             if qty is None or qty <= 0:

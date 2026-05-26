@@ -717,6 +717,10 @@
       const hiddenDept = form.querySelector("#id_department");
       const uiDept = form.querySelector("#department-ui");
       if (hiddenDept && uiDept) hiddenDept.value = uiDept.value;
+      if (typeof form.checkValidity === "function" && !form.checkValidity()) {
+        if (typeof form.reportValidity === "function") form.reportValidity();
+        return;
+      }
       if (hiddenDept && !hiddenDept.value) {
         showInlineError("Please select a department");
         if (window.notifications)

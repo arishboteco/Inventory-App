@@ -195,6 +195,11 @@
             updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
             return;
           }
+          row
+            .querySelectorAll("input, select, textarea")
+            .forEach(function (field) {
+              if (field !== deleteInput) field.removeAttribute("required");
+            });
           row.style.display = "none";
           updateExpectedDeliveryDate(form, formsetEl, itemLeadTimes);
         } else {

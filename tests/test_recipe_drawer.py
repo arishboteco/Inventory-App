@@ -51,6 +51,43 @@ def test_recipe_create_partial_invalid_ajax_returns_json(client, item_factory):
 
 
 @pytest.mark.django_db
+def test_recipe_create_partial_requires_positive_ingredient_row(client):
+    url = reverse("recipe_create_partial")
+    data = {
+        "name": "No Ingredient Recipe",
+        "description_and_plating": "",
+        "is_active": "on",
+        "type": Recipe.Type.FINAL,
+        "default_yield_qty": "1",
+        "default_yield_unit": "portion",
+        "items-TOTAL_FORMS": "1",
+        "items-INITIAL_FORMS": "0",
+        "items-MIN_NUM_FORMS": "0",
+        "items-MAX_NUM_FORMS": "1000",
+        "items-0-ingredient": "",
+        "items-0-quantity": "",
+        "items-0-unit": "",
+        "items-0-unit_display": "",
+        "items-0-loss_pct": "",
+        "items-0-DELETE": "",
+    }
+
+    response = client.post(
+        url,
+        data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["ok"] is False
+    assert payload["errors"]["formset_non_form"] == [
+        "Add at least one ingredient with a positive quantity."
+    ]
+    assert not Recipe.objects.filter(name="No Ingredient Recipe").exists()
+
+
+@pytest.mark.django_db
 def test_recipe_create_partial_invalid_non_ajax_returns_html(client, item_factory):
     item = item_factory(name="Flour")
     url = reverse("recipe_create_partial")
@@ -424,6 +461,75 @@ def test_recipe_edit_partial_drawer_header_prefills_thumbnail_and_notes(client):
     )
     assert toggle is not None
     assert not toggle.has_attr("checked")
+
+
+@pytest.mark.django_db
+def test_recipe_edit_partial_renders_hidden_ingredient_ids(client, item_factory):
+    item = item_factory(name="Hidden Id Flour")
+    recipe = Recipe.objects.create(name="Hidden Id Bread", is_active=True)
+    recipe_item = RecipeItem.objects.create(
+        recipe=recipe,
+        item=item,
+        quantity=Decimal("1"),
+        unit="kg",
+        loss_pct=Decimal("0"),
+    )
+
+    response = client.get(reverse("recipe_edit_partial", args=[recipe.pk]))
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.content, "html.parser")
+    hidden_id = soup.find("input", {"name": "items-0-id"})
+    assert hidden_id is not None
+    assert hidden_id["value"] == str(recipe_item.pk)
+
+
+@pytest.mark.django_db
+def test_recipe_edit_partial_allows_unchanged_recipe_name(client, item_factory):
+    item = item_factory(name="Edit Same Flour")
+    recipe = Recipe.objects.create(
+        name="Edit Same Bread",
+        is_active=True,
+        type=Recipe.Type.FINAL,
+        default_yield_qty=Decimal("1"),
+        default_yield_unit="portion",
+    )
+    recipe_item = RecipeItem.objects.create(
+        recipe=recipe,
+        item=item,
+        quantity=Decimal("1"),
+        unit="kg",
+        loss_pct=Decimal("0"),
+    )
+    data = {
+        "name": recipe.name,
+        "description_and_plating": "",
+        "is_active": "on",
+        "type": recipe.type,
+        "default_yield_qty": "1",
+        "default_yield_unit": "portion",
+        "items-TOTAL_FORMS": "1",
+        "items-INITIAL_FORMS": "1",
+        "items-MIN_NUM_FORMS": "0",
+        "items-MAX_NUM_FORMS": "1000",
+        "items-0-id": str(recipe_item.pk),
+        "items-0-ingredient": f"i:{item.pk}",
+        "items-0-quantity": "2",
+        "items-0-unit": "kg",
+        "items-0-unit_display": "kg",
+        "items-0-loss_pct": "0",
+        "items-0-DELETE": "",
+    }
+
+    response = client.post(
+        reverse("recipe_edit_partial", args=[recipe.pk]),
+        data,
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+
+    assert response.status_code == 200
+    saved_line = recipe.items.get()
+    assert saved_line.quantity == Decimal("2")
 
 
 @pytest.mark.django_db

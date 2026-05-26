@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django import forms
+from django.forms.models import BaseInlineFormSet
 
 from ..models import Item, Recipe, RecipeItem
 from ..services.form_service import FormService
@@ -181,6 +182,17 @@ class RecipeForm(StyledFormMixin, forms.ModelForm):
             return ini
         return Recipe.Type.FINAL
 
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if not name:
+            return name
+        duplicate_qs = Recipe.objects.filter(name=name)
+        if self.instance and self.instance.pk:
+            duplicate_qs = duplicate_qs.exclude(pk=self.instance.pk)
+        if duplicate_qs.exists():
+            raise forms.ValidationError("A recipe with this name already exists.")
+        return name
+
     def clean(self):
         cleaned_data = super().clean()
         combined = cleaned_data.get("description_and_plating", "")
@@ -232,12 +244,15 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
         choices=[],
         widget=IngredientSelect(
             attrs={
-                "data-placeholder": "Select ingredient",
+                "class": INPUT_CLASS + " predictive",
+                "data-min-chars": "2",
+                "data-placeholder": "Type 2+ chars to search ingredients",
             }
         ),
         label="Ingredient",
     )
     quantity = forms.DecimalField(
+        required=False,
         min_value=0.01,
         decimal_places=2,
         widget=forms.NumberInput(
@@ -266,6 +281,7 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
         label="Unit",
     )
     loss_pct = forms.DecimalField(
+        required=False,
         initial=0,
         min_value=0,
         max_value=100,
@@ -394,10 +410,34 @@ class RecipeItemForm(StyledFormMixin, forms.ModelForm):
         return instance
 
 
+class BaseRecipeItemFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        has_positive_ingredient = False
+        for form in self.forms:
+            cleaned = getattr(form, "cleaned_data", {})
+            if not cleaned or cleaned.get("DELETE"):
+                continue
+            has_ingredient = bool(cleaned.get("item") or cleaned.get("sub_recipe"))
+            quantity = cleaned.get("quantity")
+            if has_ingredient and quantity is not None and quantity > 0:
+                has_positive_ingredient = True
+                break
+
+        if not has_positive_ingredient:
+            raise forms.ValidationError(
+                "Add at least one ingredient with a positive quantity."
+            )
+
+
 RecipeItemFormSet = forms.inlineformset_factory(
     Recipe,
     RecipeItem,
     form=RecipeItemForm,
+    formset=BaseRecipeItemFormSet,
     fk_name="recipe",
     fields=["ingredient", "quantity", "unit", "loss_pct"],
     extra=1,
@@ -408,6 +448,7 @@ RecipeItemEditFormSet = forms.inlineformset_factory(
     Recipe,
     RecipeItem,
     form=RecipeItemForm,
+    formset=BaseRecipeItemFormSet,
     fk_name="recipe",
     fields=["ingredient", "quantity", "unit", "loss_pct"],
     extra=0,

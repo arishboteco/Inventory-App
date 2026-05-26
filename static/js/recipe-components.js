@@ -122,6 +122,73 @@
     return row.querySelector('input[id$="-unit_display"]');
   }
 
+  function recipeHasPositiveIngredientLine(form) {
+    var selects = Array.from(
+      form.querySelectorAll('select[name^="items-"][name$="-ingredient"]'),
+    );
+    return selects.some(function (select) {
+      var row = select.closest("tr");
+      if (!row || row.id === "items-empty-row" || row.classList.contains("hidden")) {
+        return false;
+      }
+      var deleteField = row.querySelector('input[id$="-DELETE"]');
+      if (deleteField && deleteField.checked) {
+        return false;
+      }
+      if (!String(select.value || "").trim()) {
+        return false;
+      }
+      var baseName = String(select.name || "").replace(/-ingredient$/, "");
+      var qty = form.querySelector('input[name="' + baseName + '-quantity"]');
+      return qty && toNumber(qty.value) > 0;
+    });
+  }
+
+  function setRecipeLineRequirement(form, shouldShow) {
+    var alert = form.querySelector("[data-recipe-line-error]");
+    if (!alert) {
+      return;
+    }
+    if (shouldShow) {
+      alert.classList.remove("hidden");
+    } else {
+      alert.classList.add("hidden");
+    }
+  }
+
+  function bindRecipeLineRequirement(form) {
+    if (!form || form.dataset.recipeLineRequirementBound === "1") {
+      return;
+    }
+    if (!form.hasAttribute("data-requires-line-items")) {
+      return;
+    }
+    form.dataset.recipeLineRequirementBound = "1";
+    form.addEventListener("submit", function (event) {
+      if (recipeHasPositiveIngredientLine(form)) {
+        setRecipeLineRequirement(form, false);
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      setRecipeLineRequirement(form, true);
+      var alert = form.querySelector("[data-recipe-line-error]");
+      if (alert) {
+        alert.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+    form.addEventListener("input", function () {
+      if (recipeHasPositiveIngredientLine(form)) {
+        setRecipeLineRequirement(form, false);
+      }
+    });
+    form.addEventListener("change", function () {
+      if (recipeHasPositiveIngredientLine(form)) {
+        setRecipeLineRequirement(form, false);
+      }
+    });
+  }
+
   function setSubRecipeBadgeVisible(row, show) {
     var badge = row.querySelector("[data-recipe-sub-badge]");
     if (!badge) {
@@ -749,6 +816,7 @@
     }
 
     table.dataset.recipeInitialized = "1";
+    bindRecipeLineRequirement(table.closest("form"));
 
     var totalForms = scope.querySelector("#id_items-TOTAL_FORMS");
     var emptyRow = scope.querySelector("#items-empty-row");

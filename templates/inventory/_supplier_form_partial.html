@@ -3,18 +3,18 @@
     <h3 class="text-lg font-semibold">{% if is_edit %}Edit Supplier — {{ supplier.name }}{% else %}Add Supplier{% endif %}</h3>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
-  <div class="p-4">
+  <div class="max-h-[calc(100vh-8rem)] overflow-y-auto" data-supplier-form-scroll>
     <form method="post" data-modal-form action="{% if is_edit %}{% url 'supplier_edit' supplier.supplier_id %}?partial=1{% else %}{% url 'supplier_create' %}?partial=1{% endif %}">
       {% csrf_token %}
       <input type="hidden" name="partial" value="1"/>
-      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1">
+      <div class="grid gap-4 grid-cols-2 max-sm:grid-cols-1 p-4">
         {% for field in form %}
         {% include "components/form_field.html" with field=field container_class="col-span-2" %}
         {% endfor %}
-        <div class="col-span-2 flex flex-row-reverse flex-wrap gap-2 justify-end items-center">
-          <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">{% if is_edit %}Save{% else %}Create{% endif %}</button>
-          <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        </div>
+      </div>
+      <div class="sticky bottom-0 border-t border-border bg-surface/95 backdrop-blur px-4 py-3 flex flex-row-reverse flex-wrap gap-2 justify-end items-center" data-supplier-form-footer>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">{% if is_edit %}Save{% else %}Create{% endif %}</button>
+        <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
       </div>
     </form>
   </div>

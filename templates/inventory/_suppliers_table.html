@@ -112,7 +112,9 @@
         <input type="hidden" name="page_size" value="{{ page_size }}" />
         <input type="hidden" name="sort" value="{{ sort }}" />
         <input type="hidden" name="direction" value="{{ direction }}" />
-        <button type="submit" title="Toggle">
+        <button type="submit"
+                title="{% if row.is_active %}Deactivate{% else %}Activate{% endif %} supplier {{ row.name }}"
+                aria-label="{% if row.is_active %}Deactivate{% else %}Activate{% endif %} supplier {{ row.name }}">
           {% if row.is_active %}
           {% icon 'check' 'w-5 h-5 text-success' %}
           <span class="sr-only">Deactivate</span>
@@ -130,7 +132,8 @@
                 data-modal-type="drawer"
                 data-modal-prefetch="hover"
                 class="text-gray-500 hover:text-primary"
-                title="View">
+                title="View supplier {{ row.name }}"
+                aria-label="View supplier {{ row.name }}">
           {% icon 'eye' 'w-5 h-5' %}
           <span class="sr-only">View</span>
         </button>
@@ -140,7 +143,8 @@
           data-modal-type="drawer"
           data-modal-prefetch="hover"
           class="text-primary"
-          title="Edit"
+          title="Edit supplier {{ row.name }}"
+          aria-label="Edit supplier {{ row.name }}"
         >
           {% icon 'pencil-square' 'w-5 h-5' %}
           <span class="sr-only">Edit</span>
@@ -148,7 +152,8 @@
         <button type="button"
                 onclick="confirmDelete('{% url 'supplier_delete' row.supplier_id %}', '{{ row.name|escapejs }}', 'Supplier')"
                 class="text-danger hover:text-danger"
-                title="Delete">
+                title="Delete supplier {{ row.name }}"
+                aria-label="Delete supplier {{ row.name }}">
           {% icon 'trash' 'w-5 h-5' %}
           <span class="sr-only">Delete</span>
         </button>

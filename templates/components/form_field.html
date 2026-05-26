@@ -3,15 +3,15 @@
   {% if field.field.widget.input_type == "checkbox" %}
     <div class="inline-flex items-center gap-2 h-9">
       {{ field|add_class:"h-4 w-4 rounded border-form-border text-primary focus:ring-primary" }}
-      <label for="{{ field.id_for_label }}" class="text-sm font-medium text-bodyText">{{ field.label }}</label>
+      <label for="{{ field.id_for_label }}" class="text-sm font-medium text-bodyText">{{ field.label }}{% if field.field.required %}<span class="text-danger"> *</span>{% endif %}</label>
     </div>
   {% elif field.field.widget.input_type == "radio" %}
     <div class="inline-flex items-center gap-2 h-9">
       {{ field|add_class:"h-4 w-4 rounded-full border-form-border text-primary focus:ring-primary" }}
-      <label for="{{ field.id_for_label }}" class="text-sm font-medium text-bodyText">{{ field.label }}</label>
+      <label for="{{ field.id_for_label }}" class="text-sm font-medium text-bodyText">{{ field.label }}{% if field.field.required %}<span class="text-danger"> *</span>{% endif %}</label>
     </div>
   {% else %}
-    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-bodyText">{{ field.label }}</label>
+    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-bodyText">{{ field.label }}{% if field.field.required %}<span class="text-danger"> *</span>{% endif %}</label>
     {% if field.field.widget.attrs.class %}
       {{ field|add_class:"leading-normal" }}
     {% elif field_class %}

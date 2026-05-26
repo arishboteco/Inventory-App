@@ -97,6 +97,10 @@
 
     const emptyOption = rawOptions.find((o) => !o.value && !o.disabled);
     const options = rawOptions.filter((o) => o.value && !o.disabled);
+    const minChars = Math.max(
+      0,
+      parseInt(originalSelect.getAttribute("data-min-chars") || "0", 10) || 0,
+    );
 
     // Placeholder
     const attrPlaceholder =
@@ -153,10 +157,22 @@
       dropdown.style.width = rect.width + "px";
     }
 
+    function searchOptions(query) {
+      const q = String(query || "").toLowerCase();
+      if (minChars && q.trim().length < minChars) {
+        renderOptions([]);
+        return;
+      }
+      renderOptions(options.filter((o) => o.text.toLowerCase().includes(q)));
+    }
+
     // Input typing behavior
     textInput.addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase();
-      const filtered = options.filter((o) => o.text.toLowerCase().includes(q));
+      const q = e.target.value;
+      const canSearch = !minChars || q.trim().length >= minChars;
+      const filtered = canSearch
+        ? options.filter((o) => o.text.toLowerCase().includes(q.toLowerCase()))
+        : [];
       renderOptions(filtered);
       dropdown.classList.remove("hidden");
 
@@ -195,7 +211,7 @@
     });
 
     textInput.addEventListener("focus", () => {
-      renderOptions(options);
+      searchOptions(textInput.value);
       dropdown.classList.remove("hidden");
       document.body.appendChild(dropdown);
       // Reposition on scroll/resize

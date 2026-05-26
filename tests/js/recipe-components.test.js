@@ -20,7 +20,7 @@ describe("recipe cost helpers", () => {
       </div>`;
 
     jest.isolateModules(() => {
-      require("./recipe-components.js");
+      require("../../static/js/recipe-components.js");
     });
   });
 

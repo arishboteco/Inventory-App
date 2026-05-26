@@ -19,7 +19,7 @@ describe("items-table delete", () => {
     window.notifications = { showToast: jest.fn() };
     // Require script after mocks and DOM setup
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
   });
 
@@ -54,7 +54,7 @@ describe("items-table view", () => {
     window.modal = { open: jest.fn() };
     window.notifications = { showToast: jest.fn() };
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
   });
 
@@ -66,6 +66,35 @@ describe("items-table view", () => {
       headers: { "X-Requested-With": "fetch" },
     });
     expect(window.modal.open).toHaveBeenCalledWith("<div>ok</div>");
+  });
+});
+
+describe("items-table activate/deactivate", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.body.innerHTML =
+      '<table><tr class="item-row" data-item-id="1"><td data-col="status"><span>Inactive</span></td><td><button data-action="archive">Toggle</button></td></tr></table>';
+    document.cookie = "csrftoken=abc";
+    global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
+    window.htmx = { ajax: jest.fn() };
+    jest.isolateModules(() => {
+      require("../../static/js/items-table.js");
+    });
+  });
+
+  test("inactive rows are treated as activate actions", async () => {
+    const btn = document.querySelector('[data-action="archive"]');
+    btn.click();
+    await flushPromises();
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/items/1/toggle/",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(JSON.parse(localStorage.getItem("items_pending_toast"))).toEqual({
+      message: "Item activated",
+      type: "success",
+    });
   });
 });
 
@@ -81,7 +110,7 @@ describe("column visibility menu", () => {
       </div>`;
     // Require script after DOM setup
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
     document.dispatchEvent(new Event("DOMContentLoaded"));
   });
@@ -141,7 +170,7 @@ describe("stock_status column toggle", () => {
         <table><tr><td data-col="stock_status">val</td></tr></table>
       </div>`;
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
     document.dispatchEvent(new Event("DOMContentLoaded"));
   });
@@ -172,7 +201,7 @@ describe("sorting aria updates", () => {
         </tbody>
       </table>`;
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
   });
 
@@ -209,7 +238,7 @@ describe("details toggle", () => {
         <tr id="details-1" class="hidden"><td colspan="10">Details</td></tr>
       </table>`;
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
   });
 
@@ -243,7 +272,7 @@ describe("inline row edit", () => {
         </tr>
       </table>`;
     jest.isolateModules(() => {
-      require("./items-table.js");
+      require("../../static/js/items-table.js");
     });
   });
 

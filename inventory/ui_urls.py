@@ -30,6 +30,7 @@ from .views.indents import (
 from .views.items.detail import (
     ItemDeleteView,
     ItemDetailView,
+    ItemDuplicateView,
     ItemEditView,
     ItemInlineUpdateView,
     ItemToggleActiveView,
@@ -139,6 +140,11 @@ urlpatterns = [
     # Backward-compat name used in templates/tests
     path("items/upload/", ItemsBulkUploadView.as_view(), name="upload_csv"),
     path("items/<int:pk>/edit/", ItemEditView.as_view(), name="item_edit"),
+    path(
+        "items/<int:pk>/duplicate/",
+        ItemDuplicateView.as_view(),
+        name="item_duplicate",
+    ),
     path("items/<int:pk>/delete/", ItemDeleteView.as_view(), name="item_delete"),
     path(
         "items/<int:pk>/toggle/",

@@ -1,7 +1,7 @@
 {% load form_tags %}
 <div class="bg-surface rounded-2xl shadow-card border border-border overflow-hidden drawer-panel max-w-drawer-xl flex flex-col min-h-0 max-h-[90vh]">
   <div class="shrink-0 px-4 py-3 border-b border-border bg-surfaceSubtle flex items-center justify-between">
-    <h3 class="text-lg font-semibold text-bodyText">Add New Item</h3>
+    <h3 class="text-lg font-semibold text-bodyText">{% if duplicate_source %}Duplicate Item - {{ duplicate_source.name }}{% else %}Add New Item{% endif %}</h3>
     <button type="button" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-close>Close</button>
   </div>
   <form method="post" data-modal-form action="{% url 'items_list' %}" class="flex flex-col flex-1 min-h-0">
@@ -79,7 +79,7 @@
       </div>
       <div class="flex flex-wrap gap-2 justify-end">
         <button type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary" data-modal-close>Cancel</button>
-        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Create</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">{% if duplicate_source %}Create Duplicate{% else %}Create{% endif %}</button>
       </div>
     </div>
   </form>

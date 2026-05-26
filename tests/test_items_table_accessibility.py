@@ -44,3 +44,19 @@ def test_no_dropdown_filter_controls_present():
         "Filter Status",
     ]:
         assert f'aria-label="{label}"' not in content
+
+
+def test_item_action_icons_have_clear_labels():
+    content = Path("templates/inventory/_items_table.html").read_text()
+    for label in [
+        "View details",
+        "Edit item",
+        "Duplicate item",
+        "Delete item",
+    ]:
+        assert f'title="{label}' in content
+        assert f'aria-label="{label}' in content
+    for label in ["Deactivate item", "Activate item"]:
+        assert label in content
+
+    assert "item_duplicate" in content

@@ -67,6 +67,55 @@ class ItemEditView(View):
         return render(request, self.template_name, ctx, status=400)
 
 
+class ItemDuplicateView(View):
+    """Open a create drawer prefilled from an existing item."""
+
+    template_name = "inventory/_item_create_partial.html"
+
+    def get(self, request, pk: int):
+        try:
+            source = get_object_or_404(
+                Item.objects.select_related(
+                    "unit", "category", "preferred_supplier"
+                ).prefetch_related("departments"),
+                pk=pk,
+            )
+        except (DatabaseError, ValueError):  # pragma: no cover - defensive
+            logger.exception("Error retrieving item %s for duplication", pk)
+            raise Http404("Item not found")
+
+        initial = {
+            "name": self._copy_name(source.name),
+            "unit_id": source.unit_id,
+            "category_id": source.category_id,
+            "departments": list(source.departments.values_list("pk", flat=True)),
+            "initial_purchase_price": source.initial_purchase_price,
+            "preferred_supplier": source.preferred_supplier_id,
+            "minimum_order_qty": source.minimum_order_qty,
+            "lead_time_days": source.lead_time_days,
+            "reorder_point": source.reorder_point,
+            "current_stock": source.current_stock,
+            "notes": source.notes,
+            "is_active": source.is_active,
+        }
+        form = ItemForm(initial=initial)
+        return render(
+            request,
+            self.template_name,
+            {"form": form, "duplicate_source": source},
+        )
+
+    @staticmethod
+    def _copy_name(name: str) -> str:
+        base = f"Copy of {name}"
+        if not Item.objects.filter(name=base).exists():
+            return base
+        index = 2
+        while Item.objects.filter(name=f"{base} {index}").exists():
+            index += 1
+        return f"{base} {index}"
+
+
 class ItemInlineUpdateView(View):
     """Minimal inline update endpoint for quick edits in the items table."""
 

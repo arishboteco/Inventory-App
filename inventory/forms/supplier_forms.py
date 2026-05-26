@@ -6,6 +6,17 @@ from .base import INPUT_CLASS, StyledFormMixin
 
 
 class SupplierForm(StyledFormMixin, forms.ModelForm):
+    contact_person = forms.CharField(
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "placeholder": "Primary contact person",
+                "aria-label": "Contact person",
+            }
+        ),
+    )
+
     supplier_rating = forms.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         required=False,
@@ -66,14 +77,12 @@ class SupplierForm(StyledFormMixin, forms.ModelForm):
             "phone": forms.TextInput(
                 attrs={
                     "class": INPUT_CLASS,
-                    "placeholder": "+1 (555) 123-4567",
                     "aria-label": "Phone number",
                 }
             ),
             "email": forms.EmailInput(
                 attrs={
                     "class": INPUT_CLASS,
-                    "placeholder": "supplier@company.com",
                     "aria-label": "Email address",
                 }
             ),

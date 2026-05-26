@@ -365,8 +365,8 @@
     if (!itemId) return;
     // Detect current active state from status cell text
     const statusCell = row.querySelector('td[data-col="status"]');
-    const currentlyActive =
-      statusCell && /Active/i.test(statusCell.textContent || "");
+    const statusText = (statusCell?.textContent || "").trim().toLowerCase();
+    const currentlyActive = statusText === "active";
     const csrf = getCsrfToken();
     // Optimistic: flip badge immediately
     if (statusCell) {

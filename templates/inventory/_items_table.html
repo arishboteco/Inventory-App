@@ -53,7 +53,7 @@
   <th scope="col" class="sticky z-10 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md" data-col="abc_class" data-field="abc_class" data-sort="col8" aria-sort="none">
           <div class="flex items-center gap-1"><span>ABC</span></div>
         </th>
-        <th scope="col" class="sticky z-10 w-30 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">
+        <th scope="col" class="sticky z-10 w-40 px-4 py-2.5 bg-surfaceSubtle border-b border-border group-data-[shadow=true]:shadow-md">
           Actions
         </th>
       </tr>
@@ -156,40 +156,52 @@
         <div class="flex items-center gap-1">
 
           <a
+            href="{% url 'item_detail' item.item_id %}"
+            data-modal-url="{% url 'item_detail' item.item_id %}?partial=1"
+            data-modal-type="drawer"
+            data-modal-prefetch="hover"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary hover:text-success"
+            title="View details for {{ item.name }}"
+            aria-label="View details for {{ item.name }}"
+          >
+            {% icon 'eye' 'w-4 h-4' %}
+          </a>
+          <a
             href="{% url 'item_edit' item.item_id %}"
             data-modal-url="{% url 'item_edit' item.item_id %}?partial=1"
             data-modal-type="drawer"
             data-modal-prefetch="hover"
             class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary hover:text-accent"
-            title="Edit"
-            aria-label="Edit {{ item.name }}"
+            title="Edit item {{ item.name }}"
+            aria-label="Edit item {{ item.name }}"
           >
             {% icon 'pencil' 'w-4 h-4' %}
           </a>
           <a
-            href="{% url 'item_detail' item.item_id %}"
-            data-modal-url="{% url 'item_detail' item.item_id %}?partial=1"
+            href="{% url 'item_duplicate' item.item_id %}"
+            data-modal-url="{% url 'item_duplicate' item.item_id %}?partial=1"
+            data-modal-type="drawer"
             data-modal-prefetch="hover"
-            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary hover:text-success"
-            title="View Details"
-            aria-label="View details {{ item.name }}"
+            class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary hover:text-info"
+            title="Duplicate item {{ item.name }}"
+            aria-label="Duplicate item {{ item.name }}"
           >
-            {% icon 'eye' 'w-4 h-4' %}
+            {% icon 'document-duplicate' 'w-4 h-4' %}
           </a>
           <button
             type="button"
             data-action="archive"
             class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary hover:text-warning"
-            title="{% if item.is_active %}Archive{% else %}Activate{% endif %}"
-            aria-label="{% if item.is_active %}Archive{% else %}Activate{% endif %} {{ item.name }}"
+            title="{% if item.is_active %}Deactivate item{% else %}Activate item{% endif %} {{ item.name }}"
+            aria-label="{% if item.is_active %}Deactivate item{% else %}Activate item{% endif %} {{ item.name }}"
           >
             {% icon 'archive-box' 'w-4 h-4' %}
           </button>
           <button
             type="button"
             class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary hover:text-danger"
-            title="Delete"
-            aria-label="Delete {{ item.name }}"
+            title="Delete item {{ item.name }}"
+            aria-label="Delete item {{ item.name }}"
             data-action="delete"
           >
             {% icon 'trash' 'w-4 h-4' %}

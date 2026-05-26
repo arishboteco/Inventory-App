@@ -1,9 +1,10 @@
 from decimal import Decimal
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 
-from inventory.models import Item, StockTransaction
+from inventory.models import Category, Item, StockTransaction, Supplier, Unit
 from inventory.models.departments import Department
 from inventory.services import item_service
 
@@ -181,6 +182,46 @@ def test_item_edit_view_preselects_category(client, monkeypatch):
 
     # Check that the page loads successfully
     assert "Widget" in content
+
+
+def test_item_duplicate_view_prefills_create_drawer_without_saving(client):
+    unit = Unit.objects.create(purchase_unit="kg", base_unit="kg", conversion_factor=1)
+    category = Category.objects.create(category="Food", sub_category="Dry")
+    supplier = Supplier.objects.create(name="Acme")
+    dept = Department.objects.create(name="Kitchen")
+    item = Item.objects.create(
+        name="Widget",
+        unit=unit,
+        category=category,
+        preferred_supplier=supplier,
+        initial_purchase_price=Decimal("2.50"),
+        minimum_order_qty=Decimal("3.00"),
+        lead_time_days=4,
+        reorder_point=Decimal("5.00"),
+        current_stock=Decimal("7.00"),
+        notes="copy me",
+        is_active=True,
+    )
+    item.departments.add(dept)
+
+    resp = client.get(reverse("item_duplicate", args=[item.pk]))
+
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    soup = BeautifulSoup(content, "html.parser")
+    assert "Duplicate Item" in content
+    assert "Copy of Widget" in content
+    assert "copy me" in content
+    assert 'name="unit_id"' in content
+    assert f'value="{unit.pk}" selected' in content
+    assert f'value="{category.pk}" selected' in content
+    assert f'value="{supplier.pk}" selected' in content
+    dept_checkbox = soup.find(
+        "input", {"name": "departments", "value": str(dept.pk)}
+    )
+    assert dept_checkbox is not None
+    assert dept_checkbox.has_attr("checked")
+    assert Item.objects.count() == 1
 
 
 def test_items_list_view_shows_empty_categories(client, monkeypatch):

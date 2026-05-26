@@ -150,6 +150,23 @@ class IndentItemForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
 
 
 class _IndentItemFormSetBase(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        has_item = False
+        for form in self.forms:
+            cleaned = getattr(form, "cleaned_data", {}) or {}
+            if cleaned.get("DELETE"):
+                continue
+            if cleaned.get("item") and cleaned.get("requested_qty"):
+                has_item = True
+                break
+
+        if not has_item:
+            raise forms.ValidationError("Add at least one item to the indent.")
+
     def save(self, commit=True):
         instances = super().save(commit=False)
         # Default issued_qty to 0 for all instances to satisfy NOT NULL constraints

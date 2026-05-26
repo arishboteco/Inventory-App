@@ -10,7 +10,13 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
-from inventory.models import PurchaseOrder, PurchaseOrderItem, Supplier
+from inventory.models import (
+    GoodsReceivedNote,
+    GRNItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    Supplier,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -49,6 +55,121 @@ def test_purchase_order_create_partial_get_has_drawer_hooks(po_staff_client):
     )
     assert grid is not None
     assert grid.find("textarea", attrs={"name": "notes"}) is None
+
+
+def test_purchase_order_create_partial_marks_required_fields(po_staff_client):
+    resp = po_staff_client.get(reverse("purchase_order_create_partial"))
+
+    assert resp.status_code == 200
+    soup = BeautifulSoup(resp.content.decode(), "html.parser")
+
+    assert soup.find("input", attrs={"name": "supplier"}).has_attr("required")
+    assert soup.find("input", attrs={"name": "supplier"}).get("hx-params") == "supplier"
+    assert soup.find("input", attrs={"name": "order_date"}).has_attr("required")
+    assert soup.find("select", attrs={"name": "items-0-item"}).has_attr("required")
+    assert soup.find("input", attrs={"name": "items-0-quantity_ordered"}).has_attr(
+        "required"
+    )
+    assert soup.find("input", attrs={"name": "items-0-unit_price"}).has_attr(
+        "required"
+    )
+    assert soup.find("textarea", attrs={"name": "notes"}).get("required") is None
+
+
+def test_supplier_search_matches_partial_name_case_insensitive(po_staff_client):
+    Supplier.objects.create(name="Acme Produce", is_active=True)
+    Supplier.objects.create(name="Dormant Produce", is_active=False)
+    Supplier.objects.create(name="Paper Goods", is_active=True)
+
+    resp = po_staff_client.get(reverse("supplier_search"), {"q": "PROD"})
+
+    assert resp.status_code == 200
+    content = resp.content.decode()
+    assert "Acme Produce" in content
+    assert "Dormant Produce" not in content
+    assert "Paper Goods" not in content
+
+
+def test_purchase_order_create_accepts_unique_supplier_substring(
+    po_staff_client, item_factory
+):
+    supplier = Supplier.objects.create(name="North Market Foods", is_active=True)
+    item = item_factory(name="PO Substring Item")
+
+    resp = po_staff_client.post(
+        reverse("purchase_order_create_partial"),
+        {
+            "partial": "1",
+            "supplier": "market",
+            "order_date": date.today().isoformat(),
+            "expected_delivery_date": "",
+            "status": "DRAFT",
+            "notes": "",
+            "items-TOTAL_FORMS": "1",
+            "items-INITIAL_FORMS": "0",
+            "items-MIN_NUM_FORMS": "1",
+            "items-MAX_NUM_FORMS": "1000",
+            "items-0-item": str(item.pk),
+            "items-0-quantity_ordered": "2.00",
+            "items-0-unit_price": "3.00",
+        },
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    po = PurchaseOrder.objects.get(pk=data["id"])
+    assert po.supplier_id == supplier.pk
+
+
+def test_purchase_order_create_rejects_numeric_unknown_supplier(
+    po_staff_client, item_factory
+):
+    item = item_factory(name="PO Numeric Supplier Item")
+
+    resp = po_staff_client.post(
+        reverse("purchase_order_create_partial"),
+        {
+            "partial": "1",
+            "supplier": "999999",
+            "order_date": date.today().isoformat(),
+            "expected_delivery_date": "",
+            "status": "DRAFT",
+            "notes": "",
+            "items-TOTAL_FORMS": "1",
+            "items-INITIAL_FORMS": "0",
+            "items-MIN_NUM_FORMS": "1",
+            "items-MAX_NUM_FORMS": "1000",
+            "items-0-item": str(item.pk),
+            "items-0-quantity_ordered": "2.00",
+            "items-0-unit_price": "3.00",
+        },
+    )
+
+    assert resp.status_code == 400
+    assert "Choose a valid supplier from the list." in resp.json()["message"]
+
+
+def test_purchase_order_create_requires_at_least_one_item(po_staff_client):
+    supplier = Supplier.objects.create(name="No Line Supplier", is_active=True)
+
+    resp = po_staff_client.post(
+        reverse("purchase_order_create_partial"),
+        {
+            "partial": "1",
+            "supplier": str(supplier.pk),
+            "order_date": date.today().isoformat(),
+            "expected_delivery_date": "",
+            "status": "DRAFT",
+            "notes": "",
+            "items-TOTAL_FORMS": "0",
+            "items-INITIAL_FORMS": "0",
+            "items-MIN_NUM_FORMS": "1",
+            "items-MAX_NUM_FORMS": "1000",
+        },
+    )
+
+    assert resp.status_code == 400
+    assert "at least" in resp.json()["message"].lower()
 
 
 def test_purchase_order_create_partial_post_validation_returns_json(po_staff_client):

@@ -37,7 +37,7 @@ def _resolve_supplier_from_raw(raw: str) -> Supplier:
     if exact:
         return exact
 
-    candidates = list(qs.filter(name__istartswith=raw)[:2])
+    candidates = list(qs.filter(name__icontains=raw).order_by("name")[:2])
     if len(candidates) == 1:
         return candidates[0]
     if len(candidates) > 1:
@@ -101,6 +101,7 @@ class PurchaseOrderForm(StyledFormMixin, forms.ModelForm):
                         "hx-trigger": "keyup changed delay:300ms",
                         "hx-target": "#supplier-options",
                         "hx-swap": "innerHTML",
+                        "hx-params": "supplier",
                         "list": "supplier-options",
                     }
                 ),
@@ -153,6 +154,8 @@ class PurchaseOrderItemForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, item_suggest_url: str | None = None, **kwargs):
         super().__init__(*args, **kwargs)
+        for field_name in ("item", "quantity_ordered", "unit_price"):
+            self.fields[field_name].widget.attrs["required"] = "required"
         self.apply_styling()
 
     def clean_quantity_ordered(self):
@@ -214,6 +217,8 @@ PurchaseOrderItemFormSet = forms.inlineformset_factory(
     PurchaseOrderItem,
     form=PurchaseOrderItemForm,
     extra=1,
+    min_num=1,
+    validate_min=True,
     can_delete=True,
 )
 

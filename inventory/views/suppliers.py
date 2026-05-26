@@ -481,7 +481,9 @@ class SupplierSearchView(TemplateView):
                 if key.endswith("supplier"):
                     query = val
                     break
-        suppliers = Supplier.objects.filter(name__icontains=query)[:20]
+        suppliers = Supplier.objects.filter(
+            is_active=True, name__icontains=query
+        ).order_by("name")[:20]
         ctx["suppliers"] = suppliers
         return ctx
 

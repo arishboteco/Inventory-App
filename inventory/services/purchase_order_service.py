@@ -103,9 +103,12 @@ def save_purchase_order_from_forms(
 def _validate_po_update_formset(formset: PurchaseOrderItemFormSet) -> None:
     """Prevent edits that would detach or invalidate existing receipt history."""
 
+    active_line_count = 0
     for item_form in formset.forms:
         if not getattr(item_form, "cleaned_data", None):
             continue
+        if not item_form.cleaned_data.get("DELETE"):
+            active_line_count += 1
         po_item = item_form.instance
         if not po_item.pk:
             continue
@@ -125,6 +128,10 @@ def _validate_po_update_formset(formset: PurchaseOrderItemFormSet) -> None:
                     f"quantity ({received_total})."
                 )
             )
+    if active_line_count == 0:
+        raise PurchaseOrderServiceError(
+            "Purchase Order must contain at least one item."
+        )
 
 
 def create_po(po_data: Dict[str, Any], items_data: List[Dict[str, Any]]) -> int:

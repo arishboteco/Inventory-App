@@ -83,10 +83,16 @@ ADJUSTMENT_REASONS = [
 SELECT_CLASS = INPUT_CLASS + " cursor-pointer"
 
 
-def _item_autocomplete_field(item_suggest_url: str, *, label: str = "Item"):
+def _item_autocomplete_field(
+    item_suggest_url: str,
+    *,
+    label: str = "Item",
+    required_message: str = "Choose a valid item from the list.",
+):
     return forms.CharField(
         label=label,
         required=True,
+        error_messages={"required": required_message},
         widget=forms.TextInput(
             attrs={
                 "class": INPUT_CLASS,
@@ -102,9 +108,15 @@ def _item_autocomplete_field(item_suggest_url: str, *, label: str = "Item"):
 
 
 class StockReceivingForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
+    use_required_attribute = False
+
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
         empty_label="— Select item —",
+        error_messages={
+            "required": "Choose an item to receive.",
+            "invalid_choice": "Choose a valid item from the list.",
+        },
         widget=forms.Select(attrs={"class": SELECT_CLASS}),
     )
     transaction_date = forms.DateField(
@@ -130,8 +142,17 @@ class StockReceivingForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelFo
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
         if item_suggest_url:
-            self.fields["item"] = _item_autocomplete_field(item_suggest_url)
+            self.fields["item"] = _item_autocomplete_field(
+                item_suggest_url,
+                required_message="Choose an item to receive.",
+            )
         self.fields["quantity_change"].required = True
+        self.fields["quantity_change"].error_messages.update(
+            {
+                "required": "Enter the quantity received.",
+                "invalid": "Enter a valid quantity received.",
+            }
+        )
         self.fields["quantity_change"].widget = forms.NumberInput(
             attrs={
                 "class": INPUT_CLASS,
@@ -170,6 +191,8 @@ class StockReceivingForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelFo
 
 
 class StockAdjustmentForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
+    use_required_attribute = False
+
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
         empty_label="— Select item —",
@@ -207,8 +230,28 @@ class StockAdjustmentForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelF
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
         if item_suggest_url:
-            self.fields["item"] = _item_autocomplete_field(item_suggest_url)
+            self.fields["item"] = _item_autocomplete_field(
+                item_suggest_url,
+                required_message="Choose an item to adjust.",
+            )
+        else:
+            self.fields["item"].error_messages.update(
+                {
+                    "required": "Choose an item to adjust.",
+                    "invalid_choice": "Choose a valid item from the list.",
+                }
+            )
+        self.fields["reason_category"].error_messages.update(
+            {"required": "Choose why this adjustment is needed."}
+        )
+        self.fields["quantity_change"].label = "Quantity Change (+/-)"
         self.fields["quantity_change"].required = True
+        self.fields["quantity_change"].error_messages.update(
+            {
+                "required": "Enter the stock change quantity.",
+                "invalid": "Enter a valid stock change quantity.",
+            }
+        )
         self.fields["quantity_change"].widget = forms.NumberInput(
             attrs={
                 "class": INPUT_CLASS,
@@ -233,6 +276,8 @@ class StockAdjustmentForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelF
 
 
 class StockWastageForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm):
+    use_required_attribute = False
+
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
         empty_label="— Select item —",
@@ -286,8 +331,27 @@ class StockWastageForm(ItemNameResolutionMixin, StyledFormMixin, forms.ModelForm
     def __init__(self, *args, item_suggest_url=None, **kwargs):
         super().__init__(*args, **kwargs)
         if item_suggest_url:
-            self.fields["item"] = _item_autocomplete_field(item_suggest_url)
+            self.fields["item"] = _item_autocomplete_field(
+                item_suggest_url,
+                required_message="Choose an item to record as wastage.",
+            )
+        else:
+            self.fields["item"].error_messages.update(
+                {
+                    "required": "Choose an item to record as wastage.",
+                    "invalid_choice": "Choose a valid item from the list.",
+                }
+            )
+        self.fields["reason_category"].error_messages.update(
+            {"required": "Choose a wastage category."}
+        )
         self.fields["quantity_change"].required = True
+        self.fields["quantity_change"].error_messages.update(
+            {
+                "required": "Enter the quantity wasted.",
+                "invalid": "Enter a valid quantity wasted.",
+            }
+        )
         self.fields["quantity_change"].widget = forms.NumberInput(
             attrs={
                 "class": INPUT_CLASS,
@@ -321,6 +385,8 @@ class StockTransferForm(StyledFormMixin, forms.Form):
     """D3: Transfer stock between departments."""
 
     from ..models import Department
+
+    use_required_attribute = False
 
     item = forms.ModelChoiceField(
         queryset=Item.objects.filter(is_active=True).order_by("name"),
@@ -363,8 +429,33 @@ class StockTransferForm(StyledFormMixin, forms.Form):
         from ..models import Department as Dept
 
         qs = Dept.objects.all().order_by("name")
+        self.fields["item"].error_messages.update(
+            {
+                "required": "Choose an item to transfer.",
+                "invalid_choice": "Choose a valid item from the list.",
+            }
+        )
+        self.fields["quantity"].error_messages.update(
+            {
+                "required": "Enter the transfer quantity.",
+                "invalid": "Enter a valid transfer quantity.",
+                "min_value": "Transfer quantity must be greater than zero.",
+            }
+        )
         self.fields["from_department"].queryset = qs
+        self.fields["from_department"].error_messages.update(
+            {
+                "required": "Choose the department stock is moving from.",
+                "invalid_choice": "Choose a valid source department.",
+            }
+        )
         self.fields["to_department"].queryset = qs
+        self.fields["to_department"].error_messages.update(
+            {
+                "required": "Choose the department stock is moving to.",
+                "invalid_choice": "Choose a valid destination department.",
+            }
+        )
         self.apply_styling()
 
     def clean(self):

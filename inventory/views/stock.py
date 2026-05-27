@@ -387,6 +387,10 @@ def stock_movements(request):
     params = request.GET.copy()
     params.pop("page", None)
     query_string = params.urlencode()
+    date_clear_params = params.copy()
+    date_clear_params.pop("date_from", None)
+    date_clear_params.pop("date_to", None)
+    date_clear_query_string = date_clear_params.urlencode()
 
     total_transactions = qs.count()
     pending_orders = PurchaseOrder.objects.filter(status__in=["SENT"]).count()
@@ -428,6 +432,7 @@ def stock_movements(request):
         "pending_orders": pending_orders,
         "filter_date_from": date_from,
         "filter_date_to": date_to,
+        "date_clear_query_string": date_clear_query_string,
         "filter_item_q": item_q,
         "filter_type": tx_type_filter,
     }

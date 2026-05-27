@@ -81,7 +81,7 @@
       </div>
     </div>
     <div class="p-4">
-  {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string table_id="recent-transactions" filter_item_q=filter_item_q filter_type=filter_type filter_date_from=filter_date_from filter_date_to=filter_date_to %}
+  {% include "inventory/_recent_transactions_table.html" with page_obj=page_obj query_string=query_string table_id="recent-transactions" filter_item_q=filter_item_q filter_type=filter_type filter_date_from=filter_date_from filter_date_to=filter_date_to date_clear_query_string=date_clear_query_string %}
     </div>
   </div>
 

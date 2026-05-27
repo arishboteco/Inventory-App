@@ -141,6 +141,12 @@
           {% icon 'printer' 'w-4 h-4' %}
           <span class="sr-only">Download PDF</span>
         </a>
+        {% if row.status|upper == 'APPROVED' or row.status|upper == 'PROCESSING' %}
+        <a href="{% url 'issue_indent' row.indent_id %}" class="inline-flex items-center justify-center w-8 h-8 p-0 text-xs font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary hover:text-accent" title="Issue stock" aria-label="Issue stock">
+          {% icon 'archive-box-arrow-down' 'w-4 h-4' %}
+          <span class="sr-only">Issue stock</span>
+        </a>
+        {% endif %}
   {% if row.status|upper == 'SUBMITTED' %}
   {% if request.user.is_staff or request.user.is_superuser or perms.inventory.change_indent %}
         <form action="{% url 'indent_update_status' row.indent_id 'APPROVED' %}"

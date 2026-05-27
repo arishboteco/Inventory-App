@@ -1108,15 +1108,15 @@ def issue_indent(request, pk: int):
     items = list(
         indent.indentitem_set.select_related("item").order_by("indent_item_id").all()
     )
-    shortage_rows = [
-        item
-        for item in items
-        if max(
-            Decimal("0"),
-            Decimal(str(item.requested_qty or 0)) - Decimal(str(item.issued_qty or 0)),
-        )
-        > Decimal(str(getattr(item.item, "current_stock", 0) or 0))
-    ]
+    for item in items:
+        requested = Decimal(str(item.requested_qty or 0))
+        issued = Decimal(str(item.issued_qty or 0))
+        available = Decimal(str(getattr(item.item, "current_stock", 0) or 0))
+        pending = max(Decimal("0"), requested - issued)
+        item.remaining_qty = pending
+        item.available_qty = available
+        item.max_issue_qty = min(pending, available)
+    shortage_rows = [item for item in items if item.remaining_qty > item.available_qty]
     # Build formset for all items in this indent
     if request.method == "POST":
         Formset = forms.formset_factory(
@@ -1156,6 +1156,10 @@ def issue_indent(request, pk: int):
         )  # type: ignore
         initial = IndentIssueFormset.initial_for_indent(indent.indent_id)
         formset = Formset(initial=initial)
+
+    for item, form in zip(items, formset.forms):
+        max_issue_qty = getattr(item, "max_issue_qty", Decimal("0"))
+        form.fields["issue_qty"].widget.attrs["max"] = f"{max_issue_qty:.2f}"
 
     # Pair items with forms for template rendering
     pairs = list(zip(items, formset.forms))

@@ -35,6 +35,9 @@
     {# ── Read-only view ───────────────────────────────────────────────── #}
     {% include "components/detail_table.html" with rows=rows %}
     <div class="flex flex-wrap gap-2">
+      {% if indent.status|upper == 'APPROVED' or indent.status|upper == 'PROCESSING' %}
+      <a href="{% url 'issue_indent' indent.indent_id %}" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Issue Stock</a>
+      {% endif %}
       <a href="{% url 'indent_pdf' indent.indent_id %}" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Download PDF</a>
       {% if wa_url %}
       <a href="{{ wa_url }}" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Prepare WhatsApp Message</a>
@@ -54,7 +57,6 @@
         <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-danger text-white hover:bg-danger-strong focus:ring-2 focus:ring-danger-soft">Cancel</button></form>
       {% elif indent.status|upper == 'APPROVED' %}
         <form action="{% url 'indent_update_status' indent.indent_id 'PROCESSING' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Mark Processing</button></form>
-        <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Mark Completed</button></form>
         <form action="{% url 'indent_update_status' indent.indent_id 'CANCELLED' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-danger text-white hover:bg-danger-strong focus:ring-2 focus:ring-danger-soft">Cancel</button></form>
       {% elif indent.status|upper == 'PROCESSING' %}
         <form action="{% url 'indent_update_status' indent.indent_id 'COMPLETED' %}" method="post" class="inline">{% csrf_token %}<button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-transparent text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Mark Completed</button></form>

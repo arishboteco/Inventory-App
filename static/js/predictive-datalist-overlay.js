@@ -86,9 +86,9 @@
       }
 
       const options = Array.from(datalist.querySelectorAll("option"));
-      const items = options.filter(
-        (o) => !q || (o.value || o.textContent || "").toLowerCase().includes(q),
-      );
+      const optionText = (option) =>
+        `${option.value || ""} ${option.textContent || ""}`.toLowerCase();
+      const items = options.filter((o) => !q || optionText(o).includes(q));
       overlay.innerHTML = "";
       activeIndex = -1;
       items.forEach((o, idx) => {

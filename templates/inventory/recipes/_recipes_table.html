@@ -144,7 +144,8 @@
                       data-modal-url="{% url 'recipe_view_partial' recipe.recipe_id %}"
                       data-modal-type="drawer"
                       data-modal-prefetch="hover"
-                      aria-label="View {{ recipe.name }}">
+                      title="View recipe {{ recipe.name }}"
+                      aria-label="View recipe {{ recipe.name }}">
                 {% icon 'eye' 'w-4 h-4' %}
               </button>
               <button type="button"
@@ -152,18 +153,21 @@
                       data-modal-url="{% url 'recipe_edit_partial' recipe.recipe_id %}"
                       data-modal-type="drawer"
                       data-modal-prefetch="hover"
-                      aria-label="Edit {{ recipe.name }}">
+                      title="Edit recipe {{ recipe.name }}"
+                      aria-label="Edit recipe {{ recipe.name }}">
                 {% icon 'pencil-square' 'w-4 h-4' %}
               </button>
               <a href="{% url 'recipe_detail' recipe.recipe_id %}"
                  class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary"
-                 aria-label="Open {{ recipe.name }} details">
+                 title="Open recipe details {{ recipe.name }}"
+                 aria-label="Open recipe details {{ recipe.name }}">
                 {% icon 'arrow-top-right-on-square' 'w-4 h-4' %}
               </a>
               <button type="button"
                       onclick="confirmDelete('{% url 'recipe_delete' recipe.recipe_id %}', '{{ recipe.name|escapejs }}', 'Recipe')"
                       class="inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium rounded-md transition bg-surface text-danger border border-border hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger"
-                      aria-label="Delete {{ recipe.name }}">
+                      title="Delete recipe {{ recipe.name }}"
+                      aria-label="Delete recipe {{ recipe.name }}">
                 {% icon 'trash' 'w-4 h-4' %}
               </button>
             </div>

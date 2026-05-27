@@ -105,9 +105,10 @@ class NotificationManager {
    */
   show(message, type = "info", duration = null, options = {}) {
     const style = options.style || "toast";
+    const displayMessage = this.decodeMessage(message);
 
     if (style === "banner") {
-      return this.showBannerNotification(message, type, options);
+      return this.showBannerNotification(displayMessage, type, options);
     }
 
     // Manage queue for toast notifications
@@ -116,7 +117,7 @@ class NotificationManager {
     }
 
     const notification = this.createNotificationElement(
-      message,
+      displayMessage,
       type,
       style,
       options,
@@ -201,6 +202,14 @@ class NotificationManager {
     }
 
     return notification;
+  }
+
+  decodeMessage(message) {
+    const text = String(message || "");
+    if (!/[&][A-Za-z0-9#]+;/.test(text)) return text;
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = text;
+    return textarea.value;
   }
 
   showBannerNotification(message, type, options) {

@@ -89,7 +89,7 @@
 {% endblock %}
 
 {% block filters %}
-{% include "components/filter_bar.html" with filter_bar_card=True filters=filters predictive_names=predictive_filter_names hx_get=po_hx_get hx_target=po_hx_target hx_indicator="#purchase-orders-loading" search_placeholder="Search PO #, supplier, notes…" show_date_range=True start_date=start_date end_date=end_date page_size_options=page_size_options page_size=page_size export_href=export_href export_label="Export CSV" view_toggle_table_href=view_toggle_table_href view_toggle_cards_href=view_toggle_cards_href view_toggle_current=view_toggle_current sort=sort direction=direction %}
+{% include "components/filter_bar.html" with filter_bar_card=True filters=filters predictive_names=predictive_filter_names hx_get=po_hx_get hx_target=po_hx_target hx_indicator="#purchase-orders-loading" search_placeholder="Search PO #, supplier, notes…" show_date_range=True start_date=start_date end_date=end_date page_size_options=page_size_options page_size=page_size export_href=export_href export_label="Export CSV" view_toggle_table_href=view_toggle_table_href view_toggle_cards_href=view_toggle_cards_href view_toggle_current=view_toggle_current sort=sort direction=direction reset_href=request.path %}
 {% endblock %}
 
 {% block extra_top %}{% endblock %}

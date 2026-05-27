@@ -28,7 +28,7 @@ def test_items_search_has_placeholder_and_reset_control():
     assert "Search items by nan" not in content
     assert "Search items..." in content or "Search items…" in content
     filter_bar = Path("templates/components/filter_bar.html").read_text()
-    assert "Reset" in filter_bar
+    assert "Clear filters" in filter_bar
 
 
 def test_no_dropdown_filter_controls_present():

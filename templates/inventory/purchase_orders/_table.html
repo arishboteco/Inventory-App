@@ -15,7 +15,7 @@
     </div>
     <div class="flex items-center gap-2">
 <div class="relative" data-col-menu-container x-data="{open:false}" @click.outside="open=false">
-      <button type="button" data-col-menu-button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">
+      <button type="button" data-col-menu-button @click="open=!open" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary" aria-label="Show or hide table columns" title="Show or hide table columns">
         Columns
         <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </button>
@@ -134,7 +134,9 @@
          data-modal-url="{% url 'purchase_order_edit_partial' po.pk %}"
          data-modal-type="drawer"
          data-modal-prefetch="hover"
-         class="text-primary" title="Edit">
+         class="text-primary"
+         title="Edit purchase order {{ po.pk }}"
+         aria-label="Edit purchase order {{ po.pk }}">
         {% icon 'pencil-square' 'w-5 h-5' %}
         <span class="sr-only">Edit</span>
       </a>
@@ -143,7 +145,9 @@
          data-modal-url="{% url 'purchase_order_receive_partial' po.pk %}"
          data-modal-type="drawer"
          data-modal-prefetch="hover"
-         class="text-primary" title="Receive">
+         class="text-primary"
+         title="Receive goods for purchase order {{ po.pk }}"
+         aria-label="Receive goods for purchase order {{ po.pk }}">
         {% icon 'arrow-down-tray' 'w-5 h-5' %}
         <span class="sr-only">Receive</span>
       </a>

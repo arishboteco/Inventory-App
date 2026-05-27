@@ -76,7 +76,7 @@
 {% block filters %}
   {% url hx_view_name as suppliers_view_url %}
   {% with hx_tgt='#'|add:container_id %}
-  {% include "components/filter_bar.html" with filter_bar_card=True search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target=hx_tgt filters=filters page_size_options=page_size_options page_size=page_size sort=sort direction=direction export_href=export_href export_label="Export CSV" view_toggle_table_href=view_toggle_table_href view_toggle_cards_href=view_toggle_cards_href view_toggle_current=view_toggle_current hx_indicator="#htmx-spinner" %}
+  {% include "components/filter_bar.html" with filter_bar_card=True search_placeholder="Search suppliers..." hx_get=suppliers_view_url hx_target=hx_tgt filters=filters page_size_options=page_size_options page_size=page_size sort=sort direction=direction export_href=export_href export_label="Export CSV" view_toggle_table_href=view_toggle_table_href view_toggle_cards_href=view_toggle_cards_href view_toggle_current=view_toggle_current hx_indicator="#htmx-spinner" reset_href=request.path %}
   {% endwith %}
 {% endblock %}
 

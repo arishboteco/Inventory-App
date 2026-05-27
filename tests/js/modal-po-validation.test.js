@@ -20,7 +20,7 @@ describe("modal purchase order validation", () => {
     require("../../static/js/modal.js");
   });
 
-  test("reports native required errors before posting modal form", () => {
+  test("shows explicit required errors before posting modal form", () => {
     const form = document.getElementById("po-drawer-form");
     form.checkValidity = jest.fn(() => false);
     form.reportValidity = jest.fn();
@@ -28,7 +28,9 @@ describe("modal purchase order validation", () => {
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     expect(form.checkValidity).toHaveBeenCalled();
-    expect(form.reportValidity).toHaveBeenCalled();
+    expect(form.reportValidity).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("Supplier is required.");
+    expect(document.body.textContent).toContain("Order Date is required.");
     expect(fetch).not.toHaveBeenCalled();
   });
 });

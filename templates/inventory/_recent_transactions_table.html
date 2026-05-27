@@ -20,6 +20,9 @@
       <input type="date" name="date_to" value="{{ filter_date_to|default:'' }}"
              class="px-3 py-1.5 text-sm border border-border rounded-md bg-surface text-bodyText focus:outline-none focus:ring-2 focus:ring-primary" />
       <button type="submit" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Filter</button>
+      {% if filter_date_from or filter_date_to %}
+      <a href="{% url 'stock_movements' %}{% if date_clear_query_string %}?{{ date_clear_query_string }}{% endif %}" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Clear dates</a>
+      {% endif %}
       {% if filter_item_q or filter_type or filter_date_from or filter_date_to %}
       <a href="{% url 'stock_movements' %}" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:outline-none focus:ring-2 focus:ring-primary">Clear</a>
       {% endif %}

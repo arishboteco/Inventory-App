@@ -1,7 +1,20 @@
-<form method="post" action="" class="space-y-3">
+<form method="post" action="" class="space-y-4">
   {% csrf_token %}
   <input type="hidden" name="submit_receive" value="1" />
-  {{ receive_form.as_p }}
+  {% if receive_form.non_field_errors %}
+    <ul class="text-sm text-danger list-disc pl-5">
+      {% for error in receive_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+  <div class="grid gap-4 md:grid-cols-2">
+    {% for field in receive_form %}
+      {% if field.name == "notes" %}
+        {% include "components/form_field.html" with field=field container_class="md:col-span-2" %}
+      {% else %}
+        {% include "components/form_field.html" with field=field %}
+      {% endif %}
+    {% endfor %}
+  </div>
   <div class="flex items-center justify-end gap-2">
     <button type="button" data-close class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-surface text-bodyText border border-border hover:bg-surfaceSubtle focus:ring-2 focus:ring-primary">Cancel</button>
     <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition focus:outline-none bg-accent text-white hover:bg-accent-strong focus:ring-2 focus:ring-accent-strong">Record</button>

@@ -51,7 +51,8 @@
     <div class="flex justify-end gap-2 pt-3 border-t border-border">
       <a href="{% url 'purchase_order_detail' po.pk %}"
          class="text-primary hover:text-primary-dark"
-         title="View">
+         title="View purchase order {{ po.pk }}"
+         aria-label="View purchase order {{ po.pk }}">
         {% icon 'eye' 'w-5 h-5' %}
         <span class="sr-only">View</span>
       </a>
@@ -60,7 +61,8 @@
          data-modal-type="drawer"
          data-modal-prefetch="hover"
          class="text-primary hover:text-primary-dark"
-         title="Edit">
+         title="Edit purchase order {{ po.pk }}"
+         aria-label="Edit purchase order {{ po.pk }}">
         {% icon 'pencil-square' 'w-5 h-5' %}
         <span class="sr-only">Edit</span>
       </a>
@@ -69,7 +71,8 @@
          data-modal-type="drawer"
          data-modal-prefetch="hover"
          class="text-primary hover:text-primary-dark"
-         title="Receive Goods">
+         title="Receive goods for purchase order {{ po.pk }}"
+         aria-label="Receive goods for purchase order {{ po.pk }}">
         {% icon 'arrow-down-tray' 'w-5 h-5' %}
         <span class="sr-only">Receive</span>
       </a>

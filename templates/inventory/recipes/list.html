@@ -26,7 +26,7 @@
 
 {% block filters %}
   {% url 'recipes_table' as recipes_table_url %}
-  {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_table_url hx_target="#recipes-table-container" hx_indicator="#recipes-table-loading" q=q %}
+  {% include "components/filter_bar.html" with search_placeholder="Search recipes..." hx_get=recipes_table_url hx_target="#recipes-table-container" hx_indicator="#recipes-table-loading" q=q reset_href=request.path %}
 {% endblock %}
 
 {% block table_id %}recipes-table-wrapper{% endblock %}

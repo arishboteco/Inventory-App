@@ -714,11 +714,65 @@
           } catch (_) {}
         } catch (_) {}
       };
+      const humanizeName = (value) =>
+        String(value || "This field")
+          .replace(/^id_/, "")
+          .replace(/[_-]+/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .replace(/\b\w/g, (char) => char.toUpperCase());
+      const labelFor = (control) => {
+        if (!(control instanceof HTMLElement)) return "This field";
+        const id = control.getAttribute("id");
+        const label = id ? form.querySelector(`label[for="${cssEscape(id)}"]`) : null;
+        const text = label ? label.textContent.trim() : "";
+        return (
+          text.replace(/\s*\*\s*$/, "") ||
+          humanizeName(control.getAttribute("name") || id)
+        );
+      };
+      const validationMessageFor = (control) => {
+        const label = labelFor(control);
+        const validity = control.validity || {};
+        if (validity.valueMissing) return `${label} is required.`;
+        if (validity.typeMismatch)
+          return `Enter a valid ${label.toLowerCase()}.`;
+        if (validity.rangeUnderflow)
+          return `${label} must be at least ${control.getAttribute("min")}.`;
+        if (validity.rangeOverflow)
+          return `${label} must be no more than ${control.getAttribute("max")}.`;
+        if (validity.stepMismatch)
+          return `${label} must use a valid increment.`;
+        if (validity.tooShort) return `${label} is too short.`;
+        if (validity.tooLong) return `${label} is too long.`;
+        if (validity.patternMismatch) return `${label} has an invalid format.`;
+        return `${label} is invalid.`;
+      };
+      const collectNativeValidationErrors = () => {
+        const errors = { form: {} };
+        form.querySelectorAll("input, select, textarea").forEach((control) => {
+          if (
+            !(control instanceof HTMLElement) ||
+            control.disabled ||
+            typeof control.checkValidity !== "function" ||
+            control.checkValidity()
+          ) {
+            return;
+          }
+          const name = control.getAttribute("name") || control.getAttribute("id");
+          if (!name) return;
+          errors.form[name] = [validationMessageFor(control)];
+        });
+        return Object.keys(errors.form).length ? errors : null;
+      };
       const hiddenDept = form.querySelector("#id_department");
       const uiDept = form.querySelector("#department-ui");
       if (hiddenDept && uiDept) hiddenDept.value = uiDept.value;
       if (typeof form.checkValidity === "function" && !form.checkValidity()) {
-        if (typeof form.reportValidity === "function") form.reportValidity();
+        showInlineError(
+          "Please fix the highlighted fields.",
+          { errors: collectNativeValidationErrors() },
+        );
         return;
       }
       if (hiddenDept && !hiddenDept.value) {

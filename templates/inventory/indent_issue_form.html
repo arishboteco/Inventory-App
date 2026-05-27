@@ -34,9 +34,12 @@
               <td class="px-3 py-2 align-top">{{ row.item.name }}</td>
               <td class="px-3 py-2 text-right align-top">{{ row.requested_qty }}</td>
               <td class="px-3 py-2 text-right align-top">{{ row.issued_qty|default:0 }}</td>
-              <td class="px-3 py-2 text-right align-top">{{ row.remaining_qty }}</td>
-              <td class="px-3 py-2 text-right align-top" data-testid="available-stock">{{ row.item.current_stock|default:0 }}</td>
-              <td class="px-3 py-2 text-right align-top">{{ form.issue_qty }}{{ form.indent_item_id }}</td>
+              <td class="px-3 py-2 text-right align-top" data-testid="pending-qty">{{ row.remaining_qty|floatformat:2 }}</td>
+              <td class="px-3 py-2 text-right align-top" data-testid="available-stock">{{ row.available_qty|floatformat:2 }}</td>
+              <td class="px-3 py-2 text-right align-top">
+                {{ form.issue_qty }}{{ form.indent_item_id }}
+                <span class="mt-1 block text-xs text-gray-500" data-testid="issue-available-help">Available: {{ row.available_qty|floatformat:2 }}</span>
+              </td>
               <td class="px-3 py-2 align-top">{{ form.source_location }}</td>
             </tr>
           {% endfor %}

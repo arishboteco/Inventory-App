@@ -44,7 +44,13 @@
       <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Send to Supplier</button>
     </form>
   {% elif po.status == 'SENT' %}
-    <a href="{% url 'purchase_order_receive' po.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Receive Goods</a>
+    <a href="{% url 'purchase_order_receive' po.pk %}"
+       data-modal-url="{% url 'purchase_order_receive_partial' po.pk %}"
+       data-modal-type="drawer"
+       data-modal-prefetch="hover"
+       title="Receive goods for purchase order {{ po.pk }}"
+       aria-label="Receive goods for purchase order {{ po.pk }}"
+       class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">Receive Goods</a>
   {% elif po.status == 'RECEIVED' %}
     <a href="{% url 'grn_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition bg-accent text-white hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent-strong">View GRNs</a>
   {% endif %}
@@ -66,7 +72,13 @@
           <button type="submit" class="w-full text-left px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Send to Supplier</button>
         </form>
       {% elif po.status == 'SENT' %}
-        <a href="{% url 'purchase_order_receive' po.pk %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Receive Goods</a>
+        <a href="{% url 'purchase_order_receive' po.pk %}"
+           data-modal-url="{% url 'purchase_order_receive_partial' po.pk %}"
+           data-modal-type="drawer"
+           data-modal-prefetch="hover"
+           title="Receive goods for purchase order {{ po.pk }}"
+           aria-label="Receive goods for purchase order {{ po.pk }}"
+           class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">Receive Goods</a>
       {% endif %}
       <div class="border-t border-border my-1"></div>
       <a href="{% url 'grn_list' %}" class="block px-4 py-2 text-sm text-bodyText hover:bg-surfaceSubtle" role="menuitem">View GRNs</a>

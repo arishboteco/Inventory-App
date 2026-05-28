@@ -12,9 +12,9 @@ def test_column_menu_has_accessibility_attrs():
     btn_match = re.search(r"<button[^>]*data-col-menu-button[^>]*>", content)
     assert btn_match, "Column menu button not found"
     btn = btn_match.group(0)
-    assert 'title="Show/Hide Columns"' in btn
+    assert 'title="Show or hide table columns"' in btn
     assert 'aria-controls="columns-menu"' in btn
-    assert 'aria-label="Show/Hide Columns"' in btn
+    assert 'aria-label="Show or hide table columns"' in btn
 
 
 def test_inline_item_create_marks_required_fields():

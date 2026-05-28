@@ -10,7 +10,7 @@
       {% if row.email %}<p class="text-sm text-gray-500"><a href="mailto:{{ row.email }}" class="hover:text-primary transition">{{ row.email }}</a></p>{% endif %}
     </div>
     <div class="flex gap-2">
-      <a href="{% url 'supplier_edit' row.supplier_id %}" data-modal-url="{% url 'supplier_edit' row.supplier_id %}?partial=1" class="text-primary" title="Edit">{% icon 'pencil' 'w-5 h-5' %}</a>
+      <a href="{% url 'supplier_edit' row.supplier_id %}" data-modal-url="{% url 'supplier_edit' row.supplier_id %}?partial=1" class="text-primary" title="Edit supplier {{ row.name }}" aria-label="Edit supplier {{ row.name }}">{% icon 'pencil' 'w-5 h-5' %}</a>
       <form hx-post="{% url 'supplier_toggle_active' row.supplier_id %}" hx-target="#suppliers_cards" method="post" class="inline deactivate-form" data-open-pos="{{ row.open_po_count }}" data-is-active="{% if row.is_active %}true{% else %}false{% endif %}" data-supplier-name="{{ row.name }}">
         {% csrf_token %}
         <input type="hidden" name="q" value="{{ q }}" />
@@ -20,7 +20,10 @@
         <input type="hidden" name="sort" value="{{ sort }}" />
         <input type="hidden" name="direction" value="{{ direction }}" />
         <input type="hidden" name="view" value="cards" />
-        <button type="submit" title="Toggle" class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-surfaceSubtle hover:bg-surface transition focus:outline-none focus:ring-2 focus:ring-primary">
+        <button type="submit"
+                title="{% if row.is_active %}Deactivate{% else %}Activate{% endif %} supplier {{ row.name }}"
+                aria-label="{% if row.is_active %}Deactivate{% else %}Activate{% endif %} supplier {{ row.name }}"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-surfaceSubtle hover:bg-surface transition focus:outline-none focus:ring-2 focus:ring-primary">
           {% if row.is_active %}{% icon 'check' 'w-5 h-5 text-success' %}<span class="sr-only">Deactivate</span>{% else %}{% icon 'x-mark' 'w-5 h-5 text-danger' %}<span class="sr-only">Activate</span>{% endif %}
         </button>
       </form>

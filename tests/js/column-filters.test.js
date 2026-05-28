@@ -19,7 +19,7 @@ describe("column-filters dropdown", () => {
     global.fetch = jest.fn();
     window.fetch = global.fetch;
     jest.isolateModules(() => {
-      require("./column-filters.js");
+      require("../../static/js/column-filters.js");
     });
     document.dispatchEvent(new Event("DOMContentLoaded"));
   });

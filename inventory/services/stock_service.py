@@ -96,6 +96,12 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
             for tx in transactions:
                 item_id = tx["item_id"]
                 quantity_change = Decimal(str(tx["quantity_change"]))
+                item = Item.objects.select_for_update().get(pk=item_id)
+                current = item.current_stock or Decimal("0")
+                if quantity_change < 0 and current + quantity_change < 0:
+                    raise ValueError(
+                        f"Stock cannot go negative for item {item_id}."
+                    )
                 updated = Item.objects.filter(pk=item_id).update(
                     current_stock=F("current_stock") + quantity_change
                 )
@@ -111,6 +117,7 @@ def record_stock_transactions_bulk(transactions: List[Dict[str, Any]]) -> bool:
                     related_indent_id=tx.get("related_indent_id"),
                     related_po_id=tx.get("related_po_id"),
                     notes=tx.get("notes"),
+                    reason_category=tx.get("reason_category"),
                 )
         get_low_stock_items.cache_clear()
         return True

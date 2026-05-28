@@ -155,3 +155,31 @@ def test_create_po_creates_estimated_vendor_savings(item_factory):
     assert entry.status == SavingsLedger.Status.ESTIMATED
     assert entry.estimated_saving == Decimal("0.00")
     assert entry.lost_saving == Decimal("100.00")
+
+
+@pytest.mark.django_db
+def test_updating_purchase_order_item_price_updates_item_last_purchase_price(
+    item_factory,
+):
+    supplier = Supplier.objects.create(name="Price History Vendor")
+    item = item_factory(
+        name="Price History Item",
+        last_purchase_price=Decimal("12.00"),
+    )
+    po = PurchaseOrder.objects.create(
+        supplier=supplier,
+        order_date=date.today(),
+        status="DRAFT",
+    )
+    po_item = PurchaseOrderItem.objects.create(
+        purchase_order=po,
+        item=item,
+        quantity_ordered=Decimal("2.00"),
+        unit_price=Decimal("15.00"),
+    )
+
+    po_item.unit_price = Decimal("18.50")
+    po_item.save()
+
+    item.refresh_from_db()
+    assert item.last_purchase_price == Decimal("18.50")

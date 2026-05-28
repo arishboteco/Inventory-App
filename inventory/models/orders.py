@@ -171,19 +171,20 @@ class PurchaseOrderItem(models.Model):
             self.line_total = self.quantity_ordered * self.unit_price
 
         is_new = self.pk is None
+        old_unit_price = None
+        if not is_new:
+            old_unit_price = (
+                type(self)
+                .objects.filter(pk=self.pk)
+                .values_list("unit_price", flat=True)
+                .first()
+            )
         super().save(*args, **kwargs)
 
         # Update item's last purchase price when PO item is created/updated
         if self.item and self.unit_price:
             # Only update if this is a new record or price changed
-            update_price = False
-            if is_new:
-                update_price = True
-            else:
-                # Check if price changed
-                old_item = PurchaseOrderItem.objects.get(pk=self.pk)
-                if old_item.unit_price != self.unit_price:
-                    update_price = True
+            update_price = is_new or old_unit_price != self.unit_price
 
             if update_price:
                 # Update item's price history

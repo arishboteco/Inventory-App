@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 
 from inventory.models import StockTransaction
@@ -41,3 +43,29 @@ def test_record_and_remove_bulk_transactions(item_factory):
     item2.refresh_from_db()
     assert item1.current_stock == 10
     assert item2.current_stock == 10
+
+
+@pytest.mark.django_db
+def test_bulk_stock_transactions_prevent_negative_stock_and_roll_back(item_factory):
+    item1 = item_factory(name="Bulk Safe Item", current_stock=Decimal("3.00"))
+    item2 = item_factory(name="Bulk Untouched Item", current_stock=Decimal("4.00"))
+    txs = [
+        {
+            "item_id": item1.item_id,
+            "quantity_change": Decimal("-5.00"),
+            "transaction_type": "ADJUSTMENT",
+        },
+        {
+            "item_id": item2.item_id,
+            "quantity_change": Decimal("2.00"),
+            "transaction_type": "RECEIVING",
+        },
+    ]
+
+    assert stock_service.record_stock_transactions_bulk(txs) is False
+
+    item1.refresh_from_db()
+    item2.refresh_from_db()
+    assert item1.current_stock == Decimal("3.00")
+    assert item2.current_stock == Decimal("4.00")
+    assert StockTransaction.objects.count() == 0

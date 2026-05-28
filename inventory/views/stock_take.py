@@ -165,6 +165,13 @@ def stock_take_review(request, pk: int):
 
     if request.method == "POST":
         action = request.POST.get("action")
+        if st.status == "COMPLETED":
+            messages.info(
+                request,
+                "This stock take is already completed and cannot be changed.",
+                extra_tags="toast",
+            )
+            return redirect("stock_take_review", pk=pk)
         if action == "complete" and st.status != "COMPLETED":
             user_id = getattr(request.user, "username", None) or "System"
             user_int = getattr(request.user, "pk", None)
